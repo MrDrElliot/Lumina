@@ -11,6 +11,10 @@
 *.sln.docstates
 *.sln
 
+.idea/
+.Binaries/
+.Intermediates/
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
