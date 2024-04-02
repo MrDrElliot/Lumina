@@ -1,7 +1,6 @@
 
-project ""
-	kind "ConsoleApp"
-
+project "Lumina"
+	kind "StaticLib"
 
 	outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
@@ -9,21 +8,18 @@ project ""
 	objdir ("../Intermediates/" .. outputdir .. "/%{prj.name}")
 
 	
-	links { "Lumina" }
-
 	files
 	{
-		"Source/**.h",
-		"Source/**.cpp",
-
+		"Engine/**.h",
+		"Engine/**.cpp",
+		"Engine/**.h",
+		"Engine/**.cpp",
 	}
 
 
 	includedirs
 	{ 
-		"Source/",
-		"../Lumina/Engine",
-		"../Lumina/Engine/Source",
+		"Engine/Source/",
 	}
 
 
