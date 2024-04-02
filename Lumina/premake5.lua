@@ -19,7 +19,7 @@ project "Lumina"
 
 	includedirs
 	{ 
-		"Engine/Source/",
+		"Engine/",
 	}
 
 

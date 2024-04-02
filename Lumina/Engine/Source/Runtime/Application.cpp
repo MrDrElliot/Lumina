@@ -1,5 +1,7 @@
 #include "Application.h"
 
+#include <iostream>
+
 namespace Lumina
 {
     FApplication::FApplication(const FApplicationSpecs& InAppSpecs)

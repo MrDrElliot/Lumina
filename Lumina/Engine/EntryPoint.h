@@ -14,13 +14,9 @@ namespace Lumina
 			FApplication* App = CreateApplication(argc, argv);
 			App->Run();
 			delete App;
-			
 		}
 		return 0;
 	}
-
-	/* Implemented by client */
-	static FApplication* CreateApplication(int argc, char** argv);
 
 }
 
@@ -29,7 +25,6 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 {
 	return Lumina::GuardedMain(__argc, __argv);
 }
-
 #else
 
 int main(int argc, char** argv)

@@ -20,6 +20,7 @@ namespace Lumina
 	{
 	public:
 
+		FApplication() {}
 		FApplication(const FApplicationSpecs& InAppSpecs);
 		virtual ~FApplication();
 		
@@ -34,7 +35,7 @@ namespace Lumina
 
 	private:
 
-		inline bool ShouldExit() const { return bRunning; }
+		inline bool ShouldExit() const { return !bRunning; }
 
 	private:
 
@@ -42,4 +43,7 @@ namespace Lumina
 		bool bRunning = true;
 		bool bMinimized = false;
 	};
+
+	/* Implemented by client */
+	static FApplication* CreateApplication(int argc, char** argv);
 }
