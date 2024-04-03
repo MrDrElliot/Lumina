@@ -1,6 +1,7 @@
 [submodule "Lumina/Engine/Source/ThirdParty/glfw"]
 	path = Lumina/Engine/Source/ThirdParty/glfw
 	url = https://github.com/MrDrElliot/glfw.git
+
 [submodule "Lumina/Engine/Source/ThirdParty/glm"]
 	path = Lumina/Engine/Source/ThirdParty/glm
 	url = https://github.com/g-truc/glm.git
