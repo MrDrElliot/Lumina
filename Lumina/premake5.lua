@@ -12,17 +12,15 @@ project "Lumina"
 	
 	files
 	{
-		"Engine/Source/Runtime/**.h",
-		"Engine/Source/Runtime/**.cpp",
+		"Engine/EntryPoint.h",
+		"Engine/Lumina.h",
 
-		"Engine/ThirdParty/spdlog/include/**.h",
-		"Engine/ThirdParty/spdlog/include/**.cpp",
-
-
-		"Engine/ThirdParty/glm/glm/**.cpp",
+		"Engine/Source/**.h",
+		"Engine/Source/**.cpp",
+		
 		"Engine/ThirdParty/glm/glm/**.hpp",
-		"Engine/ThirdParty/glm/glm/**.inl",
-
+		"Engine/ThirdParty/glm/glm**.cpp",
+		"Engine/ThirdParty/glm/glm**.inl",
 	}
 
 
@@ -33,6 +31,7 @@ project "Lumina"
 		"%{IncludeDir.spdlog}/",
 		"%{IncludeDir.glfw}/",
 		"%{IncludeDir.glm}/",
+		"%{IncludeDir.vulkan}",
 	}
 	
 	links { "GLFW" }

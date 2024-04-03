@@ -38,7 +38,7 @@ workspace "Lumina"
 		buildoptions { "/EHsc", "/Zc:preprocessor", "/Zc:__cplusplus" }
 
 	group "Dependencies"
-		include "Lumina/Engine/Source/ThirdParty/glfw"
+		include "Lumina/Engine/ThirdParty/glfw"
 	group ""
 
 	group "Core"

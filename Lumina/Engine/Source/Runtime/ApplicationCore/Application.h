@@ -4,6 +4,7 @@
 #include <string>
 #include "LayerStack.h"
 #include "Window.h"
+#include <GLFW/glfw3.h>
 
 namespace Lumina
 {
@@ -56,8 +57,8 @@ namespace Lumina
 
 	private:
 
-		FLayerStack LayerStack;
 
+		FLayerStack LayerStack;
 
 		static FApplication* Instance;
 	};

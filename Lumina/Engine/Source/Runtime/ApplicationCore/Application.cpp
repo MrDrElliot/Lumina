@@ -19,7 +19,7 @@ namespace Lumina
 
         FLog::Init();
 
-        Window = std::unique_ptr<FWindow>(FWindow::Create(AppWindowSpecs));
+        Window = std::unique_ptr<FWindow>(FWindow::Create(AppWindowSpecs, true));
 
     }
 
@@ -63,20 +63,25 @@ namespace Lumina
 
     void FApplication::PushLayer(FLayer* InLayer)
     {
-
+        LayerStack.PushLayer(InLayer);
+        InLayer->OnAttach();
     }
 
     void FApplication::PushOverlay(FLayer* InLayer)
     {
+        LayerStack.PushOverlay(InLayer);
+        InLayer->OnAttach();
     }
 
     void FApplication::PopLayer(FLayer* InLayer)
     {
-
+        LayerStack.PopLayer(InLayer);
+        InLayer->OnDetach();
     }
 
     void FApplication::PopOverlay(FLayer* InLayer)
     {
-
+        LayerStack.PopOverlay(InLayer);
+        InLayer->OnDetach();
     }
 }

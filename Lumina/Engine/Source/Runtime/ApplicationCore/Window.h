@@ -3,6 +3,9 @@
 #include <cstdint>
 #include <string>
 
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
+
 namespace Lumina
 {
 
@@ -16,7 +19,7 @@ namespace Lumina
 	class FWindow
 	{
 	public:
-		static FWindow* Create(const FWindowSpecs& InSpecs);
+		static FWindow* Create(const FWindowSpecs& InSpecs, bool bInit = false);
 
 		FWindow(const FWindowSpecs& InSpecs, bool bInit = false);
 		virtual ~FWindow();
@@ -27,7 +30,9 @@ namespace Lumina
 
 	private:
 
-		bool bInitialized;
+		GLFWwindow* Window;
+
+		bool bInitialized = false;
 		FWindowSpecs Specs;
 	};
 }
