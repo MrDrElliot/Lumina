@@ -19,6 +19,12 @@
     <Filter Include="Source\Runtime\Memory">
       <UniqueIdentifier>{D1D182A6-3D3E-3EA1-0632-D6FE725D6009}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Runtime\RHI">
+      <UniqueIdentifier>{3B376101-271B-2257-907B-1CAA7C7E0CD9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Runtime\RHI\Vulkan">
+      <UniqueIdentifier>{5B743815-C736-6C9F-10E7-FA2B7CE8447D}</UniqueIdentifier>
+    </Filter>
     <Filter Include="ThirdParty">
       <UniqueIdentifier>{107145F9-FC28-8746-6530-60A251072237}</UniqueIdentifier>
     </Filter>
@@ -64,6 +70,21 @@
     </ClInclude>
     <ClInclude Include="Engine\Source\Runtime\Memory\Memory.h">
       <Filter>Source\Runtime\Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\RHI\RendererContext.h">
+      <Filter>Source\Runtime\RHI</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\RHI\Vulkan\VulkanBuffer.h">
+      <Filter>Source\Runtime\RHI\Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\RHI\Vulkan\VulkanDevice.h">
+      <Filter>Source\Runtime\RHI\Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\RHI\Vulkan\VulkanRendererContext.h">
+      <Filter>Source\Runtime\RHI\Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\RHI\Vulkan\VulkanSwapChain.h">
+      <Filter>Source\Runtime\RHI\Vulkan</Filter>
     </ClInclude>
     <ClInclude Include="Engine\ThirdParty\glm\glm\common.hpp">
       <Filter>ThirdParty\glm\glm</Filter>
@@ -1326,6 +1347,21 @@
     </ClCompile>
     <ClCompile Include="Engine\Source\Runtime\Log\Log.cpp">
       <Filter>Source\Runtime\Log</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\RHI\RendererContext.cpp">
+      <Filter>Source\Runtime\RHI</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\RHI\Vulkan\VulkanBuffer.cpp">
+      <Filter>Source\Runtime\RHI\Vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\RHI\Vulkan\VulkanDevice.cpp">
+      <Filter>Source\Runtime\RHI\Vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\RHI\Vulkan\VulkanRendererContext.cpp">
+      <Filter>Source\Runtime\RHI\Vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\RHI\Vulkan\VulkanSwapChain.cpp">
+      <Filter>Source\Runtime\RHI\Vulkan</Filter>
     </ClCompile>
     <ClCompile Include="Engine\ThirdParty\glm\glm\detail\glm.cpp">
       <Filter>ThirdParty\glm\glm\detail</Filter>

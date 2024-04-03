@@ -2,7 +2,6 @@
 
 #include <memory>
 #include <spdlog/spdlog.h>
-#include <glm/glm.hpp>
 
 
 namespace Lumina

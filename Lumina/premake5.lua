@@ -27,11 +27,13 @@ project "Lumina"
 	includedirs
 	{ 
 		"Engine/",
-		"Engine/Source/ThirdParty/",
+		"Engine/ThirdParty/",
 		"%{IncludeDir.spdlog}/",
 		"%{IncludeDir.glfw}/",
 		"%{IncludeDir.glm}/",
-		"%{IncludeDir.vulkan}",
+		"%{IncludeDir.vulkan}/Include/",
+		"%{IncludeDir.vulkan}/Lib/",
+
 	}
 	
 	links { "GLFW" }

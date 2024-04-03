@@ -79,7 +79,7 @@
       <WarningLevel>Level3</WarningLevel>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;GLM_FORCE_DEPTH_ZERO_TO_ONE;LE_DEBUG;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\VulkanSDK\1.3.280.0\include;Source;..\Lumina\Engine;..\Lumina\Engine\ThirdParty\spdlog\include;..\Lumina\Engine\ThirdParty\GLFW\include;..\Lumina\Engine\ThirdParty\GLM;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Source;..\Lumina\Engine;..\Lumina\Engine\ThirdParty\spdlog\include;..\Lumina\Engine\ThirdParty\GLFW\include;..\Lumina\Engine\ThirdParty\GLM;C:\VulkanSDK\1.3.280.0\Include;C:\VulkanSDK\1.3.280.0\Lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <MinimalRebuild>false</MinimalRebuild>
@@ -100,7 +100,7 @@
       <WarningLevel>Level3</WarningLevel>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;GLM_FORCE_DEPTH_ZERO_TO_ONE;LE_RELEASE;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\VulkanSDK\1.3.280.0\include;Source;..\Lumina\Engine;..\Lumina\Engine\ThirdParty\spdlog\include;..\Lumina\Engine\ThirdParty\GLFW\include;..\Lumina\Engine\ThirdParty\GLM;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Source;..\Lumina\Engine;..\Lumina\Engine\ThirdParty\spdlog\include;..\Lumina\Engine\ThirdParty\GLFW\include;..\Lumina\Engine\ThirdParty\GLM;C:\VulkanSDK\1.3.280.0\Include;C:\VulkanSDK\1.3.280.0\Lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -124,7 +124,7 @@
       <WarningLevel>Level3</WarningLevel>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;GLM_FORCE_DEPTH_ZERO_TO_ONE;LE_SHIP;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\VulkanSDK\1.3.280.0\include;Source;..\Lumina\Engine;..\Lumina\Engine\ThirdParty\spdlog\include;..\Lumina\Engine\ThirdParty\GLFW\include;..\Lumina\Engine\ThirdParty\GLM;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Source;..\Lumina\Engine;..\Lumina\Engine\ThirdParty\spdlog\include;..\Lumina\Engine\ThirdParty\GLFW\include;..\Lumina\Engine\ThirdParty\GLM;C:\VulkanSDK\1.3.280.0\Include;C:\VulkanSDK\1.3.280.0\Lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>

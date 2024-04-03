@@ -21,12 +21,13 @@ project "Sandbox"
 
 	includedirs
 	{ 
-		"%{IncludeDir.vulkan}",
 		"Source/",
 		"../Lumina/Engine",
 		"../Lumina/Engine/ThirdParty/spdlog/include/",
 		"../Lumina/Engine/ThirdParty/GLFW/include",
 		"../Lumina/Engine/ThirdParty/GLM/",
+		"%{IncludeDir.vulkan}/Include/",
+		"%{IncludeDir.vulkan}/Lib/",
 	}
 
 
