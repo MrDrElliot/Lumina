@@ -22,6 +22,7 @@ namespace Lumina
 
 	FWindow::~FWindow()
 	{
+		OnShutdown();
 	}
 
 	void FWindow::Init()
@@ -48,6 +49,12 @@ namespace Lumina
 	void FWindow::OnUpdate(float DeltaTime)
 	{
 		glfwPollEvents();
+	}
+
+	void FWindow::OnShutdown()
+	{
+		glfwDestroyWindow(Window);
+		glfwTerminate();
 	}
 
 	FWindow* FWindow::Create(const FWindowSpecs& InSpecs, bool bInit)

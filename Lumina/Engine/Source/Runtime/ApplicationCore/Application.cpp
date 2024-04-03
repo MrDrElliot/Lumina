@@ -38,7 +38,7 @@ namespace Lumina
             if (!IsMinimized())
             {
 
-
+                Window->OnUpdate(1.0f);
             }
 
         }
