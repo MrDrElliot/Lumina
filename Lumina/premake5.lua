@@ -7,6 +7,10 @@ project "Lumina"
 	targetdir ("../Binaries/" .. outputdir .. "/%{prj.name}")
 	objdir ("../Intermediates/" .. outputdir .. "/%{prj.name}")
 
+	IncludeDir = {}
+	IncludeDir["spdlog"] = "Engine/Source/ThirdParty/spdlog/include"
+	IncludeDir["glfw"] = "Engine/Source/ThirdParty/GLFW/include"
+
 	
 	files
 	{
@@ -20,8 +24,9 @@ project "Lumina"
 	includedirs
 	{ 
 		"Engine/",
+		"%{IncludeDir.spdlog}",
+		"%{IncludeDir.glfw}",
 	}
-
 
 	defines { "GLM_FORCE_DEPTH_ZERO_TO_ONE", }
 

@@ -9,7 +9,11 @@ project "Sandbox"
 	objdir ("../Intermediates/" .. outputdir .. "/%{prj.name}")
 
 	
-	links { "Lumina" }
+	IncludeDir = {}
+	IncludeDir["spdlog"] = "Engine/Source/ThirdParty/spdlog/include"
+	IncludeDir["glfw"] = "Engine/Source/ThirdParty/glfw/include"
+	
+	links { "Lumina", "GLFW", }
 
 	files
 	{
@@ -23,7 +27,8 @@ project "Sandbox"
 	{ 
 		"Source/",
 		"../Lumina/Engine",
-		"../Lumina/Engine/Source",
+		"%{IncludeDir.spdlog}",
+		"%{IncludeDir.glfw}",
 	}
 
 

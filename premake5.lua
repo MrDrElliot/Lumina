@@ -14,7 +14,7 @@ workspace "Lumina"
 
 	defines
 	{
-		"_CRT_SECURE_NO_WARNINGS"
+		"_CRT_SECURE_NO_WARNINGS",
 	}
 
 	filter "action:vs"
@@ -36,6 +36,10 @@ workspace "Lumina"
 
 	filter "system:windows"
 		buildoptions { "/EHsc", "/Zc:preprocessor", "/Zc:__cplusplus" }
+
+	group "Dependencies"
+		include "Lumina/Engine/Source/ThirdParty/glfw"
+	group ""
 
 	group "Core"
 		include "Lumina"

@@ -4,4 +4,5 @@
 #include <memory>
 #include <string>
 
-#include "Source/Runtime/Application.h"
+#include "Source/Runtime/ApplicationCore/Application.h"
+#include "Source/Runtime/Log/Log.h"

@@ -1,5 +1,6 @@
 #pragma once
-#include "Source/Runtime/Application.h"
+
+#include "Source/Runtime/ApplicationCore/Application.h"
 
 extern Lumina::FApplication* Lumina::CreateApplication(int argc, char** argv);
 
