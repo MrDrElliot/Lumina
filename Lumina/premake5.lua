@@ -12,13 +12,16 @@ project "Lumina"
 	
 	files
 	{
-		"Engine/**.h",
-		"Engine/**.cpp",
+		"Engine/Source**.h",
+		"Engine/Source**.cpp",
 
-		"Engine/**.hpp",
-		"Engine/**.cpp",
+		"Engine/ThirdParty/spdlog/include/**.h",
+		"Engine/ThirdParty/spdlog/include/**.cpp",
 
-		"Engine/**.inl",
+
+		"Engine/ThirdParty/glm/glm/**.cpp",
+		"Engine/ThirdParty/glm/glm/**.hpp",
+		"Engine/ThirdParty/glm/glm/**.inl",
 
 	}
 

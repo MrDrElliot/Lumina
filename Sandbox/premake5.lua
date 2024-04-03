@@ -25,7 +25,7 @@ project "Sandbox"
 		"../Lumina/Engine",
 		"../Lumina/Engine/Source/ThirdParty/spdlog/include/",
 		"../Lumina/Engine/Source/ThirdParty/GLFW/include",
-		"../Lumina/Engine/Source/ThirdParty/GLM/",
+		"../Lumina/Engine/Source/ThirdParty/GLM/glm",
 	}
 
 
