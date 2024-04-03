@@ -76,7 +76,7 @@
       <WarningLevel>Level3</WarningLevel>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;GLM_FORCE_DEPTH_ZERO_TO_ONE;GLFW_INCLUDE_NONE;GLM_ENABLE_EXPERIMENTAL;LE_DEBUG;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>Engine;Engine\Source\ThirdParty;Engine\Source\ThirdParty\spdlog\include;Engine\Source\ThirdParty\GLFW\include;Engine\Source\ThirdParty\GLM;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Lumina\Engine;Engine\Source\ThirdParty;Lumina\Engine\Source\ThirdParty\spdlog\include;Lumina\Engine\Source\ThirdParty\GLFW\include;Engine\Source\ThirdParty\GLM;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <MinimalRebuild>false</MinimalRebuild>
@@ -97,7 +97,7 @@
       <WarningLevel>Level3</WarningLevel>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;GLM_FORCE_DEPTH_ZERO_TO_ONE;GLFW_INCLUDE_NONE;GLM_ENABLE_EXPERIMENTAL;LE_RELEASE;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>Engine;Engine\Source\ThirdParty;Engine\Source\ThirdParty\spdlog\include;Engine\Source\ThirdParty\GLFW\include;Engine\Source\ThirdParty\GLM;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Lumina\Engine;Engine\Source\ThirdParty;Lumina\Engine\Source\ThirdParty\spdlog\include;Lumina\Engine\Source\ThirdParty\GLFW\include;Engine\Source\ThirdParty\GLM;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -121,7 +121,7 @@
       <WarningLevel>Level3</WarningLevel>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;GLM_FORCE_DEPTH_ZERO_TO_ONE;GLFW_INCLUDE_NONE;GLM_ENABLE_EXPERIMENTAL;LE_SHIP;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>Engine;Engine\Source\ThirdParty;Engine\Source\ThirdParty\spdlog\include;Engine\Source\ThirdParty\GLFW\include;Engine\Source\ThirdParty\GLM;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Lumina\Engine;Engine\Source\ThirdParty;Lumina\Engine\Source\ThirdParty\spdlog\include;Lumina\Engine\Source\ThirdParty\GLFW\include;Engine\Source\ThirdParty\GLM;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -721,6 +721,212 @@
     <ClCompile Include="Engine\Source\Runtime\ApplicationCore\Window.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Log\Log.cpp" />
     <ClCompile Include="Engine\Source\ThirdParty\glm\glm\detail\glm.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\bug\bug_ms_vec_static.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\cmake\test_find_glm.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_cpp_constexpr.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_cpp_defaulted_ctor.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_force_aligned_gentypes.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_force_arch_unknown.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_force_compiler_unknown.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_force_ctor_init.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_force_depth_zero_to_one.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_force_explicit_ctor.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_force_inline.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_force_left_handed.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_force_platform_unknown.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_force_pure.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_force_quat_wxyz.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_force_size_t_length.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_force_unrestricted_gentype.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_force_xyzw_only.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_func_common.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_func_exponential.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_func_geometric.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_func_integer.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_func_integer_bit_count.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_func_integer_find_lsb.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_func_integer_find_msb.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_func_matrix.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_func_noise.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_func_packing.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_func_swizzle.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_func_trigonometric.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_func_vector_relational.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_setup_force_cxx03.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_setup_force_cxx98.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_setup_force_cxx_unknown.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_setup_force_size_t_length.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_setup_message.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_setup_platform_unknown.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_setup_precision.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_type_aligned.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_type_cast.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_type_ctor.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_type_int.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_type_length.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_type_mat2x2.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_type_mat2x3.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_type_mat2x4.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_type_mat3x2.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_type_mat3x3.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_type_mat3x4.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_type_mat4x2.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_type_mat4x3.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_type_mat4x4.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_type_vec1.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_type_vec2.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_type_vec3.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\core\core_type_vec4.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_matrix_clip_space.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_matrix_common.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_matrix_int2x2_sized.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_matrix_int2x3_sized.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_matrix_int2x4_sized.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_matrix_int3x2_sized.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_matrix_int3x3_sized.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_matrix_int3x4_sized.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_matrix_int4x2_sized.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_matrix_int4x3_sized.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_matrix_int4x4_sized.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_matrix_integer.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_matrix_projection.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_matrix_relational.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_matrix_transform.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_matrix_uint2x2_sized.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_matrix_uint2x3_sized.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_matrix_uint2x4_sized.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_matrix_uint3x2_sized.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_matrix_uint3x3_sized.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_matrix_uint3x4_sized.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_matrix_uint4x2_sized.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_matrix_uint4x3_sized.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_matrix_uint4x4_sized.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_quaternion_common.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_quaternion_exponential.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_quaternion_geometric.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_quaternion_relational.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_quaternion_transform.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_quaternion_trigonometric.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_quaternion_type.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_scalar_common.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_scalar_constants.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_scalar_int_sized.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_scalar_integer.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_scalar_packing.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_scalar_reciprocal.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_scalar_relational.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_scalar_uint_sized.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_scalar_ulp.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_vec1.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_vector_bool1.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_vector_common.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_vector_iec559.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_vector_int1_sized.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_vector_int2_sized.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_vector_int3_sized.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_vector_int4_sized.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_vector_integer.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_vector_integer_sized.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_vector_packing.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_vector_reciprocal.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_vector_relational.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_vector_uint1_sized.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_vector_uint2_sized.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_vector_uint3_sized.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_vector_uint4_sized.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\ext\ext_vector_ulp.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtc\gtc_bitfield.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtc\gtc_color_space.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtc\gtc_constants.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtc\gtc_epsilon.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtc\gtc_integer.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtc\gtc_matrix_access.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtc\gtc_matrix_integer.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtc\gtc_matrix_inverse.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtc\gtc_matrix_transform.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtc\gtc_noise.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtc\gtc_packing.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtc\gtc_quaternion.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtc\gtc_random.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtc\gtc_reciprocal.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtc\gtc_round.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtc\gtc_type_aligned.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtc\gtc_type_precision.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtc\gtc_type_ptr.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtc\gtc_ulp.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtc\gtc_user_defined_types.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtc\gtc_vec1.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_associated_min_max.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_closest_point.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_color_encoding.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_color_space.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_color_space_YCoCg.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_common.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_compatibility.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_component_wise.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_dual_quaternion.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_easing.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_euler_angle.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_extend.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_extended_min_max.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_extented_min_max.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_exterior_product.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_fast_exponential.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_fast_square_root.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_fast_trigonometry.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_functions.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_gradient_paint.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_handed_coordinate_space.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_hash.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_int_10_10_10_2.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_integer.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_intersect.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_io.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_load.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_log_base.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_matrix_cross_product.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_matrix_decompose.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_matrix_factorisation.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_matrix_interpolation.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_matrix_major_storage.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_matrix_operation.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_matrix_query.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_matrix_transform_2d.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_mixed_product.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_norm.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_normal.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_normalize_dot.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_optimum_pow.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_orthonormalize.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_pca.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_perpendicular.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_polar_coordinates.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_projection.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_quaternion.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_random.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_range.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_rotate_normalized_axis.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_rotate_vector.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_scalar_multiplication.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_scalar_relational.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_simd_mat4.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_simd_vec4.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_spline.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_string_cast.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_texture.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_type_aligned.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_type_trait.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_vec_swizzle.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_vector_angle.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_vector_query.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\gtx\gtx_wrap.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\perf\perf_matrix_div.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\perf\perf_matrix_inverse.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\perf\perf_matrix_mul.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\perf\perf_matrix_mul_vector.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\perf\perf_matrix_transpose.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\glm\test\perf\perf_vector_mul_matrix.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="Engine\Source\ThirdParty\glfw\GLFW.vcxproj">

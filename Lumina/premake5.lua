@@ -25,7 +25,7 @@ project "Lumina"
 
 	includedirs
 	{ 
-		"Engine/",
+		"Lumina/Engine/",
 		"Engine/Source/ThirdParty/",
 		"%{IncludeDir.spdlog}/",
 		"%{IncludeDir.glfw}/",
