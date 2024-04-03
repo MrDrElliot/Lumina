@@ -1,3 +1,5 @@
+include "Dependencies.lua"
+
 
 project "Lumina"
 	kind "StaticLib"
@@ -7,28 +9,37 @@ project "Lumina"
 	targetdir ("../Binaries/" .. outputdir .. "/%{prj.name}")
 	objdir ("../Intermediates/" .. outputdir .. "/%{prj.name}")
 
-	IncludeDir = {}
-	IncludeDir["spdlog"] = "Engine/Source/ThirdParty/spdlog/include"
-	IncludeDir["glfw"] = "Engine/Source/ThirdParty/GLFW/include"
-
 	
 	files
 	{
 		"Engine/**.h",
 		"Engine/**.cpp",
-		"Engine/**.h",
+
+		"Engine/**.hpp",
 		"Engine/**.cpp",
+
+		"Engine/**.inl",
+
 	}
 
 
 	includedirs
 	{ 
 		"Engine/",
-		"%{IncludeDir.spdlog}",
-		"%{IncludeDir.glfw}",
+		"Engine/Source/ThirdParty/",
+		"%{IncludeDir.spdlog}/",
+		"%{IncludeDir.glfw}/",
+		"%{IncludeDir.glm}/",
 	}
+	
+	links { "GLFW" }
 
-	defines { "GLM_FORCE_DEPTH_ZERO_TO_ONE", }
+	defines
+	 {
+		 "GLM_FORCE_DEPTH_ZERO_TO_ONE",
+		 "GLFW_INCLUDE_NONE",
+		 "GLM_ENABLE_EXPERIMENTAL",
+	}
 
 	filter "system:linux"
 		defines { "LE_PLATFORM_LINUX" }

@@ -1,3 +1,4 @@
+include "Dependencies.lua"
 
 project "Sandbox"
 	kind "ConsoleApp"
@@ -7,13 +8,8 @@ project "Sandbox"
 
 	targetdir ("../Binaries/" .. outputdir .. "/%{prj.name}")
 	objdir ("../Intermediates/" .. outputdir .. "/%{prj.name}")
-
 	
-	IncludeDir = {}
-	IncludeDir["spdlog"] = "Engine/Source/ThirdParty/spdlog/include"
-	IncludeDir["glfw"] = "Engine/Source/ThirdParty/glfw/include"
-	
-	links { "Lumina", "GLFW", }
+	links { "Lumina", }
 
 	files
 	{
@@ -27,8 +23,9 @@ project "Sandbox"
 	{ 
 		"Source/",
 		"../Lumina/Engine",
-		"%{IncludeDir.spdlog}",
-		"%{IncludeDir.glfw}",
+		"../Lumina/Engine/Source/ThirdParty/spdlog/include/",
+		"../Lumina/Engine/Source/ThirdParty/GLFW/include",
+		"../Lumina/Engine/Source/ThirdParty/GLM/",
 	}
 
 
