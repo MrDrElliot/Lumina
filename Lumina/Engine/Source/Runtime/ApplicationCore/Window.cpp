@@ -45,6 +45,11 @@ namespace Lumina
 		}
 	}
 
+	void FWindow::OnUpdate(float DeltaTime)
+	{
+		glfwPollEvents();
+	}
+
 	FWindow* FWindow::Create(const FWindowSpecs& InSpecs, bool bInit)
 	{
 		return new FWindow(InSpecs, bInit);

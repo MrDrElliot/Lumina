@@ -19,8 +19,8 @@ project "Lumina"
 		"Engine/Source/**.cpp",
 		
 		"Engine/ThirdParty/glm/glm/**.hpp",
-		"Engine/ThirdParty/glm/glm**.cpp",
-		"Engine/ThirdParty/glm/glm**.inl",
+		"Engine/ThirdParty/glm/glm/**.cpp",
+		"Engine/ThirdParty/glm/glm/**.inl",
 	}
 
 

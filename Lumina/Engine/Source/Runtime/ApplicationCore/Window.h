@@ -26,6 +26,7 @@ namespace Lumina
 
 
 		virtual void Init();
+		virtual void OnUpdate(float DeltaTime);
 
 
 	private:
