@@ -25,7 +25,7 @@ project "Lumina"
 
 	includedirs
 	{ 
-		"Lumina/Engine/",
+		"Engine/",
 		"Engine/Source/ThirdParty/",
 		"%{IncludeDir.spdlog}/",
 		"%{IncludeDir.glfw}/",
@@ -38,7 +38,6 @@ project "Lumina"
 	 {
 		 "GLM_FORCE_DEPTH_ZERO_TO_ONE",
 		 "GLFW_INCLUDE_NONE",
-		 "GLM_ENABLE_EXPERIMENTAL",
 	}
 
 	filter "system:linux"
