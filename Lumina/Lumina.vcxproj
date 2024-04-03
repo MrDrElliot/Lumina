@@ -142,6 +142,21 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Engine\Source\Runtime\ApplicationCore\Application.h" />
+    <ClInclude Include="Engine\Source\Runtime\ApplicationCore\Layer.h" />
+    <ClInclude Include="Engine\Source\Runtime\ApplicationCore\LayerStack.h" />
+    <ClInclude Include="Engine\Source\Runtime\ApplicationCore\Window.h" />
+    <ClInclude Include="Engine\Source\Runtime\CoreObject\Object.h" />
+    <ClInclude Include="Engine\Source\Runtime\Log\Log.h" />
+    <ClInclude Include="Engine\Source\Runtime\Memory\Memory.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Engine\Source\Runtime\ApplicationCore\Application.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\ApplicationCore\LayerStack.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\ApplicationCore\Window.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Log\Log.cpp" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="Engine\Source\ThirdParty\glfw\GLFW.vcxproj">
       <Project>{154B857C-0182-860D-AA6E-6C109684020F}</Project>
     </ProjectReference>

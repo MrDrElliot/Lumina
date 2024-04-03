@@ -79,7 +79,7 @@
       <WarningLevel>Level3</WarningLevel>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;GLM_FORCE_DEPTH_ZERO_TO_ONE;LE_DEBUG;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>Source;..\Lumina\Engine;..\Lumina\Engine\Source\ThirdParty\spdlog\include;..\Lumina\Engine\Source\ThirdParty\GLFW\include;..\Lumina\Engine\Source\ThirdParty\GLM\glm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Source;..\Lumina\Engine;..\Lumina\Engine\Source\ThirdParty\spdlog\include;..\Lumina\Engine\Source\ThirdParty\GLFW\include;..\Lumina\Engine\Source\ThirdParty\GLM;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <MinimalRebuild>false</MinimalRebuild>
@@ -100,7 +100,7 @@
       <WarningLevel>Level3</WarningLevel>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;GLM_FORCE_DEPTH_ZERO_TO_ONE;LE_RELEASE;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>Source;..\Lumina\Engine;..\Lumina\Engine\Source\ThirdParty\spdlog\include;..\Lumina\Engine\Source\ThirdParty\GLFW\include;..\Lumina\Engine\Source\ThirdParty\GLM\glm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Source;..\Lumina\Engine;..\Lumina\Engine\Source\ThirdParty\spdlog\include;..\Lumina\Engine\Source\ThirdParty\GLFW\include;..\Lumina\Engine\Source\ThirdParty\GLM;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -124,7 +124,7 @@
       <WarningLevel>Level3</WarningLevel>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;GLM_FORCE_DEPTH_ZERO_TO_ONE;LE_SHIP;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>Source;..\Lumina\Engine;..\Lumina\Engine\Source\ThirdParty\spdlog\include;..\Lumina\Engine\Source\ThirdParty\GLFW\include;..\Lumina\Engine\Source\ThirdParty\GLM\glm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Source;..\Lumina\Engine;..\Lumina\Engine\Source\ThirdParty\spdlog\include;..\Lumina\Engine\Source\ThirdParty\GLFW\include;..\Lumina\Engine\Source\ThirdParty\GLM;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>

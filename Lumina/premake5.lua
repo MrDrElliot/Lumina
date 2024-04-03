@@ -12,8 +12,8 @@ project "Lumina"
 	
 	files
 	{
-		"Engine/Source**.h",
-		"Engine/Source**.cpp",
+		"Engine/Source/Runtime/**.h",
+		"Engine/Source/Runtime/**.cpp",
 
 		"Engine/ThirdParty/spdlog/include/**.h",
 		"Engine/ThirdParty/spdlog/include/**.cpp",
