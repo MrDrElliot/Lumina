@@ -1,8 +1,7 @@
 #include "Window.h"
 
 #include "Source/Runtime/Log/Log.h"
-#include "Source/Runtime/RHI/Vulkan/VulkanRendererContext.h"
-
+ 
 namespace Lumina
 {
 
@@ -45,14 +44,7 @@ namespace Lumina
 			const GLFWvidmode* VidMode = glfwGetVideoMode(PrimaryMonitor);
 
 			Window = glfwCreateWindow(Specs.Width, Specs.Height, Specs.Title.c_str(), nullptr, nullptr);
-
-			RendererContext = LRendererContext::Create(true);
-
-			const LVulkanRendererContext* VulkanContext = dynamic_cast<LVulkanRendererContext*>(RendererContext);
-
-			SwapChain = new FVulkanSwapChain(LVulkanRendererContext::GetInstance(), VulkanContext->GetDevice(), Window);
-			SwapChain->InitSurface(Window);
-			SwapChain->Create(&Specs.Width, &Specs.Height, true);
+			
 			
 		}
 	}
@@ -60,7 +52,6 @@ namespace Lumina
 	void FWindow::OnUpdate(float DeltaTime)
 	{
 		glfwPollEvents();
-		SwapChain->Present();
 	}
 
 	void FWindow::OnShutdown()
