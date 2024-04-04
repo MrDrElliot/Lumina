@@ -1,29 +1,29 @@
 #include "Window.h"
 
 #include "Source/Runtime/Log/Log.h"
- 
-namespace Lumina
-{
+#include "Source/Runtime/Renderer/RendererContext.h"
+#include "Source/Runtime/Renderer/Vulkan/VulkanRendererContext.h"
 
-	static void GLFWErrorCallback(int error, const char* description)
+namespace
+{
+	void GLFWErrorCallback(int error, const char* description)
 	{
 		LE_LOG_CRITICAL("GLFW Error: {0} | {1}", error, description);
 	}
+}
 
+
+namespace Lumina
+{
 
 	FWindow::FWindow(const FWindowSpecs& InSpecs, bool bInit)
 	{
 		Specs = InSpecs;
 
-		if (bInit)
-		{
-			Init();
-		}
 	}
 
 	FWindow::~FWindow()
 	{
-		OnShutdown();
 	}
 
 	void FWindow::Init()
@@ -32,21 +32,31 @@ namespace Lumina
 		{
 			LE_LOG_INFO("Initializing Window: {0} {1} {2}", Specs.Title, Specs.Width, Specs.Height);
 
-			int bInitalized = glfwInit();
+			glfwInit();
+			
 			glfwSetErrorCallback(GLFWErrorCallback);
-
-			// @TODO FRenderer::Current() = ERendererAPI::Vulkan
-
+			
 			glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-
 
 			GLFWmonitor* PrimaryMonitor = glfwGetPrimaryMonitor();
 			const GLFWvidmode* VidMode = glfwGetVideoMode(PrimaryMonitor);
 
 			Window = glfwCreateWindow(Specs.Width, Specs.Height, Specs.Title.c_str(), nullptr, nullptr);
-			
-			
+
+			RendererContext = CreateRenderContext();
+
+				
+			return;
 		}
+		
+		LE_LOG_ERROR("Init called on a window that's already been initialized!");
+	}
+
+	 std::shared_ptr<FRendererContext> FWindow::CreateRenderContext()
+	{
+		std::shared_ptr<FRendererContext> NewContext = FRendererContext::Create();
+		NewContext->Init();
+		return NewContext;
 	}
 
 	void FWindow::OnUpdate(float DeltaTime)
@@ -60,8 +70,8 @@ namespace Lumina
 		glfwTerminate();
 	}
 
-	FWindow* FWindow::Create(const FWindowSpecs& InSpecs, bool bInit)
+	FWindow* FWindow::Create(const FWindowSpecs& InSpecs)
 	{
-		return new FWindow(InSpecs, bInit);
+		return new FWindow(InSpecs);
 	}
 }

@@ -1,8 +1,6 @@
 #include "Application.h"
 
 #include "Source/Runtime/Log/Log.h"
-#include <vulkan/vulkan.h>
-#include <vulkan/vulkan.hpp>
 
 namespace Lumina
 {
@@ -12,16 +10,7 @@ namespace Lumina
     FApplication::FApplication(const FApplicationSpecs& InAppSpecs)
     {
         AppSpecs = InAppSpecs;
-
-        FWindowSpecs AppWindowSpecs;
-        AppWindowSpecs.Title = InAppSpecs.Name;
-        AppWindowSpecs.Width = InAppSpecs.WindowWidth;
-        AppWindowSpecs.Height = InAppSpecs.WindowHeight;
-
-        FLog::Init();
-
-        Window = std::unique_ptr<FWindow>(FWindow::Create(AppWindowSpecs, true));
-
+        
     }
 
     FApplication::~FApplication()
@@ -31,19 +20,19 @@ namespace Lumina
      
     void FApplication::Run()
     {
+        /* Application Initialization */
         OnInit();
         
         while(!ShouldExit())
         {
-            
             if (!IsMinimized())
             {
-
                 Window->OnUpdate(1.0f);
             }
 
         }
 
+        /* Application Shutdown */
         OnShutdown();
     }
 
@@ -54,12 +43,26 @@ namespace Lumina
 
     void FApplication::OnInit()
     {
+        /* Initialize Logging */
+        FLog::Init();
 
+        /* Create application window */
+        FWindowSpecs AppWindowSpecs;
+        AppWindowSpecs.Title = AppSpecs.Name;
+        AppWindowSpecs.Width = AppSpecs.WindowWidth;
+        AppWindowSpecs.Height = AppSpecs.WindowHeight;
+        CreateApplicationWindow(AppWindowSpecs);
     }
 
     void FApplication::OnShutdown()
     {
 
+    }
+
+    void FApplication::CreateApplicationWindow(const FWindowSpecs& InSpecs)
+    {
+        Window = std::unique_ptr<FWindow>(FWindow::Create(InSpecs));
+        Window->Init();
     }
 
     void FApplication::PushLayer(FLayer* InLayer)

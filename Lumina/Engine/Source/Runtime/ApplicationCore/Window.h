@@ -4,11 +4,15 @@
 #include <string>
 
 #define GLFW_INCLUDE_VULKAN
+#include <memory>
 #include <GLFW/glfw3.h>
+
+#include "Source/Runtime/Memory/Memory.h"
 
 
 namespace Lumina
 {
+	class FRendererContext;
 
 	struct FWindowSpecs
 	{
@@ -20,13 +24,14 @@ namespace Lumina
 	class FWindow
 	{
 	public:
-		static FWindow* Create(const FWindowSpecs& InSpecs, bool bInit = false);
+		static FWindow* Create(const FWindowSpecs& InSpecs);
 
 		FWindow(const FWindowSpecs& InSpecs, bool bInit = false);
 		virtual ~FWindow();
 
 
 		virtual void Init();
+		virtual  std::shared_ptr<FRendererContext> CreateRenderContext();
 		virtual void OnUpdate(float DeltaTime);
 
 
@@ -39,6 +44,8 @@ namespace Lumina
 	private:
 
 		GLFWwindow* Window;
+		
+		std::shared_ptr<FRendererContext> RendererContext;
 
 		bool bInitialized = false;
 		

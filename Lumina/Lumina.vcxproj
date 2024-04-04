@@ -152,6 +152,10 @@
     <ClInclude Include="Engine\Source\Runtime\Log\Log.h" />
     <ClInclude Include="Engine\Source\Runtime\Memory\Memory.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\Renderer.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\RendererContext.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanLogicalDevice.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanPhysicalDevice.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanRendererContext.h" />
     <ClInclude Include="Engine\ThirdParty\glm\glm\common.hpp" />
     <ClInclude Include="Engine\ThirdParty\glm\glm\detail\_features.hpp" />
     <ClInclude Include="Engine\ThirdParty\glm\glm\detail\_fixes.hpp" />
@@ -575,15 +579,16 @@
     <ClCompile Include="Engine\Source\Runtime\ApplicationCore\Window.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Log\Log.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\Renderer.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\RendererContext.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanLogicalDevice.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanPhysicalDevice.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanRendererContext.cpp" />
     <ClCompile Include="Engine\ThirdParty\glm\glm\detail\glm.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="Engine\ThirdParty\glfw\GLFW.vcxproj">
       <Project>{154B857C-0182-860D-AA6E-6C109684020F}</Project>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Engine\Source\Runtime\Renderer\Vulkan\" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

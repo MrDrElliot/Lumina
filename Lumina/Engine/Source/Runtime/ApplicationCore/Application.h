@@ -37,6 +37,8 @@ namespace Lumina
 		virtual void OnInit();
 		virtual void OnShutdown();
 
+		void CreateApplicationWindow(const FWindowSpecs& InSpecs);
+		
 		void PushLayer(FLayer* InLayer);
 		void PushOverlay(FLayer* InLayer);
 		void PopLayer(FLayer* InLayer);
@@ -62,10 +64,14 @@ namespace Lumina
 
 	private:
 
+		/* Application Instance */
+		static FApplication* Instance;
 
+		/* Layer Stack */
 		FLayerStack LayerStack;
 
-		static FApplication* Instance;
+		/* Rendering Context */
+		
 	};
 
 	/* Implemented by client */
