@@ -6,6 +6,9 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
+#include "Source/Runtime/RHI/RendererContext.h"
+#include "Source/Runtime/RHI/Vulkan/VulkanSwapChain.h"
+
 namespace Lumina
 {
 
@@ -28,6 +31,9 @@ namespace Lumina
 		virtual void Init();
 		virtual void OnUpdate(float DeltaTime);
 
+		LRendererContext* GetRendererContext() const { return RendererContext; }
+		FVulkanSwapChain* GetSwapChain() const { return SwapChain; }
+
 	private:
 
 		virtual void OnShutdown();
@@ -38,6 +44,11 @@ namespace Lumina
 		GLFWwindow* Window;
 
 		bool bInitialized = false;
+		
 		FWindowSpecs Specs;
+
+		LRendererContext* RendererContext;
+		FVulkanSwapChain* SwapChain;
+		
 	};
 }

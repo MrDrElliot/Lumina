@@ -1,5 +1,9 @@
 #pragma once
 
+#define GLFW_INCLUDE_VULKAN
+#include <optional>
+#include <GLFW/glfw3.h>
+
 #include "Source/Runtime/CoreObject/Object.h"
 #include <map>
 #include <string>
@@ -7,59 +11,69 @@
 #include <unordered_set>
 #include <vector>
 
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
 
 namespace Lumina
 {
+	struct FQueueFamilyIndices
+	{
+		std::optional<uint32_t> GraphicsFamily;
+		std::optional<uint32_t> PresentFamily;
 
+		bool IsComplete() const
+		{
+			return GraphicsFamily.has_value() && PresentFamily.has_value();
+		}
+	};
+	
+//////////////////////////////////////////////////////////////////////////////////
 
+	
 	class LVulkanPhysicalDevice : public LObject
 	{
 	public:
-		struct QueueFamilyIndices
-		{
-			int32_t Graphics = -1;
-			int32_t Compute = -1;
-			int32_t Transfer = -1;
-		};
 	public:
 		LVulkanPhysicalDevice();
 		~LVulkanPhysicalDevice();
+		
+		bool IsDeviceSuitable(VkPhysicalDevice InDevice) const;
+		
+		VkPhysicalDevice GetPhysicalDevice() const { return PhysicalDevice; }
 
-		bool IsExtensionSupported(const std::string& extensionName) const;
-		uint32_t GetMemoryTypeIndex(uint32_t typeBits, VkMemoryPropertyFlags properties) const;
+		bool CheckDeviceExtensionSupport(VkPhysicalDevice InDevice);
+		
+		VkPhysicalDevice GetVulkanPhysicalDevice() const { return PhysicalDevice; }
+		static FQueueFamilyIndices GetQueueFamilyIndices(VkPhysicalDevice InDevice);
 
-		VkPhysicalDevice GetVulkanPhysicalDevice() const { return m_PhysicalDevice; }
-		const QueueFamilyIndices& GetQueueFamilyIndices() const { return m_QueueFamilyIndices; }
-
-		const VkPhysicalDeviceProperties& GetProperties() const { return m_Properties; }
-		const VkPhysicalDeviceLimits& GetLimits() const { return m_Properties.limits; }
-		const VkPhysicalDeviceMemoryProperties& GetMemoryProperties() const { return m_MemoryProperties; }
+		const VkPhysicalDeviceProperties& GetProperties() const { return Properties; }
+		const VkPhysicalDeviceLimits& GetLimits() const { return Properties.limits; }
+		const VkPhysicalDeviceMemoryProperties& GetMemoryProperties() const { return MemoryProperties; }
 
 		VkFormat GetDepthFormat() const { return m_DepthFormat; }
 
-		static LVulkanPhysicalDevice* Select();
-	private:
-		VkFormat FindDepthFormat() const;
-		QueueFamilyIndices GetQueueFamilyIndices(int queueFlags);
-	private:
-		QueueFamilyIndices m_QueueFamilyIndices;
 
-		VkPhysicalDevice m_PhysicalDevice = nullptr;
-		VkPhysicalDeviceProperties m_Properties;
-		VkPhysicalDeviceFeatures m_Features;
-		VkPhysicalDeviceMemoryProperties m_MemoryProperties;
+	private:
+
+	
+	private:
+
+		FQueueFamilyIndices QueueFamilyIndices;
+
+		VkPhysicalDevice PhysicalDevice = nullptr;
+		VkPhysicalDeviceProperties Properties;
+		VkPhysicalDeviceFeatures Features;
+		VkPhysicalDeviceMemoryProperties MemoryProperties;
 
 		VkFormat m_DepthFormat = VK_FORMAT_UNDEFINED;
 
-		std::vector<VkQueueFamilyProperties> m_QueueFamilyProperties;
-		std::unordered_set<std::string> m_SupportedExtensions;
-		std::vector<VkDeviceQueueCreateInfo> m_QueueCreateInfos;
+		std::vector<VkQueueFamilyProperties> QueueFamilyProperties;
+		std::unordered_set<std::string> SupportedExtensions;
+		std::vector<VkDeviceQueueCreateInfo> QueueCreateInfos;
 
 		friend class VulkanDevice;
 	};
 
+//////////////////////////////////////////////////////////////////////////////////
+	
 	class LVulkanCommandPool : public LObject
 	{
 	public:
@@ -77,6 +91,9 @@ namespace Lumina
 		VkCommandPool GraphicsCommandPool;
 		VkCommandPool ComputeCommandPool;
 	};
+
+	//////////////////////////////////////////////////////////////////////////////////
+
 	
 	class LVulkanDevice : public LObject
 	{

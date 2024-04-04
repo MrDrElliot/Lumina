@@ -42,6 +42,9 @@ namespace Lumina
 		void PopLayer(FLayer* InLayer);
 		void PopOverlay(FLayer* InLayer);
 
+		static FApplication* Get() { return Instance; }
+
+		FWindow& GetWindow() { return *Window;  }
 
 
 	private:

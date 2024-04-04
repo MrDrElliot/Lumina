@@ -5,10 +5,13 @@
 
 namespace Lumina
 {
-    LRendererContext* LRendererContext::Create()
+    LRendererContext* LRendererContext::Create(bool bInit)
     {
         LVulkanRendererContext* NewContext = new LVulkanRendererContext();
-        NewContext->Init();
+        if(bInit)
+        {
+            NewContext->Init();
+        }
         return NewContext;
     }
 

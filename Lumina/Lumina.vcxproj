@@ -154,7 +154,9 @@
     <ClInclude Include="Engine\Source\Runtime\RHI\RendererContext.h" />
     <ClInclude Include="Engine\Source\Runtime\RHI\Vulkan\VulkanBuffer.h" />
     <ClInclude Include="Engine\Source\Runtime\RHI\Vulkan\VulkanDevice.h" />
+    <ClInclude Include="Engine\Source\Runtime\RHI\Vulkan\VulkanPipeline.h" />
     <ClInclude Include="Engine\Source\Runtime\RHI\Vulkan\VulkanRendererContext.h" />
+    <ClInclude Include="Engine\Source\Runtime\RHI\Vulkan\VulkanRenderPass.h" />
     <ClInclude Include="Engine\Source\Runtime\RHI\Vulkan\VulkanSwapChain.h" />
     <ClInclude Include="Engine\ThirdParty\glm\glm\common.hpp" />
     <ClInclude Include="Engine\ThirdParty\glm\glm\detail\_features.hpp" />
@@ -581,7 +583,9 @@
     <ClCompile Include="Engine\Source\Runtime\RHI\RendererContext.cpp" />
     <ClCompile Include="Engine\Source\Runtime\RHI\Vulkan\VulkanBuffer.cpp" />
     <ClCompile Include="Engine\Source\Runtime\RHI\Vulkan\VulkanDevice.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\RHI\Vulkan\VulkanPipeline.cpp" />
     <ClCompile Include="Engine\Source\Runtime\RHI\Vulkan\VulkanRendererContext.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\RHI\Vulkan\VulkanRenderPass.cpp" />
     <ClCompile Include="Engine\Source\Runtime\RHI\Vulkan\VulkanSwapChain.cpp" />
     <ClCompile Include="Engine\ThirdParty\glm\glm\detail\glm.cpp" />
   </ItemGroup>
@@ -589,6 +593,10 @@
     <ProjectReference Include="Engine\ThirdParty\glfw\GLFW.vcxproj">
       <Project>{154B857C-0182-860D-AA6E-6C109684020F}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Engine\Resources\Shaders\shader.frag" />
+    <Content Include="Engine\Resources\Shaders\shader.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

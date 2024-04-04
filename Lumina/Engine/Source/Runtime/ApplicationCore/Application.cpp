@@ -2,6 +2,8 @@
 
 #include "Source/Runtime/Log/Log.h"
 #include "Source/Runtime/RHI/RendererContext.h"
+#include <vulkan/vulkan.h>
+#include <vulkan/vulkan.hpp>
 
 namespace Lumina
 {
@@ -20,14 +22,6 @@ namespace Lumina
         FLog::Init();
 
         Window = std::unique_ptr<FWindow>(FWindow::Create(AppWindowSpecs, true));
-
-
-        uint32_t ExtCount = 0;
-        vkEnumerateInstanceExtensionProperties(nullptr, &ExtCount, nullptr);
-
-        LE_LOG_ERROR("{0}", ExtCount);
-
-        LRendererContext::Create();
 
     }
 

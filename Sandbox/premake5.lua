@@ -9,7 +9,12 @@ project "Sandbox"
 	targetdir ("../Binaries/" .. outputdir .. "/%{prj.name}")
 	objdir ("../Intermediates/" .. outputdir .. "/%{prj.name}")
 	
-	links { "Lumina", }
+	links
+	 {
+		"Lumina",
+	  	"GLFW",
+	  	"$(VULKAN_SDK)/lib/vulkan-1.lib",
+	 }
 
 	files
 	{
@@ -24,7 +29,8 @@ project "Sandbox"
 		"Source/",
 		"../Lumina/Engine",
 		"../Lumina/Engine/ThirdParty/spdlog/include/",
-		"../Lumina/Engine/ThirdParty/GLFW/include",
+		"../Lumina/Engine/ThirdParty/GLFW/include/",
+		"../Lumina/Engine/ThirdParty/GLFW/src/",
 		"../Lumina/Engine/ThirdParty/GLM/",
 		"%{IncludeDir.vulkan}/Include/",
 		"%{IncludeDir.vulkan}/Lib/",

@@ -11,8 +11,9 @@ namespace Lumina
         virtual ~LRendererContext() = default;
 
         virtual void Init() = 0;
+        virtual void OnDestroy() = 0;
 
-        static LRendererContext* Create();
+        static LRendererContext* Create(bool bInit = false);
         
     };
 }
