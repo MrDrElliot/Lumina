@@ -31,15 +31,6 @@
     <Filter Include="ThirdParty">
       <UniqueIdentifier>{107145F9-FC28-8746-6530-60A251072237}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ThirdParty\fastgltf">
-      <UniqueIdentifier>{9AE930E6-064B-0EF4-8FB8-54A6FB1845B3}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ThirdParty\fastgltf\include">
-      <UniqueIdentifier>{0D0B7366-7918-A14C-02FF-9C376E0B6D03}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ThirdParty\fastgltf\include\fastgltf">
-      <UniqueIdentifier>{37102CC5-23F7-EDBC-CC47-54DAB80D6723}</UniqueIdentifier>
-    </Filter>
     <Filter Include="ThirdParty\glm">
       <UniqueIdentifier>{5F03D311-4BD1-C617-3465-373E20D2A27C}</UniqueIdentifier>
     </Filter>
@@ -130,24 +121,6 @@
     </ClInclude>
     <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanTypes.h">
       <Filter>Source\Runtime\Renderer\Vulkan</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\ThirdParty\fastgltf\include\fastgltf\base64.hpp">
-      <Filter>ThirdParty\fastgltf\include\fastgltf</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\ThirdParty\fastgltf\include\fastgltf\core.hpp">
-      <Filter>ThirdParty\fastgltf\include\fastgltf</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\ThirdParty\fastgltf\include\fastgltf\glm_element_traits.hpp">
-      <Filter>ThirdParty\fastgltf\include\fastgltf</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\ThirdParty\fastgltf\include\fastgltf\tools.hpp">
-      <Filter>ThirdParty\fastgltf\include\fastgltf</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\ThirdParty\fastgltf\include\fastgltf\types.hpp">
-      <Filter>ThirdParty\fastgltf\include\fastgltf</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\ThirdParty\fastgltf\include\fastgltf\util.hpp">
-      <Filter>ThirdParty\fastgltf\include\fastgltf</Filter>
     </ClInclude>
     <ClInclude Include="Engine\ThirdParty\glm\glm\common.hpp">
       <Filter>ThirdParty\glm\glm</Filter>
