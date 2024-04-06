@@ -18,6 +18,8 @@ project "Lumina"
 		"Engine/Source/**.h",
 		"Engine/Source/**.cpp",
 		
+		"Engine/ThirdParty/stb_image/**.h",
+		
 		"Engine/ThirdParty/glm/glm/**.hpp",
 		"Engine/ThirdParty/glm/glm/**.cpp",
 		"Engine/ThirdParty/glm/glm/**.inl",
@@ -34,6 +36,7 @@ project "Lumina"
 	    "Engine/ThirdParty/imgui/backends/imgui_impl_vulkan.h",
 	    "Engine/ThirdParty/imgui/backends/imgui_impl_vulkan.cpp",
 	  
+	    "Engine/ThirdPary/fastgltf/include/**.h",
 
 	}
 
@@ -46,6 +49,8 @@ project "Lumina"
 		"%{IncludeDir.glfw}/",
 		"%{IncludeDir.glm}/",
 		"%{IncludeDir.imgui}/",
+		"%{IncludeDir.stb_image}/",
+		"%{IncludeDir.fastgltf}/",
 		"%{IncludeDir.vkbootstrap}/src/",
 		"%{IncludeDir.vulkan}/Include/",
 		"%{IncludeDir.vulkan}/Lib/",

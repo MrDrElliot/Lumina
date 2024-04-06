@@ -12,6 +12,20 @@
 namespace Lumina
 {
     class FVulkanRenderContext;
+
+    struct FGGeoSurface
+    {
+        uint32_t StartIndex;
+    };
+
+    struct FMeshAsset
+    {
+        std::string Name;
+
+        std::vector<FGGeoSurface> Surfaces;
+        FGPUMeshBuffers MeshBuffers;
+    };
+
     
-    
+    std::optional<std::vector<std::shared_ptr<FMeshAsset>>> LoadGltfMeshes(std::filesystem::path InPath);
 }

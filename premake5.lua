@@ -3,7 +3,7 @@ include "Dependencies.lua"
 workspace "Lumina"
 	configurations { "Debug", "Release", "Shipping" }
 	targetdir "Build"
-	startproject "Sandbox"
+	startproject "LuminaEditor"
 	conformancemode "On"
 
 	language "C++"
@@ -44,6 +44,7 @@ workspace "Lumina"
 
 	group "Core"
 		include "Lumina"
+		include "LuminaEditor"
 	group ""
 
 	group "Sandbox"

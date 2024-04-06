@@ -55,6 +55,9 @@
     <Filter Include="ThirdParty\imgui\backends">
       <UniqueIdentifier>{E4EDCF95-50B0-0320-9960-92AC0562DCFD}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ThirdParty\stb_image">
+      <UniqueIdentifier>{AAB50CD2-9644-969B-3F63-AA962BD1A641}</UniqueIdentifier>
+    </Filter>
     <Filter Include="ThirdParty\vk-bootstrap">
       <UniqueIdentifier>{CB99BB44-37D1-03DC-40DB-67FFAC912AD5}</UniqueIdentifier>
     </Filter>
@@ -1375,6 +1378,9 @@
     </ClInclude>
     <ClInclude Include="Engine\ThirdParty\imgui\backends\imgui_impl_vulkan.h">
       <Filter>ThirdParty\imgui\backends</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\ThirdParty\stb_image\stb_image.h">
+      <Filter>ThirdParty\stb_image</Filter>
     </ClInclude>
     <ClInclude Include="Engine\ThirdParty\vk-bootstrap\src\VkBootstrap.h">
       <Filter>ThirdParty\vk-bootstrap\src</Filter>
