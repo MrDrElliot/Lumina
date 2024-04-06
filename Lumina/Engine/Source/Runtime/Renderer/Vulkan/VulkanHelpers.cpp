@@ -222,7 +222,7 @@ namespace Lumina
         vkCmdBlitImage2(InCmd, &blitInfo);
     }
 
-    VkShaderModule* Vulkan::LoadShaderModule(const char* InFilePath, VkDevice InDevice)
+    VkShaderModule Vulkan::LoadShaderModule(const char* InFilePath, VkDevice InDevice)
     {
         std::ifstream File(InFilePath, std::ios::ate | std::ios::binary);
 
@@ -252,12 +252,73 @@ namespace Lumina
         CreateInfo.codeSize = buffer.size() * sizeof(uint32_t);
         CreateInfo.pCode = buffer.data();
 
-        VkShaderModule* shaderModule;
-        if (vkCreateShaderModule(InDevice, &CreateInfo, nullptr, &*shaderModule) != VK_SUCCESS)
+        VkShaderModule shaderModule;
+        if (vkCreateShaderModule(InDevice, &CreateInfo, nullptr, &shaderModule) != VK_SUCCESS)
         {
             LE_LOG_CRITICAL("Failed to load shader module.");
             return nullptr;
         }
         return shaderModule;
+    }
+
+    VkRenderingAttachmentInfo Vulkan::RenderingAttachmentInfo(VkImageView view, VkClearValue* clear, VkImageLayout layout)
+    {
+        VkRenderingAttachmentInfo ColorAttachment {};
+        ColorAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+        ColorAttachment.pNext = nullptr;
+
+        ColorAttachment.imageView = view;
+        ColorAttachment.imageLayout = layout;
+        ColorAttachment.loadOp = clear ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
+        ColorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+        if (clear)
+        {
+            ColorAttachment.clearValue = *clear;
+        }
+
+        return ColorAttachment;
+    }
+
+    VkRenderingInfo Vulkan::RenderingInfo(VkExtent2D InRenderExtent, VkRenderingAttachmentInfo* InColorAttachment, VkRenderingAttachmentInfo* InDepthAttachment)
+    {
+        VkRenderingInfo renderInfo {};
+        renderInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
+        renderInfo.pNext = nullptr;
+
+        renderInfo.renderArea = VkRect2D { VkOffset2D { 0, 0 }, InRenderExtent };
+        renderInfo.layerCount = 1;
+        renderInfo.colorAttachmentCount = 1;
+        renderInfo.pColorAttachments = InColorAttachment;
+        renderInfo.pDepthAttachment = InDepthAttachment;
+        renderInfo.pStencilAttachment = nullptr;
+
+        return renderInfo;
+    }
+
+    VkPipelineShaderStageCreateInfo Vulkan::PipelineShaderStageCreateInfo(VkShaderStageFlagBits InStage, VkShaderModule InModule, const char* Entry)
+    {
+        VkPipelineShaderStageCreateInfo info {};
+        info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        info.pNext = nullptr;
+        info.stage = InStage;
+        info.module = InModule;
+        info.pName = Entry;
+        
+        return info;
+    }
+
+    VkPipelineLayoutCreateInfo Vulkan::PipelineLayoutCreateInfo()
+    {
+        VkPipelineLayoutCreateInfo info {};
+        info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+        info.pNext = nullptr;
+
+        // empty defaults
+        info.flags = 0;
+        info.setLayoutCount = 0;
+        info.pSetLayouts = nullptr;
+        info.pushConstantRangeCount = 0;
+        info.pPushConstantRanges = nullptr;
+        return info;
     }
 }

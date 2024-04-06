@@ -1,4 +1,7 @@
 #include "Application.h"
+
+#include "backends/imgui_impl_glfw.h"
+#include "backends/imgui_impl_vulkan.h"
 #include "Source/Runtime/Log/Log.h"
 #include "Source/Runtime/Renderer/Vulkan/VulkanSwapChain.h"
 #include "Source/Runtime/Renderer/RenderContext.h"
@@ -23,16 +26,19 @@ namespace Lumina
     {
         /* Application Initialization */
         OnInit();
+        ImGuiInit();
         
         while(!ShouldExit())
         {
             if (!IsMinimized())
             {
+                Window->OnImGuiUpdate(1.0f);
                 Window->OnUpdate(1.0f);
             }
         }
 
         /* Application Shutdown */
+        ImGuiShutdown();
         OnShutdown();
     }
 
@@ -41,6 +47,16 @@ namespace Lumina
 
     }
 
+    void FApplication::ImGuiInit()
+    {
+
+    }
+
+    void FApplication::ImGuiShutdown()
+    {
+        
+    }
+    
     void FApplication::OnInit()
     {
         /* Initialize Logging */

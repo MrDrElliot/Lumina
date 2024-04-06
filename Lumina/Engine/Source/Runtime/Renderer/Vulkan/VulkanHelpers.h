@@ -67,6 +67,18 @@ namespace Lumina::Vulkan
     void CopyImageToImage(VkCommandBuffer InCmd, VkImage Source, VkImage Destination, VkExtent2D SourceSize, VkExtent2D DestinationSize);
 
     /* Loads a shader module */
-    VkShaderModule* LoadShaderModule(const char* InFilePath, VkDevice InDevice);
+    VkShaderModule LoadShaderModule(const char* InFilePath, VkDevice InDevice);
+
+    /* Creates a VkRenderingAttachmentInfo */
+    VkRenderingAttachmentInfo RenderingAttachmentInfo(VkImageView view, VkClearValue* clear ,VkImageLayout layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
     
+    /* Creates a VkRenderingInfo */
+    VkRenderingInfo RenderingInfo(VkExtent2D InRenderExtent, VkRenderingAttachmentInfo* InColorAttachment, VkRenderingAttachmentInfo* InDepthAttachment);
+
+    /* Creates a VkPipelineShaderCreateInfo */
+    VkPipelineShaderStageCreateInfo PipelineShaderStageCreateInfo(VkShaderStageFlagBits InStage, VkShaderModule InModule, const char* Entry = "main");
+
+    /* Creates a VkPipelineLayoutCreateInfo */
+    VkPipelineLayoutCreateInfo PipelineLayoutCreateInfo();
+
 }

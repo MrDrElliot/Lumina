@@ -30,14 +30,16 @@ namespace Lumina
 
         std::vector<VkImage> GetImages() { return SwapChain.get_images().value(); }
         std::vector<VkImageView> GetImageViews() { return SwapChain.get_image_views().value(); }
-
         
         
+        FWindow* GetWindow() { return Window; }
         
         /* Get the extent from the actual swap chain's extent */
         VkExtent3D& GetExtent();
         VkExtent2D& GetExtent2D() { return SwapChain.extent; }
 
+        VkFormat& GetFormat() { return ImageFormat; }
+        
         VkSwapchainKHR& GetSwapChain() { return SwapChain.swapchain; }
         VkSurfaceKHR GetSurface() const { return Surface; }
 

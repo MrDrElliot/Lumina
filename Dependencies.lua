@@ -7,6 +7,7 @@ IncludeDir = {}
 IncludeDir["spdlog"] = 	"Engine/ThirdParty/spdlog/include/"
 IncludeDir["glfw"]	 = 	"Engine/ThirdParty/GLFW/include"
 IncludeDir["glm"]	 = 	"Engine/ThirdParty/GLM/"
+IncludeDir["imgui"]	 = 	"Engine/ThirdParty/imgui/"
 IncludeDir["vkbootstrap"] = "Engine/ThirdParty/vk-bootstrap/"
 IncludeDir["vulkan"] = "%{VULKAN_SDK}/"
 IncludeDir["vulkanmemoryallocator"] = "Engine/THirdParty/VulkanMemoryAllocator/include/"

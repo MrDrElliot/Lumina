@@ -26,7 +26,14 @@ project "Lumina"
 	    "Engine/ThirdParty/vk-bootstrap/src/**.cpp",
 	    
 	    "Engine/ThirdParty/vulkanmemoryallocator/**.h",
-	    "Engine/ThirdParty/vulkanmemoryallocator/**.cpp",
+	    "Engine/ThirdParty/vulkanmemoryallocator/src/VmaUsage.cpp",
+	    
+	    "Engine/ThirdParty/imgui/backends/imgui_impl_glfw.h",
+	    "Engine/ThirdParty/imgui/backends/imgui_impl_glfw.cpp",
+	    
+	    "Engine/ThirdParty/imgui/backends/imgui_impl_vulkan.h",
+	    "Engine/ThirdParty/imgui/backends/imgui_impl_vulkan.cpp",
+	  
 
 	}
 
@@ -38,6 +45,7 @@ project "Lumina"
 		"%{IncludeDir.spdlog}/",
 		"%{IncludeDir.glfw}/",
 		"%{IncludeDir.glm}/",
+		"%{IncludeDir.imgui}/",
 		"%{IncludeDir.vkbootstrap}/src/",
 		"%{IncludeDir.vulkan}/Include/",
 		"%{IncludeDir.vulkan}/Lib/",

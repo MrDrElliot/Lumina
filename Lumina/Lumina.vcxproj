@@ -76,7 +76,7 @@
       <WarningLevel>Level3</WarningLevel>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;GLM_FORCE_DEPTH_ZERO_TO_ONE;GLFW_INCLUDE_NONE;LE_DEBUG;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>Engine;Engine\ThirdParty;Engine\ThirdParty\spdlog\include;Engine\ThirdParty\GLFW\include;Engine\ThirdParty\GLM;Engine\ThirdParty\vk-bootstrap\src;C:\VulkanSDK\1.3.280.0\Include;C:\VulkanSDK\1.3.280.0\Lib;Engine\THirdParty\VulkanMemoryAllocator\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Engine;Engine\ThirdParty;Engine\ThirdParty\spdlog\include;Engine\ThirdParty\GLFW\include;Engine\ThirdParty\GLM;Engine\ThirdParty\imgui;${IncludeDir.fastgltf};Engine\ThirdParty\vk-bootstrap\src;C:\VulkanSDK\1.3.280.0\Include;C:\VulkanSDK\1.3.280.0\Lib;Engine\THirdParty\VulkanMemoryAllocator\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <MinimalRebuild>false</MinimalRebuild>
@@ -97,7 +97,7 @@
       <WarningLevel>Level3</WarningLevel>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;GLM_FORCE_DEPTH_ZERO_TO_ONE;GLFW_INCLUDE_NONE;LE_RELEASE;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>Engine;Engine\ThirdParty;Engine\ThirdParty\spdlog\include;Engine\ThirdParty\GLFW\include;Engine\ThirdParty\GLM;Engine\ThirdParty\vk-bootstrap\src;C:\VulkanSDK\1.3.280.0\Include;C:\VulkanSDK\1.3.280.0\Lib;Engine\THirdParty\VulkanMemoryAllocator\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Engine;Engine\ThirdParty;Engine\ThirdParty\spdlog\include;Engine\ThirdParty\GLFW\include;Engine\ThirdParty\GLM;Engine\ThirdParty\imgui;${IncludeDir.fastgltf};Engine\ThirdParty\vk-bootstrap\src;C:\VulkanSDK\1.3.280.0\Include;C:\VulkanSDK\1.3.280.0\Lib;Engine\THirdParty\VulkanMemoryAllocator\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -121,7 +121,7 @@
       <WarningLevel>Level3</WarningLevel>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;GLM_FORCE_DEPTH_ZERO_TO_ONE;GLFW_INCLUDE_NONE;LE_SHIP;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>Engine;Engine\ThirdParty;Engine\ThirdParty\spdlog\include;Engine\ThirdParty\GLFW\include;Engine\ThirdParty\GLM;Engine\ThirdParty\vk-bootstrap\src;C:\VulkanSDK\1.3.280.0\Include;C:\VulkanSDK\1.3.280.0\Lib;Engine\THirdParty\VulkanMemoryAllocator\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Engine;Engine\ThirdParty;Engine\ThirdParty\spdlog\include;Engine\ThirdParty\GLFW\include;Engine\ThirdParty\GLM;Engine\ThirdParty\imgui;${IncludeDir.fastgltf};Engine\ThirdParty\vk-bootstrap\src;C:\VulkanSDK\1.3.280.0\Include;C:\VulkanSDK\1.3.280.0\Lib;Engine\THirdParty\VulkanMemoryAllocator\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -155,10 +155,17 @@
     <ClInclude Include="Engine\Source\Runtime\Renderer\RenderContext.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanDescriptor.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanHelpers.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanLoader.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanPipeline.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanRenderContext.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanSwapChain.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanTypes.h" />
+    <ClInclude Include="Engine\ThirdParty\fastgltf\include\fastgltf\base64.hpp" />
+    <ClInclude Include="Engine\ThirdParty\fastgltf\include\fastgltf\core.hpp" />
+    <ClInclude Include="Engine\ThirdParty\fastgltf\include\fastgltf\glm_element_traits.hpp" />
+    <ClInclude Include="Engine\ThirdParty\fastgltf\include\fastgltf\tools.hpp" />
+    <ClInclude Include="Engine\ThirdParty\fastgltf\include\fastgltf\types.hpp" />
+    <ClInclude Include="Engine\ThirdParty\fastgltf\include\fastgltf\util.hpp" />
     <ClInclude Include="Engine\ThirdParty\glm\glm\common.hpp" />
     <ClInclude Include="Engine\ThirdParty\glm\glm\detail\_features.hpp" />
     <ClInclude Include="Engine\ThirdParty\glm\glm\detail\_fixes.hpp" />
@@ -575,6 +582,8 @@
     <ClInclude Include="Engine\ThirdParty\glm\glm\vec3.hpp" />
     <ClInclude Include="Engine\ThirdParty\glm\glm\vec4.hpp" />
     <ClInclude Include="Engine\ThirdParty\glm\glm\vector_relational.hpp" />
+    <ClInclude Include="Engine\ThirdParty\imgui\backends\imgui_impl_glfw.h" />
+    <ClInclude Include="Engine\ThirdParty\imgui\backends\imgui_impl_vulkan.h" />
     <ClInclude Include="Engine\ThirdParty\vk-bootstrap\src\VkBootstrap.h" />
     <ClInclude Include="Engine\ThirdParty\vk-bootstrap\src\VkBootstrapDispatch.h" />
     <ClInclude Include="Engine\ThirdParty\vulkanmemoryallocator\include\vk_mem_alloc.h" />
@@ -591,16 +600,15 @@
     <ClCompile Include="Engine\Source\Runtime\Renderer\RenderContext.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanDescriptor.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanHelpers.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanLoader.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanPipeline.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanRenderContext.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanSwapChain.cpp" />
     <ClCompile Include="Engine\ThirdParty\glm\glm\detail\glm.cpp" />
+    <ClCompile Include="Engine\ThirdParty\imgui\backends\imgui_impl_glfw.cpp" />
+    <ClCompile Include="Engine\ThirdParty\imgui\backends\imgui_impl_vulkan.cpp" />
     <ClCompile Include="Engine\ThirdParty\vk-bootstrap\src\VkBootstrap.cpp" />
-    <ClCompile Include="Engine\ThirdParty\vulkanmemoryallocator\src\Common.cpp" />
-    <ClCompile Include="Engine\ThirdParty\vulkanmemoryallocator\src\SparseBindingTest.cpp" />
-    <ClCompile Include="Engine\ThirdParty\vulkanmemoryallocator\src\Tests.cpp" />
     <ClCompile Include="Engine\ThirdParty\vulkanmemoryallocator\src\VmaUsage.cpp" />
-    <ClCompile Include="Engine\ThirdParty\vulkanmemoryallocator\src\VulkanSample.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="Engine\ThirdParty\glfw\GLFW.vcxproj">

@@ -39,6 +39,7 @@ workspace "Lumina"
 
 	group "Dependencies"
 		include "Lumina/Engine/ThirdParty/glfw"
+		include "Lumina/Engine/ThirdParty/imgui"
 	group ""
 
 	group "Core"

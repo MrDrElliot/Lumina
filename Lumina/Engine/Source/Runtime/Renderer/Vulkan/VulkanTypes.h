@@ -2,10 +2,9 @@
 
 #include <deque>
 #include <functional>
+#include "glm/glm.hpp"
 
-#include "vk_mem_alloc.h"
-
-
+#include <vma/vk_mem_alloc.h>
 namespace Lumina
 {
     
@@ -33,7 +32,36 @@ constexpr unsigned int FRAME_OVERLAP = 2;
             Deletors.clear();
         }
     };
-        
+    
+    struct FVertex
+    {
+        glm::vec3 Position;
+        float UV_x;
+        glm::vec3 Normal;
+        float UV_y;
+        glm::vec4 Color;
+    };
+
+    struct FAllocatedBuffer
+    {
+        VkBuffer Buffer;
+        VmaAllocation Allocation;
+        VmaAllocationInfo Info;
+    };
+    
+    struct FGPUMeshBuffers
+    {
+        FAllocatedBuffer IndexBuffer;
+        FAllocatedBuffer VertexBuffer;
+        VkDeviceAddress VertexBufferAddress;
+    };
+
+    struct FGPUDrawPushConstants
+    {
+        glm::mat4 WorldMatrix;
+        VkDeviceAddress VertexBuffer;
+    };
+    
     struct FAllocatedImage
     {
         VkImage Image;
@@ -42,6 +70,7 @@ constexpr unsigned int FRAME_OVERLAP = 2;
         VkExtent3D ImageExtent;
         VkFormat ImageFormat;
     };
+
 
     struct FFrameData
     {
@@ -55,7 +84,24 @@ constexpr unsigned int FRAME_OVERLAP = 2;
 
         FDeletionQueue DeletionQueue;
     };
-    
 
+    
+    struct FComputePushConstants
+    {
+        glm::vec4 data1;
+        glm::vec4 data2;
+        glm::vec4 data3;
+        glm::vec4 data4;
+    };
+
+    struct FComputeEffect
+    {
+        const char* Name;
+        VkPipeline Pipeline;
+        VkPipelineLayout Layout;
+
+        FComputePushConstants Data;
+    };
+    
     
 }

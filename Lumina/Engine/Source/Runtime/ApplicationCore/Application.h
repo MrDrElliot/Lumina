@@ -36,7 +36,9 @@ namespace Lumina
 		void Run();
 		void Close();
 
-
+		virtual void ImGuiInit();
+		virtual void ImGuiShutdown();
+		
 		virtual void OnInit();
 		virtual void OnShutdown();
 

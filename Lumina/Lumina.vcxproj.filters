@@ -31,6 +31,15 @@
     <Filter Include="ThirdParty">
       <UniqueIdentifier>{107145F9-FC28-8746-6530-60A251072237}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ThirdParty\fastgltf">
+      <UniqueIdentifier>{9AE930E6-064B-0EF4-8FB8-54A6FB1845B3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\fastgltf\include">
+      <UniqueIdentifier>{0D0B7366-7918-A14C-02FF-9C376E0B6D03}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\fastgltf\include\fastgltf">
+      <UniqueIdentifier>{37102CC5-23F7-EDBC-CC47-54DAB80D6723}</UniqueIdentifier>
+    </Filter>
     <Filter Include="ThirdParty\glm">
       <UniqueIdentifier>{5F03D311-4BD1-C617-3465-373E20D2A27C}</UniqueIdentifier>
     </Filter>
@@ -48,6 +57,12 @@
     </Filter>
     <Filter Include="ThirdParty\glm\glm\gtx">
       <UniqueIdentifier>{9097D540-7C91-FE92-65FE-94A3519764FF}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\imgui">
+      <UniqueIdentifier>{7A0AC6D2-6603-E524-8F35-CAA97B8DC430}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\imgui\backends">
+      <UniqueIdentifier>{E4EDCF95-50B0-0320-9960-92AC0562DCFD}</UniqueIdentifier>
     </Filter>
     <Filter Include="ThirdParty\vk-bootstrap">
       <UniqueIdentifier>{CB99BB44-37D1-03DC-40DB-67FFAC912AD5}</UniqueIdentifier>
@@ -95,7 +110,16 @@
     <ClInclude Include="Engine\Source\Runtime\Renderer\RenderContext.h">
       <Filter>Source\Runtime\Renderer</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanDescriptor.h">
+      <Filter>Source\Runtime\Renderer\Vulkan</Filter>
+    </ClInclude>
     <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanHelpers.h">
+      <Filter>Source\Runtime\Renderer\Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanLoader.h">
+      <Filter>Source\Runtime\Renderer\Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanPipeline.h">
       <Filter>Source\Runtime\Renderer\Vulkan</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanRenderContext.h">
@@ -106,6 +130,24 @@
     </ClInclude>
     <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanTypes.h">
       <Filter>Source\Runtime\Renderer\Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\ThirdParty\fastgltf\include\fastgltf\base64.hpp">
+      <Filter>ThirdParty\fastgltf\include\fastgltf</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\ThirdParty\fastgltf\include\fastgltf\core.hpp">
+      <Filter>ThirdParty\fastgltf\include\fastgltf</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\ThirdParty\fastgltf\include\fastgltf\glm_element_traits.hpp">
+      <Filter>ThirdParty\fastgltf\include\fastgltf</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\ThirdParty\fastgltf\include\fastgltf\tools.hpp">
+      <Filter>ThirdParty\fastgltf\include\fastgltf</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\ThirdParty\fastgltf\include\fastgltf\types.hpp">
+      <Filter>ThirdParty\fastgltf\include\fastgltf</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\ThirdParty\fastgltf\include\fastgltf\util.hpp">
+      <Filter>ThirdParty\fastgltf\include\fastgltf</Filter>
     </ClInclude>
     <ClInclude Include="Engine\ThirdParty\glm\glm\common.hpp">
       <Filter>ThirdParty\glm\glm</Filter>
@@ -1355,6 +1397,12 @@
     <ClInclude Include="Engine\ThirdParty\glm\glm\vector_relational.hpp">
       <Filter>ThirdParty\glm\glm</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\ThirdParty\imgui\backends\imgui_impl_glfw.h">
+      <Filter>ThirdParty\imgui\backends</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\ThirdParty\imgui\backends\imgui_impl_vulkan.h">
+      <Filter>ThirdParty\imgui\backends</Filter>
+    </ClInclude>
     <ClInclude Include="Engine\ThirdParty\vk-bootstrap\src\VkBootstrap.h">
       <Filter>ThirdParty\vk-bootstrap\src</Filter>
     </ClInclude>
@@ -1393,7 +1441,16 @@
     <ClCompile Include="Engine\Source\Runtime\Renderer\RenderContext.cpp">
       <Filter>Source\Runtime\Renderer</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanDescriptor.cpp">
+      <Filter>Source\Runtime\Renderer\Vulkan</Filter>
+    </ClCompile>
     <ClCompile Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanHelpers.cpp">
+      <Filter>Source\Runtime\Renderer\Vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanLoader.cpp">
+      <Filter>Source\Runtime\Renderer\Vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanPipeline.cpp">
       <Filter>Source\Runtime\Renderer\Vulkan</Filter>
     </ClCompile>
     <ClCompile Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanRenderContext.cpp">
@@ -1405,22 +1462,16 @@
     <ClCompile Include="Engine\ThirdParty\glm\glm\detail\glm.cpp">
       <Filter>ThirdParty\glm\glm\detail</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\ThirdParty\imgui\backends\imgui_impl_glfw.cpp">
+      <Filter>ThirdParty\imgui\backends</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\ThirdParty\imgui\backends\imgui_impl_vulkan.cpp">
+      <Filter>ThirdParty\imgui\backends</Filter>
+    </ClCompile>
     <ClCompile Include="Engine\ThirdParty\vk-bootstrap\src\VkBootstrap.cpp">
       <Filter>ThirdParty\vk-bootstrap\src</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\ThirdParty\vulkanmemoryallocator\src\Common.cpp">
-      <Filter>ThirdParty\vulkanmemoryallocator\src</Filter>
-    </ClCompile>
-    <ClCompile Include="Engine\ThirdParty\vulkanmemoryallocator\src\SparseBindingTest.cpp">
-      <Filter>ThirdParty\vulkanmemoryallocator\src</Filter>
-    </ClCompile>
-    <ClCompile Include="Engine\ThirdParty\vulkanmemoryallocator\src\Tests.cpp">
-      <Filter>ThirdParty\vulkanmemoryallocator\src</Filter>
-    </ClCompile>
     <ClCompile Include="Engine\ThirdParty\vulkanmemoryallocator\src\VmaUsage.cpp">
-      <Filter>ThirdParty\vulkanmemoryallocator\src</Filter>
-    </ClCompile>
-    <ClCompile Include="Engine\ThirdParty\vulkanmemoryallocator\src\VulkanSample.cpp">
       <Filter>ThirdParty\vulkanmemoryallocator\src</Filter>
     </ClCompile>
   </ItemGroup>

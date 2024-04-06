@@ -1,5 +1,7 @@
 #include "Window.h"
 
+#include "backends/imgui_impl_glfw.h"
+#include "backends/imgui_impl_vulkan.h"
 #include "Source/Runtime/ApplicationCore/Application.h"
 #include "Source/Runtime/Log/Log.h"
 #include "Source/Runtime/Renderer/RenderContext.h"
@@ -44,6 +46,11 @@ namespace Lumina
 		}
 		
 		LE_LOG_ERROR("Init called on a window that's already been initialized!");
+	}
+
+	void FWindow::OnImGuiUpdate(float DeltaTime)
+	{
+		FApplication::Get().GetRenderContext<FVulkanRenderContext>()->ImGuiDraw(DeltaTime);
 	}
 
 	void FWindow::OnUpdate(float DeltaTime)

@@ -13,6 +13,7 @@ project "Sandbox"
 	 {
 		"Lumina",
 	  	"GLFW",
+	  	"imgui",
 	  	"$(VULKAN_SDK)/lib/vulkan-1.lib",
 	 }
 
@@ -34,6 +35,9 @@ project "Sandbox"
 		"../Lumina/Engine/ThirdParty/GLM/",
 		"../Lumina/Engine/ThirdParty/vk-bootstrap/src/",
         "../Lumina/Engine/ThirdParty/vulkanmemoryallocator/include/",
+        "../Lumina/Engine/ThirdParty/vulkanmemoryallocator/src/",
+        "../Lumina/Engine/ThirdParty/imgui/",
+
         
 		"%{IncludeDir.vulkan}/Include/",
 		"%{IncludeDir.vulkan}/Lib/",
