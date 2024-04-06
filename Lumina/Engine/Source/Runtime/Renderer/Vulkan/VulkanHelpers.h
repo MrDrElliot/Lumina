@@ -36,6 +36,37 @@ namespace Lumina::Vulkan
     /* Creates a VkSemaphoreCreateInfo */
     VkSemaphoreCreateInfo SemaphoreCreateInfo(VkSemaphoreCreateFlags InFlags = 0);
 
+    /* Creates a VkSemaphoreSubmit Info */
+    VkSemaphoreSubmitInfo SemaphoreSubmitInfo(VkPipelineStageFlags2 InStageMask, VkSemaphore InSemaphore);
 
+    /* Creates a VkCommandBufferBeginInfo */
+    VkCommandBufferBeginInfo CommandBufferBeginInfo(VkCommandBufferUsageFlags InFlags = 0);
+
+    /* Creates a VkCommabdBufferSubmitInfo */
+    VkCommandBufferSubmitInfo CommandBufferSubmitInfo(VkCommandBuffer InBuffer);
+
+    /* Transition the swap chain image into a drawable layout, then clear the command */
+    void TransitionImage(VkCommandBuffer InCmd, VkImage InImage, VkImageLayout CurrentLayout, VkImageLayout NewLayout);
+
+    /* Creates a VkSubmitInfo2 */
+    VkSubmitInfo2 SubmitInfo(VkCommandBufferSubmitInfo* InCmd, VkSemaphoreSubmitInfo* SignalSemaphoreInfo, VkSemaphoreSubmitInfo* WaitSemaphoreInfo);
+
+    /* Creates a VkImageSubresourceRange */
+    VkImageSubresourceRange ImageSubresourceRange(VkImageAspectFlags InAspectMask);
+
+    /* Creates a VkRenderPassBeginInfo */
+    VkRenderPassBeginInfo RenderpassBeginInfo(VkRenderPass InRenderPass, VkExtent2D InExtent, VkFramebuffer InBuffer);
+
+    /* Creates a VkImageCreateInfo */
+    VkImageCreateInfo ImageCreateInfo(VkFormat InFormat, VkImageUsageFlags InUsageFlags, VkExtent3D InExtent);
+
+    /* Creates a VkImageViewCreateInfo */
+    VkImageViewCreateInfo ImageViewCreateInfo(VkFormat InFormat, VkImage InImage, VkImageAspectFlags AspectFlags);
+
+    /* Copies an image to another image */
+    void CopyImageToImage(VkCommandBuffer InCmd, VkImage Source, VkImage Destination, VkExtent2D SourceSize, VkExtent2D DestinationSize);
+
+    /* Loads a shader module */
+    VkShaderModule* LoadShaderModule(const char* InFilePath, VkDevice InDevice);
     
 }

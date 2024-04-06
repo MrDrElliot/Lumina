@@ -4,6 +4,8 @@
 #include <glfw/glfw3.h>
 
 #include "VkBootstrap.h"
+#include "VulkanDescriptor.h"
+#include "VulkanTypes.h"
 
 
 namespace Lumina
@@ -24,12 +26,33 @@ namespace Lumina
         void Present();
 
     public:
+
+
+        std::vector<VkImage> GetImages() { return SwapChain.get_images().value(); }
+        std::vector<VkImageView> GetImageViews() { return SwapChain.get_image_views().value(); }
+
         
-        VkSwapchainKHR GetSwapChain() const { return SwapChain; }
+        
+        
+        /* Get the extent from the actual swap chain's extent */
+        VkExtent3D& GetExtent();
+        VkExtent2D& GetExtent2D() { return SwapChain.extent; }
+
+        VkSwapchainKHR& GetSwapChain() { return SwapChain.swapchain; }
         VkSurfaceKHR GetSurface() const { return Surface; }
+
+
+        
+
+        FAllocatedImage& GetDrawImage() { return DrawImage; }
+
+        /* Get the extent from the draw image */
+        VkExtent3D& GetDrawExtent() { return DrawImage.ImageExtent; }
+        VkExtent2D& GetDrawExtent2D();
+
         
     private:
-
+    
     private:
 
         bool bInitialized = false;
@@ -38,10 +61,10 @@ namespace Lumina
         VkSurfaceKHR Surface;
 
         VkFormat ImageFormat;
-        std::vector<VkImage> Images;
-        std::vector<VkImageView> ImageViews;
+        FAllocatedImage DrawImage;
         
 
+        
         FWindow* Window;
     };
 }

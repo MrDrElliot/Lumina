@@ -10,7 +10,6 @@ Lumina::FApplication* Lumina::CreateApplication(int argc, char** argv)
 	AppSpecs.Name = "Sandbox";
 	AppSpecs.WindowWidth = 1600;
 	AppSpecs.WindowHeight = 900;
-	
 	return new FSandboxApp(AppSpecs);
 
 }

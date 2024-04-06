@@ -12,7 +12,7 @@ namespace Lumina
 /* Max number of frames to overlap */
 constexpr unsigned int FRAME_OVERLAP = 2;
     
-    typedef struct FDeletionQueue
+    struct FDeletionQueue
     {
         std::deque<std::function<void()>> Deletors;
 
@@ -36,11 +36,11 @@ constexpr unsigned int FRAME_OVERLAP = 2;
         
     struct FAllocatedImage
     {
-        VkImage image;
-        VkImageView imageView;
-        VmaAllocation allocation;
-        VkExtent3D imageExtent;
-        VkFormat imageFormat;
+        VkImage Image;
+        VkImageView ImageView;
+        VmaAllocation Allocation;
+        VkExtent3D ImageExtent;
+        VkFormat ImageFormat;
     };
 
     struct FFrameData

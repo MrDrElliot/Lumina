@@ -95,6 +95,9 @@
     <ClInclude Include="Engine\Source\Runtime\Renderer\RenderContext.h">
       <Filter>Source\Runtime\Renderer</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanHelpers.h">
+      <Filter>Source\Runtime\Renderer\Vulkan</Filter>
+    </ClInclude>
     <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanRenderContext.h">
       <Filter>Source\Runtime\Renderer\Vulkan</Filter>
     </ClInclude>
@@ -1389,6 +1392,9 @@
     </ClCompile>
     <ClCompile Include="Engine\Source\Runtime\Renderer\RenderContext.cpp">
       <Filter>Source\Runtime\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanHelpers.cpp">
+      <Filter>Source\Runtime\Renderer\Vulkan</Filter>
     </ClCompile>
     <ClCompile Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanRenderContext.cpp">
       <Filter>Source\Runtime\Renderer\Vulkan</Filter>

@@ -153,7 +153,9 @@
     <ClInclude Include="Engine\Source\Runtime\Log\Log.h" />
     <ClInclude Include="Engine\Source\Runtime\Memory\Memory.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\RenderContext.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanDescriptor.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanHelpers.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanPipeline.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanRenderContext.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanSwapChain.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanTypes.h" />
@@ -587,7 +589,9 @@
     <ClCompile Include="Engine\Source\Runtime\ApplicationCore\Windows\Window.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Log\Log.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\RenderContext.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanDescriptor.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanHelpers.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanPipeline.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanRenderContext.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanSwapChain.cpp" />
     <ClCompile Include="Engine\ThirdParty\glm\glm\detail\glm.cpp" />

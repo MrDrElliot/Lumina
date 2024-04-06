@@ -50,7 +50,7 @@ namespace Lumina
 	{
 		glfwPollEvents();
 
-		SwapChain->Present();
+		FApplication::Get().GetRenderContext<FVulkanRenderContext>()->Draw(DeltaTime);
 	}
 
 	void FWindow::Shutdown()

@@ -1,14 +1,15 @@
 #pragma once
 #include "VkBootstrap.h"
 #include "..\RenderContext.h"
-
-
 #include "vk_mem_alloc.h"
+#include "VulkanDescriptor.h"
 #include "VulkanTypes.h"
 
 
 namespace Lumina
 {
+    class FVulkanSwapChain;
+    
     class FVulkanRenderContext : public FRenderContext
     {
     public:
@@ -16,25 +17,26 @@ namespace Lumina
         FVulkanRenderContext();
         ~FVulkanRenderContext();
 
-
-
         /* Main Draw Loop */
         void Draw(float DeltaTime) override;
+        void DrawBackground(VkCommandBuffer InBuffer);
+
+        void FinalInitialization();
 
         /* Set Vulkan Devices, this is when logic is allowed to run, the swap chain has been created by this point */
         void InitializedDependencies(vkb::Device InDevice, vkb::PhysicalDevice InPhysicalDevice);
 
-        void SetSwapChain(VkSwapchainKHR InSwapChain) { ActiveSwapChain = InSwapChain; }
+        void SetSwapChain(FVulkanSwapChain* InSwapChain) { ActiveSwapChain = InSwapChain; }
         void ClearSwapChain();
         
 
-        vkb::Instance GetInstance() const { return VkbInstance; }
+        VmaAllocator& GetAllocator() { return Allocator; }
+        vkb::Instance GetInstance() const { return Instance; }
         FFrameData& GetCurrentFrame() { return Frames[FrameNumber % FRAME_OVERLAP]; }
         
 
-        
-        
     private:
+        
         /* Main Initialization */
         void InternalInit() override;
 
@@ -46,10 +48,21 @@ namespace Lumina
         
         /* Creates Vulkan instance */
         void CreateVkInstance();
+        
+        /* Initialize the allocator */
+        void InitializeAllocator();
+
+        /* Initialize Descriptors */
+        void InitializeDescriptors();
+
+        /* Initialize Pipelines */
+        void InitPipelines();
+        void InitBackgroundPipelines();
+        
 
     private:
         
-        vkb::Instance VkbInstance;
+        vkb::Instance Instance;
 
         FFrameData Frames[FRAME_OVERLAP];
         uint64_t FrameNumber = 0;
@@ -57,15 +70,22 @@ namespace Lumina
         VkQueue GraphicsQueue;
         uint32_t GraphicsQueueFamily;
 
-        VkSwapchainKHR ActiveSwapChain;
+        FVulkanSwapChain* ActiveSwapChain;
         
         VkDebugUtilsMessengerEXT DebugMessenger;
         vkb::PhysicalDevice PhysicalDevice;
         vkb::Device Device;
         VmaAllocator Allocator;
 
-        
+        FDescriptorAllocator GlobalDescriptorAllocator;
 
+        VkDescriptorSet DrawImageDescriptors;
+        VkDescriptorSetLayout DrawImageDescriptorLayout;
+
+        VkPipeline GradientPipeline;
+        VkPipelineLayout GradientPipelineLayout;
+        
+        
         bool bInitialized = false;
     };
 }

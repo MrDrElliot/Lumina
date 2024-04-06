@@ -11,3 +11,6 @@
 [submodule "Lumina/Engine/ThirdParty/VulkanMemoryAllocator"]
 	path = Lumina/Engine/ThirdParty/VulkanMemoryAllocator
 	url = https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git
+[submodule "Lumina/Engine/ThirdParty/imgui"]
+	path = Lumina/Engine/ThirdParty/imgui
+	url = https://github.com/MrDrElliot/imgui.git
