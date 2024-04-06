@@ -10,6 +10,9 @@
     <Filter Include="Source\Runtime\ApplicationCore">
       <UniqueIdentifier>{75EAD70A-6110-A271-4A56-273D361BC73D}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Runtime\ApplicationCore\Windows">
+      <UniqueIdentifier>{AF390F74-9B8B-E663-84AA-2374709BFF4C}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Source\Runtime\CoreObject">
       <UniqueIdentifier>{58F33599-C4B5-6923-0D66-F8AF79674201}</UniqueIdentifier>
     </Filter>
@@ -19,11 +22,11 @@
     <Filter Include="Source\Runtime\Memory">
       <UniqueIdentifier>{D1D182A6-3D3E-3EA1-0632-D6FE725D6009}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\Runtime\RHI">
-      <UniqueIdentifier>{3B376101-271B-2257-907B-1CAA7C7E0CD9}</UniqueIdentifier>
+    <Filter Include="Source\Runtime\Renderer">
+      <UniqueIdentifier>{4F9C4EF1-BBD3-9688-C4DD-FAAB3094BD81}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\Runtime\RHI\Vulkan">
-      <UniqueIdentifier>{5B743815-C736-6C9F-10E7-FA2B7CE8447D}</UniqueIdentifier>
+    <Filter Include="Source\Runtime\Renderer\Vulkan">
+      <UniqueIdentifier>{EFDAA6A6-DB00-710D-C446-F6D8B00B96D9}</UniqueIdentifier>
     </Filter>
     <Filter Include="ThirdParty">
       <UniqueIdentifier>{107145F9-FC28-8746-6530-60A251072237}</UniqueIdentifier>
@@ -46,6 +49,21 @@
     <Filter Include="ThirdParty\glm\glm\gtx">
       <UniqueIdentifier>{9097D540-7C91-FE92-65FE-94A3519764FF}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ThirdParty\vk-bootstrap">
+      <UniqueIdentifier>{CB99BB44-37D1-03DC-40DB-67FFAC912AD5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\vk-bootstrap\src">
+      <UniqueIdentifier>{62455509-CE52-83EF-5739-7FDAC3454FA6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\vulkanmemoryallocator">
+      <UniqueIdentifier>{4AA165F5-36F2-5037-5F56-3FF94B06E4A0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\vulkanmemoryallocator\include">
+      <UniqueIdentifier>{BD72FC73-A9EF-EFB6-D26C-F0CABE488C4A}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\vulkanmemoryallocator\src">
+      <UniqueIdentifier>{61F4A486-4DDB-667E-F62B-CD9BE2F1DFE4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\EntryPoint.h" />
@@ -59,8 +77,11 @@
     <ClInclude Include="Engine\Source\Runtime\ApplicationCore\LayerStack.h">
       <Filter>Source\Runtime\ApplicationCore</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\Source\Runtime\ApplicationCore\Window.h">
-      <Filter>Source\Runtime\ApplicationCore</Filter>
+    <ClInclude Include="Engine\Source\Runtime\ApplicationCore\Windows\Window.h">
+      <Filter>Source\Runtime\ApplicationCore\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\ApplicationCore\Windows\WindowTypes.h">
+      <Filter>Source\Runtime\ApplicationCore\Windows</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Source\Runtime\CoreObject\Object.h">
       <Filter>Source\Runtime\CoreObject</Filter>
@@ -71,20 +92,17 @@
     <ClInclude Include="Engine\Source\Runtime\Memory\Memory.h">
       <Filter>Source\Runtime\Memory</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\Source\Runtime\RHI\RendererContext.h">
-      <Filter>Source\Runtime\RHI</Filter>
+    <ClInclude Include="Engine\Source\Runtime\Renderer\RenderContext.h">
+      <Filter>Source\Runtime\Renderer</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\Source\Runtime\RHI\Vulkan\VulkanBuffer.h">
-      <Filter>Source\Runtime\RHI\Vulkan</Filter>
+    <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanRenderContext.h">
+      <Filter>Source\Runtime\Renderer\Vulkan</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\Source\Runtime\RHI\Vulkan\VulkanDevice.h">
-      <Filter>Source\Runtime\RHI\Vulkan</Filter>
+    <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanSwapChain.h">
+      <Filter>Source\Runtime\Renderer\Vulkan</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\Source\Runtime\RHI\Vulkan\VulkanRendererContext.h">
-      <Filter>Source\Runtime\RHI\Vulkan</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Source\Runtime\RHI\Vulkan\VulkanSwapChain.h">
-      <Filter>Source\Runtime\RHI\Vulkan</Filter>
+    <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanTypes.h">
+      <Filter>Source\Runtime\Renderer\Vulkan</Filter>
     </ClInclude>
     <ClInclude Include="Engine\ThirdParty\glm\glm\common.hpp">
       <Filter>ThirdParty\glm\glm</Filter>
@@ -1334,6 +1352,27 @@
     <ClInclude Include="Engine\ThirdParty\glm\glm\vector_relational.hpp">
       <Filter>ThirdParty\glm\glm</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\ThirdParty\vk-bootstrap\src\VkBootstrap.h">
+      <Filter>ThirdParty\vk-bootstrap\src</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\ThirdParty\vk-bootstrap\src\VkBootstrapDispatch.h">
+      <Filter>ThirdParty\vk-bootstrap\src</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\ThirdParty\vulkanmemoryallocator\include\vk_mem_alloc.h">
+      <Filter>ThirdParty\vulkanmemoryallocator\include</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\ThirdParty\vulkanmemoryallocator\src\Common.h">
+      <Filter>ThirdParty\vulkanmemoryallocator\src</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\ThirdParty\vulkanmemoryallocator\src\SparseBindingTest.h">
+      <Filter>ThirdParty\vulkanmemoryallocator\src</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\ThirdParty\vulkanmemoryallocator\src\Tests.h">
+      <Filter>ThirdParty\vulkanmemoryallocator\src</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\ThirdParty\vulkanmemoryallocator\src\VmaUsage.h">
+      <Filter>ThirdParty\vulkanmemoryallocator\src</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine\Source\Runtime\ApplicationCore\Application.cpp">
@@ -1342,29 +1381,41 @@
     <ClCompile Include="Engine\Source\Runtime\ApplicationCore\LayerStack.cpp">
       <Filter>Source\Runtime\ApplicationCore</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\Source\Runtime\ApplicationCore\Window.cpp">
-      <Filter>Source\Runtime\ApplicationCore</Filter>
+    <ClCompile Include="Engine\Source\Runtime\ApplicationCore\Windows\Window.cpp">
+      <Filter>Source\Runtime\ApplicationCore\Windows</Filter>
     </ClCompile>
     <ClCompile Include="Engine\Source\Runtime\Log\Log.cpp">
       <Filter>Source\Runtime\Log</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\Source\Runtime\RHI\RendererContext.cpp">
-      <Filter>Source\Runtime\RHI</Filter>
+    <ClCompile Include="Engine\Source\Runtime\Renderer\RenderContext.cpp">
+      <Filter>Source\Runtime\Renderer</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\Source\Runtime\RHI\Vulkan\VulkanBuffer.cpp">
-      <Filter>Source\Runtime\RHI\Vulkan</Filter>
+    <ClCompile Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanRenderContext.cpp">
+      <Filter>Source\Runtime\Renderer\Vulkan</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\Source\Runtime\RHI\Vulkan\VulkanDevice.cpp">
-      <Filter>Source\Runtime\RHI\Vulkan</Filter>
-    </ClCompile>
-    <ClCompile Include="Engine\Source\Runtime\RHI\Vulkan\VulkanRendererContext.cpp">
-      <Filter>Source\Runtime\RHI\Vulkan</Filter>
-    </ClCompile>
-    <ClCompile Include="Engine\Source\Runtime\RHI\Vulkan\VulkanSwapChain.cpp">
-      <Filter>Source\Runtime\RHI\Vulkan</Filter>
+    <ClCompile Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanSwapChain.cpp">
+      <Filter>Source\Runtime\Renderer\Vulkan</Filter>
     </ClCompile>
     <ClCompile Include="Engine\ThirdParty\glm\glm\detail\glm.cpp">
       <Filter>ThirdParty\glm\glm\detail</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\ThirdParty\vk-bootstrap\src\VkBootstrap.cpp">
+      <Filter>ThirdParty\vk-bootstrap\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\ThirdParty\vulkanmemoryallocator\src\Common.cpp">
+      <Filter>ThirdParty\vulkanmemoryallocator\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\ThirdParty\vulkanmemoryallocator\src\SparseBindingTest.cpp">
+      <Filter>ThirdParty\vulkanmemoryallocator\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\ThirdParty\vulkanmemoryallocator\src\Tests.cpp">
+      <Filter>ThirdParty\vulkanmemoryallocator\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\ThirdParty\vulkanmemoryallocator\src\VmaUsage.cpp">
+      <Filter>ThirdParty\vulkanmemoryallocator\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\ThirdParty\vulkanmemoryallocator\src\VulkanSample.cpp">
+      <Filter>ThirdParty\vulkanmemoryallocator\src</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

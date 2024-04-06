@@ -1,16 +1,17 @@
 #include "Application.h"
-
 #include "Source/Runtime/Log/Log.h"
+#include "Source/Runtime/Renderer/Vulkan/VulkanSwapChain.h"
+#include "Source/Runtime/Renderer/RenderContext.h"
+#include "Windows/Window.h"
 
 namespace Lumina
 {
-
     FApplication* FApplication::Instance = nullptr;
-
+    
     FApplication::FApplication(const FApplicationSpecs& InAppSpecs)
     {
         AppSpecs = InAppSpecs;
-        
+        Instance = this;
     }
 
     FApplication::~FApplication()
@@ -29,7 +30,6 @@ namespace Lumina
             {
                 Window->OnUpdate(1.0f);
             }
-
         }
 
         /* Application Shutdown */
@@ -45,7 +45,10 @@ namespace Lumina
     {
         /* Initialize Logging */
         FLog::Init();
-
+        
+        /* Create Renderer Context */
+        RenderContext = FRenderContext::Create();
+        
         /* Create application window */
         FWindowSpecs AppWindowSpecs;
         AppWindowSpecs.Title = AppSpecs.Name;
@@ -56,13 +59,17 @@ namespace Lumina
 
     void FApplication::OnShutdown()
     {
-
+        
     }
 
     void FApplication::CreateApplicationWindow(const FWindowSpecs& InSpecs)
     {
-        Window = std::unique_ptr<FWindow>(FWindow::Create(InSpecs));
+        FVulkanSwapChain* NewSwapChain = FVulkanSwapChain::Create();
+        Window.reset(FWindow::Create(InSpecs, NewSwapChain));
+
+        /* Window Init must be called before initializing a swap chain or the GLFWwindow will be null */
         Window->Init();
+        NewSwapChain->Init(Window.get());
     }
 
     void FApplication::PushLayer(FLayer* InLayer)

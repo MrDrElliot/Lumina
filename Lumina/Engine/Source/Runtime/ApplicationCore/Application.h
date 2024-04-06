@@ -3,13 +3,16 @@
 #include <memory>
 #include <string>
 #include "LayerStack.h"
-#include "Window.h"
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
+
 namespace Lumina
 {
+	struct FWindowSpecs;
+	class FWindow;
+	class FRenderContext;
 
 	struct FApplicationSpecs
 	{
@@ -44,11 +47,24 @@ namespace Lumina
 		void PopLayer(FLayer* InLayer);
 		void PopOverlay(FLayer* InLayer);
 
-		static FApplication* Get() { return Instance; }
+		static FApplication& Get() { return *Instance; }
 
 		FWindow& GetWindow() { return *Window;  }
 
 
+
+
+
+
+		
+		template<typename T>
+		T* GetRenderContext()
+		{
+			//@ TODO Not allowed?
+			//static_assert(std::is_base_of<FRenderContext, T>::Value, "T Must be derived from FRenderContext");
+			return dynamic_cast<T*>(RenderContext);
+		}
+	
 	private:
 
 		inline bool IsMinimized() const { return bMinimized; }
@@ -56,7 +72,6 @@ namespace Lumina
 
 	private:
 
-		std::unique_ptr<FWindow> Window;
 
 		FApplicationSpecs AppSpecs;
 		bool bRunning = true;
@@ -66,12 +81,17 @@ namespace Lumina
 
 		/* Application Instance */
 		static FApplication* Instance;
+		
+
+		/* Rendering Context */
+		FRenderContext* RenderContext;
+		
+		/* Application Window */
+		std::unique_ptr<FWindow> Window;
 
 		/* Layer Stack */
 		FLayerStack LayerStack;
 
-		/* Rendering Context */
-		
 	};
 
 	/* Implemented by client */

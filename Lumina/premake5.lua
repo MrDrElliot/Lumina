@@ -21,6 +21,13 @@ project "Lumina"
 		"Engine/ThirdParty/glm/glm/**.hpp",
 		"Engine/ThirdParty/glm/glm/**.cpp",
 		"Engine/ThirdParty/glm/glm/**.inl",
+		
+		"Engine/ThirdParty/vk-bootstrap/src/**.h",
+	    "Engine/ThirdParty/vk-bootstrap/src/**.cpp",
+	    
+	    "Engine/ThirdParty/vulkanmemoryallocator/**.h",
+	    "Engine/ThirdParty/vulkanmemoryallocator/**.cpp",
+
 	}
 
 
@@ -31,8 +38,10 @@ project "Lumina"
 		"%{IncludeDir.spdlog}/",
 		"%{IncludeDir.glfw}/",
 		"%{IncludeDir.glm}/",
+		"%{IncludeDir.vkbootstrap}/src/",
 		"%{IncludeDir.vulkan}/Include/",
 		"%{IncludeDir.vulkan}/Lib/",
+		"%{IncludeDir.vulkanmemoryallocator}/",
 
 	}
 	

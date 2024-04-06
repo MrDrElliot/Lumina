@@ -1,7 +1,8 @@
 #include <Lumina.h>
 
-#include "EntryPoint.h"
 #include "SandboxApp.h"
+#include "EntryPoint.h"
+
 
 Lumina::FApplication* Lumina::CreateApplication(int argc, char** argv)
 {
