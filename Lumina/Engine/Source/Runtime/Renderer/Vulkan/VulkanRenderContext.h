@@ -5,6 +5,7 @@
 #include "VulkanDescriptor.h"
 #include "VulkanLoader.h"
 #include "VulkanMaterial.h"
+#include "VulkanSwapChain.h"
 #include "VulkanTypes.h"
 
 #include "Source/Runtime/Events/Delegate.h"
@@ -22,7 +23,6 @@ namespace Lumina
         ~FVulkanRenderContext();
         
         /* Main Draw Loop */
-        void ImGuiDraw(float DeltaTime) override;
         void Draw(float DeltaTime) override;
         void DrawGeometry(VkCommandBuffer InCmd);
         void DrawBackground(VkCommandBuffer InBuffer);
@@ -55,10 +55,7 @@ namespace Lumina
         VmaAllocator& GetAllocator() { return Allocator; }
         vkb::Instance GetInstance() const { return Instance; }
         FFrameData& GetCurrentFrame() { return Frames[FrameNumber % FRAME_OVERLAP]; }
-
-        void SetResizeRequested(bool bNew) { bResizeRequested = bNew; }
-        bool IsResizeRequested() const { return bResizeRequested; }
-
+    
     private:
         
         /* Main Initialization */
@@ -154,7 +151,6 @@ namespace Lumina
         VkPipeline MeshPipeline;
         VkPipelineLayout MeshPipelineLayout;
         
-        bool bResizeRequested = false;
         bool bInitialized = false;
     };
 }

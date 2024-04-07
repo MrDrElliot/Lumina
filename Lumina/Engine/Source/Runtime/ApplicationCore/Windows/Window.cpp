@@ -40,21 +40,15 @@ namespace Lumina
 			glfwSetErrorCallback(GLFWErrorCallback);
 			glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
-			
 			Window = glfwCreateWindow(Specs.Width, Specs.Height, Specs.Title.c_str(), nullptr, nullptr);
-
+			
 			glfwSetWindowSizeCallback(Window, WindowResizeCallback);
 
-			
 			return;
+			
 		}
 		
 		LE_LOG_ERROR("Init called on a window that's already been initialized!");
-	}
-
-	void FWindow::OnImGuiUpdate(float DeltaTime)
-	{
-		FApplication::Get().GetRenderContext<FVulkanRenderContext>()->ImGuiDraw(DeltaTime);
 	}
 
 	void FWindow::OnUpdate(float DeltaTime)
@@ -73,7 +67,6 @@ namespace Lumina
 	void FWindow::WindowResizeCallback(GLFWwindow* window, int width, int height)
 	{
 		LE_LOG_INFO("Resizing Window To: {0} {1}", width, height);
-		FRenderContext::Get<FVulkanRenderContext>()->SetResizeRequested(true);
 	}
 
 	FWindow* FWindow::Create(const FWindowSpecs& InSpecs, FVulkanSwapChain* InSwapChain)

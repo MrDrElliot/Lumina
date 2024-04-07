@@ -228,7 +228,7 @@ namespace Lumina
 
         if (!File.is_open())
         {
-            LE_LOG_CRITICAL("Failed to open file");
+            LE_LOG_CRITICAL("Failed to open file: {0}", InFilePath);
             return nullptr;
         }
 

@@ -16,6 +16,9 @@
     <Filter Include="Source\Runtime\CoreObject">
       <UniqueIdentifier>{58F33599-C4B5-6923-0D66-F8AF79674201}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Runtime\Events">
+      <UniqueIdentifier>{4DC60895-B932-C48F-8226-5CEDEE51E6F7}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Source\Runtime\Log">
       <UniqueIdentifier>{DA226101-C606-2257-2F67-1CAA1B6A0CD9}</UniqueIdentifier>
     </Filter>
@@ -113,13 +116,25 @@
     <ClInclude Include="Engine\Source\Runtime\CoreObject\Object.h">
       <Filter>Source\Runtime\CoreObject</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Events\Delegate.h">
+      <Filter>Source\Runtime\Events</Filter>
+    </ClInclude>
     <ClInclude Include="Engine\Source\Runtime\Log\Log.h">
       <Filter>Source\Runtime\Log</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Source\Runtime\Memory\Memory.h">
       <Filter>Source\Runtime\Memory</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Renderer\Camera.h">
+      <Filter>Source\Runtime\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Renderer\Material.h">
+      <Filter>Source\Runtime\Renderer</Filter>
+    </ClInclude>
     <ClInclude Include="Engine\Source\Runtime\Renderer\RenderContext.h">
+      <Filter>Source\Runtime\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Renderer\RenderObject.h">
       <Filter>Source\Runtime\Renderer</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanDescriptor.h">
@@ -129,6 +144,9 @@
       <Filter>Source\Runtime\Renderer\Vulkan</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanLoader.h">
+      <Filter>Source\Runtime\Renderer\Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanMaterial.h">
       <Filter>Source\Runtime\Renderer\Vulkan</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanPipeline.h">
@@ -1453,10 +1471,22 @@
     <ClCompile Include="Engine\Source\Runtime\ApplicationCore\Windows\Window.cpp">
       <Filter>Source\Runtime\ApplicationCore\Windows</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\Events\Delegate.cpp">
+      <Filter>Source\Runtime\Events</Filter>
+    </ClCompile>
     <ClCompile Include="Engine\Source\Runtime\Log\Log.cpp">
       <Filter>Source\Runtime\Log</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\Renderer\Camera.cpp">
+      <Filter>Source\Runtime\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\Renderer\Material.cpp">
+      <Filter>Source\Runtime\Renderer</Filter>
+    </ClCompile>
     <ClCompile Include="Engine\Source\Runtime\Renderer\RenderContext.cpp">
+      <Filter>Source\Runtime\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\Renderer\RenderObject.cpp">
       <Filter>Source\Runtime\Renderer</Filter>
     </ClCompile>
     <ClCompile Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanDescriptor.cpp">
@@ -1466,6 +1496,9 @@
       <Filter>Source\Runtime\Renderer\Vulkan</Filter>
     </ClCompile>
     <ClCompile Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanLoader.cpp">
+      <Filter>Source\Runtime\Renderer\Vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanMaterial.cpp">
       <Filter>Source\Runtime\Renderer\Vulkan</Filter>
     </ClCompile>
     <ClCompile Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanPipeline.cpp">

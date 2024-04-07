@@ -42,6 +42,7 @@ workspace "Lumina"
 
 	group "Core"
 		include "Lumina"
+		include "LuminaEditor"
 	group ""
 
 	group "Sandbox"

@@ -34,22 +34,99 @@ namespace Lumina
         {
             vkDeviceWaitIdle(Device);
 
-            vkDestroySwapchainKHR(Device, SwapChain, nullptr);
+            DestroySwapchain();
 
-            int w;
-            int h;
+            int h, w;
             glfwGetWindowSize(Window->GetWindow(), &w, &h);
+            
+            CreateSwapChain(w, h);
 
-            VkRenderContext->SetResizeRequested(false);
-            
-            
-            Init(Window);
+            DrawImage.ImageExtent = GetExtent();
+            DepthImage.ImageExtent = GetExtent();
+
+
+            bResizeRequested = false;
         }
     }
 
-    VkExtent2D& FVulkanSwapChain::GetDrawExtent2D()
+    void FVulkanSwapChain::DestroySwapchain()
     {
-        VkExtent2D Extent2D =  { DrawImage.ImageExtent.width, DrawImage.ImageExtent.height };
+        
+
+        std::vector<VkImageView> Images = GetImageViews();
+        vkDestroySwapchainKHR(Device, SwapChain, nullptr);
+        
+        for(auto Image : Images)
+        {
+            vkDestroyImageView(Device, Image, nullptr);
+        }
+    }
+
+    void FVulkanSwapChain::CreateSwapChain(uint32_t NewWidth, uint32_t NewHeight)
+    {
+        ImageFormat = VK_FORMAT_B8G8R8A8_UNORM;
+        
+        vkb::SwapchainBuilder SwapchainBuilder{ Device.physical_device, Device, Surface };
+
+        SwapChain = SwapchainBuilder
+        .set_desired_format(VkSurfaceFormatKHR { .format = ImageFormat, .colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR })
+        .set_desired_present_mode(VK_PRESENT_MODE_FIFO_KHR)
+        .set_desired_extent(NewWidth, NewHeight)
+        .add_image_usage_flags(VK_IMAGE_USAGE_TRANSFER_DST_BIT)
+        .build()
+        .value();
+
+        
+
+        /* Send information to render context */
+        VkRenderContext->SetSwapChain(this);
+    }
+
+    void FVulkanSwapChain::CreateDevices()
+    {
+
+        /* Vulkan 1.3 Enabled Features */
+        VkPhysicalDeviceVulkan13Features Features = {};
+        Features.dynamicRendering = true;
+        Features.synchronization2 = true;
+
+        /* Vulkan 1.2 Enabled Features */
+        VkPhysicalDeviceVulkan12Features Features12 = {};
+        Features12.bufferDeviceAddress = true;
+        Features12.descriptorIndexing = true;
+
+        
+        /* Select Vulkan devices */
+        vkb::Instance vkb_inst = Vulkan::GetInstance();
+        vkb::PhysicalDeviceSelector Selector{ vkb_inst };
+        vkb::PhysicalDevice PhysicalDevice = Selector
+        .set_minimum_version(1, 3)
+        .set_required_features_13(Features)
+        .set_required_features_12(Features12)
+        .set_surface(Surface)
+        .select()
+        .value();
+
+        /* Set Vulkan devices */
+        vkb::DeviceBuilder DeviceBuilder { PhysicalDevice };
+        Device = DeviceBuilder.build().value();
+    }
+
+    VkExtent3D FVulkanSwapChain::GetDrawExtent()
+    {
+        VkExtent3D Extent3D;
+        Extent3D.width =  std::min(GetExtent().width, DrawImage.ImageExtent.width) * RenderScale;
+        Extent3D.height = std::min(GetExtent().height, DrawImage.ImageExtent.height) * RenderScale;
+        Extent3D.depth = 1;
+        
+        return Extent3D;
+    }
+
+    VkExtent2D FVulkanSwapChain::GetDrawExtent2D()
+    {
+        VkExtent2D Extent2D;
+        Extent2D.width = GetDrawExtent().width;
+        Extent2D.height= GetDrawExtent().height;
 
         return Extent2D;
     }
@@ -66,8 +143,8 @@ namespace Lumina
     
     void FVulkanSwapChain::Init(FWindow* InWindow)
     {
-        Window = InWindow;
         
+        Window = InWindow;
         
         VkRenderContext = FApplication::Get().GetRenderContext<FVulkanRenderContext>();
 
@@ -77,45 +154,9 @@ namespace Lumina
         /* Create window surface */
         VK_CHECK(glfwCreateWindowSurface(Vulkan::GetInstance(), Window->GetWindow(), nullptr, &Surface));
 
-
-        /* Vulkan 1.3 Enabled Features */
-        VkPhysicalDeviceVulkan13Features Features = {};
-        Features.dynamicRendering = true;
-        Features.synchronization2 = true;
-
-        /* Vulkan 1.2 Enabled Features */
-        VkPhysicalDeviceVulkan12Features Features12 = {};
-        Features12.bufferDeviceAddress = true;
-        Features12.descriptorIndexing = true;
-
-        /* Select Vulkan devices */
-        vkb::Instance vkb_inst = Vulkan::GetInstance();
-        vkb::PhysicalDeviceSelector Selector{ vkb_inst };
-        vkb::PhysicalDevice PhysicalDevice = Selector
-        .set_minimum_version(1, 3)
-        .set_required_features_13(Features)
-        .set_required_features_12(Features12)
-        .set_surface(Surface)
-        .select()
-        .value();
-
-        /* Set Vulkan devices */
-        vkb::DeviceBuilder DeviceBuilder { PhysicalDevice };
-        Device = DeviceBuilder.build().value();
-
+        CreateDevices();
         
-        /* Create Swap Chain */
-         ImageFormat = VK_FORMAT_B8G8R8A8_UNORM;
-        vkb::SwapchainBuilder SwapchainBuilder{ PhysicalDevice, Device, Surface };
-
-        SwapChain = SwapchainBuilder
-        .set_desired_format(VkSurfaceFormatKHR { .format = ImageFormat, .colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR })
-        .set_desired_present_mode(VK_PRESENT_MODE_FIFO_KHR)
-        .set_desired_extent(InWindow->GetWidth(), InWindow->GetHeight())
-        .add_image_usage_flags(VK_IMAGE_USAGE_TRANSFER_DST_BIT)
-        .build()
-        .value();
-        
+        CreateSwapChain(InWindow->GetWidth(), InWindow->GetHeight());
 
         DrawImage.ImageFormat = VK_FORMAT_R16G16B16A16_SFLOAT;
         DrawImage.ImageExtent = GetExtent();
@@ -138,7 +179,7 @@ namespace Lumina
         AllocationInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
         AllocationInfo.requiredFlags = VkMemoryPropertyFlags(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-        VkRenderContext->InitializedDependencies(Device, PhysicalDevice);
+        VkRenderContext->InitializedDependencies(Device, Device.physical_device);
 
         /* Allocate and create the draw image */
         vmaCreateImage(VkRenderContext->GetAllocator(), &ImgInfo, &AllocationInfo, &DrawImage.Image, &DrawImage.Allocation, nullptr);
@@ -148,8 +189,8 @@ namespace Lumina
         vmaCreateImage(VkRenderContext->GetAllocator(), &DepthImgInfo, &AllocationInfo, &DepthImage.Image, &DepthImage.Allocation, nullptr);
 
         VkImageViewCreateInfo DepthViewInfo = Vulkan::ImageViewCreateInfo(DepthImage.ImageFormat, DepthImage.Image, VK_IMAGE_ASPECT_DEPTH_BIT);
-
         VkImageViewCreateInfo ViewInfo = Vulkan::ImageViewCreateInfo(DrawImage.ImageFormat, DrawImage.Image, VK_IMAGE_ASPECT_COLOR_BIT);
+
 
         VK_CHECK(vkCreateImageView(Device, &DepthViewInfo, nullptr, &DepthImage.ImageView));
         VK_CHECK(vkCreateImageView(Device, &ViewInfo, nullptr, &DrawImage.ImageView));
@@ -159,5 +200,5 @@ namespace Lumina
         
         bInitialized = true;
     }
-    
+
 }

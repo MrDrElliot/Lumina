@@ -22,9 +22,12 @@ namespace Lumina
 
         /* Swap Chains must be initialized with a GLFWwindow */
         void Init(FWindow* InWindow);
+        void OnDraw();
         
         void Present();
         void Resize();
+
+        void DestroySwapchain();
 
     public:
 
@@ -44,15 +47,18 @@ namespace Lumina
         VkSwapchainKHR& GetSwapChain() { return SwapChain.swapchain; }
         VkSurfaceKHR GetSurface() const { return Surface; }
 
-
-        
+        void CreateSwapChain(uint32_t NewWidth, uint32_t NewHeight);
+        void CreateDevices();
 
         FAllocatedImage& GetDrawImage() { return DrawImage; }
         FAllocatedImage& GetDepthImage() { return DepthImage; }
 
         /* Get the extent from the draw image */
-        VkExtent3D& GetDrawExtent() { return DrawImage.ImageExtent; }
-        VkExtent2D& GetDrawExtent2D();
+        VkExtent3D GetDrawExtent();
+        VkExtent2D GetDrawExtent2D();
+
+        void SetResizeRequested(bool bNew) { bResizeRequested = bNew; }
+        bool IsResizeRequested() const { return bResizeRequested; }
 
         
     private:
@@ -60,6 +66,8 @@ namespace Lumina
     private:
 
         bool bInitialized = false;
+        bool bResizeRequested = false;
+        
         FVulkanRenderContext* VkRenderContext;
         
         vkb::Swapchain SwapChain;
@@ -71,7 +79,7 @@ namespace Lumina
 
         vkb::Device Device;
 
-        
+        float RenderScale = 1.0f;
         FWindow* Window;
     };
 }

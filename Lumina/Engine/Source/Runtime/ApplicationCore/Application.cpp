@@ -2,6 +2,7 @@
 
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_vulkan.h"
+#include "ImGui/ImGuiLayer.h"
 #include "Source/Runtime/Log/Log.h"
 #include "Source/Runtime/Renderer/Vulkan/VulkanSwapChain.h"
 #include "Source/Runtime/Renderer/RenderContext.h"
@@ -16,6 +17,10 @@ namespace Lumina
     {
         AppSpecs = InAppSpecs;
         Instance = this;
+
+        ImGuiLayer = FImGuiLayer::Create();
+        PushOverlay(ImGuiLayer);
+        
     }
 
     FApplication::~FApplication()
@@ -27,41 +32,21 @@ namespace Lumina
     {
         /* Application Initialization */
         OnInit();
-        ImGuiInit();
         
-        while(!ShouldExit())
+        while(!ShouldExit() || !glfwWindowShouldClose(Window->GetWindow()))
         {
             if (!IsMinimized())
             {
-                if(FRenderContext::Get<FVulkanRenderContext>()->IsResizeRequested())
-                {
-                    Window->GetSwapChain()->Resize();
-                }
-                Window->OnImGuiUpdate(1.0f);
+                CheckWindowResized();
+                RenderImGui();
                 Window->OnUpdate(1.0f);
             }
         }
 
         /* Application Shutdown */
-        ImGuiShutdown();
         OnShutdown();
     }
 
-    void FApplication::Close()
-    {
-
-    }
-
-    void FApplication::ImGuiInit()
-    {
-
-    }
-
-    void FApplication::ImGuiShutdown()
-    {
-        
-    }
-    
     void FApplication::OnInit()
     {
         /* Initialize Logging */
@@ -80,7 +65,7 @@ namespace Lumina
 
     void FApplication::OnShutdown()
     {
-        
+       Window->Shutdown();
     }
 
     void FApplication::CreateApplicationWindow(const FWindowSpecs& InSpecs)
@@ -92,6 +77,14 @@ namespace Lumina
         Window->Init();
         
         NewSwapChain->Init(Window.get());
+    }
+
+    void FApplication::CheckWindowResized()
+    {
+        if(RenderContext->Get<FVulkanRenderContext>()->GetActiveSwapChain()->IsResizeRequested())
+        {
+            RenderContext->Get<FVulkanRenderContext>()->GetActiveSwapChain()->Resize();
+        }
     }
 
     void FApplication::PushLayer(FLayer* InLayer)
@@ -117,5 +110,17 @@ namespace Lumina
         LayerStack.PopOverlay(InLayer);
         InLayer->OnDetach();
     }
-    
+
+    void FApplication::RenderImGui()
+    {
+        ImGuiLayer->Begin();
+
+        for(auto Layer : LayerStack)
+        {
+            Layer->OnImGuiRender();
+        }
+
+        ImGuiLayer->End();
+
+    }
 }

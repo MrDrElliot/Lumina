@@ -14,14 +14,15 @@ namespace Lumina
 
     	FVulkanRenderContext* RenderContext = FRenderContext::Get<FVulkanRenderContext>();
     	VkDevice Device = RenderContext->GetDevice();
+    	
     	VkShaderModule FragShader;
-		if (FragShader = Vulkan::LoadShaderModule("Resources/Shaders/mesh.frag.spv", Device); FragShader == nullptr)
+		if (FragShader = Vulkan::LoadShaderModule("../Lumina/Engine/Resources/Shaders/mesh.frag.spv", Device); FragShader == nullptr)
 		{
 			LE_LOG_CRITICAL("Failed to load fragment shader");
 		}
 		
 		VkShaderModule VertexShader;
-		if (VertexShader = Vulkan::LoadShaderModule("Resources/Shaders/mesh.vert.spv", Device); VertexShader == nullptr)
+		if (VertexShader = Vulkan::LoadShaderModule("../Lumina/Engine/Resources/Shaders/mesh.vert.spv", Device); VertexShader == nullptr)
 		{
 			LE_LOG_CRITICAL("Failed to load vertex shader");
 		}

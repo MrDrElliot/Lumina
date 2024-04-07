@@ -30,7 +30,6 @@ namespace Lumina
         FRenderContext &operator=(const FRenderContext &) = delete;
         FRenderContext &operator=(FRenderContext &&) = delete;
 
-        virtual void ImGuiDraw(float DeltaTime) = 0;
         virtual void Draw(float DeltaTime) = 0;
 
         static FRenderContext* Create();

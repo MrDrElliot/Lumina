@@ -31,34 +31,8 @@ namespace Lumina
         }
 
         vkDestroyDevice(Device, nullptr);
-
-
     }
     
-
-    void FVulkanRenderContext::ImGuiDraw(float DeltaTime)
-    {
-        
-        ImGui_ImplVulkan_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
-
-        if(ImGui::Begin("Background Editor"))
-        {
-            FComputeEffect& Selected = BackgroundEffects[CurrentBackgroundEffect];
-            ImGui::Text("Selected Effect", Selected.Name);
-            ImGui::SliderInt("Effect Index", &CurrentBackgroundEffect, 0, BackgroundEffects.size() - 1);
-
-            ImGui::InputFloat4("data1",(float*)& Selected.Data.data1);
-            ImGui::InputFloat4("data2",(float*)& Selected.Data.data2);
-            ImGui::InputFloat4("data3",(float*)& Selected.Data.data3);
-            ImGui::InputFloat4("data4",(float*)& Selected.Data.data4);
-            ImGui::End();   
-        }
-        
-        ImGui::Render();
-    }
-
     void FVulkanRenderContext::Draw(float DeltaTime)
     {
         /* Don't want to render if we haven't initialized yet */
@@ -77,11 +51,9 @@ namespace Lumina
         VkResult ImageResult = vkAcquireNextImageKHR(Device, ActiveSwapChain->GetSwapChain(), 1000000000, GetCurrentFrame().SwapchainSemaphore, nullptr, &SwapChainImageIndex);
         if(ImageResult == VK_ERROR_OUT_OF_DATE_KHR)
         {
-            bResizeRequested = true;
+            ActiveSwapChain->SetResizeRequested(true);
             return;
         }
-
-        
 
         VK_CHECK(vkResetFences(Device, 1, &GetCurrentFrame().RenderFence));
 
@@ -110,7 +82,7 @@ namespace Lumina
         
         DrawGeometry(Cmd);
 
-        // Transition the draw image and the swapchain image into their correct transfer layouts
+        /* Transition the draw image and the swapchain image into their correct transfer layouts */
         Vulkan::TransitionImage(Cmd, ActiveSwapChain->GetDrawImage().Image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
         Vulkan::TransitionImage(Cmd, ActiveSwapChain->GetImages()[SwapChainImageIndex], VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
@@ -149,7 +121,7 @@ namespace Lumina
         VkResult PresentResult = vkQueuePresentKHR(GraphicsQueue, &PresentInfo);
         if(PresentResult == VK_ERROR_OUT_OF_DATE_KHR)
         {
-            bResizeRequested = true;
+            ActiveSwapChain->SetResizeRequested(true);
         }
         
         FrameNumber++;
@@ -163,11 +135,10 @@ namespace Lumina
         VkRenderingInfo renderInfo = Vulkan::RenderingInfo(ActiveSwapChain->GetDrawExtent2D(), &colorAttachment, nullptr);
         vkCmdBeginRendering(InCmd, &renderInfo);
 
-        // vkCmdBindPipeline(InCmd, VK_PIPELINE_BIND_POINT_GRAPHICS, TrianglePipeline);
+        //vkCmdBindPipeline(InCmd, VK_PIPELINE_BIND_POINT_GRAPHICS, TrianglePipeline);
 
-        //set dynamic viewport and scissor
         VkViewport viewport = {};
-        viewport.x = 0;
+        viewport.x = 500;
         viewport.y = 0;
         viewport.width = ActiveSwapChain->GetDrawExtent2D().width;
         viewport.height = ActiveSwapChain->GetDrawExtent2D().height;
@@ -696,14 +667,14 @@ namespace Lumina
         VK_CHECK(vkCreatePipelineLayout(Device, &ComputeLayout, nullptr, &GradientPipelineLayout));
 
         VkShaderModule GradientShader;
-        if (GradientShader = Vulkan::LoadShaderModule("Resources/Shaders/Gradient_Color.comp.spv", Device); GradientShader == nullptr)
+        if (GradientShader = Vulkan::LoadShaderModule("../Lumina/Engine/Resources/Shaders/Gradient_Color.comp.spv", Device); GradientShader == nullptr)
         {
             LE_LOG_CRITICAL("Failed to create gradient shader");
         }
 
 
         VkShaderModule SkyShader;
-        if(SkyShader = Vulkan::LoadShaderModule("Resources/Shaders/sky.comp.spv", Device); SkyShader == nullptr)
+        if(SkyShader = Vulkan::LoadShaderModule("../Lumina/Engine/Resources/Shaders/sky.comp.spv", Device); SkyShader == nullptr)
         {
             LE_LOG_CRITICAL("Failed to create sky shader!");
         }
@@ -752,13 +723,13 @@ namespace Lumina
     void FVulkanRenderContext::InitTrianglePipeline()
     {
         VkShaderModule FragShader;
-        if(FragShader = Vulkan::LoadShaderModule("Resources/Shaders/Colored_Triangle.frag.spv", Device); FragShader == nullptr)
+        if(FragShader = Vulkan::LoadShaderModule("../Lumina/Engine/Resources/Shaders/Colored_Triangle.frag.spv", Device); FragShader == nullptr)
         {
             LE_LOG_CRITICAL("Failed to created colored triangle frag shader!");
         }
 
         VkShaderModule VertShader;
-        if(VertShader = Vulkan::LoadShaderModule("Resources/Shaders/Colored_Triangle.vert.spv", Device); VertShader == nullptr)
+        if(VertShader = Vulkan::LoadShaderModule("../Lumina/Engine/Resources/Shaders/Colored_Triangle.vert.spv", Device); VertShader == nullptr)
         {
             LE_LOG_CRITICAL("Failed to create colored triangle vertex shader!");
         }
@@ -791,13 +762,13 @@ namespace Lumina
     void FVulkanRenderContext::InitMeshPipeline()
     {
         VkShaderModule FragShader;
-        if (FragShader = Vulkan::LoadShaderModule("Resources/Shaders/tex_image.frag.spv", Device); FragShader == nullptr)
+        if (FragShader = Vulkan::LoadShaderModule("../Lumina/Engine/Resources/Shaders/tex_image.frag.spv", Device); FragShader == nullptr)
         {
             LE_LOG_CRITICAL("Failed to create colored triangle fragment shader!");
         }
         
         VkShaderModule VertexShader;
-        if (VertexShader = Vulkan::LoadShaderModule("Resources/Shaders/Colored_Triangle_mesh.vert.spv", Device); VertexShader == nullptr)
+        if (VertexShader = Vulkan::LoadShaderModule("../Lumina/Engine/Resources/Shaders/Colored_Triangle_mesh.vert.spv", Device); VertexShader == nullptr)
         {
             LE_LOG_CRITICAL("Failed to create triangle mesh vertex shader!");
         }
@@ -839,7 +810,7 @@ namespace Lumina
 
     void FVulkanRenderContext::InitDefaultData()
     {
-        testMeshes = LoadGltfMeshes("Resources/Meshes/basicmesh.glb").value();
+        testMeshes = LoadGltfMeshes("../Lumina/Engine/Resources/Meshes/basicmesh.glb").value();
         
         
         constexpr uint32_t white = std::byteswap(0xFFFFFFFF);
@@ -900,6 +871,6 @@ namespace Lumina
         materialResources.DataBuffer = materialConstants.Buffer;
         materialResources.DataBufferOffset = 0;
 
-        defaultData = metalRoughMaterial.WriteMaterial(Device, EMaterialPass::MainColor, materialResources, GlobalDescriptorAllocator);
+        defaultData = metalRoughMaterial.WriteMaterial(Device, EMaterialPass::Transparent, materialResources, GlobalDescriptorAllocator);
     }
 }

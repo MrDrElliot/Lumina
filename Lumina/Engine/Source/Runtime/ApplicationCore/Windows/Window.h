@@ -29,7 +29,6 @@ namespace Lumina
 
 
 		virtual void Init();
-		virtual void OnImGuiUpdate(float DeltaTime);
 		virtual void OnUpdate(float DeltaTime);
 		virtual void Shutdown();
 

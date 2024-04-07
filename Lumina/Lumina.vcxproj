@@ -145,17 +145,21 @@
     <ClInclude Include="Engine\EntryPoint.h" />
     <ClInclude Include="Engine\Lumina.h" />
     <ClInclude Include="Engine\Source\Runtime\ApplicationCore\Application.h" />
+    <ClInclude Include="Engine\Source\Runtime\ApplicationCore\ImGui\ImGuiLayer.h" />
     <ClInclude Include="Engine\Source\Runtime\ApplicationCore\Layer.h" />
     <ClInclude Include="Engine\Source\Runtime\ApplicationCore\LayerStack.h" />
     <ClInclude Include="Engine\Source\Runtime\ApplicationCore\Windows\Window.h" />
     <ClInclude Include="Engine\Source\Runtime\ApplicationCore\Windows\WindowTypes.h" />
     <ClInclude Include="Engine\Source\Runtime\CoreObject\Object.h" />
     <ClInclude Include="Engine\Source\Runtime\Events\Delegate.h" />
+    <ClInclude Include="Engine\Source\Runtime\GUID\GUID.h" />
     <ClInclude Include="Engine\Source\Runtime\Log\Log.h" />
     <ClInclude Include="Engine\Source\Runtime\Memory\Memory.h" />
+    <ClInclude Include="Engine\Source\Runtime\Platform\Vulkan\VulkanImGuiLayer.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\Camera.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\Material.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\RenderContext.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\RenderObject.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanDescriptor.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanHelpers.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanLoader.h" />
@@ -600,13 +604,15 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine\Source\Runtime\ApplicationCore\Application.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\ApplicationCore\ImGui\ImGuiLayer.cpp" />
     <ClCompile Include="Engine\Source\Runtime\ApplicationCore\LayerStack.cpp" />
     <ClCompile Include="Engine\Source\Runtime\ApplicationCore\Windows\Window.cpp" />
-    <ClCompile Include="Engine\Source\Runtime\Events\Delegate.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Log\Log.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Platform\Vulkan\VulkanImGuiLayer.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\Camera.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\Material.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\RenderContext.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\RenderObject.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanDescriptor.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanHelpers.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanLoader.cpp" />

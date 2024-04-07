@@ -10,6 +10,11 @@
 
 namespace Lumina
 {
+	class FImGuiLayer;
+}
+
+namespace Lumina
+{
 	struct FWindowSpecs;
 	class FWindow;
 	class FRenderContext;
@@ -35,19 +40,19 @@ namespace Lumina
 
 		void Run();
 		void Close();
-
-		virtual void ImGuiInit();
-		virtual void ImGuiShutdown();
 		
 		virtual void OnInit();
 		virtual void OnShutdown();
 
 		void CreateApplicationWindow(const FWindowSpecs& InSpecs);
+
+		void CheckWindowResized();
 		
 		void PushLayer(FLayer* InLayer);
 		void PushOverlay(FLayer* InLayer);
 		void PopLayer(FLayer* InLayer);
 		void PopOverlay(FLayer* InLayer);
+		void RenderImGui();
 
 		static FApplication& Get() { return *Instance; }
 
@@ -89,6 +94,8 @@ namespace Lumina
 
 		/* Layer Stack */
 		FLayerStack LayerStack;
+
+		FImGuiLayer* ImGuiLayer;
 
 	};
 
