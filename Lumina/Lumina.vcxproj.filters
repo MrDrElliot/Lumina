@@ -34,6 +34,12 @@
     <Filter Include="ThirdParty\fastgltf">
       <UniqueIdentifier>{9AE930E6-064B-0EF4-8FB8-54A6FB1845B3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ThirdParty\fastgltf\deps">
+      <UniqueIdentifier>{F50BF030-E130-3FB1-0A7C-2441F6FF3DCF}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\fastgltf\deps\simdjson">
+      <UniqueIdentifier>{0B92E7AD-7700-3D2D-C0E9-F72C2C9732C9}</UniqueIdentifier>
+    </Filter>
     <Filter Include="ThirdParty\fastgltf\include">
       <UniqueIdentifier>{0D0B7366-7918-A14C-02FF-9C376E0B6D03}</UniqueIdentifier>
     </Filter>
@@ -136,6 +142,9 @@
     </ClInclude>
     <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanTypes.h">
       <Filter>Source\Runtime\Renderer\Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\ThirdParty\fastgltf\deps\simdjson\simdjson.h">
+      <Filter>ThirdParty\fastgltf\deps\simdjson</Filter>
     </ClInclude>
     <ClInclude Include="Engine\ThirdParty\fastgltf\include\fastgltf\base64.hpp">
       <Filter>ThirdParty\fastgltf\include\fastgltf</Filter>
@@ -1467,6 +1476,9 @@
     </ClCompile>
     <ClCompile Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanSwapChain.cpp">
       <Filter>Source\Runtime\Renderer\Vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\ThirdParty\fastgltf\deps\simdjson\simdjson.cpp">
+      <Filter>ThirdParty\fastgltf\deps\simdjson</Filter>
     </ClCompile>
     <ClCompile Include="Engine\ThirdParty\fastgltf\src\base64.cpp">
       <Filter>ThirdParty\fastgltf\src</Filter>

@@ -22,6 +22,9 @@ project "Lumina"
 		
 	    "Engine/ThirdParty/fastgltf/include/**.hpp",
 	    "Engine/ThirdParty/fastgltf/src/**.cpp",
+	    "Engine/ThirdParty/fastgltf/deps/simdjson/**.h",
+    	"Engine/ThirdParty/fastgltf/deps/simdjson/**.cpp",
+
 
 		"Engine/ThirdParty/glm/glm/**.hpp",
 		"Engine/ThirdParty/glm/glm/**.cpp",

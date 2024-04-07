@@ -16,7 +16,7 @@ std::optional<std::vector<std::shared_ptr<Lumina::FMeshAsset>>> Lumina::LoadGltf
     fastgltf::GltfDataBuffer Data;
     Data.loadFromFile(InPath);
 
-    constexpr auto Options = fastgltf::Options::LoadGLBBuffers;
+    constexpr auto Options = fastgltf::Options::LoadGLBBuffers | fastgltf::Options::LoadExternalBuffers;
 
     fastgltf::Asset gltf;
     fastgltf::Parser parser;

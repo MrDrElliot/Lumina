@@ -38,6 +38,8 @@ namespace Lumina
 
 		uint32_t GetWidth() const { return Specs.Width; }
 		uint32_t GetHeight() const { return Specs.Height; }
+
+		static void WindowResizeCallback(GLFWwindow* window, int width, int height);
 		
 	private:
 	

@@ -5,6 +5,8 @@
 #include "glm/glm.hpp"
 #include <VulkanMemoryAllocator/include/vk_mem_alloc.h>
 
+#include "VulkanDescriptor.h"
+
 namespace Lumina
 {
     
@@ -71,6 +73,16 @@ constexpr unsigned int FRAME_OVERLAP = 2;
         VkFormat ImageFormat;
     };
 
+    struct FGPUSceneData
+    {
+        glm::mat4 View;
+        glm::mat4 Proj;
+        glm::mat4 Viewproj;
+        glm::vec4 AmbientColor;
+        glm::vec4 SunlightDirection;
+        glm::vec4 SunlightColor;
+    };
+
 
     struct FFrameData
     {
@@ -81,7 +93,8 @@ constexpr unsigned int FRAME_OVERLAP = 2;
         
         VkCommandBuffer CommandBuffer;
         VkCommandPool CommandPool;
-
+        
+        FDescriptorAllocatorGrowable FrameDescriptors;
         FDeletionQueue DeletionQueue;
     };
 
@@ -102,6 +115,5 @@ constexpr unsigned int FRAME_OVERLAP = 2;
 
         FComputePushConstants Data;
     };
-    
     
 }

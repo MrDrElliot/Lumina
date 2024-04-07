@@ -52,11 +52,7 @@ namespace Lumina
 		static FApplication& Get() { return *Instance; }
 
 		FWindow& GetWindow() { return *Window;  }
-
-
-
-
-
+		
 
 		
 		template<typename T>

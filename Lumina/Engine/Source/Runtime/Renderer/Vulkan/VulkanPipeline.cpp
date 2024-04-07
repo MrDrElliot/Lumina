@@ -126,6 +126,43 @@ namespace Lumina
         DepthStencil.maxDepthBounds= 1.f;
     }
 
+    void FVulkanPipeline::EnableDepthTest(bool bDepthWriteEnable, VkCompareOp InOp)
+    {
+        DepthStencil.depthTestEnable = VK_TRUE;
+        DepthStencil.depthWriteEnable = bDepthWriteEnable;
+        DepthStencil.depthCompareOp = InOp;
+        DepthStencil.depthBoundsTestEnable = VK_FALSE;
+        DepthStencil.stencilTestEnable = VK_FALSE;
+        DepthStencil.front = {};
+        DepthStencil.back = {};
+        DepthStencil.minDepthBounds = 0.f;
+        DepthStencil.maxDepthBounds = 1.f;
+    }
+
+    void FVulkanPipeline::EnableBlendingAdditive()
+    {
+        ColorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+        ColorBlendAttachment.blendEnable = VK_TRUE;
+        ColorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+        ColorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+        ColorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+        ColorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+        ColorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+        ColorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+    }
+
+    void FVulkanPipeline::EnableBlendingAlphablend()
+    {
+        ColorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+        ColorBlendAttachment.blendEnable = VK_TRUE;
+        ColorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+        ColorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+        ColorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+        ColorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+        ColorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+        ColorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+    }
+
     void FVulkanPipeline::Clear()
     {
     

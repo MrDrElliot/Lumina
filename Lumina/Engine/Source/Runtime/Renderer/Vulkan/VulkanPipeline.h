@@ -22,6 +22,9 @@ namespace Lumina
         void SetColorAttachmentFormat(VkFormat InFormat);
         void SetDepthFormat(VkFormat InFormat);
         void DisableDepthTest();
+        void EnableDepthTest(bool bDepthWriteEnable, VkCompareOp InOp);
+        void EnableBlendingAdditive();
+        void EnableBlendingAlphablend();
         
 
         

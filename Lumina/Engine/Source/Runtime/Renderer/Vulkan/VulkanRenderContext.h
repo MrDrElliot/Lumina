@@ -4,7 +4,11 @@
 #include "..\RenderContext.h"
 #include "VulkanDescriptor.h"
 #include "VulkanLoader.h"
+#include "VulkanMaterial.h"
 #include "VulkanTypes.h"
+
+#include "Source/Runtime/Events/Delegate.h"
+
 
 namespace Lumina
 {
@@ -16,13 +20,17 @@ namespace Lumina
 
         FVulkanRenderContext();
         ~FVulkanRenderContext();
-
+        
         /* Main Draw Loop */
         void ImGuiDraw(float DeltaTime) override;
         void Draw(float DeltaTime) override;
         void DrawGeometry(VkCommandBuffer InCmd);
         void DrawBackground(VkCommandBuffer InBuffer);
         void DrawImGui(VkCommandBuffer InBuffer, VkImageView TargetViewImage);
+
+        FAllocatedImage CreateImage(VkExtent3D InSize, VkFormat InFormat, VkImageUsageFlags InUsage, bool bMipmapped = false);
+        FAllocatedImage CreateImage(void* InData, VkExtent3D InSize, VkFormat InFormat, VkImageUsageFlags InUsage, bool bMipmapped = false);
+        void DestroyImage(const FAllocatedImage& InImage);
 
         FAllocatedBuffer CreateBuffer(size_t Size, VkBufferUsageFlags InUsage, VmaMemoryUsage MemoryUsage);
         void DestroyBuffer(const FAllocatedBuffer& Buffer);
@@ -41,10 +49,15 @@ namespace Lumina
         void ClearSwapChain();
         
 
+        FVulkanSwapChain* GetActiveSwapChain() { return ActiveSwapChain; }
+        VkDescriptorSetLayout GetGPUDescriptorLayout() { return GpuSceneDataDescriptorLayout; }
+        vkb::Device GetDevice() { return Device; }
         VmaAllocator& GetAllocator() { return Allocator; }
         vkb::Instance GetInstance() const { return Instance; }
         FFrameData& GetCurrentFrame() { return Frames[FrameNumber % FRAME_OVERLAP]; }
-        
+
+        void SetResizeRequested(bool bNew) { bResizeRequested = bNew; }
+        bool IsResizeRequested() const { return bResizeRequested; }
 
     private:
         
@@ -104,10 +117,30 @@ namespace Lumina
         vkb::Device Device;
         VmaAllocator Allocator;
 
-        FDescriptorAllocator GlobalDescriptorAllocator;
+        FDescriptorAllocatorGrowable GlobalDescriptorAllocator;
 
         std::vector<std::shared_ptr<FMeshAsset>> testMeshes;
 
+        FDeletionQueue MainDeletionQueue;
+
+        FGPUSceneData SceneData;
+
+
+        FAllocatedImage WhiteImage;
+        FAllocatedImage BlackImage;
+        FAllocatedImage GreyImage;
+        FAllocatedImage ErrorCheckerboardImage;
+
+        VkSampler DefaultSamplerLinear;
+        VkSampler DefaultSamplerNearest;
+
+
+        FMaterialInstance defaultData;
+        GLTFMetallicRoughness metalRoughMaterial;
+        
+        VkDescriptorSetLayout SingleImageDescriptorLayout;
+        
+        VkDescriptorSetLayout GpuSceneDataDescriptorLayout;
 
         VkDescriptorSet DrawImageDescriptors;
         VkDescriptorSetLayout DrawImageDescriptorLayout;
@@ -121,7 +154,7 @@ namespace Lumina
         VkPipeline MeshPipeline;
         VkPipelineLayout MeshPipelineLayout;
         
-        
+        bool bResizeRequested = false;
         bool bInitialized = false;
     };
 }

@@ -279,6 +279,21 @@ namespace Lumina
         return ColorAttachment;
     }
 
+    VkRenderingAttachmentInfo Vulkan::DepthAttachmentInfo(VkImageView InView, VkImageLayout InLayout)
+    {
+        VkRenderingAttachmentInfo depthAttachment {};
+        depthAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+        depthAttachment.pNext = nullptr;
+
+        depthAttachment.imageView = InView;
+        depthAttachment.imageLayout = InLayout;
+        depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+        depthAttachment.clearValue.depthStencil.depth = 0.f;
+
+        return depthAttachment;
+    }
+
     VkRenderingInfo Vulkan::RenderingInfo(VkExtent2D InRenderExtent, VkRenderingAttachmentInfo* InColorAttachment, VkRenderingAttachmentInfo* InDepthAttachment)
     {
         VkRenderingInfo renderInfo {};

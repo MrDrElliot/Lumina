@@ -28,6 +28,25 @@ namespace Lumina
         
     }
 
+    void FVulkanSwapChain::Resize()
+    {
+        if(Device && VkRenderContext)
+        {
+            vkDeviceWaitIdle(Device);
+
+            vkDestroySwapchainKHR(Device, SwapChain, nullptr);
+
+            int w;
+            int h;
+            glfwGetWindowSize(Window->GetWindow(), &w, &h);
+
+            VkRenderContext->SetResizeRequested(false);
+            
+            
+            Init(Window);
+        }
+    }
+
     VkExtent2D& FVulkanSwapChain::GetDrawExtent2D()
     {
         VkExtent2D Extent2D =  { DrawImage.ImageExtent.width, DrawImage.ImageExtent.height };
@@ -49,7 +68,8 @@ namespace Lumina
     {
         Window = InWindow;
         
-        FVulkanRenderContext* VkRenderContext = FApplication::Get().GetRenderContext<FVulkanRenderContext>();
+        
+        VkRenderContext = FApplication::Get().GetRenderContext<FVulkanRenderContext>();
 
         /* Send information to render context */
         VkRenderContext->SetSwapChain(this);
@@ -81,7 +101,7 @@ namespace Lumina
 
         /* Set Vulkan devices */
         vkb::DeviceBuilder DeviceBuilder { PhysicalDevice };
-        vkb::Device Device = DeviceBuilder.build().value();
+        Device = DeviceBuilder.build().value();
 
         
         /* Create Swap Chain */
@@ -100,6 +120,12 @@ namespace Lumina
         DrawImage.ImageFormat = VK_FORMAT_R16G16B16A16_SFLOAT;
         DrawImage.ImageExtent = GetExtent();
 
+        DepthImage.ImageFormat = VK_FORMAT_D32_SFLOAT;
+        DepthImage.ImageExtent = GetExtent();
+        VkImageUsageFlags DepthImageFlags = {};
+        DepthImageFlags |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+        
+
         VkImageUsageFlags DrawImageFlags = {};
         DrawImageFlags |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
         DrawImageFlags |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
@@ -117,8 +143,15 @@ namespace Lumina
         /* Allocate and create the draw image */
         vmaCreateImage(VkRenderContext->GetAllocator(), &ImgInfo, &AllocationInfo, &DrawImage.Image, &DrawImage.Allocation, nullptr);
 
+        /* Allocate and create the depth image */
+        VkImageCreateInfo DepthImgInfo = Vulkan::ImageCreateInfo(DepthImage.ImageFormat, DepthImageFlags, GetExtent());
+        vmaCreateImage(VkRenderContext->GetAllocator(), &DepthImgInfo, &AllocationInfo, &DepthImage.Image, &DepthImage.Allocation, nullptr);
+
+        VkImageViewCreateInfo DepthViewInfo = Vulkan::ImageViewCreateInfo(DepthImage.ImageFormat, DepthImage.Image, VK_IMAGE_ASPECT_DEPTH_BIT);
+
         VkImageViewCreateInfo ViewInfo = Vulkan::ImageViewCreateInfo(DrawImage.ImageFormat, DrawImage.Image, VK_IMAGE_ASPECT_COLOR_BIT);
 
+        VK_CHECK(vkCreateImageView(Device, &DepthViewInfo, nullptr, &DepthImage.ImageView));
         VK_CHECK(vkCreateImageView(Device, &ViewInfo, nullptr, &DrawImage.ImageView));
         
 

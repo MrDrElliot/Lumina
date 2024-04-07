@@ -5,6 +5,7 @@
 #include "Source/Runtime/Log/Log.h"
 #include "Source/Runtime/Renderer/Vulkan/VulkanSwapChain.h"
 #include "Source/Runtime/Renderer/RenderContext.h"
+#include "Source/Runtime/Renderer/Vulkan/VulkanRenderContext.h"
 #include "Windows/Window.h"
 
 namespace Lumina
@@ -32,6 +33,10 @@ namespace Lumina
         {
             if (!IsMinimized())
             {
+                if(FRenderContext::Get<FVulkanRenderContext>()->IsResizeRequested())
+                {
+                    Window->GetSwapChain()->Resize();
+                }
                 Window->OnImGuiUpdate(1.0f);
                 Window->OnUpdate(1.0f);
             }
@@ -85,6 +90,7 @@ namespace Lumina
 
         /* Window Init must be called before initializing a swap chain or the GLFWwindow will be null */
         Window->Init();
+        
         NewSwapChain->Init(Window.get());
     }
 
@@ -111,4 +117,5 @@ namespace Lumina
         LayerStack.PopOverlay(InLayer);
         InLayer->OnDetach();
     }
+    
 }

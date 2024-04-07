@@ -17,7 +17,6 @@ layout(buffer_reference, std430) readonly buffer VertexBuffer{
 	Vertex vertices[];
 };
 
-//push constants block
 layout( push_constant ) uniform constants
 {	
 	mat4 render_matrix;
@@ -26,7 +25,6 @@ layout( push_constant ) uniform constants
 
 void main() 
 {	
-	//load vertex data from device adress
 	Vertex v = PushConstants.vertexBuffer.vertices[gl_VertexIndex];
 
 	//output data

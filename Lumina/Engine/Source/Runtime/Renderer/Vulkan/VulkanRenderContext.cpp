@@ -8,13 +8,16 @@
 #include "imgui/backends/imgui_impl_vulkan.h"
 #include "Source/Runtime/ApplicationCore/Windows/Window.h"
 
-
+#define GLM_ENABLE_EXPERIMENTAL
+#include "glm/gtx/transform.hpp"
 
 namespace Lumina
 {
     FVulkanRenderContext::FVulkanRenderContext()
     {
         CreateVkInstance();
+        
+
     }
 
     FVulkanRenderContext::~FVulkanRenderContext()
@@ -31,9 +34,11 @@ namespace Lumina
 
 
     }
+    
 
     void FVulkanRenderContext::ImGuiDraw(float DeltaTime)
     {
+        
         ImGui_ImplVulkan_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
@@ -62,14 +67,25 @@ namespace Lumina
 
         /* Wait until the GPU has finished rendering the previous frame */
         VK_CHECK(vkWaitForFences(Device, 1, &GetCurrentFrame().RenderFence, true, 1000000000));
-        VK_CHECK(vkResetFences(Device, 1, &GetCurrentFrame().RenderFence));
 
         GetCurrentFrame().DeletionQueue.Flush();
+        GetCurrentFrame().FrameDescriptors.ClearPools(Device);
+        
         
         /* Request the rendered image from the swap chain */
         uint32_t SwapChainImageIndex = 0;
-        VK_CHECK(vkAcquireNextImageKHR(Device, ActiveSwapChain->GetSwapChain(), 1000000000, GetCurrentFrame().SwapchainSemaphore, nullptr, &SwapChainImageIndex));
+        VkResult ImageResult = vkAcquireNextImageKHR(Device, ActiveSwapChain->GetSwapChain(), 1000000000, GetCurrentFrame().SwapchainSemaphore, nullptr, &SwapChainImageIndex);
+        if(ImageResult == VK_ERROR_OUT_OF_DATE_KHR)
+        {
+            bResizeRequested = true;
+            return;
+        }
 
+        
+
+        VK_CHECK(vkResetFences(Device, 1, &GetCurrentFrame().RenderFence));
+
+        
         /* Get the current frame's command buffer */
         VkCommandBuffer Cmd = GetCurrentFrame().CommandBuffer;
 
@@ -88,8 +104,10 @@ namespace Lumina
 
         DrawBackground(Cmd);
 
-        Vulkan::TransitionImage(Cmd, ActiveSwapChain->GetDrawImage().Image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+        Vulkan::TransitionImage(Cmd, ActiveSwapChain->GetDrawImage().Image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+        Vulkan::TransitionImage(Cmd, ActiveSwapChain->GetDepthImage().Image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL);
 
+        
         DrawGeometry(Cmd);
 
         // Transition the draw image and the swapchain image into their correct transfer layouts
@@ -118,6 +136,7 @@ namespace Lumina
 
         VK_CHECK(vkQueueSubmit2(GraphicsQueue, 1, &Submit, GetCurrentFrame().RenderFence));
 
+
         VkPresentInfoKHR PresentInfo = {};
         PresentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
         PresentInfo.pNext = nullptr;
@@ -127,8 +146,11 @@ namespace Lumina
         PresentInfo.waitSemaphoreCount = 1;
         PresentInfo.pImageIndices = &SwapChainImageIndex;
 
-        VK_CHECK(vkQueuePresentKHR(GraphicsQueue, &PresentInfo));
-        
+        VkResult PresentResult = vkQueuePresentKHR(GraphicsQueue, &PresentInfo);
+        if(PresentResult == VK_ERROR_OUT_OF_DATE_KHR)
+        {
+            bResizeRequested = true;
+        }
         
         FrameNumber++;
     }
@@ -136,11 +158,12 @@ namespace Lumina
     void FVulkanRenderContext::DrawGeometry(VkCommandBuffer InCmd)
     {
         VkRenderingAttachmentInfo colorAttachment = Vulkan::RenderingAttachmentInfo(ActiveSwapChain->GetDrawImage().ImageView, nullptr, VK_IMAGE_LAYOUT_GENERAL);
-
+        VkRenderingAttachmentInfo depthAttachment = Vulkan::DepthAttachmentInfo(ActiveSwapChain->GetDepthImage().ImageView, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL);
+        
         VkRenderingInfo renderInfo = Vulkan::RenderingInfo(ActiveSwapChain->GetDrawExtent2D(), &colorAttachment, nullptr);
         vkCmdBeginRendering(InCmd, &renderInfo);
 
-        vkCmdBindPipeline(InCmd, VK_PIPELINE_BIND_POINT_GRAPHICS, TrianglePipeline);
+        // vkCmdBindPipeline(InCmd, VK_PIPELINE_BIND_POINT_GRAPHICS, TrianglePipeline);
 
         //set dynamic viewport and scissor
         VkViewport viewport = {};
@@ -161,22 +184,60 @@ namespace Lumina
 
         vkCmdSetScissor(InCmd, 0, 1, &scissor);
 
-        vkCmdDraw(InCmd, 3, 1, 0, 0);
+        // vkCmdDraw(InCmd, 3, 1, 0, 0);
 
 
         vkCmdBindPipeline(InCmd, VK_PIPELINE_BIND_POINT_GRAPHICS, MeshPipeline);
 
+
+        VkDescriptorSet ImageSet = GetCurrentFrame().FrameDescriptors.Allocate(Device, SingleImageDescriptorLayout);
+        FDescriptorWriter TexWriter;
+        TexWriter.WriteImage(0, ErrorCheckerboardImage.ImageView, DefaultSamplerNearest, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+        TexWriter.UpdateSet(Device, ImageSet);
+
+        vkCmdBindDescriptorSets(InCmd, VK_PIPELINE_BIND_POINT_GRAPHICS, MeshPipelineLayout, 0, 1, &ImageSet, 0, nullptr);
+        
+        
+
+
+        glm::mat4 view = glm::translate(glm::vec3{ 0,0,-5 });
+        glm::mat4 projection = glm::perspective(glm::radians(70.f), (float)ActiveSwapChain->GetDrawExtent().width / (float)ActiveSwapChain->GetDrawExtent().height, 10000.f, 0.1f);
+        projection[1][1] *= -1;
+
+        
+
+
+        
         FGPUDrawPushConstants push_constants;
-        push_constants.WorldMatrix = glm::mat4{ 1.f };
-        push_constants.VertexBuffer = Rect.VertexBufferAddress;
-
+        push_constants.WorldMatrix = projection * view;
         push_constants.VertexBuffer = testMeshes[2]->MeshBuffers.VertexBufferAddress;
-
+        
         vkCmdPushConstants(InCmd, MeshPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(FGPUDrawPushConstants), &push_constants);
-        vkCmdBindIndexBuffer(InCmd, Rect.IndexBuffer.Buffer, 0, VK_INDEX_TYPE_UINT32);
+        vkCmdBindIndexBuffer(InCmd, testMeshes[2]->MeshBuffers.IndexBuffer.Buffer, 0, VK_INDEX_TYPE_UINT32);
 
-        vkCmdDrawIndexed(InCmd, 6, 1, 0, 0, 0);
+        vkCmdDrawIndexed(InCmd, testMeshes[2]->Surfaces[0].Count, 1, testMeshes[2]->Surfaces[0].StartIndex, 0, 0);
 
+        FAllocatedBuffer GpuSceneDataBuffer = CreateBuffer(sizeof(FGPUSceneData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+
+        //@TODO crashing?
+        /*GetCurrentFrame().DeletionQueue.Add([&]
+        {
+           DestroyBuffer(GpuSceneDataBuffer); 
+        });*/
+
+        VmaAllocationInfo Info;
+        vmaGetAllocationInfo(Allocator, GpuSceneDataBuffer.Allocation, &Info);
+        void* data = Info.pMappedData;
+
+        FGPUSceneData* SceneUniformData = (FGPUSceneData*)data;
+        *SceneUniformData = SceneData;
+
+        VkDescriptorSet GlobalDescriptor = GetCurrentFrame().FrameDescriptors.Allocate(Device, GpuSceneDataDescriptorLayout);
+        
+        FDescriptorWriter Writer;
+        Writer.WriteBuffer(0, GpuSceneDataBuffer.Buffer, sizeof(FGPUSceneData), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+        Writer.UpdateSet(Device, GlobalDescriptor);
+        
         vkCmdEndRendering(InCmd);
     }
 
@@ -185,23 +246,12 @@ namespace Lumina
 
         FComputeEffect& Effect = BackgroundEffects[CurrentBackgroundEffect];
         
-
-        VkImageSubresourceRange clearRange = Vulkan::ImageSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT);
-
-        // bind the gradient drawing compute pipeline
         vkCmdBindPipeline(InBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, Effect.Pipeline);
 
-        // bind the descriptor set containing the draw image for the compute pipeline
         vkCmdBindDescriptorSets(InBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, GradientPipelineLayout, 0, 1, &DrawImageDescriptors, 0, nullptr);
-
-        FComputePushConstants pc;
-        pc.data1 = glm::vec4(1, 0, 0, 1);
-        pc.data2 = glm::vec4(0, 0, 1, 1);
-
+        
         vkCmdPushConstants(InBuffer, GradientPipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(FComputePushConstants), &Effect.Data);
 
-        
-        // execute the compute pipeline dispatch. We are using 16x16 workgroup size so we need to divide by it
         vkCmdDispatch(InBuffer, std::ceil(ActiveSwapChain->GetDrawExtent().width / 16.0), std::ceil(ActiveSwapChain->GetDrawExtent().height / 16.0), 1);
     }
 
@@ -215,6 +265,83 @@ namespace Lumina
         ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), InBuffer);
 
         vkCmdEndRendering(InBuffer);
+    }
+
+    FAllocatedImage FVulkanRenderContext::CreateImage(VkExtent3D InSize, VkFormat InFormat, VkImageUsageFlags InUsage, bool bMipmapped)
+    {
+        FAllocatedImage newImage;
+        newImage.ImageFormat = InFormat;
+        newImage.ImageExtent = InSize;
+
+        VkImageCreateInfo img_info = Vulkan::ImageCreateInfo(InFormat, InUsage, InSize);
+        if (bMipmapped)
+        {
+            img_info.mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(InSize.width, InSize.height)))) + 1;
+        }
+
+        // always allocate images on dedicated GPU memory
+        VmaAllocationCreateInfo allocinfo = {};
+        allocinfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+        allocinfo.requiredFlags = VkMemoryPropertyFlags(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+        // allocate and create the image
+        VK_CHECK(vmaCreateImage(Allocator, &img_info, &allocinfo, &newImage.Image, &newImage.Allocation, nullptr));
+
+        // if the format is a depth format, we will need to have it use the correct
+        // aspect flag
+        VkImageAspectFlags aspectFlag = VK_IMAGE_ASPECT_COLOR_BIT;
+        if (InFormat == VK_FORMAT_D32_SFLOAT)
+        {
+            aspectFlag = VK_IMAGE_ASPECT_DEPTH_BIT;
+        }
+
+        // build a image-view for the image
+        VkImageViewCreateInfo view_info = Vulkan::ImageViewCreateInfo(InFormat, newImage.Image, aspectFlag);
+        view_info.subresourceRange.levelCount = img_info.mipLevels;
+
+        VK_CHECK(vkCreateImageView(Device, &view_info, nullptr, &newImage.ImageView));
+
+        return newImage;
+    }
+
+    FAllocatedImage FVulkanRenderContext::CreateImage(void* InData, VkExtent3D InSize, VkFormat InFormat, VkImageUsageFlags InUsage, bool bMipmapped)
+    {
+        size_t data_size = InSize.depth * InSize.width * InSize.height * 4;
+        FAllocatedBuffer uploadbuffer = CreateBuffer(data_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+
+        memcpy(uploadbuffer.Info.pMappedData, InData, data_size);
+
+        FAllocatedImage Newimage = CreateImage(InSize, InFormat, InUsage | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, bMipmapped);
+
+        ImmediateSubmit([&](VkCommandBuffer cmd)
+        {
+            Vulkan::TransitionImage(cmd, Newimage.Image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+            VkBufferImageCopy copyRegion = {};
+            copyRegion.bufferOffset = 0;
+            copyRegion.bufferRowLength = 0;
+            copyRegion.bufferImageHeight = 0;
+
+            copyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+            copyRegion.imageSubresource.mipLevel = 0;
+            copyRegion.imageSubresource.baseArrayLayer = 0;
+            copyRegion.imageSubresource.layerCount = 1;
+            copyRegion.imageExtent = InSize;
+
+            // copy the buffer into the image
+            vkCmdCopyBufferToImage(cmd, uploadbuffer.Buffer, Newimage.Image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
+
+            Vulkan::TransitionImage(cmd, Newimage.Image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL); });
+
+        DestroyBuffer(uploadbuffer);
+
+        return Newimage;
+    }
+
+    void FVulkanRenderContext::DestroyImage(const FAllocatedImage& InImage)
+    {
+        vkDestroyImageView(Device, InImage.ImageView, nullptr);
+        vmaDestroyImage(Allocator, InImage.Image, InImage.Allocation);
     }
 
     FAllocatedBuffer FVulkanRenderContext::CreateBuffer(size_t Size, VkBufferUsageFlags InUsage, VmaMemoryUsage MemoryUsage)
@@ -248,8 +375,7 @@ namespace Lumina
         FGPUMeshBuffers newSurface;
 
         //create vertex buffer
-        newSurface.VertexBuffer = CreateBuffer(vertexBufferSize, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-            VMA_MEMORY_USAGE_GPU_ONLY);
+        newSurface.VertexBuffer = CreateBuffer(vertexBufferSize, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 
         //find the adress of the vertex buffer
         VkBufferDeviceAddressInfo deviceAdressInfo{ .sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,.buffer = newSurface.VertexBuffer.Buffer };
@@ -269,7 +395,8 @@ namespace Lumina
         // copy index buffer
         memcpy((char*)data + vertexBufferSize, Indices.data(), indexBufferSize);
 
-        ImmediateSubmit([&](VkCommandBuffer cmd) {
+        ImmediateSubmit([&](VkCommandBuffer cmd)
+        {
             VkBufferCopy vertexCopy{ 0 };
             vertexCopy.dstOffset = 0;
             vertexCopy.srcOffset = 0;
@@ -338,6 +465,7 @@ namespace Lumina
         /* Initialize ImGui */
         InitImGui();
 
+        /* Initialize Default Data */
         InitDefaultData();
 
         
@@ -438,12 +566,12 @@ namespace Lumina
 
     void FVulkanRenderContext::InitializeDescriptors()
     {
-        std::vector<FDescriptorAllocator::FPoolSizeRatio> Sizes =
+        std::vector<FDescriptorAllocatorGrowable::FPoolSizeRatio> Sizes =
         {
             { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1 }
         };
 
-        GlobalDescriptorAllocator.InitPool(Device, 10, Sizes);
+        GlobalDescriptorAllocator.Init(Device, 10, Sizes);
 
         FDescriptorLayoutBuilder LayoutBuilder;
         LayoutBuilder.AddBinding(0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);
@@ -451,20 +579,36 @@ namespace Lumina
 
         DrawImageDescriptors = GlobalDescriptorAllocator.Allocate(Device, DrawImageDescriptorLayout);
 
-        VkDescriptorImageInfo ImgInfo = {};
-        ImgInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-        ImgInfo.imageView = ActiveSwapChain->GetDrawImage().ImageView;
+        FDescriptorWriter Writer;
+        Writer.WriteImage(0, ActiveSwapChain->GetDrawImage().ImageView, VK_NULL_HANDLE, VK_IMAGE_LAYOUT_GENERAL, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);
+        Writer.UpdateSet(Device, DrawImageDescriptors);
 
-        VkWriteDescriptorSet DrawImageWrite = {};
-        DrawImageWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        DrawImageWrite.pNext = nullptr;
-        DrawImageWrite.dstBinding = 0;
-        DrawImageWrite.dstSet = DrawImageDescriptors;
-        DrawImageWrite.descriptorCount = 1;
-        DrawImageWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-        DrawImageWrite.pImageInfo = &ImgInfo;
+        FDescriptorLayoutBuilder Builder;
+        Builder.AddBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+        GpuSceneDataDescriptorLayout = Builder.Build(Device, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
 
-        vkUpdateDescriptorSets(Device, 1, &DrawImageWrite, 0, nullptr);
+        FDescriptorLayoutBuilder Builder2;
+        Builder2.AddBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+        SingleImageDescriptorLayout = Builder2.Build(Device, VK_SHADER_STAGE_FRAGMENT_BIT);
+
+        for (int i = 0; i < FRAME_OVERLAP; i++)
+        {
+            // create a descriptor pool
+            std::vector<FDescriptorAllocatorGrowable::FPoolSizeRatio> frame_sizes = { 
+                { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 3 },
+                { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 3 },
+                { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3 },
+                { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4 },
+            };
+
+            Frames[i].FrameDescriptors = FDescriptorAllocatorGrowable{};
+            Frames[i].FrameDescriptors.Init(Device, 1000, frame_sizes);
+	
+            MainDeletionQueue.Add([&, i]()
+            {
+                Frames[i].FrameDescriptors.DestroyPools(Device);
+            });
+        }
     }
 
     void FVulkanRenderContext::InitImGui()
@@ -529,6 +673,8 @@ namespace Lumina
 
         InitTrianglePipeline();
         InitMeshPipeline();
+
+        metalRoughMaterial.BuildPipelines();
     }
 
     void FVulkanRenderContext::InitBackgroundPipelines()
@@ -645,7 +791,7 @@ namespace Lumina
     void FVulkanRenderContext::InitMeshPipeline()
     {
         VkShaderModule FragShader;
-        if (FragShader = Vulkan::LoadShaderModule("Resources/Shaders/Colored_Triangle.frag.spv", Device); FragShader == nullptr)
+        if (FragShader = Vulkan::LoadShaderModule("Resources/Shaders/tex_image.frag.spv", Device); FragShader == nullptr)
         {
             LE_LOG_CRITICAL("Failed to create colored triangle fragment shader!");
         }
@@ -666,7 +812,8 @@ namespace Lumina
         VkPipelineLayoutCreateInfo pipeline_layout_info = Vulkan::PipelineLayoutCreateInfo();
         pipeline_layout_info.pPushConstantRanges = &bufferRange;
         pipeline_layout_info.pushConstantRangeCount = 1;
-
+        pipeline_layout_info.pSetLayouts = &SingleImageDescriptorLayout;
+        pipeline_layout_info.setLayoutCount = 1;
         VK_CHECK(vkCreatePipelineLayout(Device, &pipeline_layout_info, nullptr, &MeshPipelineLayout));
 
         
@@ -676,10 +823,11 @@ namespace Lumina
         Pipeline.SetPolygonMode(VK_POLYGON_MODE_FILL);
         Pipeline.SetCullMode(VK_CULL_MODE_NONE, VK_FRONT_FACE_CLOCKWISE);
         Pipeline.SetMultisampingNone();
-        Pipeline.DisableBlending();
-        Pipeline.DisableDepthTest();
+        // Pipeline.DisableBlending();
+        Pipeline.EnableBlendingAdditive();
+        Pipeline.EnableDepthTest(true, VK_COMPARE_OP_GREATER_OR_EQUAL);
         Pipeline.SetColorAttachmentFormat(ActiveSwapChain->GetDrawImage().ImageFormat);
-        Pipeline.SetDepthFormat(VK_FORMAT_UNDEFINED);
+        Pipeline.SetDepthFormat(ActiveSwapChain->GetDepthImage().ImageFormat);
 
         MeshPipeline = Pipeline.BuildPipeline(Device);
 
@@ -691,32 +839,67 @@ namespace Lumina
 
     void FVulkanRenderContext::InitDefaultData()
     {
+        testMeshes = LoadGltfMeshes("Resources/Meshes/basicmesh.glb").value();
+        
+        
+        constexpr uint32_t white = std::byteswap(0xFFFFFFFF);
+        WhiteImage = CreateImage((void*)&white, VkExtent3D{ 1, 1, 1 }, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT);
 
-            testMeshes = LoadGltfMeshes("Resources/Meshes/basicmesh.glb").value();
+        constexpr uint32_t grey = std::byteswap(0xAAAAAAFF);
+        GreyImage = CreateImage((void*)&grey, VkExtent3D{ 1, 1, 1 }, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT);
 
-            std::array<FVertex,4> rect_vertices;
+        constexpr uint32_t black = std::byteswap(0x000000FF);
+        BlackImage = CreateImage((void*)&black, VkExtent3D{ 1, 1, 1 }, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT);
 
-            rect_vertices[0].Position = {0.5,-0.5, 0};
-            rect_vertices[1].Position = {0.5,0.5, 0};
-            rect_vertices[2].Position = {-0.5,-0.5, 0};
-            rect_vertices[3].Position = {-0.5,0.5, 0};
+        constexpr uint32_t magenta = std::byteswap(0xFF00FFFF);
+        std::array<uint32_t, 16 * 16 > pixels;
+        for (int x = 0; x < 16; x++)
+        {
+            for (int y = 0; y < 16; y++)
+            {
+                pixels[y*16 + x] = ((x % 2) ^ (y % 2)) ? magenta : black;
+            }
+        }
 
-            rect_vertices[0].Color = {0,0, 0,1};
-            rect_vertices[1].Color = { 0.5,0.5,0.5 ,1};
-            rect_vertices[2].Color = { 1,0, 0,1 };
-            rect_vertices[3].Color = { 0,1, 0,1 };
+        
+        ErrorCheckerboardImage = CreateImage(pixels.data(), VkExtent3D{16, 16, 1}, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT);
 
-            std::array<uint32_t,6> rect_indices;
+        VkSamplerCreateInfo sampl = {.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO};
 
-            rect_indices[0] = 0;
-            rect_indices[1] = 1;
-            rect_indices[2] = 2;
+        sampl.magFilter = VK_FILTER_NEAREST;
+        sampl.minFilter = VK_FILTER_NEAREST;
 
-            rect_indices[3] = 2;
-            rect_indices[4] = 1;
-            rect_indices[5] = 3;
+        vkCreateSampler(Device, &sampl, nullptr, &DefaultSamplerNearest);
 
-            Rect = UploadMesh(rect_indices, rect_vertices);
+        sampl.magFilter = VK_FILTER_LINEAR;
+        sampl.minFilter = VK_FILTER_LINEAR;
+        vkCreateSampler(Device, &sampl, nullptr, &DefaultSamplerLinear);
 
+        GLTFMetallicRoughness::Resources materialResources;
+        materialResources.ColorImage = WhiteImage;
+        materialResources.ColorSampler = DefaultSamplerLinear;
+        materialResources.MetalRoughImage = WhiteImage;
+        materialResources.MetalRoughSampler = DefaultSamplerLinear;
+
+        FAllocatedBuffer materialConstants = CreateBuffer(sizeof(GLTFMetallicRoughness::Constants), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+
+
+        VmaAllocationInfo Info;
+        vmaGetAllocationInfo(Allocator, materialConstants.Allocation, &Info);
+        void* Data = Info.pMappedData;
+
+        GLTFMetallicRoughness::Constants* sceneUniformData = (GLTFMetallicRoughness::Constants*)Data;
+        sceneUniformData->Color = glm::vec4{1,1,1,1};
+        sceneUniformData->MetalRoughness = glm::vec4{1,0.5,0,0};
+
+        MainDeletionQueue.Add([=, this]()
+        {
+            DestroyBuffer(materialConstants);
+        });
+
+        materialResources.DataBuffer = materialConstants.Buffer;
+        materialResources.DataBufferOffset = 0;
+
+        defaultData = metalRoughMaterial.WriteMaterial(Device, EMaterialPass::MainColor, materialResources, GlobalDescriptorAllocator);
     }
 }

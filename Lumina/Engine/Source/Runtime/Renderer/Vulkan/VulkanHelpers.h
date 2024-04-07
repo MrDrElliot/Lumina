@@ -71,6 +71,9 @@ namespace Lumina::Vulkan
 
     /* Creates a VkRenderingAttachmentInfo */
     VkRenderingAttachmentInfo RenderingAttachmentInfo(VkImageView view, VkClearValue* clear ,VkImageLayout layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+
+    /* Creates a VkRenderingAttachmentInfo */
+    VkRenderingAttachmentInfo DepthAttachmentInfo(VkImageView InView, VkImageLayout InLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
     
     /* Creates a VkRenderingInfo */
     VkRenderingInfo RenderingInfo(VkExtent2D InRenderExtent, VkRenderingAttachmentInfo* InColorAttachment, VkRenderingAttachmentInfo* InDepthAttachment);

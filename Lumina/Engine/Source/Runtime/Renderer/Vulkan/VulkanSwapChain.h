@@ -4,12 +4,12 @@
 #include <glfw/glfw3.h>
 
 #include <vk-bootstrap/src/VkBootstrap.h>
-#include "VulkanDescriptor.h"
 #include "VulkanTypes.h"
 
 
 namespace Lumina
 {
+    class FVulkanRenderContext;
     class FWindow;
 
     class FVulkanSwapChain
@@ -24,6 +24,7 @@ namespace Lumina
         void Init(FWindow* InWindow);
         
         void Present();
+        void Resize();
 
     public:
 
@@ -47,6 +48,7 @@ namespace Lumina
         
 
         FAllocatedImage& GetDrawImage() { return DrawImage; }
+        FAllocatedImage& GetDepthImage() { return DepthImage; }
 
         /* Get the extent from the draw image */
         VkExtent3D& GetDrawExtent() { return DrawImage.ImageExtent; }
@@ -58,13 +60,16 @@ namespace Lumina
     private:
 
         bool bInitialized = false;
-
+        FVulkanRenderContext* VkRenderContext;
+        
         vkb::Swapchain SwapChain;
         VkSurfaceKHR Surface;
 
         VkFormat ImageFormat;
         FAllocatedImage DrawImage;
-        
+        FAllocatedImage DepthImage;
+
+        vkb::Device Device;
 
         
         FWindow* Window;
