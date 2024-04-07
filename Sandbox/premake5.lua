@@ -34,6 +34,7 @@ project "Sandbox"
 		"../Lumina/Engine/ThirdParty/GLFW/src/",
 		"../Lumina/Engine/ThirdParty/GLM/",
 		"../Lumina/Engine/ThirdParty/vk-bootstrap/src/",
+		"../Lumina/Engine/ThirdParty/fastgltf/",
         "../Lumina/Engine/ThirdParty/vulkanmemoryallocator/include/",
         "../Lumina/Engine/ThirdParty/vulkanmemoryallocator/src/",
         "../Lumina/Engine/ThirdParty/imgui/",

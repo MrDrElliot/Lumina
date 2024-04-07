@@ -13,16 +13,17 @@ namespace Lumina
 {
     class FVulkanRenderContext;
 
-    struct FGGeoSurface
+    struct FGeoSurface
     {
         uint32_t StartIndex;
+        uint32_t Count;
     };
 
     struct FMeshAsset
     {
         std::string Name;
 
-        std::vector<FGGeoSurface> Surfaces;
+        std::vector<FGeoSurface> Surfaces;
         FGPUMeshBuffers MeshBuffers;
     };
 

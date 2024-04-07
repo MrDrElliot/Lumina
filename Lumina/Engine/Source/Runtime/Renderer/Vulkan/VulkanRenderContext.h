@@ -1,8 +1,9 @@
 #pragma once
 
-#include "VkBootstrap.h"
+#include <vk-bootstrap/src/VkBootstrap.h>
 #include "..\RenderContext.h"
 #include "VulkanDescriptor.h"
+#include "VulkanLoader.h"
 #include "VulkanTypes.h"
 
 namespace Lumina
@@ -104,6 +105,9 @@ namespace Lumina
         VmaAllocator Allocator;
 
         FDescriptorAllocator GlobalDescriptorAllocator;
+
+        std::vector<std::shared_ptr<FMeshAsset>> testMeshes;
+
 
         VkDescriptorSet DrawImageDescriptors;
         VkDescriptorSetLayout DrawImageDescriptorLayout;

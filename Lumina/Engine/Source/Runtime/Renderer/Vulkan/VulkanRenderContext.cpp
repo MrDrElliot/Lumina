@@ -1,12 +1,11 @@
 #include "VulkanRenderContext.h"
-#include "imgui.h"
-#include "imgui_internal.h"
-#include "VkBootstrap.h"
+#include <imgui/imgui.h>
+#include <vk-bootstrap/src/VkBootstrap.h>
 #include "VulkanHelpers.h"
 #include "VulkanPipeline.h"
 #include "VulkanSwapChain.h"
-#include "backends/imgui_impl_glfw.h"
-#include "backends/imgui_impl_vulkan.h"
+#include "imgui/backends/imgui_impl_glfw.h"
+#include "imgui/backends/imgui_impl_vulkan.h"
 #include "Source/Runtime/ApplicationCore/Windows/Window.h"
 
 
@@ -170,6 +169,8 @@ namespace Lumina
         FGPUDrawPushConstants push_constants;
         push_constants.WorldMatrix = glm::mat4{ 1.f };
         push_constants.VertexBuffer = Rect.VertexBufferAddress;
+
+        push_constants.VertexBuffer = testMeshes[2]->MeshBuffers.VertexBufferAddress;
 
         vkCmdPushConstants(InCmd, MeshPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(FGPUDrawPushConstants), &push_constants);
         vkCmdBindIndexBuffer(InCmd, Rect.IndexBuffer.Buffer, 0, VK_INDEX_TYPE_UINT32);
@@ -690,6 +691,9 @@ namespace Lumina
 
     void FVulkanRenderContext::InitDefaultData()
     {
+
+            testMeshes = LoadGltfMeshes("Resources/Meshes/basicmesh.glb").value();
+
             std::array<FVertex,4> rect_vertices;
 
             rect_vertices[0].Position = {0.5,-0.5, 0};

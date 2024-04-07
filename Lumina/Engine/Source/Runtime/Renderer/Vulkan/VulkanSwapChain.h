@@ -3,7 +3,7 @@
 #define GLFW_INCLUDE_VULKAN
 #include <glfw/glfw3.h>
 
-#include "VkBootstrap.h"
+#include <vk-bootstrap/src/VkBootstrap.h>
 #include "VulkanDescriptor.h"
 #include "VulkanTypes.h"
 

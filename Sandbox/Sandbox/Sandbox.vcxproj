@@ -9,8 +9,8 @@
       <Configuration>Release</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="Shipping|x64">
-      <Configuration>Shipping</Configuration>
+    <ProjectConfiguration Include="Dist|x64">
+      <Configuration>Dist</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
@@ -33,7 +33,7 @@
     <CharacterSet>Unicode</CharacterSet>
     <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Shipping|x64'" Label="Configuration">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Dist|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
@@ -48,28 +48,28 @@
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Shipping|x64'">
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Dist|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LinkIncremental>false</LinkIncremental>
-    <OutDir>..\Binaries\Debug-windows-x86_64\Sandbox\</OutDir>
-    <IntDir>..\Intermediates\Debug-windows-x86_64\Sandbox\</IntDir>
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>..\..\Binaries\Debug-windows-x86_64\</OutDir>
+    <IntDir>..\..\Intermediates\Debug-windows-x86_64\Debug\Sandbox\</IntDir>
     <TargetName>Sandbox</TargetName>
     <TargetExt>.exe</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>..\Binaries\Release-windows-x86_64\Sandbox\</OutDir>
-    <IntDir>..\Intermediates\Release-windows-x86_64\Sandbox\</IntDir>
+    <OutDir>..\..\Binaries\Release-windows-x86_64\</OutDir>
+    <IntDir>..\..\Intermediates\Release-windows-x86_64\Release\Sandbox\</IntDir>
     <TargetName>Sandbox</TargetName>
     <TargetExt>.exe</TargetExt>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Shipping|x64'">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Dist|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>..\Binaries\Shipping-windows-x86_64\Sandbox\</OutDir>
-    <IntDir>..\Intermediates\Shipping-windows-x86_64\Sandbox\</IntDir>
+    <OutDir>..\..\Binaries\Dist-windows-x86_64\</OutDir>
+    <IntDir>..\..\Intermediates\Dist-windows-x86_64\Dist\Sandbox\</IntDir>
     <TargetName>Sandbox</TargetName>
     <TargetExt>.exe</TargetExt>
   </PropertyGroup>
@@ -77,94 +77,61 @@
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;GLM_FORCE_DEPTH_ZERO_TO_ONE;LE_DEBUG;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>Source;..\Lumina\Engine;..\Lumina\Engine\ThirdParty\spdlog\include;..\Lumina\Engine\ThirdParty\GLFW\include;..\Lumina\Engine\ThirdParty\GLFW\src;..\Lumina\Engine\ThirdParty\GLM;..\Lumina\Engine\ThirdParty\vk-bootstrap\src;..\Lumina\Engine\ThirdParty\fastgltf;..\Lumina\Engine\ThirdParty\vulkanmemoryallocator\include;..\Lumina\Engine\ThirdParty\vulkanmemoryallocator\src;..\Lumina\Engine\ThirdParty\imgui;C:\VulkanSDK\1.3.280.0\Include;C:\VulkanSDK\1.3.280.0\Lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;LE_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\Lumina\Engine\ThirdParty\glfw;..\..\Lumina\Engine\ThirdParty\glm;..\..\Lumina\Engine\ThirdParty\imgui;..\..\Lumina\Engine\ThirdParty\fastgltf;C:\VulkanSDK\1.3.280.0\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
-      <MinimalRebuild>false</MinimalRebuild>
-      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalOptions>/EHsc /Zc:preprocessor /Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>$(VULKAN_SDK)\lib\vulkan-1.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;GLM_FORCE_DEPTH_ZERO_TO_ONE;LE_RELEASE;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>Source;..\Lumina\Engine;..\Lumina\Engine\ThirdParty\spdlog\include;..\Lumina\Engine\ThirdParty\GLFW\include;..\Lumina\Engine\ThirdParty\GLFW\src;..\Lumina\Engine\ThirdParty\GLM;..\Lumina\Engine\ThirdParty\vk-bootstrap\src;..\Lumina\Engine\ThirdParty\fastgltf;..\Lumina\Engine\ThirdParty\vulkanmemoryallocator\include;..\Lumina\Engine\ThirdParty\vulkanmemoryallocator\src;..\Lumina\Engine\ThirdParty\imgui;C:\VulkanSDK\1.3.280.0\Include;C:\VulkanSDK\1.3.280.0\Lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;LE_RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\Lumina\Engine\ThirdParty\glfw;..\..\Lumina\Engine\ThirdParty\glm;..\..\Lumina\Engine\ThirdParty\imgui;..\..\Lumina\Engine\ThirdParty\fastgltf;C:\VulkanSDK\1.3.280.0\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <MinimalRebuild>false</MinimalRebuild>
       <StringPooling>true</StringPooling>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalOptions>/EHsc /Zc:preprocessor /Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>$(VULKAN_SDK)\lib\vulkan-1.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Shipping|x64'">
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Dist|x64'">
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;GLM_FORCE_DEPTH_ZERO_TO_ONE;LE_SHIP;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>Source;..\Lumina\Engine;..\Lumina\Engine\ThirdParty\spdlog\include;..\Lumina\Engine\ThirdParty\GLFW\include;..\Lumina\Engine\ThirdParty\GLFW\src;..\Lumina\Engine\ThirdParty\GLM;..\Lumina\Engine\ThirdParty\vk-bootstrap\src;..\Lumina\Engine\ThirdParty\fastgltf;..\Lumina\Engine\ThirdParty\vulkanmemoryallocator\include;..\Lumina\Engine\ThirdParty\vulkanmemoryallocator\src;..\Lumina\Engine\ThirdParty\imgui;C:\VulkanSDK\1.3.280.0\Include;C:\VulkanSDK\1.3.280.0\Lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <DebugInformationFormat>None</DebugInformationFormat>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;LE_DIST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\Lumina\Engine\ThirdParty\glfw;..\..\Lumina\Engine\ThirdParty\glm;..\..\Lumina\Engine\ThirdParty\imgui;..\..\Lumina\Engine\ThirdParty\fastgltf;C:\VulkanSDK\1.3.280.0\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <MinimalRebuild>false</MinimalRebuild>
       <StringPooling>true</StringPooling>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalOptions>/EHsc /Zc:preprocessor /Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-      <GenerateDebugInformation>false</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>$(VULKAN_SDK)\lib\vulkan-1.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Source\SandboxApp.h" />
-    <ClInclude Include="Source\SandboxLayer.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="Source\Sandbox.cpp" />
-    <ClCompile Include="Source\SandboxApp.cpp" />
-    <ClCompile Include="Source\SandboxLayer.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Lumina\Lumina.vcxproj">
+    <ProjectReference Include="..\..\Lumina\Lumina\Lumina.vcxproj">
       <Project>{0BDAA9C1-F77B-D497-E036-E8EBCC775BE8}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\Lumina\Engine\ThirdParty\glfw\GLFW.vcxproj">
-      <Project>{154B857C-0182-860D-AA6E-6C109684020F}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\Lumina\Engine\ThirdParty\imgui\ImGui.vcxproj">
-      <Project>{C0FF640D-2C14-8DBE-F595-301E616989EF}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

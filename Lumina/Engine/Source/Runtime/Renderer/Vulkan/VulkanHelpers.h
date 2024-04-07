@@ -2,7 +2,7 @@
 
 #include <vulkan/vulkan_core.h>
 
-#include "VkBootstrap.h"
+#include <vk-bootstrap/src/VkBootstrap.h>
 #include "Source/Runtime/Log/Log.h"
 
 namespace Lumina::Vulkan

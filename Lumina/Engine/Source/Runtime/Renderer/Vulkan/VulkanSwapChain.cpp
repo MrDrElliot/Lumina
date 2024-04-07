@@ -1,6 +1,6 @@
 #include "VulkanSwapChain.h"
 
-#include "VkBootstrap.h"
+#include <vk-bootstrap/src/VkBootstrap.h>
 #include "VulkanHelpers.h"
 #include "VulkanRenderContext.h"
 #include "Source/Runtime/ApplicationCore/Application.h"

@@ -20,6 +20,9 @@ project "Lumina"
 		
 		"Engine/ThirdParty/stb_image/**.h",
 		
+	    "Engine/ThirdParty/fastgltf/include/**.hpp",
+	    "Engine/ThirdParty/fastgltf/src/**.cpp",
+
 		"Engine/ThirdParty/glm/glm/**.hpp",
 		"Engine/ThirdParty/glm/glm/**.cpp",
 		"Engine/ThirdParty/glm/glm/**.inl",
@@ -36,7 +39,6 @@ project "Lumina"
 	    "Engine/ThirdParty/imgui/backends/imgui_impl_vulkan.h",
 	    "Engine/ThirdParty/imgui/backends/imgui_impl_vulkan.cpp",
 	  
-	    "Engine/ThirdPary/fastgltf/include/**.h",
 
 	}
 
