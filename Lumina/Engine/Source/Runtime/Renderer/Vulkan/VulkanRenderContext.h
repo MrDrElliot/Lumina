@@ -49,6 +49,7 @@ namespace Lumina
         void ClearSwapChain();
         
 
+        VkQueue GetGraphicsQueue() { return GraphicsQueue; }
         FVulkanSwapChain* GetActiveSwapChain() { return ActiveSwapChain; }
         VkDescriptorSetLayout GetGPUDescriptorLayout() { return GpuSceneDataDescriptorLayout; }
         vkb::Device GetDevice() { return Device; }
@@ -75,9 +76,7 @@ namespace Lumina
 
         /* Initialize Descriptors */
         void InitializeDescriptors();
-
-        /* Initialize ImGui */
-        void InitImGui();
+        
 
         /* Initialize Pipelines */
         void InitPipelines();

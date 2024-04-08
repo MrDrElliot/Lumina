@@ -74,12 +74,13 @@ namespace Lumina
         // We will overwrite it all so we dont care about what was the older layout
         Vulkan::TransitionImage(Cmd, ActiveSwapChain->GetDrawImage().Image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
 
+        /* Background render */
         DrawBackground(Cmd);
 
         Vulkan::TransitionImage(Cmd, ActiveSwapChain->GetDrawImage().Image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
         Vulkan::TransitionImage(Cmd, ActiveSwapChain->GetDepthImage().Image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL);
 
-        
+        /* Geomtry Render */
         DrawGeometry(Cmd);
 
         /* Transition the draw image and the swapchain image into their correct transfer layouts */
@@ -91,7 +92,9 @@ namespace Lumina
 
         Vulkan::TransitionImage(Cmd, ActiveSwapChain->GetImages()[SwapChainImageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
+        /* ImGui Render */
         DrawImGui(Cmd, ActiveSwapChain->GetImageViews()[SwapChainImageIndex]);
+        
         
         // Set swapchain image layout to Present so we can show it on the screen
         Vulkan::TransitionImage(Cmd, ActiveSwapChain->GetImages()[SwapChainImageIndex], VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
@@ -99,11 +102,10 @@ namespace Lumina
         /* End the command buffer, commands cannot be added to it after this point */
         VK_CHECK(vkEndCommandBuffer(Cmd));
 
-        VkCommandBufferSubmitInfo CmdInfo = Vulkan::CommandBufferSubmitInfo(Cmd);
         
+        VkCommandBufferSubmitInfo CmdInfo = Vulkan::CommandBufferSubmitInfo(Cmd);
         VkSemaphoreSubmitInfo WaitInfo = Vulkan::SemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR, GetCurrentFrame().SwapchainSemaphore);
         VkSemaphoreSubmitInfo SignalInfo = Vulkan::SemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT, GetCurrentFrame().RenderSemaphore);
-
         VkSubmitInfo2 Submit = Vulkan::SubmitInfo(&CmdInfo, &SignalInfo, &WaitInfo);
 
         VK_CHECK(vkQueueSubmit2(GraphicsQueue, 1, &Submit, GetCurrentFrame().RenderFence));
@@ -117,6 +119,7 @@ namespace Lumina
         PresentInfo.pWaitSemaphores = &GetCurrentFrame().RenderSemaphore;
         PresentInfo.waitSemaphoreCount = 1;
         PresentInfo.pImageIndices = &SwapChainImageIndex;
+
 
         VkResult PresentResult = vkQueuePresentKHR(GraphicsQueue, &PresentInfo);
         if(PresentResult == VK_ERROR_OUT_OF_DATE_KHR)
@@ -133,12 +136,16 @@ namespace Lumina
         VkRenderingAttachmentInfo depthAttachment = Vulkan::DepthAttachmentInfo(ActiveSwapChain->GetDepthImage().ImageView, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL);
         
         VkRenderingInfo renderInfo = Vulkan::RenderingInfo(ActiveSwapChain->GetDrawExtent2D(), &colorAttachment, nullptr);
+        if(renderInfo.renderArea.extent.width == 0 || renderInfo.renderArea.extent.height == 0) return;
+
+
+        
         vkCmdBeginRendering(InCmd, &renderInfo);
 
         //vkCmdBindPipeline(InCmd, VK_PIPELINE_BIND_POINT_GRAPHICS, TrianglePipeline);
 
         VkViewport viewport = {};
-        viewport.x = 500;
+        viewport.x = 0;
         viewport.y = 0;
         viewport.width = ActiveSwapChain->GetDrawExtent2D().width;
         viewport.height = ActiveSwapChain->GetDrawExtent2D().height;
@@ -169,15 +176,12 @@ namespace Lumina
         vkCmdBindDescriptorSets(InCmd, VK_PIPELINE_BIND_POINT_GRAPHICS, MeshPipelineLayout, 0, 1, &ImageSet, 0, nullptr);
         
         
-
-
+        
         glm::mat4 view = glm::translate(glm::vec3{ 0,0,-5 });
         glm::mat4 projection = glm::perspective(glm::radians(70.f), (float)ActiveSwapChain->GetDrawExtent().width / (float)ActiveSwapChain->GetDrawExtent().height, 10000.f, 0.1f);
         projection[1][1] *= -1;
 
         
-
-
         
         FGPUDrawPushConstants push_constants;
         push_constants.WorldMatrix = projection * view;
@@ -228,14 +232,17 @@ namespace Lumina
 
     void FVulkanRenderContext::DrawImGui(VkCommandBuffer InBuffer, VkImageView TargetViewImage)
     {
-        VkRenderingAttachmentInfo colorAttachment = Vulkan::RenderingAttachmentInfo(TargetViewImage, nullptr, VK_IMAGE_LAYOUT_GENERAL);
-        VkRenderingInfo renderInfo = Vulkan::RenderingInfo(ActiveSwapChain->GetExtent2D(), &colorAttachment, nullptr);
+        if (ImDrawData* DrawData = ImGui::GetDrawData())
+        {
+            VkRenderingAttachmentInfo colorAttachment = Vulkan::RenderingAttachmentInfo(TargetViewImage, nullptr, VK_IMAGE_LAYOUT_GENERAL);
+            VkRenderingInfo renderInfo = Vulkan::RenderingInfo(ActiveSwapChain->GetExtent2D(), &colorAttachment, nullptr);
 
-        vkCmdBeginRendering(InBuffer, &renderInfo);
+            vkCmdBeginRendering(InBuffer, &renderInfo);
 
-        ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), InBuffer);
+            ImGui_ImplVulkan_RenderDrawData(DrawData, InBuffer);
 
-        vkCmdEndRendering(InBuffer);
+            vkCmdEndRendering(InBuffer);
+        }
     }
 
     FAllocatedImage FVulkanRenderContext::CreateImage(VkExtent3D InSize, VkFormat InFormat, VkImageUsageFlags InUsage, bool bMipmapped)
@@ -433,9 +440,9 @@ namespace Lumina
         /* Initialize Pipelines */
         InitPipelines();
 
-        /* Initialize ImGui */
-        InitImGui();
-
+        /* Initialize ImGuiLayer */
+        FApplication::Get().InitImGuiLayer();
+        
         /* Initialize Default Data */
         InitDefaultData();
 
@@ -581,63 +588,7 @@ namespace Lumina
             });
         }
     }
-
-    void FVulkanRenderContext::InitImGui()
-    {
-        VkDescriptorPoolSize PoolSizes[] = { { VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
-        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
-        { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
-        { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
-        { VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
-        { VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
-        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
-        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
-        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
-        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
-        { VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 } };
-
-        VkDescriptorPoolCreateInfo PoolInfo =  {};
-        PoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-        PoolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-        PoolInfo.maxSets = 1000;
-        PoolInfo.poolSizeCount = (uint32_t)std::size(PoolSizes);
-        PoolInfo.pPoolSizes = PoolSizes;
-
-
-        VkDescriptorPool ImGuiPool;
-        VK_CHECK(vkCreateDescriptorPool(Device, &PoolInfo, nullptr, &ImGuiPool));
-
-        ImGui::CreateContext();
-        ImGuiIO& Io = ImGui::GetIO(); (void)Io;
-        ImGui::StyleColorsDark();
-        ImGui_ImplGlfw_InitForVulkan(ActiveSwapChain->GetWindow()->GetWindow(), true);
-
-        VkPipelineRenderingCreateInfo RenderPipeline = {};
-        RenderPipeline.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
-        RenderPipeline.pColorAttachmentFormats = &ActiveSwapChain->GetFormat();
-        RenderPipeline.colorAttachmentCount = 1;
-
-        ImGui_ImplVulkan_InitInfo InitInfo = {};
-        InitInfo.PipelineRenderingCreateInfo = RenderPipeline;
-        InitInfo.Instance = Instance;
-        InitInfo.PhysicalDevice = PhysicalDevice;
-        InitInfo.Device = Device;
-        InitInfo.Queue = GraphicsQueue;
-        InitInfo.DescriptorPool = ImGuiPool;
-        InitInfo.MinImageCount = 3;
-        InitInfo.ImageCount = 3;
-        InitInfo.UseDynamicRendering = true;
-        InitInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
-
-        ImGui_ImplVulkan_Init(&InitInfo);
-
-        ImmediateSubmit([&](VkCommandBuffer cmd) { ImGui_ImplVulkan_CreateFontsTexture(); });
-
-        ImGui_ImplVulkan_DestroyFontsTexture();
-
-        
-    }
-
+    
     void FVulkanRenderContext::InitPipelines()
     {
         InitBackgroundPipelines();

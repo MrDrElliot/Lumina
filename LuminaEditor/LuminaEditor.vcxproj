@@ -79,7 +79,7 @@
       <WarningLevel>Level3</WarningLevel>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;GLM_FORCE_DEPTH_ZERO_TO_ONE;LE_DEBUG;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>Source;..\Lumina\Engine;..\Lumina\Engine\ThirdParty\spdlog\include;..\Lumina\Engine\ThirdParty\GLFW\include;..\Lumina\Engine\ThirdParty\GLFW\src;..\Lumina\Engine\ThirdParty\GLM;..\Lumina\Engine\ThirdParty\vk-bootstrap\src;..\Lumina\Engine\ThirdParty\vulkanmemoryallocator\include;..\Lumina\Engine\ThirdParty\vulkanmemoryallocator\src;..\Lumina\Engine\ThirdParty\imgui;C:\VulkanSDK\1.3.280.0\Include;C:\VulkanSDK\1.3.280.0\Lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Editor;..\Lumina\Engine;..\Lumina\Engine\ThirdParty\spdlog\include;..\Lumina\Engine\ThirdParty\GLFW\include;..\Lumina\Engine\ThirdParty\GLFW\src;..\Lumina\Engine\ThirdParty\GLM;..\Lumina\Engine\ThirdParty\vk-bootstrap\src;..\Lumina\Engine\ThirdParty\vulkanmemoryallocator\include;..\Lumina\Engine\ThirdParty\vulkanmemoryallocator\src;..\Lumina\Engine\ThirdParty\imgui;C:\VulkanSDK\1.3.280.0\Include;C:\VulkanSDK\1.3.280.0\Lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <MinimalRebuild>false</MinimalRebuild>
@@ -101,7 +101,7 @@
       <WarningLevel>Level3</WarningLevel>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;GLM_FORCE_DEPTH_ZERO_TO_ONE;LE_RELEASE;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>Source;..\Lumina\Engine;..\Lumina\Engine\ThirdParty\spdlog\include;..\Lumina\Engine\ThirdParty\GLFW\include;..\Lumina\Engine\ThirdParty\GLFW\src;..\Lumina\Engine\ThirdParty\GLM;..\Lumina\Engine\ThirdParty\vk-bootstrap\src;..\Lumina\Engine\ThirdParty\vulkanmemoryallocator\include;..\Lumina\Engine\ThirdParty\vulkanmemoryallocator\src;..\Lumina\Engine\ThirdParty\imgui;C:\VulkanSDK\1.3.280.0\Include;C:\VulkanSDK\1.3.280.0\Lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Editor;..\Lumina\Engine;..\Lumina\Engine\ThirdParty\spdlog\include;..\Lumina\Engine\ThirdParty\GLFW\include;..\Lumina\Engine\ThirdParty\GLFW\src;..\Lumina\Engine\ThirdParty\GLM;..\Lumina\Engine\ThirdParty\vk-bootstrap\src;..\Lumina\Engine\ThirdParty\vulkanmemoryallocator\include;..\Lumina\Engine\ThirdParty\vulkanmemoryallocator\src;..\Lumina\Engine\ThirdParty\imgui;C:\VulkanSDK\1.3.280.0\Include;C:\VulkanSDK\1.3.280.0\Lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -126,7 +126,7 @@
       <WarningLevel>Level3</WarningLevel>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;GLM_FORCE_DEPTH_ZERO_TO_ONE;LE_SHIP;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>Source;..\Lumina\Engine;..\Lumina\Engine\ThirdParty\spdlog\include;..\Lumina\Engine\ThirdParty\GLFW\include;..\Lumina\Engine\ThirdParty\GLFW\src;..\Lumina\Engine\ThirdParty\GLM;..\Lumina\Engine\ThirdParty\vk-bootstrap\src;..\Lumina\Engine\ThirdParty\vulkanmemoryallocator\include;..\Lumina\Engine\ThirdParty\vulkanmemoryallocator\src;..\Lumina\Engine\ThirdParty\imgui;C:\VulkanSDK\1.3.280.0\Include;C:\VulkanSDK\1.3.280.0\Lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Editor;..\Lumina\Engine;..\Lumina\Engine\ThirdParty\spdlog\include;..\Lumina\Engine\ThirdParty\GLFW\include;..\Lumina\Engine\ThirdParty\GLFW\src;..\Lumina\Engine\ThirdParty\GLM;..\Lumina\Engine\ThirdParty\vk-bootstrap\src;..\Lumina\Engine\ThirdParty\vulkanmemoryallocator\include;..\Lumina\Engine\ThirdParty\vulkanmemoryallocator\src;..\Lumina\Engine\ThirdParty\imgui;C:\VulkanSDK\1.3.280.0\Include;C:\VulkanSDK\1.3.280.0\Lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -148,6 +148,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Editor\LuminaEditor.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Editor\LuminaEditor.cpp" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\Lumina\Lumina.vcxproj">
       <Project>{0BDAA9C1-F77B-D497-E036-E8EBCC775BE8}</Project>
     </ProjectReference>
@@ -157,12 +163,6 @@
     <ProjectReference Include="..\Lumina\Engine\ThirdParty\imgui\ImGui.vcxproj">
       <Project>{C0FF640D-2C14-8DBE-F595-301E616989EF}</Project>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="Editor\LuminaEditor.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="Editor\LuminaEditor.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

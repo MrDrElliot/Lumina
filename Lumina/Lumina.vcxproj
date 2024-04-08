@@ -168,6 +168,9 @@
     <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanRenderContext.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanSwapChain.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanTypes.h" />
+    <ClInclude Include="Engine\Source\Runtime\Thread\GameThread.h" />
+    <ClInclude Include="Engine\Source\Runtime\Thread\RenderThread.h" />
+    <ClInclude Include="Engine\Source\Runtime\Thread\Thread.h" />
     <ClInclude Include="Engine\ThirdParty\fastgltf\deps\simdjson\simdjson.h" />
     <ClInclude Include="Engine\ThirdParty\fastgltf\include\fastgltf\base64.hpp" />
     <ClInclude Include="Engine\ThirdParty\fastgltf\include\fastgltf\core.hpp" />
@@ -620,6 +623,9 @@
     <ClCompile Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanPipeline.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanRenderContext.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanSwapChain.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Thread\GameThread.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Thread\RenderThread.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Thread\Thread.cpp" />
     <ClCompile Include="Engine\ThirdParty\fastgltf\deps\simdjson\simdjson.cpp" />
     <ClCompile Include="Engine\ThirdParty\fastgltf\src\base64.cpp" />
     <ClCompile Include="Engine\ThirdParty\fastgltf\src\fastgltf.cpp" />

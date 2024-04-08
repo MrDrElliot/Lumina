@@ -10,6 +10,9 @@
     <Filter Include="Source\Runtime\ApplicationCore">
       <UniqueIdentifier>{75EAD70A-6110-A271-4A56-273D361BC73D}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Runtime\ApplicationCore\ImGui">
+      <UniqueIdentifier>{5FA305ED-4B8A-C7E4-F4DA-2D02E0A0404B}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Source\Runtime\ApplicationCore\Windows">
       <UniqueIdentifier>{AF390F74-9B8B-E663-84AA-2374709BFF4C}</UniqueIdentifier>
     </Filter>
@@ -19,11 +22,20 @@
     <Filter Include="Source\Runtime\Events">
       <UniqueIdentifier>{4DC60895-B932-C48F-8226-5CEDEE51E6F7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Runtime\GUID">
+      <UniqueIdentifier>{014E822D-6DAF-5F3B-F61C-A6ED627D96FA}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Source\Runtime\Log">
       <UniqueIdentifier>{DA226101-C606-2257-2F67-1CAA1B6A0CD9}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source\Runtime\Memory">
       <UniqueIdentifier>{D1D182A6-3D3E-3EA1-0632-D6FE725D6009}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Runtime\Platform">
+      <UniqueIdentifier>{FD947116-69CC-B9AD-72D6-1DD1DE8CE0A6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Runtime\Platform\Vulkan">
+      <UniqueIdentifier>{DD8381CC-C9A9-4B33-B2EF-D0FE9EB470FF}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source\Runtime\Renderer">
       <UniqueIdentifier>{4F9C4EF1-BBD3-9688-C4DD-FAAB3094BD81}</UniqueIdentifier>
@@ -101,6 +113,9 @@
     <ClInclude Include="Engine\Source\Runtime\ApplicationCore\Application.h">
       <Filter>Source\Runtime\ApplicationCore</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\ApplicationCore\ImGui\ImGuiLayer.h">
+      <Filter>Source\Runtime\ApplicationCore\ImGui</Filter>
+    </ClInclude>
     <ClInclude Include="Engine\Source\Runtime\ApplicationCore\Layer.h">
       <Filter>Source\Runtime\ApplicationCore</Filter>
     </ClInclude>
@@ -119,11 +134,17 @@
     <ClInclude Include="Engine\Source\Runtime\Events\Delegate.h">
       <Filter>Source\Runtime\Events</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\GUID\GUID.h">
+      <Filter>Source\Runtime\GUID</Filter>
+    </ClInclude>
     <ClInclude Include="Engine\Source\Runtime\Log\Log.h">
       <Filter>Source\Runtime\Log</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Source\Runtime\Memory\Memory.h">
       <Filter>Source\Runtime\Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Platform\Vulkan\VulkanImGuiLayer.h">
+      <Filter>Source\Runtime\Platform\Vulkan</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Source\Runtime\Renderer\Camera.h">
       <Filter>Source\Runtime\Renderer</Filter>
@@ -1465,17 +1486,20 @@
     <ClCompile Include="Engine\Source\Runtime\ApplicationCore\Application.cpp">
       <Filter>Source\Runtime\ApplicationCore</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\ApplicationCore\ImGui\ImGuiLayer.cpp">
+      <Filter>Source\Runtime\ApplicationCore\ImGui</Filter>
+    </ClCompile>
     <ClCompile Include="Engine\Source\Runtime\ApplicationCore\LayerStack.cpp">
       <Filter>Source\Runtime\ApplicationCore</Filter>
     </ClCompile>
     <ClCompile Include="Engine\Source\Runtime\ApplicationCore\Windows\Window.cpp">
       <Filter>Source\Runtime\ApplicationCore\Windows</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\Source\Runtime\Events\Delegate.cpp">
-      <Filter>Source\Runtime\Events</Filter>
-    </ClCompile>
     <ClCompile Include="Engine\Source\Runtime\Log\Log.cpp">
       <Filter>Source\Runtime\Log</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\Platform\Vulkan\VulkanImGuiLayer.cpp">
+      <Filter>Source\Runtime\Platform\Vulkan</Filter>
     </ClCompile>
     <ClCompile Include="Engine\Source\Runtime\Renderer\Camera.cpp">
       <Filter>Source\Runtime\Renderer</Filter>

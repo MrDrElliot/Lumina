@@ -19,15 +19,15 @@ project "LuminaEditor"
 
 	files
 	{
-		"Source/**.h",
-		"Source/**.cpp",
+		"Editor/**.h",
+		"Editor/**.cpp",
 
 	}
 
 
 	includedirs
 	{ 
-		"Source/",
+		"Editor/",
 		"../Lumina/Engine",
 		"../Lumina/Engine/ThirdParty/spdlog/include/",
 		"../Lumina/Engine/ThirdParty/GLFW/include/",

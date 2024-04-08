@@ -18,14 +18,15 @@ namespace Lumina
         AppSpecs = InAppSpecs;
         Instance = this;
 
-        ImGuiLayer = FImGuiLayer::Create();
-        PushOverlay(ImGuiLayer);
+        /* Initialize Render Thread */
+        RenderThread = std::make_unique<FRenderThread>();
+        RenderThread->Start();
         
     }
 
     FApplication::~FApplication()
     {
-
+        
     }
      
     void FApplication::Run()
@@ -40,6 +41,8 @@ namespace Lumina
                 CheckWindowResized();
                 RenderImGui();
                 Window->OnUpdate(1.0f);
+                
+                RenderThread->Dispatch();
             }
         }
 
@@ -61,12 +64,18 @@ namespace Lumina
         AppWindowSpecs.Width = AppSpecs.WindowWidth;
         AppWindowSpecs.Height = AppSpecs.WindowHeight;
         CreateApplicationWindow(AppWindowSpecs);
+
     }
 
     void FApplication::OnShutdown()
     {
-       Window->Shutdown();
+        Window->Shutdown();
+        
+        RenderThread->RequestStop();
+        RenderThread->Join();
+        
     }
+    
 
     void FApplication::CreateApplicationWindow(const FWindowSpecs& InSpecs)
     {
@@ -77,6 +86,7 @@ namespace Lumina
         Window->Init();
         
         NewSwapChain->Init(Window.get());
+        
     }
 
     void FApplication::CheckWindowResized()
@@ -109,6 +119,12 @@ namespace Lumina
     {
         LayerStack.PopOverlay(InLayer);
         InLayer->OnDetach();
+    }
+
+    void FApplication::InitImGuiLayer()
+    {
+        ImGuiLayer = FImGuiLayer::Create();
+        PushOverlay(ImGuiLayer);
     }
 
     void FApplication::RenderImGui()

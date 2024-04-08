@@ -7,6 +7,9 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
+#include "Source/Runtime/Thread/GameThread.h"
+#include "Source/Runtime/Thread/RenderThread.h"
+
 
 namespace Lumina
 {
@@ -43,7 +46,7 @@ namespace Lumina
 		
 		virtual void OnInit();
 		virtual void OnShutdown();
-
+		
 		void CreateApplicationWindow(const FWindowSpecs& InSpecs);
 
 		void CheckWindowResized();
@@ -52,13 +55,20 @@ namespace Lumina
 		void PushOverlay(FLayer* InLayer);
 		void PopLayer(FLayer* InLayer);
 		void PopOverlay(FLayer* InLayer);
+		void InitImGuiLayer();
 		void RenderImGui();
+
+		
 
 		static FApplication& Get() { return *Instance; }
 
 		FWindow& GetWindow() { return *Window;  }
 		
 
+		FRenderThread* GetRenderThread() const { return RenderThread.get(); }
+		std::thread::id GetRenderThreadID() const { return RenderThread->GetThreadID(); }
+
+		
 		
 		template<typename T>
 		T* GetRenderContext()
@@ -97,6 +107,11 @@ namespace Lumina
 
 		FImGuiLayer* ImGuiLayer;
 
+
+		
+		/* Render Thread */
+		std::unique_ptr<FRenderThread> RenderThread;
+		
 	};
 
 	/* Implemented by client */
