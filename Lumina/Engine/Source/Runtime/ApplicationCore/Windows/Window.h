@@ -46,10 +46,7 @@ namespace Lumina
 
 		GLFWwindow* Window;
 		FVulkanSwapChain* SwapChain;
-		
 		bool bInitialized = false;
-		
-		
 		FWindowSpecs Specs;
 	};
 }

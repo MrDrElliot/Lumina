@@ -3,6 +3,7 @@
 #include <vk-bootstrap/src/VkBootstrap.h>
 #include "VulkanHelpers.h"
 #include "VulkanRenderContext.h"
+#include "backends/imgui_impl_vulkan.h"
 #include "Source/Runtime/ApplicationCore/Application.h"
 #include "Source/Runtime/ApplicationCore/Windows/Window.h"
 
@@ -28,31 +29,26 @@ namespace Lumina
         
     }
 
-    void FVulkanSwapChain::Resize()
+    void FVulkanSwapChain::Resize(uint32_t InWidth, uint32_t InHeight)
     {
         if(Device && VkRenderContext)
         {
             vkDeviceWaitIdle(Device);
 
             DestroySwapchain();
-
-            int h, w;
-            glfwGetWindowSize(Window->GetWindow(), &w, &h);
             
-            CreateSwapChain(w, h);
+            CreateSwapChain(InWidth, InHeight);
 
-            DrawImage.ImageExtent = GetExtent();
-            DepthImage.ImageExtent = GetExtent();
-
-
+            VkExtent3D Extent = GetExtent();
+            DrawImage.ImageExtent = Extent;
+            DepthImage.ImageExtent = Extent;
+            
             bResizeRequested = false;
         }
     }
 
     void FVulkanSwapChain::DestroySwapchain()
     {
-        
-
         std::vector<VkImageView> Images = GetImageViews();
         vkDestroySwapchainKHR(Device, SwapChain, nullptr);
         
@@ -87,19 +83,20 @@ namespace Lumina
 
         /* Vulkan 1.3 Enabled Features */
         VkPhysicalDeviceVulkan13Features Features = {};
-        Features.dynamicRendering = true;
-        Features.synchronization2 = true;
+        Features.dynamicRendering = VK_TRUE;
+        Features.synchronization2 = VK_TRUE;
 
         /* Vulkan 1.2 Enabled Features */
         VkPhysicalDeviceVulkan12Features Features12 = {};
-        Features12.bufferDeviceAddress = true;
-        Features12.descriptorIndexing = true;
+        Features12.bufferDeviceAddress = VK_TRUE;
+        Features12.descriptorIndexing = VK_TRUE;
 
         
         /* Select Vulkan devices */
         vkb::Instance vkb_inst = Vulkan::GetInstance();
         vkb::PhysicalDeviceSelector Selector{ vkb_inst };
         vkb::PhysicalDevice PhysicalDevice = Selector
+        .add_required_extension(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME)
         .set_minimum_version(1, 3)
         .set_required_features_13(Features)
         .set_required_features_12(Features12)
@@ -171,7 +168,9 @@ namespace Lumina
         DrawImageFlags |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
         DrawImageFlags |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
         DrawImageFlags |= VK_IMAGE_USAGE_STORAGE_BIT;
+        DrawImageFlags |= VK_IMAGE_USAGE_SAMPLED_BIT;
         DrawImageFlags |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+        
 
         VkImageCreateInfo ImgInfo = Vulkan::ImageCreateInfo(DrawImage.ImageFormat, DrawImageFlags, GetExtent());
 
@@ -183,6 +182,7 @@ namespace Lumina
 
         /* Allocate and create the draw image */
         vmaCreateImage(VkRenderContext->GetAllocator(), &ImgInfo, &AllocationInfo, &DrawImage.Image, &DrawImage.Allocation, nullptr);
+        
 
         /* Allocate and create the depth image */
         VkImageCreateInfo DepthImgInfo = Vulkan::ImageCreateInfo(DepthImage.ImageFormat, DepthImageFlags, GetExtent());

@@ -7,12 +7,20 @@ namespace Lumina
 {
     VkPipeline FVulkanPipeline::BuildPipeline(VkDevice InDevice)
     {
+
+        DynamicStateEnables = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
+        DynamicStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+        DynamicStateInfo.pDynamicStates = DynamicStateEnables.data();
+        DynamicStateInfo.dynamicStateCount = static_cast<uint32_t>(DynamicStateEnables.size());
+        DynamicStateInfo.flags = 0;
+        
         VkPipelineViewportStateCreateInfo ViewportState = {};
         ViewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
         ViewportState.pNext = nullptr;
-
+        ViewportState.pScissors = nullptr;
+        ViewportState.pViewports = nullptr;
         ViewportState.viewportCount = 1;
-        ViewportState.scissorCount =1;
+        ViewportState.scissorCount = 1;
 
 
         VkPipelineColorBlendStateCreateInfo colorBlending = {};
@@ -39,6 +47,7 @@ namespace Lumina
         PipelineInfo.pColorBlendState = &colorBlending;
         PipelineInfo.pDepthStencilState = &DepthStencil;
         PipelineInfo.layout = PipelineLayout;
+        PipelineInfo.pDynamicState = &DynamicStateInfo;
 
 
         VkDynamicState State[] = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};

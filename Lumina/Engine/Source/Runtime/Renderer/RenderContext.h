@@ -38,8 +38,6 @@ namespace Lumina
         template<typename T>
         static T* Get()
         {
-            //@ TODO Not allowed?
-            //static_assert(std::is_base_of<FRenderContext, T>::Value, "T Must be derived from FRenderContext");
             return dynamic_cast<T*>(FApplication::Get().GetRenderContext<T>());
         }
         

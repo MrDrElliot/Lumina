@@ -25,7 +25,7 @@ namespace Lumina
         void OnDraw();
         
         void Present();
-        void Resize();
+        void Resize(uint32_t InWidth, uint32_t InHeight);
 
         void DestroySwapchain();
 

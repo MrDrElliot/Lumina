@@ -40,6 +40,7 @@ namespace Lumina
     {
 
         FVulkanRenderContext* RenderContext = FRenderContext::Get<FVulkanRenderContext>();
+
         
         VkDescriptorPoolSize PoolSizes[] = { { VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
         { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
@@ -70,6 +71,7 @@ namespace Lumina
         io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       // Enable Multi-Viewport / Platform Windows
 
         ImGui::StyleColorsDark();
+        SetupDarkThemeColors();
         
         VkDescriptorPool ImGuiPool;
         VK_CHECK(vkCreateDescriptorPool(RenderContext->GetDevice(), &PoolInfo, nullptr, &ImGuiPool));
@@ -111,8 +113,6 @@ namespace Lumina
 
     void FVulkanImGuiLayer::OnImGuiRender()
     {
-        ImGui::Begin("Test");
-        ImGui::Text("ASDASDASD");
-        ImGui::End();
+        
     }
 }

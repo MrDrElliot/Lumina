@@ -116,6 +116,12 @@ namespace Lumina
         vkCmdPipelineBarrier2(InCmd, &depInfo);
     }
 
+    void Vulkan::TransitionImage(VkCommandBuffer InCmd, FAllocatedImage& InImage, VkImageLayout CurrentLayout, VkImageLayout NewLayout)
+    {
+        InImage.Layout = NewLayout;
+        TransitionImage(InCmd, InImage.Image, CurrentLayout, NewLayout);
+    }
+
     VkSubmitInfo2 Vulkan::SubmitInfo(VkCommandBufferSubmitInfo* InCmd, VkSemaphoreSubmitInfo* SignalSemaphoreInfo, VkSemaphoreSubmitInfo* WaitSemaphoreInfo)
     {
         VkSubmitInfo2 info = {};

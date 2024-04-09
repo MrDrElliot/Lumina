@@ -11,6 +11,8 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include "glm/gtx/transform.hpp"
 
+#include <chrono>
+
 namespace Lumina
 {
     FVulkanRenderContext::FVulkanRenderContext()
@@ -37,61 +39,34 @@ namespace Lumina
     {
         /* Don't want to render if we haven't initialized yet */
         if(!bInitialized || !ActiveSwapChain) return;
-        
 
-        /* Wait until the GPU has finished rendering the previous frame */
-        VK_CHECK(vkWaitForFences(Device, 1, &GetCurrentFrame().RenderFence, true, 1000000000));
 
-        GetCurrentFrame().DeletionQueue.Flush();
-        GetCurrentFrame().FrameDescriptors.ClearPools(Device);
-        
-        
-        /* Request the rendered image from the swap chain */
+        VkCommandBuffer Cmd;
         uint32_t SwapChainImageIndex = 0;
-        VkResult ImageResult = vkAcquireNextImageKHR(Device, ActiveSwapChain->GetSwapChain(), 1000000000, GetCurrentFrame().SwapchainSemaphore, nullptr, &SwapChainImageIndex);
-        if(ImageResult == VK_ERROR_OUT_OF_DATE_KHR)
-        {
-            ActiveSwapChain->SetResizeRequested(true);
-            return;
-        }
-
-        VK_CHECK(vkResetFences(Device, 1, &GetCurrentFrame().RenderFence));
-
-        
-        /* Get the current frame's command buffer */
-        VkCommandBuffer Cmd = GetCurrentFrame().CommandBuffer;
-
-        
-        /* Reset the commad buffer since we know it's finished, we need to do this to start recording again */
-        VK_CHECK(vkResetCommandBuffer(Cmd, 0));
-        
-
-        /* Begin recording to the command buffer of this frame */
-        VkCommandBufferBeginInfo CmdBeginInfo = Vulkan::CommandBufferBeginInfo(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-        VK_CHECK(vkBeginCommandBuffer(Cmd, &CmdBeginInfo));
+        if(BeginFrame(Cmd, &SwapChainImageIndex) == false) return;
 
         // Transition our main draw image into general layout so we can write into it
         // We will overwrite it all so we dont care about what was the older layout
-        Vulkan::TransitionImage(Cmd, ActiveSwapChain->GetDrawImage().Image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
+        Vulkan::TransitionImage(Cmd, ActiveSwapChain->GetDrawImage(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
 
         /* Background render */
         DrawBackground(Cmd);
 
-        Vulkan::TransitionImage(Cmd, ActiveSwapChain->GetDrawImage().Image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-        Vulkan::TransitionImage(Cmd, ActiveSwapChain->GetDepthImage().Image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL);
+        Vulkan::TransitionImage(Cmd, ActiveSwapChain->GetDrawImage(), VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+        Vulkan::TransitionImage(Cmd, ActiveSwapChain->GetDepthImage(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL);
 
         /* Geomtry Render */
         DrawGeometry(Cmd);
 
         /* Transition the draw image and the swapchain image into their correct transfer layouts */
-        Vulkan::TransitionImage(Cmd, ActiveSwapChain->GetDrawImage().Image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+        Vulkan::TransitionImage(Cmd, ActiveSwapChain->GetDrawImage(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
         Vulkan::TransitionImage(Cmd, ActiveSwapChain->GetImages()[SwapChainImageIndex], VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
         // Execute a copy from the draw image into the swapchain */
         Vulkan::CopyImageToImage(Cmd, ActiveSwapChain->GetDrawImage().Image, ActiveSwapChain->GetImages()[SwapChainImageIndex], ActiveSwapChain->GetDrawExtent2D(), ActiveSwapChain->GetExtent2D());
 
         Vulkan::TransitionImage(Cmd, ActiveSwapChain->GetImages()[SwapChainImageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-
+        
         /* ImGui Render */
         DrawImGui(Cmd, ActiveSwapChain->GetImageViews()[SwapChainImageIndex]);
         
@@ -99,33 +74,7 @@ namespace Lumina
         // Set swapchain image layout to Present so we can show it on the screen
         Vulkan::TransitionImage(Cmd, ActiveSwapChain->GetImages()[SwapChainImageIndex], VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
-        /* End the command buffer, commands cannot be added to it after this point */
-        VK_CHECK(vkEndCommandBuffer(Cmd));
-
-        
-        VkCommandBufferSubmitInfo CmdInfo = Vulkan::CommandBufferSubmitInfo(Cmd);
-        VkSemaphoreSubmitInfo WaitInfo = Vulkan::SemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR, GetCurrentFrame().SwapchainSemaphore);
-        VkSemaphoreSubmitInfo SignalInfo = Vulkan::SemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT, GetCurrentFrame().RenderSemaphore);
-        VkSubmitInfo2 Submit = Vulkan::SubmitInfo(&CmdInfo, &SignalInfo, &WaitInfo);
-
-        VK_CHECK(vkQueueSubmit2(GraphicsQueue, 1, &Submit, GetCurrentFrame().RenderFence));
-
-
-        VkPresentInfoKHR PresentInfo = {};
-        PresentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-        PresentInfo.pNext = nullptr;
-        PresentInfo.pSwapchains = &ActiveSwapChain->GetSwapChain();
-        PresentInfo.swapchainCount = 1;
-        PresentInfo.pWaitSemaphores = &GetCurrentFrame().RenderSemaphore;
-        PresentInfo.waitSemaphoreCount = 1;
-        PresentInfo.pImageIndices = &SwapChainImageIndex;
-
-
-        VkResult PresentResult = vkQueuePresentKHR(GraphicsQueue, &PresentInfo);
-        if(PresentResult == VK_ERROR_OUT_OF_DATE_KHR)
-        {
-            ActiveSwapChain->SetResizeRequested(true);
-        }
+        SubmitFrame(Cmd, SwapChainImageIndex);
         
         FrameNumber++;
     }
@@ -139,10 +88,9 @@ namespace Lumina
         if(renderInfo.renderArea.extent.width == 0 || renderInfo.renderArea.extent.height == 0) return;
 
 
-        
         vkCmdBeginRendering(InCmd, &renderInfo);
+        
 
-        //vkCmdBindPipeline(InCmd, VK_PIPELINE_BIND_POINT_GRAPHICS, TrianglePipeline);
 
         VkViewport viewport = {};
         viewport.x = 0;
@@ -151,18 +99,17 @@ namespace Lumina
         viewport.height = ActiveSwapChain->GetDrawExtent2D().height;
         viewport.minDepth = 0.f;
         viewport.maxDepth = 1.f;
-
         vkCmdSetViewport(InCmd, 0, 1, &viewport);
+
 
         VkRect2D scissor = {};
         scissor.offset.x = 0;
         scissor.offset.y = 0;
         scissor.extent.width = ActiveSwapChain->GetDrawExtent2D().width;
         scissor.extent.height = ActiveSwapChain->GetDrawExtent2D().height;
-
         vkCmdSetScissor(InCmd, 0, 1, &scissor);
 
-        // vkCmdDraw(InCmd, 3, 1, 0, 0);
+
 
 
         vkCmdBindPipeline(InCmd, VK_PIPELINE_BIND_POINT_GRAPHICS, MeshPipeline);
@@ -194,12 +141,7 @@ namespace Lumina
 
         FAllocatedBuffer GpuSceneDataBuffer = CreateBuffer(sizeof(FGPUSceneData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
-        //@TODO crashing?
-        /*GetCurrentFrame().DeletionQueue.Add([&]
-        {
-           DestroyBuffer(GpuSceneDataBuffer); 
-        });*/
-
+        
         VmaAllocationInfo Info;
         vmaGetAllocationInfo(Allocator, GpuSceneDataBuffer.Allocation, &Info);
         void* data = Info.pMappedData;
@@ -243,6 +185,74 @@ namespace Lumina
 
             vkCmdEndRendering(InBuffer);
         }
+    }
+
+    bool FVulkanRenderContext::BeginFrame(VkCommandBuffer& OutCmd, uint32_t* InSwapChainImageIndex)
+    {
+        
+        /* Wait until the GPU has finished rendering the previous frame */
+        VK_CHECK(vkWaitForFences(Device, 1, &GetCurrentFrame().RenderFence, true, 1000000000));
+
+        GetCurrentFrame().DeletionQueue.Flush();
+        GetCurrentFrame().FrameDescriptors.ClearPools(Device);
+        
+        
+        /* Request the rendered image from the swap chain */
+        VkResult ImageResult = vkAcquireNextImageKHR(Device, ActiveSwapChain->GetSwapChain(), 1000000000, GetCurrentFrame().SwapchainSemaphore, nullptr, InSwapChainImageIndex);
+        if(ImageResult == VK_ERROR_OUT_OF_DATE_KHR)
+        {
+            ActiveSwapChain->SetResizeRequested(true);
+            return false;
+        }
+
+        VK_CHECK(vkResetFences(Device, 1, &GetCurrentFrame().RenderFence));
+
+        
+        /* Get the current frame's command buffer */
+        VkCommandBuffer Cmd = GetCurrentFrame().CommandBuffer;
+        
+        
+        /* Reset the commad buffer since we know it's finished, we need to do this to start recording again */
+        VK_CHECK(vkResetCommandBuffer(Cmd, 0));
+        
+
+        /* Begin recording to the command buffer of this frame */
+        VkCommandBufferBeginInfo CmdBeginInfo = Vulkan::CommandBufferBeginInfo(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+        VK_CHECK(vkBeginCommandBuffer(Cmd, &CmdBeginInfo));
+
+        OutCmd = Cmd;
+    }
+
+    void FVulkanRenderContext::SubmitFrame(VkCommandBuffer InCmd, uint32_t SwapChainImageIndex)
+    {
+        /* End the command buffer, commands cannot be added to it after this point */
+        VK_CHECK(vkEndCommandBuffer(InCmd));
+
+        
+        VkCommandBufferSubmitInfo CmdInfo = Vulkan::CommandBufferSubmitInfo(InCmd);
+        VkSemaphoreSubmitInfo WaitInfo = Vulkan::SemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR, GetCurrentFrame().SwapchainSemaphore);
+        VkSemaphoreSubmitInfo SignalInfo = Vulkan::SemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT, GetCurrentFrame().RenderSemaphore);
+        VkSubmitInfo2 Submit = Vulkan::SubmitInfo(&CmdInfo, &SignalInfo, &WaitInfo);
+
+        VK_CHECK(vkQueueSubmit2(GraphicsQueue, 1, &Submit, GetCurrentFrame().RenderFence));
+
+
+        VkPresentInfoKHR PresentInfo = {};
+        PresentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+        PresentInfo.pNext = nullptr;
+        PresentInfo.pSwapchains = &ActiveSwapChain->GetSwapChain();
+        PresentInfo.swapchainCount = 1;
+        PresentInfo.pWaitSemaphores = &GetCurrentFrame().RenderSemaphore;
+        PresentInfo.waitSemaphoreCount = 1;
+        PresentInfo.pImageIndices = &SwapChainImageIndex;
+
+
+        VkResult PresentResult = vkQueuePresentKHR(GraphicsQueue, &PresentInfo);
+        if(PresentResult == VK_ERROR_OUT_OF_DATE_KHR/* || VK_SUBOPTIMAL_KHR*/)
+        {
+            ActiveSwapChain->SetResizeRequested(true);
+        }
+        
     }
 
     FAllocatedImage FVulkanRenderContext::CreateImage(VkExtent3D InSize, VkFormat InFormat, VkImageUsageFlags InUsage, bool bMipmapped)
@@ -593,7 +603,6 @@ namespace Lumina
     {
         InitBackgroundPipelines();
 
-        InitTrianglePipeline();
         InitMeshPipeline();
 
         metalRoughMaterial.BuildPipelines();
@@ -670,45 +679,7 @@ namespace Lumina
 
         
     }
-
-    void FVulkanRenderContext::InitTrianglePipeline()
-    {
-        VkShaderModule FragShader;
-        if(FragShader = Vulkan::LoadShaderModule("../Lumina/Engine/Resources/Shaders/Colored_Triangle.frag.spv", Device); FragShader == nullptr)
-        {
-            LE_LOG_CRITICAL("Failed to created colored triangle frag shader!");
-        }
-
-        VkShaderModule VertShader;
-        if(VertShader = Vulkan::LoadShaderModule("../Lumina/Engine/Resources/Shaders/Colored_Triangle.vert.spv", Device); VertShader == nullptr)
-        {
-            LE_LOG_CRITICAL("Failed to create colored triangle vertex shader!");
-        }
-
-        VkPipelineLayoutCreateInfo LayoutInfo = Vulkan::PipelineLayoutCreateInfo();
-
-        VK_CHECK(vkCreatePipelineLayout(Device, &LayoutInfo, nullptr, &TrianglePipelineLayout));
-
-        FVulkanPipeline Pipeline;
-
-        Pipeline.PipelineLayout = TrianglePipelineLayout;
-        Pipeline.SetShaders(VertShader, FragShader);
-        Pipeline.SetInputTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
-        Pipeline.SetPolygonMode(VK_POLYGON_MODE_FILL);
-        Pipeline.SetCullMode(VK_CULL_MODE_NONE, VK_FRONT_FACE_CLOCKWISE);
-        Pipeline.SetMultisampingNone();
-        Pipeline.DisableBlending();
-        Pipeline.DisableDepthTest();
-
-        //connect the image format we will draw into, from draw image
-        Pipeline.SetColorAttachmentFormat(ActiveSwapChain->GetDrawImage().ImageFormat);
-        Pipeline.SetDepthFormat(VK_FORMAT_UNDEFINED);
-
-        //finally build the pipeline
-        TrianglePipeline = Pipeline.BuildPipeline(Device);
-        
-
-    }
+    
 
     void FVulkanRenderContext::InitMeshPipeline()
     {
@@ -797,6 +768,8 @@ namespace Lumina
         sampl.minFilter = VK_FILTER_LINEAR;
         vkCreateSampler(Device, &sampl, nullptr, &DefaultSamplerLinear);
 
+        GetActiveSwapChain()->GetDrawImage().ImGuiTexture = ImGui_ImplVulkan_AddTexture(DefaultSamplerLinear, GetActiveSwapChain()->GetDrawImage().ImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        
         GLTFMetallicRoughness::Resources materialResources;
         materialResources.ColorImage = WhiteImage;
         materialResources.ColorSampler = DefaultSamplerLinear;
@@ -814,7 +787,7 @@ namespace Lumina
         sceneUniformData->Color = glm::vec4{1,1,1,1};
         sceneUniformData->MetalRoughness = glm::vec4{1,0.5,0,0};
 
-        MainDeletionQueue.Add([=, this]()
+        MainDeletionQueue.Add([&]()
         {
             DestroyBuffer(materialConstants);
         });

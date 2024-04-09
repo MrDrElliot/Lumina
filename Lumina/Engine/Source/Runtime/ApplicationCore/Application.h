@@ -56,7 +56,7 @@ namespace Lumina
 		void PopLayer(FLayer* InLayer);
 		void PopOverlay(FLayer* InLayer);
 		void InitImGuiLayer();
-		void RenderImGui();
+		virtual void RenderImGui();
 
 		
 

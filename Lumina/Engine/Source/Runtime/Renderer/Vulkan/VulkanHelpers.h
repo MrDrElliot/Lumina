@@ -3,6 +3,8 @@
 #include <vulkan/vulkan_core.h>
 
 #include <vk-bootstrap/src/VkBootstrap.h>
+
+#include "VulkanTypes.h"
 #include "Source/Runtime/Log/Log.h"
 
 namespace Lumina::Vulkan
@@ -47,6 +49,9 @@ namespace Lumina::Vulkan
 
     /* Transition the swap chain image into a drawable layout, then clear the command */
     void TransitionImage(VkCommandBuffer InCmd, VkImage InImage, VkImageLayout CurrentLayout, VkImageLayout NewLayout);
+
+    /* Transition the swap chain image into a drawable layout, then clear the command */
+    void TransitionImage(VkCommandBuffer InCmd, FAllocatedImage& InImage, VkImageLayout CurrentLayout, VkImageLayout NewLayout);
 
     /* Creates a VkSubmitInfo2 */
     VkSubmitInfo2 SubmitInfo(VkCommandBufferSubmitInfo* InCmd, VkSemaphoreSubmitInfo* SignalSemaphoreInfo, VkSemaphoreSubmitInfo* WaitSemaphoreInfo);

@@ -43,6 +43,9 @@
     <Filter Include="Source\Runtime\Renderer\Vulkan">
       <UniqueIdentifier>{EFDAA6A6-DB00-710D-C446-F6D8B00B96D9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Runtime\Thread">
+      <UniqueIdentifier>{D0C80FB7-3C35-CBB1-0529-630F7154ED19}</UniqueIdentifier>
+    </Filter>
     <Filter Include="ThirdParty">
       <UniqueIdentifier>{107145F9-FC28-8746-6530-60A251072237}</UniqueIdentifier>
     </Filter>
@@ -181,6 +184,15 @@
     </ClInclude>
     <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanTypes.h">
       <Filter>Source\Runtime\Renderer\Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Thread\GameThread.h">
+      <Filter>Source\Runtime\Thread</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Thread\RenderThread.h">
+      <Filter>Source\Runtime\Thread</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Thread\Thread.h">
+      <Filter>Source\Runtime\Thread</Filter>
     </ClInclude>
     <ClInclude Include="Engine\ThirdParty\fastgltf\deps\simdjson\simdjson.h">
       <Filter>ThirdParty\fastgltf\deps\simdjson</Filter>
@@ -1533,6 +1545,15 @@
     </ClCompile>
     <ClCompile Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanSwapChain.cpp">
       <Filter>Source\Runtime\Renderer\Vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\Thread\GameThread.cpp">
+      <Filter>Source\Runtime\Thread</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\Thread\RenderThread.cpp">
+      <Filter>Source\Runtime\Thread</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\Thread\Thread.cpp">
+      <Filter>Source\Runtime\Thread</Filter>
     </ClCompile>
     <ClCompile Include="Engine\ThirdParty\fastgltf\deps\simdjson\simdjson.cpp">
       <Filter>ThirdParty\fastgltf\deps\simdjson</Filter>

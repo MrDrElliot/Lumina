@@ -5,6 +5,7 @@
 #include "glm/glm.hpp"
 #include <VulkanMemoryAllocator/include/vk_mem_alloc.h>
 
+#include "imgui.h"
 #include "VulkanDescriptor.h"
 
 namespace Lumina
@@ -71,6 +72,9 @@ constexpr unsigned int FRAME_OVERLAP = 2;
         VmaAllocation Allocation;
         VkExtent3D ImageExtent;
         VkFormat ImageFormat;
+
+        VkImageLayout Layout;
+        ImTextureID ImGuiTexture;
     };
 
     struct FGPUSceneData

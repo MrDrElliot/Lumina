@@ -41,7 +41,6 @@ namespace Lumina
                 CheckWindowResized();
                 RenderImGui();
                 Window->OnUpdate(1.0f);
-                
                 RenderThread->Dispatch();
             }
         }
@@ -93,7 +92,9 @@ namespace Lumina
     {
         if(RenderContext->Get<FVulkanRenderContext>()->GetActiveSwapChain()->IsResizeRequested())
         {
-            RenderContext->Get<FVulkanRenderContext>()->GetActiveSwapChain()->Resize();
+            int w, h;
+            glfwGetWindowSize(Window->GetWindow(), &w, &h);
+            RenderContext->Get<FVulkanRenderContext>()->GetActiveSwapChain()->Resize(w, h);
         }
     }
 
@@ -137,6 +138,5 @@ namespace Lumina
         }
 
         ImGuiLayer->End();
-
     }
 }

@@ -27,9 +27,14 @@ namespace Lumina
         void DrawGeometry(VkCommandBuffer InCmd);
         void DrawBackground(VkCommandBuffer InBuffer);
         void DrawImGui(VkCommandBuffer InBuffer, VkImageView TargetViewImage);
+        
+        bool BeginFrame(VkCommandBuffer& OutCmdInCmd, uint32_t* InSwapChainImageIndex);
+        void SubmitFrame(VkCommandBuffer InCmd, uint32_t SwapChainImageIndex);
 
         FAllocatedImage CreateImage(VkExtent3D InSize, VkFormat InFormat, VkImageUsageFlags InUsage, bool bMipmapped = false);
         FAllocatedImage CreateImage(void* InData, VkExtent3D InSize, VkFormat InFormat, VkImageUsageFlags InUsage, bool bMipmapped = false);
+
+        
         void DestroyImage(const FAllocatedImage& InImage);
 
         FAllocatedBuffer CreateBuffer(size_t Size, VkBufferUsageFlags InUsage, VmaMemoryUsage MemoryUsage);
@@ -56,6 +61,11 @@ namespace Lumina
         VmaAllocator& GetAllocator() { return Allocator; }
         vkb::Instance GetInstance() const { return Instance; }
         FFrameData& GetCurrentFrame() { return Frames[FrameNumber % FRAME_OVERLAP]; }
+        VkDescriptorSet GetDrawImageDescriptors() { return DrawImageDescriptors; }
+
+        VkSampler GetSamplerLinear() { return DefaultSamplerLinear; }
+        VkSampler GetSamplerNearest() { return DefaultSamplerNearest; }
+
     
     private:
         
@@ -81,7 +91,6 @@ namespace Lumina
         /* Initialize Pipelines */
         void InitPipelines();
         void InitBackgroundPipelines();
-        void InitTrianglePipeline();
         void InitMeshPipeline();
 
         void InitDefaultData();
@@ -121,7 +130,6 @@ namespace Lumina
 
         FGPUSceneData SceneData;
 
-
         FAllocatedImage WhiteImage;
         FAllocatedImage BlackImage;
         FAllocatedImage GreyImage;
@@ -143,9 +151,7 @@ namespace Lumina
 
         VkPipeline GradientPipeline;
         VkPipelineLayout GradientPipelineLayout;
-
-        VkPipeline TrianglePipeline;
-        VkPipelineLayout TrianglePipelineLayout;
+        
 
         VkPipeline MeshPipeline;
         VkPipelineLayout MeshPipelineLayout;

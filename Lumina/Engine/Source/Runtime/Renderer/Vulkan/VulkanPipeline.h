@@ -39,6 +39,9 @@ namespace Lumina
         VkPipelineDepthStencilStateCreateInfo DepthStencil;
         VkPipelineRenderingCreateInfo RenderInfo;
         VkFormat ColorAttachmentformat;
+        
+        std::vector<VkDynamicState> DynamicStateEnables;
+        VkPipelineDynamicStateCreateInfo DynamicStateInfo;
 
 
 

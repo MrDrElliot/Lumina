@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Panels">
+      <UniqueIdentifier>{A80D95C9-94AF-BF9F-7D6A-D3F369AB46F0}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Editor\EditorLayer.h" />
+    <ClInclude Include="Editor\LuminaEditor.h" />
+    <ClInclude Include="Editor\Panels\ContentBrowserPanel.h">
+      <Filter>Panels</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Panels\EditorPanel.h">
+      <Filter>Panels</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Panels\SceneViewPanel.h">
+      <Filter>Panels</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Editor\EditorLayer.cpp" />
+    <ClCompile Include="Editor\LuminaEditor.cpp" />
+    <ClCompile Include="Editor\Panels\ContentBrowserPanel.cpp">
+      <Filter>Panels</Filter>
+    </ClCompile>
+    <ClCompile Include="Editor\Panels\EditorPanel.cpp">
+      <Filter>Panels</Filter>
+    </ClCompile>
+    <ClCompile Include="Editor\Panels\SceneViewPanel.cpp">
+      <Filter>Panels</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
