@@ -150,15 +150,23 @@
   <ItemGroup>
     <ClInclude Include="Editor\EditorLayer.h" />
     <ClInclude Include="Editor\LuminaEditor.h" />
+    <ClInclude Include="Editor\Panels\ConsolePanel.h" />
     <ClInclude Include="Editor\Panels\ContentBrowserPanel.h" />
     <ClInclude Include="Editor\Panels\EditorPanel.h" />
+    <ClInclude Include="Editor\Panels\MainMenuPanel.h" />
+    <ClInclude Include="Editor\Panels\PropertyDetailsPanel.h" />
+    <ClInclude Include="Editor\Panels\SceneHierarchyPanel.h" />
     <ClInclude Include="Editor\Panels\SceneViewPanel.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Editor\EditorLayer.cpp" />
     <ClCompile Include="Editor\LuminaEditor.cpp" />
+    <ClCompile Include="Editor\Panels\ConsolePanel.cpp" />
     <ClCompile Include="Editor\Panels\ContentBrowserPanel.cpp" />
     <ClCompile Include="Editor\Panels\EditorPanel.cpp" />
+    <ClCompile Include="Editor\Panels\MainMenuPanel.cpp" />
+    <ClCompile Include="Editor\Panels\PropertyDetailsPanel.cpp" />
+    <ClCompile Include="Editor\Panels\SceneHierarchyPanel.cpp" />
     <ClCompile Include="Editor\Panels\SceneViewPanel.cpp" />
   </ItemGroup>
   <ItemGroup>

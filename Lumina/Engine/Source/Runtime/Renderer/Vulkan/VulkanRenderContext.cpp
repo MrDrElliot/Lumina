@@ -66,6 +66,7 @@ namespace Lumina
         Vulkan::CopyImageToImage(Cmd, ActiveSwapChain->GetDrawImage().Image, ActiveSwapChain->GetImages()[SwapChainImageIndex], ActiveSwapChain->GetDrawExtent2D(), ActiveSwapChain->GetExtent2D());
 
         Vulkan::TransitionImage(Cmd, ActiveSwapChain->GetImages()[SwapChainImageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+
         
         /* ImGui Render */
         DrawImGui(Cmd, ActiveSwapChain->GetImageViews()[SwapChainImageIndex]);
@@ -87,11 +88,9 @@ namespace Lumina
         VkRenderingInfo renderInfo = Vulkan::RenderingInfo(ActiveSwapChain->GetDrawExtent2D(), &colorAttachment, nullptr);
         if(renderInfo.renderArea.extent.width == 0 || renderInfo.renderArea.extent.height == 0) return;
 
-
         vkCmdBeginRendering(InCmd, &renderInfo);
+
         
-
-
         VkViewport viewport = {};
         viewport.x = 0;
         viewport.y = 0;
@@ -108,11 +107,10 @@ namespace Lumina
         scissor.extent.width = ActiveSwapChain->GetDrawExtent2D().width;
         scissor.extent.height = ActiveSwapChain->GetDrawExtent2D().height;
         vkCmdSetScissor(InCmd, 0, 1, &scissor);
-
-
-
+        
 
         vkCmdBindPipeline(InCmd, VK_PIPELINE_BIND_POINT_GRAPHICS, MeshPipeline);
+
 
 
         VkDescriptorSet ImageSet = GetCurrentFrame().FrameDescriptors.Allocate(Device, SingleImageDescriptorLayout);
@@ -121,8 +119,6 @@ namespace Lumina
         TexWriter.UpdateSet(Device, ImageSet);
 
         vkCmdBindDescriptorSets(InCmd, VK_PIPELINE_BIND_POINT_GRAPHICS, MeshPipelineLayout, 0, 1, &ImageSet, 0, nullptr);
-        
-        
         
         glm::mat4 view = glm::translate(glm::vec3{ 0,0,-5 });
         glm::mat4 projection = glm::perspective(glm::radians(70.f), (float)ActiveSwapChain->GetDrawExtent().width / (float)ActiveSwapChain->GetDrawExtent().height, 10000.f, 0.1f);
@@ -156,6 +152,7 @@ namespace Lumina
         Writer.UpdateSet(Device, GlobalDescriptor);
         
         vkCmdEndRendering(InCmd);
+        
     }
 
     void FVulkanRenderContext::DrawBackground(VkCommandBuffer InBuffer)
@@ -555,11 +552,20 @@ namespace Lumina
     void FVulkanRenderContext::InitializeDescriptors()
     {
         std::vector<FDescriptorAllocatorGrowable::FPoolSizeRatio> Sizes =
-        {
-            { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1 }
-        };
+            { { VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
+        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
+        { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
+        { VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
+        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
+        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
+        { VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 } };
 
-        GlobalDescriptorAllocator.Init(Device, 10, Sizes);
+        
+        GlobalDescriptorAllocator.Init(Device, 1000, Sizes);
 
         FDescriptorLayoutBuilder LayoutBuilder;
         LayoutBuilder.AddBinding(0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);
@@ -796,5 +802,6 @@ namespace Lumina
         materialResources.DataBufferOffset = 0;
 
         defaultData = metalRoughMaterial.WriteMaterial(Device, EMaterialPass::Transparent, materialResources, GlobalDescriptorAllocator);
+        
     }
 }

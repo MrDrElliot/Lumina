@@ -25,6 +25,9 @@
     <Filter Include="Source\Runtime\GUID">
       <UniqueIdentifier>{014E822D-6DAF-5F3B-F61C-A6ED627D96FA}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Runtime\ImGui">
+      <UniqueIdentifier>{7366FDDD-5FF5-86A7-0814-9BA2F481974D}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Source\Runtime\Log">
       <UniqueIdentifier>{DA226101-C606-2257-2F67-1CAA1B6A0CD9}</UniqueIdentifier>
     </Filter>
@@ -139,6 +142,9 @@
     </ClInclude>
     <ClInclude Include="Engine\Source\Runtime\GUID\GUID.h">
       <Filter>Source\Runtime\GUID</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\ImGui\ImGuiFonts.h">
+      <Filter>Source\Runtime\ImGui</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Source\Runtime\Log\Log.h">
       <Filter>Source\Runtime\Log</Filter>
@@ -1506,6 +1512,9 @@
     </ClCompile>
     <ClCompile Include="Engine\Source\Runtime\ApplicationCore\Windows\Window.cpp">
       <Filter>Source\Runtime\ApplicationCore\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\ImGui\ImGuiFonts.cpp">
+      <Filter>Source\Runtime\ImGui</Filter>
     </ClCompile>
     <ClCompile Include="Engine\Source\Runtime\Log\Log.cpp">
       <Filter>Source\Runtime\Log</Filter>

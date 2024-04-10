@@ -21,7 +21,8 @@ namespace Lumina
 
     private:
 
-        std::unique_ptr<ImGui::FileBrowser> FileBrowser;
+        std::string CurrentPath = "../";
+        std::string SelectedDirectory;
         
     };
 }

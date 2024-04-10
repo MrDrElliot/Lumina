@@ -36,9 +36,9 @@ namespace Lumina
 
         
         void DestroyImage(const FAllocatedImage& InImage);
+        void DestroyBuffer(const FAllocatedBuffer& Buffer);
 
         FAllocatedBuffer CreateBuffer(size_t Size, VkBufferUsageFlags InUsage, VmaMemoryUsage MemoryUsage);
-        void DestroyBuffer(const FAllocatedBuffer& Buffer);
 
         FGPUMeshBuffers UploadMesh(std::span<uint32_t> Indices, std::span<FVertex> Vertices);
 

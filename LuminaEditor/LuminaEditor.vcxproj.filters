@@ -8,10 +8,19 @@
   <ItemGroup>
     <ClInclude Include="Editor\EditorLayer.h" />
     <ClInclude Include="Editor\LuminaEditor.h" />
+    <ClInclude Include="Editor\Panels\ConsolePanel.h">
+      <Filter>Panels</Filter>
+    </ClInclude>
     <ClInclude Include="Editor\Panels\ContentBrowserPanel.h">
       <Filter>Panels</Filter>
     </ClInclude>
     <ClInclude Include="Editor\Panels\EditorPanel.h">
+      <Filter>Panels</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Panels\PropertyDetailsPanel.h">
+      <Filter>Panels</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Panels\SceneHierarchyPanel.h">
       <Filter>Panels</Filter>
     </ClInclude>
     <ClInclude Include="Editor\Panels\SceneViewPanel.h">
@@ -21,10 +30,19 @@
   <ItemGroup>
     <ClCompile Include="Editor\EditorLayer.cpp" />
     <ClCompile Include="Editor\LuminaEditor.cpp" />
+    <ClCompile Include="Editor\Panels\ConsolePanel.cpp">
+      <Filter>Panels</Filter>
+    </ClCompile>
     <ClCompile Include="Editor\Panels\ContentBrowserPanel.cpp">
       <Filter>Panels</Filter>
     </ClCompile>
     <ClCompile Include="Editor\Panels\EditorPanel.cpp">
+      <Filter>Panels</Filter>
+    </ClCompile>
+    <ClCompile Include="Editor\Panels\PropertyDetailsPanel.cpp">
+      <Filter>Panels</Filter>
+    </ClCompile>
+    <ClCompile Include="Editor\Panels\SceneHierarchyPanel.cpp">
       <Filter>Panels</Filter>
     </ClCompile>
     <ClCompile Include="Editor\Panels\SceneViewPanel.cpp">

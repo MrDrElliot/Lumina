@@ -75,6 +75,18 @@ constexpr unsigned int FRAME_OVERLAP = 2;
 
         VkImageLayout Layout;
         ImTextureID ImGuiTexture;
+
+        operator VkImage()
+        {
+            return Image;
+        }
+
+        VkExtent2D GetExtent2D()
+        {
+            VkExtent2D NewExtent;
+            NewExtent.height = ImageExtent.height;
+            NewExtent.width = ImageExtent.width;
+        }
     };
 
     struct FGPUSceneData

@@ -1,5 +1,7 @@
 #pragma once
 #include "EditorPanel.h"
+#include "imgui.h"
+#include "Source/Runtime/Renderer/Vulkan/VulkanTypes.h"
 
 namespace Lumina
 {
@@ -16,6 +18,10 @@ namespace Lumina
         
         void OnRender() override;
         void OnImGui() override;
-    
+
+    private:
+
+        ImVec2 Region;
+        
     };
 }

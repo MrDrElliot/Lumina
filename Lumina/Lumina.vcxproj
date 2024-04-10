@@ -153,6 +153,7 @@
     <ClInclude Include="Engine\Source\Runtime\CoreObject\Object.h" />
     <ClInclude Include="Engine\Source\Runtime\Events\Delegate.h" />
     <ClInclude Include="Engine\Source\Runtime\GUID\GUID.h" />
+    <ClInclude Include="Engine\Source\Runtime\ImGui\ImGuiFonts.h" />
     <ClInclude Include="Engine\Source\Runtime\Log\Log.h" />
     <ClInclude Include="Engine\Source\Runtime\Memory\Memory.h" />
     <ClInclude Include="Engine\Source\Runtime\Platform\Vulkan\VulkanImGuiLayer.h" />
@@ -610,6 +611,7 @@
     <ClCompile Include="Engine\Source\Runtime\ApplicationCore\ImGui\ImGuiLayer.cpp" />
     <ClCompile Include="Engine\Source\Runtime\ApplicationCore\LayerStack.cpp" />
     <ClCompile Include="Engine\Source\Runtime\ApplicationCore\Windows\Window.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\ImGui\ImGuiFonts.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Log\Log.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Platform\Vulkan\VulkanImGuiLayer.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\Camera.cpp" />

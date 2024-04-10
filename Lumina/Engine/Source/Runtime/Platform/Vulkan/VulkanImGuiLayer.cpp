@@ -6,6 +6,7 @@
 #include "GLFW/glfw3.h"
 #include "Source/Runtime/ApplicationCore/Application.h"
 #include "Source/Runtime/ApplicationCore/Windows/Window.h"
+#include "Source/Runtime/ImGui/ImGuiFonts.h"
 #include "Source/Runtime/Log/Log.h"
 #include "Source/Runtime/Renderer/Vulkan/VulkanHelpers.h"
 #include "Source/Runtime/Renderer/Vulkan/VulkanRenderContext.h"
@@ -14,7 +15,6 @@ namespace Lumina
 {
     void FVulkanImGuiLayer::Begin()
     {
-
         ImGui_ImplVulkan_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
@@ -70,6 +70,16 @@ namespace Lumina
         io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // Enable Docking
         io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       // Enable Multi-Viewport / Platform Windows
 
+
+        
+        Font::Add("Resources/Fonts/Roboto/Roboto-Light.ttf", "Roboto-Light");
+        Font::Add("Resources/Fonts/Roboto/Roboto-Medium.ttf", "Roboto-Medium");
+        Font::Add("Resources/Fonts/Roboto/Roboto-Bold.ttf", "Roboto-Bold");
+        Font::Add("Resources/Fonts/Roboto/Roboto-Italic.ttf", "Roboto-Italic");
+
+
+        
+        
         ImGui::StyleColorsDark();
         SetupDarkThemeColors();
         
@@ -94,12 +104,14 @@ namespace Lumina
         InitInfo.ImageCount = 2;
         InitInfo.UseDynamicRendering = true;
         InitInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+
+
         
         ImGui_ImplVulkan_Init(&InitInfo);
-
-        RenderContext->ImmediateSubmit([&](VkCommandBuffer cmd) { ImGui_ImplVulkan_CreateFontsTexture(); });
-
+        ImGui_ImplVulkan_CreateFontsTexture();
+        vkDeviceWaitIdle(RenderContext->GetDevice());
         ImGui_ImplVulkan_DestroyFontsTexture();
+
 
         
     }

@@ -25,6 +25,7 @@ namespace Lumina
 
     void FSceneViewPanel::OnAdded()
     {
+
     }
 
     void FSceneViewPanel::OnRemoved()
@@ -37,21 +38,18 @@ namespace Lumina
 
     void FSceneViewPanel::OnImGui()
     {
-        ImGui::ShowDemoWindow();
-        FVulkanRenderContext* Context = FApplication::Get().GetRenderContext<FVulkanRenderContext>();
-        FAllocatedImage Image = Context->GetActiveSwapChain()->GetDrawImage();
-        ImGui::Begin("Scene Viewport");
+        FVulkanRenderContext* RenderContext = FRenderContext::Get<FVulkanRenderContext>();
+        
+        ImGui::Begin("Scene");
+
         ImVec2 Max = ImGui::GetWindowContentRegionMax();
         ImVec2 Min = ImGui::GetWindowContentRegionMin();
-        ImVec2 Region;
-        Region.x = Max.x - Min.x;
-        Region.y = Max.y - Min.y;
-        ImGui::Text("Viewport Size: %f, %f", Region.x, Region.y);
-
-        if(ImTextureID ID = Image.ImGuiTexture)
-        {
-            ImGui::Image(ID, Region);
-        }
+        ImVec2 NewRegion;
+        NewRegion.x = Max.x - Min.x;
+        NewRegion.y = Max.y - Min.y;
+        
+        ImGui::Text("Viewport Size: %i %i", (int)NewRegion.x, (int)NewRegion.y);
+        ImGui::Image(RenderContext->GetDrawImageDescriptors(), NewRegion);
         
         ImGui::End();
     }

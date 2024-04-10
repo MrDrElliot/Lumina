@@ -49,7 +49,7 @@ namespace Lumina
 		
 		void CreateApplicationWindow(const FWindowSpecs& InSpecs);
 
-		void CheckWindowResized();
+		virtual void CheckWindowResized();
 		
 		void PushLayer(FLayer* InLayer);
 		void PushOverlay(FLayer* InLayer);
@@ -58,8 +58,10 @@ namespace Lumina
 		void InitImGuiLayer();
 		virtual void RenderImGui();
 
-		
 
+
+		
+		
 		static FApplication& Get() { return *Instance; }
 
 		FWindow& GetWindow() { return *Window;  }

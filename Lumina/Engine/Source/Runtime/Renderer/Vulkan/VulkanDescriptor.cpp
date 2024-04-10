@@ -60,7 +60,6 @@ namespace Lumina
         VkDescriptorSet ds;
         VkResult result = vkAllocateDescriptorSets(InDevice, &allocInfo, &ds);
 
-        //allocation failed. Try again
         if (result == VK_ERROR_OUT_OF_POOL_MEMORY || result == VK_ERROR_FRAGMENTED_POOL) {
 
             FullPools.push_back(poolToUse);
@@ -68,7 +67,7 @@ namespace Lumina
             poolToUse = GetPool(InDevice);
             allocInfo.descriptorPool = poolToUse;
 
-            VK_CHECK( vkAllocateDescriptorSets(InDevice, &allocInfo, &ds));
+            VK_CHECK(vkAllocateDescriptorSets(InDevice, &allocInfo, &ds));
         }
   
         ReadyPools.push_back(poolToUse);
