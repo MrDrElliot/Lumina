@@ -17,6 +17,9 @@
     <ClInclude Include="Editor\Panels\EditorPanel.h">
       <Filter>Panels</Filter>
     </ClInclude>
+    <ClInclude Include="Editor\Panels\MainMenuPanel.h">
+      <Filter>Panels</Filter>
+    </ClInclude>
     <ClInclude Include="Editor\Panels\PropertyDetailsPanel.h">
       <Filter>Panels</Filter>
     </ClInclude>
@@ -37,6 +40,9 @@
       <Filter>Panels</Filter>
     </ClCompile>
     <ClCompile Include="Editor\Panels\EditorPanel.cpp">
+      <Filter>Panels</Filter>
+    </ClCompile>
+    <ClCompile Include="Editor\Panels\MainMenuPanel.cpp">
       <Filter>Panels</Filter>
     </ClCompile>
     <ClCompile Include="Editor\Panels\PropertyDetailsPanel.cpp">

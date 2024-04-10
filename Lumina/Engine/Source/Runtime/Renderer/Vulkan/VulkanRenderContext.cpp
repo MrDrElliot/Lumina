@@ -66,15 +66,16 @@ namespace Lumina
         Vulkan::CopyImageToImage(Cmd, ActiveSwapChain->GetDrawImage().Image, ActiveSwapChain->GetImages()[SwapChainImageIndex], ActiveSwapChain->GetDrawExtent2D(), ActiveSwapChain->GetExtent2D());
 
         Vulkan::TransitionImage(Cmd, ActiveSwapChain->GetImages()[SwapChainImageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-
         
+
         /* ImGui Render */
         DrawImGui(Cmd, ActiveSwapChain->GetImageViews()[SwapChainImageIndex]);
-        
+
         
         // Set swapchain image layout to Present so we can show it on the screen
         Vulkan::TransitionImage(Cmd, ActiveSwapChain->GetImages()[SwapChainImageIndex], VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
+        
         SubmitFrame(Cmd, SwapChainImageIndex);
         
         FrameNumber++;
@@ -96,8 +97,8 @@ namespace Lumina
         viewport.y = 0;
         viewport.width = ActiveSwapChain->GetDrawExtent2D().width;
         viewport.height = ActiveSwapChain->GetDrawExtent2D().height;
-        viewport.minDepth = 0.f;
-        viewport.maxDepth = 1.f;
+        viewport.minDepth = 0.0f;
+        viewport.maxDepth = 1.0f;
         vkCmdSetViewport(InCmd, 0, 1, &viewport);
 
 
@@ -169,7 +170,7 @@ namespace Lumina
         vkCmdDispatch(InBuffer, std::ceil(ActiveSwapChain->GetDrawExtent().width / 16.0), std::ceil(ActiveSwapChain->GetDrawExtent().height / 16.0), 1);
     }
 
-    void FVulkanRenderContext::DrawImGui(VkCommandBuffer InBuffer, VkImageView TargetViewImage)
+    void FVulkanRenderContext:: DrawImGui(VkCommandBuffer InBuffer, VkImageView TargetViewImage)
     {
         if (ImDrawData* DrawData = ImGui::GetDrawData())
         {
@@ -177,7 +178,7 @@ namespace Lumina
             VkRenderingInfo renderInfo = Vulkan::RenderingInfo(ActiveSwapChain->GetExtent2D(), &colorAttachment, nullptr);
 
             vkCmdBeginRendering(InBuffer, &renderInfo);
-
+            
             ImGui_ImplVulkan_RenderDrawData(DrawData, InBuffer);
 
             vkCmdEndRendering(InBuffer);
@@ -222,6 +223,7 @@ namespace Lumina
 
     void FVulkanRenderContext::SubmitFrame(VkCommandBuffer InCmd, uint32_t SwapChainImageIndex)
     {
+        
         /* End the command buffer, commands cannot be added to it after this point */
         VK_CHECK(vkEndCommandBuffer(InCmd));
 

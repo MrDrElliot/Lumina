@@ -160,6 +160,8 @@ namespace Lumina
 
         DepthImage.ImageFormat = VK_FORMAT_D32_SFLOAT;
         DepthImage.ImageExtent = GetExtent();
+
+        
         VkImageUsageFlags DepthImageFlags = {};
         DepthImageFlags |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
         
