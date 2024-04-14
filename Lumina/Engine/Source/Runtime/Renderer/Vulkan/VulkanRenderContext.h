@@ -25,7 +25,6 @@ namespace Lumina
         /* Main Draw Loop */
         void Draw(float DeltaTime) override;
         void DrawGeometry(VkCommandBuffer InCmd);
-        void DrawBackground(VkCommandBuffer InBuffer);
         void DrawImGui(VkCommandBuffer InBuffer, VkImageView TargetViewImage);
         
         bool BeginFrame(VkCommandBuffer& OutCmdInCmd, uint32_t* InSwapChainImageIndex);
@@ -90,7 +89,6 @@ namespace Lumina
 
         /* Initialize Pipelines */
         void InitPipelines();
-        void InitBackgroundPipelines();
         void InitMeshPipeline();
 
         void InitDefaultData();
@@ -101,13 +99,7 @@ namespace Lumina
 
         FFrameData Frames[FRAME_OVERLAP];
         uint64_t FrameNumber = 0;
-
-        FGPUMeshBuffers Rect;
-
-
-        std::vector<FComputeEffect> BackgroundEffects;
-        int CurrentBackgroundEffect = 0;
-
+        
         VkFence ImmediateFence;
         VkCommandBuffer ImmediateCommandBuffer;
         VkCommandPool ImmediateCommandPool;
@@ -117,19 +109,14 @@ namespace Lumina
 
         FVulkanSwapChain* ActiveSwapChain;
         
-        VkDebugUtilsMessengerEXT DebugMessenger;
         vkb::PhysicalDevice PhysicalDevice;
         vkb::Device Device;
         VmaAllocator Allocator;
 
         FDescriptorAllocatorGrowable GlobalDescriptorAllocator;
 
-        std::vector<std::shared_ptr<FMeshAsset>> testMeshes;
-
         FDeletionQueue MainDeletionQueue;
-
-        FGPUSceneData SceneData;
-
+        
         FAllocatedImage WhiteImage;
         FAllocatedImage BlackImage;
         FAllocatedImage GreyImage;
@@ -143,16 +130,12 @@ namespace Lumina
         GLTFMetallicRoughness metalRoughMaterial;
         
         VkDescriptorSetLayout SingleImageDescriptorLayout;
-        
         VkDescriptorSetLayout GpuSceneDataDescriptorLayout;
 
         VkDescriptorSet DrawImageDescriptors;
         VkDescriptorSetLayout DrawImageDescriptorLayout;
 
-        VkPipeline GradientPipeline;
-        VkPipelineLayout GradientPipelineLayout;
         
-
         VkPipeline MeshPipeline;
         VkPipelineLayout MeshPipelineLayout;
         

@@ -45,17 +45,10 @@ namespace Lumina
         uint32_t SwapChainImageIndex = 0;
         if(BeginFrame(Cmd, &SwapChainImageIndex) == false) return;
 
-        // Transition our main draw image into general layout so we can write into it
-        // We will overwrite it all so we dont care about what was the older layout
-        Vulkan::TransitionImage(Cmd, ActiveSwapChain->GetDrawImage(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
-
-        /* Background render */
-        DrawBackground(Cmd);
-
-        Vulkan::TransitionImage(Cmd, ActiveSwapChain->GetDrawImage(), VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+        Vulkan::TransitionImage(Cmd, ActiveSwapChain->GetDrawImage(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
         Vulkan::TransitionImage(Cmd, ActiveSwapChain->GetDepthImage(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL);
 
-        /* Geomtry Render */
+        /* Geometry Render */
         DrawGeometry(Cmd);
 
         /* Transition the draw image and the swapchain image into their correct transfer layouts */
@@ -67,6 +60,7 @@ namespace Lumina
 
         Vulkan::TransitionImage(Cmd, ActiveSwapChain->GetImages()[SwapChainImageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
         
+        Vulkan::TransitionImage(Cmd, ActiveSwapChain->GetDrawImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
         /* ImGui Render */
         DrawImGui(Cmd, ActiveSwapChain->GetImageViews()[SwapChainImageIndex]);
@@ -113,71 +107,21 @@ namespace Lumina
         vkCmdBindPipeline(InCmd, VK_PIPELINE_BIND_POINT_GRAPHICS, MeshPipeline);
 
 
-
-        VkDescriptorSet ImageSet = GetCurrentFrame().FrameDescriptors.Allocate(Device, SingleImageDescriptorLayout);
-        FDescriptorWriter TexWriter;
-        TexWriter.WriteImage(0, ErrorCheckerboardImage.ImageView, DefaultSamplerNearest, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-        TexWriter.UpdateSet(Device, ImageSet);
-
-        vkCmdBindDescriptorSets(InCmd, VK_PIPELINE_BIND_POINT_GRAPHICS, MeshPipelineLayout, 0, 1, &ImageSet, 0, nullptr);
-        
-        glm::mat4 view = glm::translate(glm::vec3{ 0,0,-5 });
-        glm::mat4 projection = glm::perspective(glm::radians(70.f), (float)ActiveSwapChain->GetDrawExtent().width / (float)ActiveSwapChain->GetDrawExtent().height, 10000.f, 0.1f);
-        projection[1][1] *= -1;
-
-        
-        
-        FGPUDrawPushConstants push_constants;
-        push_constants.WorldMatrix = projection * view;
-        push_constants.VertexBuffer = testMeshes[2]->MeshBuffers.VertexBufferAddress;
-        
-        vkCmdPushConstants(InCmd, MeshPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(FGPUDrawPushConstants), &push_constants);
-        vkCmdBindIndexBuffer(InCmd, testMeshes[2]->MeshBuffers.IndexBuffer.Buffer, 0, VK_INDEX_TYPE_UINT32);
-
-        vkCmdDrawIndexed(InCmd, testMeshes[2]->Surfaces[0].Count, 1, testMeshes[2]->Surfaces[0].StartIndex, 0, 0);
-
-        FAllocatedBuffer GpuSceneDataBuffer = CreateBuffer(sizeof(FGPUSceneData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-
-        
-        VmaAllocationInfo Info;
-        vmaGetAllocationInfo(Allocator, GpuSceneDataBuffer.Allocation, &Info);
-        void* data = Info.pMappedData;
-
-        FGPUSceneData* SceneUniformData = (FGPUSceneData*)data;
-        *SceneUniformData = SceneData;
-
-        VkDescriptorSet GlobalDescriptor = GetCurrentFrame().FrameDescriptors.Allocate(Device, GpuSceneDataDescriptorLayout);
-        
-        FDescriptorWriter Writer;
-        Writer.WriteBuffer(0, GpuSceneDataBuffer.Buffer, sizeof(FGPUSceneData), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-        Writer.UpdateSet(Device, GlobalDescriptor);
+        // Stuff here.
         
         vkCmdEndRendering(InCmd);
         
     }
-
-    void FVulkanRenderContext::DrawBackground(VkCommandBuffer InBuffer)
-    {
-
-        FComputeEffect& Effect = BackgroundEffects[CurrentBackgroundEffect];
-        
-        vkCmdBindPipeline(InBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, Effect.Pipeline);
-
-        vkCmdBindDescriptorSets(InBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, GradientPipelineLayout, 0, 1, &DrawImageDescriptors, 0, nullptr);
-        
-        vkCmdPushConstants(InBuffer, GradientPipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(FComputePushConstants), &Effect.Data);
-
-        vkCmdDispatch(InBuffer, std::ceil(ActiveSwapChain->GetDrawExtent().width / 16.0), std::ceil(ActiveSwapChain->GetDrawExtent().height / 16.0), 1);
-    }
+    
 
     void FVulkanRenderContext:: DrawImGui(VkCommandBuffer InBuffer, VkImageView TargetViewImage)
     {
         if (ImDrawData* DrawData = ImGui::GetDrawData())
         {
-            VkRenderingAttachmentInfo colorAttachment = Vulkan::RenderingAttachmentInfo(TargetViewImage, nullptr, VK_IMAGE_LAYOUT_GENERAL);
-            VkRenderingInfo renderInfo = Vulkan::RenderingInfo(ActiveSwapChain->GetExtent2D(), &colorAttachment, nullptr);
+            VkRenderingAttachmentInfo ColorAttachment = Vulkan::RenderingAttachmentInfo(TargetViewImage, nullptr, VK_IMAGE_LAYOUT_GENERAL);
+            VkRenderingInfo RenderInfo = Vulkan::RenderingInfo(ActiveSwapChain->GetExtent2D(), &ColorAttachment, nullptr);
 
-            vkCmdBeginRendering(InBuffer, &renderInfo);
+            vkCmdBeginRendering(InBuffer, &RenderInfo);
             
             ImGui_ImplVulkan_RenderDrawData(DrawData, InBuffer);
 
@@ -269,7 +213,7 @@ namespace Lumina
         // always allocate images on dedicated GPU memory
         VmaAllocationCreateInfo allocinfo = {};
         allocinfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-        allocinfo.requiredFlags = VkMemoryPropertyFlags(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        allocinfo.requiredFlags = static_cast<VkMemoryPropertyFlags>(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
         // allocate and create the image
         VK_CHECK(vmaCreateImage(Allocator, &img_info, &allocinfo, &newImage.Image, &newImage.Allocation, nullptr));
@@ -586,11 +530,12 @@ namespace Lumina
         FDescriptorLayoutBuilder Builder2;
         Builder2.AddBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
         SingleImageDescriptorLayout = Builder2.Build(Device, VK_SHADER_STAGE_FRAGMENT_BIT);
+        
 
         for (int i = 0; i < FRAME_OVERLAP; i++)
         {
-            // create a descriptor pool
-            std::vector<FDescriptorAllocatorGrowable::FPoolSizeRatio> frame_sizes = { 
+            std::vector<FDescriptorAllocatorGrowable::FPoolSizeRatio> frame_sizes =
+            { 
                 { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 3 },
                 { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 3 },
                 { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3 },
@@ -609,83 +554,9 @@ namespace Lumina
     
     void FVulkanRenderContext::InitPipelines()
     {
-        InitBackgroundPipelines();
-
         InitMeshPipeline();
 
         metalRoughMaterial.BuildPipelines();
-    }
-
-    void FVulkanRenderContext::InitBackgroundPipelines()
-    {
-        VkPipelineLayoutCreateInfo ComputeLayout = {};
-        ComputeLayout.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        ComputeLayout.pNext = nullptr;
-        ComputeLayout.pSetLayouts = &DrawImageDescriptorLayout;
-        ComputeLayout.setLayoutCount = 1;
-
-        VkPushConstantRange PushConstant = {};
-        PushConstant.offset = 0;
-        PushConstant.size = sizeof(FComputePushConstants);
-        PushConstant.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
-
-        ComputeLayout.pPushConstantRanges = &PushConstant;
-        ComputeLayout.pushConstantRangeCount = 1;
-        
-        VK_CHECK(vkCreatePipelineLayout(Device, &ComputeLayout, nullptr, &GradientPipelineLayout));
-
-        VkShaderModule GradientShader;
-        if (GradientShader = Vulkan::LoadShaderModule("../Lumina/Engine/Resources/Shaders/Gradient_Color.comp.spv", Device); GradientShader == nullptr)
-        {
-            LE_LOG_CRITICAL("Failed to create gradient shader");
-        }
-
-
-        VkShaderModule SkyShader;
-        if(SkyShader = Vulkan::LoadShaderModule("../Lumina/Engine/Resources/Shaders/sky.comp.spv", Device); SkyShader == nullptr)
-        {
-            LE_LOG_CRITICAL("Failed to create sky shader!");
-        }
-
-        
-
-        VkPipelineShaderStageCreateInfo stageinfo{};
-        stageinfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-        stageinfo.pNext = nullptr;
-        stageinfo.stage = VK_SHADER_STAGE_COMPUTE_BIT;
-        stageinfo.module = GradientShader;
-        stageinfo.pName = "main";
-
-        VkComputePipelineCreateInfo ComputePipelineCreateInfo{};
-        ComputePipelineCreateInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
-        ComputePipelineCreateInfo.pNext = nullptr;
-        ComputePipelineCreateInfo.layout = GradientPipelineLayout;
-        ComputePipelineCreateInfo.stage = stageinfo;
-
-        FComputeEffect Gradient;
-        Gradient.Layout = GradientPipelineLayout;
-        Gradient.Name = "gradient";
-        Gradient.Data = {};
-
-        Gradient.Data.data1 = glm::vec4(1, 0, 0, 1);
-        Gradient.Data.data2 = glm::vec4(0, 0, 1, 1);
-	
-        VK_CHECK(vkCreateComputePipelines(Device, VK_NULL_HANDLE, 1 , &ComputePipelineCreateInfo, nullptr, &Gradient.Pipeline));
-        
-        ComputePipelineCreateInfo.stage.module = SkyShader;
-
-        FComputeEffect Sky;
-        Sky.Layout = GradientPipelineLayout;
-        Sky.Name = "sky";
-        Sky.Data = {};
-        Sky.Data.data1 = glm::vec4(0.1, 0.2, 0.4 ,0.97);
-
-        VK_CHECK(vkCreateComputePipelines(Device, VK_NULL_HANDLE, 1, &ComputePipelineCreateInfo, nullptr, &Sky.Pipeline));
-
-        BackgroundEffects.push_back(Gradient);
-        BackgroundEffects.push_back(Sky);
-
-        
     }
     
 
@@ -740,8 +611,6 @@ namespace Lumina
 
     void FVulkanRenderContext::InitDefaultData()
     {
-        testMeshes = LoadGltfMeshes("../Lumina/Engine/Resources/Meshes/basicmesh.glb").value();
-        
         
         constexpr uint32_t white = std::byteswap(0xFFFFFFFF);
         WhiteImage = CreateImage((void*)&white, VkExtent3D{ 1, 1, 1 }, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT);
@@ -753,7 +622,8 @@ namespace Lumina
         BlackImage = CreateImage((void*)&black, VkExtent3D{ 1, 1, 1 }, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT);
 
         constexpr uint32_t magenta = std::byteswap(0xFF00FFFF);
-        std::array<uint32_t, 16 * 16 > pixels;
+        std::array<unsigned, 16 * 16 > pixels;
+        
         for (int x = 0; x < 16; x++)
         {
             for (int y = 0; y < 16; y++)
@@ -791,7 +661,7 @@ namespace Lumina
         vmaGetAllocationInfo(Allocator, materialConstants.Allocation, &Info);
         void* Data = Info.pMappedData;
 
-        GLTFMetallicRoughness::Constants* sceneUniformData = (GLTFMetallicRoughness::Constants*)Data;
+        auto* sceneUniformData = static_cast<GLTFMetallicRoughness::Constants*>(Data);
         sceneUniformData->Color = glm::vec4{1,1,1,1};
         sceneUniformData->MetalRoughness = glm::vec4{1,0.5,0,0};
 

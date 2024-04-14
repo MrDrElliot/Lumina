@@ -172,13 +172,6 @@
     <ClInclude Include="Engine\Source\Runtime\Thread\GameThread.h" />
     <ClInclude Include="Engine\Source\Runtime\Thread\RenderThread.h" />
     <ClInclude Include="Engine\Source\Runtime\Thread\Thread.h" />
-    <ClInclude Include="Engine\ThirdParty\fastgltf\deps\simdjson\simdjson.h" />
-    <ClInclude Include="Engine\ThirdParty\fastgltf\include\fastgltf\base64.hpp" />
-    <ClInclude Include="Engine\ThirdParty\fastgltf\include\fastgltf\core.hpp" />
-    <ClInclude Include="Engine\ThirdParty\fastgltf\include\fastgltf\glm_element_traits.hpp" />
-    <ClInclude Include="Engine\ThirdParty\fastgltf\include\fastgltf\tools.hpp" />
-    <ClInclude Include="Engine\ThirdParty\fastgltf\include\fastgltf\types.hpp" />
-    <ClInclude Include="Engine\ThirdParty\fastgltf\include\fastgltf\util.hpp" />
     <ClInclude Include="Engine\ThirdParty\glm\glm\common.hpp" />
     <ClInclude Include="Engine\ThirdParty\glm\glm\detail\_features.hpp" />
     <ClInclude Include="Engine\ThirdParty\glm\glm\detail\_fixes.hpp" />
@@ -628,9 +621,6 @@
     <ClCompile Include="Engine\Source\Runtime\Thread\GameThread.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Thread\RenderThread.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Thread\Thread.cpp" />
-    <ClCompile Include="Engine\ThirdParty\fastgltf\deps\simdjson\simdjson.cpp" />
-    <ClCompile Include="Engine\ThirdParty\fastgltf\src\base64.cpp" />
-    <ClCompile Include="Engine\ThirdParty\fastgltf\src\fastgltf.cpp" />
     <ClCompile Include="Engine\ThirdParty\glm\glm\detail\glm.cpp" />
     <ClCompile Include="Engine\ThirdParty\imgui\backends\imgui_impl_glfw.cpp" />
     <ClCompile Include="Engine\ThirdParty\imgui\backends\imgui_impl_vulkan.cpp" />

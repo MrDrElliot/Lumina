@@ -19,11 +19,6 @@ project "Lumina"
 		"Engine/Source/**.cpp",
 		
 		"Engine/ThirdParty/stb_image/**.h",
-		
-	    "Engine/ThirdParty/fastgltf/include/**.hpp",
-	    "Engine/ThirdParty/fastgltf/src/**.cpp",
-	    "Engine/ThirdParty/fastgltf/deps/simdjson/**.h",
-    	"Engine/ThirdParty/fastgltf/deps/simdjson/**.cpp",
 
 
 		"Engine/ThirdParty/glm/glm/**.hpp",

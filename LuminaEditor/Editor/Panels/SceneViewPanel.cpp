@@ -49,7 +49,8 @@ namespace Lumina
         NewRegion.y = Max.y - Min.y;
         
         ImGui::Text("Viewport Size: %i %i", (int)NewRegion.x, (int)NewRegion.y);
-        ImGui::Image(RenderContext->GetDrawImageDescriptors(), NewRegion);
+        
+        ImGui::Image(RenderContext->GetActiveSwapChain()->GetDrawImage().ImGuiTexture, NewRegion);
         
         ImGui::End();
     }
