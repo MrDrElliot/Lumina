@@ -28,8 +28,9 @@ project "Lumina"
 		"Engine/ThirdParty/vk-bootstrap/src/**.h",
 	    "Engine/ThirdParty/vk-bootstrap/src/**.cpp",
 	    
-	    "Engine/ThirdParty/fastgltf/include/**.hpp"
-	    "Engine/ThirdParty/fastgltf/include/**.cpp"
+	    
+	    "Engine/ThirdParty/fastgltf/deps/simdjson/**.h",
+        "Engine/ThirdParty/fastgltf/deps/simdjson/**.cpp",
 
 	    "Engine/ThirdParty/vulkanmemoryallocator/**.h",
 	    "Engine/ThirdParty/vulkanmemoryallocator/src/VmaUsage.cpp",
