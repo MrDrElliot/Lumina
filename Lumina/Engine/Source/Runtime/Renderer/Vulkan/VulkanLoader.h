@@ -1,15 +1,16 @@
 #pragma once
-#include <cstdint>
 #include <filesystem>
-#include <string>
 #include <vector>
 
-#include "VulkanTypes.h"
 #include <iostream>
 #include <optional>
 
 
+
 namespace Lumina
 {
+    class FStaticMesh;
+
+    std::optional<std::vector<std::shared_ptr<FStaticMesh>>> LoadGltfMeshes(std::filesystem::path FilePath);
 
 }

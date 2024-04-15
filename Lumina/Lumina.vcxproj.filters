@@ -16,6 +16,12 @@
     <Filter Include="Source\Runtime\ApplicationCore\Windows">
       <UniqueIdentifier>{AF390F74-9B8B-E663-84AA-2374709BFF4C}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Runtime\Assets">
+      <UniqueIdentifier>{4B61858B-B7CD-4086-80C1-D8E3ECEC62EE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Runtime\Assets\StaticMesh">
+      <UniqueIdentifier>{2FF056B2-1B41-42F4-44A5-30B63055D55D}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Source\Runtime\CoreObject">
       <UniqueIdentifier>{58F33599-C4B5-6923-0D66-F8AF79674201}</UniqueIdentifier>
     </Filter>
@@ -60,6 +66,9 @@
     </Filter>
     <Filter Include="ThirdParty\fastgltf\deps\simdjson">
       <UniqueIdentifier>{0B92E7AD-7700-3D2D-C0E9-F72C2C9732C9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\fastgltf\src">
+      <UniqueIdentifier>{B1E47B01-1D1C-C498-2626-28BC92DCEA91}</UniqueIdentifier>
     </Filter>
     <Filter Include="ThirdParty\glm">
       <UniqueIdentifier>{5F03D311-4BD1-C617-3465-373E20D2A27C}</UniqueIdentifier>
@@ -124,6 +133,15 @@
     </ClInclude>
     <ClInclude Include="Engine\Source\Runtime\ApplicationCore\Windows\WindowTypes.h">
       <Filter>Source\Runtime\ApplicationCore\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Assets\Asset.h">
+      <Filter>Source\Runtime\Assets</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Assets\AssetTypes.h">
+      <Filter>Source\Runtime\Assets</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Assets\StaticMesh\StaticMesh.h">
+      <Filter>Source\Runtime\Assets\StaticMesh</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Source\Runtime\CoreObject\Object.h">
       <Filter>Source\Runtime\CoreObject</Filter>
@@ -1486,6 +1504,12 @@
     <ClCompile Include="Engine\Source\Runtime\ApplicationCore\Windows\Window.cpp">
       <Filter>Source\Runtime\ApplicationCore\Windows</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\Assets\Asset.cpp">
+      <Filter>Source\Runtime\Assets</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\Assets\StaticMesh\StaticMesh.cpp">
+      <Filter>Source\Runtime\Assets\StaticMesh</Filter>
+    </ClCompile>
     <ClCompile Include="Engine\Source\Runtime\ImGui\ImGuiFonts.cpp">
       <Filter>Source\Runtime\ImGui</Filter>
     </ClCompile>
@@ -1539,6 +1563,12 @@
     </ClCompile>
     <ClCompile Include="Engine\ThirdParty\fastgltf\deps\simdjson\simdjson.cpp">
       <Filter>ThirdParty\fastgltf\deps\simdjson</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\ThirdParty\fastgltf\src\base64.cpp">
+      <Filter>ThirdParty\fastgltf\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\ThirdParty\fastgltf\src\fastgltf.cpp">
+      <Filter>ThirdParty\fastgltf\src</Filter>
     </ClCompile>
     <ClCompile Include="Engine\ThirdParty\glm\glm\detail\glm.cpp">
       <Filter>ThirdParty\glm\glm\detail</Filter>

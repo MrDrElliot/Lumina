@@ -46,7 +46,7 @@ private:
     };
 };
 
-FGuid FGuid::Generate()
+inline FGuid FGuid::Generate()
 {
     FGuid guid;
 #if defined(_WIN32)
@@ -64,12 +64,12 @@ FGuid FGuid::Generate()
     return guid;
 }
 
-FGuid FGuid::Invalidate()
+inline FGuid FGuid::Invalidate()
 {
     return FGuid();
 }
 
-bool FGuid::IsValid() const
+inline bool FGuid::IsValid() const
 {
     for (int i = 0; i < 16; ++i) {
         if (Bytes[i] != 0) return true;
@@ -77,7 +77,7 @@ bool FGuid::IsValid() const
     return false;
 }
 
-std::string FGuid::ToString() const
+inline std::string FGuid::ToString() const
 {
     std::stringstream ss;
     ss << std::hex << std::setfill('0')

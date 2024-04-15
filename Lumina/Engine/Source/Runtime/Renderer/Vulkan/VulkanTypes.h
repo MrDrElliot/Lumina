@@ -100,6 +100,8 @@ vkSetDebugUtilsObjectNameEXT(device, &nameInfo);                \
             VkExtent2D NewExtent;
             NewExtent.height = ImageExtent.height;
             NewExtent.width = ImageExtent.width;
+
+            return NewExtent;
         }
     };
 

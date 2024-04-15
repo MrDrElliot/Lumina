@@ -83,7 +83,7 @@ namespace Lumina
 	private:
 
 		inline bool IsMinimized() const { return bMinimized; }
-		inline bool ShouldExit() const { return !bRunning; }
+		inline bool ShouldExit() const;
 
 	private:
 

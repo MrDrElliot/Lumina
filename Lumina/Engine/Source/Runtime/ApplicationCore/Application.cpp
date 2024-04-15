@@ -34,7 +34,7 @@ namespace Lumina
         /* Application Initialization */
         OnInit();
         
-        while(!ShouldExit() || !glfwWindowShouldClose(Window->GetWindow()))
+        while(!ShouldExit())
         {
             if (!IsMinimized())
             {
@@ -138,5 +138,10 @@ namespace Lumina
         }
 
         ImGuiLayer->End();
+    }
+
+    bool FApplication::ShouldExit() const
+    {
+        return glfwWindowShouldClose(Window->GetWindow()) || !bRunning;
     }
 }

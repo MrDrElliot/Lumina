@@ -74,6 +74,7 @@ namespace Lumina
         VkSurfaceKHR Surface;
 
         VkFormat ImageFormat;
+        
         FAllocatedImage DrawImage;
         FAllocatedImage DepthImage;
 

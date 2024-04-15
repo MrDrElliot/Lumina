@@ -4,7 +4,6 @@
 #include "VulkanHelpers.h"
 #include "VulkanPipeline.h"
 #include "VulkanSwapChain.h"
-#include "imgui/backends/imgui_impl_glfw.h"
 #include "imgui/backends/imgui_impl_vulkan.h"
 #include "Source/Runtime/ApplicationCore/Windows/Window.h"
 
@@ -12,6 +11,8 @@
 #include "glm/gtx/transform.hpp"
 
 #include <chrono>
+
+#include "Source/Runtime/Assets/StaticMesh/StaticMesh.h"
 
 namespace Lumina
 {
@@ -51,24 +52,21 @@ namespace Lumina
         /* Geometry Render */
         DrawGeometry(Cmd);
 
-        /* Transition the draw image and the swapchain image into their correct transfer layouts */
         Vulkan::TransitionImage(Cmd, ActiveSwapChain->GetDrawImage(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
         Vulkan::TransitionImage(Cmd, ActiveSwapChain->GetImages()[SwapChainImageIndex], VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
-        // Execute a copy from the draw image into the swapchain */
         Vulkan::CopyImageToImage(Cmd, ActiveSwapChain->GetDrawImage().Image, ActiveSwapChain->GetImages()[SwapChainImageIndex], ActiveSwapChain->GetDrawExtent2D(), ActiveSwapChain->GetExtent2D());
 
         Vulkan::TransitionImage(Cmd, ActiveSwapChain->GetImages()[SwapChainImageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-        
         Vulkan::TransitionImage(Cmd, ActiveSwapChain->GetDrawImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
 
         /* ImGui Render */
         DrawImGui(Cmd, ActiveSwapChain->GetImageViews()[SwapChainImageIndex]);
-
+        
         
         // Set swapchain image layout to Present so we can show it on the screen
         Vulkan::TransitionImage(Cmd, ActiveSwapChain->GetImages()[SwapChainImageIndex], VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
-
         
         SubmitFrame(Cmd, SwapChainImageIndex);
         
@@ -83,14 +81,13 @@ namespace Lumina
         VkRenderingInfo renderInfo = Vulkan::RenderingInfo(ActiveSwapChain->GetDrawExtent2D(), &colorAttachment, nullptr);
         if(renderInfo.renderArea.extent.width == 0 || renderInfo.renderArea.extent.height == 0) return;
 
-        vkCmdBeginRendering(InCmd, &renderInfo);
 
         
         VkViewport viewport = {};
         viewport.x = 0;
         viewport.y = 0;
-        viewport.width = ActiveSwapChain->GetDrawExtent2D().width;
-        viewport.height = ActiveSwapChain->GetDrawExtent2D().height;
+        viewport.width = static_cast<float>(ActiveSwapChain->GetDrawExtent2D().width);
+        viewport.height = static_cast<float>(ActiveSwapChain->GetDrawExtent2D().height);
         viewport.minDepth = 0.0f;
         viewport.maxDepth = 1.0f;
         vkCmdSetViewport(InCmd, 0, 1, &viewport);
@@ -102,11 +99,37 @@ namespace Lumina
         scissor.extent.width = ActiveSwapChain->GetDrawExtent2D().width;
         scissor.extent.height = ActiveSwapChain->GetDrawExtent2D().height;
         vkCmdSetScissor(InCmd, 0, 1, &scissor);
+
         
+        vkCmdBeginRendering(InCmd, &renderInfo);
 
         vkCmdBindPipeline(InCmd, VK_PIPELINE_BIND_POINT_GRAPHICS, MeshPipeline);
 
-        // Stuff here.
+        VkDescriptorSet imageSet = GetCurrentFrame().FrameDescriptors.Allocate(Device, SingleImageDescriptorLayout);
+        FDescriptorWriter writer;
+        writer.WriteImage(0, ErrorCheckerboardImage.ImageView, DefaultSamplerNearest, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+
+        writer.UpdateSet(Device, imageSet);
+        
+
+        vkCmdBindDescriptorSets(InCmd, VK_PIPELINE_BIND_POINT_GRAPHICS, MeshPipelineLayout, 0, 1, &imageSet, 0, nullptr);
+
+        glm::mat4 view = glm::translate(glm::vec3{ 0,0,-5 });
+        // camera projection
+        glm::mat4 projection = glm::perspective(glm::radians(70.f), (float)ActiveSwapChain->GetDrawExtent().width / (float)ActiveSwapChain->GetDrawExtent().height, 10000.f, 0.1f);
+
+        // invert the Y direction on projection matrix so that we are more similar
+        // to opengl and gltf axis
+        projection[1][1] *= -1;
+
+        FGPUDrawPushConstants PushConstants;
+        PushConstants.WorldMatrix = projection * view;
+        PushConstants.VertexBuffer = testMeshes[2]->GetMeshBuffers().VertexBufferAddress;
+
+        vkCmdPushConstants(InCmd, MeshPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(FGPUDrawPushConstants), &PushConstants);
+        vkCmdBindIndexBuffer(InCmd, testMeshes[2]->GetMeshBuffers().IndexBuffer.Buffer, 0, VK_INDEX_TYPE_UINT32);
+
+        vkCmdDrawIndexed(InCmd, testMeshes[2]->GetSurfaces()[0].Count, 1, testMeshes[2]->GetSurfaces()[0].StartIndex, 0, 0);
         
         vkCmdEndRendering(InCmd);
         
@@ -611,7 +634,8 @@ namespace Lumina
 
     void FVulkanRenderContext::InitDefaultData()
     {
-        
+        testMeshes = LoadGltfMeshes("../Lumina/Engine/Resources/Meshes/basicmesh.glb").value();
+
         constexpr uint32_t white = std::byteswap(0xFFFFFFFF);
         WhiteImage = CreateImage((void*)&white, VkExtent3D{ 1, 1, 1 }, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT);
 

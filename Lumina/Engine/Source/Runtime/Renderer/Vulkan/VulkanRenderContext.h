@@ -20,7 +20,7 @@ namespace Lumina
     public:
 
         FVulkanRenderContext();
-        ~FVulkanRenderContext();
+        ~FVulkanRenderContext() override;
         
         /* Main Draw Loop */
         void Draw(float DeltaTime) override;
@@ -96,6 +96,9 @@ namespace Lumina
     private:
         
         vkb::Instance Instance;
+
+        std::vector<std::shared_ptr<FStaticMesh>> testMeshes;
+
 
         FFrameData Frames[FRAME_OVERLAP];
         uint64_t FrameNumber = 0;

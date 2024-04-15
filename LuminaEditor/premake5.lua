@@ -34,6 +34,8 @@ project "LuminaEditor"
 		"../Lumina/Engine/ThirdParty/GLFW/src/",
 		"../Lumina/Engine/ThirdParty/GLM/",
 		"../Lumina/Engine/ThirdParty/",
+		"../Lumina/Engine/ThirdParty/fastgltf/include/",
+		"../Lumina/Engine/ThirdParty/fastgltf/src/",
         "../Lumina/Engine/ThirdParty/vulkanmemoryallocator/include/",
         "../Lumina/Engine/ThirdParty/vulkanmemoryallocator/src/",
         "../Lumina/Engine/ThirdParty/imgui/",
@@ -41,6 +43,7 @@ project "LuminaEditor"
         
 		"%{IncludeDir.vulkan}/Include/",
 		"%{IncludeDir.vulkan}/Lib/",
+		"%{IncludeDir.fastgltf}/Include",
 	}
 
 

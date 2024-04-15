@@ -17,7 +17,7 @@ namespace Lumina
     {
     public:
         FThread(const std::string& ThreadName)
-            : Name(ThreadName), ShouldStop(false) {}
+            : ShouldStop(false), Name(ThreadName) {}
 
         virtual ~FThread()
         {
