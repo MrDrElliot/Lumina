@@ -168,6 +168,7 @@
     <ClInclude Include="Engine\Source\Runtime\Memory\Memory.h" />
     <ClInclude Include="Engine\Source\Runtime\Platform\Vulkan\VulkanImGuiLayer.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\Material.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\RenderAPI.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\RenderContext.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\Renderer.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanDescriptor.h" />
@@ -624,6 +625,7 @@
     <ClCompile Include="Engine\Source\Runtime\Log\Log.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Platform\Vulkan\VulkanImGuiLayer.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\Material.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\RenderAPI.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\RenderContext.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\Renderer.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanDescriptor.cpp" />
