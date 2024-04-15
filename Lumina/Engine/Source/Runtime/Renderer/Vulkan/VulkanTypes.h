@@ -13,6 +13,20 @@ namespace Lumina
     
 /* Max number of frames to overlap */
 constexpr unsigned int FRAME_OVERLAP = 2;
+
+#define GRAPHICS_SET_DEBUG_NAME(device, object, type, name)  \
+do {                                                              \
+if (name.empty()) {                                             \
+return;                                                       \
+}                                                               \
+auto nameInfo = VkDebugUtilsObjectNameInfoEXT(                  \
+VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT            \
+);                                                              \
+nameInfo.objectHandle = (uint64)object;                         \
+nameInfo.objectType = type;                                     \
+nameInfo.pObjectName = name.data();                             \
+vkSetDebugUtilsObjectNameEXT(device, &nameInfo);                \
+} while (false)
     
     struct FDeletionQueue
     {

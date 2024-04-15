@@ -124,8 +124,7 @@ namespace Lumina
 
         VkSampler DefaultSamplerLinear;
         VkSampler DefaultSamplerNearest;
-
-
+        
         FMaterialInstance defaultData;
         GLTFMetallicRoughness metalRoughMaterial;
         
@@ -134,7 +133,6 @@ namespace Lumina
 
         VkDescriptorSet DrawImageDescriptors;
         VkDescriptorSetLayout DrawImageDescriptorLayout;
-
         
         VkPipeline MeshPipeline;
         VkPipelineLayout MeshPipelineLayout;

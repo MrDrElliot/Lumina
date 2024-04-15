@@ -106,7 +106,6 @@ namespace Lumina
 
         vkCmdBindPipeline(InCmd, VK_PIPELINE_BIND_POINT_GRAPHICS, MeshPipeline);
 
-
         // Stuff here.
         
         vkCmdEndRendering(InCmd);
@@ -163,6 +162,7 @@ namespace Lumina
         VK_CHECK(vkBeginCommandBuffer(Cmd, &CmdBeginInfo));
 
         OutCmd = Cmd;
+        return true;
     }
 
     void FVulkanRenderContext::SubmitFrame(VkCommandBuffer InCmd, uint32_t SwapChainImageIndex)
@@ -191,7 +191,7 @@ namespace Lumina
 
 
         VkResult PresentResult = vkQueuePresentKHR(GraphicsQueue, &PresentInfo);
-        if(PresentResult == VK_ERROR_OUT_OF_DATE_KHR/* || VK_SUBOPTIMAL_KHR*/)
+        if(PresentResult == VK_ERROR_OUT_OF_DATE_KHR || PresentResult == VK_SUBOPTIMAL_KHR)
         {
             ActiveSwapChain->SetResizeRequested(true);
         }
