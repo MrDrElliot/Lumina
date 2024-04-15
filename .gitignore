@@ -403,3 +403,5 @@ FodyWeavers.xsd
 *.sln.iml
 *.lib
 *.idb
+*.vcxproj
+*.filters
