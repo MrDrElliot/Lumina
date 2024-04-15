@@ -34,7 +34,7 @@ namespace Lumina
 
         std::vector<VkImage> GetImages() { return SwapChain.get_images().value(); }
         std::vector<VkImageView> GetImageViews() { return SwapChain.get_image_views().value(); }
-        
+        float GetAspectRatio() { return GetExtent2D().width / GetExtent2D().height; }
         
         FWindow* GetWindow() { return Window; }
         

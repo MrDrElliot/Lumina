@@ -3,6 +3,7 @@
 namespace Lumina
 {
     FStaticMesh::FStaticMesh(const std::filesystem::path& InPath)
+    : LAsset(EAssetType::StaticMesh)
     {
     }
 

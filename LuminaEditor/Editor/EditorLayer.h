@@ -20,7 +20,7 @@ namespace Lumina
         void OnDetach() override;
         void OnUpdate(float DeltaTime) override;
         void OnImGuiRender() override;
-        void OnEvent() override;
+        void OnEvent(FEvent& InEvent) override;
 
         void AddEditorLayer(FEditorPanel* NewPanel);
 

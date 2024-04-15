@@ -5,11 +5,11 @@
 #include <vector>
 
 #define GLFW_INCLUDE_VULKAN
+#include <functional>
 #include <GLFW/glfw3.h>
 
 #include "WindowTypes.h"
-
-
+#include "Source/Runtime/Events/Event.h"
 
 
 namespace Lumina
@@ -21,6 +21,8 @@ namespace Lumina
 	class FWindow
 	{
 	public:
+
+
 		
 		static FWindow* Create(const FWindowSpecs& InSpecs, FVulkanSwapChain* InSwapChain);
 
@@ -39,8 +41,8 @@ namespace Lumina
 		uint32_t GetHeight() const { return Specs.Height; }
 
 		static void WindowResizeCallback(GLFWwindow* window, int width, int height);
-		
-	private:
+		void SetEventCallback(const std::function<void(FEvent&)>& Callback) { Specs.EventCallback = Callback; }
+
 	
 	private:
 

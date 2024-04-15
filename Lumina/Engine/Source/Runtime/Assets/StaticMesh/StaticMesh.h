@@ -6,7 +6,7 @@ namespace Lumina
 {
 
 
-    class FStaticMesh : FAsset
+    class FStaticMesh : LAsset
     {
     public:
 

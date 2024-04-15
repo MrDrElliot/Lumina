@@ -2,13 +2,12 @@
 
 namespace Lumina
 {
-    FAsset::FAsset()
+    LAsset::LAsset(EAssetType InType)
     {
-        AssetType = EAssetType::StaticMesh;
-      //  Guid = FGuid::Generate();
+        AssetType = InType;
     }
 
-    FAsset::~FAsset()
+    LAsset::~LAsset()
     {
         
     }

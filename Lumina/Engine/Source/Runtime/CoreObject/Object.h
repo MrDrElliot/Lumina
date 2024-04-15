@@ -7,5 +7,8 @@ namespace Lumina
 	class LObject
 	{
 	public:
+
+	private:
+		
 	};
 }

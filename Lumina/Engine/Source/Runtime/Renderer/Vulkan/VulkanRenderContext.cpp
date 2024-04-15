@@ -13,6 +13,7 @@
 #include <chrono>
 
 #include "Source/Runtime/Assets/StaticMesh/StaticMesh.h"
+#include "Source/Runtime/Scene/Scene.h"
 
 namespace Lumina
 {
@@ -41,24 +42,29 @@ namespace Lumina
         /* Don't want to render if we haven't initialized yet */
         if(!bInitialized || !ActiveSwapChain) return;
 
+        VkCommandBuffer Cmd = GetCurrentFrame().CommandBuffer;
 
-        VkCommandBuffer Cmd;
         uint32_t SwapChainImageIndex = 0;
         if(BeginFrame(Cmd, &SwapChainImageIndex) == false) return;
 
-        Vulkan::TransitionImage(Cmd, ActiveSwapChain->GetDrawImage(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-        Vulkan::TransitionImage(Cmd, ActiveSwapChain->GetDepthImage(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL);
+
+        FAllocatedImage DrawImage = ActiveSwapChain->GetDrawImage();
+        FAllocatedImage DepthImage = ActiveSwapChain->GetDepthImage();
+
+        
+        Vulkan::TransitionImage(Cmd, DrawImage,  VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+        Vulkan::TransitionImage(Cmd, DepthImage, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL);
 
         /* Geometry Render */
         DrawGeometry(Cmd);
 
-        Vulkan::TransitionImage(Cmd, ActiveSwapChain->GetDrawImage(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+        Vulkan::TransitionImage(Cmd, DrawImage, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
         Vulkan::TransitionImage(Cmd, ActiveSwapChain->GetImages()[SwapChainImageIndex], VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
-        Vulkan::CopyImageToImage(Cmd, ActiveSwapChain->GetDrawImage().Image, ActiveSwapChain->GetImages()[SwapChainImageIndex], ActiveSwapChain->GetDrawExtent2D(), ActiveSwapChain->GetExtent2D());
+        Vulkan::CopyImageToImage(Cmd, DrawImage, ActiveSwapChain->GetImages()[SwapChainImageIndex], ActiveSwapChain->GetDrawExtent2D(), ActiveSwapChain->GetExtent2D());
 
         Vulkan::TransitionImage(Cmd, ActiveSwapChain->GetImages()[SwapChainImageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-        Vulkan::TransitionImage(Cmd, ActiveSwapChain->GetDrawImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        Vulkan::TransitionImage(Cmd, DrawImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 
         /* ImGui Render */
@@ -75,12 +81,14 @@ namespace Lumina
 
     void FVulkanRenderContext::DrawGeometry(VkCommandBuffer InCmd)
     {
-        VkRenderingAttachmentInfo colorAttachment = Vulkan::RenderingAttachmentInfo(ActiveSwapChain->GetDrawImage().ImageView, nullptr, VK_IMAGE_LAYOUT_GENERAL);
+
+        VkClearValue ClearValue = {};
+        ClearValue.color = {{0.0f}};
+        VkRenderingAttachmentInfo colorAttachment = Vulkan::RenderingAttachmentInfo(ActiveSwapChain->GetDrawImage().ImageView, &ClearValue, VK_IMAGE_LAYOUT_GENERAL);
         VkRenderingAttachmentInfo depthAttachment = Vulkan::DepthAttachmentInfo(ActiveSwapChain->GetDepthImage().ImageView, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL);
         
-        VkRenderingInfo renderInfo = Vulkan::RenderingInfo(ActiveSwapChain->GetDrawExtent2D(), &colorAttachment, nullptr);
+        VkRenderingInfo renderInfo = Vulkan::RenderingInfo(ActiveSwapChain->GetDrawExtent2D(), &colorAttachment, &depthAttachment);
         if(renderInfo.renderArea.extent.width == 0 || renderInfo.renderArea.extent.height == 0) return;
-
 
         
         VkViewport viewport = {};
@@ -108,24 +116,14 @@ namespace Lumina
         VkDescriptorSet imageSet = GetCurrentFrame().FrameDescriptors.Allocate(Device, SingleImageDescriptorLayout);
         FDescriptorWriter writer;
         writer.WriteImage(0, ErrorCheckerboardImage.ImageView, DefaultSamplerNearest, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-
         writer.UpdateSet(Device, imageSet);
+
         
 
         vkCmdBindDescriptorSets(InCmd, VK_PIPELINE_BIND_POINT_GRAPHICS, MeshPipelineLayout, 0, 1, &imageSet, 0, nullptr);
-
-        glm::mat4 view = glm::translate(glm::vec3{ 0,0,-5 });
-        // camera projection
-        glm::mat4 projection = glm::perspective(glm::radians(70.f), (float)ActiveSwapChain->GetDrawExtent().width / (float)ActiveSwapChain->GetDrawExtent().height, 10000.f, 0.1f);
-
-        // invert the Y direction on projection matrix so that we are more similar
-        // to opengl and gltf axis
-        projection[1][1] *= -1;
-
-        FGPUDrawPushConstants PushConstants;
-        PushConstants.WorldMatrix = projection * view;
-        PushConstants.VertexBuffer = testMeshes[2]->GetMeshBuffers().VertexBufferAddress;
-
+        
+        
+        
         vkCmdPushConstants(InCmd, MeshPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(FGPUDrawPushConstants), &PushConstants);
         vkCmdBindIndexBuffer(InCmd, testMeshes[2]->GetMeshBuffers().IndexBuffer.Buffer, 0, VK_INDEX_TYPE_UINT32);
 
@@ -151,7 +149,7 @@ namespace Lumina
         }
     }
 
-    bool FVulkanRenderContext::BeginFrame(VkCommandBuffer& OutCmd, uint32_t* InSwapChainImageIndex)
+    bool FVulkanRenderContext::BeginFrame(VkCommandBuffer InCmd, uint32_t* InSwapChainImageIndex)
     {
         
         /* Wait until the GPU has finished rendering the previous frame */
@@ -163,7 +161,7 @@ namespace Lumina
         
         /* Request the rendered image from the swap chain */
         VkResult ImageResult = vkAcquireNextImageKHR(Device, ActiveSwapChain->GetSwapChain(), 1000000000, GetCurrentFrame().SwapchainSemaphore, nullptr, InSwapChainImageIndex);
-        if(ImageResult == VK_ERROR_OUT_OF_DATE_KHR)
+        if(ImageResult == VK_ERROR_OUT_OF_DATE_KHR || ImageResult == VK_SUBOPTIMAL_KHR)
         {
             ActiveSwapChain->SetResizeRequested(true);
             return false;
@@ -172,19 +170,16 @@ namespace Lumina
         VK_CHECK(vkResetFences(Device, 1, &GetCurrentFrame().RenderFence));
 
         
-        /* Get the current frame's command buffer */
-        VkCommandBuffer Cmd = GetCurrentFrame().CommandBuffer;
         
         
         /* Reset the commad buffer since we know it's finished, we need to do this to start recording again */
-        VK_CHECK(vkResetCommandBuffer(Cmd, 0));
+        VK_CHECK(vkResetCommandBuffer(InCmd, 0));
         
 
         /* Begin recording to the command buffer of this frame */
         VkCommandBufferBeginInfo CmdBeginInfo = Vulkan::CommandBufferBeginInfo(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-        VK_CHECK(vkBeginCommandBuffer(Cmd, &CmdBeginInfo));
+        VK_CHECK(vkBeginCommandBuffer(InCmd, &CmdBeginInfo));
 
-        OutCmd = Cmd;
         return true;
     }
 
@@ -597,7 +592,6 @@ namespace Lumina
             LE_LOG_CRITICAL("Failed to create triangle mesh vertex shader!");
         }
 
-        FVulkanPipeline Pipeline;
 
         VkPushConstantRange bufferRange{};
         bufferRange.offset = 0;
@@ -612,6 +606,7 @@ namespace Lumina
         VK_CHECK(vkCreatePipelineLayout(Device, &pipeline_layout_info, nullptr, &MeshPipelineLayout));
 
         
+        FVulkanPipeline Pipeline;
         Pipeline.PipelineLayout = MeshPipelineLayout;
         Pipeline.SetShaders(VertexShader, FragShader);
         Pipeline.SetInputTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);

@@ -61,8 +61,6 @@ namespace Lumina
     class FVulkanMaterial : public FMaterial
     {
     public:
-
         
-    
     };
 }

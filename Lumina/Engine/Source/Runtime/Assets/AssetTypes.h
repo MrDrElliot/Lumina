@@ -7,6 +7,7 @@ namespace Lumina
     enum class EAssetType : uint8_t
     {
         StaticMesh,
+        Scene,
     };
 
     struct FGeometrySurface

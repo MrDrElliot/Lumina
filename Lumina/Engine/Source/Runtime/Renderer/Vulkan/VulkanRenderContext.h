@@ -27,7 +27,7 @@ namespace Lumina
         void DrawGeometry(VkCommandBuffer InCmd);
         void DrawImGui(VkCommandBuffer InBuffer, VkImageView TargetViewImage);
         
-        bool BeginFrame(VkCommandBuffer& OutCmdInCmd, uint32_t* InSwapChainImageIndex);
+        bool BeginFrame(VkCommandBuffer InCmd, uint32_t* InSwapChainImageIndex);
         void SubmitFrame(VkCommandBuffer InCmd, uint32_t SwapChainImageIndex);
 
         FAllocatedImage CreateImage(VkExtent3D InSize, VkFormat InFormat, VkImageUsageFlags InUsage, bool bMipmapped = false);

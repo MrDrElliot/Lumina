@@ -7,6 +7,7 @@
 #include "Source/Runtime/Renderer/Vulkan/VulkanSwapChain.h"
 #include "Source/Runtime/Renderer/RenderContext.h"
 #include "Source/Runtime/Renderer/Vulkan/VulkanRenderContext.h"
+#include "Source/Runtime/Scene/Scene.h"
 #include "Windows/Window.h"
 
 namespace Lumina
@@ -42,6 +43,7 @@ namespace Lumina
                 RenderImGui();
                 Window->OnUpdate(1.0f);
                 RenderThread->Dispatch();
+                TestScene->OnUpdate(0.0f);
             }
         }
 
@@ -64,6 +66,8 @@ namespace Lumina
         AppWindowSpecs.Height = AppSpecs.WindowHeight;
         CreateApplicationWindow(AppWindowSpecs);
 
+        TestScene = new LScene();
+
     }
 
     void FApplication::OnShutdown()
@@ -83,6 +87,7 @@ namespace Lumina
 
         /* Window Init must be called before initializing a swap chain or the GLFWwindow will be null */
         Window->Init();
+        Window->SetEventCallback(HZ_BIND_EVENT_FN(OnEvent));
         
         NewSwapChain->Init(Window.get());
         
@@ -138,6 +143,14 @@ namespace Lumina
         }
 
         ImGuiLayer->End();
+    }
+
+    void FApplication::OnEvent(FEvent& Event)
+    {
+        for (auto Layer : LayerStack)
+        {
+            Layer->OnEvent(Event);
+        }
     }
 
     bool FApplication::ShouldExit() const

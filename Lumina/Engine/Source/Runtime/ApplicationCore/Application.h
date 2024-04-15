@@ -7,17 +7,14 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
-#include "Source/Runtime/Thread/GameThread.h"
+#include "Source/Runtime/Events/Event.h"
 #include "Source/Runtime/Thread/RenderThread.h"
 
 
 namespace Lumina
 {
 	class FImGuiLayer;
-}
-
-namespace Lumina
-{
+	class LScene;
 	struct FWindowSpecs;
 	class FWindow;
 	class FRenderContext;
@@ -58,13 +55,15 @@ namespace Lumina
 		void InitImGuiLayer();
 		virtual void RenderImGui();
 
+		void OnEvent(FEvent& Event);
+
 
 
 		
 		
 		static FApplication& Get() { return *Instance; }
 
-		FWindow& GetWindow() { return *Window;  }
+		static FWindow& GetWindow() { return *Instance->Window;  }
 		
 
 		FRenderThread* GetRenderThread() const { return RenderThread.get(); }
@@ -79,6 +78,9 @@ namespace Lumina
 			//static_assert(std::is_base_of<FRenderContext, T>::Value, "T Must be derived from FRenderContext");
 			return dynamic_cast<T*>(RenderContext);
 		}
+
+		
+		LScene* TestScene;
 	
 	private:
 
@@ -107,7 +109,9 @@ namespace Lumina
 		/* Layer Stack */
 		FLayerStack LayerStack;
 
+		/* Im Gui Layer */
 		FImGuiLayer* ImGuiLayer;
+
 
 
 		

@@ -52,9 +52,9 @@ namespace Lumina
         Font::PopFont();
     }
 
-    void FEditorLayer::OnEvent()
+    void FEditorLayer::OnEvent(FEvent& InEvent)
     {
-        FLayer::OnEvent();
+        FLayer::OnEvent(InEvent);
     }
 
     void FEditorLayer::AddEditorLayer(FEditorPanel* NewPanel)

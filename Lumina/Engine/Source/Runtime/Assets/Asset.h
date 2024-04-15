@@ -1,24 +1,23 @@
 #pragma once
 #include "AssetTypes.h"
+#include "Source/Runtime/CoreObject/Object.h"
 #include "Source/Runtime/GUID/GUID.h"
 
 namespace Lumina
 {
-    class FAsset
+    class LAsset : public LObject
     {
     public:
 
-        FAsset();
-        virtual ~FAsset();
+        LAsset(EAssetType InType);
+        virtual ~LAsset();
 
 
         EAssetType GetAssetType() const { return AssetType; }
-       // FGuid GetGuid() const { return Guid; }
         const std::string& GetFilePath() const { return FilePath; }
         
     private:
 
-       // FGuid Guid;
         EAssetType AssetType;
         std::string FilePath;
     };
