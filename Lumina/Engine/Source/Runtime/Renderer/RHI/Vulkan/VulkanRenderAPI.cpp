@@ -55,13 +55,14 @@ namespace Lumina
         LE_LOG_WARN("Vulkan Render API: Shutting Down");
 
         vkDeviceWaitIdle(FVulkanRenderContext::GetDevice());
-        
+
         for(auto& Buffer : CommandBuffers)
         {
             Buffer->Destroy();
         }
 
         vkDestroyDescriptorPool(FVulkanRenderContext::GetDevice(), DescriptorPool, nullptr);
+
     }
 
     void FVulkanRenderAPI::BeginFrame()

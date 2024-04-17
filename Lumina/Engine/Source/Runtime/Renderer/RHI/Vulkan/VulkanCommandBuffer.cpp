@@ -1,5 +1,6 @@
 #include "VulkanCommandBuffer.h"
 
+#include "VulkanMemoryAllocator.h"
 #include "VulkanRenderContext.h"
 
 namespace Lumina

@@ -5,6 +5,7 @@
 
 #include "VulkanSwapchain.h"
 #include "Source/Runtime/ApplicationCore/Windows/Window.h"
+#include "Source/Runtime/Log/Log.h"
 
 
 namespace Lumina
@@ -89,6 +90,11 @@ namespace Lumina
 
     FVulkanRenderContext::~FVulkanRenderContext()
     {
+        FVulkanRenderContext::Destroy();
+    }
+
+    void FVulkanRenderContext::Destroy()
+    {
         vkDeviceWaitIdle(Device);
         
         FVulkanMemoryAllocator::Destroy();
@@ -103,6 +109,9 @@ namespace Lumina
         func(VulkanInstance, DebugMessenger, nullptr);
         
         vkDestroyInstance(VulkanInstance, nullptr);
+
+
+        LE_LOG_WARN("Vulkan Render Context: Shutting Down");
     }
 
     VkCommandBuffer FVulkanRenderContext::AllocateTransientCommandBuffer()

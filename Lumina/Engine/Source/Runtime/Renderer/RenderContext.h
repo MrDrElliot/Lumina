@@ -18,6 +18,8 @@ namespace Lumina
         virtual ~FRenderContext() = default;
 
         static FRenderContext* Create(const FRenderConfig& InConfig);
+
+        virtual void Destroy() = 0;
     
     private:
         

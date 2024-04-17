@@ -25,6 +25,8 @@ namespace Lumina
         ~FVulkanRenderContext();
 
         static FVulkanRenderContext& Get() { return *Instance; }
+
+        void Destroy() override;
         
         static VkInstance GetVulkanInstance() { return Instance->VulkanInstance; }
         static VkDevice GetDevice() { return Instance->Device; }

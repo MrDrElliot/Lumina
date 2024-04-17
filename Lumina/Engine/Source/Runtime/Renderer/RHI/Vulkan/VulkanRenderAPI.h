@@ -15,7 +15,7 @@ namespace Lumina
     public:
 
         FVulkanRenderAPI(const FRenderConfig& InConfig);
-        ~FVulkanRenderAPI();
+        ~FVulkanRenderAPI() override;
         
         virtual void BeginFrame() override;
         virtual void EndFrame() override;
