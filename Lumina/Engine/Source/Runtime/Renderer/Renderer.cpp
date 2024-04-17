@@ -17,6 +17,7 @@ namespace Lumina
     
     void FRenderer::Init(const FRenderConfig& InConfig)
     {
+        LE_LOG_INFO("Renderer: Initializing");
         RenderAPI = new FVulkanRenderAPI(InConfig);
     }
     

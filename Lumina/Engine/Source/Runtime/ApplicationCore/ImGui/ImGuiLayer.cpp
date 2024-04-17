@@ -4,13 +4,15 @@
 #include "Source/Runtime/Platform/Vulkan/VulkanImGuiLayer.h"
 
 
-Lumina::FImGuiLayer* Lumina::FImGuiLayer::Create()
+namespace Lumina
 {
-    return new FVulkanImGuiLayer();
-}
+	std::shared_ptr<FImGuiLayer> Lumina::FImGuiLayer::Create()
+	{
+		return std::make_shared<FVulkanImGuiLayer>();
+	}
 
-void Lumina::FImGuiLayer::SetupDarkThemeColors()
-{
+	void FImGuiLayer::SetupDarkThemeColors()
+	{
 		auto& colors = ImGui::GetStyle().Colors;
 		colors[ImGuiCol_WindowBg] = ImVec4{ 0.1f, 0.105f, 0.11f, 1.0f };
 
@@ -58,9 +60,10 @@ void Lumina::FImGuiLayer::SetupDarkThemeColors()
 		// Slider
 		colors[ImGuiCol_SliderGrab] = ImVec4(0.51f, 0.51f, 0.51f, 0.7f);
 		colors[ImGuiCol_SliderGrabActive] = ImVec4(0.66f, 0.66f, 0.66f, 1.0f);
-}
+	}
 
-void Lumina::FImGuiLayer::SetDarkThemeV2Colors()
-{
+	void FImGuiLayer::SetDarkThemeV2Colors()
+	{
 	
+	}
 }

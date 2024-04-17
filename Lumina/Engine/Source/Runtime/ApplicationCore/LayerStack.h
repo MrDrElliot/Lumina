@@ -12,29 +12,29 @@ namespace Lumina
 		FLayerStack();
 		virtual ~FLayerStack();
 
-		void PushLayer(FLayer* InLayer);
-		void PushOverlay(FLayer* InLayer);
-		void PopLayer(FLayer* InLayer);
-		void PopOverlay(FLayer* InLayer);
+		void PushLayer(std::shared_ptr<FLayer> InLayer);
+		void PushOverlay(std::shared_ptr<FLayer> InLayer);
+		void PopLayer(std::shared_ptr<FLayer> InLayer);
+		void PopOverlay(std::shared_ptr<FLayer> InLayer);
 
-		FLayer* operator [](size_t i)
+		std::shared_ptr<FLayer> operator [](size_t i)
 		{
 			return Layers[i];
 		}
 
-		const FLayer* operator [](size_t i) const
+		const std::shared_ptr<FLayer> operator [](size_t i) const
 		{
 			return Layers[i];
 		}
 
 		size_t GetSize() const { return Layers.size(); }
 
-		std::vector<FLayer*>::iterator begin() { return Layers.begin(); }
-		std::vector<FLayer*>::iterator end() { return Layers.end(); }
+		std::vector<std::shared_ptr<FLayer>>::iterator begin() { return Layers.begin(); }
+		std::vector<std::shared_ptr<FLayer>>::iterator end() { return Layers.end(); }
 
 	private:
 
-		std::vector<FLayer*> Layers;
+		std::vector<std::shared_ptr<FLayer>> Layers;
 		unsigned int LayerInsertIndex = 0;
 	};
 }

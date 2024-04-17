@@ -2,21 +2,24 @@
 
 #include "Source/Runtime/ApplicationCore/Application.h"
 
-extern Lumina::FApplication* Lumina::CreateApplication(int argc, char** argv);
+extern std::unique_ptr<Lumina::FApplication> Lumina::CreateApplication(int argc, char** argv);
 
 inline bool gApplicationRunning = true;
 
 namespace Lumina
 {
-	int GuardedMain(int argc, char** argv)
+	inline int GuardedMain(int argc, char** argv)
 	{
+		int Exit = 0;
 		while (gApplicationRunning)
 		{
-			FApplication* App = CreateApplication(argc, argv);
+			std::unique_ptr<FApplication> App = CreateApplication(argc, argv);
 			App->Run();
-			delete App;
+			Exit = App->Close();
+	
+			gApplicationRunning = false;
 		}
-		return 0;
+		return Exit;
 	}
 
 }
@@ -28,7 +31,7 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 }
 #else
 
-int main(int argc, char** argv)
+inline int main(int argc, char** argv)
 {
 	return Lumina::GuardedMain(argc, argv);
 }

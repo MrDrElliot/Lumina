@@ -6,6 +6,8 @@ namespace Lumina
     class FImGuiLayer : public FLayer
     {
     public:
+        
+        static std::shared_ptr<FImGuiLayer> Create();
 
         virtual void Begin() = 0;
         virtual void End() = 0;
@@ -15,7 +17,6 @@ namespace Lumina
         void SetupDarkThemeColors();
         void SetDarkThemeV2Colors();
 
-        static FImGuiLayer* Create();
     
     };
 }

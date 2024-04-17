@@ -17,10 +17,6 @@ namespace Lumina
     {
         AppSpecs = InAppSpecs;
         Instance = this;
-
-        /* Initialize Render Thread */
-        RenderThread = std::make_unique<FRenderThread>();
-        RenderThread->Start();
         
     }
 
@@ -50,10 +46,17 @@ namespace Lumina
         OnShutdown();
     }
 
+    int FApplication::Close()
+    {
+        return 0;
+    }
+
     void FApplication::OnInit()
     {
         /* Initialize Logging */
         FLog::Init();
+
+        LE_LOG_INFO("{0} Initializing", AppSpecs.Name);
 
         
         /* Create application window */
@@ -71,13 +74,13 @@ namespace Lumina
 
     void FApplication::OnShutdown()
     {
+        bRunning = false;
+
         LE_LOG_WARN("Lumina Engine: Shutting Down");
         
         FRenderer::Shutdown();
         Window->Shutdown();
-        
-        RenderThread->RequestStop();
-        RenderThread->Join();
+        glfwTerminate();
         
 
         FLog::Shutdown();
@@ -86,7 +89,7 @@ namespace Lumina
 
     void FApplication::CreateApplicationWindow(const FWindowSpecs& InSpecs)
     {
-        Window.reset(FWindow::Create(InSpecs));
+        Window = FWindow::Create(InSpecs);
         Window->Init();
         Window->SetEventCallback(HZ_BIND_EVENT_FN(OnEvent));
         
@@ -106,25 +109,25 @@ namespace Lumina
     }
 
 
-    void FApplication::PushLayer(FLayer* InLayer)
+    void FApplication::PushLayer(std::shared_ptr<FLayer> InLayer)
     {
         LayerStack.PushLayer(InLayer);
         InLayer->OnAttach();
     }
 
-    void FApplication::PushOverlay(FLayer* InLayer)
+    void FApplication::PushOverlay(std::shared_ptr<FLayer> InLayer)
     {
         LayerStack.PushOverlay(InLayer);
         InLayer->OnAttach();
     }
 
-    void FApplication::PopLayer(FLayer* InLayer)
+    void FApplication::PopLayer(std::shared_ptr<FLayer> InLayer)
     {
         LayerStack.PopLayer(InLayer);
         InLayer->OnDetach();
     }
 
-    void FApplication::PopOverlay(FLayer* InLayer)
+    void FApplication::PopOverlay(std::shared_ptr<FLayer> InLayer)
     {
         LayerStack.PopOverlay(InLayer);
         InLayer->OnDetach();

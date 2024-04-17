@@ -1,8 +1,6 @@
 #pragma once
 
 #include <cstdint>
-#include <string>
-#include <vector>
 
 #define GLFW_INCLUDE_VULKAN
 #include <functional>
@@ -24,7 +22,7 @@ namespace Lumina
 
 
 		
-		static FWindow* Create(const FWindowSpecs& InSpecs);
+		static std::shared_ptr<FWindow> Create(const FWindowSpecs& InSpecs);
 
 		FWindow(const FWindowSpecs& InSpecsn);
 		virtual ~FWindow();

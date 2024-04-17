@@ -11,7 +11,6 @@ namespace Lumina
 
 	FLog::FLog()
 	{
-		std::cout << "HEllo";
 	}
 
 	FLog::~FLog()

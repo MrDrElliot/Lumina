@@ -10,10 +10,12 @@ namespace Lumina
     
     FVulkanRenderAPI::FVulkanRenderAPI(const FRenderConfig& InConfig)
     {
+        LE_LOG_INFO("Vulkan Render API: Initializing");
+
         Config = InConfig;
 
         RenderContext = std::make_shared<FVulkanRenderContext>(InConfig);
-        Swapchain.reset(RenderContext->GetSwapchain());
+        Swapchain = RenderContext->GetSwapchain();
 
         CommandBuffers.resize(Swapchain->GetSpecs().FramesInFlight);
         CommandBuffers.shrink_to_fit();

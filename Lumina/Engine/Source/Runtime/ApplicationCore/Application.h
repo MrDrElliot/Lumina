@@ -39,7 +39,7 @@ namespace Lumina
 		
 
 		void Run();
-		void Close();
+		int Close();
 		
 		virtual void OnInit();
 		virtual void OnShutdown();
@@ -49,27 +49,18 @@ namespace Lumina
 		virtual void PreFrame();
 		virtual void PostFrame();
 		
-		void PushLayer(FLayer* InLayer);
-		void PushOverlay(FLayer* InLayer);
-		void PopLayer(FLayer* InLayer);
-		void PopOverlay(FLayer* InLayer);
+		void PushLayer(std::shared_ptr<FLayer> InLayer);
+		void PushOverlay(std::shared_ptr<FLayer> InLayer);
+		void PopLayer(std::shared_ptr<FLayer> InLayer);
+		void PopOverlay(std::shared_ptr<FLayer> InLayer);
 		void InitImGuiLayer();
 		virtual void RenderImGui();
 
 		void OnEvent(FEvent& Event);
-
-
-
-		
 		
 		static FApplication& Get() { return *Instance; }
 
 		static FWindow& GetWindow() { return *Instance->Window;  }
-		
-
-		FRenderThread* GetRenderThread() const { return RenderThread.get(); }
-		std::thread::id GetRenderThreadID() const { return RenderThread->GetThreadID(); }
-		
 	
 	private:
 
@@ -89,22 +80,16 @@ namespace Lumina
 		static FApplication* Instance;
 		
 		/* Application Window */
-		std::unique_ptr<FWindow> Window;
+		std::shared_ptr<FWindow> Window;
 
 		/* Layer Stack */
 		FLayerStack LayerStack;
 
 		/* Im Gui Layer */
-		FImGuiLayer* ImGuiLayer;
-
-
-
-		
-		/* Render Thread */
-		std::unique_ptr<FRenderThread> RenderThread;
+		std::shared_ptr<FImGuiLayer> ImGuiLayer;
 		
 	};
 
 	/* Implemented by client */
-	static FApplication* CreateApplication(int argc, char** argv);
+	static std::unique_ptr<Lumina::FApplication> CreateApplication(int argc, char** argv);
 }

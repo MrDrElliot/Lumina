@@ -8,18 +8,18 @@ Lumina::FLayerStack::~FLayerStack()
 {
 }
 
-void Lumina::FLayerStack::PushLayer(FLayer* InLayer)
+void Lumina::FLayerStack::PushLayer(std::shared_ptr<FLayer> InLayer)
 {
 	Layers.emplace(Layers.begin() + LayerInsertIndex, InLayer);
 	LayerInsertIndex++;
 }
 
-void Lumina::FLayerStack::PushOverlay(FLayer* InLayer)
+void Lumina::FLayerStack::PushOverlay(std::shared_ptr<FLayer> InLayer)
 {
 	Layers.emplace_back(InLayer);
 }
 
-void Lumina::FLayerStack::PopLayer(FLayer* InLayer)
+void Lumina::FLayerStack::PopLayer(std::shared_ptr<FLayer> InLayer)
 {
 	auto it = std::find(Layers.begin(), Layers.end(), InLayer);
 	if (it != Layers.end())
@@ -29,7 +29,7 @@ void Lumina::FLayerStack::PopLayer(FLayer* InLayer)
 	}
 }
 
-void Lumina::FLayerStack::PopOverlay(FLayer* InLayer)
+void Lumina::FLayerStack::PopOverlay(std::shared_ptr<FLayer> InLayer)
 {
 	auto it = std::find(Layers.begin(), Layers.end(), InLayer);
 	if (it != Layers.end())

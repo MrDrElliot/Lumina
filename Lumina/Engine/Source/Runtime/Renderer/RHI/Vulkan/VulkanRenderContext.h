@@ -31,7 +31,7 @@ namespace Lumina
         static VkInstance GetVulkanInstance() { return Instance->VulkanInstance; }
         static VkDevice GetDevice() { return Instance->Device; }
         static VkPhysicalDevice GetPhysicalDevice() { return Instance->PhysicalDevice; }
-        static FVulkanSwapchain* GetSwapchain() { return Instance->Swapchain.get(); }
+        static std::shared_ptr<FVulkanSwapchain> GetSwapchain() { return Instance->Swapchain; }
         static VkQueue GetGeneralQueue() { return Instance->GeneralQueue; }
         static FQueueFamilyIndex GetQueueFamilyIndex() { return Instance->QueueFamilyIndex; }
 

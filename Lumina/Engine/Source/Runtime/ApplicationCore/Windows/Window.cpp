@@ -26,7 +26,6 @@ namespace Lumina
 	
 	FWindow::~FWindow()
 	{
-		
 	}
 
 	void FWindow::Init()
@@ -142,7 +141,6 @@ namespace Lumina
 	void FWindow::Shutdown()
 	{
 		glfwDestroyWindow(Window);
-		glfwTerminate();
 	}
 
 	void FWindow::WindowResizeCallback(GLFWwindow* window, int width, int height)
@@ -157,10 +155,9 @@ namespace Lumina
 		data.EventCallback(event);
 	}
 
-	FWindow* FWindow::Create(const FWindowSpecs& InSpecs)
+	std::shared_ptr<FWindow> FWindow::Create(const FWindowSpecs& InSpecs)
 	{
-		FWindow* NewWindow = new FWindow(InSpecs);
-		return NewWindow;
+		return std::make_shared<FWindow>(InSpecs);
 	}
 
 	

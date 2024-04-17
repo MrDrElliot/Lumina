@@ -15,6 +15,7 @@ namespace Lumina
     
     FVulkanRenderContext::FVulkanRenderContext(const FRenderConfig& InConfig)
     {
+        LE_LOG_INFO("Vulkan Render Context: Initializing");
 
         Instance = this;
         
