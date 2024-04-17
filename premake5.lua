@@ -9,6 +9,8 @@ workspace "Lumina"
 	staticruntime "Off"
 
 	flags  { "MultiProcessorCompile" }
+	
+
 
 	defines
 	{
