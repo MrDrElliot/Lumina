@@ -32,6 +32,7 @@ namespace Lumina
 	}
 	void FLog::Shutdown()
 	{
-
+		LE_LOG_WARN("Logger: Shutting Down");
+		spdlog::shutdown();
 	}
 }

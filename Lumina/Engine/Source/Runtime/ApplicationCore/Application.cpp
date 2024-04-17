@@ -1,14 +1,13 @@
 #include "Application.h"
 
-#include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_vulkan.h"
 #include "ImGui/ImGuiLayer.h"
 #include "Source/Runtime/Log/Log.h"
-#include "Source/Runtime/Renderer/Vulkan/VulkanSwapChain.h"
 #include "Source/Runtime/Renderer/RenderContext.h"
-#include "Source/Runtime/Renderer/Vulkan/VulkanRenderContext.h"
+#include "Source/Runtime/Renderer/Renderer.h"
 #include "Source/Runtime/Scene/Scene.h"
 #include "Windows/Window.h"
+
 
 namespace Lumina
 {
@@ -39,11 +38,11 @@ namespace Lumina
         {
             if (!IsMinimized())
             {
-                CheckWindowResized();
-                RenderImGui();
+                PreFrame();
+                
                 Window->OnUpdate(1.0f);
-                RenderThread->Dispatch();
-                TestScene->OnUpdate(0.0f);
+                
+                PostFrame();
             }
         }
 
@@ -55,9 +54,7 @@ namespace Lumina
     {
         /* Initialize Logging */
         FLog::Init();
-        
-        /* Create Renderer Context */
-        RenderContext = FRenderContext::Create();
+
         
         /* Create application window */
         FWindowSpecs AppWindowSpecs;
@@ -65,43 +62,49 @@ namespace Lumina
         AppWindowSpecs.Width = AppSpecs.WindowWidth;
         AppWindowSpecs.Height = AppSpecs.WindowHeight;
         CreateApplicationWindow(AppWindowSpecs);
-
-        TestScene = new LScene();
-
+        
+        FRenderConfig RenderConfig;
+        RenderConfig.Window = Window.get();
+        RenderConfig.FramesInFlight = 2;
+        FRenderer::Init(RenderConfig);
     }
 
     void FApplication::OnShutdown()
     {
+        LE_LOG_WARN("Lumina Engine: Shutting Down");
+        
+        FRenderer::Shutdown();
         Window->Shutdown();
         
         RenderThread->RequestStop();
         RenderThread->Join();
         
+
+        FLog::Shutdown();
     }
     
 
     void FApplication::CreateApplicationWindow(const FWindowSpecs& InSpecs)
     {
-        FVulkanSwapChain* NewSwapChain = FVulkanSwapChain::Create();
-        Window.reset(FWindow::Create(InSpecs, NewSwapChain));
-
-        /* Window Init must be called before initializing a swap chain or the GLFWwindow will be null */
+        Window.reset(FWindow::Create(InSpecs));
         Window->Init();
         Window->SetEventCallback(HZ_BIND_EVENT_FN(OnEvent));
         
-        NewSwapChain->Init(Window.get());
-        
     }
 
-    void FApplication::CheckWindowResized()
+    void FApplication::PreFrame()
     {
-        if(RenderContext->Get<FVulkanRenderContext>()->GetActiveSwapChain()->IsResizeRequested())
-        {
-            int w, h;
-            glfwGetWindowSize(Window->GetWindow(), &w, &h);
-            RenderContext->Get<FVulkanRenderContext>()->GetActiveSwapChain()->Resize(w, h);
-        }
+        FRenderer::BeginFrame();
     }
+
+    void FApplication::PostFrame()
+    {
+        FRenderer::EndRender();
+        FRenderer::Render();
+        FRenderer::EndFrame();
+        glfwPollEvents();
+    }
+
 
     void FApplication::PushLayer(FLayer* InLayer)
     {

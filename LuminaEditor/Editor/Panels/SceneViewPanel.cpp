@@ -1,12 +1,6 @@
 #include "SceneViewPanel.h"
 
-#include <complex.h>
 #include "imgui.h"
-#include "imgui_internal.h"
-#include "backends/imgui_impl_vulkan.h"
-#include "Source/Runtime/Log/Log.h"
-#include "Source/Runtime/Renderer/Vulkan/VulkanHelpers.h"
-#include "Source/Runtime/Renderer/Vulkan/VulkanRenderContext.h"
 
 namespace Lumina
 {
@@ -38,7 +32,6 @@ namespace Lumina
 
     void FSceneViewPanel::OnImGui()
     {
-        FVulkanRenderContext* RenderContext = FRenderContext::Get<FVulkanRenderContext>();
         
         ImGui::Begin("Scene");
 
@@ -50,7 +43,7 @@ namespace Lumina
         
         ImGui::Text("Viewport Size: %i %i", (int)NewRegion.x, (int)NewRegion.y);
         
-        ImGui::Image(RenderContext->GetActiveSwapChain()->GetDrawImage().ImGuiTexture, NewRegion);
+       // ImGui::Image(RenderContext->GetActiveSwapChain()->GetDrawImage().ImGuiTexture, NewRegion);
         
         ImGui::End();
     }

@@ -1,13 +1,13 @@
 #include "RenderContext.h"
-#include "Vulkan\VulkanRenderContext.h"
-#include "Source/Runtime/ApplicationCore/Application.h"
+
+#include "RHI/Vulkan/VulkanRenderContext.h"
 
 
 namespace Lumina
 {
-    FRenderContext* FRenderContext::Create()
+    FRenderContext* FRenderContext::Create(const FRenderConfig& InConfig)
     {
-        return new FVulkanRenderContext();
+        return new FVulkanRenderContext(InConfig);
     }
     
 }

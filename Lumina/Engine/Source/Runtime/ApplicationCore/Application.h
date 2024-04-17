@@ -46,7 +46,8 @@ namespace Lumina
 		
 		void CreateApplicationWindow(const FWindowSpecs& InSpecs);
 
-		virtual void CheckWindowResized();
+		virtual void PreFrame();
+		virtual void PostFrame();
 		
 		void PushLayer(FLayer* InLayer);
 		void PushOverlay(FLayer* InLayer);
@@ -68,19 +69,7 @@ namespace Lumina
 
 		FRenderThread* GetRenderThread() const { return RenderThread.get(); }
 		std::thread::id GetRenderThreadID() const { return RenderThread->GetThreadID(); }
-
 		
-		
-		template<typename T>
-		T* GetRenderContext()
-		{
-			//@ TODO Not allowed?
-			//static_assert(std::is_base_of<FRenderContext, T>::Value, "T Must be derived from FRenderContext");
-			return dynamic_cast<T*>(RenderContext);
-		}
-
-		
-		LScene* TestScene;
 	
 	private:
 
@@ -98,10 +87,6 @@ namespace Lumina
 
 		/* Application Instance */
 		static FApplication* Instance;
-		
-
-		/* Rendering Context */
-		FRenderContext* RenderContext;
 		
 		/* Application Window */
 		std::unique_ptr<FWindow> Window;

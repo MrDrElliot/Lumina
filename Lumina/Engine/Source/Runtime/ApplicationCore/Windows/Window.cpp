@@ -1,7 +1,5 @@
 #include "Window.h"
-#include "Window.h"
 
-#include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_vulkan.h"
 #include "Source/Runtime/ApplicationCore/Application.h"
 #include "Source/Runtime/Events/ApplicationEvent.h"
@@ -9,9 +7,6 @@
 #include "Source/Runtime/Events/MouseEvent.h"
 #include "Source/Runtime/Input/Input.h"
 #include "Source/Runtime/Log/Log.h"
-#include "Source/Runtime/Renderer/RenderContext.h"
-#include "Source/Runtime/Renderer/Vulkan/VulkanRenderContext.h"
-#include "Source/Runtime/Renderer/Vulkan/VulkanSwapChain.h"
 
 namespace
 {
@@ -24,10 +19,9 @@ namespace
 
 namespace Lumina
 {
-	FWindow::FWindow(const FWindowSpecs& InSpecs, FVulkanSwapChain* InSwapChain)
+	FWindow::FWindow(const FWindowSpecs& InSpecs)
 	{
 		Specs = InSpecs;
-		SwapChain = InSwapChain;
 	}
 	
 	FWindow::~FWindow()
@@ -37,7 +31,7 @@ namespace Lumina
 
 	void FWindow::Init()
 	{
-		if (!bInitialized && SwapChain)
+		if (!bInitialized)
 		{
 			LE_LOG_INFO("Initializing Window: {0} {1} {2}", Specs.Title, Specs.Width, Specs.Height);
 
@@ -143,9 +137,6 @@ namespace Lumina
 	void FWindow::OnUpdate(float DeltaTime)
 	{
 		glfwPollEvents();
-
-		FApplication::Get().GetRenderContext<FVulkanRenderContext>()->Draw(DeltaTime);
-		
 	}
 
 	void FWindow::Shutdown()
@@ -166,9 +157,9 @@ namespace Lumina
 		data.EventCallback(event);
 	}
 
-	FWindow* FWindow::Create(const FWindowSpecs& InSpecs, FVulkanSwapChain* InSwapChain)
+	FWindow* FWindow::Create(const FWindowSpecs& InSpecs)
 	{
-		FWindow* NewWindow = new FWindow(InSpecs, InSwapChain);
+		FWindow* NewWindow = new FWindow(InSpecs);
 		return NewWindow;
 	}
 

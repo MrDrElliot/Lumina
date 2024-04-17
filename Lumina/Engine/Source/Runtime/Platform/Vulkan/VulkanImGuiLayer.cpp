@@ -8,8 +8,8 @@
 #include "Source/Runtime/ApplicationCore/Windows/Window.h"
 #include "Source/Runtime/ImGui/ImGuiFonts.h"
 #include "Source/Runtime/Log/Log.h"
-#include "Source/Runtime/Renderer/Vulkan/VulkanHelpers.h"
-#include "Source/Runtime/Renderer/Vulkan/VulkanRenderContext.h"
+#include "Source/Runtime/Renderer/RHI/Vulkan/VulkanRenderContext.h"
+#include "Source/Runtime/Renderer/RHI/Vulkan/VulkanSwapchain.h"
 
 namespace Lumina
 {
@@ -38,9 +38,7 @@ namespace Lumina
 
     void FVulkanImGuiLayer::OnAttach()
     {
-
-        FVulkanRenderContext* RenderContext = FRenderContext::Get<FVulkanRenderContext>();
-
+        
         
         VkDescriptorPoolSize PoolSizes[] = { { VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
         { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
@@ -82,23 +80,25 @@ namespace Lumina
         
         ImGui::StyleColorsDark();
         SetupDarkThemeColors();
+
+        
         
         VkDescriptorPool ImGuiPool;
-        VK_CHECK(vkCreateDescriptorPool(RenderContext->GetDevice(), &PoolInfo, nullptr, &ImGuiPool));
+        vkCreateDescriptorPool(FVulkanRenderContext::GetDevice(), &PoolInfo, nullptr, &ImGuiPool);
         
-        ImGui_ImplGlfw_InitForVulkan(RenderContext->GetActiveSwapChain()->GetWindow()->GetWindow(), true);
+        ImGui_ImplGlfw_InitForVulkan(FApplication::GetWindow().GetWindow(), true);
 
         VkPipelineRenderingCreateInfo RenderPipeline = {};
         RenderPipeline.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
-        RenderPipeline.pColorAttachmentFormats = &RenderContext->GetActiveSwapChain()->GetFormat();
+      //  RenderPipeline.pColorAttachmentFormats = FVulkanRenderContext::GetSwapchain()->GetFormat();
         RenderPipeline.colorAttachmentCount = 1;
 
         ImGui_ImplVulkan_InitInfo InitInfo = {};
         InitInfo.PipelineRenderingCreateInfo = RenderPipeline;
-        InitInfo.Instance = RenderContext->GetInstance();
-        InitInfo.PhysicalDevice = RenderContext->GetDevice().physical_device;
-        InitInfo.Device = RenderContext->GetDevice();
-        InitInfo.Queue = RenderContext->GetGraphicsQueue();
+        InitInfo.Instance = FVulkanRenderContext::GetVulkanInstance();
+        InitInfo.PhysicalDevice = FVulkanRenderContext::GetPhysicalDevice();
+        InitInfo.Device = FVulkanRenderContext::GetDevice();
+        InitInfo.Queue = FVulkanRenderContext::GetGeneralQueue();
         InitInfo.DescriptorPool = ImGuiPool;
         InitInfo.MinImageCount = 2;
         InitInfo.ImageCount = 2;
@@ -109,7 +109,6 @@ namespace Lumina
         
         ImGui_ImplVulkan_Init(&InitInfo);
         ImGui_ImplVulkan_CreateFontsTexture();
-        vkDeviceWaitIdle(RenderContext->GetDevice());
         ImGui_ImplVulkan_DestroyFontsTexture();
 
 

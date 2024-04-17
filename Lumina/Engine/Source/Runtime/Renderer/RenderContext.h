@@ -1,15 +1,7 @@
 #pragma once
-#include <memory>
-#include <vulkan/vulkan_core.h>
 
-#include "Source/Runtime/ApplicationCore/Application.h"
+#include "Renderer.h"
 
-
-/*
- *  RenderContext is the "manager" class for the renderer to interface.
- *  There is only one per application.
- *
- */
 
 namespace Lumina
 {
@@ -24,26 +16,8 @@ namespace Lumina
 
         FRenderContext() = default;
         virtual ~FRenderContext() = default;
-        
-        FRenderContext(const FRenderContext &) = delete;
-        FRenderContext(FRenderContext &&) = delete;
-        FRenderContext &operator=(const FRenderContext &) = delete;
-        FRenderContext &operator=(FRenderContext &&) = delete;
 
-        virtual void Draw(float DeltaTime) = 0;
-
-        static FRenderContext* Create();
-
-
-        template<typename T>
-        static T* Get()
-        {
-            return dynamic_cast<T*>(FApplication::Get().GetRenderContext<T>());
-        }
-        
-    private:
-        
-        virtual void InternalInit() = 0;
+        static FRenderContext* Create(const FRenderConfig& InConfig);
     
     private:
         

@@ -24,9 +24,9 @@ namespace Lumina
 
 
 		
-		static FWindow* Create(const FWindowSpecs& InSpecs, FVulkanSwapChain* InSwapChain);
+		static FWindow* Create(const FWindowSpecs& InSpecs);
 
-		FWindow(const FWindowSpecs& InSpecs, FVulkanSwapChain* InSwapChain);
+		FWindow(const FWindowSpecs& InSpecsn);
 		virtual ~FWindow();
 
 
@@ -35,7 +35,6 @@ namespace Lumina
 		virtual void Shutdown();
 
 		GLFWwindow* GetWindow() const { return Window; }
-		FVulkanSwapChain* GetSwapChain() const { return SwapChain; }
 
 		uint32_t GetWidth() const { return Specs.Width; }
 		uint32_t GetHeight() const { return Specs.Height; }
@@ -47,7 +46,6 @@ namespace Lumina
 	private:
 
 		GLFWwindow* Window;
-		FVulkanSwapChain* SwapChain;
 		bool bInitialized = false;
 		FWindowSpecs Specs;
 	};

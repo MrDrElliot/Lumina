@@ -167,18 +167,22 @@
     <ClInclude Include="Engine\Source\Runtime\Log\Log.h" />
     <ClInclude Include="Engine\Source\Runtime\Memory\Memory.h" />
     <ClInclude Include="Engine\Source\Runtime\Platform\Vulkan\VulkanImGuiLayer.h" />
-    <ClInclude Include="Engine\Source\Runtime\Renderer\Material.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\Buffer.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\CommandBuffer.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\Image.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\RenderAPI.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\RenderContext.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\Renderer.h" />
-    <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanDescriptor.h" />
-    <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanHelpers.h" />
-    <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanLoader.h" />
-    <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanMaterial.h" />
-    <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanPipeline.h" />
-    <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanRenderContext.h" />
-    <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanSwapChain.h" />
-    <ClInclude Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanTypes.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\Converts.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanBuffer.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanCommandBuffer.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanImage.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanMemoryAllocator.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanRenderAPI.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanRenderContext.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanSwapchain.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\Shader.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\Swapchain.h" />
     <ClInclude Include="Engine\Source\Runtime\Scene\Camera.h" />
     <ClInclude Include="Engine\Source\Runtime\Scene\Scene.h" />
     <ClInclude Include="Engine\Source\Runtime\Thread\GameThread.h" />
@@ -624,17 +628,97 @@
     <ClCompile Include="Engine\Source\Runtime\Input\Input.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Log\Log.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Platform\Vulkan\VulkanImGuiLayer.cpp" />
-    <ClCompile Include="Engine\Source\Runtime\Renderer\Material.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\Buffer.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\CommandBuffer.cpp">
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <Optimization>Disabled</Optimization>
+      <SupportJustMyCode>true</SupportJustMyCode>
+      <AssemblerOutput>NoListing</AssemblerOutput>
+      <AssemblerListingLocation>..\Intermediates\Debug-windows-x86_64\Lumina\</AssemblerListingLocation>
+      <UndefineAllPreprocessorDefinitions>false</UndefineAllPreprocessorDefinitions>
+      <BrowseInformation>false</BrowseInformation>
+      <BrowseInformationFile>..\Intermediates\Debug-windows-x86_64\Lumina\</BrowseInformationFile>
+      <CompileAs>Default</CompileAs>
+      <ConformanceMode>true</ConformanceMode>
+      <DiagnosticsFormat>Column</DiagnosticsFormat>
+      <DisableLanguageExtensions>false</DisableLanguageExtensions>
+      <ErrorReporting>Prompt</ErrorReporting>
+      <ExpandAttributedSource>false</ExpandAttributedSource>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <EnableASAN>false</EnableASAN>
+      <EnableFuzzer>false</EnableFuzzer>
+      <EnableFiberSafeOptimizations>false</EnableFiberSafeOptimizations>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Precise</FloatingPointModel>
+      <ForceConformanceInForLoopScope>true</ForceConformanceInForLoopScope>
+      <GenerateModuleDependencies>false</GenerateModuleDependencies>
+      <GenerateSourceDependencies>false</GenerateSourceDependencies>
+      <GenerateXMLDocumentationFiles>false</GenerateXMLDocumentationFiles>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <IntrinsicFunctions>false</IntrinsicFunctions>
+      <IgnoreStandardIncludePath>false</IgnoreStandardIncludePath>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <LanguageStandard_C>Default</LanguageStandard_C>
+      <MinimalRebuild>false</MinimalRebuild>
+      <ModuleDependenciesFile>..\Intermediates\Debug-windows-x86_64\Lumina\</ModuleDependenciesFile>
+      <ModuleOutputFile>..\Intermediates\Debug-windows-x86_64\Lumina\</ModuleOutputFile>
+      <OmitDefaultLibName>false</OmitDefaultLibName>
+      <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <ObjectFileName>..\Intermediates\Debug-windows-x86_64\Lumina\</ObjectFileName>
+      <CallingConvention>Cdecl</CallingConvention>
+      <ProgramDataBaseFileName>..\Binaries\Debug-windows-x86_64\Lumina\Lumina.pdb</ProgramDataBaseFileName>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile>..\Intermediates\Debug-windows-x86_64\Lumina\Lumina.pch</PrecompiledHeaderOutputFile>
+      <PreprocessToFile>false</PreprocessToFile>
+      <PreprocessKeepComments>false</PreprocessKeepComments>
+      <PreprocessSuppressLineNumbers>false</PreprocessSuppressLineNumbers>
+      <RemoveUnreferencedCodeData>true</RemoveUnreferencedCodeData>
+      <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
+      <ShowIncludes>false</ShowIncludes>
+      <SourceDependenciesFile>..\Intermediates\Debug-windows-x86_64\Lumina\</SourceDependenciesFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <SmallerTypeCheck>false</SmallerTypeCheck>
+      <SpectreMitigation>false</SpectreMitigation>
+      <StructMemberAlignment>Default</StructMemberAlignment>
+      <TrackerLogDirectory>..\Intermediates\Debug-windows-x86_64\Lumina\Lumina.tlog\</TrackerLogDirectory>
+      <TranslateIncludes>false</TranslateIncludes>
+      <MinimalRebuildFromTracking>true</MinimalRebuildFromTracking>
+      <TreatWarningAsError>false</TreatWarningAsError>
+      <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+      <UseFullPaths>true</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <XMLDocumentationFileName>..\Intermediates\Debug-windows-x86_64\Lumina\</XMLDocumentationFileName>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <IntelJCCErratum>false</IntelJCCErratum>
+      <BuildStlModules>false</BuildStlModules>
+      <TreatAngleIncludeAsExternal>false</TreatAngleIncludeAsExternal>
+      <ExternalWarningLevel>InheritWarningLevel</ExternalWarningLevel>
+      <TreatExternalTemplatesAsInternal>true</TreatExternalTemplatesAsInternal>
+      <DisableAnalyzeExternal>false</DisableAnalyzeExternal>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;GLM_FORCE_DEPTH_ZERO_TO_ONE;GLFW_INCLUDE_NONE;LE_DEBUG;_DEBUG;_UNICODE;UNICODE;</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>Engine;Engine\ThirdParty;Engine\ThirdParty\spdlog\include;Engine\ThirdParty\GLFW\include;Engine\ThirdParty\GLM;Engine\ThirdParty\imgui;.;Engine\ThirdParty\fastgltf\include;Engine\ThirdParty\vk-bootstrap\src;C:\VulkanSDK\1.3.280.0\Include;C:\VulkanSDK\1.3.280.0\Lib;Engine\THirdParty\VulkanMemoryAllocator\include;</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalOptions>/EHsc /Zc:preprocessor /Zc:__cplusplus </AdditionalOptions>
+      <LibCompiled>true</LibCompiled>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\Renderer\Image.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\RenderAPI.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\RenderContext.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\Renderer.cpp" />
-    <ClCompile Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanDescriptor.cpp" />
-    <ClCompile Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanHelpers.cpp" />
-    <ClCompile Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanLoader.cpp" />
-    <ClCompile Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanMaterial.cpp" />
-    <ClCompile Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanPipeline.cpp" />
-    <ClCompile Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanRenderContext.cpp" />
-    <ClCompile Include="Engine\Source\Runtime\Renderer\Vulkan\VulkanSwapChain.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\Converts.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanBuffer.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanCommandBuffer.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanImage.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanMemoryAllocator.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanRenderAPI.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanRenderContext.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanSwapchain.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\Shader.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\Swapchain.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Scene\Camera.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Scene\Scene.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Thread\GameThread.cpp" />
@@ -653,6 +737,9 @@
     <ProjectReference Include="Engine\ThirdParty\glfw\GLFW.vcxproj">
       <Project>{154B857C-0182-860D-AA6E-6C109684020F}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Engine\Source\Runtime\Renderer\PipelineStage.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,7 +1,6 @@
 #pragma once
 #include "EditorPanel.h"
 #include "imgui.h"
-#include "Source/Runtime/Renderer/Vulkan/VulkanTypes.h"
 
 namespace Lumina
 {
