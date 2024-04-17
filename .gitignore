@@ -405,3 +405,4 @@ FodyWeavers.xsd
 *.idb
 *.vcxproj
 *.filters
+*.idb
