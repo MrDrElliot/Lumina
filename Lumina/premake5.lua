@@ -35,8 +35,7 @@ project "Lumina"
         "%{IncludeDir.vulkan}/Source/**.h",
         "%{IncludeDir.vulkan}/Source/**.c",
 
-        
-        
+       
 	    "Engine/ThirdParty/vulkanmemoryallocator/**.h",
 	    "Engine/ThirdParty/vulkanmemoryallocator/src/VmaUsage.cpp",
 	    

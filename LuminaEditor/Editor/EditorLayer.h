@@ -3,13 +3,12 @@
 #include <vector>
 #include "Source/Runtime/ApplicationCore/Layer.h"
 
-namespace Lumina
-{
-    class FEditorPanel;
-}
+
 
 namespace Lumina
 {
+    class FEditorPanel;
+    
     class FEditorLayer : public FLayer
     {
     public:
