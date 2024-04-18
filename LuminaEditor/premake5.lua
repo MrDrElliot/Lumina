@@ -15,8 +15,8 @@ project "LuminaEditor"
 	  	"GLFW",
 	  	"imgui",
 	  	"$(VULKAN_SDK)/lib/vulkan-1.lib",
-	  	"%{VULKAN_SDK}/lib/shaderc.lib",
-	  	"%{VULKAN_SDK}/lib/shaderc_util.lib",
+        "%{VULKAN_SDK}/lib/shaderc.lib",
+        "%{VULKAN_SDK}/lib/shaderc_util.lib",
 
 	 }
 
@@ -43,9 +43,10 @@ project "LuminaEditor"
         "../Lumina/Engine/ThirdParty/vulkanmemoryallocator/src/",
         "../Lumina/Engine/ThirdParty/imgui/",
         
-         "../Lumina/Engine/ThirdParty/SPIRV-Reflect/include/",
+         "../Lumina/Engine/ThirdParty/SPIRV-Reflect/",
+         "../Lumina/Engine/ThirdParty/SPIRV-Reflect/Include/",
 
-       
+       	"%{IncludeDir.vulkan}/Source/",
 		"%{IncludeDir.vulkan}/Include/",
 		"%{IncludeDir.vulkan}/Lib/",
 		"%{IncludeDir.fastgltf}/Include",

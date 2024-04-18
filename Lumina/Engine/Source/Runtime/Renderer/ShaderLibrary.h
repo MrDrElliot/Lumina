@@ -7,6 +7,7 @@
 
 namespace Lumina
 {
+    class FShaderCompiler;
     class FShader;
 
     class FShaderLibrary
@@ -29,7 +30,7 @@ namespace Lumina
         EShaderStage EvaluateStage(std::filesystem::path File) const;
 
     private:
-        
+
         static FShaderLibrary* Instance;
         std::unordered_map<std::string, std::shared_ptr<FShader>> Library;
         std::shared_mutex Mutex;

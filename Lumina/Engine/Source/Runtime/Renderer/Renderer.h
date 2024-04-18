@@ -36,6 +36,8 @@ namespace Lumina
         static void EndRender();
         static std::shared_ptr<FImage> GetSwapchainImage();
 
+        static void LoadShaderPack();
+
         static void Render();
         static void ClearColor(std::shared_ptr<FImage> Image, const glm::fvec4& Value);
 

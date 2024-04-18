@@ -1,9 +1,7 @@
 #pragma once
 #include <memory>
 #include <vector>
-
 #include "Source/Runtime/ApplicationCore/Layer.h"
-
 
 namespace Lumina
 {

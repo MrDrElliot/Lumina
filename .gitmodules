@@ -24,6 +24,3 @@
 [submodule "Lumina/Engine/ThirdParty/glfw"]
 	path = Lumina/Engine/ThirdParty/glfw
 	url = https://github.com/MrDrElliot/glfw.git
-[submodule "Lumina/Engine/ThirdParty/SPIRV-Reflect"]
-	path = Lumina/Engine/ThirdParty/SPIRV-Reflect
-	url = https://github.com/KhronosGroup/SPIRV-Reflect.git

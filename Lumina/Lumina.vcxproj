@@ -76,7 +76,7 @@
       <WarningLevel>Level3</WarningLevel>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;GLM_FORCE_DEPTH_ZERO_TO_ONE;GLFW_INCLUDE_NONE;LE_DEBUG;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>Engine;Engine\ThirdParty;Engine\ThirdParty\spdlog\include;Engine\ThirdParty\GLFW\include;Engine\ThirdParty\GLM;Engine\ThirdParty\imgui;.;Engine\ThirdParty\fastgltf\include;Engine\ThirdParty\SPIRV-Reflect\include;Engine\ThirdParty\vk-bootstrap\src;C:\VulkanSDK\1.3.280.0\Include;C:\VulkanSDK\1.3.280.0\Lib;Engine\ThirdParty\VulkanMemoryAllocator\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Engine;Engine\ThirdParty;Engine\ThirdParty\spdlog\include;Engine\ThirdParty\GLFW\include;Engine\ThirdParty\GLM;Engine\ThirdParty\imgui;.;Engine\ThirdParty\fastgltf\include;Engine\ThirdParty\vk-bootstrap\src;C:\VulkanSDK\1.3.280.0\Include;C:\VulkanSDK\1.3.280.0\Source;C:\VulkanSDK\1.3.280.0\Lib;Engine\ThirdParty\VulkanMemoryAllocator\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <MinimalRebuild>false</MinimalRebuild>
@@ -100,7 +100,7 @@
       <WarningLevel>Level3</WarningLevel>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;GLM_FORCE_DEPTH_ZERO_TO_ONE;GLFW_INCLUDE_NONE;LE_RELEASE;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>Engine;Engine\ThirdParty;Engine\ThirdParty\spdlog\include;Engine\ThirdParty\GLFW\include;Engine\ThirdParty\GLM;Engine\ThirdParty\imgui;.;Engine\ThirdParty\fastgltf\include;Engine\ThirdParty\SPIRV-Reflect\include;Engine\ThirdParty\vk-bootstrap\src;C:\VulkanSDK\1.3.280.0\Include;C:\VulkanSDK\1.3.280.0\Lib;Engine\ThirdParty\VulkanMemoryAllocator\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Engine;Engine\ThirdParty;Engine\ThirdParty\spdlog\include;Engine\ThirdParty\GLFW\include;Engine\ThirdParty\GLM;Engine\ThirdParty\imgui;.;Engine\ThirdParty\fastgltf\include;Engine\ThirdParty\vk-bootstrap\src;C:\VulkanSDK\1.3.280.0\Include;C:\VulkanSDK\1.3.280.0\Source;C:\VulkanSDK\1.3.280.0\Lib;Engine\ThirdParty\VulkanMemoryAllocator\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -127,7 +127,7 @@
       <WarningLevel>Level3</WarningLevel>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;GLM_FORCE_DEPTH_ZERO_TO_ONE;GLFW_INCLUDE_NONE;LE_SHIP;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>Engine;Engine\ThirdParty;Engine\ThirdParty\spdlog\include;Engine\ThirdParty\GLFW\include;Engine\ThirdParty\GLM;Engine\ThirdParty\imgui;.;Engine\ThirdParty\fastgltf\include;Engine\ThirdParty\SPIRV-Reflect\include;Engine\ThirdParty\vk-bootstrap\src;C:\VulkanSDK\1.3.280.0\Include;C:\VulkanSDK\1.3.280.0\Lib;Engine\ThirdParty\VulkanMemoryAllocator\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Engine;Engine\ThirdParty;Engine\ThirdParty\spdlog\include;Engine\ThirdParty\GLFW\include;Engine\ThirdParty\GLM;Engine\ThirdParty\imgui;.;Engine\ThirdParty\fastgltf\include;Engine\ThirdParty\vk-bootstrap\src;C:\VulkanSDK\1.3.280.0\Include;C:\VulkanSDK\1.3.280.0\Source;C:\VulkanSDK\1.3.280.0\Lib;Engine\ThirdParty\VulkanMemoryAllocator\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -151,6 +151,8 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="C:\VulkanSDK\1.3.280.0\Source\SPIRV-Reflect\include\spirv\unified1\spirv.h" />
+    <ClInclude Include="C:\VulkanSDK\1.3.280.0\Source\SPIRV-Reflect\spirv_reflect.h" />
     <ClInclude Include="Engine\EntryPoint.h" />
     <ClInclude Include="Engine\Lumina.h" />
     <ClInclude Include="Engine\Source\Runtime\ApplicationCore\Application.h" />
@@ -201,8 +203,6 @@
     <ClInclude Include="Engine\Source\Runtime\Thread\GameThread.h" />
     <ClInclude Include="Engine\Source\Runtime\Thread\RenderThread.h" />
     <ClInclude Include="Engine\Source\Runtime\Thread\Thread.h" />
-    <ClInclude Include="Engine\ThirdParty\SPIRV-Reflect\include\spirv\unified1\spirv.h" />
-    <ClInclude Include="Engine\ThirdParty\SPIRV-Reflect\spirv_reflect.h" />
     <ClInclude Include="Engine\ThirdParty\fastgltf\deps\simdjson\simdjson.h" />
     <ClInclude Include="Engine\ThirdParty\glm\glm\common.hpp" />
     <ClInclude Include="Engine\ThirdParty\glm\glm\detail\_features.hpp" />
@@ -632,6 +632,7 @@
     <ClInclude Include="Engine\ThirdParty\vulkanmemoryallocator\src\VmaUsage.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="C:\VulkanSDK\1.3.280.0\Source\SPIRV-Reflect\spirv_reflect.c" />
     <ClCompile Include="Engine\Source\Runtime\ApplicationCore\Application.cpp" />
     <ClCompile Include="Engine\Source\Runtime\ApplicationCore\ImGui\ImGuiLayer.cpp" />
     <ClCompile Include="Engine\Source\Runtime\ApplicationCore\LayerStack.cpp" />
@@ -667,8 +668,6 @@
     <ClCompile Include="Engine\Source\Runtime\Thread\GameThread.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Thread\RenderThread.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Thread\Thread.cpp" />
-    <ClCompile Include="Engine\ThirdParty\SPIRV-Reflect\spirv_reflect.cpp" />
-    <ClCompile Include="Engine\ThirdParty\fastgltf\deps\simdjson\simdjson.cpp" />
     <ClCompile Include="Engine\ThirdParty\fastgltf\src\base64.cpp" />
     <ClCompile Include="Engine\ThirdParty\fastgltf\src\fastgltf.cpp" />
     <ClCompile Include="Engine\ThirdParty\glm\glm\detail\glm.cpp" />

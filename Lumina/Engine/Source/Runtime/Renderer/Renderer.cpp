@@ -1,6 +1,7 @@
 #include "Renderer.h"
 
 #include "Image.h"
+#include "ShaderLibrary.h"
 #include "RHI/Vulkan/VulkanRenderAPI.h"
 #include "Source/Runtime/Log/Log.h"
 
@@ -19,12 +20,21 @@ namespace Lumina
     {
         LE_LOG_INFO("Renderer: Initializing");
         RenderAPI = new FVulkanRenderAPI(InConfig);
+        FShaderLibrary::Init();
+
+        LoadShaderPack();
     }
     
     void FRenderer::Shutdown()
     {
         LE_LOG_WARN("Renderer: Shutting Down");
         delete RenderAPI;
+        FShaderLibrary::Destroy();
+    }
+
+    void FRenderer::LoadShaderPack()
+    {
+        FShaderLibrary::Get()->Load("Resources/");
     }
 
     void FRenderer::Submit(RenderFunction Functor)
