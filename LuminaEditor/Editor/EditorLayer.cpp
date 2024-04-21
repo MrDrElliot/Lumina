@@ -1,6 +1,4 @@
 #include "EditorLayer.h"
-
-
 #include "Panels/ConsolePanel.h"
 #include "Panels/ContentBrowserPanel.h"
 #include "Panels/MainMenuPanel.h"

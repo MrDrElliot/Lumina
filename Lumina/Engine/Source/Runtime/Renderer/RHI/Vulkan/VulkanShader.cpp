@@ -2,25 +2,26 @@
 
 #include "VulkanRenderContext.h"
 #include "Source/Runtime/Log/Log.h"
+
 #include "SPIRV-Reflect/spirv_reflect.h"
 
 namespace Lumina
 {
 
 
-		constexpr VkShaderStageFlagBits convert(const EShaderStage& stage)
-		{
-			switch (stage)
-			{
-				case EShaderStage::VERTEX:		return VK_SHADER_STAGE_VERTEX_BIT;
-				case EShaderStage::FRAGMENT:	return VK_SHADER_STAGE_FRAGMENT_BIT;
-				case EShaderStage::COMPUTE:		return VK_SHADER_STAGE_COMPUTE_BIT;
-			}
-		}
-
-	constexpr VkDescriptorType convert(SpvReflectDescriptorType type)
+	constexpr VkShaderStageFlagBits convert(const EShaderStage& stage)
 	{
-		switch (type)
+		switch (stage)
+		{
+			case EShaderStage::VERTEX:		return VK_SHADER_STAGE_VERTEX_BIT;
+			case EShaderStage::FRAGMENT:	return VK_SHADER_STAGE_FRAGMENT_BIT;
+			case EShaderStage::COMPUTE:		return VK_SHADER_STAGE_COMPUTE_BIT;
+		}
+	}
+	
+	constexpr VkDescriptorType convert(SpvReflectDescriptorType Type)
+	{
+		switch (Type)
 		{
 			case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLER:							return VK_DESCRIPTOR_TYPE_SAMPLER;
 			case SPV_REFLECT_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:			return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -55,92 +56,111 @@ namespace Lumina
 		}
 	}
 	
-    FVulkanShader::FVulkanShader(std::map<EShaderStage, std::vector<glm::uint32>> Binaries, std::filesystem::path Path)
-    {
-        auto Device = FVulkanRenderContext::GetDevice();
-
-        LE_LOG_INFO("===============================");
-        LE_LOG_INFO("Reflecting Shader - {0}", Path.filename().string());
-        LE_LOG_INFO("===============================");
+    FVulkanShader::FVulkanShader(std::vector<FShaderData> InData, const std::string& Tag)
+	{
+		auto Device = FVulkanRenderContext::GetDevice();
 
 		std::map<glm::uint32, std::vector<VkDescriptorSetLayoutBinding>> Bindings;
 		VkPushConstantRange PushConstantRange = {};
 
-        for (auto& StageData : Binaries)
-        {
+
+		LE_LOG_INFO("===============================");
+		LE_LOG_INFO("Reflecting Shader - {0}", Tag);
+		LE_LOG_INFO("===============================");
+
+
+		for (auto& StageData : InData)
+		{
 			VkShaderModule ShaderModule;
 
 			VkShaderModuleCreateInfo ShaderModuleCreateInfo = {};
 			ShaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-			ShaderModuleCreateInfo.pCode = StageData.second.data();
-			ShaderModuleCreateInfo.codeSize = StageData.second.size() * 4;
+			ShaderModuleCreateInfo.pCode = StageData.Binaries.data();
+			ShaderModuleCreateInfo.codeSize = StageData.Binaries.size() * 4;
 			
 			vkCreateShaderModule(Device, &ShaderModuleCreateInfo, nullptr, &ShaderModule);
 
 			VkPipelineShaderStageCreateInfo ShaderStageCreateInfo = {};
 			ShaderStageCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-			ShaderStageCreateInfo.stage = convert(StageData.first);
+			ShaderStageCreateInfo.stage = convert(StageData.Stage);
 			ShaderStageCreateInfo.pName = "main";
 			ShaderStageCreateInfo.module = ShaderModule;
 
 			StageCreateInfos.push_back(ShaderStageCreateInfo);
-			SpvReflectShaderModule reflect_module;
-			if (spvReflectCreateShaderModule(StageData.second.size() * 4, StageData.second.data(), &reflect_module) != SPV_REFLECT_RESULT_SUCCESS)
+
+			SpvReflectShaderModule ReflectModule;
+			if (spvReflectCreateShaderModule(StageData.Binaries.size() * 4, StageData.Binaries.data(), &ReflectModule) != SPV_REFLECT_RESULT_SUCCESS)
 			{
-				LE_LOG_ERROR("Failed to reflect shader {0}", Path.filename().string());
+				LE_LOG_ERROR("Failed to reflect shader {}", Path.filename().string());
 				bDirty = true;
 				return;
 			}
 
-			glm::uint32 SetCount = 0;
-			spvReflectEnumerateDescriptorSets(&reflect_module, &SetCount, nullptr);
+			glm::uint32 set_count = 0;
+			spvReflectEnumerateDescriptorSets(&ReflectModule, &set_count, nullptr);
 
-			std::vector<SpvReflectDescriptorSet*> ReflectDescriptorSets(SetCount);
-			spvReflectEnumerateDescriptorSets(&reflect_module, &SetCount, ReflectDescriptorSets.data());
+			std::vector<SpvReflectDescriptorSet*> ReflectDescriptorSets(set_count);
+			spvReflectEnumerateDescriptorSets(&ReflectModule, &set_count, ReflectDescriptorSets.data());
 
 			for (auto& ReflectSet : ReflectDescriptorSets)
 			{
-				if (Bindings.find(ReflectSet->set) != Bindings.end())
+				if (!Bindings.contains(ReflectSet->set))
 				{
 					Bindings.emplace(ReflectSet->set, std::vector<VkDescriptorSetLayoutBinding>());
 				}
 
 				for (int i = 0; i < ReflectSet->binding_count; i++)
 				{
-					SpvReflectDescriptorBinding* reflect_binding = ReflectSet->bindings[i];
+					SpvReflectDescriptorBinding* ReflectBinding = ReflectSet->bindings[i];
 
 					VkDescriptorSetLayoutBinding layout_binding = {};
-					layout_binding.binding = reflect_binding->binding;
-					layout_binding.descriptorType = convert(reflect_binding->descriptor_type);
-					layout_binding.descriptorCount = reflect_binding->count;
-					layout_binding.stageFlags = VK_SHADER_STAGE_ALL;
+					layout_binding.binding = ReflectBinding->binding;
+					layout_binding.descriptorType = convert(ReflectBinding->descriptor_type);
+					layout_binding.descriptorCount = ReflectBinding->count;
+					layout_binding.stageFlags = StageData.Stage == EShaderStage::COMPUTE ? VK_SHADER_STAGE_COMPUTE_BIT : VK_SHADER_STAGE_ALL;
+
+					bool bSkipBinding = false;
 
 					for (auto& set_binding : Bindings[ReflectSet->set])
 					{
 						if (set_binding.binding == layout_binding.binding)
 						{
-							continue;
+							bSkipBinding = true;
+							break;
 						}
 					}
 					
-					Bindings[ReflectSet->set].push_back(layout_binding);
+					if(!bSkipBinding)
+					{
+						Bindings[ReflectSet->set].push_back(layout_binding);
+					}
 				}
 			}
 
 			glm::uint32 PushConstantRangeCount = 0;
-			spvReflectEnumeratePushConstantBlocks(&reflect_module, &PushConstantRangeCount, nullptr);
+			spvReflectEnumeratePushConstantBlocks(&ReflectModule, &PushConstantRangeCount, nullptr);
 
 			std::vector<SpvReflectBlockVariable*> ReflectPushConstantRanges(PushConstantRangeCount);
-			spvReflectEnumeratePushConstantBlocks(&reflect_module, &PushConstantRangeCount, ReflectPushConstantRanges.data());
+			spvReflectEnumeratePushConstantBlocks(&ReflectModule, &PushConstantRangeCount, ReflectPushConstantRanges.data());
 
-			for (auto& reflect_range : ReflectPushConstantRanges)
-			{
-				PushConstantRange.size = reflect_range->size; // TODO: some dodgy stuff here
-				PushConstantRange.offset = 0;
-				PushConstantRange.stageFlags = VK_SHADER_STAGE_ALL;
+			if (PushConstantRangeCount) {
+
+				for (int i = 0; i < ReflectPushConstantRanges[0]->member_count; i++) {
+					auto& member = ReflectPushConstantRanges[0]->members[i];
+
+					int x = 5;
+				}
 			}
 
-			spvReflectDestroyShaderModule(&reflect_module);
+			for (auto& ReflectRange : ReflectPushConstantRanges)
+			{
+				PushConstantRange.size += ReflectRange->size;
+				PushConstantRange.offset = 0;
+				PushConstantRange.stageFlags = VK_SHADER_STAGE_ALL;
+				
+			}
+
+			spvReflectDestroyShaderModule(&ReflectModule);
 		}
 
 		if(PushConstantRange.size)
@@ -148,17 +168,17 @@ namespace Lumina
 			Ranges.push_back(PushConstantRange);
 		}
 
-			for (auto& set : Bindings)
+		for (auto& set : Bindings)
+		{
+			LE_LOG_TRACE("\tSet #{0}: ", set.first);
+			for (auto& binding : set.second)
 			{
-				LE_LOG_TRACE("\tSet #{0}: ", set.first);
-				for (auto& binding : set.second)
-				{
-					LE_LOG_TRACE("\t\t Binding #{0}: {1}[{2}]", binding.binding, DescriptorToString(binding.descriptorType), binding.descriptorCount);
-				}
+				LE_LOG_TRACE("\t\t Binding #{0}: {1}[{2}]", binding.binding, DescriptorToString(binding.descriptorType), binding.descriptorCount);
 			}
-			printf("\n");
+		}
+		printf("\n");
 
-		if (Bindings.size())
+		if(Bindings.size())
 		{
 			glm::uint32 highest_set_index = Bindings.rbegin()->first;
 			for (int i = 0; i <= highest_set_index; i++)
@@ -169,43 +189,62 @@ namespace Lumina
 				}
 				else
 				{
-					std::vector<VkDescriptorBindingFlags> binding_flags;
-					for (auto& binding : Bindings[i])
-					{
-						if (binding.descriptorCount != 1) binding_flags.push_back(VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT);
-						else binding_flags.push_back(0);
+					std::vector<VkDescriptorBindingFlags> BindingFlags;
+					for (auto& binding : Bindings[i]) {
+						if (binding.descriptorCount != 1) BindingFlags.push_back(VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT);
+						else BindingFlags.push_back(0);
 					}
 
-					VkDescriptorSetLayoutBindingFlagsCreateInfo layout_bindings_flags = {};
-					layout_bindings_flags.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO;
-					layout_bindings_flags.bindingCount = binding_flags.size();
-					layout_bindings_flags.pBindingFlags = binding_flags.data();
+					VkDescriptorSetLayoutBindingFlagsCreateInfo LayoutBindingsFlags = {};
+					LayoutBindingsFlags.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO;
+					LayoutBindingsFlags.bindingCount = BindingFlags.size();
+					LayoutBindingsFlags.pBindingFlags = BindingFlags.data();
 
 					VkDescriptorSetLayoutCreateInfo LayoutCreateInfo = {};
 					LayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-					LayoutCreateInfo.pNext = &layout_bindings_flags;
+					LayoutCreateInfo.pNext = &LayoutBindingsFlags;
 					LayoutCreateInfo.bindingCount = Bindings[i].size();
 					LayoutCreateInfo.pBindings = Bindings[i].data();
 
-					VkDescriptorSetLayout vk_descriptor_set_layout = VK_NULL_HANDLE;
-					vkCreateDescriptorSetLayout(Device, &LayoutCreateInfo, nullptr, &vk_descriptor_set_layout);
-					SetLayouts.push_back(vk_descriptor_set_layout);
+					VkDescriptorSetLayout VkDescriptorSetLayout = VK_NULL_HANDLE;
+					vkCreateDescriptorSetLayout(Device, &LayoutCreateInfo, nullptr, &VkDescriptorSetLayout);
+					SetLayouts.push_back(VkDescriptorSetLayout);
 				}
 			}
 		}
-
-    }
-    
-
+	}
+	
     FVulkanShader::~FVulkanShader()
     {
     }
 
     void FVulkanShader::RestoreShaderModule(std::filesystem::path path)
     {
+
     }
 
     void FVulkanShader::Destroy()
     {
+		auto Device = FVulkanRenderContext::GetDevice();
+
+		for (auto& Stage : StageCreateInfos)
+		{
+			if (Stage.module != VK_NULL_HANDLE)
+			{
+				vkDestroyShaderModule(Device, Stage.module, nullptr);
+			}
+			
+		}
+		
+		for (auto& layout : SetLayouts)
+		{
+			vkDestroyDescriptorSetLayout(Device, layout, nullptr);
+		}
+
+		SetLayouts.clear();
+		for (auto& stage : StageCreateInfos)
+		{
+			stage.module = VK_NULL_HANDLE;
+		}
     }
 }

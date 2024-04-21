@@ -22,7 +22,7 @@ namespace Lumina
     public:
 
         FVulkanRenderContext(const FRenderConfig& InConfig);
-        ~FVulkanRenderContext();
+        ~FVulkanRenderContext() override;
 
         static FVulkanRenderContext& Get() { return *Instance; }
 

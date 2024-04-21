@@ -7,19 +7,17 @@
 namespace Lumina
 {
     class FVulkanCommandBuffer;
-
-    #pragma region converts
 	constexpr VkFormat convert(const EImageFormat& format)
 	{
 		switch (format)
 		{
 		case EImageFormat::R8:							return VK_FORMAT_R8_SRGB;
-		case EImageFormat::RB16:							return VK_FORMAT_R8G8_SRGB;
+		case EImageFormat::RB16:						return VK_FORMAT_R8G8_SRGB;
 		case EImageFormat::RGB24:						return VK_FORMAT_R8G8B8_SRGB;
 		case EImageFormat::RGBA32_SRGB:					return VK_FORMAT_R8G8B8A8_SRGB;
-		case EImageFormat::RGBA32_UNORM:					return VK_FORMAT_R8G8B8A8_UNORM;
+		case EImageFormat::RGBA32_UNORM:				return VK_FORMAT_R8G8B8A8_UNORM;
 		case EImageFormat::BGRA32_SRGB:					return VK_FORMAT_B8G8R8A8_SRGB;
-		case EImageFormat::BGRA32_UNORM:					return VK_FORMAT_B8G8R8A8_UNORM;
+		case EImageFormat::BGRA32_UNORM:				return VK_FORMAT_B8G8R8A8_UNORM;
 		case EImageFormat::RGB32_HDR:					return VK_FORMAT_B10G11R11_UFLOAT_PACK32;
 		case EImageFormat::RGBA64_HDR:					return VK_FORMAT_R16G16B16A16_SFLOAT;
 		case EImageFormat::RGBA128_HDR:					return VK_FORMAT_R32G32B32A32_SFLOAT;
@@ -81,7 +79,7 @@ namespace Lumina
 	{
 		switch (mode)
 		{
-		case ESamplerAddressMode::CLAMP:					return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		case ESamplerAddressMode::CLAMP:				return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 		case ESamplerAddressMode::CLAMP_BORDER:			return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
 		case ESamplerAddressMode::REPEAT:				return VK_SAMPLER_ADDRESS_MODE_REPEAT;
 		case ESamplerAddressMode::MIRRORED_REPEAT:		return VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
@@ -94,13 +92,11 @@ namespace Lumina
 		switch (mode)
 		{
 		case ESamplerFilteringMode::LINEAR:				return VK_SAMPLER_MIPMAP_MODE_LINEAR;
-		case ESamplerFilteringMode::NEAREST:				return VK_SAMPLER_MIPMAP_MODE_NEAREST;
+		case ESamplerFilteringMode::NEAREST:			return VK_SAMPLER_MIPMAP_MODE_NEAREST;
 		default:										std::unreachable();
 		}
 	}
-
-#pragma endregion
-    
+	
     class FVulkanImage : public FImage
     {
     public:
@@ -112,13 +108,14 @@ namespace Lumina
         void CreateRenderTarget();
         void CreateDepthBuffer();
 		void CreateFromRaw(const FImageSpecification& InSpec, VkImage InImage, VkImageView InView);
-
+		FImageSpecification GetSpecification() const override { return Spec; }
 
         void Destroy() override;
 
         VkImage GetImage() { return Image; }
         VkImageView GetImageView() { return ImageView; }
-            
+		EImageLayout GetLayout() { return CurrentLayout; }
+		
         void SetCurrentLayout(EImageLayout Layout) { CurrentLayout = Layout; }
         void SetLayout(std::shared_ptr<FCommandBuffer> CmdBuffer, EImageLayout NewLayout, EPipelineStage SrcStage, EPipelineStage DstStage, EPipelineAccess SrcAccess, EPipelineAccess DstAccess) override;
 
@@ -141,7 +138,13 @@ namespace Lumina
     public:
 
         FVulkanImageSampler(const FImageSamplerSpecification& spec);
-
         void Destroy() override;
+
+    	VkSampler GetSampler() { return Sampler; }
+
+    private:
+
+    	VkSampler Sampler;
+    	FImageSamplerSpecification Specs;
     };
 }

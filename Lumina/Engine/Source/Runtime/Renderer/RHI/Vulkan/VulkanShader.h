@@ -8,7 +8,7 @@ namespace Lumina
     {
     public:
 
-        FVulkanShader(std::map<EShaderStage, std::vector<glm::uint32>> Binaries, std::filesystem::path Path);
+        FVulkanShader(std::vector<FShaderData> InData, const std::string& Tag);
         ~FVulkanShader() override;
 
         

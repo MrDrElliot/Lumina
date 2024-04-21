@@ -20,7 +20,6 @@ project "Lumina"
 		
 		"Engine/ThirdParty/stb_image/**.h",
 
-
 		"Engine/ThirdParty/glm/glm/**.hpp",
 		"Engine/ThirdParty/glm/glm/**.cpp",
 		"Engine/ThirdParty/glm/glm/**.inl",
@@ -28,13 +27,17 @@ project "Lumina"
 		"Engine/ThirdParty/vk-bootstrap/src/**.h",
 	    "Engine/ThirdParty/vk-bootstrap/src/**.cpp",
 	    
+	    "Engine/ThirdParty/shaderc/**.h",
+        "Engine/ThirdParty/shaderc/**.cc",
+        
+	    "Engine/ThirdParty/SPIRV-Reflect/**.h",
+	    "Engine/ThirdParty/SPIRV-Reflect/**.c",
+	    "Engine/ThirdParty/SPIRV-Reflect/**.cpp",
+
 	    "Engine/ThirdParty/fastgltf/src/**.cpp",
 	    "Engine/ThirdParty/fastgltf/deps/simdjson/**.h",
         "Engine/ThirdParty/fastgltf/deps/simdjson/**.c",
-        
-        "%{IncludeDir.vulkan}/Source/**.h",
-        "%{IncludeDir.vulkan}/Source/**.c",
-
+       
        
 	    "Engine/ThirdParty/vulkanmemoryallocator/**.h",
 	    "Engine/ThirdParty/vulkanmemoryallocator/src/VmaUsage.cpp",
@@ -56,13 +59,13 @@ project "Lumina"
 		"%{IncludeDir.spdlog}/",
 		"%{IncludeDir.glfw}/",
 		"%{IncludeDir.glm}/",
+		"%{IncludeDir.SPIRV_Reflect}/include",
 		"%{IncludeDir.imgui}/",
 		"%{IncludeDir.stb_image}/",
 		"%{IncludeDir.fastgltf}/",
 		"%{IncludeDir.vkbootstrap}/src/",
 		"%{IncludeDir.vulkan}/Include/",
-		"%{IncludeDir.vulkan}/Source/",
-		"%{IncludeDir.vulkan}/Lib/",
+		"%{IncludeDir.shaderc}/",
 		"%{IncludeDir.vulkanmemoryallocator}/",
 
 	}
@@ -70,9 +73,9 @@ project "Lumina"
 	links
 	 {
 	    "GLFW",
-	    "%{VULKAN_SDK}/lib/shaderc.lib",
-        "%{VULKAN_SDK}/lib/shaderc_util.lib",
-	  }
+	  	"%{VULKAN_SDK}/lib/vulkan-1.lib",  	
+	  	"%{VULKAN_SDK}/lib/shaderc.lib",  	
+	 }
 
 	defines
 	 {

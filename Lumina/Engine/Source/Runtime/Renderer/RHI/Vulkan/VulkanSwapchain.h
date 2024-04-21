@@ -29,7 +29,7 @@ namespace Lumina
         std::shared_ptr<FVulkanImage> GetCurrentImage() { return Images[CurrentImageIndex]; }
         VkSwapchainKHR GetSwapchain() { return Swapchain.value(); }
         VkSurfaceKHR GetSurface() { return Surface; }
-        VkFormat GetFormat() { return Format; }
+        VkFormat& GetFormat() { return Format; }
         
     private:
 

@@ -1,10 +1,11 @@
 #include "Application.h"
-
-#include "backends/imgui_impl_vulkan.h"
 #include "ImGui/ImGuiLayer.h"
 #include "Source/Runtime/Log/Log.h"
-#include "Source/Runtime/Renderer/RenderContext.h"
+#include "Source/Runtime/Renderer/Buffer.h"
+#include "Source/Runtime/Renderer/Image.h"
+#include "Source/Runtime/Renderer/PipelineLibrary.h"
 #include "Source/Runtime/Renderer/Renderer.h"
+#include "Source/Runtime/Renderer/ShaderLibrary.h"
 #include "Source/Runtime/Scene/Scene.h"
 #include "Windows/Window.h"
 
@@ -35,7 +36,7 @@ namespace Lumina
             if (!IsMinimized())
             {
                 PreFrame();
-                
+
                 Window->OnUpdate(1.0f);
                 
                 PostFrame();
@@ -70,6 +71,7 @@ namespace Lumina
         RenderConfig.Window = Window.get();
         RenderConfig.FramesInFlight = 2;
         FRenderer::Init(RenderConfig);
+        
     }
 
     void FApplication::OnShutdown()
@@ -102,10 +104,10 @@ namespace Lumina
 
     void FApplication::PostFrame()
     {
-        FRenderer::EndRender();
         FRenderer::Render();
         FRenderer::EndFrame();
         glfwPollEvents();
+        
     }
 
 

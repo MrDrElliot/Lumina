@@ -6,10 +6,13 @@
 namespace Lumina
 {
     FVulkanCommandBuffer::FVulkanCommandBuffer()
+    : CommandBuffer(nullptr), CommandPool(nullptr), Level(), BufferType(), CmdType()
     {
+        std::unreachable();
     }
 
-    FVulkanCommandBuffer::FVulkanCommandBuffer(bool bTransient): CommandBuffer(VK_NULL_HANDLE), CommandPool(VK_NULL_HANDLE)
+    FVulkanCommandBuffer::FVulkanCommandBuffer(ECommandBufferLevel InLevel, ECommandBufferType InBufferType, ECommandType InCmdType)
+    : CommandBuffer(VK_NULL_HANDLE), CommandPool(VK_NULL_HANDLE), Level(InLevel), BufferType(InBufferType), CmdType(InCmdType)
     {
         FQueueFamilyIndex Index = FVulkanRenderContext::GetQueueFamilyIndex();
         VkDevice Device = FVulkanRenderContext::GetDevice();
@@ -17,7 +20,7 @@ namespace Lumina
         VkCommandPoolCreateInfo PoolInfo = {};
         PoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
         PoolInfo.queueFamilyIndex = Index.Graphics;
-        PoolInfo.flags = bTransient ? VK_COMMAND_POOL_CREATE_TRANSIENT_BIT : 0;
+        PoolInfo.flags = InBufferType == ECommandBufferType::GENERAL ? VK_COMMAND_POOL_CREATE_TRANSIENT_BIT : 0;
 
         vkCreateCommandPool(Device, &PoolInfo, nullptr, &CommandPool);
 
@@ -25,8 +28,7 @@ namespace Lumina
         BufferInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
         BufferInfo.commandPool = CommandPool;
         BufferInfo.commandBufferCount = 1;
-        BufferInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-
+        BufferInfo.level = Level == ECommandBufferLevel::PRIMARY ?  VK_COMMAND_BUFFER_LEVEL_PRIMARY : VK_COMMAND_BUFFER_LEVEL_SECONDARY;
         vkAllocateCommandBuffers(Device, &BufferInfo, &CommandBuffer);
         
     }
@@ -39,7 +41,7 @@ namespace Lumina
     {
         VkCommandBufferBeginInfo Info = {};
         Info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        Info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+        Info.flags = BufferType == ECommandBufferType::TRANSIENT ? VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT : 0;
 
         vkBeginCommandBuffer(CommandBuffer, &Info);
     }
@@ -55,7 +57,7 @@ namespace Lumina
         vkResetCommandPool(Device, CommandPool, 0);
     }
 
-    void FVulkanCommandBuffer::Execute()
+    void FVulkanCommandBuffer::Execute(bool bWait)
     {
         VkSubmitInfo SubmitInfo = {};
         SubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -65,12 +67,24 @@ namespace Lumina
         VkQueue Queue = FVulkanRenderContext::GetGeneralQueue();
 
         VkFence Fence = VK_NULL_HANDLE;
-        VkFenceCreateInfo FenceInfo = {};
-        FenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+        if(bWait)
+        {
+            VkFenceCreateInfo FenceInfo = {};
+            FenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 
-        vkCreateFence(FVulkanRenderContext::GetDevice(), &FenceInfo, nullptr, &Fence);
+            vkCreateFence(FVulkanRenderContext::GetDevice(), &FenceInfo, nullptr, &Fence);
+        }
         
+        SubmissionMutex.lock();
         vkQueueSubmit(Queue, 1, &SubmitInfo, Fence);
+        SubmissionMutex.unlock();
+
+        if(bWait)
+        {
+            auto Device = FVulkanRenderContext::GetDevice();
+            vkWaitForFences(Device, 1, &Fence, VK_TRUE, UINT64_MAX);
+            vkDestroyFence(Device, Fence, nullptr);
+        }
     }
 
     void FVulkanCommandBuffer::Destroy()

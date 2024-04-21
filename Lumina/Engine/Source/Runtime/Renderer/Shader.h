@@ -5,14 +5,18 @@
 #include <string>
 #include <glm/glm.hpp>
 
+#include "ShaderTypes.h"
+
 namespace Lumina
 {
-    enum class EShaderStage : glm::uint32 {
+    enum class EShaderStage : glm::uint32
+    {
         VERTEX,
         FRAGMENT,
         COMPUTE,
         UNKNOWN
     };
+    
     inline constexpr std::string StageToString(const EShaderStage& Stage)
     {
         switch (Stage)
@@ -56,8 +60,8 @@ namespace Lumina
     {
     public:
 
-        static std::shared_ptr<FShader> Create(std::map<EShaderStage, std::vector<glm::uint32>> Binaries, std::filesystem::path Path);
-        virtual ~FShader() {};
+        static std::shared_ptr<FShader> Create(std::vector<FShaderData> InData, const std::string& Tag);
+        virtual ~FShader() {}
         virtual void Destroy() = 0;
 
         virtual bool IsDirty() const = 0;

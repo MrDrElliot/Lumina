@@ -76,7 +76,7 @@
       <WarningLevel>Level3</WarningLevel>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;GLM_FORCE_DEPTH_ZERO_TO_ONE;GLFW_INCLUDE_NONE;LE_DEBUG;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>Engine;Engine\ThirdParty;Engine\ThirdParty\spdlog\include;Engine\ThirdParty\GLFW\include;Engine\ThirdParty\GLM;Engine\ThirdParty\imgui;.;Engine\ThirdParty\fastgltf\include;Engine\ThirdParty\vk-bootstrap\src;C:\VulkanSDK\1.3.280.0\Include;C:\VulkanSDK\1.3.280.0\Source;C:\VulkanSDK\1.3.280.0\Lib;Engine\ThirdParty\VulkanMemoryAllocator\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Engine;Engine\ThirdParty;Engine\ThirdParty\spdlog\include;Engine\ThirdParty\GLFW\include;Engine\ThirdParty\GLM;Engine\ThirdParty\SPIRV-Reflect\include;Engine\ThirdParty\imgui;.;Engine\ThirdParty\fastgltf\include;Engine\ThirdParty\vk-bootstrap\src;C:\VulkanSDK\1.3.280.0\Include;Engine\ThirdParty\shaderc;Engine\ThirdParty\VulkanMemoryAllocator\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <MinimalRebuild>false</MinimalRebuild>
@@ -91,7 +91,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Lib>
-      <AdditionalDependencies>C:\VulkanSDK\1.3.280.0\lib\shaderc.lib;C:\VulkanSDK\1.3.280.0\lib\shaderc_util.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>C:\VulkanSDK\1.3.280.0\lib\vulkan-1.lib;C:\VulkanSDK\1.3.280.0\lib\shaderc.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -100,7 +100,7 @@
       <WarningLevel>Level3</WarningLevel>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;GLM_FORCE_DEPTH_ZERO_TO_ONE;GLFW_INCLUDE_NONE;LE_RELEASE;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>Engine;Engine\ThirdParty;Engine\ThirdParty\spdlog\include;Engine\ThirdParty\GLFW\include;Engine\ThirdParty\GLM;Engine\ThirdParty\imgui;.;Engine\ThirdParty\fastgltf\include;Engine\ThirdParty\vk-bootstrap\src;C:\VulkanSDK\1.3.280.0\Include;C:\VulkanSDK\1.3.280.0\Source;C:\VulkanSDK\1.3.280.0\Lib;Engine\ThirdParty\VulkanMemoryAllocator\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Engine;Engine\ThirdParty;Engine\ThirdParty\spdlog\include;Engine\ThirdParty\GLFW\include;Engine\ThirdParty\GLM;Engine\ThirdParty\SPIRV-Reflect\include;Engine\ThirdParty\imgui;.;Engine\ThirdParty\fastgltf\include;Engine\ThirdParty\vk-bootstrap\src;C:\VulkanSDK\1.3.280.0\Include;Engine\ThirdParty\shaderc;Engine\ThirdParty\VulkanMemoryAllocator\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -118,7 +118,7 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <Lib>
-      <AdditionalDependencies>C:\VulkanSDK\1.3.280.0\lib\shaderc.lib;C:\VulkanSDK\1.3.280.0\lib\shaderc_util.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>C:\VulkanSDK\1.3.280.0\lib\vulkan-1.lib;C:\VulkanSDK\1.3.280.0\lib\shaderc.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Shipping|x64'">
@@ -127,7 +127,7 @@
       <WarningLevel>Level3</WarningLevel>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;GLM_FORCE_DEPTH_ZERO_TO_ONE;GLFW_INCLUDE_NONE;LE_SHIP;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>Engine;Engine\ThirdParty;Engine\ThirdParty\spdlog\include;Engine\ThirdParty\GLFW\include;Engine\ThirdParty\GLM;Engine\ThirdParty\imgui;.;Engine\ThirdParty\fastgltf\include;Engine\ThirdParty\vk-bootstrap\src;C:\VulkanSDK\1.3.280.0\Include;C:\VulkanSDK\1.3.280.0\Source;C:\VulkanSDK\1.3.280.0\Lib;Engine\ThirdParty\VulkanMemoryAllocator\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Engine;Engine\ThirdParty;Engine\ThirdParty\spdlog\include;Engine\ThirdParty\GLFW\include;Engine\ThirdParty\GLM;Engine\ThirdParty\SPIRV-Reflect\include;Engine\ThirdParty\imgui;.;Engine\ThirdParty\fastgltf\include;Engine\ThirdParty\vk-bootstrap\src;C:\VulkanSDK\1.3.280.0\Include;Engine\ThirdParty\shaderc;Engine\ThirdParty\VulkanMemoryAllocator\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -147,12 +147,10 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <Lib>
-      <AdditionalDependencies>C:\VulkanSDK\1.3.280.0\lib\shaderc.lib;C:\VulkanSDK\1.3.280.0\lib\shaderc_util.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>C:\VulkanSDK\1.3.280.0\lib\vulkan-1.lib;C:\VulkanSDK\1.3.280.0\lib\shaderc.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="C:\VulkanSDK\1.3.280.0\Source\SPIRV-Reflect\include\spirv\unified1\spirv.h" />
-    <ClInclude Include="C:\VulkanSDK\1.3.280.0\Source\SPIRV-Reflect\spirv_reflect.h" />
     <ClInclude Include="Engine\EntryPoint.h" />
     <ClInclude Include="Engine\Lumina.h" />
     <ClInclude Include="Engine\Source\Runtime\ApplicationCore\Application.h" />
@@ -179,14 +177,17 @@
     <ClInclude Include="Engine\Source\Runtime\Memory\Memory.h" />
     <ClInclude Include="Engine\Source\Runtime\Platform\Vulkan\VulkanImGuiLayer.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\Buffer.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\BufferLayout.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\CommandBuffer.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\Image.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\Pipeline.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\PipelineLibrary.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\PipelineStage.h" />
-    <ClInclude Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\Converts.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanBuffer.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanCommandBuffer.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanImage.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanMemoryAllocator.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanPipeline.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanRenderAPI.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanRenderContext.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanShader.h" />
@@ -195,14 +196,17 @@
     <ClInclude Include="Engine\Source\Runtime\Renderer\RenderContext.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\Renderer.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\Shader.h" />
-    <ClInclude Include="Engine\Source\Runtime\Renderer\ShaderCompiler.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\ShaderCompilier.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\ShaderLibrary.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\ShaderTypes.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\Swapchain.h" />
     <ClInclude Include="Engine\Source\Runtime\Scene\Camera.h" />
     <ClInclude Include="Engine\Source\Runtime\Scene\Scene.h" />
     <ClInclude Include="Engine\Source\Runtime\Thread\GameThread.h" />
     <ClInclude Include="Engine\Source\Runtime\Thread\RenderThread.h" />
     <ClInclude Include="Engine\Source\Runtime\Thread\Thread.h" />
+    <ClInclude Include="Engine\ThirdParty\SPIRV-Reflect\include\spirv\unified1\spirv.h" />
+    <ClInclude Include="Engine\ThirdParty\SPIRV-Reflect\spirv_reflect.h" />
     <ClInclude Include="Engine\ThirdParty\fastgltf\deps\simdjson\simdjson.h" />
     <ClInclude Include="Engine\ThirdParty\glm\glm\common.hpp" />
     <ClInclude Include="Engine\ThirdParty\glm\glm\detail\_features.hpp" />
@@ -622,6 +626,27 @@
     <ClInclude Include="Engine\ThirdParty\glm\glm\vector_relational.hpp" />
     <ClInclude Include="Engine\ThirdParty\imgui\backends\imgui_impl_glfw.h" />
     <ClInclude Include="Engine\ThirdParty\imgui\backends\imgui_impl_vulkan.h" />
+    <ClInclude Include="Engine\ThirdParty\shaderc\glslc\dependency_info.h" />
+    <ClInclude Include="Engine\ThirdParty\shaderc\glslc\file.h" />
+    <ClInclude Include="Engine\ThirdParty\shaderc\glslc\file_compiler.h" />
+    <ClInclude Include="Engine\ThirdParty\shaderc\glslc\file_includer.h" />
+    <ClInclude Include="Engine\ThirdParty\shaderc\glslc\resource_parse.h" />
+    <ClInclude Include="Engine\ThirdParty\shaderc\glslc\shader_stage.h" />
+    <ClInclude Include="Engine\ThirdParty\shaderc\libshaderc_util\include\libshaderc_util\args.h" />
+    <ClInclude Include="Engine\ThirdParty\shaderc\libshaderc_util\include\libshaderc_util\compiler.h" />
+    <ClInclude Include="Engine\ThirdParty\shaderc\libshaderc_util\include\libshaderc_util\counting_includer.h" />
+    <ClInclude Include="Engine\ThirdParty\shaderc\libshaderc_util\include\libshaderc_util\exceptions.h" />
+    <ClInclude Include="Engine\ThirdParty\shaderc\libshaderc_util\include\libshaderc_util\file_finder.h" />
+    <ClInclude Include="Engine\ThirdParty\shaderc\libshaderc_util\include\libshaderc_util\format.h" />
+    <ClInclude Include="Engine\ThirdParty\shaderc\libshaderc_util\include\libshaderc_util\io_shaderc.h" />
+    <ClInclude Include="Engine\ThirdParty\shaderc\libshaderc_util\include\libshaderc_util\message.h" />
+    <ClInclude Include="Engine\ThirdParty\shaderc\libshaderc_util\include\libshaderc_util\mutex.h" />
+    <ClInclude Include="Engine\ThirdParty\shaderc\libshaderc_util\include\libshaderc_util\resources.h" />
+    <ClInclude Include="Engine\ThirdParty\shaderc\libshaderc_util\include\libshaderc_util\shader_stage.h" />
+    <ClInclude Include="Engine\ThirdParty\shaderc\libshaderc_util\include\libshaderc_util\spirv_tools_wrapper.h" />
+    <ClInclude Include="Engine\ThirdParty\shaderc\libshaderc_util\include\libshaderc_util\string_piece.h" />
+    <ClInclude Include="Engine\ThirdParty\shaderc\libshaderc_util\include\libshaderc_util\universal_unistd.h" />
+    <ClInclude Include="Engine\ThirdParty\shaderc\libshaderc_util\include\libshaderc_util\version_profile.h" />
     <ClInclude Include="Engine\ThirdParty\stb_image\stb_image.h" />
     <ClInclude Include="Engine\ThirdParty\vk-bootstrap\src\VkBootstrap.h" />
     <ClInclude Include="Engine\ThirdParty\vk-bootstrap\src\VkBootstrapDispatch.h" />
@@ -632,7 +657,6 @@
     <ClInclude Include="Engine\ThirdParty\vulkanmemoryallocator\src\VmaUsage.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="C:\VulkanSDK\1.3.280.0\Source\SPIRV-Reflect\spirv_reflect.c" />
     <ClCompile Include="Engine\Source\Runtime\ApplicationCore\Application.cpp" />
     <ClCompile Include="Engine\Source\Runtime\ApplicationCore\ImGui\ImGuiLayer.cpp" />
     <ClCompile Include="Engine\Source\Runtime\ApplicationCore\LayerStack.cpp" />
@@ -640,6 +664,7 @@
     <ClCompile Include="Engine\Source\Runtime\Assets\Asset.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Assets\StaticMesh\StaticMesh.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Events\Event.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\GUID\GUID.cpp" />
     <ClCompile Include="Engine\Source\Runtime\ImGui\ImGuiFonts.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Input\Input.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Log\Log.cpp" />
@@ -647,11 +672,13 @@
     <ClCompile Include="Engine\Source\Runtime\Renderer\Buffer.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\CommandBuffer.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\Image.cpp" />
-    <ClCompile Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\Converts.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\Pipeline.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\PipelineLibrary.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanBuffer.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanCommandBuffer.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanImage.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanMemoryAllocator.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanPipeline.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanRenderAPI.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanRenderContext.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanShader.cpp" />
@@ -660,7 +687,7 @@
     <ClCompile Include="Engine\Source\Runtime\Renderer\RenderContext.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\Renderer.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\Shader.cpp" />
-    <ClCompile Include="Engine\Source\Runtime\Renderer\ShaderCompiler.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\ShaderCompilier.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\ShaderLibrary.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\Swapchain.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Scene\Camera.cpp" />
@@ -668,11 +695,29 @@
     <ClCompile Include="Engine\Source\Runtime\Thread\GameThread.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Thread\RenderThread.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Thread\Thread.cpp" />
+    <ClCompile Include="Engine\ThirdParty\SPIRV-Reflect\spirv_reflect.c" />
     <ClCompile Include="Engine\ThirdParty\fastgltf\src\base64.cpp" />
     <ClCompile Include="Engine\ThirdParty\fastgltf\src\fastgltf.cpp" />
     <ClCompile Include="Engine\ThirdParty\glm\glm\detail\glm.cpp" />
     <ClCompile Include="Engine\ThirdParty\imgui\backends\imgui_impl_glfw.cpp" />
     <ClCompile Include="Engine\ThirdParty\imgui\backends\imgui_impl_vulkan.cpp" />
+    <ClCompile Include="Engine\ThirdParty\shaderc\glslc\dependency_info.cc" />
+    <ClCompile Include="Engine\ThirdParty\shaderc\glslc\file.cc" />
+    <ClCompile Include="Engine\ThirdParty\shaderc\glslc\file_compiler.cc" />
+    <ClCompile Include="Engine\ThirdParty\shaderc\glslc\file_includer.cc" />
+    <ClCompile Include="Engine\ThirdParty\shaderc\glslc\resource_parse.cc" />
+    <ClCompile Include="Engine\ThirdParty\shaderc\glslc\shader_stage.cc" />
+    <ClCompile Include="Engine\ThirdParty\shaderc\libshaderc_util\src\args.cc" />
+    <ClCompile Include="Engine\ThirdParty\shaderc\libshaderc_util\src\compiler.cc" />
+    <ClCompile Include="Engine\ThirdParty\shaderc\libshaderc_util\src\file_finder.cc" />
+    <ClCompile Include="Engine\ThirdParty\shaderc\libshaderc_util\src\io_shaderc.cc" />
+    <ClCompile Include="Engine\ThirdParty\shaderc\libshaderc_util\src\message.cc" />
+    <ClCompile Include="Engine\ThirdParty\shaderc\libshaderc_util\src\resources.cc" />
+    <ClCompile Include="Engine\ThirdParty\shaderc\libshaderc_util\src\shader_stage.cc">
+      <ObjectFileName>$(IntDir)\shader_stage1.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="Engine\ThirdParty\shaderc\libshaderc_util\src\spirv_tools_wrapper.cc" />
+    <ClCompile Include="Engine\ThirdParty\shaderc\libshaderc_util\src\version_profile.cc" />
     <ClCompile Include="Engine\ThirdParty\vk-bootstrap\src\VkBootstrap.cpp" />
     <ClCompile Include="Engine\ThirdParty\vulkanmemoryallocator\src\VmaUsage.cpp" />
   </ItemGroup>

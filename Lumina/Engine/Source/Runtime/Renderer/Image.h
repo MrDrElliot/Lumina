@@ -82,9 +82,13 @@ namespace Lumina
     {
     public:
         
-        static FImage* Create(const FImageSpecification& Spec);
 
+        static std::shared_ptr<FImage> Create(const FImageSpecification& Spec);
+
+        virtual ~FImage() = default;
         virtual void Destroy() = 0;
+        virtual FImageSpecification GetSpecification() const = 0;
+
 
         virtual void SetLayout(
             std::shared_ptr<FCommandBuffer> CmdBuffer,
@@ -94,7 +98,9 @@ namespace Lumina
             EPipelineAccess SrcAccess = EPipelineAccess::NONE,
             EPipelineAccess DstAccess = EPipelineAccess::NONE
          ) = 0;
-    
+
+    private:
+        
     };
 
 
@@ -123,13 +129,14 @@ namespace Lumina
         float MinLOD;
         float MaxLOD;
         float LODBias;
-        glm::uint8 SnisotropicFilteringLevel;
+        glm::uint8 AnisotropicFilteringLevel;
     };
 
     class FImageSampler
     {
     public:
-        
+        virtual ~FImageSampler() = default;
+
         static FImageSampler* Create(const FImageSamplerSpecification& Spec);
 
         virtual void Destroy() = 0;

@@ -13,6 +13,7 @@
 
 namespace Lumina
 {
+	class FImage;
 	class FImGuiLayer;
 	class LScene;
 	struct FWindowSpecs;
@@ -67,6 +68,7 @@ namespace Lumina
 		inline bool IsMinimized() const { return bMinimized; }
 		inline bool ShouldExit() const;
 
+	
 	private:
 
 

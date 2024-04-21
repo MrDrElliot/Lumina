@@ -22,7 +22,6 @@ namespace Lumina
 
     LuminaEditor::LuminaEditor(const FApplicationSpecs& AppSpecs): FApplication(AppSpecs)
     {
-        PushOverlay(std::make_shared<FEditorLayer>());
     }
 
     LuminaEditor::~LuminaEditor()

@@ -4,8 +4,8 @@
 
 namespace Lumina
 {
-    std::shared_ptr<FCommandBuffer> FCommandBuffer::Create(bool bTransient)
+    std::shared_ptr<FCommandBuffer> FCommandBuffer::Create(ECommandBufferLevel InLevel, ECommandBufferType InBufferType, ECommandType InCmdType)
     {
-        return std::make_shared<FVulkanCommandBuffer>(bTransient);
+        return std::make_shared<FVulkanCommandBuffer>(InLevel, InBufferType, InCmdType);
     }
 }

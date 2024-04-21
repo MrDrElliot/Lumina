@@ -1,6 +1,5 @@
 #pragma once
 #include "Source/Runtime/ApplicationCore/ImGui/ImGuiLayer.h"
-#include "vulkanmemoryallocator/src/Common.h"
 
 namespace Lumina
 {
@@ -17,7 +16,6 @@ namespace Lumina
 
     private:
 
-        VkCommandBuffer CommandBuffer;
         float Time = 0.0f;
     
     };

@@ -19,18 +19,24 @@ namespace Lumina
         
         virtual void BeginFrame() override;
         virtual void EndFrame() override;
-        virtual void BeginRender(std::shared_ptr<FImage> Target, glm::uvec3 RenderArea, glm::ivec2 RenderOffset, glm::fvec4 ClearColor) override;
+        virtual void BeginRender(const std::vector<std::shared_ptr<FImage>> Attachments, glm::uvec3 RenderArea, glm::ivec2 RenderOffset, glm::fvec4 ClearColor) override;
         virtual void EndRender() override;
         virtual void WaitDevice() override;
 
         std::shared_ptr<FImage> GetSwapchainImage() override;
 
+        void CopyToSwapchain(std::shared_ptr<FImage> ImageToCopy) override;
+        void BindPipeline(std::shared_ptr<FPipeline> Pipeline) override;
         void ClearColor(std::shared_ptr<FImage> Image, const glm::fvec4& Value) override;
+        void RenderMeshIndexed(std::shared_ptr<FBuffer> VertexBuffer, std::shared_ptr<FBuffer> IndexBuffer) override;
 
+        
         std::shared_ptr<FCommandBuffer> GetCommandBuffer() override;
         virtual void BeginCommandRecord() override;
         virtual void EndCommandRecord() override;
         virtual void ExecuteCurrentCommands() override;
+
+        void RenderImGui() override;
 
 
     private:

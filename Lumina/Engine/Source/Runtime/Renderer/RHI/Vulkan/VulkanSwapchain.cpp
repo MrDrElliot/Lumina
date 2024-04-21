@@ -6,6 +6,7 @@
 #include "VulkanImage.h"
 #include "VulkanRenderContext.h"
 #include "Source/Runtime/ApplicationCore/Windows/Window.h"
+#include "Source/Runtime/Log/Log.h"
 
 namespace Lumina
 {

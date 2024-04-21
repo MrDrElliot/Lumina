@@ -120,6 +120,7 @@ namespace Lumina
 			FVulkanMemoryAllocator* Allocator = FVulkanMemoryAllocator::Get();
 			void* memory = Allocator->MapMemory(Allocation);
 			memcpy((std::byte*)memory + Offset, Data, DataSize);
+			//@ TODO Possible memory leak?
 			Allocator->UnmapMemory(Allocation);
 		}
 		
@@ -156,7 +157,7 @@ namespace Lumina
 	{
 		FVulkanMemoryAllocator* Alloc = FVulkanMemoryAllocator::Get();
 		Alloc->DestroyBuffer(&Buffer, &Allocation);
-           
+
 		if(Data) delete Data;
 	}
 }

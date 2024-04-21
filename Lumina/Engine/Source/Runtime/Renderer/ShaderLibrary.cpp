@@ -2,14 +2,13 @@
 
 #include <fstream>
 
-#include "ShaderCompiler.h"
+#include "RHI/Vulkan/VulkanShader.h"
 #include "Source/Runtime/Log/Log.h"
 
 namespace Lumina
 {
 
     FShaderLibrary* FShaderLibrary::Instance = nullptr;
-    FShaderCompiler Compiler;
     
     FShaderLibrary::FShaderLibrary()
     {
@@ -17,8 +16,9 @@ namespace Lumina
 
     FShaderLibrary::~FShaderLibrary()
     {
-        for (auto& [Key,Shader] : Library)
+        for (auto& [Key, Shader] : Library)
         {
+            LE_LOG_WARN("Shader Library: Destroying Shader - {0}", Key);
             Shader->Destroy();
         }
     }
@@ -26,9 +26,6 @@ namespace Lumina
     void FShaderLibrary::Init()
     {
         Instance = new FShaderLibrary;
-        Compiler.AddGlobalMacro("_LUMINA_SCENE_DESCRIPTOR_SET", "0");
-        Compiler.AddGlobalMacro("_LUMINA_PASS_DESCRIPTOR_SET", "1");
-        Compiler.AddGlobalMacro("_LUMINA_DRAW_CALL_DESCRIPTOR_SET", "2");
     }
 
     void FShaderLibrary::Destroy()
@@ -36,39 +33,47 @@ namespace Lumina
         delete Instance;
     }
 
-    bool FShaderLibrary::Load(std::filesystem::path Path)
+    bool FShaderLibrary::Load(std::filesystem::path Vertex, std::filesystem::path Fragment, const std::string& Tag)
     {
-        bool Result = Library.find(Path.filename().string()) != Library.end();
-
-        if (Result)
+        std::vector<FShaderData> Shaders;
+        
+        FShaderData VertData
         {
-            LE_LOG_INFO("Shader \"{0}\" is already loaded.", Path.filename().string());
-            return true;
-        }
+            .Stage = EShaderStage::VERTEX,
+            .RawPath = Vertex
+        };
 
-        Result = std::filesystem::exists(Path);
-
-        if (!Result)
+        FShaderData FragData
         {
-            LE_LOG_INFO("Shader directory not found: {0}", Path.string());
-            return false;
+            .Stage = EShaderStage::FRAGMENT,
+            .RawPath = Fragment,
+        };
+        
+        Shaders.push_back(VertData);
+        Shaders.push_back(FragData);
+
+        for (auto& Shader : Shaders)
+        {
+            std::ifstream File(Shader.RawPath, std::ios::ate | std::ios::binary);
+            if(!File.is_open())
+            {
+                LE_LOG_ERROR("Failed to open shader file: {0}", Shader.RawPath.string());
+                return false;
+            }
+            
+            size_t Size = (size_t)File.tellg();
+            std::vector<uint32_t> Buffer(Size / sizeof(uint32_t));
+
+            File.seekg(0);
+            File.read((char*)Buffer.data(), Size);
+            File.close();
+            Shader.Binaries = Buffer;
         }
-
-        std::string shader_source;
-        std::string line;
-        std::ifstream input_stream(Path);
-        while (std::getline(input_stream, line)) shader_source.append(line + '\n');
-
-        FShaderCompilationResult compilation_result = Compiler.Compile(shader_source, Path.filename().string());
-
-        if (!compilation_result.bValid) return false;
-
-        std::shared_ptr<FShader> Shader = FShader::Create(compilation_result.Bytecode, Path);
-
+        
+        std::shared_ptr<FShader> Shader = FShader::Create(Shaders, Tag);
         Mutex.lock();
-        Library.emplace(Path.filename().string(), Shader);
+        Library.emplace(Tag, Shader);
         Mutex.unlock();
-
         return true;
     }
 
@@ -95,7 +100,14 @@ namespace Lumina
 
     std::shared_ptr<FShader> FShaderLibrary::GetShader(std::string Key)
     {
-        return Library.find(Key)->second;
+        std::shared_ptr<FShader> ReturnShader = Instance->Library.find(Key)->second;
+        if(ReturnShader.get())
+        {
+            return ReturnShader;
+        }
+        
+        LE_LOG_ERROR("Failed to load shader with key: {0}", Key);
+        return nullptr;
     }
 
     EShaderStage FShaderLibrary::EvaluateStage(std::filesystem::path File) const

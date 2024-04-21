@@ -39,7 +39,6 @@ namespace Lumina
     void FVulkanImGuiLayer::OnAttach()
     {
         
-        
         VkDescriptorPoolSize PoolSizes[] = { { VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
         { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
         { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
@@ -90,7 +89,7 @@ namespace Lumina
 
         VkPipelineRenderingCreateInfo RenderPipeline = {};
         RenderPipeline.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
-      //  RenderPipeline.pColorAttachmentFormats = FVulkanRenderContext::GetSwapchain()->GetFormat();
+        RenderPipeline.pColorAttachmentFormats = &FVulkanRenderContext::GetSwapchain()->GetFormat();
         RenderPipeline.colorAttachmentCount = 1;
 
         ImGui_ImplVulkan_InitInfo InitInfo = {};
