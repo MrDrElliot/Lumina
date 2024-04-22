@@ -1,7 +1,7 @@
 #include "VulkanRenderAPI.h"
-
 #include "imgui.h"
 #include "VulkanBuffer.h"
+#include "VulkanSwapchain.h"
 #include "VulkanDescriptorSet.h"
 #include "VulkanImage.h"
 #include "VulkanPipeline.h"
@@ -324,15 +324,15 @@ namespace Lumina
 		{
 			VkCommandBuffer Buffer = CurrentCommandBuffer->GetCommandBuffer();
 			std::shared_ptr<FVulkanBuffer> VkVertexBuffer = std::dynamic_pointer_cast<FVulkanBuffer>(VertexBuffer);
-			std::shared_ptr<FVulkanBuffer> VkIndexBuffer= std::dynamic_pointer_cast<FVulkanBuffer>(IndexBuffer);
+			std::shared_ptr<FVulkanBuffer> VkIndexBuffer = std::dynamic_pointer_cast<FVulkanBuffer>(IndexBuffer);
 			
 			VkBuffer BindBuffer = VkVertexBuffer->GetBuffer();
-			VkDeviceSize Size = 0;
+			VkDeviceSize Offsets[] = {0};
 			
-			vkCmdBindVertexBuffers(Buffer, 0, 1, &BindBuffer, &Size);
+			vkCmdBindVertexBuffers(Buffer, 0, 1, &BindBuffer, Offsets);
 			vkCmdBindIndexBuffer(Buffer, VkIndexBuffer->GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
 
-			vkCmdDrawIndexed(Buffer, 0, 1, 0, 0, 0);
+			vkCmdDrawIndexed(Buffer, 6, 1, 0, 0, 0);
 		});
     }
 

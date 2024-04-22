@@ -4,6 +4,7 @@
 #include "Image.h"
 #include "PipelineLibrary.h"
 #include "ShaderLibrary.h"
+#include "Swapchain.h"
 #include "RHI/Vulkan/VulkanRenderAPI.h"
 #include "Source/Runtime/Log/Log.h"
 

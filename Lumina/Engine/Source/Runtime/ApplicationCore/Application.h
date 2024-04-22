@@ -13,6 +13,7 @@
 
 namespace Lumina
 {
+	class FBuffer;
 	class FDescriptorSet;
 	class FImage;
 	class FImGuiLayer;
@@ -72,6 +73,10 @@ namespace Lumina
 	
 	private:
 
+		std::shared_ptr<FImage> ColorImage;
+		std::shared_ptr<FBuffer> VBO;
+		std::shared_ptr<FBuffer> IBO;
+		
 		FApplicationSpecs AppSpecs;
 		bool bRunning = true;
 		bool bMinimized = false;

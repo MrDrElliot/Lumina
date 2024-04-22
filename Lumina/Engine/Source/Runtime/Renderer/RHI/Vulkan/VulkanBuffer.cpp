@@ -10,12 +10,12 @@ namespace Lumina
 	{
 		switch (Usage)
 		{
-		case EDeviceBufferUsage::VERTEX_BUFFER:				    return VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-		case EDeviceBufferUsage::INDEX_BUFFER:					return VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-		case EDeviceBufferUsage::UNIFORM_BUFFER:				return VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-		case EDeviceBufferUsage::STORAGE_BUFFER:				return VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
-		case EDeviceBufferUsage::STAGING_BUFFER:				return VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-		default:												std::unreachable();
+			case EDeviceBufferUsage::VERTEX_BUFFER:				    return VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+			case EDeviceBufferUsage::INDEX_BUFFER:					return VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+			case EDeviceBufferUsage::UNIFORM_BUFFER:				return VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+			case EDeviceBufferUsage::STORAGE_BUFFER:				return VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+			case EDeviceBufferUsage::STAGING_BUFFER:				return VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+			default:												std::unreachable();
 		}
 	}
 
@@ -23,10 +23,10 @@ namespace Lumina
 	{
 		switch (Usage)
 		{
-		case EDeviceBufferMemoryUsage::READ_BACK:				return VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT;			
-		case EDeviceBufferMemoryUsage::COHERENT_WRITE:			return VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;  
-		case EDeviceBufferMemoryUsage::NO_HOST_ACCESS:			return 0;														
-		default:												std::unreachable();												
+			case EDeviceBufferMemoryUsage::READ_BACK:				return VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT;			
+			case EDeviceBufferMemoryUsage::COHERENT_WRITE:			return VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;  
+			case EDeviceBufferMemoryUsage::NO_HOST_ACCESS:			return 0;														
+			default:												std::unreachable();												
 		}
 	}
     
@@ -50,18 +50,18 @@ namespace Lumina
 		FVulkanMemoryAllocator* Alloc = FVulkanMemoryAllocator::Get();
 		glm::uint64 vma_flags = convert(Spec.MemoryUsage);
 
-		VkBufferCreateInfo buffer_create_info = {};
-		buffer_create_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		buffer_create_info.size = Spec.Size;
-		buffer_create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-		buffer_create_info.usage = convert(Spec.BufferUsage);
+		VkBufferCreateInfo BufferCreateInfo = {};
+		BufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+		BufferCreateInfo.size = Spec.Size;
+		BufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		BufferCreateInfo.usage = convert(Spec.BufferUsage);
 
 		if (Specification.MemoryUsage == EDeviceBufferMemoryUsage::NO_HOST_ACCESS)
 		{
-			buffer_create_info.usage |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+			BufferCreateInfo.usage |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 		}
 
-		Allocation = Alloc->AllocateBuffer(&buffer_create_info, vma_flags, &Buffer);
+		Allocation = Alloc->AllocateBuffer(&BufferCreateInfo, vma_flags, &Buffer);
 		this->UploadData(0, Data, DataSize);
         
 	}

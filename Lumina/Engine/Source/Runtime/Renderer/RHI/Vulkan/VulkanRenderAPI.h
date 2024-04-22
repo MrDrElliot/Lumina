@@ -1,7 +1,6 @@
 #pragma once
 #include "VulkanCommandBuffer.h"
 #include "VulkanRenderContext.h"
-#include "VulkanSwapchain.h"
 #include "Source/Runtime/Renderer/RenderAPI.h"
 #include "Source/Runtime/Renderer/Renderer.h"
 

@@ -6,6 +6,7 @@
 
 namespace Lumina
 {
+    class FSwapchain;
     class FDescriptorSet;
     class FBuffer;
     class FPipeline;
