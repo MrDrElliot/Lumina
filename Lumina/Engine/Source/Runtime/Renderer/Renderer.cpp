@@ -40,6 +40,11 @@ namespace Lumina
             "../Lumina/Engine/Resources/Shaders/Mesh.frag.spv", "Mesh");
     }
 
+    void FRenderer::BindSet(std::shared_ptr<FDescriptorSet> Set, std::shared_ptr<FPipeline> Pipeline, glm::uint8 Index)
+    {
+        RenderAPI->BindSet(Set, Pipeline, Index);
+    }
+
     void FRenderer::Submit(RenderFunction Functor)
     {
         InternalData.FunctorList.push_back(Functor);
@@ -85,6 +90,16 @@ namespace Lumina
         RenderAPI->RenderMeshIndexed(VertexBuffer, IndexBuffer);
     }
 
+    void FRenderer::RenderQuad(std::shared_ptr<FPipeline> Pipeline, FMiscData Data)
+    {
+        RenderAPI->RenderQuad(Pipeline, Data);
+    }
+
+    void FRenderer::RenderQuad(std::shared_ptr<FPipeline> Pipeline, glm::uint32 Amount, FMiscData Data)
+    {
+        RenderAPI->RenderQuad(Pipeline, Amount, Data);
+    }
+
     void FRenderer::Render()
     {
         FRenderer::Submit([&]
@@ -121,6 +136,11 @@ namespace Lumina
     void FRenderer::ClearColor(std::shared_ptr<FImage> Image, const glm::fvec4& Value)
     {
         RenderAPI->ClearColor(Image, Value);
+    }
+
+    void FRenderer::RenderMeshTasks(std::shared_ptr<FPipeline> Pipeline, const glm::uvec3 Dimensions, FMiscData Data)
+    {
+        RenderAPI->RenderMeshTasks(Pipeline, Dimensions, Data);
     }
 
     std::shared_ptr<FCommandBuffer> FRenderer::GetCommandBuffer()

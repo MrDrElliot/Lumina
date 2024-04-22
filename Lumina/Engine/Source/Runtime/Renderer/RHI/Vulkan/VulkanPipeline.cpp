@@ -81,9 +81,9 @@ namespace Lumina
     	switch (InSpec.type)
     	{
     		case EPipelineType::GRAPHICS:		CreateGraphics(); break;
-    		case EPipelineType::COMPUTE:		CreateCompute(); break;
-    		case EPipelineType::RAY_TRACING:	std::unreachable(); break;
-    		default:							std::unreachable(); break;
+    		case EPipelineType::COMPUTE:		CreateCompute();  break;
+    		case EPipelineType::RAY_TRACING:	std::unreachable();
+    		default:							std::unreachable();
     	}
     }
 
@@ -295,8 +295,9 @@ namespace Lumina
 
     void FVulkanPipeline::CreateCompute()
     {
-    		auto Device = FVulkanRenderContext::GetDevice();
 
+    	auto Device = FVulkanRenderContext::GetDevice();	
+	
     	std::shared_ptr<FVulkanShader> VkShader = std::dynamic_pointer_cast<FVulkanShader>(Specification.shader);
     	std::vector<VkDescriptorSetLayout> DescriptorSetLayouts = VkShader->GetLayouts();
     	std::vector<VkPushConstantRange> PushConstantRanges = VkShader->GetRanges();

@@ -71,6 +71,12 @@ namespace Lumina
         RenderConfig.Window = Window.get();
         RenderConfig.FramesInFlight = 2;
         FRenderer::Init(RenderConfig);
+
+        FPipelineSpecification PipelineSpecs = FPipelineSpecification::Default();
+        PipelineSpecs.debug_name = "GraphicsPipeline";
+        PipelineSpecs.shader = FShaderLibrary::GetShader("Mesh");
+        PipelineSpecs.type = EPipelineType::GRAPHICS;
+        std::shared_ptr<FPipeline> GraphicsPipeline = FPipeline::Create(PipelineSpecs);
         
     }
 
@@ -104,6 +110,7 @@ namespace Lumina
 
     void FApplication::PostFrame()
     {
+        
         FRenderer::Render();
         FRenderer::EndFrame();
         glfwPollEvents();

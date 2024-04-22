@@ -23,6 +23,7 @@ namespace Lumina
         if (Flags & (glm::uint64)EDeviceBufferFlags::INDEX_TYPE_UINT8)		return VK_INDEX_TYPE_UINT8_EXT;
         if (Flags & (glm::uint64)EDeviceBufferFlags::INDEX_TYPE_UINT16)	    return VK_INDEX_TYPE_UINT16;
         if (Flags & (glm::uint64)EDeviceBufferFlags::INDEX_TYPE_UINT32)	    return VK_INDEX_TYPE_UINT32;
+        return {};
     }
 
     
@@ -38,6 +39,7 @@ namespace Lumina
         void* GetAdditionalData() const { return Data; }
 
         FDeviceBufferSpecification GetSpecification() const override;
+
         void UploadData(glm::uint64 Offset, void* Data, glm::uint64 DataSize) override;
         void Destroy() override;
 

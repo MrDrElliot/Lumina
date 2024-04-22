@@ -25,11 +25,21 @@ namespace Lumina
 
         std::shared_ptr<FImage> GetSwapchainImage() override;
 
-        void CopyToSwapchain(std::shared_ptr<FImage> ImageToCopy) override;
+        void BindSet(std::shared_ptr<FDescriptorSet> Set, std::shared_ptr<FPipeline> Pipeline, glm::uint8 Index) override;
         void BindPipeline(std::shared_ptr<FPipeline> Pipeline) override;
+        
+        void CopyToSwapchain(std::shared_ptr<FImage> ImageToCopy) override;
         void ClearColor(std::shared_ptr<FImage> Image, const glm::fvec4& Value) override;
-        void RenderMeshIndexed(std::shared_ptr<FBuffer> VertexBuffer, std::shared_ptr<FBuffer> IndexBuffer) override;
 
+        
+        static std::vector<VkDescriptorSet> AllocateDescriptorSets(VkDescriptorSetLayout InLayout, glm::uint32 InCount);
+        static void FreeDescriptorSets(std::vector<VkDescriptorSet> InSets);
+
+        void RenderMeshTasks(std::shared_ptr<FPipeline> Pipeline, const glm::uvec3 Dimensions, FMiscData Data) override;
+        void RenderMeshIndexed(std::shared_ptr<FBuffer> VertexBuffer, std::shared_ptr<FBuffer> IndexBuffer) override;
+        void RenderQuad(std::shared_ptr<FPipeline> Pipeline, FMiscData Data) override;
+        void RenderQuad(std::shared_ptr<FPipeline> Pipeline, glm::uint32 Amount, FMiscData Data) override;
+        
         
         std::shared_ptr<FCommandBuffer> GetCommandBuffer() override;
         virtual void BeginCommandRecord() override;

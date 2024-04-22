@@ -13,6 +13,7 @@
 
 namespace Lumina
 {
+	class FDescriptorSet;
 	class FImage;
 	class FImGuiLayer;
 	class LScene;
@@ -70,7 +71,6 @@ namespace Lumina
 
 	
 	private:
-
 
 		FApplicationSpecs AppSpecs;
 		bool bRunning = true;

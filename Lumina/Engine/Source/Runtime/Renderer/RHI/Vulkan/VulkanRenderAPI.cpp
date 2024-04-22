@@ -2,6 +2,7 @@
 
 #include "imgui.h"
 #include "VulkanBuffer.h"
+#include "VulkanDescriptorSet.h"
 #include "VulkanImage.h"
 #include "VulkanPipeline.h"
 #include "backends/imgui_impl_vulkan.h"
@@ -199,6 +200,27 @@ namespace Lumina
         return Swapchain->GetCurrentImage();
     }
 
+    void FVulkanRenderAPI::BindSet(std::shared_ptr<FDescriptorSet> Set, std::shared_ptr<FPipeline> Pipeline, glm::uint8 Index)
+    {
+    	FRenderer::Submit([&, Set, Pipeline, Index]
+    	{
+			std::shared_ptr<FVulkanPipeline> vk_pipeline = std::dynamic_pointer_cast<FVulkanPipeline>(Pipeline);
+			std::shared_ptr<FVulkanDescriptorSet> vk_set = std::dynamic_pointer_cast<FVulkanDescriptorSet>(Set);
+			VkDescriptorSet RawSet = vk_set->GetSet();
+			
+			VkPipelineBindPoint BindPoint = {};
+			
+			switch (Pipeline->GetSpecification().type)
+			{
+				case EPipelineType::GRAPHICS:			BindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;		break;
+				case EPipelineType::COMPUTE:			BindPoint = VK_PIPELINE_BIND_POINT_COMPUTE;			break;
+				case EPipelineType::RAY_TRACING:		BindPoint = VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR;	break;
+			}
+			
+			vkCmdBindDescriptorSets(CurrentCommandBuffer->GetCommandBuffer(), BindPoint, vk_pipeline->GetPipelineLayout(), Index, 1, &RawSet, 0, nullptr);
+		});
+    }
+
     void FVulkanRenderAPI::CopyToSwapchain(std::shared_ptr<FImage> ImageToCopy)
     {
     	FRenderer::Submit([&, ImageToCopy]
@@ -306,6 +328,82 @@ namespace Lumina
 			vkCmdBindIndexBuffer(Buffer, VkIndexBuffer->GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
 
 			vkCmdDrawIndexed(Buffer, 0, 1, 0, 0, 0);
+		});
+    }
+
+    void FVulkanRenderAPI::RenderQuad(std::shared_ptr<FPipeline> Pipeline, FMiscData Data)
+    {
+    	FRenderer::Submit([&, Pipeline, Data]
+    	{
+			std::shared_ptr<FVulkanPipeline> VkPipeline = std::dynamic_pointer_cast<FVulkanPipeline>(Pipeline);
+			
+			vkCmdPushConstants(CurrentCommandBuffer->GetCommandBuffer(), VkPipeline->GetPipelineLayout(), VK_SHADER_STAGE_ALL, 0, Data.Size, Data.Data);
+			vkCmdBindPipeline(CurrentCommandBuffer->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, VkPipeline->GetPipeline());
+			
+			vkCmdDraw(CurrentCommandBuffer->GetCommandBuffer(), 6, 1, 0, 0);
+			
+			delete[] Data.Data;
+		});
+    }
+
+    void FVulkanRenderAPI::RenderQuad(std::shared_ptr<FPipeline> Pipeline, glm::uint32 Amount, FMiscData Data)
+    {
+    	FRenderer::Submit([&, Pipeline, Amount, Data]
+    	{
+    		std::shared_ptr<FVulkanPipeline> VkPipeline = std::dynamic_pointer_cast<FVulkanPipeline>(Pipeline);
+			
+			if (Data.Size)
+			{
+				vkCmdPushConstants(CurrentCommandBuffer->GetCommandBuffer(), VkPipeline->GetPipelineLayout(), VK_SHADER_STAGE_ALL, 0, Data.Size, Data.Data);
+				delete[] Data.Data;
+			}
+			vkCmdBindPipeline(CurrentCommandBuffer->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, VkPipeline->GetPipeline());
+			vkCmdDraw(CurrentCommandBuffer->GetCommandBuffer(), 6, Amount, 0, 0);
+		});
+    }
+
+    std::vector<VkDescriptorSet> FVulkanRenderAPI::AllocateDescriptorSets(VkDescriptorSetLayout InLayout, glm::uint32 InCount)
+    {
+		auto Device = FVulkanRenderContext::GetDevice();
+    	
+    	std::vector<VkDescriptorSet> sets(InCount);
+    	sets.resize(InCount);
+
+    	VkDescriptorSetAllocateInfo AllocateInfo = {};
+    	AllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    	AllocateInfo.descriptorPool = DescriptorPool;
+    	AllocateInfo.descriptorSetCount = InCount;
+    	AllocateInfo.pSetLayouts = &InLayout;
+
+    	if (vkAllocateDescriptorSets(Device, &AllocateInfo, sets.data()) != VK_SUCCESS) 
+    	{
+    		LE_LOG_ERROR("Failed to allocate descriptor set. Possible issue: too many allocated descriptor sets.");
+    		return std::vector<VkDescriptorSet>(0);
+    	}
+
+    	return sets;
+    }
+
+    void FVulkanRenderAPI::FreeDescriptorSets(std::vector<VkDescriptorSet> InSets)
+    {
+    	auto Device = FVulkanRenderContext::GetDevice();
+
+    	vkFreeDescriptorSets(Device, DescriptorPool, InSets.size(), InSets.data());
+    }
+
+    void FVulkanRenderAPI::RenderMeshTasks(std::shared_ptr<FPipeline> Pipeline, const glm::uvec3 Dimensions, FMiscData Data)
+    {
+    	FRenderer::Submit([&, Pipeline, Dimensions, Data]()
+    	{
+			std::shared_ptr<FVulkanPipeline> vk_pipeline = std::dynamic_pointer_cast<FVulkanPipeline>(Pipeline);
+			
+			if (Data.Size)
+			{
+				vkCmdPushConstants(CurrentCommandBuffer->GetCommandBuffer(), vk_pipeline->GetPipelineLayout(), VK_SHADER_STAGE_ALL, 0, Data.Size, Data.Data);
+				delete[] Data.Data;
+			}
+			vkCmdBindPipeline(CurrentCommandBuffer->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, vk_pipeline->GetPipeline());
+			//vkCmdDrawMeshTasksEXT(CurrentCommandBuffer->GetCommandBuffer(), Dimensions.x, Dimensions.y, Dimensions.z);
 		});
     }
 

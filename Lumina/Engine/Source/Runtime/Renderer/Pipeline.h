@@ -85,7 +85,7 @@ namespace Lumina
             return spec;
         }
 
-        bool operator== (const FPipelineSpecification& other) const
+        bool operator == (const FPipelineSpecification& other) const
         {
             bool result = true;
             result &= shader == other.shader;
