@@ -23,7 +23,7 @@ namespace Lumina
         void BeginFrame() override;
         void EndFrame() override;
 
-        uint32_t GetCurrentFrameIndex() { return CurrentFrameIndex; }
+        uint32_t GetCurrentFrameIndex() override { return CurrentFrameIndex; }
         FSwapchainSemaphores GetSemaphores() { return Semaphores[CurrentFrameIndex]; }
         VkFence GetCurrentFence() { return Fences[CurrentFrameIndex]; }
         std::shared_ptr<FVulkanImage> GetCurrentImage() { return Images[CurrentImageIndex]; }

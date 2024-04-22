@@ -88,29 +88,29 @@ namespace Lumina
     {
 	    FRenderer::Submit([&, Attachments, RenderArea, RenderOffset, ClearColor]
 	    {
-		VkRenderingAttachmentInfo depth_attachment = {};
+		VkRenderingAttachmentInfo DepthAttachment = {};
 
-			std::vector<VkRenderingAttachmentInfo> color_attachments = {};
+			std::vector<VkRenderingAttachmentInfo> ColorAttachments = {};
 
 			for (auto attachment : Attachments)
 			{
-				std::shared_ptr<FVulkanImage> vk_target = std::dynamic_pointer_cast<FVulkanImage>(attachment);
-				FImageSpecification target_spec = vk_target->GetSpecification();
+				std::shared_ptr<FVulkanImage> VkTarget = std::dynamic_pointer_cast<FVulkanImage>(attachment);
+				FImageSpecification target_spec = VkTarget->GetSpecification();
 
 				if (target_spec.Usage == EImageUsage::RENDER_TARGET)
 				{
-					VkImageMemoryBarrier target_barrier = {};
-					target_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-					target_barrier.image = vk_target->GetImage();
-					target_barrier.oldLayout = (VkImageLayout)vk_target->GetLayout();
-					target_barrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-					target_barrier.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT;
-					target_barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-					target_barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-					target_barrier.subresourceRange.baseArrayLayer = 0;
-					target_barrier.subresourceRange.baseMipLevel = 0;
-					target_barrier.subresourceRange.layerCount = 1;
-					target_barrier.subresourceRange.levelCount = 1;
+					VkImageMemoryBarrier TargetBarrier = {};
+					TargetBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+					TargetBarrier.image = VkTarget->GetImage();
+					TargetBarrier.oldLayout = (VkImageLayout)VkTarget->GetLayout();
+					TargetBarrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+					TargetBarrier.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT;
+					TargetBarrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+					TargetBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+					TargetBarrier.subresourceRange.baseArrayLayer = 0;
+					TargetBarrier.subresourceRange.baseMipLevel = 0;
+					TargetBarrier.subresourceRange.layerCount = 1;
+					TargetBarrier.subresourceRange.levelCount = 1;
 
 					vkCmdPipelineBarrier(CurrentCommandBuffer->GetCommandBuffer(),
 						VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
@@ -121,56 +121,56 @@ namespace Lumina
 						0,
 						nullptr,
 						1, 
-						&target_barrier
+						&TargetBarrier
 					);
 
-					vk_target->SetCurrentLayout(EImageLayout::COLOR_ATTACHMENT);
+					VkTarget->SetCurrentLayout(EImageLayout::COLOR_ATTACHMENT);
 
-					VkRenderingAttachmentInfo color_attachment = {};
-					color_attachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
-					color_attachment.imageView = vk_target->GetImageView();
-					color_attachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+					VkRenderingAttachmentInfo ColorAttachment = {};
+					ColorAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+					ColorAttachment.imageView = VkTarget->GetImageView();
+					ColorAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 					if (ClearColor.a != 0.0f)
 					{
-						color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+						ColorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 					}
 					else
 					{
-						color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+						ColorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
 					}
-					color_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-					color_attachment.clearValue = {{ClearColor.r, ClearColor.g, ClearColor.b, ClearColor.a}};
+					ColorAttachment.clearValue = {{ClearColor.r, ClearColor.g, ClearColor.b, ClearColor.a}};
+					ColorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 
-					color_attachments.push_back(color_attachment);
+					ColorAttachments.push_back(ColorAttachment);
 				}
 				else {
-					depth_attachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
-					depth_attachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
-					depth_attachment.imageView = vk_target->GetImageView();
-					depth_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-					depth_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-					depth_attachment.clearValue.color = {{0,0,0,1}};
+					DepthAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+					DepthAttachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+					DepthAttachment.imageView = VkTarget->GetImageView();
+					DepthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+					DepthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+					DepthAttachment.clearValue.color = {{0,0,0,1}};
 					if (ClearColor.a != 0.0f)
 					{
-						depth_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+						DepthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 					}
 					else
 					{
-						depth_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+						DepthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
 					}
-					depth_attachment.clearValue.depthStencil = { 0.0f, 0 };
+					DepthAttachment.clearValue.depthStencil = { 0.0f, 0 };
 				}
 			}
 			
 
-			VkRenderingInfo rendering_info = {};
-			rendering_info.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
-			rendering_info.renderArea = { { RenderOffset.x, RenderOffset.y }, { RenderArea.x, RenderArea.y } };
-			rendering_info.layerCount = 1;
-			rendering_info.colorAttachmentCount = color_attachments.size();
-			rendering_info.pColorAttachments = color_attachments.data();
-			rendering_info.pDepthAttachment = depth_attachment.imageView ? &depth_attachment : nullptr;
-			rendering_info.pStencilAttachment = nullptr;
+			VkRenderingInfo RenderingInfo = {};
+			RenderingInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
+			RenderingInfo.renderArea = { { RenderOffset.x, RenderOffset.y }, { RenderArea.x, RenderArea.y } };
+			RenderingInfo.layerCount = 1;
+			RenderingInfo.colorAttachmentCount = ColorAttachments.size();
+			RenderingInfo.pColorAttachments = ColorAttachments.data();
+			RenderingInfo.pDepthAttachment = DepthAttachment.imageView ? &DepthAttachment : nullptr;
+			RenderingInfo.pStencilAttachment = nullptr;
 
 
 
@@ -178,7 +178,7 @@ namespace Lumina
 			VkViewport viewport = { 0, (glm::float32)RenderArea.y, (glm::float32)RenderArea.x, -(glm::float32)RenderArea.y, 0.0f, 1.0f};
 			vkCmdSetScissor(CurrentCommandBuffer->GetCommandBuffer(), 0, 1, &scissor);
 			vkCmdSetViewport(CurrentCommandBuffer->GetCommandBuffer(), 0, 1, &viewport);
-			vkCmdBeginRendering(CurrentCommandBuffer->GetCommandBuffer(), &rendering_info);
+			vkCmdBeginRendering(CurrentCommandBuffer->GetCommandBuffer(), &RenderingInfo);
 		});
     }
 
@@ -193,6 +193,11 @@ namespace Lumina
     void FVulkanRenderAPI::WaitDevice()
     {
         vkDeviceWaitIdle(RenderContext->GetDevice());
+    }
+
+    std::shared_ptr<FSwapchain> FVulkanRenderAPI::GetSwapchain()
+    {
+    	return Swapchain;
     }
 
     std::shared_ptr<FImage> FVulkanRenderAPI::GetSwapchainImage()

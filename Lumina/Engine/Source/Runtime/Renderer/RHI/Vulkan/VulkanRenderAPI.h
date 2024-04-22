@@ -23,6 +23,7 @@ namespace Lumina
         virtual void EndRender() override;
         virtual void WaitDevice() override;
 
+        std::shared_ptr<FSwapchain> GetSwapchain() override;
         std::shared_ptr<FImage> GetSwapchainImage() override;
 
         void BindSet(std::shared_ptr<FDescriptorSet> Set, std::shared_ptr<FPipeline> Pipeline, glm::uint8 Index) override;

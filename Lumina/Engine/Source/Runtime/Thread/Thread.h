@@ -3,10 +3,8 @@
 #include <condition_variable>
 #include <functional>
 #include <mutex>
-#include <queue>
 #include <string>
 #include <thread>
-#include <vector>
 
 #include "Source/Runtime/Log/Log.h"
 

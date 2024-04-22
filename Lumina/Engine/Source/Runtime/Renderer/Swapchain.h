@@ -37,7 +37,8 @@ namespace Lumina
         
         virtual void BeginFrame() = 0;
         virtual void EndFrame() = 0;
-
+        
+        virtual uint32_t GetCurrentFrameIndex() = 0;
         FSwapchainSpec& GetSpecs() { return Specifications; }
 
     protected:

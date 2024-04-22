@@ -85,6 +85,11 @@ namespace Lumina
         RenderAPI->BindPipeline(Pipeline);
     }
 
+    std::shared_ptr<FSwapchain> FRenderer::GetSwapchain()
+    {
+        return RenderAPI->GetSwapchain();
+    }
+
     void FRenderer::RenderMeshIndexed(std::shared_ptr<FBuffer> VertexBuffer, std::shared_ptr<FBuffer> IndexBuffer)
     {
         RenderAPI->RenderMeshIndexed(VertexBuffer, IndexBuffer);
@@ -126,6 +131,11 @@ namespace Lumina
         {
             func();
         }
+    }
+
+    glm::uint32 FRenderer::GetCurrentFrameIndex()
+    {
+        return RenderAPI->GetSwapchain()->GetCurrentFrameIndex();
     }
 
     void FRenderer::RenderImGui()

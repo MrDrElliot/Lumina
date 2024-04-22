@@ -26,6 +26,7 @@ namespace Lumina
         virtual void EndRender() = 0;
         virtual void WaitDevice() = 0;
 
+        virtual std::shared_ptr<FSwapchain> GetSwapchain() = 0;
         virtual std::shared_ptr<FImage> GetSwapchainImage() = 0;
 
         virtual void BindSet(std::shared_ptr<FDescriptorSet> Set, std::shared_ptr<FPipeline> Pipeline, glm::uint8 Index) = 0;

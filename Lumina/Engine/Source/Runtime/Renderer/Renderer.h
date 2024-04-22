@@ -9,6 +9,11 @@
 
 namespace Lumina
 {
+    class FSwapchain;
+}
+
+namespace Lumina
+{
     class FDescriptorSet;
     class FBuffer;
     class FPipeline;
@@ -43,13 +48,17 @@ namespace Lumina
         static void RenderImGui();
         static void Render();
 
+        static glm::uint32 GetCurrentFrameIndex();
+
+        
         static void LoadShaderPack();
 
         static void BindSet(std::shared_ptr<FDescriptorSet> Set, std::shared_ptr<FPipeline> Pipeline, glm::uint8 Index);
         static void BindPipeline(std::shared_ptr<FPipeline> Pipeline);
 
+        static std::shared_ptr<FSwapchain> GetSwapchain();
         static std::shared_ptr<FImage> GetSwapchainImage();
-
+        
         static void CopyToSwapchain(std::shared_ptr<FImage> ImageToCopy);
         static void ClearColor(std::shared_ptr<FImage> Image, const glm::fvec4& Value);
 
