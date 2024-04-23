@@ -22,7 +22,9 @@ namespace Lumina
         INDEX_BUFFER,
         UNIFORM_BUFFER,
         STORAGE_BUFFER,
-        STAGING_BUFFER
+        STAGING_BUFFER,
+        SHADER_DEVICE_ADDRESS,
+        INDIRECT_PARAMS,
     };
 
     enum class EDeviceBufferMemoryUsage
@@ -50,11 +52,13 @@ namespace Lumina
     class FBuffer
     {
     public:
+        
+        virtual ~FBuffer() {}
+        
 
         static std::shared_ptr<FBuffer> Create(const FDeviceBufferSpecification& Spec);
         static std::shared_ptr<FBuffer> Create(const FDeviceBufferSpecification& Spec, void* Data, glm::uint64 DataSize);
 
-        virtual ~FBuffer() {}
 
         virtual void Destroy() = 0;
 

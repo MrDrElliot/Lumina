@@ -7,6 +7,7 @@
 #include "VulkanPipeline.h"
 #include "backends/imgui_impl_vulkan.h"
 #include "Source/Runtime/Log/Log.h"
+#include "Source/Runtime/Renderer/PipelineLibrary.h"
 
 namespace Lumina
 {
@@ -205,6 +206,66 @@ namespace Lumina
         return Swapchain->GetCurrentImage();
     }
 
+    void FVulkanRenderAPI::InsertBarrier(const FPipelineBarrierInfo& BarrierInfo)
+    {
+    		FRenderer::Submit([&, BarrierInfo]
+    		{
+				std::vector<VkMemoryBarrier2> memory_barriers;
+				std::vector<VkImageMemoryBarrier2> image_barriers;
+				
+				VkDependencyInfo dependency = {};
+				dependency.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
+				
+				for (auto& buffer_barrier : BarrierInfo.BufferBarriers)
+				{
+				
+					VkMemoryBarrier2 vk_barrier = {};
+					vk_barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER_2;
+					vk_barrier.srcStageMask =  buffer_barrier.second.src_stages;
+					vk_barrier.dstStageMask =  buffer_barrier.second.dst_stages;
+					vk_barrier.srcAccessMask = buffer_barrier.second.src_access_mask;
+					vk_barrier.dstAccessMask = buffer_barrier.second.dst_access_mask;
+				
+					memory_barriers.push_back(vk_barrier);
+				}
+				
+				for (auto& image_barrier : BarrierInfo.ImageBarriers)
+				{
+					std::shared_ptr<FImage> image = image_barrier.first;
+					std::shared_ptr<FVulkanImage> vk_image = std::dynamic_pointer_cast<FVulkanImage>(image);
+				
+					VkImageMemoryBarrier2 vk_barrier = {};
+					vk_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
+					vk_barrier.srcStageMask = image_barrier.second.src_stages;
+					vk_barrier.dstStageMask = image_barrier.second.dst_stages;
+					vk_barrier.srcAccessMask = image_barrier.second.src_access_mask;
+					vk_barrier.dstAccessMask = image_barrier.second.dst_access_mask;
+					vk_barrier.image = vk_image->GetImage();
+					vk_barrier.oldLayout = (VkImageLayout)vk_image->GetLayout();
+					vk_barrier.newLayout = (VkImageLayout)image_barrier.second.new_image_layout;
+					vk_barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+					vk_barrier.subresourceRange.baseArrayLayer = 0;
+					vk_barrier.subresourceRange.layerCount = image->GetSpecification().ArrayLayers;
+					vk_barrier.subresourceRange.baseMipLevel = 0;
+					vk_barrier.subresourceRange.levelCount = image->GetSpecification().MipLevels;
+				
+					vk_image->SetCurrentLayout(image_barrier.second.new_image_layout);
+				
+					image_barriers.push_back(vk_barrier);
+				}	
+				
+				dependency.memoryBarrierCount = memory_barriers.size();
+				dependency.pMemoryBarriers = memory_barriers.data();
+				dependency.imageMemoryBarrierCount = image_barriers.size();
+				dependency.pImageMemoryBarriers = image_barriers.data();
+				
+				vkCmdPipelineBarrier2(
+					CurrentCommandBuffer->GetCommandBuffer(),
+					&dependency
+			);
+		});
+    }
+
     void FVulkanRenderAPI::BindSet(std::shared_ptr<FDescriptorSet> Set, std::shared_ptr<FPipeline> Pipeline, glm::uint8 Index)
     {
     	FRenderer::Submit([&, Set, Pipeline, Index]
@@ -248,21 +309,13 @@ namespace Lumina
 			ImageBlit.srcOffsets[1] = { (glm::int32)src_image_resolution.x, (glm::int32)src_image_resolution.y, 1 };
 			ImageBlit.dstOffsets[0] = { 0, 0, 0 };
 			ImageBlit.dstOffsets[1] = { (glm::int32)swapchain_resolution.x, (glm::int32)swapchain_resolution.y, 1 };
-						
-			vk_image->SetLayout(
-				CurrentCommandBuffer,
-				EImageLayout::TRANSFER_DST,
-				EPipelineStage::COLOR_ATTACHMENT_OUTPUT,
-				EPipelineStage::TRANSFER,
-				EPipelineAccess::COLOR_ATTACHMENT_WRITE,
-				EPipelineAccess::TRANSFER_READ
-			);
+    		
 						
 			vkCmdBlitImage(
 				CurrentCommandBuffer->GetCommandBuffer(),
 				vk_image->GetImage(),
 				(VkImageLayout)vk_image->GetLayout(),
-				std::dynamic_pointer_cast<FVulkanImage>(ImageToCopy)->GetImage(),
+				std::dynamic_pointer_cast<FVulkanImage>(GetSwapchainImage())->GetImage(),
 				(VkImageLayout)VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 				1,
 				&ImageBlit,
@@ -318,23 +371,27 @@ namespace Lumina
         });
     }
 
-    void FVulkanRenderAPI::RenderMeshIndexed(std::shared_ptr<FBuffer> VertexBuffer, std::shared_ptr<FBuffer> IndexBuffer)
+    void FVulkanRenderAPI::RenderMeshIndexed(std::shared_ptr<FPipeline> Pipeline, std::shared_ptr<FBuffer> VertexBuffer, std::shared_ptr<FBuffer> IndexBuffer, FMiscData Data)
     {
-		FRenderer::Submit([&, VertexBuffer, IndexBuffer]
+		FRenderer::Submit([&, Pipeline, VertexBuffer, IndexBuffer, Data]
 		{
 			VkCommandBuffer Buffer = CurrentCommandBuffer->GetCommandBuffer();
 			std::shared_ptr<FVulkanBuffer> VkVertexBuffer = std::dynamic_pointer_cast<FVulkanBuffer>(VertexBuffer);
 			std::shared_ptr<FVulkanBuffer> VkIndexBuffer = std::dynamic_pointer_cast<FVulkanBuffer>(IndexBuffer);
+			std::shared_ptr<FVulkanPipeline> VkPipeline = std::dynamic_pointer_cast<FVulkanPipeline>(Pipeline);
 			
 			VkBuffer BindBuffer = VkVertexBuffer->GetBuffer();
 			VkDeviceSize Offsets[] = {0};
-			
+
+			vkCmdPushConstants(Buffer, VkPipeline->GetPipelineLayout(), VK_SHADER_STAGE_ALL, 0, Data.Size, Data.Data);
 			vkCmdBindVertexBuffers(Buffer, 0, 1, &BindBuffer, Offsets);
 			vkCmdBindIndexBuffer(Buffer, VkIndexBuffer->GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
 
-			vkCmdDrawIndexed(Buffer, 6, 1, 0, 0, 0);
+			vkCmdDrawIndexed(Buffer, 36, 1, 0, 0, 0);
 		});
     }
+
+
 
     void FVulkanRenderAPI::RenderQuad(std::shared_ptr<FPipeline> Pipeline, FMiscData Data)
     {

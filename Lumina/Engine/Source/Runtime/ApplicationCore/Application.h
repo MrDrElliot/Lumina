@@ -73,10 +73,8 @@ namespace Lumina
 	
 	private:
 
-		std::shared_ptr<FImage> ColorImage;
-		std::shared_ptr<FBuffer> VBO;
-		std::shared_ptr<FBuffer> IBO;
-		
+		std::shared_ptr<LScene> ActiveScene;
+
 		FApplicationSpecs AppSpecs;
 		bool bRunning = true;
 		bool bMinimized = false;

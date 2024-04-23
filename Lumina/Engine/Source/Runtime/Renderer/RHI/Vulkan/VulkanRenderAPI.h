@@ -22,9 +22,11 @@ namespace Lumina
         virtual void EndRender() override;
         virtual void WaitDevice() override;
 
+        FRenderConfig GetConfig() override { return Config; }
         std::shared_ptr<FSwapchain> GetSwapchain() override;
         std::shared_ptr<FImage> GetSwapchainImage() override;
 
+        void InsertBarrier(const FPipelineBarrierInfo& BarrierInfo) override;
         void BindSet(std::shared_ptr<FDescriptorSet> Set, std::shared_ptr<FPipeline> Pipeline, glm::uint8 Index) override;
         void BindPipeline(std::shared_ptr<FPipeline> Pipeline) override;
         
@@ -36,7 +38,7 @@ namespace Lumina
         static void FreeDescriptorSets(std::vector<VkDescriptorSet> InSets);
 
         void RenderMeshTasks(std::shared_ptr<FPipeline> Pipeline, const glm::uvec3 Dimensions, FMiscData Data) override;
-        void RenderMeshIndexed(std::shared_ptr<FBuffer> VertexBuffer, std::shared_ptr<FBuffer> IndexBuffer) override;
+        void RenderMeshIndexed(std::shared_ptr<FPipeline> Pipeline, std::shared_ptr<FBuffer> VertexBuffer, std::shared_ptr<FBuffer> IndexBuffer, FMiscData Data) override;
         void RenderQuad(std::shared_ptr<FPipeline> Pipeline, FMiscData Data) override;
         void RenderQuad(std::shared_ptr<FPipeline> Pipeline, glm::uint32 Amount, FMiscData Data) override;
         

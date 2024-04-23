@@ -2,6 +2,7 @@
 #include <memory>
 
 #include "Image.h"
+#include "PipelineBarrier.h"
 #include "RenderTypes.h"
 
 namespace Lumina
@@ -27,18 +28,20 @@ namespace Lumina
         virtual void EndRender() = 0;
         virtual void WaitDevice() = 0;
 
+        virtual FRenderConfig GetConfig() = 0;
         virtual std::shared_ptr<FSwapchain> GetSwapchain() = 0;
         virtual std::shared_ptr<FImage> GetSwapchainImage() = 0;
 
         virtual void BindSet(std::shared_ptr<FDescriptorSet> Set, std::shared_ptr<FPipeline> Pipeline, glm::uint8 Index) = 0;
         virtual void BindPipeline(std::shared_ptr<FPipeline> Pipeline) = 0;
-        
+
+        virtual void InsertBarrier(const FPipelineBarrierInfo& BarrierInfo) = 0;
         virtual void ClearColor(std::shared_ptr<FImage> Image, const glm::fvec4& Value) = 0;
         virtual void CopyToSwapchain(std::shared_ptr<FImage> ImageToCopy) = 0;
 
         
         virtual void RenderMeshTasks(std::shared_ptr<FPipeline> Pipeline, const glm::uvec3 Dimensions, FMiscData Data) = 0;
-        virtual void RenderMeshIndexed(std::shared_ptr<FBuffer> VertexBuffer, std::shared_ptr<FBuffer> IndexBuffer) = 0;
+        virtual void RenderMeshIndexed(std::shared_ptr<FPipeline> Pipeline, std::shared_ptr<FBuffer> VertexBuffer, std::shared_ptr<FBuffer> IndexBuffer, FMiscData Data) = 0;
         virtual void RenderQuad(std::shared_ptr<FPipeline> Pipeline, FMiscData Data) = 0;
         virtual void RenderQuad(std::shared_ptr<FPipeline> Pipeline, glm::uint32 Amount, FMiscData Data) = 0;
 

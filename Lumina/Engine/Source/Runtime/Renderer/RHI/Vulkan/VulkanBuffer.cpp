@@ -62,7 +62,7 @@ namespace Lumina
 		}
 
 		Allocation = Alloc->AllocateBuffer(&BufferCreateInfo, vma_flags, &Buffer);
-		this->UploadData(0, Data, DataSize);
+		this->FVulkanBuffer::UploadData(0, Data, DataSize);
         
 	}
 
@@ -132,7 +132,7 @@ namespace Lumina
 			if(!Data) Data = new FIndexBufferData;
 		
 			FIndexBufferData* IboData = (FIndexBufferData*)Data;
-			glm::uint8 IndexSize = 0;
+			glm::uint8 IndexSize = 1;
 			if (Specification.Flags & (glm::uint64)EDeviceBufferFlags::INDEX_TYPE_UINT8)  IndexSize = 1;
 			if (Specification.Flags & (glm::uint64)EDeviceBufferFlags::INDEX_TYPE_UINT16) IndexSize = 2;
 			if (Specification.Flags & (glm::uint64)EDeviceBufferFlags::INDEX_TYPE_UINT32) IndexSize = 4;

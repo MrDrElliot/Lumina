@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 
 #include "CommandBuffer.h"
+#include "PipelineBarrier.h"
 #include "RenderTypes.h"
 
 
@@ -48,14 +49,18 @@ namespace Lumina
         static void RenderImGui();
         static void Render();
 
+        static FRenderConfig GetConfig();
         static glm::uint32 GetCurrentFrameIndex();
 
         
         static void LoadShaderPack();
 
+
+        static void InsertBarrier(const FPipelineBarrierInfo& BarrierInfo);
         static void BindSet(std::shared_ptr<FDescriptorSet> Set, std::shared_ptr<FPipeline> Pipeline, glm::uint8 Index);
         static void BindPipeline(std::shared_ptr<FPipeline> Pipeline);
 
+        
         static std::shared_ptr<FSwapchain> GetSwapchain();
         static std::shared_ptr<FImage> GetSwapchainImage();
         
@@ -63,7 +68,7 @@ namespace Lumina
         static void ClearColor(std::shared_ptr<FImage> Image, const glm::fvec4& Value);
 
         static void RenderMeshTasks(std::shared_ptr<FPipeline> Pipeline, const glm::uvec3 Dimensions, FMiscData Data);
-        static void RenderMeshIndexed(std::shared_ptr<FBuffer> VertexBuffer, std::shared_ptr<FBuffer> IndexBuffer);
+        static void RenderMeshIndexed(std::shared_ptr<FPipeline> Pipeline, std::shared_ptr<FBuffer> VertexBuffer, std::shared_ptr<FBuffer> IndexBuffer, FMiscData Data);
         static void RenderQuad(std::shared_ptr<FPipeline> Pipeline, FMiscData Data);
         static void RenderQuad(std::shared_ptr<FPipeline> Pipeline, glm::uint32 Amount, FMiscData Data);
 

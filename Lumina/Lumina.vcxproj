@@ -161,6 +161,9 @@
     <ClInclude Include="Engine\Source\Runtime\ApplicationCore\Windows\WindowTypes.h" />
     <ClInclude Include="Engine\Source\Runtime\Assets\Asset.h" />
     <ClInclude Include="Engine\Source\Runtime\Assets\AssetTypes.h" />
+    <ClInclude Include="Engine\Source\Runtime\Assets\Factories\Factory.h" />
+    <ClInclude Include="Engine\Source\Runtime\Assets\Factories\MeshFactory\StaticMeshFactory.h" />
+    <ClInclude Include="Engine\Source\Runtime\Assets\Processors\MeshPreProcessor.h" />
     <ClInclude Include="Engine\Source\Runtime\Assets\StaticMesh\StaticMesh.h" />
     <ClInclude Include="Engine\Source\Runtime\CoreObject\Object.h" />
     <ClInclude Include="Engine\Source\Runtime\Events\ApplicationEvent.h" />
@@ -176,12 +179,15 @@
     <ClInclude Include="Engine\Source\Runtime\Log\Log.h" />
     <ClInclude Include="Engine\Source\Runtime\Memory\Memory.h" />
     <ClInclude Include="Engine\Source\Runtime\Platform\Vulkan\VulkanImGuiLayer.h" />
+    <ClInclude Include="Engine\Source\Runtime\Primitives\DefaultPrimitives.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\Buffer.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\BufferLayout.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\CommandBuffer.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\DescriptorSet.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\Image.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\Meshlet.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\Pipeline.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\PipelineBarrier.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\PipelineLibrary.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\PipelineStage.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\RenderTypes.h" />
@@ -205,6 +211,8 @@
     <ClInclude Include="Engine\Source\Runtime\Renderer\Swapchain.h" />
     <ClInclude Include="Engine\Source\Runtime\Scene\Camera.h" />
     <ClInclude Include="Engine\Source\Runtime\Scene\Scene.h" />
+    <ClInclude Include="Engine\Source\Runtime\Scene\ScenePrimitives.h" />
+    <ClInclude Include="Engine\Source\Runtime\Scene\SceneRenderer.h" />
     <ClInclude Include="Engine\Source\Runtime\Thread\GameThread.h" />
     <ClInclude Include="Engine\Source\Runtime\Thread\RenderThread.h" />
     <ClInclude Include="Engine\Source\Runtime\Thread\Thread.h" />
@@ -665,6 +673,9 @@
     <ClCompile Include="Engine\Source\Runtime\ApplicationCore\LayerStack.cpp" />
     <ClCompile Include="Engine\Source\Runtime\ApplicationCore\Windows\Window.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Assets\Asset.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Assets\Factories\Factory.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Assets\Factories\MeshFactory\StaticMeshFactory.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Assets\Processors\MeshPreProcessor.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Assets\StaticMesh\StaticMesh.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Events\Event.cpp" />
     <ClCompile Include="Engine\Source\Runtime\GUID\GUID.cpp" />
@@ -672,6 +683,7 @@
     <ClCompile Include="Engine\Source\Runtime\Input\Input.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Log\Log.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Platform\Vulkan\VulkanImGuiLayer.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Primitives\DefaultPrimitives.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\Buffer.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\CommandBuffer.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\DescriptorSet.cpp" />
@@ -697,6 +709,7 @@
     <ClCompile Include="Engine\Source\Runtime\Renderer\Swapchain.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Scene\Camera.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Scene\Scene.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Scene\SceneRenderer.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Thread\GameThread.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Thread\RenderThread.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Thread\Thread.cpp" />

@@ -11,6 +11,6 @@ namespace Lumina
 
     std::shared_ptr<FBuffer> FBuffer::Create(const FDeviceBufferSpecification& Spec, void* Data, glm::uint64 DataSize)
     {
-        return std::make_shared<FVulkanBuffer>(Spec);
+        return std::make_shared<FVulkanBuffer>(Spec, Data, DataSize);
     }
 }

@@ -10,17 +10,15 @@ namespace Lumina
     
     struct DeviceBufferLayoutElement
     {
-        std::string Name;
         EShaderDataType Format = EShaderDataType::FLOAT4;
         glm::uint32 Size = 0;
         glm::uint32 Offset = 0;
 
-        DeviceBufferLayoutElement(const std::string& InName, EShaderDataType InFormat)
-            : Name(InName), Format(InFormat) {}
+        DeviceBufferLayoutElement(EShaderDataType InFormat)
+            : Format(InFormat) {}
 
         DeviceBufferLayoutElement(DeviceBufferLayoutElement& other)
         {
-            Name = other.Name;
             Format = other.Format;
             Size = other.Size;
             Offset = other.Offset;
@@ -28,7 +26,6 @@ namespace Lumina
 
         DeviceBufferLayoutElement(const DeviceBufferLayoutElement& other)
         {
-            Name = other.Name;
             Format = other.Format;
             Size = other.Size;
             Offset = other.Offset;

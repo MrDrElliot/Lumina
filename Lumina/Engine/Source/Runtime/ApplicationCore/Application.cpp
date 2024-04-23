@@ -6,7 +6,6 @@
 #include "Source/Runtime/Renderer/PipelineLibrary.h"
 #include "Source/Runtime/Renderer/Renderer.h"
 #include "Source/Runtime/Renderer/ShaderLibrary.h"
-#include "Source/Runtime/Renderer/RHI/Vulkan/VulkanBuffer.h"
 #include "Source/Runtime/Scene/Scene.h"
 #include "Windows/Window.h"
 
@@ -38,6 +37,7 @@ namespace Lumina
             {
                 PreFrame();
 
+                ActiveScene->OnUpdate(1.0f);
                 Window->OnUpdate(1.0f);
                 
                 PostFrame();
@@ -73,55 +73,7 @@ namespace Lumina
         RenderConfig.FramesInFlight = 2;
         FRenderer::Init(RenderConfig);
 
-        FImageSpecification ImageSpecs = FImageSpecification::Default();
-        ImageSpecs.Extent.x = AppWindowSpecs.Width;
-        ImageSpecs.Extent.y = AppWindowSpecs.Height;
-        ImageSpecs.Usage = EImageUsage::RENDER_TARGET;
-        ImageSpecs.Type = EImageType::TYPE_2D;
-        ImageSpecs.Format = EImageFormat::RGBA32_SRGB;
-
-        ColorImage = FImage::Create(ImageSpecs);
-        
-        DeviceBufferLayoutElement Element({"inPosition", EShaderDataType::FLOAT3});
-        FDeviceBufferLayout Layout({Element});
-        
-        FPipelineSpecification PipelineSpecs = FPipelineSpecification::Default();
-        PipelineSpecs.debug_name = "GraphicsPipeline";
-        PipelineSpecs.shader = FShaderLibrary::GetShader("Mesh");
-        PipelineSpecs.type = EPipelineType::GRAPHICS;
-        PipelineSpecs.culling_mode = EPipelineCullingMode::NONE;
-        PipelineSpecs.depth_test_enable = true;
-        PipelineSpecs.output_attachments_formats = { EImageFormat::RGBA32_SRGB };
-        PipelineSpecs.input_layout = Layout;
-        std::shared_ptr<FPipeline> GraphicsPipeline = FPipeline::Create(PipelineSpecs);
-
-                
-        std::vector<float> vertices =
-        {
-            0.5,-0.5, 0,
-            0.5, 0.5, 0,
-           -0.5,-0.5, 0,
-           -0.5, 0.5, 0,
-       };
-        
-
-        std::vector<uint32_t> indices = {0, 1, 2, 2, 1, 3};
-
-        FDeviceBufferSpecification Specs;
-        Specs.BufferUsage = EDeviceBufferUsage::VERTEX_BUFFER;
-        Specs.MemoryUsage = EDeviceBufferMemoryUsage::NO_HOST_ACCESS;
-        Specs.Heap = EDeviceBufferMemoryHeap::DEVICE;
-        Specs.Size = sizeof(uint32_t) * vertices.size();
-        VBO = FBuffer::Create(Specs, vertices.data(), vertices.size());
-        VBO->UploadData(0, vertices.data(), vertices.size());
-
-        FDeviceBufferSpecification IndexSpecs;
-        IndexSpecs.BufferUsage = EDeviceBufferUsage::INDEX_BUFFER;
-        IndexSpecs.MemoryUsage = EDeviceBufferMemoryUsage::NO_HOST_ACCESS;
-        IndexSpecs.Heap = EDeviceBufferMemoryHeap::DEVICE;
-        IndexSpecs.Size = sizeof(uint32_t) * indices.size();
-        IBO = FBuffer::Create(IndexSpecs, indices.data(), indices.size());
-        IBO->UploadData(0, indices.data(), indices.size());
+        ActiveScene = std::make_shared<LScene>();
         
     }
 
@@ -155,20 +107,6 @@ namespace Lumina
 
     void FApplication::PostFrame()
     {
-
-        FRenderer::BindPipeline(FPipelineLibrary::GetPipelineByTag("GraphicsPipeline"));
-
-        
-        glm::uvec3 RenderArea = {};
-        RenderArea.x = AppSpecs.WindowWidth;
-        RenderArea.y = AppSpecs.WindowHeight;
-        FRenderer::BeginRender({ColorImage}, RenderArea, {0, 0},
-            { 0.2f, 0.2f, 0.3f, 1.0 });
-
-        
-        FRenderer::RenderMeshIndexed(VBO, IBO);
-
-        FRenderer::EndRender();
         
         FRenderer::Render();
         FRenderer::EndFrame();

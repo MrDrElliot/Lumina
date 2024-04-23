@@ -1,4 +1,6 @@
 #pragma once
+#include <filesystem>
+
 #include "AssetTypes.h"
 #include "Source/Runtime/CoreObject/Object.h"
 #include "Source/Runtime/GUID/GUID.h"
@@ -9,16 +11,16 @@ namespace Lumina
     {
     public:
 
-        LAsset(EAssetType InType);
+        LAsset(EAssetType InType, std::filesystem::path InPath);
         virtual ~LAsset();
 
 
         EAssetType GetAssetType() const { return AssetType; }
-        const std::string& GetFilePath() const { return FilePath; }
+        const std::filesystem::path& GetFilePath() const { return FilePath; }
         
     private:
-
+        
         EAssetType AssetType;
-        std::string FilePath;
+        std::filesystem::path FilePath;
     };
 }

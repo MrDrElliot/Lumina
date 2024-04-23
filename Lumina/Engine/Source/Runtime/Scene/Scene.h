@@ -5,6 +5,7 @@
 
 namespace Lumina
 {
+    class FSceneRenderer;
     class LScene : public LAsset
     {
     public:
@@ -14,12 +15,12 @@ namespace Lumina
 
         void OnUpdate(float DeltaTime);
 
-        FCamera* GetEditorCamera() { return EditorCamera.get(); }
+        std::shared_ptr<FCamera> GetEditorCamera() { return EditorCamera; }
         
 
     private:
-
-        std::unique_ptr<FCamera> EditorCamera;
         
+        std::shared_ptr<FCamera> EditorCamera;
+        std::unique_ptr<FSceneRenderer> SceneRenderer;
     };
 }

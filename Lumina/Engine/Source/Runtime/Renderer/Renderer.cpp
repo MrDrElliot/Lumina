@@ -41,6 +41,11 @@ namespace Lumina
             "../Lumina/Engine/Resources/Shaders/Mesh.frag.spv", "Mesh");
     }
 
+    void FRenderer::InsertBarrier(const FPipelineBarrierInfo& BarrierInfo)
+    {
+        RenderAPI->InsertBarrier(BarrierInfo);
+    }
+
     void FRenderer::BindSet(std::shared_ptr<FDescriptorSet> Set, std::shared_ptr<FPipeline> Pipeline, glm::uint8 Index)
     {
         RenderAPI->BindSet(Set, Pipeline, Index);
@@ -91,9 +96,9 @@ namespace Lumina
         return RenderAPI->GetSwapchain();
     }
 
-    void FRenderer::RenderMeshIndexed(std::shared_ptr<FBuffer> VertexBuffer, std::shared_ptr<FBuffer> IndexBuffer)
+    void FRenderer::RenderMeshIndexed(std::shared_ptr<FPipeline> Pipeline, std::shared_ptr<FBuffer> VertexBuffer, std::shared_ptr<FBuffer> IndexBuffer, FMiscData Data)
     {
-        RenderAPI->RenderMeshIndexed(VertexBuffer, IndexBuffer);
+        RenderAPI->RenderMeshIndexed(Pipeline, VertexBuffer, IndexBuffer, Data);
     }
 
     void FRenderer::RenderQuad(std::shared_ptr<FPipeline> Pipeline, FMiscData Data)
@@ -132,6 +137,11 @@ namespace Lumina
         {
             func();
         }
+    }
+
+    FRenderConfig FRenderer::GetConfig()
+    {
+        return RenderAPI->GetConfig();
     }
 
     glm::uint32 FRenderer::GetCurrentFrameIndex()

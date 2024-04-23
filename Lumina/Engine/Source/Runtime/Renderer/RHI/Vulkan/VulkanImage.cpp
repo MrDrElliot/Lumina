@@ -45,7 +45,7 @@ namespace Lumina
 		RenderTargetCreateInfo.arrayLayers = 1;
 		RenderTargetCreateInfo.format = convert(Spec.Format);
 		RenderTargetCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT; // HACK
-		RenderTargetCreateInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+		RenderTargetCreateInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
 		RenderTargetCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
 		RenderTargetCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 		
@@ -176,7 +176,7 @@ namespace Lumina
     	ImageMemoryBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     	ImageMemoryBarrier.srcAccessMask = (VkAccessFlags)SrcAccess;
     	ImageMemoryBarrier.dstAccessMask = (VkAccessFlags)DstAccess;
-    	ImageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    	ImageMemoryBarrier.subresourceRange.aspectMask = Spec.Usage == EImageUsage::DEPTH_BUFFER ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
     	ImageMemoryBarrier.subresourceRange.baseArrayLayer = 0;
     	ImageMemoryBarrier.subresourceRange.layerCount = 1;
     	ImageMemoryBarrier.subresourceRange.baseMipLevel = 0;

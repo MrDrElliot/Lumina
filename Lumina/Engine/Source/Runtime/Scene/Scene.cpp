@@ -1,10 +1,13 @@
 #include "Scene.h"
 
+#include "SceneRenderer.h"
+
 namespace Lumina
 {
-    LScene::LScene() :LAsset(EAssetType::Scene)
+    LScene::LScene(): LAsset(EAssetType::StaticMesh, "")
     {
-        EditorCamera = std::make_unique<FCamera>();
+        EditorCamera = std::make_shared<FCamera>();
+        SceneRenderer = std::make_unique<FSceneRenderer>();
     }
 
     LScene::~LScene()
@@ -13,6 +16,11 @@ namespace Lumina
 
     void LScene::OnUpdate(float DeltaTime)
     {
-        EditorCamera->Update(DeltaTime);
+        
+        SceneRenderer->BeginScene(EditorCamera);
+
+        
+
+        SceneRenderer->EndScene();
     }
 }
