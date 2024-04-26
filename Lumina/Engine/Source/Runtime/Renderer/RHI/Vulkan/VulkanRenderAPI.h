@@ -39,6 +39,8 @@ namespace Lumina
 
         void RenderMeshTasks(std::shared_ptr<FPipeline> Pipeline, const glm::uvec3 Dimensions, FMiscData Data) override;
         void RenderMeshIndexed(std::shared_ptr<FPipeline> Pipeline, std::shared_ptr<FBuffer> VertexBuffer, std::shared_ptr<FBuffer> IndexBuffer, FMiscData Data) override;
+        void RenderStaticMesh(std::shared_ptr<FPipeline> Pipeline, std::shared_ptr<LStaticMesh> StaticMesh, FMiscData Data) override;
+        void RenderStaticMesh(std::shared_ptr<FPipeline> Pipeline, std::shared_ptr<LStaticMesh> StaticMesh) override;
         void RenderQuad(std::shared_ptr<FPipeline> Pipeline, FMiscData Data) override;
         void RenderQuad(std::shared_ptr<FPipeline> Pipeline, glm::uint32 Amount, FMiscData Data) override;
         

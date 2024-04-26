@@ -11,6 +11,7 @@ namespace Lumina
     FVulkanImage::FVulkanImage(const FImageSpecification& InSpec)
 	:Spec(InSpec), CurrentLayout(EImageLayout::UNDEFINED)
     {
+    	Guid = FGuid::Generate();
     	bCreatedFromRaw = false;
         switch (InSpec.Usage)
         {
@@ -23,14 +24,143 @@ namespace Lumina
     FVulkanImage::FVulkanImage(const FImageSpecification& InSpec, VkImage InImage, VkImageView InImageView)
 	:Spec(InSpec), CurrentLayout(EImageLayout::UNDEFINED)
     {
+    	Guid = FGuid::Generate();
     	bCreatedFromRaw = true;
     	CreateFromRaw(InSpec, InImage, InImageView);
     }
 
     void FVulkanImage::CreateTexture()
     {
- 
-    }
+		VkImageCreateInfo texture_create_info = {};
+		texture_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+		texture_create_info.format = convert(Spec.Format);
+		texture_create_info.tiling = VK_IMAGE_TILING_OPTIMAL;
+		texture_create_info.imageType = VK_IMAGE_TYPE_2D;
+		texture_create_info.samples = VK_SAMPLE_COUNT_1_BIT;
+		texture_create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		texture_create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		texture_create_info.usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+		texture_create_info.arrayLayers = 1;
+		texture_create_info.mipLevels = Spec.MipLevels;
+		texture_create_info.extent = { Spec.Extent.x, Spec.Extent.y, 1 };
+
+		auto allocator = FVulkanMemoryAllocator::Get();
+		Allocation = allocator->AllocateImage(&texture_create_info, 0, &Image);
+
+		FDeviceBufferSpecification staging_buffer_spec = {};
+		staging_buffer_spec.Size = Spec.Pixels.size();
+		staging_buffer_spec.MemoryUsage = EDeviceBufferMemoryUsage::COHERENT_WRITE;
+		staging_buffer_spec.BufferUsage = EDeviceBufferUsage::STAGING_BUFFER;
+
+		FVulkanBuffer staging_buffer(staging_buffer_spec, Spec.Pixels.data(), Spec.Pixels.size());
+
+		auto device = FVulkanRenderContext::GetDevice();
+		VkCommandBuffer cmd_buffer = FVulkanRenderContext::AllocateTransientCommandBuffer();
+
+		// So here we need to load and transition layout of all mip-levels of a texture
+		// Firstly we transition all of them into transfer destination layout
+		VkImageMemoryBarrier barrier = {};
+		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		barrier.image = Image;
+		barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		barrier.subresourceRange.baseArrayLayer = 0;
+		barrier.subresourceRange.layerCount = 1;
+		barrier.subresourceRange.baseMipLevel = 0;
+		barrier.subresourceRange.levelCount = texture_create_info.mipLevels;
+
+		vkCmdPipelineBarrier(cmd_buffer,
+			VK_PIPELINE_STAGE_TRANSFER_BIT,
+			VK_PIPELINE_STAGE_TRANSFER_BIT,
+			0,
+			0,
+			nullptr,
+			0,
+			nullptr,
+			1,
+			&barrier
+		);
+
+		// Compute transfer regions
+		std::vector<VkBufferImageCopy> copy_regions(Spec.MipLevels);
+		glm::uint32 buffer_offset = 0;
+
+		for (int i = 0; i < copy_regions.size(); i++) {
+			glm::uvec2 mip_size = { Spec.Extent.x / (glm::uint32)(std::pow(2, i)), Spec.Extent.y / (glm::uint32)(std::pow(2, i)) };
+
+			VkBufferImageCopy& buffer_image_copy = copy_regions[i];
+			buffer_image_copy.imageExtent = { mip_size.x, mip_size.y, 1 };
+			buffer_image_copy.bufferOffset = buffer_offset;
+			buffer_image_copy.imageOffset = { 0, 0, 0 };
+			buffer_image_copy.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			buffer_image_copy.imageSubresource.baseArrayLayer = 0;
+			buffer_image_copy.imageSubresource.layerCount = 1;
+			buffer_image_copy.imageSubresource.mipLevel = i;
+			buffer_image_copy.bufferRowLength = 0;
+			buffer_image_copy.bufferImageHeight = 0;
+
+			buffer_offset += buffer_image_copy.imageExtent.width * buffer_image_copy.imageExtent.height * 4; //(Spec.Format == EImageFormat::BC7 ? 1 : 4);
+		}
+
+		// Submit copy command
+		vkCmdCopyBufferToImage(cmd_buffer, staging_buffer.GetBuffer(), Image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, copy_regions.size(), copy_regions.data());
+		
+		// Transition layout to shader read only
+		barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+		barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		barrier.subresourceRange.baseMipLevel = 0;
+		barrier.subresourceRange.levelCount = texture_create_info.mipLevels;
+
+		vkCmdPipelineBarrier(cmd_buffer,
+			VK_PIPELINE_STAGE_TRANSFER_BIT,
+			VK_PIPELINE_STAGE_VERTEX_SHADER_BIT,
+			0,
+			0,
+			nullptr,
+			0,
+			nullptr,
+			1,
+			&barrier
+		);
+
+		// Execute commands
+		FVulkanRenderContext::ExecuteTransientCommandBuffer(cmd_buffer);
+
+		CurrentLayout = EImageLayout::SHADER_READ_ONLY;
+
+		// Clear image data
+		Spec.Pixels.clear();
+
+		// Create image view
+		VkImageViewCreateInfo image_view_create_info = {};
+		image_view_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		image_view_create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		image_view_create_info.image = Image;
+		image_view_create_info.format = convert(Spec.Format);
+		image_view_create_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		image_view_create_info.subresourceRange.baseArrayLayer = 0;
+		image_view_create_info.subresourceRange.layerCount = 1;
+		image_view_create_info.subresourceRange.baseMipLevel = 0;
+		image_view_create_info.subresourceRange.levelCount = texture_create_info.mipLevels;
+		image_view_create_info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+		image_view_create_info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+		image_view_create_info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+		image_view_create_info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+
+		vkCreateImageView(device, &image_view_create_info, nullptr, &ImageView);
+
+		Spec.ArrayLayers = 1;
+		Spec.MipLevels = texture_create_info.mipLevels;
+		Spec.Type = EImageType::TYPE_2D;
+		Spec.Usage = EImageUsage::TEXTURE;
+
+		staging_buffer.Destroy();
+	}
 
     void FVulkanImage::CreateRenderTarget()
     {

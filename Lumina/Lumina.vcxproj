@@ -76,7 +76,7 @@
       <WarningLevel>Level3</WarningLevel>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;GLM_FORCE_DEPTH_ZERO_TO_ONE;GLFW_INCLUDE_NONE;LE_DEBUG;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>Engine;Engine\ThirdParty;Engine\ThirdParty\spdlog\include;Engine\ThirdParty\GLFW\include;Engine\ThirdParty\GLM;Engine\ThirdParty\SPIRV-Reflect\include;Engine\ThirdParty\imgui;.;Engine\ThirdParty\fastgltf\include;Engine\ThirdParty\vk-bootstrap\src;C:\VulkanSDK\1.3.280.0\Include;Engine\ThirdParty\shaderc;Engine\ThirdParty\VulkanMemoryAllocator\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Engine\ThirdParty\stb_image;Engine;Engine\ThirdParty;Engine\ThirdParty\spdlog\include;Engine\ThirdParty\GLFW\include;Engine\ThirdParty\GLM;Engine\ThirdParty\SPIRV-Reflect\include;Engine\ThirdParty\imgui;.;Engine\ThirdParty\fastgltf\include;Engine\ThirdParty\vk-bootstrap\src;C:\VulkanSDK\1.3.280.0\Include;Engine\ThirdParty\shaderc;Engine\ThirdParty\VulkanMemoryAllocator\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <MinimalRebuild>false</MinimalRebuild>
@@ -100,7 +100,7 @@
       <WarningLevel>Level3</WarningLevel>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;GLM_FORCE_DEPTH_ZERO_TO_ONE;GLFW_INCLUDE_NONE;LE_RELEASE;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>Engine;Engine\ThirdParty;Engine\ThirdParty\spdlog\include;Engine\ThirdParty\GLFW\include;Engine\ThirdParty\GLM;Engine\ThirdParty\SPIRV-Reflect\include;Engine\ThirdParty\imgui;.;Engine\ThirdParty\fastgltf\include;Engine\ThirdParty\vk-bootstrap\src;C:\VulkanSDK\1.3.280.0\Include;Engine\ThirdParty\shaderc;Engine\ThirdParty\VulkanMemoryAllocator\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Engine\ThirdParty\stb_image;Engine;Engine\ThirdParty;Engine\ThirdParty\spdlog\include;Engine\ThirdParty\GLFW\include;Engine\ThirdParty\GLM;Engine\ThirdParty\SPIRV-Reflect\include;Engine\ThirdParty\imgui;.;Engine\ThirdParty\fastgltf\include;Engine\ThirdParty\vk-bootstrap\src;C:\VulkanSDK\1.3.280.0\Include;Engine\ThirdParty\shaderc;Engine\ThirdParty\VulkanMemoryAllocator\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -127,7 +127,7 @@
       <WarningLevel>Level3</WarningLevel>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;GLM_FORCE_DEPTH_ZERO_TO_ONE;GLFW_INCLUDE_NONE;LE_SHIP;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>Engine;Engine\ThirdParty;Engine\ThirdParty\spdlog\include;Engine\ThirdParty\GLFW\include;Engine\ThirdParty\GLM;Engine\ThirdParty\SPIRV-Reflect\include;Engine\ThirdParty\imgui;.;Engine\ThirdParty\fastgltf\include;Engine\ThirdParty\vk-bootstrap\src;C:\VulkanSDK\1.3.280.0\Include;Engine\ThirdParty\shaderc;Engine\ThirdParty\VulkanMemoryAllocator\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Engine\ThirdParty\stb_image;Engine;Engine\ThirdParty;Engine\ThirdParty\spdlog\include;Engine\ThirdParty\GLFW\include;Engine\ThirdParty\GLM;Engine\ThirdParty\SPIRV-Reflect\include;Engine\ThirdParty\imgui;.;Engine\ThirdParty\fastgltf\include;Engine\ThirdParty\vk-bootstrap\src;C:\VulkanSDK\1.3.280.0\Include;Engine\ThirdParty\shaderc;Engine\ThirdParty\VulkanMemoryAllocator\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -154,15 +154,17 @@
     <ClInclude Include="Engine\EntryPoint.h" />
     <ClInclude Include="Engine\Lumina.h" />
     <ClInclude Include="Engine\Source\Runtime\ApplicationCore\Application.h" />
-    <ClInclude Include="Engine\Source\Runtime\ApplicationCore\ImGui\ImGuiLayer.h" />
     <ClInclude Include="Engine\Source\Runtime\ApplicationCore\Layer.h" />
     <ClInclude Include="Engine\Source\Runtime\ApplicationCore\LayerStack.h" />
     <ClInclude Include="Engine\Source\Runtime\ApplicationCore\Windows\Window.h" />
     <ClInclude Include="Engine\Source\Runtime\ApplicationCore\Windows\WindowTypes.h" />
     <ClInclude Include="Engine\Source\Runtime\Assets\Asset.h" />
+    <ClInclude Include="Engine\Source\Runtime\Assets\AssetManager\AssetManager.h" />
+    <ClInclude Include="Engine\Source\Runtime\Assets\AssetRegistry\AssetRegistry.h" />
     <ClInclude Include="Engine\Source\Runtime\Assets\AssetTypes.h" />
     <ClInclude Include="Engine\Source\Runtime\Assets\Factories\Factory.h" />
     <ClInclude Include="Engine\Source\Runtime\Assets\Factories\MeshFactory\StaticMeshFactory.h" />
+    <ClInclude Include="Engine\Source\Runtime\Assets\Factories\TextureFactory\TextureFactory.h" />
     <ClInclude Include="Engine\Source\Runtime\Assets\Processors\MeshPreProcessor.h" />
     <ClInclude Include="Engine\Source\Runtime\Assets\StaticMesh\StaticMesh.h" />
     <ClInclude Include="Engine\Source\Runtime\CoreObject\Object.h" />
@@ -175,10 +177,12 @@
     <ClInclude Include="Engine\Source\Runtime\Events\MouseEvent.h" />
     <ClInclude Include="Engine\Source\Runtime\GUID\GUID.h" />
     <ClInclude Include="Engine\Source\Runtime\ImGui\ImGuiFonts.h" />
+    <ClInclude Include="Engine\Source\Runtime\ImGui\ImGuiRenderAPI.h" />
+    <ClInclude Include="Engine\Source\Runtime\ImGui\ImGuiRenderer.h" />
     <ClInclude Include="Engine\Source\Runtime\Input\Input.h" />
     <ClInclude Include="Engine\Source\Runtime\Log\Log.h" />
     <ClInclude Include="Engine\Source\Runtime\Memory\Memory.h" />
-    <ClInclude Include="Engine\Source\Runtime\Platform\Vulkan\VulkanImGuiLayer.h" />
+    <ClInclude Include="Engine\Source\Runtime\Platform\Vulkan\VulkanImGuiRenderAPI.h" />
     <ClInclude Include="Engine\Source\Runtime\Primitives\DefaultPrimitives.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\Buffer.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\BufferLayout.h" />
@@ -190,7 +194,6 @@
     <ClInclude Include="Engine\Source\Runtime\Renderer\PipelineBarrier.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\PipelineLibrary.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\PipelineStage.h" />
-    <ClInclude Include="Engine\Source\Runtime\Renderer\RenderTypes.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanBuffer.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanCommandBuffer.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanDescriptorSet.h" />
@@ -203,6 +206,7 @@
     <ClInclude Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanSwapchain.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\RenderAPI.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\RenderContext.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\RenderTypes.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\Renderer.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\Shader.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\ShaderCompilier.h" />
@@ -669,20 +673,24 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine\Source\Runtime\ApplicationCore\Application.cpp" />
-    <ClCompile Include="Engine\Source\Runtime\ApplicationCore\ImGui\ImGuiLayer.cpp" />
     <ClCompile Include="Engine\Source\Runtime\ApplicationCore\LayerStack.cpp" />
     <ClCompile Include="Engine\Source\Runtime\ApplicationCore\Windows\Window.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Assets\Asset.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Assets\AssetManager\AssetManager.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Assets\AssetRegistry\AssetRegistry.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Assets\Factories\Factory.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Assets\Factories\MeshFactory\StaticMeshFactory.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Assets\Factories\TextureFactory\TextureFactory.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Assets\Processors\MeshPreProcessor.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Assets\StaticMesh\StaticMesh.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Events\Event.cpp" />
     <ClCompile Include="Engine\Source\Runtime\GUID\GUID.cpp" />
     <ClCompile Include="Engine\Source\Runtime\ImGui\ImGuiFonts.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\ImGui\ImGuiRenderAPI.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\ImGui\ImGuiRenderer.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Input\Input.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Log\Log.cpp" />
-    <ClCompile Include="Engine\Source\Runtime\Platform\Vulkan\VulkanImGuiLayer.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Platform\Vulkan\VulkanImGuiRenderAPI.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Primitives\DefaultPrimitives.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\Buffer.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\CommandBuffer.cpp" />
@@ -714,6 +722,7 @@
     <ClCompile Include="Engine\Source\Runtime\Thread\RenderThread.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Thread\Thread.cpp" />
     <ClCompile Include="Engine\ThirdParty\SPIRV-Reflect\spirv_reflect.c" />
+    <ClCompile Include="Engine\ThirdParty\fastgltf\deps\simdjson\simdjson.cpp" />
     <ClCompile Include="Engine\ThirdParty\fastgltf\src\base64.cpp" />
     <ClCompile Include="Engine\ThirdParty\fastgltf\src\fastgltf.cpp" />
     <ClCompile Include="Engine\ThirdParty\glm\glm\detail\glm.cpp" />

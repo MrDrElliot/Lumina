@@ -10,6 +10,11 @@
 
 namespace Lumina
 {
+    class LStaticMesh;
+}
+
+namespace Lumina
+{
     class FSwapchain;
 }
 
@@ -52,7 +57,7 @@ namespace Lumina
         static FRenderConfig GetConfig();
         static glm::uint32 GetCurrentFrameIndex();
 
-        
+        static void WaitIdle();
         static void LoadShaderPack();
 
 
@@ -69,6 +74,8 @@ namespace Lumina
 
         static void RenderMeshTasks(std::shared_ptr<FPipeline> Pipeline, const glm::uvec3 Dimensions, FMiscData Data);
         static void RenderMeshIndexed(std::shared_ptr<FPipeline> Pipeline, std::shared_ptr<FBuffer> VertexBuffer, std::shared_ptr<FBuffer> IndexBuffer, FMiscData Data);
+        static void RenderStaticMesh(std::shared_ptr<FPipeline> Pipeline, std::shared_ptr<LStaticMesh> StaticMesh, FMiscData Data);
+        static void RenderStaticMesh(std::shared_ptr<FPipeline> Pipeline, std::shared_ptr<LStaticMesh> StaticMesh);
         static void RenderQuad(std::shared_ptr<FPipeline> Pipeline, FMiscData Data);
         static void RenderQuad(std::shared_ptr<FPipeline> Pipeline, glm::uint32 Amount, FMiscData Data);
 

@@ -30,6 +30,7 @@ namespace Lumina
     void FRenderer::Shutdown()
     {
         LE_LOG_WARN("Renderer: Shutting Down");
+        WaitIdle();
         FShaderLibrary::Destroy();
         FPipelineLibrary::Shutdown();
         delete RenderAPI;
@@ -101,6 +102,16 @@ namespace Lumina
         RenderAPI->RenderMeshIndexed(Pipeline, VertexBuffer, IndexBuffer, Data);
     }
 
+    void FRenderer::RenderStaticMesh(std::shared_ptr<FPipeline> Pipeline, std::shared_ptr<LStaticMesh> StaticMesh, FMiscData Data)
+    {
+        RenderAPI->RenderStaticMesh(Pipeline, StaticMesh, Data);
+    }
+
+    void FRenderer::RenderStaticMesh(std::shared_ptr<FPipeline> Pipeline, std::shared_ptr<LStaticMesh> StaticMesh)
+    {
+        RenderAPI->RenderStaticMesh(Pipeline, StaticMesh);
+    }
+
     void FRenderer::RenderQuad(std::shared_ptr<FPipeline> Pipeline, FMiscData Data)
     {
         RenderAPI->RenderQuad(Pipeline, Data);
@@ -147,6 +158,11 @@ namespace Lumina
     glm::uint32 FRenderer::GetCurrentFrameIndex()
     {
         return RenderAPI->GetSwapchain()->GetCurrentFrameIndex();
+    }
+
+    void FRenderer::WaitIdle()
+    {
+        RenderAPI->WaitDevice();
     }
 
     void FRenderer::RenderImGui()

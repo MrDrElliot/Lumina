@@ -2,6 +2,8 @@
 #include <filesystem>
 
 #include "Source/Runtime/Assets/Asset.h"
+#include "Source/Runtime/Renderer/RenderTypes.h"
+
 
 namespace Lumina
 {
@@ -10,9 +12,10 @@ namespace Lumina
     struct FMeshAsset
     {
         std::string Name;
-
-        std::shared_ptr<FBuffer> VertexBuffer;
-        std::shared_ptr<FBuffer> IndexBuffer;
+        
+        std::vector<FVertex> Vertices;
+        std::vector<uint32_t> Indices;
+        
     };
     
 
@@ -20,13 +23,15 @@ namespace Lumina
     {
     public:
         
-        LStaticMesh(std::filesystem::path InFilePath);
-        void CreateMesh(std::filesystem::path InFilePath);
+        LStaticMesh(std::filesystem::path InFilePath, FMeshAsset InInfo);
+        static std::shared_ptr<LStaticMesh> CreateMesh(std::filesystem::path InFilePath, FMeshAsset InInfo);
+
+        FMeshAsset GetMeshData() { return MeshData; }
+        std::pair<std::shared_ptr<FBuffer>, std::shared_ptr<FBuffer>> GetBuffers() { return {VBO, IBO}; }
 
     private:
 
-        std::vector<FMeshAsset> Meshes;
-
+        FMeshAsset MeshData;
         std::shared_ptr<FBuffer> VBO;
         std::shared_ptr<FBuffer> IBO;
     };

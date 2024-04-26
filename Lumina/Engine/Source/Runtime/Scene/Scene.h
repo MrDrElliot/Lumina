@@ -13,14 +13,16 @@ namespace Lumina
         LScene();
         ~LScene();
 
-        void OnUpdate(float DeltaTime);
+        void OnUpdate(double DeltaTime);
+        void Shutdown();
 
         std::shared_ptr<FCamera> GetEditorCamera() { return EditorCamera; }
+        std::shared_ptr<FSceneRenderer> GetSceneRenderer() { return SceneRenderer; }
         
 
     private:
         
         std::shared_ptr<FCamera> EditorCamera;
-        std::unique_ptr<FSceneRenderer> SceneRenderer;
+        std::shared_ptr<FSceneRenderer> SceneRenderer;
     };
 }

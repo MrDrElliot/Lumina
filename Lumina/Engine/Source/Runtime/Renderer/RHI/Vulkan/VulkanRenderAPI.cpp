@@ -6,6 +6,7 @@
 #include "VulkanImage.h"
 #include "VulkanPipeline.h"
 #include "backends/imgui_impl_vulkan.h"
+#include "Source/Runtime/Assets/StaticMesh/StaticMesh.h"
 #include "Source/Runtime/Log/Log.h"
 #include "Source/Runtime/Renderer/PipelineLibrary.h"
 
@@ -89,9 +90,10 @@ namespace Lumina
     {
 	    FRenderer::Submit([&, Attachments, RenderArea, RenderOffset, ClearColor]
 	    {
-		VkRenderingAttachmentInfo DepthAttachment = {};
+	    	
 
-			std::vector<VkRenderingAttachmentInfo> ColorAttachments = {};
+			VkRenderingAttachmentInfo				DepthAttachment = {};
+			std::vector<VkRenderingAttachmentInfo>	ColorAttachments = {};
 
 			for (auto attachment : Attachments)
 			{
@@ -144,7 +146,8 @@ namespace Lumina
 
 					ColorAttachments.push_back(ColorAttachment);
 				}
-				else {
+				else
+				{
 					DepthAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
 					DepthAttachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
 					DepthAttachment.imageView = VkTarget->GetImageView();
@@ -383,14 +386,58 @@ namespace Lumina
 			VkBuffer BindBuffer = VkVertexBuffer->GetBuffer();
 			VkDeviceSize Offsets[] = {0};
 
-			vkCmdPushConstants(Buffer, VkPipeline->GetPipelineLayout(), VK_SHADER_STAGE_ALL, 0, Data.Size, Data.Data);
+
+			vkCmdPushConstants(Buffer, VkPipeline->GetPipelineLayout(), VK_SHADER_STAGE_ALL, 0, Data.Size, Data.Data); 
 			vkCmdBindVertexBuffers(Buffer, 0, 1, &BindBuffer, Offsets);
 			vkCmdBindIndexBuffer(Buffer, VkIndexBuffer->GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
 
 			vkCmdDrawIndexed(Buffer, 36, 1, 0, 0, 0);
+
+			delete Data.Data;
 		});
     }
 
+    void FVulkanRenderAPI::RenderStaticMesh(std::shared_ptr<FPipeline> Pipeline, std::shared_ptr<LStaticMesh> StaticMesh, FMiscData Data)
+    {
+    	FRenderer::Submit([&, Pipeline, StaticMesh, Data]
+		{
+			VkCommandBuffer Buffer = CurrentCommandBuffer->GetCommandBuffer();
+			std::shared_ptr<FVulkanBuffer> VkVertexBuffer = std::dynamic_pointer_cast<FVulkanBuffer>(StaticMesh->GetBuffers().first);
+			std::shared_ptr<FVulkanBuffer> VkIndexBuffer = std::dynamic_pointer_cast<FVulkanBuffer>(StaticMesh->GetBuffers().second);
+			std::shared_ptr<FVulkanPipeline> VkPipeline = std::dynamic_pointer_cast<FVulkanPipeline>(Pipeline);
+					
+			VkBuffer BindBuffer = VkVertexBuffer->GetBuffer();
+			VkDeviceSize Offsets[] = {0};
+		
+			vkCmdPushConstants(Buffer, VkPipeline->GetPipelineLayout(), VK_SHADER_STAGE_ALL, 0, Data.Size, Data.Data); 
+			vkCmdBindVertexBuffers(Buffer, 0, 1, &BindBuffer, Offsets);
+			vkCmdBindIndexBuffer(Buffer, VkIndexBuffer->GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
+		
+			vkCmdDrawIndexed(Buffer, StaticMesh->GetMeshData().Indices.size(), 1, 0, 0, 0);
+
+    		delete Data.Data;
+		});
+    }
+
+    void FVulkanRenderAPI::RenderStaticMesh(std::shared_ptr<FPipeline> Pipeline, std::shared_ptr<LStaticMesh> StaticMesh)
+    {
+    	FRenderer::Submit([&, Pipeline, StaticMesh]
+ 		{
+			 VkCommandBuffer Buffer = CurrentCommandBuffer->GetCommandBuffer();
+			 std::shared_ptr<FVulkanBuffer> VkVertexBuffer = std::dynamic_pointer_cast<FVulkanBuffer>(StaticMesh->GetBuffers().first);
+			 std::shared_ptr<FVulkanBuffer> VkIndexBuffer = std::dynamic_pointer_cast<FVulkanBuffer>(StaticMesh->GetBuffers().second);
+			 std::shared_ptr<FVulkanPipeline> VkPipeline = std::dynamic_pointer_cast<FVulkanPipeline>(Pipeline);
+							
+			 VkBuffer BindBuffer = VkVertexBuffer->GetBuffer();
+			 VkDeviceSize Offsets[] = {0};
+				
+			 vkCmdBindVertexBuffers(Buffer, 0, 1, &BindBuffer, Offsets);
+			 vkCmdBindIndexBuffer(Buffer, VkIndexBuffer->GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
+				
+			 vkCmdDrawIndexed(Buffer, StaticMesh->GetMeshData().Indices.size(), 1, 0, 0, 0);
+ 		
+ 		});
+    }
 
 
     void FVulkanRenderAPI::RenderQuad(std::shared_ptr<FPipeline> Pipeline, FMiscData Data)
@@ -403,8 +450,11 @@ namespace Lumina
 			vkCmdBindPipeline(CurrentCommandBuffer->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, VkPipeline->GetPipeline());
 			
 			vkCmdDraw(CurrentCommandBuffer->GetCommandBuffer(), 6, 1, 0, 0);
-			
-			delete[] Data.Data;
+
+    		if(Data.Data)
+    		{
+				delete[] Data.Data;
+    		}
 		});
     }
 

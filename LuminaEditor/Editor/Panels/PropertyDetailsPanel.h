@@ -12,8 +12,7 @@ namespace Lumina
 
         void OnAdded() override;
         void OnRemoved() override;
-        void OnRender() override;
-        void OnImGui() override;
+        void OnRender(double DeltaTime) override;
         void OnNewScene() override;
     
     };

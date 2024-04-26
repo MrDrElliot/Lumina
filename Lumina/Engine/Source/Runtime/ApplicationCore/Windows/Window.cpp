@@ -43,7 +43,7 @@ namespace Lumina
 			glfwSetWindowUserPointer(Window, &Specs);
 			
 			glfwSetWindowSizeCallback(Window, WindowResizeCallback);
-
+			
 			glfwSetWindowCloseCallback(Window, [](GLFWwindow* window)
 			{
 				FWindowSpecs& data = *(FWindowSpecs*)glfwGetWindowUserPointer(window);
@@ -133,7 +133,7 @@ namespace Lumina
 		LE_LOG_ERROR("Init called on a window that's already been initialized!");
 	}
 
-	void FWindow::OnUpdate(float DeltaTime)
+	void FWindow::OnUpdate(double DeltaTime)
 	{
 		glfwPollEvents();
 	}
@@ -141,6 +141,14 @@ namespace Lumina
 	void FWindow::Shutdown()
 	{
 		glfwDestroyWindow(Window);
+	}
+
+	bool FWindow::IsMinimized() const
+	{
+		int w, h;
+		glfwGetWindowSize(Window, &w, &h);
+
+		return (w == 0 || h == 0);
 	}
 
 	void FWindow::WindowResizeCallback(GLFWwindow* window, int width, int height)

@@ -15,6 +15,7 @@ namespace Lumina
 			case EDeviceBufferUsage::UNIFORM_BUFFER:				return VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
 			case EDeviceBufferUsage::STORAGE_BUFFER:				return VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
 			case EDeviceBufferUsage::STAGING_BUFFER:				return VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+			case EDeviceBufferUsage::SHADER_DEVICE_ADDRESS:			return VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
 			default:												std::unreachable();
 		}
 	}
@@ -120,7 +121,6 @@ namespace Lumina
 			FVulkanMemoryAllocator* Allocator = FVulkanMemoryAllocator::Get();
 			void* memory = Allocator->MapMemory(Allocation);
 			memcpy((std::byte*)memory + Offset, Data, DataSize);
-			//@ TODO Possible memory leak?
 			Allocator->UnmapMemory(Allocation);
 		}
 		

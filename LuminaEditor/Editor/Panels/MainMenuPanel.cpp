@@ -22,13 +22,12 @@ namespace Lumina
     {
     }
 
-    void FMainMenuPanel::OnRender()
+    void FMainMenuPanel::OnRender(double DeltaTime)
     {
-    }
-
-    void FMainMenuPanel::OnImGui()
-    {
-        
+        if(bShowDemo)
+        {
+            ImGui::ShowDemoWindow();
+        }
         if (ImGui::BeginMainMenuBar())
         {
     
@@ -63,6 +62,16 @@ namespace Lumina
         
                 ImGui::EndMenu();
             }
+
+            if (ImGui::BeginMenu("Tools"))
+            {
+                if (ImGui::MenuItem("ImGuiDemo", "", bShowDemo))
+                {
+                    bShowDemo = !bShowDemo;
+                }
+        
+                ImGui::EndMenu();
+            }
     
             if (ImGui::BeginMenu("Settings"))
             {
@@ -72,8 +81,8 @@ namespace Lumina
             ImGui::EndMainMenuBar();
         }
 
-        
     }
+
 
     void FMainMenuPanel::OnNewScene()
     {

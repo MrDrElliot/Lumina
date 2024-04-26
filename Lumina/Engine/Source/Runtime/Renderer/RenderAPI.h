@@ -7,6 +7,7 @@
 
 namespace Lumina
 {
+    class LStaticMesh;
     class FSwapchain;
     class FDescriptorSet;
     class FBuffer;
@@ -42,6 +43,8 @@ namespace Lumina
         
         virtual void RenderMeshTasks(std::shared_ptr<FPipeline> Pipeline, const glm::uvec3 Dimensions, FMiscData Data) = 0;
         virtual void RenderMeshIndexed(std::shared_ptr<FPipeline> Pipeline, std::shared_ptr<FBuffer> VertexBuffer, std::shared_ptr<FBuffer> IndexBuffer, FMiscData Data) = 0;
+        virtual void RenderStaticMesh(std::shared_ptr<FPipeline> Pipeline, std::shared_ptr<LStaticMesh> StaticMesh) = 0;
+        virtual void RenderStaticMesh(std::shared_ptr<FPipeline> Pipeline, std::shared_ptr<LStaticMesh> StaticMesh, FMiscData Data) = 0;
         virtual void RenderQuad(std::shared_ptr<FPipeline> Pipeline, FMiscData Data) = 0;
         virtual void RenderQuad(std::shared_ptr<FPipeline> Pipeline, glm::uint32 Amount, FMiscData Data) = 0;
 

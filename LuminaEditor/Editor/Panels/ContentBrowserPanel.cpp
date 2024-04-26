@@ -26,10 +26,14 @@ namespace Lumina
     void FContentBrowserPanel::OnRemoved()
     {
     }
-
-    void FContentBrowserPanel::OnImGui()
+    
+    void FContentBrowserPanel::OnNewScene()
     {
-        ImGui::Begin(Name.c_str());
+    }
+
+    void FContentBrowserPanel::OnRender(double DeltaTime)
+    {
+              ImGui::Begin(Name.c_str());
 
 
         float leftPaneWidth = 200.0f;
@@ -95,13 +99,5 @@ namespace Lumina
         ImGui::EndChild();
 
         ImGui::End();
-    }
-
-    void FContentBrowserPanel::OnNewScene()
-    {
-    }
-
-    void FContentBrowserPanel::OnRender()
-    {
     }
 }

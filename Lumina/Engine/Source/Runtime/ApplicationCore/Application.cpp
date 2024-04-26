@@ -1,8 +1,8 @@
 #include "Application.h"
-#include "ImGui/ImGuiLayer.h"
+
+#include "Source/Runtime/ImGui/ImGuiRenderer.h"
 #include "Source/Runtime/Log/Log.h"
 #include "Source/Runtime/Renderer/Buffer.h"
-#include "Source/Runtime/Renderer/Image.h"
 #include "Source/Runtime/Renderer/PipelineLibrary.h"
 #include "Source/Runtime/Renderer/Renderer.h"
 #include "Source/Runtime/Renderer/ShaderLibrary.h"
@@ -13,7 +13,8 @@
 namespace Lumina
 {
     FApplication* FApplication::Instance = nullptr;
-    
+    static double accumTime = 0.0;
+
     FApplication::FApplication(const FApplicationSpecs& InAppSpecs)
     {
         AppSpecs = InAppSpecs;
@@ -37,8 +38,9 @@ namespace Lumina
             {
                 PreFrame();
 
-                ActiveScene->OnUpdate(1.0f);
-                Window->OnUpdate(1.0f);
+                ActiveScene->OnUpdate(Stats.DeltaTime);
+                Window->OnUpdate(Stats.DeltaTime);
+                FImGuiRenderer::Render(Stats.DeltaTime);
                 
                 PostFrame();
             }
@@ -59,7 +61,6 @@ namespace Lumina
         FLog::Init();
 
         LE_LOG_INFO("{0} Initializing", AppSpecs.Name);
-
         
         /* Create application window */
         FWindowSpecs AppWindowSpecs;
@@ -74,6 +75,11 @@ namespace Lumina
         FRenderer::Init(RenderConfig);
 
         ActiveScene = std::make_shared<LScene>();
+
+        if(ShouldRenderImGui())
+        {
+            FImGuiRenderer::Init();
+        }
         
     }
 
@@ -82,8 +88,12 @@ namespace Lumina
         bRunning = false;
 
         LE_LOG_WARN("Lumina Engine: Shutting Down");
-        
-        FRenderer::Shutdown();
+        ActiveScene->Shutdown();
+        if (ShouldRenderImGui())
+        {
+          FRenderer::Shutdown();
+        }
+        FImGuiRenderer::Shutdown();
         Window->Shutdown();
         glfwTerminate();
         
@@ -102,15 +112,39 @@ namespace Lumina
 
     void FApplication::PreFrame()
     {
+
+        Stats.DeltaTime = (Stats.CurrentFrameTime - Stats.LastFrameTime);
+        Stats.LastFrameTime = Stats.CurrentFrameTime;
+
+        Stats.FPS = static_cast<int>(Stats.DeltaTime / 60.0f);
+        accumTime += Stats.DeltaTime;
+        
+        if (accumTime >= 1.0)
+        {
+            Stats.FPS = Stats.FrameCount;
+            Stats.FrameCount = 0;
+            accumTime -= 1.0;
+        }
+
+        
         FRenderer::BeginFrame();
+        if(ShouldRenderImGui())
+        {
+            FImGuiRenderer::BeginFrame();
+        }
     }
 
     void FApplication::PostFrame()
     {
-        
+        if(ShouldRenderImGui())
+        {
+            FImGuiRenderer::EndFrame();
+        }
         FRenderer::Render();
         FRenderer::EndFrame();
         glfwPollEvents();
+        
+        Stats.CurrentFrameTime = glfwGetTime();
         
     }
 
@@ -138,25 +172,7 @@ namespace Lumina
         LayerStack.PopOverlay(InLayer);
         InLayer->OnDetach();
     }
-
-    void FApplication::InitImGuiLayer()
-    {
-        ImGuiLayer = FImGuiLayer::Create();
-        PushOverlay(ImGuiLayer);
-    }
-
-    void FApplication::RenderImGui()
-    {
-        ImGuiLayer->Begin();
-
-        for(auto Layer : LayerStack)
-        {
-            Layer->OnImGuiRender();
-        }
-
-        ImGuiLayer->End();
-    }
-
+    
     void FApplication::OnEvent(FEvent& Event)
     {
         for (auto Layer : LayerStack)

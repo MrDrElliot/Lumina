@@ -19,6 +19,18 @@
     <Filter Include="Source\Runtime\Assets">
       <UniqueIdentifier>{4B61858B-B7CD-4086-80C1-D8E3ECEC62EE}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Runtime\Assets\Factories">
+      <UniqueIdentifier>{7AC6F9A0-E6A9-08E1-EFAC-361D5B0FCF31}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Runtime\Assets\Factories\MeshFactory">
+      <UniqueIdentifier>{AE767029-1ADC-03B0-A3B4-A5880F19F91E}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Runtime\Assets\Factories\TextureFactory">
+      <UniqueIdentifier>{926B6764-7EE9-B7FD-67E1-759553FEF925}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Runtime\Assets\Processors">
+      <UniqueIdentifier>{ADDC1B84-992D-07C6-C291-F587AE419A2F}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Source\Runtime\Assets\StaticMesh">
       <UniqueIdentifier>{2FF056B2-1B41-42F4-44A5-30B63055D55D}</UniqueIdentifier>
     </Filter>
@@ -48,6 +60,9 @@
     </Filter>
     <Filter Include="Source\Runtime\Platform\Vulkan">
       <UniqueIdentifier>{DD8381CC-C9A9-4B33-B2EF-D0FE9EB470FF}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Runtime\Primitives">
+      <UniqueIdentifier>{C4A4A182-3067-D50C-7917-6499E518AEEA}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source\Runtime\Renderer">
       <UniqueIdentifier>{4F9C4EF1-BBD3-9688-C4DD-FAAB3094BD81}</UniqueIdentifier>
@@ -179,6 +194,18 @@
     <ClInclude Include="Engine\Source\Runtime\Assets\AssetTypes.h">
       <Filter>Source\Runtime\Assets</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Assets\Factories\Factory.h">
+      <Filter>Source\Runtime\Assets\Factories</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Assets\Factories\MeshFactory\StaticMeshFactory.h">
+      <Filter>Source\Runtime\Assets\Factories\MeshFactory</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Assets\Factories\TextureFactory\TextureFactory.h">
+      <Filter>Source\Runtime\Assets\Factories\TextureFactory</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Assets\Processors\MeshPreProcessor.h">
+      <Filter>Source\Runtime\Assets\Processors</Filter>
+    </ClInclude>
     <ClInclude Include="Engine\Source\Runtime\Assets\StaticMesh\StaticMesh.h">
       <Filter>Source\Runtime\Assets\StaticMesh</Filter>
     </ClInclude>
@@ -224,20 +251,38 @@
     <ClInclude Include="Engine\Source\Runtime\Platform\Vulkan\VulkanImGuiLayer.h">
       <Filter>Source\Runtime\Platform\Vulkan</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Primitives\DefaultPrimitives.h">
+      <Filter>Source\Runtime\Primitives</Filter>
+    </ClInclude>
     <ClInclude Include="Engine\Source\Runtime\Renderer\Buffer.h">
+      <Filter>Source\Runtime\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Renderer\BufferLayout.h">
       <Filter>Source\Runtime\Renderer</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Source\Runtime\Renderer\CommandBuffer.h">
       <Filter>Source\Runtime\Renderer</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Renderer\DescriptorSet.h">
+      <Filter>Source\Runtime\Renderer</Filter>
+    </ClInclude>
     <ClInclude Include="Engine\Source\Runtime\Renderer\Image.h">
+      <Filter>Source\Runtime\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Renderer\Meshlet.h">
+      <Filter>Source\Runtime\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Renderer\Pipeline.h">
+      <Filter>Source\Runtime\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Renderer\PipelineBarrier.h">
+      <Filter>Source\Runtime\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Renderer\PipelineLibrary.h">
       <Filter>Source\Runtime\Renderer</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Source\Runtime\Renderer\PipelineStage.h">
       <Filter>Source\Runtime\Renderer</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\Converts.h">
-      <Filter>Source\Runtime\Renderer\RHI\Vulkan</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanBuffer.h">
       <Filter>Source\Runtime\Renderer\RHI\Vulkan</Filter>
@@ -245,10 +290,16 @@
     <ClInclude Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanCommandBuffer.h">
       <Filter>Source\Runtime\Renderer\RHI\Vulkan</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanDescriptorSet.h">
+      <Filter>Source\Runtime\Renderer\RHI\Vulkan</Filter>
+    </ClInclude>
     <ClInclude Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanImage.h">
       <Filter>Source\Runtime\Renderer\RHI\Vulkan</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanMemoryAllocator.h">
+      <Filter>Source\Runtime\Renderer\RHI\Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanPipeline.h">
       <Filter>Source\Runtime\Renderer\RHI\Vulkan</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanRenderAPI.h">
@@ -267,6 +318,9 @@
       <Filter>Source\Runtime\Renderer</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Source\Runtime\Renderer\RenderContext.h">
+      <Filter>Source\Runtime\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Renderer\RenderTypes.h">
       <Filter>Source\Runtime\Renderer</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Source\Runtime\Renderer\Renderer.h">
@@ -291,6 +345,12 @@
       <Filter>Source\Runtime\Scene</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Source\Runtime\Scene\Scene.h">
+      <Filter>Source\Runtime\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Scene\ScenePrimitives.h">
+      <Filter>Source\Runtime\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Scene\SceneRenderer.h">
       <Filter>Source\Runtime\Scene</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Source\Runtime\Thread\GameThread.h">
@@ -1669,11 +1729,26 @@
     <ClCompile Include="Engine\Source\Runtime\Assets\Asset.cpp">
       <Filter>Source\Runtime\Assets</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\Assets\Factories\Factory.cpp">
+      <Filter>Source\Runtime\Assets\Factories</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\Assets\Factories\MeshFactory\StaticMeshFactory.cpp">
+      <Filter>Source\Runtime\Assets\Factories\MeshFactory</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\Assets\Factories\TextureFactory\TextureFactory.cpp">
+      <Filter>Source\Runtime\Assets\Factories\TextureFactory</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\Assets\Processors\MeshPreProcessor.cpp">
+      <Filter>Source\Runtime\Assets\Processors</Filter>
+    </ClCompile>
     <ClCompile Include="Engine\Source\Runtime\Assets\StaticMesh\StaticMesh.cpp">
       <Filter>Source\Runtime\Assets\StaticMesh</Filter>
     </ClCompile>
     <ClCompile Include="Engine\Source\Runtime\Events\Event.cpp">
       <Filter>Source\Runtime\Events</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\GUID\GUID.cpp">
+      <Filter>Source\Runtime\GUID</Filter>
     </ClCompile>
     <ClCompile Include="Engine\Source\Runtime\ImGui\ImGuiFonts.cpp">
       <Filter>Source\Runtime\ImGui</Filter>
@@ -1687,17 +1762,26 @@
     <ClCompile Include="Engine\Source\Runtime\Platform\Vulkan\VulkanImGuiLayer.cpp">
       <Filter>Source\Runtime\Platform\Vulkan</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\Primitives\DefaultPrimitives.cpp">
+      <Filter>Source\Runtime\Primitives</Filter>
+    </ClCompile>
     <ClCompile Include="Engine\Source\Runtime\Renderer\Buffer.cpp">
       <Filter>Source\Runtime\Renderer</Filter>
     </ClCompile>
     <ClCompile Include="Engine\Source\Runtime\Renderer\CommandBuffer.cpp">
       <Filter>Source\Runtime\Renderer</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\Renderer\DescriptorSet.cpp">
+      <Filter>Source\Runtime\Renderer</Filter>
+    </ClCompile>
     <ClCompile Include="Engine\Source\Runtime\Renderer\Image.cpp">
       <Filter>Source\Runtime\Renderer</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\Converts.cpp">
-      <Filter>Source\Runtime\Renderer\RHI\Vulkan</Filter>
+    <ClCompile Include="Engine\Source\Runtime\Renderer\Pipeline.cpp">
+      <Filter>Source\Runtime\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\Renderer\PipelineLibrary.cpp">
+      <Filter>Source\Runtime\Renderer</Filter>
     </ClCompile>
     <ClCompile Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanBuffer.cpp">
       <Filter>Source\Runtime\Renderer\RHI\Vulkan</Filter>
@@ -1705,10 +1789,16 @@
     <ClCompile Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanCommandBuffer.cpp">
       <Filter>Source\Runtime\Renderer\RHI\Vulkan</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanDescriptorSet.cpp">
+      <Filter>Source\Runtime\Renderer\RHI\Vulkan</Filter>
+    </ClCompile>
     <ClCompile Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanImage.cpp">
       <Filter>Source\Runtime\Renderer\RHI\Vulkan</Filter>
     </ClCompile>
     <ClCompile Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanMemoryAllocator.cpp">
+      <Filter>Source\Runtime\Renderer\RHI\Vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanPipeline.cpp">
       <Filter>Source\Runtime\Renderer\RHI\Vulkan</Filter>
     </ClCompile>
     <ClCompile Include="Engine\Source\Runtime\Renderer\RHI\Vulkan\VulkanRenderAPI.cpp">
@@ -1750,6 +1840,9 @@
     <ClCompile Include="Engine\Source\Runtime\Scene\Scene.cpp">
       <Filter>Source\Runtime\Scene</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\Scene\SceneRenderer.cpp">
+      <Filter>Source\Runtime\Scene</Filter>
+    </ClCompile>
     <ClCompile Include="Engine\Source\Runtime\Thread\GameThread.cpp">
       <Filter>Source\Runtime\Thread</Filter>
     </ClCompile>
@@ -1761,6 +1854,9 @@
     </ClCompile>
     <ClCompile Include="Engine\ThirdParty\SPIRV-Reflect\spirv_reflect.c">
       <Filter>ThirdParty\SPIRV-Reflect</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\ThirdParty\fastgltf\deps\simdjson\simdjson.cpp">
+      <Filter>ThirdParty\fastgltf\deps\simdjson</Filter>
     </ClCompile>
     <ClCompile Include="Engine\ThirdParty\fastgltf\src\base64.cpp">
       <Filter>ThirdParty\fastgltf\src</Filter>

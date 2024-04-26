@@ -9,8 +9,8 @@ namespace Lumina
         return std::make_shared<FVulkanImage>(Spec);
     }
 
-    FImageSampler* FImageSampler::Create(const FImageSamplerSpecification& Spec)
+    std::shared_ptr<FImageSampler> FImageSampler::Create(const FImageSamplerSpecification& Spec)
     {
-        return new FVulkanImageSampler(Spec);
+        return std::make_shared<FVulkanImageSampler>(Spec);
     }
 }

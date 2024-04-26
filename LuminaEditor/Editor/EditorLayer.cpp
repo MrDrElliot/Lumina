@@ -5,6 +5,7 @@
 #include "Panels/PropertyDetailsPanel.h"
 #include "Panels/SceneHierarchyPanel.h"
 #include "Panels/SceneViewPanel.h"
+#include "Source/Runtime/ApplicationCore/Application.h"
 #include "Source/Runtime/ImGui/ImGuiFonts.h"
 
 namespace Lumina
@@ -12,12 +13,11 @@ namespace Lumina
     void FEditorLayer::OnAttach()
     {
         AddEditorLayer(new FMainMenuPanel);
-        AddEditorLayer(new FSceneViewPanel);
+        AddEditorLayer(new FSceneViewPanel(FApplication::GetActiveScene()));
         AddEditorLayer(new FContentBrowserPanel);
         AddEditorLayer(new FSceneHierarchyPanel);
         AddEditorLayer(new FConsolePanel);
         AddEditorLayer(new FPropertyDetailsPanel);
-
     }
 
     void FEditorLayer::OnDetach()
@@ -27,13 +27,10 @@ namespace Lumina
 
     void FEditorLayer::OnUpdate(float DeltaTime)
     {
-        for (auto Panel : EditorPanels)
-        {
-            Panel->OnRender();
-        }
+        
     }
 
-    void FEditorLayer::OnImGuiRender()
+    void FEditorLayer::OnImGuiRender(double DeltaTime)
     {
         if(ImGui::GetCurrentContext() && ImGui::GetMainViewport())
         {
@@ -44,7 +41,7 @@ namespace Lumina
         
         for (auto Panel : EditorPanels)
         {
-            Panel->OnImGui();
+            Panel->OnRender(DeltaTime);
         }
 
         Font::PopFont();

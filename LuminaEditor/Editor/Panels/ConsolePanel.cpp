@@ -22,18 +22,15 @@ namespace Lumina
     {
     }
 
-    void FConsolePanel::OnRender()
+    void FConsolePanel::OnRender(double DeltaTime)
     {
     }
+    
 
-    void FConsolePanel::OnImGui()
+    void FConsolePanel::OnNewScene()
     {
         ImGui::Begin(Name.c_str());
 
         ImGui::End();
-    }
-
-    void FConsolePanel::OnNewScene()
-    {
     }
 }

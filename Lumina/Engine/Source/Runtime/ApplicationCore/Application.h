@@ -9,6 +9,7 @@
 
 #include "Source/Runtime/Events/Event.h"
 #include "Source/Runtime/Thread/RenderThread.h"
+#include "Windows/Window.h"
 
 
 namespace Lumina
@@ -16,7 +17,6 @@ namespace Lumina
 	class FBuffer;
 	class FDescriptorSet;
 	class FImage;
-	class FImGuiLayer;
 	class LScene;
 	struct FWindowSpecs;
 	class FWindow;
@@ -30,7 +30,19 @@ namespace Lumina
 		bool bWindowDecorated = false;
 		bool bFullscreen = false;
 		bool bVSync = true;
+		bool bRenderImGui = true;
 		std::string WorkingDirectory;
+	};
+
+	struct FApplicationStats
+	{
+		double DeltaTime = 1.0f / 60.0f;
+		double LastFrameTime = 0.0f;
+		double CurrentFrameTime = 60.0f;
+		
+		uint32_t FPS;
+		int FrameCount = 0;
+
 	};
 	
 	class FApplication
@@ -56,28 +68,31 @@ namespace Lumina
 		void PushOverlay(std::shared_ptr<FLayer> InLayer);
 		void PopLayer(std::shared_ptr<FLayer> InLayer);
 		void PopOverlay(std::shared_ptr<FLayer> InLayer);
-		void InitImGuiLayer();
-		virtual void RenderImGui();
 
 		void OnEvent(FEvent& Event);
 		
 		static FApplication& Get() { return *Instance; }
+		
+		static FApplicationStats GetStats() { return Instance->Stats; }
+		static double GetDeltaTime() { return Instance->Stats.DeltaTime; }
 
 		static FWindow& GetWindow() { return *Instance->Window;  }
+		static std::shared_ptr<LScene> GetActiveScene() { return Instance->ActiveScene; }
 	
 	private:
 
-		inline bool IsMinimized() const { return bMinimized; }
+		inline bool IsMinimized() const { return Window->IsMinimized(); }
 		inline bool ShouldExit() const;
-
+		inline bool ShouldRenderImGui() const { return AppSpecs.bRenderImGui; }
+	
 	
 	private:
 
 		std::shared_ptr<LScene> ActiveScene;
 
+		FApplicationStats Stats;
 		FApplicationSpecs AppSpecs;
 		bool bRunning = true;
-		bool bMinimized = false;
 
 	private:
 
@@ -89,9 +104,6 @@ namespace Lumina
 
 		/* Layer Stack */
 		FLayerStack LayerStack;
-
-		/* Im Gui Layer */
-		std::shared_ptr<FImGuiLayer> ImGuiLayer;
 		
 	};
 

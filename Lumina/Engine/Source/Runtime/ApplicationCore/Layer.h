@@ -23,7 +23,7 @@ namespace Lumina
 		virtual void OnAttach() {}
 		virtual void OnDetach() {}
 		virtual void OnUpdate(float DeltaTime) {}
-		virtual void OnImGuiRender() {}
+		virtual void OnImGuiRender(double DeltaTime) {}
 		virtual void OnEvent(FEvent& InEvent) {}
 
 		inline const std::string& GetName() const { return DebugName; }

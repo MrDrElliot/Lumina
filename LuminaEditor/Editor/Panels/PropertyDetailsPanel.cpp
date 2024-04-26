@@ -22,18 +22,16 @@ namespace Lumina
     {
     }
 
-    void FPropertyDetailsPanel::OnRender()
-    {
-    }
-
-    void FPropertyDetailsPanel::OnImGui()
+    void FPropertyDetailsPanel::OnRender(double DeltaTime)
     {
         ImGui::Begin(Name.c_str());
 
         ImGui::End();
     }
 
+
     void FPropertyDetailsPanel::OnNewScene()
     {
+    
     }
 }

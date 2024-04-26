@@ -15,13 +15,6 @@ namespace Lumina
     {
     }
 
-    void FSceneHierarchyPanel::OnImGui()
-    {
-        ImGui::Begin(Name.c_str());
-        
-        ImGui::End();
-    }
-
     void FSceneHierarchyPanel::OnAdded()
     {
     }
@@ -30,8 +23,11 @@ namespace Lumina
     {
     }
 
-    void FSceneHierarchyPanel::OnRender()
+    void FSceneHierarchyPanel::OnRender(double DeltaTime)
     {
+        ImGui::Begin(Name.c_str());
+        
+        ImGui::End();
     }
 
     void FSceneHierarchyPanel::OnNewScene()

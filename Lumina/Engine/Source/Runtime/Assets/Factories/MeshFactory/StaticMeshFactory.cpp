@@ -5,24 +5,110 @@
 #include "Source/Runtime/Log/Log.h"
 #include "Source/Runtime/Renderer/RenderTypes.h"
 
+#include <fastgltf/tools.hpp>
+#include <fastgltf/glm_element_traits.hpp>
+
+#include "Source/Runtime/Assets/StaticMesh/StaticMesh.h"
+
 namespace Lumina
 {
-    void FStaticMeshFactory::Import(std::filesystem::path InPath)
+    std::vector<std::shared_ptr<LStaticMesh>> FStaticMeshFactory::Import(std::filesystem::path InPath)
     {
         fastgltf::Asset Asset;
+
+        std::vector<std::shared_ptr<LStaticMesh>> ReturnMeshes;
         
         ExtractAsset(&Asset, InPath);
         
-        
+        ReturnMeshes.reserve(Asset.meshes.size());
         for (auto Mesh : Asset.meshes)
         {
+            FMeshAsset NewAsset;
             std::vector<uint32_t> Indices;
             std::vector<FVertex> Vertices;
 
             for (auto Primitive : Mesh.primitives)
             {
+                FMeshSurface NewSurface;
+                NewSurface.StartIndex = Indices.size();
+                NewSurface.Count = Asset.accessors[Primitive.indicesAccessor.value()].count;
+
+                size_t IniitalVert = Vertices.size();
+
+                fastgltf::Accessor& IndexAccessor = Asset.accessors[Primitive.indicesAccessor.value()];
+                Indices.reserve(Indices.size() + IndexAccessor.count);
+
+                fastgltf::iterateAccessor<std::uint32_t>(Asset, IndexAccessor, [&](std::uint32_t Index)
+                {
+                    Indices.push_back(Index);
+                });
+
+                fastgltf::Accessor& PosAccessor = Asset.accessors[Primitive.findAttribute("POSITION")->second];
+                Vertices.resize(Vertices.size() + PosAccessor.count);
+
+                fastgltf::iterateAccessorWithIndex<glm::vec3>(Asset, PosAccessor, [&](glm::vec3 V, size_t Index)
+                {
+                    FVertex Vertex;
+                    Vertex.Position = V;
+                    Vertex.Color = glm::vec4(1.0f);
+                    Vertex.UV = glm::vec2(0.0f);
+                    
+                    Vertices[IniitalVert + Index] = Vertex;
+                });
+
+                auto normals = Primitive.findAttribute("NORMAL");
+                if (normals != Primitive.attributes.end())
+                {
+                    fastgltf::iterateAccessorWithIndex<glm::vec3>(Asset, Asset.accessors[(*normals).second], [&](glm::vec3 v, size_t index)
+                    {
+                           // Vertices[IniitalVert + index].Normal = v;
+                    });
+                }
+
+                auto uv = Primitive.findAttribute("TEXCOORD_0");
+                if (uv != Primitive.attributes.end())
+                {
+                    fastgltf::iterateAccessorWithIndex<glm::vec2>(Asset, Asset.accessors[(*uv).second], [&](glm::vec2 v, size_t index)
+                    {
+                            Vertices[IniitalVert + index].UV.x = v.x;
+                            Vertices[IniitalVert + index].UV.y = 1.0f - v.y;
+                    });
+                }
+
+                // load vertex colors
+                auto colors = Primitive.findAttribute("COLOR_0");
+                if (colors != Primitive.attributes.end())
+                {
+                    fastgltf::iterateAccessorWithIndex<glm::vec4>(Asset, Asset.accessors[(*colors).second], [&](glm::vec4 v, size_t index)
+                    {
+                            Vertices[IniitalVert + index].Color = v;
+                    });
+                }
+                
+                NewAsset.Indices = Indices;
+                NewAsset.Vertices = Vertices;
+                NewAsset.Name = Mesh.name;
             }
+
+            std::random_device rd;  // Obtain a random number from hardware
+            std::mt19937 gen(rd()); // Seed the generator
+            std::uniform_real_distribution<> dis(0.0, 1.0); 
+            constexpr bool OverrideColors = true;
+            if (OverrideColors)
+            {
+                for (FVertex& vtx : NewAsset.Vertices)
+                {
+                    float r = dis(gen);  // Generate a random red component
+                    float g = dis(gen);  // Generate a random green component
+                    float b = dis(gen);  // Generate a random blue component
+                    vtx.Color = glm::vec4(r, g, b, 1.0f);  // Set the vertex color
+                }
+            }
+
+            ReturnMeshes.push_back(LStaticMesh::CreateMesh(InPath, NewAsset));
         }
+
+        return ReturnMeshes;
     }
 
     void FStaticMeshFactory::ExtractAsset(fastgltf::Asset* OutAsset, std::filesystem::path InPath)
@@ -63,4 +149,5 @@ namespace Lumina
 
         *OutAsset = std::move(expected_asset.get());
     }
+    
 }

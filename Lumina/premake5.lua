@@ -36,7 +36,9 @@ project "Lumina"
 
 	    "Engine/ThirdParty/fastgltf/src/**.cpp",
 	    "Engine/ThirdParty/fastgltf/deps/simdjson/**.h",
-        "Engine/ThirdParty/fastgltf/deps/simdjson/**.c",
+        "Engine/ThirdParty/fastgltf/deps/simdjson/**.cpp",
+        
+        "Engine/ThirdParty/stb_image/**.h",
        
        
 	    "Engine/ThirdParty/vulkanmemoryallocator/**.h",
@@ -54,6 +56,7 @@ project "Lumina"
 
 	includedirs
 	{ 
+	      "Engine/ThirdParty/stb_image/",
 		"Engine/",
 		"Engine/ThirdParty/",
 		"%{IncludeDir.spdlog}/",

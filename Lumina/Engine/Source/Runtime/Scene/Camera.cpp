@@ -1,11 +1,13 @@
 #include "Camera.h"
 
 #include "imgui.h"
+#include "ScenePrimitives.h"
 #include "glm/ext/matrix_clip_space.hpp"
 #include "glm/ext/matrix_transform.hpp"
 #include "Source/Runtime/Events/MouseCodes.h"
 #include "Source/Runtime/Input/Input.h"
-
+#include "Source/Runtime/Renderer/Buffer.h"
+#include "Source/Runtime/Renderer/Renderer.h"
 namespace Lumina
 {
     FCamera::FCamera()
@@ -17,6 +19,13 @@ namespace Lumina
         Pitch = 0.0f;
         WorldUp = glm::vec3(0.0f, 1.0f, 0.0f);
         Front = glm::vec3(0.0f, 0.0f, -1.0f);
+
+        FDeviceBufferSpecification Spec;
+        Spec.MemoryUsage = EDeviceBufferMemoryUsage::COHERENT_WRITE;
+        Spec.Heap = EDeviceBufferMemoryHeap::DEVICE;
+        Spec.BufferUsage = EDeviceBufferUsage::UNIFORM_BUFFER;
+        Spec.Size = sizeof FCameraData * FRenderer::GetConfig().FramesInFlight;
+        CameraBuffer = FBuffer::Create(Spec);
         
 
         UpdateCameraVectors();
@@ -26,12 +35,11 @@ namespace Lumina
     {
     }
 
-    glm::mat4 FCamera::GetCameraProject()
+    glm::mat4 FCamera::GetViewProjectionMatrix()
     {
         glm::mat4 view = GetViewMatrix();
-        glm::mat4 projection = glm::perspective(glm::radians(70.f), AspectRatio, 10000.f, 0.1f);
-        projection[1][1] *= -1;
-
+        glm::mat4 projection = GetProjectionMatrix();
+        
         return projection * view;
     }
 
@@ -40,26 +48,82 @@ namespace Lumina
         return glm::lookAt(Position, Position + Front, Up);
     }
 
-    glm::mat4 FCamera::GetRotationMatrix()
+    glm::mat4 FCamera::GetProjectionMatrix()
     {
-        return glm::perspective(glm::radians(90.0f), 16.0f/9.0f, 0.1f, 100.0f);
+        /* zNear and zFar are flipped to use reverse depth */
+        return glm::perspective(glm::radians(FOV), AspectRatio, 10000.0f, 0.01f);
     }
 
     void FCamera::OnEvent(FEvent& Event)
     {
     }
 
-    void FCamera::Update(float DeltaTime)
+    void FCamera::Rotate(float YawOffset, float PitchOffset, float RollOffset, bool LockPitch)
     {
-        if(Input::IsMouseButtonPressed(Mouse::ButtonRight))
+        Yaw += YawOffset;
+
+        // If pitch is locked (must be in -89.0f to 89.0f range) AND pitch is less than -89.0f OR greater than 89.0f
+        if (LockPitch)
         {
-            glm::vec2 MousePos = Input::GetMousePos();
-            Yaw = MousePos.x * 0.5f;
-            Pitch = glm::clamp(MousePos.y * 0.5f, 0.1f, 269.9f);
-            
+            if (Pitch + PitchOffset> 89.0f)
+            {
+                Pitch = 89.0f;
+            }
+            else if (Pitch + PitchOffset < -89.0f)
+            {
+                Pitch = -89.0f;
+            }
+            else
+            {
+                Pitch += PitchOffset;
+            }
+        }
+        else
+        {
+            Pitch += PitchOffset;
         }
 
-        float velocity = 0.05f;// * deltaTime;
+      //  Roll += rollOffset;
+
+        UpdateCameraVectors();
+    }
+
+    void FCamera::Move(glm::vec3 Direction)
+    {
+        Position += Right * Direction.x;
+        Position += Up * Direction.y;
+        Position += Front * Direction.z;
+
+    }
+
+    void FCamera::Update(double DeltaTime)
+    {
+        if (Input::IsMouseButtonPressed(Mouse::ButtonRight))
+        {
+            glm::vec2 MousePos = Input::GetMousePos();
+
+            if (bFirstMouse)
+            {
+                LastMousePos = MousePos;
+                bFirstMouse = false;
+            }
+
+            glm::vec2 MouseDelta = MousePos - LastMousePos;
+            LastMousePos = MousePos;  // Update the last mouse position
+
+            Yaw += MouseDelta.x * 0.4f;
+            Pitch = std::clamp(Pitch + MouseDelta.y * 0.4f, -89.9f, 89.9f);
+        }
+        else
+        {
+            bFirstMouse = true;  // Reset the first-time flag when the mouse button is not pressed
+        }
+
+        float velocity = 2.0f * DeltaTime;
+        if(Input::IsKeyPressed(Key::LeftShift))
+        {
+            velocity *= 4;
+        }
         if(Input::IsKeyPressed(Key::W))
         {
             Position += Front * velocity;

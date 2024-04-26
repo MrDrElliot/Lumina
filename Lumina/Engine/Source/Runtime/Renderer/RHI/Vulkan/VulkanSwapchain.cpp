@@ -41,6 +41,7 @@ namespace Lumina
         
         vkb::SwapchainBuilder swapchainBuilder{ RenderContext.GetPhysicalDevice(), Device, Surface };
 
+    	Format = VK_FORMAT_B8G8R8A8_UNORM;
         SurfaceFormat.format = VK_FORMAT_B8G8R8A8_UNORM;
     	SurfaceFormat.colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
 
@@ -192,6 +193,7 @@ namespace Lumina
     void FVulkanSwapchain::BeginFrame()
     {
         auto Device = FVulkanRenderContext::GetDevice();
+    	if(!Swapchain.has_value()) return;
 
         vkWaitForFences(Device,  1, &Fences[CurrentFrameIndex], VK_TRUE, UINT64_MAX);
         vkResetFences(Device, 1, &Fences[CurrentFrameIndex]);

@@ -5,6 +5,7 @@
 
 #include "EditorLayer.h"
 #include "Panels/SceneViewPanel.h"
+#include "Source/Runtime/ImGui/ImGuiRenderer.h"
 
 
 namespace fs = std::filesystem;
@@ -32,11 +33,9 @@ namespace Lumina
     {
         FApplication::OnInit();
 
-    }
+        EditorLayer = std::make_shared<FEditorLayer>();
+        FImGuiRenderer::AddLayer(EditorLayer);
 
-    void LuminaEditor::RenderImGui()
-    {
-        FApplication::RenderImGui();
     }
-
+    
 }

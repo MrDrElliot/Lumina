@@ -29,10 +29,11 @@ namespace Lumina
 
 
 		virtual void Init();
-		virtual void OnUpdate(float DeltaTime);
+		virtual void OnUpdate(double DeltaTime);
 		virtual void Shutdown();
 
 		GLFWwindow* GetWindow() const { return Window; }
+		bool IsMinimized() const;
 
 		uint32_t GetWidth() const { return Specs.Width; }
 		uint32_t GetHeight() const { return Specs.Height; }

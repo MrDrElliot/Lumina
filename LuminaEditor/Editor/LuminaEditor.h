@@ -18,10 +18,9 @@ namespace Lumina
         ~LuminaEditor();
 
         void OnInit() override;
-        void RenderImGui() override;
 
         
-        
+        std::shared_ptr<FEditorLayer> EditorLayer;
     };
     
 

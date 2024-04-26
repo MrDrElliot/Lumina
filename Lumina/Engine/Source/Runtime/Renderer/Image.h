@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 
 #include "PipelineStage.h"
+#include "Source/Runtime/GUID/GUID.h"
 
 
 namespace Lumina
@@ -42,7 +43,13 @@ namespace Lumina
         RGB32_HDR,
         RGBA64_HDR,
         RGBA128_HDR,
-        D32
+        D32,
+        BC1,
+        BC5,
+        BC6h,
+        BC7,
+        RGBA64_SFLOAT,
+        RGB24_UNORM
     };
 
     enum class EImageType : glm::uint8
@@ -56,6 +63,7 @@ namespace Lumina
     {
         glm::uvec3 Extent;
         std::filesystem::path Path;
+        std::vector<glm::uint8_t> Pixels;
         EImageFormat Format;
         EImageUsage Usage;
         EImageType Type;
@@ -88,6 +96,7 @@ namespace Lumina
         virtual ~FImage() = default;
         virtual void Destroy() = 0;
         virtual FImageSpecification GetSpecification() const = 0;
+        FGuid GetGuid() { return Guid; }
 
 
         virtual void SetLayout(
@@ -100,6 +109,10 @@ namespace Lumina
          ) = 0;
 
     private:
+
+    protected:
+        
+        FGuid Guid;
         
     };
 
@@ -137,7 +150,7 @@ namespace Lumina
     public:
         virtual ~FImageSampler() = default;
 
-        static FImageSampler* Create(const FImageSamplerSpecification& Spec);
+        static std::shared_ptr<FImageSampler> Create(const FImageSamplerSpecification& Spec);
 
         virtual void Destroy() = 0;
     };

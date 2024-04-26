@@ -7,20 +7,23 @@ namespace Lumina
     LScene::LScene(): LAsset(EAssetType::StaticMesh, "")
     {
         EditorCamera = std::make_shared<FCamera>();
-        SceneRenderer = std::make_unique<FSceneRenderer>();
+        SceneRenderer = std::make_shared<FSceneRenderer>();
     }
 
     LScene::~LScene()
     {
     }
 
-    void LScene::OnUpdate(float DeltaTime)
+    void LScene::OnUpdate(double DeltaTime)
     {
         
         SceneRenderer->BeginScene(EditorCamera);
 
-        
-
         SceneRenderer->EndScene();
+    }
+
+    void LScene::Shutdown()
+    {
+        SceneRenderer->Shutdown();
     }
 }
