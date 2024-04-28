@@ -37,6 +37,7 @@ project "LuminaEditor"
 		"../Lumina/Engine/ThirdParty/GLM/",
 		"../Lumina/Engine/ThirdParty/",
 		"../Lumina/Engine/ThirdParty/stb_image/",
+		"../Lumina/Engine/ThirdParty/json/include/",
 		"../Lumina/Engine/ThirdParty/fastgltf/include/",
 		"../Lumina/Engine/ThirdParty/fastgltf/src/",
         "../Lumina/Engine/ThirdParty/vulkanmemoryallocator/include/",
@@ -44,6 +45,7 @@ project "LuminaEditor"
         "../Lumina/Engine/ThirdParty/imgui/",
         "../Luumina/Engine/ThirdParty/shaderc/",
         "../Lumina/Engine/ThirdParty/SPIRV-Reflect/",
+        "../Lumina/Engine/ThirdParty/json",
         
 		"%{IncludeDir.shaderc}/",
 		"%{IncludeDir.vulkan}/Include/",

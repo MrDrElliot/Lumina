@@ -4,7 +4,7 @@
 
 namespace Lumina
 {
-    LScene::LScene(): LAsset(EAssetType::StaticMesh, "")
+    LScene::LScene(): LAsset(FAssetMetadata())
     {
         EditorCamera = std::make_shared<FCamera>();
         SceneRenderer = std::make_shared<FSceneRenderer>();

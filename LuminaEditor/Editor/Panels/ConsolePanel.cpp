@@ -18,6 +18,10 @@ namespace Lumina
     {
     }
 
+    void FConsolePanel::OnEvent(FEvent& Event)
+    {
+    }
+
     void FConsolePanel::OnRemoved()
     {
     }

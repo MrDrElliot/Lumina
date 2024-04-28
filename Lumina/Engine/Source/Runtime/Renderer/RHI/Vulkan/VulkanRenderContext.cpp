@@ -6,6 +6,7 @@
 #include "VulkanSwapchain.h"
 #include "Source/Runtime/ApplicationCore/Windows/Window.h"
 #include "Source/Runtime/Log/Log.h"
+#include "Source/Runtime/Renderer/Image.h"
 
 
 namespace Lumina
@@ -86,6 +87,31 @@ namespace Lumina
 
 
         FVulkanMemoryAllocator::Init();
+
+        FImageSamplerSpecification Nearest = {};
+        Nearest.MinFilteringMode = ESamplerFilteringMode::LINEAR;
+        Nearest.MagFilteringMode = ESamplerFilteringMode::NEAREST;
+        Nearest.MipMapFilteringMode = ESamplerFilteringMode::LINEAR;
+        Nearest.AddressMode = ESamplerAddressMode::REPEAT;
+        Nearest.MinLOD = 0.0f;
+        Nearest.MaxLOD = 1000.0f;
+        Nearest.LODBias = 0.0f;
+        Nearest.AnisotropicFilteringLevel = 1;
+
+        NearestSampler = FImageSampler::Create(Nearest);
+        
+        // Initializing linear filtration sampler
+        FImageSamplerSpecification Linear = {};
+        Linear.MinFilteringMode = ESamplerFilteringMode::LINEAR;
+        Linear.MagFilteringMode = ESamplerFilteringMode::LINEAR;
+        Linear.MipMapFilteringMode = ESamplerFilteringMode::LINEAR;
+        Linear.AddressMode = ESamplerAddressMode::REPEAT;
+        Linear.MinLOD = 0.0f;
+        Linear.MaxLOD = 1000.0f;
+        Linear.LODBias = 0.0f;
+        Linear.AnisotropicFilteringLevel = 1;
+
+        LinearSampler = FImageSampler::Create(Linear);
         
     }
 

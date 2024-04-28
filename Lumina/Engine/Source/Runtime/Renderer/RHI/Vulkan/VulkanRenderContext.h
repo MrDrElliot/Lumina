@@ -7,6 +7,7 @@
 
 namespace Lumina
 {
+    class FImageSampler;
     class FVulkanSwapchain;
     
     struct FQueueFamilyIndex 
@@ -27,7 +28,9 @@ namespace Lumina
         static FVulkanRenderContext& Get() { return *Instance; }
 
         void Destroy() override;
-        
+
+        static std::shared_ptr<FImageSampler> GetLinearSampler() { return Instance->LinearSampler; }
+        static std::shared_ptr<FImageSampler> GetNearestSampler() { return Instance->NearestSampler; }
         static VkInstance GetVulkanInstance() { return Instance->VulkanInstance; }
         static VkDevice GetDevice() { return Instance->Device; }
         static VkPhysicalDevice GetPhysicalDevice() { return Instance->PhysicalDevice; }
@@ -46,6 +49,9 @@ namespace Lumina
         VkDebugUtilsMessengerEXT DebugMessenger;
         
         std::shared_ptr<FVulkanSwapchain> Swapchain;
+
+        std::shared_ptr<FImageSampler> NearestSampler;
+        std::shared_ptr<FImageSampler> LinearSampler;
         
         VkDevice Device;
         VkPhysicalDevice PhysicalDevice;

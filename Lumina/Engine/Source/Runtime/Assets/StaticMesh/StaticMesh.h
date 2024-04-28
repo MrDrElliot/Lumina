@@ -23,14 +23,15 @@ namespace Lumina
     {
     public:
         
-        LStaticMesh(std::filesystem::path InFilePath, FMeshAsset InInfo);
-        static std::shared_ptr<LStaticMesh> CreateMesh(std::filesystem::path InFilePath, FMeshAsset InInfo);
+        LStaticMesh(const FAssetMetadata& Metadata, FMeshAsset InInfo);
+        static std::shared_ptr<LStaticMesh> CreateMesh(const FAssetMetadata& Metadata, FMeshAsset InInfo);
 
         FMeshAsset GetMeshData() { return MeshData; }
         std::pair<std::shared_ptr<FBuffer>, std::shared_ptr<FBuffer>> GetBuffers() { return {VBO, IBO}; }
 
     private:
 
+        
         FMeshAsset MeshData;
         std::shared_ptr<FBuffer> VBO;
         std::shared_ptr<FBuffer> IBO;

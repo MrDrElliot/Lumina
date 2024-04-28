@@ -12,6 +12,7 @@ namespace Lumina
         ~FConsolePanel();
 
         void OnAdded() override;
+        void OnEvent(FEvent& Event) override;
         void OnRemoved() override;
         void OnRender(double DeltaTime) override;
         void OnNewScene() override;

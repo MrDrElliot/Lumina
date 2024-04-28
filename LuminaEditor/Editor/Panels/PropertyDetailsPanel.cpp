@@ -14,6 +14,10 @@ namespace Lumina
     {
     }
 
+    void FPropertyDetailsPanel::OnEvent(FEvent& Event)
+    {
+    }
+
     void FPropertyDetailsPanel::OnAdded()
     {
     }

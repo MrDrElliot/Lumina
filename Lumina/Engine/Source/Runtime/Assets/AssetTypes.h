@@ -7,13 +7,11 @@ namespace Lumina
     enum class EAssetType : uint8_t
     {
         StaticMesh,
+        SkeletalMesh,
+        Texture,
+        Shader,
+        Prefab,
         Scene,
-    };
-
-    struct FGeometrySurface
-    {
-        uint32_t StartIndex;
-        uint32_t Count;
     };
     
 }

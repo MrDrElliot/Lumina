@@ -17,6 +17,7 @@
 #include "Source/Runtime/Renderer/PipelineLibrary.h"
 #include "Source/Runtime/Renderer/Renderer.h"
 #include "Source/Runtime/Renderer/ShaderLibrary.h"
+#include "Source/Runtime/Renderer/RHI/Vulkan/VulkanRenderContext.h"
 
 namespace Lumina
 {
@@ -86,12 +87,12 @@ namespace Lumina
         uint32_t CurrentIndex = FRenderer::GetCurrentFrameIndex();
         SceneDescriptorSets[CurrentIndex]->Write(0, 0, CameraBuffer, CameraBuffer->GetSpecification().Size, 0);
         SceneDescriptorSets[CurrentIndex]->Write(1, 0, TransformBuffer, TransformBuffer->GetSpecification().Size, 0);
-        SceneDescriptorSets[CurrentIndex]->Write(2, 0, RandomTexture, LinearSampler);
+        SceneDescriptorSets[CurrentIndex]->Write(2, 0, RandomTexture, FVulkanRenderContext::GetLinearSampler());
         
         
         glm::vec3 position = glm::vec3(1.0f, 1.0f, 1.0f);
 
-        float angleDegrees = cos(angle) * 360.0f;
+        float angleDegrees = 0.0f;//cos(angle) * 360.0f;
         float angleRadians = glm::radians(angleDegrees);
         glm::vec3 rotationAxis = glm::vec3(1.0f, 0.0f, 0.0f);
         glm::vec3 scaleFactors = glm::vec3(1.0f, 1.0f, 1.0f);
@@ -220,30 +221,6 @@ namespace Lumina
 
     void FSceneRenderer::CreateImages()
     {
-        FImageSamplerSpecification Nearest = {};
-        Nearest.MinFilteringMode = ESamplerFilteringMode::LINEAR;
-        Nearest.MagFilteringMode = ESamplerFilteringMode::NEAREST;
-        Nearest.MipMapFilteringMode = ESamplerFilteringMode::LINEAR;
-        Nearest.AddressMode = ESamplerAddressMode::REPEAT;
-        Nearest.MinLOD = 0.0f;
-        Nearest.MaxLOD = 1000.0f;
-        Nearest.LODBias = 0.0f;
-        Nearest.AnisotropicFilteringLevel = 1;
-
-        NearestSampler = FImageSampler::Create(Nearest);
-        
-        // Initializing linear filtration sampler
-        FImageSamplerSpecification Linear = {};
-        Linear.MinFilteringMode = ESamplerFilteringMode::LINEAR;
-        Linear.MagFilteringMode = ESamplerFilteringMode::LINEAR;
-        Linear.MipMapFilteringMode = ESamplerFilteringMode::LINEAR;
-        Linear.AddressMode = ESamplerAddressMode::REPEAT;
-        Linear.MinLOD = 0.0f;
-        Linear.MaxLOD = 1000.0f;
-        Linear.LODBias = 0.0f;
-        Linear.AnisotropicFilteringLevel = 1;
-
-        LinearSampler = FImageSampler::Create(Linear);
         
         FImageSpecification ImageSpecs = FImageSpecification::Default();
         ImageSpecs.Extent.x = FApplication::Get().GetWindow().GetWidth();

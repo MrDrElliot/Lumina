@@ -3,10 +3,9 @@
 
 namespace Lumina
 {
-    LAsset::LAsset(EAssetType InType, std::filesystem::path InPath)
+    LAsset::LAsset(const FAssetMetadata& InMetadata)
+        :Metadata(InMetadata)
     {
-        AssetType = InType;
-        FilePath = InPath;
     }
 
     LAsset::~LAsset()

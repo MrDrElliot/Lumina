@@ -5,7 +5,7 @@
 
 namespace Lumina
 {
-    LStaticMesh::LStaticMesh(std::filesystem::path InFilePath, FMeshAsset InInfo): LAsset(EAssetType::StaticMesh, InFilePath)
+    LStaticMesh::LStaticMesh(const FAssetMetadata& Metadata, FMeshAsset InInfo): LAsset(Metadata)
     {
 
         MeshData = InInfo;
@@ -26,8 +26,8 @@ namespace Lumina
         IBO = FBuffer::Create(IBOSPec, InInfo.Indices.data(),sizeof(uint32_t) * InInfo.Indices.size());
     }
 
-    std::shared_ptr<LStaticMesh> LStaticMesh::CreateMesh(std::filesystem::path InFilePath, FMeshAsset InInfo)
+    std::shared_ptr<LStaticMesh> LStaticMesh::CreateMesh(const FAssetMetadata& Metadata, FMeshAsset InInfo)
     {
-        return std::make_shared<LStaticMesh>(InFilePath, InInfo);
+        return std::make_shared<LStaticMesh>(Metadata, InInfo);
     }
 }

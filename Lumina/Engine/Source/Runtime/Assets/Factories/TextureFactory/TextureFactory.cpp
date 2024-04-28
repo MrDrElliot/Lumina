@@ -3,15 +3,20 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
+#include "Source/Runtime/Log/Log.h"
+#include "Source/Runtime/Paths/Paths.h"
+
 namespace Lumina
 {
     std::vector<std::uint8_t> FTextureFactory::ImportFromSource(std::filesystem::path Path)
     {
+        LE_LOG_INFO("Importing Texture From Source: {0}", Path.filename().string());
         stbi_set_flip_vertically_on_load(true);
         int x, y, c;
         stbi_uc* data = stbi_load(Path.string().c_str(), &x, &y, &c, STBI_rgb_alpha);
         std::vector<std::uint8_t> out(data, data + (x * y * STBI_rgb_alpha));
         delete data;
+        
         return out;
     }
 

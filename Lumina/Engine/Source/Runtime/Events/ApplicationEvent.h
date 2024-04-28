@@ -37,6 +37,26 @@ namespace Lumina
         EVENT_CLASS_CATEGORY(EventCategoryApplication)
     };
 
+    class WindowDropEvent : public FEvent
+    {
+    public:
+        WindowDropEvent(int InPathCount, const char* InPaths[])
+        {
+            PathCount = InPathCount;
+            Path = InPaths[0];
+        }
+
+        int GetPathCount() { return PathCount; }
+        const char* GetPath() { return Path; }
+        EVENT_CLASS_TYPE(WindowDrop)
+        EVENT_CLASS_CATEGORY(EventCategoryApplication)
+
+    private:
+
+        int PathCount;
+        const char* Path;
+    };
+
     class AppTickEvent : public FEvent
     {
     public:

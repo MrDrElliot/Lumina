@@ -7,20 +7,34 @@
 
 namespace Lumina
 {
+
+    struct FAssetMetadata
+    {
+        std::string Name;
+        FGuid Guid;
+        std::filesystem::path Path;
+        std::filesystem::path OriginPath;
+        bool bLoaded = false;
+        EAssetType AssetType;
+    };
+    
     class LAsset : public LObject
     {
     public:
 
-        LAsset(EAssetType InType, std::filesystem::path InPath);
+        LAsset(const FAssetMetadata& InMetadata);
         virtual ~LAsset();
 
 
-        EAssetType GetAssetType() const { return AssetType; }
-        const std::filesystem::path& GetFilePath() const { return FilePath; }
+    public:
+
+        FAssetMetadata& GetAssetMetadata() { return Metadata; }
+        EAssetType GetAssetType() const { return Metadata.AssetType; }
+        const std::filesystem::path& GetFilePath() const { return Metadata.Path; }
+        const FGuid GetGUID() const { return Metadata.Guid; }
         
     private:
-        
-        EAssetType AssetType;
-        std::filesystem::path FilePath;
+
+        FAssetMetadata Metadata;
     };
 }

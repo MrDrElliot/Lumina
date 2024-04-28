@@ -1,5 +1,6 @@
 #include "Application.h"
 
+#include "Source/Runtime/Assets/AssetManager/AssetManager.h"
 #include "Source/Runtime/ImGui/ImGuiRenderer.h"
 #include "Source/Runtime/Log/Log.h"
 #include "Source/Runtime/Renderer/Buffer.h"
@@ -19,6 +20,7 @@ namespace Lumina
     {
         AppSpecs = InAppSpecs;
         Instance = this;
+        AssetManager = std::make_shared<FAssetManager>(InAppSpecs);
         
     }
 
@@ -106,7 +108,7 @@ namespace Lumina
     {
         Window = FWindow::Create(InSpecs);
         Window->Init();
-        Window->SetEventCallback(HZ_BIND_EVENT_FN(OnEvent));
+        Window->SetEventCallback(BIND_EVENT_FN(OnEvent));
         
     }
 

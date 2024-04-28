@@ -22,6 +22,10 @@ namespace Lumina
     {
     }
 
+    void FMainMenuPanel::OnEvent(FEvent& Event)
+    {
+    }
+
     void FMainMenuPanel::OnRender(double DeltaTime)
     {
         if(bShowDemo)

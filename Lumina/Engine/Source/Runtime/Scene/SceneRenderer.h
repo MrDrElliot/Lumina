@@ -20,6 +20,7 @@ namespace Lumina
     class FSceneRenderer
     {
     public:
+        
 
         static std::shared_ptr<FSceneRenderer> Create();
 
@@ -31,8 +32,6 @@ namespace Lumina
 
         std::shared_ptr<FImage> GetRenderTarget() { return RenderTargets[FRenderer::GetCurrentFrameIndex()]; }
         std::shared_ptr<FImage> GetDepthAttachment() { return DepthAttachments[FRenderer::GetCurrentFrameIndex()]; }
-        std::shared_ptr<FImageSampler> GetNearestSampler() { return NearestSampler; }
-        std::shared_ptr<FImageSampler> GetLinearSampler() { return LinearSampler; }
 
         void InitPipelines();
         void InitBuffers();
@@ -56,9 +55,6 @@ namespace Lumina
 
         std::shared_ptr<FImage> RandomTexture;
 
-        std::shared_ptr<FImageSampler> NearestSampler;
-        std::shared_ptr<FImageSampler> LinearSampler;
-
         std::vector<std::shared_ptr<LStaticMesh>> RenderMeshes;
         
         std::shared_ptr<FBuffer> CameraBuffer;
@@ -66,5 +62,11 @@ namespace Lumina
         std::shared_ptr<FBuffer> TextureBuffer;
 
         std::shared_ptr<FCamera> Camera;
+
+
+        struct GlobalLight
+        {
+            
+        } GlobalLights;
     };
 }

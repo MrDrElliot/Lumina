@@ -27,10 +27,6 @@ layout(binding = 1) buffer ModelData
 
 layout(binding = 2) uniform sampler2D displayTexture;
 
-// Lighting parameters
-vec3 lightDirection = normalize(vec3(1.0, -1.0, -1.0)); // Top-right light
-vec3 lightColor = vec3(1.0, 1.0, 1.0); // White light
-vec3 ambientColor = vec3(0.2, 0.2, 0.2); // Low ambient lighting
 
 vec4 pseudoRandomColor(int seed)
 {

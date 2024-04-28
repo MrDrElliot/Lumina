@@ -50,6 +50,10 @@ namespace Lumina
     void FEditorLayer::OnEvent(FEvent& InEvent)
     {
         FLayer::OnEvent(InEvent);
+        for(auto Panel : EditorPanels)
+        {
+            Panel->OnEvent(InEvent);
+        }
     }
 
     void FEditorLayer::AddEditorLayer(FEditorPanel* NewPanel)

@@ -31,6 +31,7 @@ namespace Lumina
 
         static void Render(double DeltaTime);
         static void RenderImage(std::shared_ptr<FImage> Image, std::shared_ptr<FImageSampler> Sampler, ImVec2 Size, glm::uint32 ImageLayer = 0, bool bFlip = false);
+        static ImTextureID CreateImGuiTexture(std::shared_ptr<FImage> Image, std::shared_ptr<FImageSampler> Sampler, ImVec2 Size, glm::uint32 ImageLayer = 0, bool bFlip = false);
 
 
     private:

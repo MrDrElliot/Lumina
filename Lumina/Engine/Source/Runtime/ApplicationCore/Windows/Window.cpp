@@ -50,6 +50,13 @@ namespace Lumina
 				WindowCloseEvent event;
 				data.EventCallback(event);
 			});
+
+			glfwSetDropCallback(Window, [](GLFWwindow* window, int path_count, const char* paths[])
+			{
+				FWindowSpecs& Data = *(FWindowSpecs*)glfwGetWindowUserPointer(window);
+				WindowDropEvent event(path_count, paths);
+				Data.EventCallback(event);
+			});
 			
 			glfwSetKeyCallback(Window, [](GLFWwindow* window, int key, int scancode, int action, int mods)
 			{

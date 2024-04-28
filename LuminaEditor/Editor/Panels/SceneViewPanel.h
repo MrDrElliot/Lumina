@@ -17,6 +17,7 @@ namespace Lumina
         FSceneViewPanel(std::shared_ptr<LScene> InScene);
         ~FSceneViewPanel() override;
 
+        void OnEvent(FEvent& Event) override;
         void OnNewScene() override;
         void OnAdded() override;
         void OnRemoved() override;

@@ -19,6 +19,8 @@ namespace Lumina
 
         void OnInit() override;
 
+        void OnEvent(FEvent& Event) override;
+
         
         std::shared_ptr<FEditorLayer> EditorLayer;
     };

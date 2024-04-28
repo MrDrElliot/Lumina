@@ -14,6 +14,7 @@
 
 namespace Lumina
 {
+	class FAssetManager;
 	class FBuffer;
 	class FDescriptorSet;
 	class FImage;
@@ -69,7 +70,7 @@ namespace Lumina
 		void PopLayer(std::shared_ptr<FLayer> InLayer);
 		void PopOverlay(std::shared_ptr<FLayer> InLayer);
 
-		void OnEvent(FEvent& Event);
+		virtual void OnEvent(FEvent& Event);
 		
 		static FApplication& Get() { return *Instance; }
 		
@@ -78,6 +79,8 @@ namespace Lumina
 
 		static FWindow& GetWindow() { return *Instance->Window;  }
 		static std::shared_ptr<LScene> GetActiveScene() { return Instance->ActiveScene; }
+
+		static std::shared_ptr<FAssetManager> GetAssetManager() { return Instance->AssetManager; }
 	
 	private:
 
@@ -104,6 +107,8 @@ namespace Lumina
 
 		/* Layer Stack */
 		FLayerStack LayerStack;
+
+		std::shared_ptr<FAssetManager> AssetManager;
 		
 	};
 

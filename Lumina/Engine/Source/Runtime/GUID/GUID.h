@@ -16,7 +16,7 @@ namespace Lumina
         bool IsValid() const { return Guid != 0; }
 
         operator uint64() const { return Guid; }
-
+    
     private:
 
         FGuid(uint64 New):Guid(New) {}

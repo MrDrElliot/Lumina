@@ -196,6 +196,23 @@ namespace Lumina
         ImGui::Image(ImGuiImageDescriptorSets[Image->GetGuid().Get()], Size, { 0, (glm::float32)!bFlip }, { 1, (glm::float32)bFlip });
     }
 
+    ImTextureID FVulkanImGuiRenderAPI::CreateImGuiTexture(std::shared_ptr<FImage> Image, std::shared_ptr<FImageSampler> Sampler, ImVec2 Size, glm::uint32 ImageLayer, bool bFlip)
+    {
+    	std::shared_ptr<FVulkanImage> vk_image = std::dynamic_pointer_cast<FVulkanImage>(Image);
+    	std::shared_ptr<FVulkanImageSampler> vk_sampler = std::dynamic_pointer_cast<FVulkanImageSampler>(Sampler);
+    	if (ImGuiImageDescriptorSets.find(Image->GetGuid().Get()) == ImGuiImageDescriptorSets.end())
+    	{
+    		VkDescriptorSet ImGuiImageID = ImGui_ImplVulkan_AddTexture(
+				vk_sampler->GetSampler(),
+				vk_image->GetImageView(),
+				VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+			);
+    		ImGuiImageDescriptorSets.emplace(Image->GetGuid().Get(), ImGuiImageID);
+    	}
+
+    	return ImGuiImageDescriptorSets[Image->GetGuid().Get()];
+    }
+
     void FVulkanImGuiRenderAPI::EndFrame()
     {
         ImGuiIO& Io = ImGui::GetIO();

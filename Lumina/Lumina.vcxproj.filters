@@ -10,14 +10,17 @@
     <Filter Include="Source\Runtime\ApplicationCore">
       <UniqueIdentifier>{75EAD70A-6110-A271-4A56-273D361BC73D}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\Runtime\ApplicationCore\ImGui">
-      <UniqueIdentifier>{5FA305ED-4B8A-C7E4-F4DA-2D02E0A0404B}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source\Runtime\ApplicationCore\Windows">
       <UniqueIdentifier>{AF390F74-9B8B-E663-84AA-2374709BFF4C}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source\Runtime\Assets">
       <UniqueIdentifier>{4B61858B-B7CD-4086-80C1-D8E3ECEC62EE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Runtime\Assets\AssetManager">
+      <UniqueIdentifier>{B52761DB-A163-6445-0A76-7C3CF6D00C60}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Runtime\Assets\AssetRegistry">
+      <UniqueIdentifier>{33B6FB08-9F6F-66B3-28CF-808D94871C23}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source\Runtime\Assets\Factories">
       <UniqueIdentifier>{7AC6F9A0-E6A9-08E1-EFAC-361D5B0FCF31}</UniqueIdentifier>
@@ -54,6 +57,9 @@
     </Filter>
     <Filter Include="Source\Runtime\Memory">
       <UniqueIdentifier>{D1D182A6-3D3E-3EA1-0632-D6FE725D6009}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Runtime\Paths">
+      <UniqueIdentifier>{383B76DE-24CA-FFA7-CDE8-13A3B956104E}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source\Runtime\Platform">
       <UniqueIdentifier>{FD947116-69CC-B9AD-72D6-1DD1DE8CE0A6}</UniqueIdentifier>
@@ -173,9 +179,6 @@
     <ClInclude Include="Engine\Source\Runtime\ApplicationCore\Application.h">
       <Filter>Source\Runtime\ApplicationCore</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\Source\Runtime\ApplicationCore\ImGui\ImGuiLayer.h">
-      <Filter>Source\Runtime\ApplicationCore\ImGui</Filter>
-    </ClInclude>
     <ClInclude Include="Engine\Source\Runtime\ApplicationCore\Layer.h">
       <Filter>Source\Runtime\ApplicationCore</Filter>
     </ClInclude>
@@ -190,6 +193,12 @@
     </ClInclude>
     <ClInclude Include="Engine\Source\Runtime\Assets\Asset.h">
       <Filter>Source\Runtime\Assets</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Assets\AssetManager\AssetManager.h">
+      <Filter>Source\Runtime\Assets\AssetManager</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Assets\AssetRegistry\AssetRegistry.h">
+      <Filter>Source\Runtime\Assets\AssetRegistry</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Source\Runtime\Assets\AssetTypes.h">
       <Filter>Source\Runtime\Assets</Filter>
@@ -239,6 +248,12 @@
     <ClInclude Include="Engine\Source\Runtime\ImGui\ImGuiFonts.h">
       <Filter>Source\Runtime\ImGui</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\ImGui\ImGuiRenderAPI.h">
+      <Filter>Source\Runtime\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\ImGui\ImGuiRenderer.h">
+      <Filter>Source\Runtime\ImGui</Filter>
+    </ClInclude>
     <ClInclude Include="Engine\Source\Runtime\Input\Input.h">
       <Filter>Source\Runtime\Input</Filter>
     </ClInclude>
@@ -248,7 +263,10 @@
     <ClInclude Include="Engine\Source\Runtime\Memory\Memory.h">
       <Filter>Source\Runtime\Memory</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\Source\Runtime\Platform\Vulkan\VulkanImGuiLayer.h">
+    <ClInclude Include="Engine\Source\Runtime\Paths\Paths.h">
+      <Filter>Source\Runtime\Paths</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Platform\Vulkan\VulkanImGuiRenderAPI.h">
       <Filter>Source\Runtime\Platform\Vulkan</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Source\Runtime\Primitives\DefaultPrimitives.h">
@@ -1717,9 +1735,6 @@
     <ClCompile Include="Engine\Source\Runtime\ApplicationCore\Application.cpp">
       <Filter>Source\Runtime\ApplicationCore</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\Source\Runtime\ApplicationCore\ImGui\ImGuiLayer.cpp">
-      <Filter>Source\Runtime\ApplicationCore\ImGui</Filter>
-    </ClCompile>
     <ClCompile Include="Engine\Source\Runtime\ApplicationCore\LayerStack.cpp">
       <Filter>Source\Runtime\ApplicationCore</Filter>
     </ClCompile>
@@ -1728,6 +1743,12 @@
     </ClCompile>
     <ClCompile Include="Engine\Source\Runtime\Assets\Asset.cpp">
       <Filter>Source\Runtime\Assets</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\Assets\AssetManager\AssetManager.cpp">
+      <Filter>Source\Runtime\Assets\AssetManager</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\Assets\AssetRegistry\AssetRegistry.cpp">
+      <Filter>Source\Runtime\Assets\AssetRegistry</Filter>
     </ClCompile>
     <ClCompile Include="Engine\Source\Runtime\Assets\Factories\Factory.cpp">
       <Filter>Source\Runtime\Assets\Factories</Filter>
@@ -1753,13 +1774,22 @@
     <ClCompile Include="Engine\Source\Runtime\ImGui\ImGuiFonts.cpp">
       <Filter>Source\Runtime\ImGui</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\ImGui\ImGuiRenderAPI.cpp">
+      <Filter>Source\Runtime\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\ImGui\ImGuiRenderer.cpp">
+      <Filter>Source\Runtime\ImGui</Filter>
+    </ClCompile>
     <ClCompile Include="Engine\Source\Runtime\Input\Input.cpp">
       <Filter>Source\Runtime\Input</Filter>
     </ClCompile>
     <ClCompile Include="Engine\Source\Runtime\Log\Log.cpp">
       <Filter>Source\Runtime\Log</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\Source\Runtime\Platform\Vulkan\VulkanImGuiLayer.cpp">
+    <ClCompile Include="Engine\Source\Runtime\Paths\Paths.cpp">
+      <Filter>Source\Runtime\Paths</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\Platform\Vulkan\VulkanImGuiRenderAPI.cpp">
       <Filter>Source\Runtime\Platform\Vulkan</Filter>
     </ClCompile>
     <ClCompile Include="Engine\Source\Runtime\Primitives\DefaultPrimitives.cpp">

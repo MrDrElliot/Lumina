@@ -37,5 +37,11 @@ namespace Lumina
         FImGuiRenderer::AddLayer(EditorLayer);
 
     }
-    
+
+    void LuminaEditor::OnEvent(FEvent& Event)
+    {
+        EditorLayer->OnEvent(Event);
+        
+        FApplication::OnEvent(Event);
+    }
 }

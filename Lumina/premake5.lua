@@ -30,6 +30,10 @@ project "Lumina"
 	    "Engine/ThirdParty/shaderc/**.h",
         "Engine/ThirdParty/shaderc/**.cc",
         
+        "Engine/ThirdParty/json/include/**.h",
+        "Engine/ThirdParty/json/include/**.cpp",
+
+        
 	    "Engine/ThirdParty/SPIRV-Reflect/**.h",
 	    "Engine/ThirdParty/SPIRV-Reflect/**.c",
 	    "Engine/ThirdParty/SPIRV-Reflect/**.cpp",
@@ -56,7 +60,7 @@ project "Lumina"
 
 	includedirs
 	{ 
-	      "Engine/ThirdParty/stb_image/",
+	    "Engine/ThirdParty/stb_image/",
 		"Engine/",
 		"Engine/ThirdParty/",
 		"%{IncludeDir.spdlog}/",
@@ -65,6 +69,7 @@ project "Lumina"
 		"%{IncludeDir.SPIRV_Reflect}/include",
 		"%{IncludeDir.imgui}/",
 		"%{IncludeDir.stb_image}/",
+		"%{IncludeDir.json}",
 		"%{IncludeDir.fastgltf}/",
 		"%{IncludeDir.vkbootstrap}/src/",
 		"%{IncludeDir.vulkan}/Include/",

@@ -54,4 +54,9 @@ namespace Lumina
     {
         RenderAPI->RenderImage(Image, Sampler, Size, ImageLayer, bFlip);
     }
+
+    ImTextureID FImGuiRenderer::CreateImGuiTexture(std::shared_ptr<FImage> Image, std::shared_ptr<FImageSampler> Sampler, ImVec2 Size, glm::uint32 ImageLayer, bool bFlip)
+    {
+        return RenderAPI->CreateImGuiTexture(Image, Sampler, Size, ImageLayer, bFlip);
+    }
 }

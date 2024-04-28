@@ -76,7 +76,7 @@
       <WarningLevel>Level3</WarningLevel>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;GLM_FORCE_DEPTH_ZERO_TO_ONE;GLFW_INCLUDE_NONE;LE_DEBUG;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>Engine\ThirdParty\stb_image;Engine;Engine\ThirdParty;Engine\ThirdParty\spdlog\include;Engine\ThirdParty\GLFW\include;Engine\ThirdParty\GLM;Engine\ThirdParty\SPIRV-Reflect\include;Engine\ThirdParty\imgui;.;Engine\ThirdParty\fastgltf\include;Engine\ThirdParty\vk-bootstrap\src;C:\VulkanSDK\1.3.280.0\Include;Engine\ThirdParty\shaderc;Engine\ThirdParty\VulkanMemoryAllocator\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Engine\ThirdParty\stb_image;Engine;Engine\ThirdParty;Engine\ThirdParty\spdlog\include;Engine\ThirdParty\GLFW\include;Engine\ThirdParty\GLM;Engine\ThirdParty\SPIRV-Reflect\include;Engine\ThirdParty\imgui;.;Engine\ThirdParty\json\include;Engine\ThirdParty\fastgltf\include;Engine\ThirdParty\vk-bootstrap\src;C:\VulkanSDK\1.3.280.0\Include;Engine\ThirdParty\shaderc;Engine\ThirdParty\VulkanMemoryAllocator\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <MinimalRebuild>false</MinimalRebuild>
@@ -100,7 +100,7 @@
       <WarningLevel>Level3</WarningLevel>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;GLM_FORCE_DEPTH_ZERO_TO_ONE;GLFW_INCLUDE_NONE;LE_RELEASE;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>Engine\ThirdParty\stb_image;Engine;Engine\ThirdParty;Engine\ThirdParty\spdlog\include;Engine\ThirdParty\GLFW\include;Engine\ThirdParty\GLM;Engine\ThirdParty\SPIRV-Reflect\include;Engine\ThirdParty\imgui;.;Engine\ThirdParty\fastgltf\include;Engine\ThirdParty\vk-bootstrap\src;C:\VulkanSDK\1.3.280.0\Include;Engine\ThirdParty\shaderc;Engine\ThirdParty\VulkanMemoryAllocator\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Engine\ThirdParty\stb_image;Engine;Engine\ThirdParty;Engine\ThirdParty\spdlog\include;Engine\ThirdParty\GLFW\include;Engine\ThirdParty\GLM;Engine\ThirdParty\SPIRV-Reflect\include;Engine\ThirdParty\imgui;.;Engine\ThirdParty\json\include;Engine\ThirdParty\fastgltf\include;Engine\ThirdParty\vk-bootstrap\src;C:\VulkanSDK\1.3.280.0\Include;Engine\ThirdParty\shaderc;Engine\ThirdParty\VulkanMemoryAllocator\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -127,7 +127,7 @@
       <WarningLevel>Level3</WarningLevel>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;GLM_FORCE_DEPTH_ZERO_TO_ONE;GLFW_INCLUDE_NONE;LE_SHIP;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>Engine\ThirdParty\stb_image;Engine;Engine\ThirdParty;Engine\ThirdParty\spdlog\include;Engine\ThirdParty\GLFW\include;Engine\ThirdParty\GLM;Engine\ThirdParty\SPIRV-Reflect\include;Engine\ThirdParty\imgui;.;Engine\ThirdParty\fastgltf\include;Engine\ThirdParty\vk-bootstrap\src;C:\VulkanSDK\1.3.280.0\Include;Engine\ThirdParty\shaderc;Engine\ThirdParty\VulkanMemoryAllocator\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Engine\ThirdParty\stb_image;Engine;Engine\ThirdParty;Engine\ThirdParty\spdlog\include;Engine\ThirdParty\GLFW\include;Engine\ThirdParty\GLM;Engine\ThirdParty\SPIRV-Reflect\include;Engine\ThirdParty\imgui;.;Engine\ThirdParty\json\include;Engine\ThirdParty\fastgltf\include;Engine\ThirdParty\vk-bootstrap\src;C:\VulkanSDK\1.3.280.0\Include;Engine\ThirdParty\shaderc;Engine\ThirdParty\VulkanMemoryAllocator\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -182,6 +182,7 @@
     <ClInclude Include="Engine\Source\Runtime\Input\Input.h" />
     <ClInclude Include="Engine\Source\Runtime\Log\Log.h" />
     <ClInclude Include="Engine\Source\Runtime\Memory\Memory.h" />
+    <ClInclude Include="Engine\Source\Runtime\Paths\Paths.h" />
     <ClInclude Include="Engine\Source\Runtime\Platform\Vulkan\VulkanImGuiRenderAPI.h" />
     <ClInclude Include="Engine\Source\Runtime\Primitives\DefaultPrimitives.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\Buffer.h" />
@@ -690,6 +691,7 @@
     <ClCompile Include="Engine\Source\Runtime\ImGui\ImGuiRenderer.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Input\Input.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Log\Log.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Paths\Paths.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Platform\Vulkan\VulkanImGuiRenderAPI.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Primitives\DefaultPrimitives.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\Buffer.cpp" />

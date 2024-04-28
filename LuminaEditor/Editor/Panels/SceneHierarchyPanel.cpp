@@ -15,6 +15,10 @@ namespace Lumina
     {
     }
 
+    void FSceneHierarchyPanel::OnEvent(FEvent& Event)
+    {
+    }
+
     void FSceneHierarchyPanel::OnAdded()
     {
     }

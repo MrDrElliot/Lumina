@@ -22,6 +22,8 @@ namespace Lumina
         void AddLayer(std::shared_ptr<FLayer> InLayer) override;
         void RemoveLayer(std::shared_ptr<FLayer> InLayer) override;
         void RenderImage(std::shared_ptr<FImage> Image, std::shared_ptr<FImageSampler> Sampler, ImVec2 Size, glm::uint32 ImageLayer, bool bFlip) override;
+        virtual ImTextureID CreateImGuiTexture(std::shared_ptr<FImage> Image, std::shared_ptr<FImageSampler> Sampler, ImVec2 Size, glm::uint32 ImageLayer = 0, bool bFlip = false);
+
 
     private:
 

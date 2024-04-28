@@ -104,8 +104,8 @@ namespace Lumina
                     vtx.Color = glm::vec4(r, g, b, 1.0f);  // Set the vertex color
                 }
             }
-
-            ReturnMeshes.push_back(LStaticMesh::CreateMesh(InPath, NewAsset));
+            
+            ReturnMeshes.push_back(LStaticMesh::CreateMesh(FAssetMetadata(), NewAsset));
         }
 
         return ReturnMeshes;

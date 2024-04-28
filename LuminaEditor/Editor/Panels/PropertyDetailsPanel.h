@@ -10,6 +10,7 @@ namespace Lumina
         FPropertyDetailsPanel();
         ~FPropertyDetailsPanel();
 
+        void OnEvent(FEvent& Event) override;
         void OnAdded() override;
         void OnRemoved() override;
         void OnRender(double DeltaTime) override;
