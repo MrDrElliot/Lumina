@@ -102,6 +102,7 @@ namespace Lumina
         modelMatrix = glm::translate(modelMatrix, position);
         modelMatrix = glm::rotate(modelMatrix, angleRadians, rotationAxis);
         modelMatrix = glm::scale(modelMatrix, scaleFactors);
+
         
         // Calculate buffer index and upload the matrix
         TransformBuffer->UploadData(0, &modelMatrix, sizeof(glm::mat4));

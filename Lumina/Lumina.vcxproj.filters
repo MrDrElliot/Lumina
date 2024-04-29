@@ -136,6 +136,15 @@
     <Filter Include="ThirdParty\imgui\backends">
       <UniqueIdentifier>{E4EDCF95-50B0-0320-9960-92AC0562DCFD}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ThirdParty\nativefiledialog">
+      <UniqueIdentifier>{9688BBF8-0296-E9DE-8B7C-E5C9F788B595}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\nativefiledialog\src">
+      <UniqueIdentifier>{ADA1F585-1985-04C6-2288-32028EEACA16}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\nativefiledialog\src\include">
+      <UniqueIdentifier>{2026ACA0-8CB5-6D8B-95B1-4EA301C0A897}</UniqueIdentifier>
+    </Filter>
     <Filter Include="ThirdParty\shaderc">
       <UniqueIdentifier>{F93D1992-E521-DAE7-4E82-D43A3A85C469}</UniqueIdentifier>
     </Filter>
@@ -1643,6 +1652,18 @@
     <ClInclude Include="Engine\ThirdParty\imgui\backends\imgui_impl_vulkan.h">
       <Filter>ThirdParty\imgui\backends</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\ThirdParty\nativefiledialog\src\common.h">
+      <Filter>ThirdParty\nativefiledialog\src</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\ThirdParty\nativefiledialog\src\include\nfd.h">
+      <Filter>ThirdParty\nativefiledialog\src\include</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\ThirdParty\nativefiledialog\src\nfd_common.h">
+      <Filter>ThirdParty\nativefiledialog\src</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\ThirdParty\nativefiledialog\src\simple_exec.h">
+      <Filter>ThirdParty\nativefiledialog\src</Filter>
+    </ClInclude>
     <ClInclude Include="Engine\ThirdParty\shaderc\glslc\dependency_info.h">
       <Filter>ThirdParty\shaderc\glslc</Filter>
     </ClInclude>
@@ -1902,6 +1923,15 @@
     </ClCompile>
     <ClCompile Include="Engine\ThirdParty\imgui\backends\imgui_impl_vulkan.cpp">
       <Filter>ThirdParty\imgui\backends</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\ThirdParty\nativefiledialog\src\nfd_common.c">
+      <Filter>ThirdParty\nativefiledialog\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\ThirdParty\nativefiledialog\src\nfd_gtk.c">
+      <Filter>ThirdParty\nativefiledialog\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\ThirdParty\nativefiledialog\src\nfd_zenity.c">
+      <Filter>ThirdParty\nativefiledialog\src</Filter>
     </ClCompile>
     <ClCompile Include="Engine\ThirdParty\shaderc\glslc\dependency_info.cc">
       <Filter>ThirdParty\shaderc\glslc</Filter>

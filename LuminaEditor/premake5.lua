@@ -36,6 +36,7 @@ project "LuminaEditor"
 		"../Lumina/Engine/ThirdParty/GLFW/src/",
 		"../Lumina/Engine/ThirdParty/GLM/",
 		"../Lumina/Engine/ThirdParty/",
+		"../Lumina/Engine/ThirdParty/nativefiledialog/src/include",
 		"../Lumina/Engine/ThirdParty/stb_image/",
 		"../Lumina/Engine/ThirdParty/json/include/",
 		"../Lumina/Engine/ThirdParty/fastgltf/include/",

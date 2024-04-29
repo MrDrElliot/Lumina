@@ -18,6 +18,7 @@ namespace Lumina
         glm::uint32 VertexCount;
     };
 
+
     constexpr VkIndexType ExtractIndexType(glm::uint8 Flags)
     {
         if (Flags & (glm::uint64)EDeviceBufferFlags::INDEX_TYPE_UINT8)		return VK_INDEX_TYPE_UINT8_EXT;

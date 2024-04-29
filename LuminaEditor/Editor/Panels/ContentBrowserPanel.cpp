@@ -3,6 +3,7 @@
 #include "imgui_internal.h"
 #include <filesystem>
 
+#include <nativefiledialog/src/include/nfd.h>
 #include "Source/Runtime/Assets/AssetRegistry/AssetRegistry.h"
 #include "Source/Runtime/Assets/Factories/TextureFactory/TextureFactory.h"
 #include "Source/Runtime/Events/ApplicationEvent.h"
@@ -88,24 +89,20 @@ namespace Lumina
         char name[1024] = ""; // New Asset name.
         if (ImGui::BeginPopupModal("Import Asset", NULL, ImGuiWindowFlags_AlwaysAutoResize))
         {
-            ImGui::Text("Enter the asset name:");
-            ImGui::InputText("##name", name, IM_ARRAYSIZE(name));
-            ImGui::Text("Enter the file path to import:");
-            ImGui::InputText("##filepath", filePath, IM_ARRAYSIZE(filePath));
-
-            if (ImGui::Button("OK"))
-            {
-                ImGui::CloseCurrentPopup();
+            nfdchar_t *outPath = NULL;
+            nfdresult_t result = NFD_OpenDialog( NULL, NULL, &outPath );
+        
+            if ( result == NFD_OKAY ) {
+                puts("Success!");
+                puts(outPath);
+                free(outPath);
             }
-            
-            ImGui::SameLine();
-            
-            if (ImGui::Button("Cancel"))
-            {
-                ImGui::CloseCurrentPopup();
+            else if ( result == NFD_CANCEL ) {
+                puts("User pressed cancel.");
             }
-
-            ImGui::EndPopup();
+            else {
+                printf("Error: %s\n", NFD_GetError() );
+            }
         }
 
         ImGui::PopStyleColor();

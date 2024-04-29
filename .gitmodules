@@ -27,3 +27,6 @@
 [submodule "Lumina/Engine/ThirdParty/json"]
 	path = Lumina/Engine/ThirdParty/json
 	url = https://github.com/MrDrElliot/json.git
+[submodule "Lumina/Engine/ThirdParty/nativefiledialog"]
+	path = Lumina/Engine/ThirdParty/nativefiledialog
+	url = https://github.com/MrDrElliot/nativefiledialog.git

@@ -33,6 +33,8 @@ project "Lumina"
         "Engine/ThirdParty/json/include/**.h",
         "Engine/ThirdParty/json/include/**.cpp",
 
+        "Engine/ThirdParty/nativefiledialog/src/**.c",
+        "Engine/ThirdParty/nativefiledialog/src/**.h",
         
 	    "Engine/ThirdParty/SPIRV-Reflect/**.h",
 	    "Engine/ThirdParty/SPIRV-Reflect/**.c",
@@ -68,6 +70,7 @@ project "Lumina"
 		"%{IncludeDir.glm}/",
 		"%{IncludeDir.SPIRV_Reflect}/include",
 		"%{IncludeDir.imgui}/",
+		"%{IncludeDir.nativefiledialog}/include",
 		"%{IncludeDir.stb_image}/",
 		"%{IncludeDir.json}",
 		"%{IncludeDir.fastgltf}/",
