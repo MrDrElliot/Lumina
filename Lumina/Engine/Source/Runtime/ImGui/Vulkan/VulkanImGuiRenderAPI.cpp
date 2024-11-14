@@ -208,6 +208,10 @@ namespace Lumina
 
     void FVulkanImGuiRenderAPI::EndFrame()
     {
+    	if(FRenderer::GetSwapchain()->IsSwapchainDirty())
+    	{
+    		return;
+    	}
         ImGuiIO& Io = ImGui::GetIO();
         FApplication& App = FApplication::Get();
         Io.DisplaySize = ImVec2(App.GetWindow().GetWidth(), App.GetWindow().GetHeight());

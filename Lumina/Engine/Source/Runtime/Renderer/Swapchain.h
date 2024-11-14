@@ -26,12 +26,13 @@ namespace Lumina
     {
     public:
 
-        FSwapchain() :Specifications({}), bResizeRequested(false) {}
+        FSwapchain() :Specifications({}), bDirty(false) {}
         
         static TRefPtr<FSwapchain> Create(const FSwapchainSpec& InSpec);
 
         virtual void CreateSurface(const FSwapchainSpec& InSpec) = 0;
         virtual void CreateSwapchain(const FSwapchainSpec& InSpec) = 0;
+        virtual void CreateImages() = 0;
 
         virtual void DestroySurface() = 0;
         virtual void DestroySwapchain() = 0;
@@ -40,7 +41,8 @@ namespace Lumina
         virtual bool BeginFrame() = 0;
         virtual void EndFrame() = 0;
 
-        inline bool IsResizeRequested() const { return bResizeRequested; }
+        inline bool IsSwapchainDirty() const { return bDirty; }
+        inline void SetSwapchainDirty() { bDirty = true; }
         
         virtual uint32 GetCurrentFrameIndex() = 0;
         FSwapchainSpec& GetSpecs() { return Specifications; }
@@ -48,7 +50,7 @@ namespace Lumina
     protected:
         
         FSwapchainSpec Specifications;
-        uint8 bResizeRequested:1;
+        uint8 bDirty:1;
 
     };
 }

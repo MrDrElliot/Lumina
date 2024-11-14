@@ -7,6 +7,7 @@
 #include "Events/KeyEvent.h"
 #include "Events/MouseEvent.h"
 #include "Renderer/Renderer.h"
+#include "Renderer/Swapchain.h"
 
 
 namespace
@@ -75,6 +76,8 @@ namespace Lumina
 			
 		WindowResizeEvent event(width, height);
 		data.EventCallback(event);
+
+		FRenderer::GetSwapchain()->SetSwapchainDirty();
 	}
 
 	void FWindow::SetEventCallback(const std::function<void(FEvent&)>& Callback)

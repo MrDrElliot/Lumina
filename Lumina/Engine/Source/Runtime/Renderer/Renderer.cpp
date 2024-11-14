@@ -128,6 +128,13 @@ namespace Lumina
 
     void FRenderer::Render()
     {
+        if(GetSwapchain()->IsSwapchainDirty())
+        {
+            InternalData.RenderFunctionList.clear();
+            GetSwapchain()->RecreateSwapchain();
+            return;
+        }
+        
         FRenderer::Submit([]
         {
             TRefPtr<FImage> Image = GetSwapchainImage();

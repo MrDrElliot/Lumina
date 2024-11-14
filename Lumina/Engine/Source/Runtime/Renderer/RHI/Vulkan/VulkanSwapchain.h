@@ -16,7 +16,7 @@ namespace Lumina
 
         void CreateSurface(const FSwapchainSpec& InSpec) override;
         void CreateSwapchain(const FSwapchainSpec& InSpec) override;
-
+        void CreateImages() override;
         void DestroySurface() override;
         void DestroySwapchain() override;
         void RecreateSwapchain() override;

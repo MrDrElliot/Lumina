@@ -35,14 +35,11 @@ namespace Lumina
         Semaphores.reserve(3);
         CurrentFrameIndex = 0;
 
-    	bool bResize = false;
-        if(Swapchain)
+        if(Swapchain) [[likely]]
         {
-        	bResize = true;
             vkDestroySwapchainKHR(FVulkanRenderContext::GetDevice(), Swapchain, nullptr);
         }
-        
-        
+    	
         vkb::SwapchainBuilder swapchainBuilder{ RenderContext.GetPhysicalDevice(), Device, Surface };
 
     	Format = VK_FORMAT_B8G8R8A8_UNORM;
@@ -131,10 +128,6 @@ namespace Lumina
 
     	FVulkanRenderContext::ExecuteTransientCommandBuffer(ImageCreateBuffer);
 
-    	if(bResize)
-    	{
-    		return;
-    	}
         VkSemaphoreCreateInfo SemaphoreCreateInfo = {};
         SemaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
         for (glm::int32 i = 0; i < InSpec.FramesInFlight; i++)
@@ -165,6 +158,10 @@ namespace Lumina
             Fences.push_back(Fence);
         }
         
+    }
+
+    void FVulkanSwapchain::CreateImages()
+    {
     }
 
     void FVulkanSwapchain::DestroySurface()
@@ -203,40 +200,42 @@ namespace Lumina
     	uint32 Height = FApplication::GetWindow().GetHeight();
     	uint32 Width = FApplication::GetWindow().GetWidth();
     	GetSpecs().Extent = {Width, Height};
+    	
+    	vkQueueWaitIdle(FVulkanRenderContext::GetGeneralQueue());
     	FRenderer::WaitIdle();
 		CreateSwapchain(GetSpecs());
     	FRenderer::WaitIdle();
-    	bResizeRequested = false;
+    	bDirty = false;
     }
 
     bool FVulkanSwapchain::BeginFrame()
     {
         auto Device = FVulkanRenderContext::GetDevice();
+    	
     	if(Swapchain == VK_NULL_HANDLE)
     	{
     		LOG_WARN("Attempted to begin swap chain frame before swap chain creation");
     		return false;
     	}
-
     	
     	VK_CHECK(vkWaitForFences(Device,  1, &Fences[CurrentFrameIndex], VK_TRUE, UINT64_MAX));
-    	VK_CHECK(vkResetFences(Device, 1, &Fences[CurrentFrameIndex]));
         
         VkResult AcquireResult = vkAcquireNextImageKHR(Device, Swapchain, UINT64_MAX, Semaphores[CurrentFrameIndex].Present,
             VK_NULL_HANDLE, &CurrentImageIndex);
 
-        if (AcquireResult == VK_ERROR_OUT_OF_DATE_KHR || AcquireResult == VK_SUBOPTIMAL_KHR)
+        if (AcquireResult == VK_ERROR_OUT_OF_DATE_KHR || AcquireResult == VK_SUBOPTIMAL_KHR || bDirty)
         {
-			bResizeRequested = true;
+        	bDirty = true;
         	return false;
         }
     	
+    	VK_CHECK(vkResetFences(Device, 1, &Fences[CurrentFrameIndex]));
         return true;
     }
 
     void FVulkanSwapchain::EndFrame()
     {
-        if(Swapchain == VK_NULL_HANDLE)
+        if(Swapchain == VK_NULL_HANDLE || bDirty)
         {
 	        return;
         }
@@ -253,11 +252,11 @@ namespace Lumina
     	VkQueue Queue = FVulkanRenderContext::GetGeneralQueue();
     	assert(Queue != VK_NULL_HANDLE);
     	
-        VkResult present_result = vkQueuePresentKHR(Queue, &PresentInfo);
+        VkResult Result = vkQueuePresentKHR(Queue, &PresentInfo);
 
-        if (present_result == VK_ERROR_OUT_OF_DATE_KHR || present_result == VK_SUBOPTIMAL_KHR)
+        if (Result == VK_ERROR_OUT_OF_DATE_KHR || Result == VK_SUBOPTIMAL_KHR || bDirty)
         {
-			bResizeRequested = true;
+        	bDirty = true;
         }
     	
         CurrentFrameIndex = (CurrentImageIndex + 1) % Specifications.FramesInFlight;

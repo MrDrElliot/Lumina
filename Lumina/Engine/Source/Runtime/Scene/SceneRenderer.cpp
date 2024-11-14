@@ -16,6 +16,7 @@
 #include "Renderer/Pipeline.h"
 #include "Renderer/Renderer.h"
 #include "Renderer/ShaderLibrary.h"
+#include "Renderer/Swapchain.h"
 
 namespace Lumina
 {
@@ -53,10 +54,14 @@ namespace Lumina
         {
             RT->Destroy();
         }
+        RenderTargets.clear();
+        
         for (auto DA : DepthAttachments)
         {
             DA->Destroy();
         }
+        DepthAttachments.clear();
+        
         for(auto Img : HistoryRenderTarget)
         {
             Img->Destroy();
@@ -69,14 +74,19 @@ namespace Lumina
         {
             Desc->Destroy();
         }
+        SceneDescriptorSets.clear();
+        
         for(auto Desc : GridDescriptorSets)
         {
             Desc->Destroy();
         }
+        GridDescriptorSets.clear();
+        
         for(auto Desc : TAADescriptorSets)
         {
             Desc->Destroy();
         }
+        TAADescriptorSets.clear();
 
         GraphicsPipeline->Destroy();
         InfiniteGridPipeline->Destroy();
@@ -127,6 +137,11 @@ namespace Lumina
 
     void FSceneRenderer::EndScene()
     {
+        if(FRenderer::GetSwapchain()->IsSwapchainDirty())
+        {
+            return;
+        }
+        
         uint32 CurrentFrameIndex = FRenderer::GetCurrentFrameIndex();
         TRefPtr<FDescriptorSet> CurrentDescriptorSet = SceneDescriptorSets[CurrentFrameIndex];
         
@@ -183,6 +198,7 @@ namespace Lumina
         {
             FRenderer::BeginRender(Attachments, glm::vec4(CurrentScene->GetSceneSettings().BackgroundColor, 1.0f));
         }
+        
         uint32 CurrentFrameIndex = FRenderer::GetCurrentFrameIndex();
         TRefPtr<FDescriptorSet> CurrentDescriptorSet = SceneDescriptorSets[CurrentFrameIndex];
         
@@ -427,6 +443,7 @@ namespace Lumina
             DepthAttachments.push_back(FImage::Create(DepthImageSpecs));
         }
 
+        /*
         FImageSpecification MotionVectorSpecs = FImageSpecification::Default();
         MotionVectorSpecs.Extent.x = FApplication::Get().GetWindow().GetWidth();
         MotionVectorSpecs.Extent.y = FApplication::Get().GetWindow().GetHeight();
@@ -453,7 +470,7 @@ namespace Lumina
         for (int i = 0; i < FRenderer::GetConfig().FramesInFlight; ++i)
         {
             HistoryRenderTarget.push_back(FImage::Create(AccumulationSpecs));
-        }
+        }*/
     }
     
 }
