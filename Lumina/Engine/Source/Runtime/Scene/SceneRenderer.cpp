@@ -137,11 +137,6 @@ namespace Lumina
 
     void FSceneRenderer::EndScene()
     {
-        if(FRenderer::GetSwapchain()->IsSwapchainDirty())
-        {
-            return;
-        }
-        
         uint32 CurrentFrameIndex = FRenderer::GetCurrentFrameIndex();
         TRefPtr<FDescriptorSet> CurrentDescriptorSet = SceneDescriptorSets[CurrentFrameIndex];
         
@@ -150,10 +145,10 @@ namespace Lumina
 
         if(CurrentScene->GetSceneSettings().bShowGrid)
         {
-            RenderGrid();
+            //RenderGrid();
         }
         
-        GeometryPass({CurrentRenderTarget, CurrentDepthAttachment});
+        //GeometryPass({CurrentRenderTarget, CurrentDepthAttachment});
 
         //TAAPass();
         

@@ -35,8 +35,10 @@ namespace Lumina
         Semaphores.reserve(3);
         CurrentFrameIndex = 0;
 
+    	bool bWasResized = false;
         if(Swapchain) [[likely]]
         {
+        	bWasResized = true;
             vkDestroySwapchainKHR(FVulkanRenderContext::GetDevice(), Swapchain, nullptr);
         }
     	
@@ -127,37 +129,50 @@ namespace Lumina
         }
 
     	FVulkanRenderContext::ExecuteTransientCommandBuffer(ImageCreateBuffer);
-
+    	
         VkSemaphoreCreateInfo SemaphoreCreateInfo = {};
         SemaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-        for (glm::int32 i = 0; i < InSpec.FramesInFlight; i++)
+    	
+    	Semaphores.reserve(InSpec.FramesInFlight);
+        for (uint8 i = 0; i < InSpec.FramesInFlight; i++)
         {
             VkSemaphore RenderSemaphore;
             VkSemaphore PresentSemaphore;
 
-            VK_CHECK(vkCreateSemaphore(Device, &SemaphoreCreateInfo, nullptr, &RenderSemaphore));
-            VK_CHECK(vkCreateSemaphore(Device, &SemaphoreCreateInfo, nullptr, &PresentSemaphore));
+        	if(bWasResized)
+        	{
+        		vkDestroySemaphore(Device, Semaphores[i].Render, nullptr);
+        		vkDestroySemaphore(Device, Semaphores[i].Present, nullptr);
+        		VK_CHECK(vkCreateSemaphore(Device, &SemaphoreCreateInfo, nullptr, &RenderSemaphore));
+        		VK_CHECK(vkCreateSemaphore(Device, &SemaphoreCreateInfo, nullptr, &PresentSemaphore));
+        		Semaphores[i] = {RenderSemaphore, PresentSemaphore};
+        	}
+	        else
+	        {
+	        	VK_CHECK(vkCreateSemaphore(Device, &SemaphoreCreateInfo, nullptr, &RenderSemaphore));
+	        	VK_CHECK(vkCreateSemaphore(Device, &SemaphoreCreateInfo, nullptr, &PresentSemaphore));
 
-            Semaphores.emplace_back(RenderSemaphore, PresentSemaphore);
+	        	Semaphores.emplace_back(RenderSemaphore, PresentSemaphore);    
+	        }
+        	
         }
-        Semaphores.shrink_to_fit();
-
-
-        Fences.shrink_to_fit();
-        Fences.reserve(InSpec.FramesInFlight);
-
-        
+    	
+    	if(bWasResized)
+    	{
+    		return;
+    	}
+    	
         VkFenceCreateInfo FenceCreateInfo = {};
         FenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
         FenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-        for (int i = 0; i < InSpec.FramesInFlight; i++)
+        Fences.reserve(InSpec.FramesInFlight);
+        for (uint8 i = 0; i < InSpec.FramesInFlight; i++)
         {
             VkFence Fence;
             VK_CHECK(vkCreateFence(Device, &FenceCreateInfo, nullptr, &Fence));
             Fences.push_back(Fence);
         }
-        
     }
 
     void FVulkanSwapchain::CreateImages()
@@ -201,7 +216,6 @@ namespace Lumina
     	uint32 Width = FApplication::GetWindow().GetWidth();
     	GetSpecs().Extent = {Width, Height};
     	
-    	vkQueueWaitIdle(FVulkanRenderContext::GetGeneralQueue());
     	FRenderer::WaitIdle();
 		CreateSwapchain(GetSpecs());
     	FRenderer::WaitIdle();
@@ -226,7 +240,7 @@ namespace Lumina
         if (AcquireResult == VK_ERROR_OUT_OF_DATE_KHR || AcquireResult == VK_SUBOPTIMAL_KHR || bDirty)
         {
         	bDirty = true;
-        	return false;
+        	RecreateSwapchain();
         }
     	
     	VK_CHECK(vkResetFences(Device, 1, &Fences[CurrentFrameIndex]));

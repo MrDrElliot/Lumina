@@ -40,8 +40,9 @@ namespace Lumina
             
                 mScene->OnUpdate(Stats.DeltaTime);
                 ApplicationSubsystems.Update(Stats.DeltaTime);
-                RenderImGui(Stats.DeltaTime);
-                
+                //RenderImGui(Stats.DeltaTime);
+                FRenderer::Render();
+
                 PostFrame();
             }
         }
@@ -124,7 +125,6 @@ namespace Lumina
     {
         Stats.CurrentFrameTime = glfwGetTime();
 
-        FRenderer::Render();
         FRenderer::EndFrame();
         
         glfwPollEvents();

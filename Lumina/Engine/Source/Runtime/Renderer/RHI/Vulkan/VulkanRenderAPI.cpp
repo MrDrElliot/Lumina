@@ -88,11 +88,9 @@ namespace Lumina
 
     void FVulkanRenderAPI::BeginFrame()
     {
-        if(Swapchain->BeginFrame())
-        {
-			CurrentCommandBuffer = CommandBuffers[Swapchain->GetCurrentFrameIndex()];
-			BeginCommandRecord();
-        }
+        Swapchain->BeginFrame();
+		CurrentCommandBuffer = CommandBuffers[Swapchain->GetCurrentFrameIndex()];
+		BeginCommandRecord();
     }
 
     void FVulkanRenderAPI::EndFrame()
