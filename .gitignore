@@ -1,32 +1,44 @@
-# Prerequisites
+# Prerequisite Files
 *.d
 
-# Compiled Object files
-*.slo
-*.lo
+# Build Directories
+/Binaries/
+/Intermediates/
+/.idea/
+
+/.vs/
+*.vcxproj
+*.user
+*.filters
+*.pyc
+*.sln
+*.DotSettings
+
+# Compiled Object Files
 *.o
 *.obj
+*.slo
+*.lo
 
 # Precompiled Headers
 *.gch
 *.pch
 
-# Compiled Dynamic libraries
+# Compiled Dynamic Libraries
+*.dll
 *.so
 *.dylib
-*.dll
 
-# Fortran module files
+# Compiled Static Libraries
+*.lib
+*.a
+*.lai
+*.la
+
+# Fortran Module Files
 *.mod
 *.smod
 
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
-*.exe
+# Executable Files
 *.out
 *.app
