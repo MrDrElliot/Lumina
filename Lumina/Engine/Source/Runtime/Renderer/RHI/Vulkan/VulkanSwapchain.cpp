@@ -15,6 +15,7 @@ namespace Lumina
     FVulkanSwapchain::FVulkanSwapchain(const FSwapchainSpec& InSpec)
     {
         Specifications = InSpec;
+    	bWasResizedThisFrame = false;
     }
 
     void FVulkanSwapchain::CreateSurface(const FSwapchainSpec& InSpec)
@@ -35,10 +36,8 @@ namespace Lumina
         Semaphores.reserve(3);
         CurrentFrameIndex = 0;
 
-    	bool bWasResized = false;
         if(Swapchain) [[likely]]
         {
-        	bWasResized = true;
             vkDestroySwapchainKHR(FVulkanRenderContext::GetDevice(), Swapchain, nullptr);
         }
     	
@@ -139,7 +138,7 @@ namespace Lumina
             VkSemaphore RenderSemaphore;
             VkSemaphore PresentSemaphore;
 
-        	if(bWasResized)
+        	if(bWasResizedThisFrame)
         	{
         		vkDestroySemaphore(Device, Semaphores[i].Render, nullptr);
         		vkDestroySemaphore(Device, Semaphores[i].Present, nullptr);
@@ -157,7 +156,7 @@ namespace Lumina
         	
         }
     	
-    	if(bWasResized)
+    	if(bWasResizedThisFrame)
     	{
     		return;
     	}
@@ -219,11 +218,18 @@ namespace Lumina
     	FRenderer::WaitIdle();
 		CreateSwapchain(GetSpecs());
     	FRenderer::WaitIdle();
+    	
+    	bWasResizedThisFrame = true;
     	bDirty = false;
     }
 
     bool FVulkanSwapchain::BeginFrame()
     {
+    	bWasResizedThisFrame = false;
+    	if(bDirty)
+    	{
+    		RecreateSwapchain();
+    	}
         auto Device = FVulkanRenderContext::GetDevice();
     	
     	if(Swapchain == VK_NULL_HANDLE)
@@ -240,7 +246,6 @@ namespace Lumina
         if (AcquireResult == VK_ERROR_OUT_OF_DATE_KHR || AcquireResult == VK_SUBOPTIMAL_KHR || bDirty)
         {
         	bDirty = true;
-        	RecreateSwapchain();
         }
     	
     	VK_CHECK(vkResetFences(Device, 1, &Fences[CurrentFrameIndex]));

@@ -182,23 +182,12 @@ namespace Lumina
 		RasterizationState.lineWidth = Specification.line_width;
 		RasterizationState.cullMode = convert(Specification.culling_mode);
 		RasterizationState.frontFace = convert(Specification.front_face);
-
-		glm::fvec2 CurrentSwapchainExtent = (glm::fvec2)FVulkanRenderContext::GetSwapchain()->GetSpecs().Extent;
-		VkViewport viewport = {};
-		viewport = { 0, CurrentSwapchainExtent.y, CurrentSwapchainExtent.x, -CurrentSwapchainExtent.y, 0.0f, 1.0f };
-
-    	/* Scissor */	
-		VkRect2D Scissor = {};
-		Scissor.extent = { (uint32)CurrentSwapchainExtent.x, (uint32)CurrentSwapchainExtent.y };
-		Scissor.offset = { 0,0 };
-
+    		
     	/* Viewport */	
 		VkPipelineViewportStateCreateInfo ViewportState = {};
 		ViewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
 		ViewportState.viewportCount = 1;
-		ViewportState.pViewports = &viewport;
 		ViewportState.scissorCount = 1;
-		ViewportState.pScissors = &Scissor;
 
     	/* Blend States */	
 		std::vector<VkPipelineColorBlendAttachmentState> BlendStates(Specification.output_attachments_formats.size());

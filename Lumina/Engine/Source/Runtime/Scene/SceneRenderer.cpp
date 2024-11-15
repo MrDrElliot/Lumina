@@ -61,15 +61,7 @@ namespace Lumina
             DA->Destroy();
         }
         DepthAttachments.clear();
-        
-        for(auto Img : HistoryRenderTarget)
-        {
-            Img->Destroy();
-        }
-        for(auto Img : MotionVectors)
-        {
-            Img->Destroy();
-        }
+
         for(auto Desc : SceneDescriptorSets)
         {
             Desc->Destroy();
@@ -91,6 +83,25 @@ namespace Lumina
         GraphicsPipeline->Destroy();
         InfiniteGridPipeline->Destroy();
         TAAPipeline->Destroy();
+    }
+
+    void FSceneRenderer::OnSwapchainResized()
+    {
+        LOG_ERROR("Size: {0} - {1}", FRenderer::GetSwapchainImage()->GetSpecification().Extent.x, FRenderer::GetSwapchainImage()->GetSpecification().Extent.y);
+        for (auto& RT : RenderTargets)
+        {
+            RT->Destroy();
+        }
+        RenderTargets.clear();
+        
+        for(auto& DT : DepthAttachments)
+        {
+            DT->Destroy();
+        }
+        DepthAttachments.clear();
+
+        CreateImages();
+        
     }
 
     void FSceneRenderer::RenderGrid()
@@ -137,6 +148,11 @@ namespace Lumina
 
     void FSceneRenderer::EndScene()
     {
+        if(FRenderer::GetSwapchain()->WasSwapchainResizedThisFrame())
+        {
+            OnSwapchainResized();
+        }
+        
         uint32 CurrentFrameIndex = FRenderer::GetCurrentFrameIndex();
         TRefPtr<FDescriptorSet> CurrentDescriptorSet = SceneDescriptorSets[CurrentFrameIndex];
         
@@ -145,10 +161,10 @@ namespace Lumina
 
         if(CurrentScene->GetSceneSettings().bShowGrid)
         {
-            //RenderGrid();
+            RenderGrid();
         }
         
-        //GeometryPass({CurrentRenderTarget, CurrentDepthAttachment});
+        GeometryPass({CurrentRenderTarget, CurrentDepthAttachment});
 
         //TAAPass();
         
@@ -412,8 +428,8 @@ namespace Lumina
     {
         
         FImageSpecification ImageSpecs = FImageSpecification::Default();
-        ImageSpecs.Extent.x = FApplication::Get().GetWindow().GetWidth();
-        ImageSpecs.Extent.y = FApplication::Get().GetWindow().GetHeight();
+        ImageSpecs.Extent.x = FRenderer::GetSwapchainImage()->GetSpecification().Extent.x;
+        ImageSpecs.Extent.y = FRenderer::GetSwapchainImage()->GetSpecification().Extent.y;
         ImageSpecs.Usage = EImageUsage::RENDER_TARGET;
         ImageSpecs.Type = EImageType::TYPE_2D;
         ImageSpecs.Format = EImageFormat::RGBA32_SRGB;
@@ -426,8 +442,8 @@ namespace Lumina
         }
 
         FImageSpecification DepthImageSpecs = FImageSpecification::Default();
-        DepthImageSpecs.Extent.x = FApplication::Get().GetWindow().GetWidth();
-        DepthImageSpecs.Extent.y = FApplication::Get().GetWindow().GetHeight();
+        DepthImageSpecs.Extent.x = FRenderer::GetSwapchainImage()->GetSpecification().Extent.x;
+        DepthImageSpecs.Extent.y = FRenderer::GetSwapchainImage()->GetSpecification().Extent.x;
         DepthImageSpecs.Usage = EImageUsage::DEPTH_BUFFER;
         DepthImageSpecs.Type = EImageType::TYPE_2D;
         DepthImageSpecs.Format = EImageFormat::D32;
@@ -438,34 +454,6 @@ namespace Lumina
             DepthAttachments.push_back(FImage::Create(DepthImageSpecs));
         }
 
-        /*
-        FImageSpecification MotionVectorSpecs = FImageSpecification::Default();
-        MotionVectorSpecs.Extent.x = FApplication::Get().GetWindow().GetWidth();
-        MotionVectorSpecs.Extent.y = FApplication::Get().GetWindow().GetHeight();
-        MotionVectorSpecs.Usage = EImageUsage::RENDER_TARGET;
-        MotionVectorSpecs.Type = EImageType::TYPE_2D;
-        MotionVectorSpecs.Format = EImageFormat::RGBA32_SRGB; // Two float channels for x and y motion vectors
-        MotionVectorSpecs.SampleCount = EImageSampleCount::ONE;
-
-        // Create motion vector images for each frame in flight
-        for (int i = 0; i < FRenderer::GetConfig().FramesInFlight; ++i)
-        {
-            MotionVectors.push_back(FImage::Create(MotionVectorSpecs));
-        }
-
-        FImageSpecification AccumulationSpecs = FImageSpecification::Default();
-        AccumulationSpecs.Extent.x = FApplication::Get().GetWindow().GetWidth();
-        AccumulationSpecs.Extent.y = FApplication::Get().GetWindow().GetHeight();
-        AccumulationSpecs.Usage = EImageUsage::RENDER_TARGET;
-        AccumulationSpecs.Type = EImageType::TYPE_2D;
-        AccumulationSpecs.Format = EImageFormat::RGBA32_SRGB; // Color buffer for accumulation
-        AccumulationSpecs.SampleCount = EImageSampleCount::ONE;
-
-        // Create accumulation images for each frame in flight
-        for (int i = 0; i < FRenderer::GetConfig().FramesInFlight; ++i)
-        {
-            HistoryRenderTarget.push_back(FImage::Create(AccumulationSpecs));
-        }*/
     }
     
 }

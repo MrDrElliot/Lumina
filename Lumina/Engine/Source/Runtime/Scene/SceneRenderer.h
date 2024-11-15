@@ -70,6 +70,7 @@ namespace Lumina
         void InitDescriptorSets();
         void CreateImages();
         void Shutdown();
+        void OnSwapchainResized();
 
     private:
         
@@ -84,8 +85,6 @@ namespace Lumina
         
         TFastVector<TRefPtr<FImage>> RenderTargets;
         TFastVector<TRefPtr<FImage>> DepthAttachments;
-        TFastVector<TRefPtr<FImage>> HistoryRenderTarget;
-        TFastVector<TRefPtr<FImage>> MotionVectors;
 
         
         TRefPtr<FBuffer> SceneUBO;

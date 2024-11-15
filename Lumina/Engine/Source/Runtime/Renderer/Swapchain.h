@@ -41,6 +41,7 @@ namespace Lumina
         virtual bool BeginFrame() = 0;
         virtual void EndFrame() = 0;
 
+        inline bool WasSwapchainResizedThisFrame() const { return bWasResizedThisFrame; }
         inline bool IsSwapchainDirty() const { return bDirty; }
         inline void SetSwapchainDirty() { bDirty = true; }
         
@@ -51,6 +52,7 @@ namespace Lumina
         
         FSwapchainSpec Specifications;
         uint8 bDirty:1;
+        uint8 bWasResizedThisFrame:1;
 
     };
 }
