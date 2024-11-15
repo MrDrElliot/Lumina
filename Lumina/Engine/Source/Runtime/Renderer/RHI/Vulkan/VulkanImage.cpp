@@ -262,11 +262,7 @@ namespace Lumina
 
 		TransientCmdBuffer->Begin();
     	
-		SetLayout(
-			TransientCmdBuffer,
-			EImageLayout::COLOR_ATTACHMENT,
-			EPipelineStage::TOP_OF_PIPE,
-			EPipelineStage::COLOR_ATTACHMENT_OUTPUT,
+		SetLayout(TransientCmdBuffer, EImageLayout::COLOR_ATTACHMENT, EPipelineStage::TOP_OF_PIPE, EPipelineStage::COLOR_ATTACHMENT_OUTPUT,
 			EPipelineAccess::NONE,
 			EPipelineAccess::COLOR_ATTACHMENT_WRITE
 		);

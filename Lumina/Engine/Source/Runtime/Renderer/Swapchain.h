@@ -46,6 +46,7 @@ namespace Lumina
         inline void SetSwapchainDirty() { bDirty = true; }
         
         virtual uint32 GetCurrentFrameIndex() = 0;
+        virtual uint32 GetCurrentImageIndex() = 0;
         FSwapchainSpec& GetSpecs() { return Specifications; }
 
     protected:

@@ -16,6 +16,8 @@ namespace Lumina
     {
         Specifications = InSpec;
     	bWasResizedThisFrame = false;
+        AquireSemaphores = { VK_NULL_HANDLE };
+        PresentSemaphores = { VK_NULL_HANDLE };
     }
 
     void FVulkanSwapchain::CreateSurface(const FSwapchainSpec& InSpec)
@@ -33,7 +35,8 @@ namespace Lumina
         auto Device = FVulkanRenderContext::GetDevice();
         
         Images.reserve(InSpec.FramesInFlight);
-        Semaphores.reserve(3);
+        AquireSemaphores.reserve(2);
+        PresentSemaphores.reserve(2);
         CurrentFrameIndex = 0;
 
         if(Swapchain) [[likely]]
@@ -131,30 +134,49 @@ namespace Lumina
     	
         VkSemaphoreCreateInfo SemaphoreCreateInfo = {};
         SemaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-    	
-    	Semaphores.reserve(InSpec.FramesInFlight);
-        for (uint8 i = 0; i < InSpec.FramesInFlight; i++)
+
+        // Handle Present Semaphores
+        size_t currentImageCount = RawImages.size();
+        if (bWasResizedThisFrame)
         {
-            VkSemaphore RenderSemaphore;
-            VkSemaphore PresentSemaphore;
-
-        	if(bWasResizedThisFrame)
-        	{
-        		vkDestroySemaphore(Device, Semaphores[i].Render, nullptr);
-        		vkDestroySemaphore(Device, Semaphores[i].Present, nullptr);
-        		VK_CHECK(vkCreateSemaphore(Device, &SemaphoreCreateInfo, nullptr, &RenderSemaphore));
-        		VK_CHECK(vkCreateSemaphore(Device, &SemaphoreCreateInfo, nullptr, &PresentSemaphore));
-        		Semaphores[i] = {RenderSemaphore, PresentSemaphore};
-        	}
-	        else
-	        {
-	        	VK_CHECK(vkCreateSemaphore(Device, &SemaphoreCreateInfo, nullptr, &RenderSemaphore));
-	        	VK_CHECK(vkCreateSemaphore(Device, &SemaphoreCreateInfo, nullptr, &PresentSemaphore));
-
-	        	Semaphores.emplace_back(RenderSemaphore, PresentSemaphore);    
-	        }
-        	
+            // Destroy any semaphores that won't be reused due to a lower image count
+            for (uint8 i = currentImageCount; i < PresentSemaphores.size(); i++)
+            {
+                vkDestroySemaphore(Device, PresentSemaphores[i], nullptr);
+            }
+            PresentSemaphores.resize(currentImageCount);  // Adjust size to match new image count
         }
+
+        for (uint8 i = 0; i < currentImageCount; i++)
+        {
+            if (bWasResizedThisFrame)
+            {
+                vkDestroySemaphore(Device, PresentSemaphores[i], nullptr);
+            }
+            VK_CHECK(vkCreateSemaphore(Device, &SemaphoreCreateInfo, nullptr, &PresentSemaphores[i]));
+        }
+
+        // Handle Render Semaphores
+        size_t currentFrameCount = InSpec.FramesInFlight;
+        if (bWasResizedThisFrame)
+        {
+            // Destroy any semaphores that won't be reused due to a lower frame count
+            for (uint8 i = currentFrameCount; i < AquireSemaphores.size(); i++)
+            {
+                vkDestroySemaphore(Device, AquireSemaphores[i], nullptr);
+            }
+            AquireSemaphores.resize(currentFrameCount);  // Adjust size to match new frame count
+        }
+
+        for (uint8 i = 0; i < currentFrameCount; i++)
+        {
+            if (bWasResizedThisFrame)
+            {
+                vkDestroySemaphore(Device, AquireSemaphores[i], nullptr);
+            }
+            VK_CHECK(vkCreateSemaphore(Device, &SemaphoreCreateInfo, nullptr, &AquireSemaphores[i]));
+        }
+
     	
     	if(bWasResizedThisFrame)
     	{
@@ -195,11 +217,15 @@ namespace Lumina
 
     	vkDestroySwapchainKHR(Device, Swapchain, nullptr);
 
-    	for (auto& Semaphore : Semaphores)
+    	for (auto& Semaphore : AquireSemaphores)
     	{
-    		vkDestroySemaphore(Device, Semaphore.Render, nullptr);
-    		vkDestroySemaphore(Device, Semaphore.Present, nullptr);
+    		vkDestroySemaphore(Device, Semaphore, nullptr);
     	}
+        
+        for (auto& Semaphore : PresentSemaphores)
+        {
+            vkDestroySemaphore(Device, Semaphore, nullptr);
+        }
 
     	for (auto& Fence : Fences)
     	{
@@ -211,13 +237,14 @@ namespace Lumina
 
     void FVulkanSwapchain::RecreateSwapchain()
     {
+    	LOG_WARN("Re-sizing Swapchain");
     	uint32 Height = FApplication::GetWindow().GetHeight();
     	uint32 Width = FApplication::GetWindow().GetWidth();
     	GetSpecs().Extent = {Width, Height};
     	
     	FRenderer::WaitIdle();
 		CreateSwapchain(GetSpecs());
-    	FRenderer::WaitIdle();
+    	//FRenderer::WaitIdle();
     	
     	bWasResizedThisFrame = true;
     	bDirty = false;
@@ -240,7 +267,7 @@ namespace Lumina
     	
     	VK_CHECK(vkWaitForFences(Device,  1, &Fences[CurrentFrameIndex], VK_TRUE, UINT64_MAX));
         
-        VkResult AcquireResult = vkAcquireNextImageKHR(Device, Swapchain, UINT64_MAX, Semaphores[CurrentFrameIndex].Present,
+        VkResult AcquireResult = vkAcquireNextImageKHR(Device, Swapchain, UINT64_MAX, GetAquireSemaphore(),
             VK_NULL_HANDLE, &CurrentImageIndex);
 
         if (AcquireResult == VK_ERROR_OUT_OF_DATE_KHR || AcquireResult == VK_SUBOPTIMAL_KHR || bDirty)
@@ -258,6 +285,9 @@ namespace Lumina
         {
 	        return;
         }
+
+        auto PresentSemaphore = GetPresentSemaphore();
+
     	
         VkPresentInfoKHR PresentInfo = {};
         PresentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -265,7 +295,7 @@ namespace Lumina
         PresentInfo.swapchainCount = 1;
         PresentInfo.pSwapchains = &Swapchain;
         PresentInfo.waitSemaphoreCount = 1;
-        PresentInfo.pWaitSemaphores = &Semaphores[CurrentFrameIndex].Render;
+        PresentInfo.pWaitSemaphores = &PresentSemaphore;
         PresentInfo.pResults = nullptr;
 
     	VkQueue Queue = FVulkanRenderContext::GetGeneralQueue();
@@ -278,6 +308,6 @@ namespace Lumina
         	bDirty = true;
         }
     	
-        CurrentFrameIndex = (CurrentImageIndex + 1) % Specifications.FramesInFlight;
+        CurrentFrameIndex = (CurrentFrameIndex + 1) % Specifications.FramesInFlight;
     }
 }

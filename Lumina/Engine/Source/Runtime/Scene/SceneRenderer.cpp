@@ -87,7 +87,6 @@ namespace Lumina
 
     void FSceneRenderer::OnSwapchainResized()
     {
-        LOG_ERROR("Size: {0} - {1}", FRenderer::GetSwapchainImage()->GetSpecification().Extent.x, FRenderer::GetSwapchainImage()->GetSpecification().Extent.y);
         for (auto& RT : RenderTargets)
         {
             RT->Destroy();
@@ -125,7 +124,7 @@ namespace Lumina
         GridData.View = Camera->GetViewMatrix();
         GridData.Projection = Camera->GetProjectionMatrixNoReverse();
         GridData.Position = Camera->GetPosition();
-
+        
         FRenderer::BeginRender({CurrentRenderTarget, CurrentDepthAttachment}, glm::vec4(CurrentScene->GetSceneSettings().BackgroundColor, 1.0f));
 
         FRenderer::BindPipeline(InfiniteGridPipeline);
@@ -166,7 +165,7 @@ namespace Lumina
         
         GeometryPass({CurrentRenderTarget, CurrentDepthAttachment});
 
-        //TAAPass();
+        TAAPass();
         
         TRefPtr<FCommandBuffer> CommandBuffer = FRenderer::GetCommandBuffer();
         FRenderer::Submit([CurrentRenderTarget, CommandBuffer]
@@ -191,8 +190,8 @@ namespace Lumina
         {
             CurrentRenderTarget->SetLayout(CommandBuffer, EImageLayout::SHADER_READ_ONLY, EPipelineStage::TRANSFER,
                 EPipelineStage::COLOR_ATTACHMENT_OUTPUT,
-         EPipelineAccess::TRANSFER_READ,
-         EPipelineAccess::COLOR_ATTACHMENT_WRITE);
+                EPipelineAccess::TRANSFER_READ,
+                EPipelineAccess::COLOR_ATTACHMENT_WRITE);
             
         });
 
@@ -261,14 +260,7 @@ namespace Lumina
 
     void FSceneRenderer::TAAPass()
     {
-        /*constexpr int FRAMES_IN_FLIGHT = 2;
-        uint32 CurrentFrameIndex = FRenderer::GetCurrentFrameIndex();
-        uint32 PreviousFrameIndex = (CurrentFrameIndex + FRAMES_IN_FLIGHT - 1) % FRAMES_IN_FLIGHT;
-    
-        // Fetch the current and previous images for TAA (color) and motion vectors
-        TRefPtr<FImage> CurrentColorImage = RenderTargets[CurrentFrameIndex];
-        TRefPtr<FImage> PreviousColorImage = RenderTargets[PreviousFrameIndex];
-        TRefPtr<FImage> MotionVectorImage = MotionVectors[CurrentFrameIndex];*/
+
     }
 
     void FSceneRenderer::InitPipelines()
@@ -426,7 +418,6 @@ namespace Lumina
 
     void FSceneRenderer::CreateImages()
     {
-        
         FImageSpecification ImageSpecs = FImageSpecification::Default();
         ImageSpecs.Extent.x = FRenderer::GetSwapchainImage()->GetSpecification().Extent.x;
         ImageSpecs.Extent.y = FRenderer::GetSwapchainImage()->GetSpecification().Extent.y;
@@ -434,8 +425,8 @@ namespace Lumina
         ImageSpecs.Type = EImageType::TYPE_2D;
         ImageSpecs.Format = EImageFormat::RGBA32_SRGB;
         ImageSpecs.SampleCount = EImageSampleCount::ONE;
-        
 
+        AssertMsg(RenderTargets.empty(), "Render Targets are not empty!");
         for (int i = 0; i < FRenderer::GetConfig().FramesInFlight; ++i)
         {
             RenderTargets.push_back(FImage::Create(ImageSpecs));
@@ -443,12 +434,13 @@ namespace Lumina
 
         FImageSpecification DepthImageSpecs = FImageSpecification::Default();
         DepthImageSpecs.Extent.x = FRenderer::GetSwapchainImage()->GetSpecification().Extent.x;
-        DepthImageSpecs.Extent.y = FRenderer::GetSwapchainImage()->GetSpecification().Extent.x;
+        DepthImageSpecs.Extent.y = FRenderer::GetSwapchainImage()->GetSpecification().Extent.y;
         DepthImageSpecs.Usage = EImageUsage::DEPTH_BUFFER;
         DepthImageSpecs.Type = EImageType::TYPE_2D;
         DepthImageSpecs.Format = EImageFormat::D32;
         DepthImageSpecs.SampleCount = EImageSampleCount::ONE;
 
+        AssertMsg(DepthAttachments.empty(), "Render Targets are not empty!");
         for(int i = 0; i < FRenderer::GetConfig().FramesInFlight; ++i)
         {
             DepthAttachments.push_back(FImage::Create(DepthImageSpecs));

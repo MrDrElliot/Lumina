@@ -103,11 +103,10 @@ namespace Lumina
 	    FRenderer::Submit([&, Attachments, ClearColor]
 	    {
 			VkRenderingAttachmentInfo				DepthAttachment = {};
-	    	VkRenderingAttachmentInfo				ResolveAttachment = {};
 			std::vector<VkRenderingAttachmentInfo>	ColorAttachments = {};
-	    	uint32 RenderHeight = FApplication::GetWindow().GetHeight();
-	    	uint32 RenderWidth = FApplication::GetWindow().GetWidth();
-
+	    	uint32 RenderHeight =	FRenderer::GetSwapchain()->GetSpecs().Extent.y;
+			uint32 RenderWidth =	FRenderer::GetSwapchain()->GetSpecs().Extent.x;
+	    	
 			for (TRefPtr<FImage> attachment : Attachments)
 			{
 				TRefPtr<FVulkanImage> VkTarget = RefPtrCast<FVulkanImage>(attachment);
@@ -164,8 +163,7 @@ namespace Lumina
 					DepthAttachment.clearValue.depthStencil.depth = 0.0f;
 				}
 			}
-			
-
+	    	
 			VkRenderingInfo RenderingInfo = {};
 			RenderingInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
 			RenderingInfo.renderArea = { { 0, 0 }, { RenderWidth, RenderHeight } };
@@ -551,16 +549,18 @@ namespace Lumina
             VkPipelineStageFlags StageMasks[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 
             auto VkCmdBuffer = RefPtrCast<FVulkanCommandBuffer>(GetCommandBuffer());
-            auto Semaphores = Swapchain->GetSemaphores();
+
+            auto AquireSemaphore = Swapchain->GetAquireSemaphore();
+            auto PresentSemaphore = Swapchain->GetPresentSemaphore();
 
             VkSubmitInfo SubmitInfo = {};
             SubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
             SubmitInfo.commandBufferCount = 1;
             SubmitInfo.pCommandBuffers = &VkCmdBuffer->GetCommandBuffer();
             SubmitInfo.signalSemaphoreCount = 1;
-            SubmitInfo.pSignalSemaphores = &Semaphores.Render;
+            SubmitInfo.pSignalSemaphores = &PresentSemaphore;
             SubmitInfo.waitSemaphoreCount = 1;
-            SubmitInfo.pWaitSemaphores = &Semaphores.Present;
+            SubmitInfo.pWaitSemaphores = &AquireSemaphore;
             SubmitInfo.pWaitDstStageMask = StageMasks;
 
             FVulkanRenderContext& Context = FVulkanRenderContext::Get();

@@ -13,6 +13,9 @@
 *.pyc
 *.sln
 *.DotSettings
+*.tlog
+*.idb
+
 
 # Compiled Object Files
 *.o
@@ -42,3 +45,6 @@
 # Executable Files
 *.out
 *.app
+*.idb
+*.tlog
+*.pdb

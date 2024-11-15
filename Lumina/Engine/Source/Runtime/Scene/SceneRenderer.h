@@ -57,9 +57,9 @@ namespace Lumina
         void BeginScene(std::shared_ptr<FCamera> InCamera);
         void EndScene();
 
-        TRefPtr<FImage> GetRenderTarget() { return RenderTargets[FRenderer::GetCurrentFrameIndex()]; }
-        TRefPtr<FImage> GetDepthAttachment() { return DepthAttachments[FRenderer::GetCurrentFrameIndex()]; }
-        FLightData& GetSceneLightingData() { return SceneLightingData; }
+        TRefPtr<FImage> GetRenderTarget() { return      RenderTargets[FRenderer::GetCurrentFrameIndex()]; }
+        TRefPtr<FImage> GetDepthAttachment() { return   DepthAttachments[FRenderer::GetCurrentFrameIndex()]; }
+        FLightData& GetSceneLightingData() { return       SceneLightingData; }
 
         void RenderGrid();
         void GeometryPass(const TFastVector<TRefPtr<FImage>>& Attachments);
@@ -92,9 +92,9 @@ namespace Lumina
         TRefPtr<FBuffer> CameraUBO;
         TRefPtr<FBuffer> GridUBO;
 
-        FGridData GridData;
-        FCameraData CameraData;
-        FLightData SceneLightingData;
+        FGridData               GridData;
+        FCameraData             CameraData;
+        FLightData              SceneLightingData;
         TFastVector<FModelData> ModelData;
 
         std::shared_ptr<FCamera> Camera;

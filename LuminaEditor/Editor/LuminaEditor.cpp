@@ -14,8 +14,8 @@ namespace Lumina
         FApplicationSpecs AppSpecs;
         AppSpecs.Name = "Lumina Editor";
 
-        AppSpecs.WindowWidth = 1920;//1.3;
-        AppSpecs.WindowHeight = 1080;//1.3;
+        AppSpecs.WindowWidth = 1920/1.3;
+        AppSpecs.WindowHeight = 1080/1.3;;
         
         return std::make_unique<LuminaEditor>(AppSpecs);
     }

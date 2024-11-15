@@ -36,7 +36,7 @@ namespace Lumina
         VkPhysicalDeviceVulkan12Features features12 = {};
         features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
         features12.bufferDeviceAddress = true;
-        features12.descriptorIndexing = true;
+        features12.descriptorIndexing =  true;
 
         VkPhysicalDeviceFeatures device_features = {};
         device_features.samplerAnisotropy = VK_TRUE;
@@ -63,23 +63,23 @@ namespace Lumina
         LOG_INFO("Creating Vulkan Device: {0}", PhysicalDeviceProperties.deviceName);
         
         GeneralQueue = vkbDevice.get_queue(vkb::QueueType::graphics).value();
-        QueueFamilyIndex.Graphics = vkbDevice.get_queue_index(vkb::QueueType::graphics).value();
-        QueueFamilyIndex.Compute = vkbDevice.get_queue_index(vkb::QueueType::compute).value();
-        QueueFamilyIndex.Transfer = vkbDevice.get_queue_index(vkb::QueueType::transfer).value();
-        QueueFamilyIndex.Present = QueueFamilyIndex.Graphics;
+        QueueFamilyIndex.Graphics =     vkbDevice.get_queue_index(vkb::QueueType::graphics).value();
+        QueueFamilyIndex.Compute =      vkbDevice.get_queue_index(vkb::QueueType::compute).value();
+        QueueFamilyIndex.Transfer =     vkbDevice.get_queue_index(vkb::QueueType::transfer).value();
+        QueueFamilyIndex.Present =      QueueFamilyIndex.Graphics;
         
         VkCommandPoolCreateInfo CmdPoolCreateInfo = {};
-        CmdPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-        CmdPoolCreateInfo.queueFamilyIndex = GetQueueFamilyIndex().Graphics;
-        CmdPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+        CmdPoolCreateInfo.sType =               VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+        CmdPoolCreateInfo.queueFamilyIndex =    GetQueueFamilyIndex().Graphics;
+        CmdPoolCreateInfo.flags =               VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
 
         vkCreateCommandPool(Device, &CmdPoolCreateInfo, nullptr, &CommandPool);
 
         FSwapchainSpec SwapchainSpec;
-        SwapchainSpec.Window = InConfig.Window;
-        SwapchainSpec.Extent.x = (int)InConfig.Window->GetWidth();
-        SwapchainSpec.Extent.y = (int)InConfig.Window->GetHeight();
-        SwapchainSpec.FramesInFlight = 2;
+        SwapchainSpec.Window =          InConfig.Window;
+        SwapchainSpec.Extent.x =        (int)InConfig.Window->GetWidth();
+        SwapchainSpec.Extent.y =        (int)InConfig.Window->GetHeight();
+        SwapchainSpec.FramesInFlight =  2;
         
         Swapchain = MakeRefPtr<FVulkanSwapchain>(SwapchainSpec);
         Swapchain->CreateSurface(SwapchainSpec);

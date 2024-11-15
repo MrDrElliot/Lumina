@@ -208,14 +208,11 @@ namespace Lumina
 
     void FVulkanImGuiRenderAPI::EndFrame()
     {
-    	if(FRenderer::GetSwapchain()->IsSwapchainDirty())
-    	{
-    		return;
-    	}
         ImGuiIO& Io = ImGui::GetIO();
         FApplication& App = FApplication::Get();
-        Io.DisplaySize = ImVec2(App.GetWindow().GetWidth(), App.GetWindow().GetHeight());
-        
+        Io.DisplaySize.x = FRenderer::GetSwapchain()->GetSpecs().Extent.x;
+    	Io.DisplaySize.y = FRenderer::GetSwapchain()->GetSpecs().Extent.y;
+
         ImGui::Render();
     	
         ImGuiIO& io = ImGui::GetIO();
@@ -244,8 +241,8 @@ namespace Lumina
 				renderInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
 				renderInfo.pColorAttachments = &colorAttachment;
 				renderInfo.colorAttachmentCount = 1;
-				renderInfo.renderArea.extent.height = FApplication::GetWindow().GetHeight();
-				renderInfo.renderArea.extent.width = FApplication::GetWindow().GetWidth();
+				renderInfo.renderArea.extent.height =	FRenderer::GetSwapchain()->GetSpecs().Extent.y;
+				renderInfo.renderArea.extent.width =	FRenderer::GetSwapchain()->GetSpecs().Extent.x;
 				renderInfo.layerCount = 1;
             
 				vkCmdBeginRendering(CmdBuffer, &renderInfo);
