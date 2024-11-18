@@ -38,13 +38,13 @@ namespace Lumina
     
         ImGui::FileBrowser fileDialog;
     
-        TAssetHandle<LTexture> FolderTexture;
+        TRefPtr<FImage> FolderTexture;
         ImTextureID ImFolderTexture;
 
-        TAssetHandle<LTexture> AssetTexture;
+        TRefPtr<FImage> AssetTexture;
         ImTextureID ImAssetTexture;
     
-        std::string EnginePath = "../Lumina/Engine/Resources/";
+        std::string EnginePath;
         std::string SelectedDirectory;
         std::filesystem::path SelectedFile;
         TFastVector<TRefPtr<ContentBrowserItem>> ContentItemEntries;

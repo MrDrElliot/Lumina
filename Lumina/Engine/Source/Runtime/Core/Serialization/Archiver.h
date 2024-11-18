@@ -7,7 +7,6 @@
 #include <fstream>
 #include <filesystem>
 #include "Core/Assertions/Assert.h"
-
 #include "Containers/Array.h"
 #include "Log/Log.h"
 
@@ -174,25 +173,63 @@ public:
     }
 
 private:
-    
+
     EArchiverFlags Flags;
     std::vector<uint8> Buffer;
     size_t ReadPosition = 0;
 
-    // Helper functions to write/read raw bytes to/from the buffer
-    void WriteToBuffer(const uint8* data, size_t size)
+    // Helper function to write raw bytes to the buffer
+    bool WriteToBuffer(const uint8_t* data, size_t size)
     {
-        Buffer.insert(Buffer.end(), data, data + size);
+        if (data == nullptr || size == 0)
+        {
+            std::cerr << "WriteToBuffer: Invalid data or size." << std::endl;
+            return false; // Return false on invalid data
+        }
+
+        try
+        {
+            Buffer.insert(Buffer.end(), data, data + size); // Insert data into buffer
+        }
+        // Catch any unexpected exceptions
+        catch (const std::exception& e)  
+        {
+            std::cerr << "WriteToBuffer: Exception occurred: " << e.what() << std::endl;
+            return false;
+        }
+
+        return true;
     }
 
-    void ReadFromBuffer(uint8* data, size_t size)
+
+    // Helper function to read raw bytes from the buffer
+    bool ReadFromBuffer(uint8_t* data, size_t size)
     {
-        if (ReadPosition + size > Buffer.size())
+        if (data == nullptr || size == 0)  // Check for invalid input data
+            {
+            std::cerr << "ReadFromBuffer: Invalid data or size." << std::endl;
+            return false; // Return false on invalid data
+            }
+
+        if (ReadPosition + size > Buffer.size()) // Bounds checking
+            {
+            std::cerr << "ReadFromBuffer: Out of bounds read attempt." << std::endl;
+            return false; // Return false on out of bounds
+            }
+
+        try
         {
-            throw std::runtime_error("Read out of buffer bounds.");
+            // Perform the read by copying data to the provided buffer
+            std::copy(Buffer.begin() + ReadPosition, Buffer.begin() + ReadPosition + size, data);
+            ReadPosition += size; // Update read position
         }
-        std::copy(Buffer.begin() + ReadPosition, Buffer.begin() + ReadPosition + size, data);
-        ReadPosition += size;
+        catch (const std::exception& e)
+        {
+            std::cerr << "ReadFromBuffer: Exception occurred: " << e.what() << std::endl;
+            return false;
+        }
+
+        return true;
     }
 };
 

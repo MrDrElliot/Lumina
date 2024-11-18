@@ -1,7 +1,6 @@
 #include "ViewportLayer.h"
 
 #include "ImGui/ImGuiRenderer.h"
-#include "Renderer/RHI/Vulkan/VulkanRenderContext.h"
 #include "Scene/Scene.h"
 #include "Scene/SceneRenderer.h"
 
@@ -38,7 +37,7 @@ namespace Lumina
 
             Scene->GetEditorCamera()->SetFOV(fov);
 
-            FImGuiRenderer::RenderImage(RenderTarget, FVulkanRenderContext::GetLinearSampler(), NewRegion, 0, true);
+            FImGuiRenderer::RenderImage(RenderTarget, FRenderer::GetLinearSampler(), NewRegion, 0, true);
 
             // Camera position overlay in the top-left corner
             ImVec2 overlayPos = ImVec2(Min.x + 10, Min.y + 10); // Slight padding from the window edge

@@ -14,4 +14,5 @@ namespace Lumina
     :mEntityHandle(InHandle), mScene(InScene.get())
     {
     }
+    
 }

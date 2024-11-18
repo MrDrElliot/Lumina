@@ -147,6 +147,8 @@ namespace Lumina
 
     void FSceneRenderer::EndScene()
     {
+        PROFILE_SCOPE(SceneRender)
+        
         if(FRenderer::GetSwapchain()->WasSwapchainResizedThisFrame())
         {
             OnSwapchainResized();
@@ -226,14 +228,14 @@ namespace Lumina
         CurrentDescriptorSet->Write(1, 0, SceneUBO, sizeof(FLightData), 0);
 
         ModelData.clear();
-        auto View = CurrentScene->GetEntityRegistry().view<MeshComponent, TransformComponent>();
+        auto View = CurrentScene->GetEntityRegistry().view<FMeshComponent, FTransformComponent>();
         uint64 ComponentTotal = View.size_hint();
         ModelData.reserve((uint32)ComponentTotal);
         
         for(auto entity : View)
         {
-            auto& Transform = View.get<TransformComponent>(entity);
-            glm::mat4 Matrix = Transform.Transform.GetMatrix();
+            auto& Transform = View.get<FTransformComponent>(entity);
+            glm::mat4 Matrix = Transform.GetTransform().GetMatrix();
     
             ModelData.emplace_back(std::move(Matrix));
         }
@@ -244,7 +246,7 @@ namespace Lumina
             CurrentDescriptorSet->Write(1, 0, SceneUBO, sizeof(FLightData), 0);
             CurrentDescriptorSet->Write(2, 0, ModelSBO, ComponentTotal * sizeof(glm::mat4), 0);
             
-            CurrentScene->ForEachComponent<MeshComponent>([this](uint32 Total, uint32 Current, entt::entity& entity, MeshComponent& Component)
+            CurrentScene->ForEachComponent<FMeshComponent>([&](uint32 Total, uint32 Current, entt::entity& entity, FMeshComponent& Component)
             {
                 Entity Ent(entity, CurrentScene);
                 Component.Material->Bind(GraphicsPipeline);
@@ -265,10 +267,10 @@ namespace Lumina
 
     void FSceneRenderer::InitPipelines()
     {
-        DeviceBufferLayoutElement Pos(EShaderDataType::FLOAT3);
-        DeviceBufferLayoutElement Color(EShaderDataType::FLOAT4);
-        DeviceBufferLayoutElement UV(EShaderDataType::FLOAT2);
-        DeviceBufferLayoutElement Normal(EShaderDataType::FLOAT3);
+        DeviceBufferLayoutElement Pos       (EShaderDataType::FLOAT3);
+        DeviceBufferLayoutElement Color     (EShaderDataType::FLOAT4);
+        DeviceBufferLayoutElement UV        (EShaderDataType::FLOAT2);
+        DeviceBufferLayoutElement Normal    (EShaderDataType::FLOAT3);
 
         FDeviceBufferLayout Layout({Pos, Color, Normal, UV});
     

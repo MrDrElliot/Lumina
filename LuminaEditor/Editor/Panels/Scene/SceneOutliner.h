@@ -12,7 +12,6 @@ namespace Lumina
         SceneOutliner(const std::shared_ptr<LScene>& InScene)
         {
             mScene = InScene;
-            
             Name = "Scene Outliner";
             bVisible = true;
 

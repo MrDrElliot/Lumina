@@ -1,10 +1,13 @@
-
+﻿
 #include "EditorLayer.h"
 
 #include "Core/Application.h"
 #include "Panels/ApplicationStats.h"
 #include "Panels/AssetDebugWindow.h"
 #include "Panels/ConsoleWindow.h"
+#include "Panels/EditorSettingsPanel.h"
+#include "Panels/EntityPropertyPanel.h"
+#include "Panels/PerformanceTrackerPanel.h"
 #include "Panels/ToolbarWindow.h"
 #include "Panels/ViewportLayer.h"
 #include "Panels/ContentBrowser/ContentBrowserWindow.h"
@@ -29,6 +32,9 @@ namespace Lumina
         PanelManager::Get()->RegisterPanel<NewProjectPanel>();
         PanelManager::Get()->RegisterPanel<OpenProjectPanel>();
         PanelManager::Get()->RegisterPanel<SceneSettings>();
+        PanelManager::Get()->RegisterPanel<FEditorSettingsPanel>();
+        PanelManager::Get()->RegisterPanel<FPerformanceTrackerPanel>();
+        PanelManager::Get()->RegisterPanel<FEntityPropertyPanel>();
 
     }
 
@@ -49,23 +55,26 @@ namespace Lumina
 
     void FEditorLayer::ImGuiRender(double DeltaTime)
     {
-        if(ImGui::GetCurrentContext() && ImGui::GetMainViewport())
+        ImGuiContext* currentContext = ImGui::GetCurrentContext();
+        ImGuiViewport* mainViewport = ImGui::GetMainViewport();
+
+        if (currentContext && mainViewport)
         {
-            ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
+            ImGui::DockSpaceOverViewport(mainViewport);
         }
 
-        TFastVector<TRefPtr<EditorImGuiWindow>> Windows;
-        PanelManager::Get()->GetPanels(Windows);
-        for (auto& Window : Windows)
+        TFastVector<TRefPtr<EditorImGuiWindow>> Panels;
+        PanelManager::Get()->GetPanels(Panels);
+
+        for (auto& Panel : Panels)
         {
-            if(!Window->IsVisible())
+            if (Panel->IsVisible())
             {
-                continue;
+                Panel->OnUpdate(DeltaTime);
             }
-            
-            Window->OnUpdate(DeltaTime);
         }
     }
+
 
     TRefPtr<EditorImGuiWindow> FEditorLayer::GetEditorWindowByName(const LString& Name)
     {

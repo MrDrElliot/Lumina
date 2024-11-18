@@ -7,6 +7,7 @@
 #include "Assets/AssetTypes/Textures/Texture.h"
 #include "Assets/Factories/TextureFactory/TextureFactory.h"
 #include "ImGui/ImGuiRenderer.h"
+#include "Paths/Paths.h"
 #include "Project/Project.h"
 #include "Renderer/Image.h"
 #include "Renderer/RenderContext.h"
@@ -49,12 +50,13 @@ namespace Lumina
 {
     void ContentBrowserWindow::OnAttach()
     { 
+        EnginePath = std::filesystem::path(Paths::GetEngineDirectory() / "Resources").string();
+        
+        FolderTexture = FTextureFactory::ImportFromSource("../LuminaEditor/Resources/Icons/ContentBrowser/Folder.png");
+        ImFolderTexture = FImGuiRenderer::CreateImGuiTexture(FolderTexture, FRenderer::GetLinearSampler(), {512, 512}, 0, true);
     
-        FolderTexture = AssetRegistry::GetAssetByPath<LTexture>("../Lumina/Engine/Resources/Textures/T_FolderIcon.lum");
-        ImFolderTexture = FImGuiRenderer::CreateImGuiTexture(FolderTexture->GetImage(), FRenderContext::GetLinearSampler(), {512, 512}, 0, true);
-    
-        AssetTexture = AssetRegistry::GetAssetByPath<LTexture>("../Lumina/Engine/Resources/Textures/T_ShaderIcon.lum");
-        ImAssetTexture = FImGuiRenderer::CreateImGuiTexture(AssetTexture->GetImage(), FRenderContext::GetLinearSampler(), {512, 512}, 0, true);
+        AssetTexture = FTextureFactory::ImportFromSource("../LuminaEditor/Resources/Icons/ContentBrowser/StaticMeshIcon.png");
+        ImAssetTexture = FImGuiRenderer::CreateImGuiTexture(AssetTexture, FRenderer::GetLinearSampler(), {512, 512}, 0, true);
 
     
         fileDialog = ImGui::FileBrowser(ImGuiFileBrowserFlags_CloseOnEsc | ImGuiFileBrowserFlags_CreateNewDir);
@@ -70,49 +72,53 @@ namespace Lumina
 
     void ContentBrowserWindow::OnDetach()
     {
+        FolderTexture->Destroy();
+        AssetTexture->Destroy();
     }
 
     void ContentBrowserWindow::OnUpdate(double DeltaTime)
     {
         ImGui::Begin("Content Browser");
-    
-        // Import asset button
-        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.6f, 0.15f, 0.15f, 1.0f));
+
+        // Import asset button with minimal gray style
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.4f, 0.4f, 0.4f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.25f, 0.25f, 0.25f, 1.0f));
         if (ImGui::Button("Import Asset"))
         {
             fileDialog.Open();
         }
-        ImGui::PopStyleColor();
+        ImGui::PopStyleColor(3);
 
         fileDialog.Display();
-        if(fileDialog.HasSelected())
+        if (fileDialog.HasSelected())
         {
             ImGui::OpenPopup("Asset Import Options");
             SelectedFile = fileDialog.GetSelected();
             fileDialog.ClearSelected();
         }
-    
+
         // Popup modal for asset import options
         if (ImGui::BeginPopupModal("Asset Import Options", NULL, ImGuiWindowFlags_AlwaysAutoResize))
         {
             EAssetType AssetType = FileExtensionToAssetType(SelectedFile.extension().string());
-        
-            if(mImGuiImporterMap.find(AssetType) != mImGuiImporterMap.end())
+
+            if (mImGuiImporterMap.find(AssetType) != mImGuiImporterMap.end())
             {
                 mImGuiImporterMap.at(AssetType)->Render(this);
             }
             else
             {
                 ImGui::Text("Unsupported file type.");
-            
+
                 if (ImGui::Button("Cancel", ImVec2(120, 0)))
                 {
-                    ImGui::CloseCurrentPopup(); // Close the popup when cancel is pressed
+                    ImGui::CloseCurrentPopup();
                     SelectedFile.clear();
                 }
             }
-    
-            ImGui::EndPopup(); // End the modal window
+
+            ImGui::EndPopup();
         }
 
         float leftPaneWidth = 200.0f;
@@ -120,11 +126,12 @@ namespace Lumina
 
         // Left pane: Directory list
         ImGui::BeginChild("Directories", ImVec2(leftPaneWidth, 0), true);
-        if(std::filesystem::exists(Project::GetProjectContentDirectory()))
+        if (std::filesystem::exists(Project::GetProjectContentDirectory()))
         {
             ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[1]);
             ImGui::Text("Project Content");
             ImGui::PopFont();
+
             for (auto& p : std::filesystem::directory_iterator(Project::GetProjectContentDirectory()))
             {
                 if (p.is_directory())
@@ -137,14 +144,14 @@ namespace Lumina
             }
         }
 
-        ImGui::Separator(); // Visually separate project and engine directories
-    
-        // Display directories in EnginePath
+        ImGui::Separator();
+
         if (std::filesystem::exists(EnginePath))
         {
             ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[1]);
             ImGui::Text("Engine Content");
             ImGui::PopFont();
+
             for (auto& p : std::filesystem::directory_iterator(EnginePath))
             {
                 if (p.is_directory())
@@ -156,44 +163,69 @@ namespace Lumina
                 }
             }
         }
-    
+
         ImGui::EndChild();
         ImGui::SameLine();
-    
+
         // Right pane: Contents of selected directory
         ImGui::BeginChild("Contents", ImVec2(rightPaneWidth, 0), true);
-    
+
+        // Top bar with current directory and refresh button
+        if (!SelectedDirectory.empty())
+        {
+            // Minimal gray style for refresh button
+            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(8, 4));
+            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
+            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.4f, 0.4f, 0.4f, 1.0f));
+            ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.25f, 0.25f, 0.25f, 1.0f));
+
+            if (ImGui::Button("Refresh"))
+            {
+                OnNewDirectorySelected(SelectedDirectory);
+            }
+
+            ImGui::PopStyleColor(3);
+            ImGui::PopStyleVar();
+
+            ImGui::SameLine();
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.8f, 0.8f, 0.8f, 1.0f));
+            ImGui::TextUnformatted(std::filesystem::relative(SelectedDirectory, Project::GetProjectContentDirectory()).string().c_str());
+            ImGui::PopStyleColor();
+        }
+
+        ImGui::Separator();
+
         if (!SelectedDirectory.empty())
         {
             RenderContentItems();
-        
-            // Context menu for creating new assets (right-click anywhere)
-            if (ImGui::IsWindowHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Right)) // Right-click detection
-                {
-                ImGui::OpenPopup("Create New Asset");
-                }
 
-            // Create New Asset context menu
+            if (ImGui::IsWindowHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Right))
+            {
+                ImGui::OpenPopup("Create New Asset");
+            }
+
             if (ImGui::BeginPopup("Create New Asset"))
             {
                 if (ImGui::MenuItem("New Folder"))
                 {
                     ImGui::CloseCurrentPopup();
                 }
-        
+
                 if (ImGui::MenuItem("Material"))
                 {
                     // Logic to create a material asset
                     ImGui::CloseCurrentPopup();
                 }
-                ImGui::EndPopup(); // End the context menu
+                ImGui::EndPopup();
             }
         }
-    
+
         ImGui::EndChild();
-    
+
         ImGui::End();
     }
+
+
     
     void ContentBrowserWindow::OnEvent(FEvent& InEvent)
     {

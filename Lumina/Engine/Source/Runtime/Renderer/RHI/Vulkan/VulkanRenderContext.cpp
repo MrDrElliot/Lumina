@@ -88,32 +88,6 @@ namespace Lumina
 
         physicalDevice.surface = Swapchain->GetSurface();
         PhysicalDevice = physicalDevice;
-        
-        // Nearest filtration sampler
-        FImageSamplerSpecification ImageSpec = {};
-        ImageSpec.MinFilteringMode =            ESamplerFilteringMode::LINEAR;
-        ImageSpec.MagFilteringMode =            ESamplerFilteringMode::NEAREST;
-        ImageSpec.MipMapFilteringMode =         ESamplerFilteringMode::LINEAR;
-        ImageSpec.AddressMode =                 ESamplerAddressMode::REPEAT;
-        ImageSpec.MinLOD =                      0.0f;
-        ImageSpec.MaxLOD =                      1000.0f;
-        ImageSpec.LODBias =                     0.0f;
-        ImageSpec.AnisotropicFilteringLevel =   1;
-
-        NearestSampler = FImageSampler::Create(ImageSpec);
-        
-        // Linear filtration sampler
-        ImageSpec.MinFilteringMode =            ESamplerFilteringMode::LINEAR;
-        ImageSpec.MagFilteringMode =            ESamplerFilteringMode::LINEAR;
-        ImageSpec.MipMapFilteringMode =         ESamplerFilteringMode::LINEAR;
-        ImageSpec.AddressMode =                 ESamplerAddressMode::REPEAT;
-        ImageSpec.MinLOD =                      0.0f;
-        ImageSpec.MaxLOD =                      1000.0f;
-        ImageSpec.LODBias =                     0.0f;
-        ImageSpec.AnisotropicFilteringLevel =   1;
-
-        LinearSampler = FImageSampler::Create(ImageSpec);
-        
     }
 
     FVulkanRenderContext::~FVulkanRenderContext()
@@ -127,12 +101,6 @@ namespace Lumina
         Swapchain->DestroySwapchain();
         Swapchain->DestroySurface();
         Swapchain = nullptr;
-        
-        LinearSampler->Destroy();
-        LinearSampler = nullptr;
-        
-        NearestSampler->Destroy();
-        NearestSampler = nullptr;
         
         vkDestroyCommandPool(Device, CommandPool, nullptr);
         

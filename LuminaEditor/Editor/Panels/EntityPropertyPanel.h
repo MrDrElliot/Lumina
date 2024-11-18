@@ -1,22 +1,26 @@
 #pragma once
-#include "Panels/ImGuiWindow.h"
+#include "ImGuiWindow.h"
 
 namespace Lumina
 {
-    class SceneSettings : public EditorImGuiWindow
+    class FEntityPropertyPanel : public EditorImGuiWindow
     {
     public:
 
-        SceneSettings()
+        FEntityPropertyPanel()
         {
-            Name = "Scene Settings";
-            bShowInWindows = true;
+            Name = "Properties";
             bVisible = true;
+            bShowInWindows = true;
         }
-        
+
         void OnAttach() override;
         void OnDetach() override;
         void OnUpdate(double DeltaTime) override;
         void OnEvent(FEvent& InEvent) override;
+
+
+    private:
+    
     };
 }

@@ -1,5 +1,5 @@
 #pragma once
-#include "Memory/RefCounted.h"
+
 #include "Renderer/Material.h"
 #include "Assets/AssetHandle.h"
 
@@ -9,11 +9,12 @@ namespace Lumina
     class LStaticMesh;
     class Material;
 
-    struct MeshComponent
+    class FMeshComponent
     {
+    public:
 
-        MeshComponent() = default;
-        MeshComponent(const TAssetHandle<LStaticMesh>& MeshAsset, const TAssetHandle<Material>& InMaterial)
+        FMeshComponent() = default;
+        FMeshComponent(const TAssetHandle<LStaticMesh>& MeshAsset, const TAssetHandle<Material>& InMaterial)
             :StaticMesh(MeshAsset), Material(InMaterial) 
         {}
 

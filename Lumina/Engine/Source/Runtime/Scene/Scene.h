@@ -3,7 +3,6 @@
 #include <entt/entt.hpp>
 #include "Camera.h"
 #include "Assets/Asset.h"
-#include "Assets/AssetHandle.h"
 
 
 class FTransform;
@@ -11,8 +10,6 @@ class LString;
 
 namespace Lumina
 {
-
-
     struct FSceneSettings
     {
         FSceneSettings()
@@ -49,38 +46,34 @@ namespace Lumina
 
         Entity CreateEntity(const FTransform& Transform, const LString& Name);
         void DestroyEntity(Entity Entity);
+        Entity GetEntityByGUID(const FGuid& Guid, bool* bFound = nullptr);
         
         EntityRegistry& GetEntityRegistry() { return mEntityRegistery; }
         FSceneSettings& GetSceneSettings() { return Settings; }
 
 
-        template<typename T>
-        void ForEachComponent(const std::function<void(uint32& NumEntires, uint32& CurrentIndex, entt::entity& OutEntity, T& OutComponent)>& Functor);
+        template <typename T>
+        void ForEachComponent(const std::function<void(uint32& NumEntires, uint32& CurrentIndex, entt::entity& OutEntity, T& OutComponent)>& Functor)
+        {
+            auto view = mEntityRegistery.view<T>();
+
+            uint32 NumEntires = view.end().index();
+            uint32 Current = 0;
+            for (auto [entity, component] : view.each())
+            {
+                Functor(NumEntires, Current, entity, component);
+                Current++;
+            }
+        }
     
     private:
         
         FSceneSettings Settings;
+        EntityRegistry mEntityRegistery;
+        std::unordered_map<FGuid, Entity> EntityIdentifierMap;
         
-        std::shared_ptr<FCamera> EditorCamera;
+        std::shared_ptr<FCamera>        EditorCamera;
         std::shared_ptr<FSceneRenderer> SceneRenderer;
 
-        EntityRegistry mEntityRegistery;
     };
-
-
-    template <typename T>
-    void LScene::ForEachComponent(const std::function<void(uint32& NumEntires, uint32& CurrentIndex, entt::entity& OutEntity, T& OutComponent)>& Functor)
-    {
-        auto view = mEntityRegistery.view<T>();
-
-        uint32 NumEntires = view.end().index();
-        uint32 Current = 0;
-        for(auto [entity, component]: view.each())
-        {
-            Functor(NumEntires, Current, entity, component);
-            Current++;
-        }
-    }
-
-    
 }

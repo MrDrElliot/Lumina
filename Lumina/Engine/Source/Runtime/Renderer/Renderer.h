@@ -13,6 +13,11 @@
 
 namespace Lumina
 {
+    class FImageSampler;
+}
+
+namespace Lumina
+{
     enum class EShaderStage : uint8;
 }
 
@@ -31,7 +36,7 @@ namespace Lumina
 
     struct FRenderConfig
     {
-        int32 FramesInFlight;
+        uint32 FramesInFlight;
         FWindow* Window;
     };
     
@@ -40,7 +45,19 @@ namespace Lumina
     public:
         
         using RenderFunction = std::function<void()>;
-
+        
+        struct RendererInternalData
+        {
+        
+            static std::atomic<bool>                bCommandsRecorded;
+            static std::mutex                       CommandBufferMutex;
+        
+            std::vector<FRenderer::RenderFunction>  RenderFunctionList;
+            TRefPtr<FImageSampler>                  LinearSampler;
+            TRefPtr<FImageSampler>                  NearestSampler;
+        
+        } static sInternalData;
+        
         static void Init(const FRenderConfig& InConfig);
         static void Shutdown();
 
@@ -60,7 +77,9 @@ namespace Lumina
         static void WaitIdle();
         static void LoadShaderPack();
 
-
+        static TRefPtr<FImageSampler> GetLinearSampler();
+        static TRefPtr<FImageSampler> GetNearestSampler();
+        
         static void InsertBarrier(const FPipelineBarrierInfo& BarrierInfo);
         static void BindSet(const TRefPtr<FDescriptorSet>& Set, const TRefPtr<FPipeline>& Pipeline, uint8 SetIndex, const TFastVector<uint32>& DynamicOffsets);
         static void BindPipeline(TRefPtr<FPipeline> Pipeline);

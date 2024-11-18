@@ -3,6 +3,10 @@
 #include "Core/Application.h"
 
 
+namespace Lumina
+{
+    class FEditorSettings;
+}
 
 namespace Lumina
 {

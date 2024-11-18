@@ -11,6 +11,8 @@ namespace Lumina
         uint32 Width = 1600;
         uint32 Height = 900;
 
+        bool bFullscreen = false;
+
        std::function<void(FEvent&)> EventCallback;
     };
 }

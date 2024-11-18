@@ -3,6 +3,8 @@
 #include <typeindex>
 #include <unordered_map>
 #include <memory>
+
+#include "Core/Performance/PerformanceTracker.h"
 #include "Log/Log.h"
 
 enum ESubsystemFlags
@@ -56,6 +58,7 @@ namespace Lumina
 
         void Update(double DeltaTime)
         {
+            PROFILE_SCOPE(SubsystemUpdate)
             for (auto& [type, S] : Subsystems)
             {
                 S->Update(DeltaTime);

@@ -1,6 +1,7 @@
 #include "ToolbarWindow.h"
 
 #include "EditorLayer.h"
+#include "EditorSettingsPanel.h"
 #include "imgui.h"
 #include "LuminaEditor.h"
 #include "Project/NewProjectPanel.h"
@@ -26,6 +27,10 @@ namespace Lumina
             // File Menu
             if (ImGui::BeginMenu("File"))
             {
+                if(ImGui::MenuItem("Editor Settings"))
+                {
+                    PanelManager::Get()->GetPanel<FEditorSettingsPanel>()->SetVisible(true);
+                }
                 if (ImGui::MenuItem("New Project"))
                 {
                     PanelManager::Get()->GetPanel<NewProjectPanel>()->SetVisible(true);
@@ -33,7 +38,6 @@ namespace Lumina
                 if (ImGui::MenuItem("Open Project"))
                 {
                     PanelManager::Get()->GetPanel<OpenProjectPanel>()->SetVisible(true);
-
                 }
                 if(ImGui::MenuItem("Project Settings"))
                 {

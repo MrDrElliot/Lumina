@@ -94,10 +94,10 @@ namespace Lumina
         dynamicOffsets.clear();
         FRenderer::BindSet(DescriptorSet, Pipeline, (uint8)Index, std::move(dynamicOffsets));
         
-        Write(1, 0, Textures.BaseColor,        FVulkanRenderContext::GetLinearSampler());
-        Write(3, 0, Textures.Normal,           FVulkanRenderContext::GetLinearSampler());
-        Write(4, 0, Textures.MetallicRoughness,FVulkanRenderContext::GetLinearSampler());
-        Write(5, 0, Textures.Emissive,         FVulkanRenderContext::GetLinearSampler());
-        Write(6, 0, Textures.AmbientOcclusion, FVulkanRenderContext::GetLinearSampler());
+        Write(1, 0, Textures.BaseColor,        FRenderer::GetLinearSampler());
+        Write(3, 0, Textures.Normal,           FRenderer::GetLinearSampler());
+        Write(4, 0, Textures.MetallicRoughness,FRenderer::GetLinearSampler());
+        Write(5, 0, Textures.Emissive,         FRenderer::GetLinearSampler());
+        Write(6, 0, Textures.AmbientOcclusion, FRenderer::GetLinearSampler());
     }
 }

@@ -14,19 +14,22 @@ namespace Lumina
     class Entity
     {
     public:
-
+        
+        Entity() = default; // Invalid entity.
         Entity(const entt::entity& InHandle, LScene* InScene);
         Entity(const entt::entity& InHandle, std::shared_ptr<LScene> InScene);
 
         
         LScene* GetScene()                      { return mScene; }
-        inline LString GetName()                { return GetComponent<NameComponent>().GetName(); }
         entt::entity GetHandle()                { return mEntityHandle; }
-        inline FTransform GetTransform()        { return GetComponent<TransformComponent>().Transform; }
-        inline glm::vec3 GetLocation()          { return GetComponent<TransformComponent>().Transform.Location; }
-        inline glm::quat GetRotation()          { return GetComponent<TransformComponent>().Transform.Rotation; }
-        inline glm::vec3 GetScale()             { return GetComponent<TransformComponent>().Transform.Scale; }
 
+        inline LString& GetName()                { return GetComponent<FNameComponent>().GetName(); }
+        inline FTransform GetTransform()        { return GetComponent<FTransformComponent>().GetTransform(); }
+        inline glm::vec3 GetLocation()          { return GetComponent<FTransformComponent>().GetLocation(); }
+        inline glm::quat GetRotation()          { return GetComponent<FTransformComponent>().GetRotation(); }
+        inline glm::vec3 GetScale()             { return GetComponent<FTransformComponent>().GetScale(); }
+
+        inline void Destroy()                   { if (mScene) mScene->DestroyEntity(*this);  }
         
         template <typename T, typename... Args>
         void AddComponent(Args&&... args);
@@ -39,6 +42,7 @@ namespace Lumina
 
         template <typename T>
         T& GetComponent();
+
 
         
 

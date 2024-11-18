@@ -5,23 +5,31 @@
 #include "Assets/Importers/AssetImporter.h"
 #include "Assets/Importers/MeshImporter.h"
 #include "Assets/Importers/TextureImporter.h"
+#include "Paths/Paths.h"
+#include "Project/Project.h"
 #include "Renderer/Image.h"
 
 namespace Lumina
 {
     AssetRegistry::AssetRegistry()
     {
-        
     }
 
     AssetRegistry::~AssetRegistry()
     {
-        
+        bShouldScan = false;
+        ScanThread.join();
     }
 
+    void AssetRegistry::StartAssetScan()
+    {
+        ScanThread = std::thread(&AssetRegistry::ScanAssets, this);
+    }
+    
     void AssetRegistry::Shutdown()
     {
-        
+        bShouldScan = false;
+        ScanThread.join();
     }
 
     const FAssetMetadata& AssetRegistry::GetMetadata(const FAssetHandle& InHandle)
@@ -63,6 +71,24 @@ namespace Lumina
     {
         mAssetRegistry[InHandle] = InMetadata;
     }
+
+    void AssetRegistry::ScanAssets()
+    {
+        while (bShouldScan)
+        {
+            // Use recursive_directory_iterator to scan all subdirectories
+            for (const auto& entry : std::filesystem::recursive_directory_iterator(Project::GetProjectContentDirectory()))
+            {
+                if (!entry.is_directory())
+                {
+                    GetMetadataByPath(entry);
+                }
+            }
+
+            std::this_thread::sleep_for(std::chrono::seconds(5));
+        }
+    }
+
 
     void AssetRegistry::GetAllRegisteredAssets(TFastVector<FAssetMetadata>& OutAssets)
     {

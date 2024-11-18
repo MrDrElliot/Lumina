@@ -1,22 +1,23 @@
 #pragma once
-#include "Panels/ImGuiWindow.h"
+#include "ImGuiWindow.h"
 
 namespace Lumina
 {
-    class SceneSettings : public EditorImGuiWindow
+    class FPerformanceTrackerPanel : public EditorImGuiWindow
     {
     public:
 
-        SceneSettings()
+        FPerformanceTrackerPanel()
         {
-            Name = "Scene Settings";
+            Name = "Performance Metrics";
+            bVisible = false;
             bShowInWindows = true;
-            bVisible = true;
         }
         
         void OnAttach() override;
         void OnDetach() override;
         void OnUpdate(double DeltaTime) override;
         void OnEvent(FEvent& InEvent) override;
+    
     };
 }

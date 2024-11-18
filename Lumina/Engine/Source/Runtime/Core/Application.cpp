@@ -36,6 +36,7 @@ namespace Lumina
         {
             if (true)
             {
+                PROFILE_SCOPE(ApplicationFrame)
                 PreFrame();
             
                 mScene->OnUpdate(Stats.DeltaTime);
@@ -134,6 +135,7 @@ namespace Lumina
 
     void FApplication::UpdateLayerStack(double DeltaTime)
     {
+        PROFILE_SCOPE(LayerStackUpdate)
         for (TRefPtr<FLayer>& Layer : LayerStack)
         {
             Layer->OnUpdate(DeltaTime);    
@@ -166,6 +168,7 @@ namespace Lumina
 
     void FApplication::RenderImGui(double DeltaTime)
     {
+        PROFILE_SCOPE(ImGuiRenderUpdate)
         FImGuiRenderer::BeginFrame();
 
         for (auto& Layer : LayerStack)

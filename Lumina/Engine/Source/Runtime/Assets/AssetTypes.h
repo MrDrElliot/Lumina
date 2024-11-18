@@ -87,7 +87,9 @@ namespace Lumina
     struct FAssetHandle
     {
         FAssetHandle() = default;
-        FAssetHandle(const FGuid& Guid):Handle(Guid) {};
+        FAssetHandle(const FGuid& Guid) :Handle(Guid) {}
+
+        
         FGuid Handle;
 
         friend FArchive& operator << (FArchive& Ar, FAssetHandle& data)
@@ -116,7 +118,7 @@ namespace std
                 return 0; // Handle empty string or nullptr
             }
             // Use a hash function for C-strings
-            return std::hash<uint64>{}(Handle.Handle.Get());
+            return std::hash<Lumina::FGuid>{}(Handle.Handle);
         }
     };
 }

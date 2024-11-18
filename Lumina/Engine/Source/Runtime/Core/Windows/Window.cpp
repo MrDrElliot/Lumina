@@ -21,6 +21,39 @@ namespace
 
 namespace Lumina
 {
+
+	GLFWmonitor* GetCurrentMonitor(GLFWwindow* window)
+	{
+		int windowX, windowY, windowWidth, windowHeight;
+		glfwGetWindowPos(window, &windowX, &windowY);
+		glfwGetWindowSize(window, &windowWidth, &windowHeight);
+
+		int monitorCount;
+		GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
+
+		GLFWmonitor* bestMonitor = nullptr;
+		int maxOverlap = 0;
+
+		for (int i = 0; i < monitorCount; ++i)
+		{
+			int monitorX, monitorY, monitorWidth, monitorHeight;
+			glfwGetMonitorWorkarea(monitors[i], &monitorX, &monitorY, &monitorWidth, &monitorHeight);
+
+			int overlapX = std::max(0, std::min(windowX + windowWidth, monitorX + monitorWidth) - std::max(windowX, monitorX));
+			int overlapY = std::max(0, std::min(windowY + windowHeight, monitorY + monitorHeight) - std::max(windowY, monitorY));
+			int overlapArea = overlapX * overlapY;
+
+			if (overlapArea > maxOverlap)
+			{
+				maxOverlap = overlapArea;
+				bestMonitor = monitors[i];
+			}
+		}
+
+		return bestMonitor;
+	}
+
+
 	FWindow::FWindow(const FWindowSpecs& InSpecs)
 	{
 		Specs = InSpecs;
@@ -35,14 +68,44 @@ namespace Lumina
 	{
 		if (!bInitialized)
 		{
+
 			LOG_TRACE("Initializing Window: {0} (Width: {1}p Height: {2}p)", Specs.Title, Specs.Width, Specs.Height);
 
 			glfwInit();
 			glfwSetErrorCallback(GLFWErrorCallback);
 			glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-			//glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE); //@TODO Temp until swapchain resizing is fixed.
+			//glfwWindowHint(GLFW_DECORATED, false);
+
+			if (Specs.bFullscreen)
+			{
+				glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
+			}
+
 
 			Window = glfwCreateWindow((int)Specs.Width, (int)Specs.Height, Specs.Title.c_str(), nullptr, nullptr);
+			if (Window)
+			{
+				GLFWmonitor* currentMonitor = GetCurrentMonitor(Window);
+
+				if (currentMonitor)
+				{
+					int monitorX, monitorY, monitorWidth, monitorHeight;
+					glfwGetMonitorWorkarea(currentMonitor, &monitorX, &monitorY, &monitorWidth, &monitorHeight);
+
+					// Check and adjust the window dimensions
+					if (Specs.Width >= monitorWidth)
+					{
+						Specs.Width = monitorWidth - 1; // Shrink width by 1 pixel if it's too large
+					}
+					if (Specs.Height >= monitorHeight)
+					{
+						Specs.Height = monitorHeight - 1; // Shrink height by 1 pixel if it's too large
+					}
+
+					// Update the window size after adjustment
+					glfwSetWindowSize(Window, Specs.Width, Specs.Height);
+				}
+			}
 		}
 		else
 		{

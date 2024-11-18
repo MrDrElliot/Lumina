@@ -1,13 +1,19 @@
 #pragma once
+
+#include "Component.h"
 #include "Containers/String.h"
 
 namespace Lumina
 {
-    struct NameComponent
+    class FNameComponent : public FComponent
     {
-        NameComponent() = default;
-        NameComponent(const LString& InName) :Name(InName) {}
-        NameComponent(const char* InName) :Name(InName) {}
+    public:
+
+        FNameComponent() = default;
+        FNameComponent(const LString& InName) :Name(InName) {}
+        FNameComponent(const char* InName) :Name(InName) {}
+
+        void Serialize(FArchive& Ar) override {}
 
         LString& GetName() { return Name; }
 

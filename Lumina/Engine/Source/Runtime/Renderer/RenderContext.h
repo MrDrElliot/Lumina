@@ -26,16 +26,12 @@ namespace Lumina
         static FRenderContext* Create(const FRenderConfig& InConfig);
         virtual void Destroy() = 0;
         
-        static TRefPtr<FImageSampler>& GetLinearSampler() { return Instance->LinearSampler; }
-        static TRefPtr<FImageSampler>& GetNearestSampler() { return Instance->NearestSampler; }
         static FQueueFamilyIndex GetQueueFamilyIndex() { return Instance->QueueFamilyIndex; }
 
     
     protected:
 
         static FRenderContext* Instance;
-        TRefPtr<FImageSampler> NearestSampler;
-        TRefPtr<FImageSampler> LinearSampler;
         FQueueFamilyIndex QueueFamilyIndex;
         
     };

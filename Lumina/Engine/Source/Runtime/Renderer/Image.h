@@ -12,6 +12,11 @@
 
 namespace Lumina
 {
+    class FImageSampler;
+}
+
+namespace Lumina
+{
     class FCommandBuffer;
 
     enum class EImageLayout
@@ -105,6 +110,7 @@ namespace Lumina
             spec.Extent = { 0, 0, 0 };
             spec.Format = EImageFormat::RGBA32_SRGB;
             spec.Usage = EImageUsage::TEXTURE;
+            spec.SampleCount = EImageSampleCount::ONE;
             spec.Type = EImageType::TYPE_2D;
             spec.MipLevels = 1;
             spec.ArrayLayers = 1;

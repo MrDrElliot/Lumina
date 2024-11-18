@@ -21,11 +21,13 @@ namespace Lumina
 		AssetRegistry();
 		~AssetRegistry();
 
+		void StartAssetScan();
 		void Shutdown() override;
 		
 		const FAssetMetadata& GetMetadata(const FAssetHandle& InHandle);
 		FAssetMetadata GetMetadataByPath(const std::filesystem::path& InPath);
 		void SetMetadata(const FAssetHandle& InHandle, const FAssetMetadata& InMetadata);
+		void ScanAssets();
 
 		void GetAllRegisteredAssets(TFastVector<FAssetMetadata>& OutAssets);
 		
@@ -40,6 +42,8 @@ namespace Lumina
 	private:
 
 		std::unordered_map<FAssetHandle, FAssetMetadata> mAssetRegistry;
+		std::thread ScanThread;
+		bool bShouldScan = true;
 	};
 
 	template <typename T>

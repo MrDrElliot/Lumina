@@ -30,7 +30,7 @@ namespace Lumina
         void Deserialize(const std::filesystem::path& Path);
         
         static FProjectConfig& GetProjectConfig() { return sCurrentProject->Config; }
-        static std::filesystem::path GetProjectContentDirectory() { return sCurrentProject->ProjectDirectory / "Game/"; }
+        static std::filesystem::path GetProjectContentDirectory() { return sCurrentProject->ProjectDirectory / "Game"; }
 
     private:
         

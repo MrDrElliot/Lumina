@@ -5,24 +5,46 @@
 #include "PipelineLibrary.h"
 #include "ShaderLibrary.h"
 #include "Swapchain.h"
+#include "Core/LuminaMacros.h"
+#include "Core/Performance/PerformanceTracker.h"
 #include "RHI/Vulkan/VulkanRenderAPI.h"
 #include "Source/Runtime/Log/Log.h"
 
 namespace Lumina
 {
     IRenderAPI* FRenderer::RenderAPI = nullptr;
-
-    struct RendererInternalData
-    {
-        std::list<FRenderer::RenderFunction> RenderFunctionList;
-        TRefPtr<FImageSampler> LinearSampler;
-        TRefPtr<FImageSampler> NearestSampler;
-    } InternalData;
+    FRenderer::RendererInternalData FRenderer::sInternalData;
     
     void FRenderer::Init(const FRenderConfig& InConfig)
     {
         LOG_TRACE("Renderer: Initializing");
         RenderAPI = new FVulkanRenderAPI(InConfig);
+
+        // Nearest filtration sampler
+        FImageSamplerSpecification ImageSpec = {};
+        ImageSpec.MinFilteringMode =            ESamplerFilteringMode::LINEAR;
+        ImageSpec.MagFilteringMode =            ESamplerFilteringMode::NEAREST;
+        ImageSpec.MipMapFilteringMode =         ESamplerFilteringMode::LINEAR;
+        ImageSpec.AddressMode =                 ESamplerAddressMode::REPEAT;
+        ImageSpec.MinLOD =                      0.0f;
+        ImageSpec.MaxLOD =                      1000.0f;
+        ImageSpec.LODBias =                     0.0f;
+        ImageSpec.AnisotropicFilteringLevel =   1;
+
+        sInternalData.NearestSampler = FImageSampler::Create(ImageSpec);
+        
+        // Linear filtration sampler
+        ImageSpec.MinFilteringMode =            ESamplerFilteringMode::LINEAR;
+        ImageSpec.MagFilteringMode =            ESamplerFilteringMode::LINEAR;
+        ImageSpec.MipMapFilteringMode =         ESamplerFilteringMode::LINEAR;
+        ImageSpec.AddressMode =                 ESamplerAddressMode::REPEAT;
+        ImageSpec.MinLOD =                      0.0f;
+        ImageSpec.MaxLOD =                      1000.0f;
+        ImageSpec.LODBias =                     0.0f;
+        ImageSpec.AnisotropicFilteringLevel =   1;
+
+        sInternalData.LinearSampler = FImageSampler::Create(ImageSpec);
+        
         LoadShaderPack();
     }
     
@@ -30,9 +52,9 @@ namespace Lumina
     {
         LOG_TRACE("Renderer: Shutting Down");
         WaitIdle();
-        //InternalData.LinearSampler->Destroy();
-        //InternalData.NearestSampler->Destroy();
-        InternalData.RenderFunctionList.clear();
+        sInternalData.LinearSampler->Destroy();
+        sInternalData.NearestSampler->Destroy();
+        sInternalData.RenderFunctionList.clear();
         FShaderLibrary::Get()->Shutdown();
         FPipelineLibrary::Get()->Shutdown();
         RenderAPI->Shutdown();
@@ -51,6 +73,16 @@ namespace Lumina
         "../Lumina/Engine/Resources/Shaders/TAA.frag.spv", "TAA");
     }
 
+    TRefPtr<FImageSampler> FRenderer::GetLinearSampler()
+    {
+        return sInternalData.LinearSampler;
+    }
+
+    TRefPtr<FImageSampler> FRenderer::GetNearestSampler()
+    {
+        return sInternalData.NearestSampler;
+    }
+
     void FRenderer::InsertBarrier(const FPipelineBarrierInfo& BarrierInfo)
     {
         RenderAPI->InsertBarrier(BarrierInfo);
@@ -63,7 +95,7 @@ namespace Lumina
 
     void FRenderer::Submit(const RenderFunction& Functor)
     {
-        InternalData.RenderFunctionList.push_back(Functor);
+        sInternalData.RenderFunctionList.push_back(Functor);
     }
 
     void FRenderer::BeginFrame()
@@ -128,6 +160,7 @@ namespace Lumina
 
     void FRenderer::Render()
     {
+        PROFILE_SCOPE(Render);
         FRenderer::Submit([]
         {
             TRefPtr<FImage> Image = GetSwapchainImage();
@@ -145,7 +178,7 @@ namespace Lumina
         RenderAPI->EndCommandRecord();
         RenderAPI->ExecuteCurrentCommands();
         
-        auto List = std::move(InternalData.RenderFunctionList);
+        auto List = std::move(sInternalData.RenderFunctionList);
         
         for(auto& func : List)
         {
