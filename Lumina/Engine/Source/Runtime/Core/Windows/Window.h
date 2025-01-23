@@ -16,8 +16,6 @@ namespace Lumina
 	class FWindow
 	{
 	public:
-
-
 		
 		static FWindow* Create(const FWindowSpecs& InSpecs);
 

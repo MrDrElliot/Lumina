@@ -34,7 +34,6 @@ namespace Lumina
         virtual ~IRenderAPI() = default;
 
         static IRenderAPI* Create(const FRenderConfig& InConfig);
-        virtual void Shutdown() = 0;
     
         virtual void BeginFrame() = 0;
         virtual void EndFrame() = 0;

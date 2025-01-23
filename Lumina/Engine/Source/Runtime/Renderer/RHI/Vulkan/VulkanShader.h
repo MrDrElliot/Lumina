@@ -15,13 +15,13 @@ namespace Lumina
         FVulkanShader(const TFastVector<FShaderData>& InData, const LString& Tag);
         ~FVulkanShader() override;
 
-        
         TFastVector<VkPipelineShaderStageCreateInfo>& GetCreateInfos() { return StageCreateInfos; }
         TFastVector<VkDescriptorSetLayout>& GetLayouts() { return SetLayouts; }
         TFastVector<VkPushConstantRange>& GetRanges() { return Ranges; }
 
+        virtual void SetFriendlyName(const LString& InString) override;
+        
         void RestoreShaderModule(std::filesystem::path path) override;
-        void Destroy() override;
         
         bool IsDirty() const override { return bDirty; }
         void SetDirty(bool NewDirty) override { bDirty = NewDirty; }

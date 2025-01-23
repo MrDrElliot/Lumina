@@ -40,7 +40,6 @@ namespace Lumina
         void BeginScene();
         void OnUpdate(double DeltaTime);
         void EndScene();
-        void Shutdown();
 
         std::shared_ptr<FCamera> GetCurrentCamera() { return CurrentCamera; }
         std::shared_ptr<FSceneRenderer> GetSceneRenderer() { return SceneRenderer; }

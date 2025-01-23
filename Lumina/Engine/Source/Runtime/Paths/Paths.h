@@ -4,6 +4,8 @@
 #include <filesystem>
 #include <cstdlib>
 
+#include "Project/Project.h"
+
 
 namespace Lumina::Paths
 {
@@ -29,6 +31,20 @@ namespace Lumina::Paths
     {
         return GetEngineDirectory().parent_path().parent_path();
     }
+    
+    inline std::filesystem::path Relative(const std::filesystem::path& relativePath)
+    {
+        // Get the current working directory
+        std::filesystem::path currentPath = std::filesystem::current_path();
+
+        // Return the absolute path by resolving the relative path against the current working directory
+        return currentPath / relativePath;
+    }
+    
+    inline std::filesystem::path FromContentDirectory(std::filesystem::path Path)
+    {
+        return Project::GetCurrent()->GetProjectContentDirectory() / Path;
+    }
 
     inline bool SetEnvVariable(const std::string& name, const std::string& value)
     {
@@ -38,12 +54,12 @@ namespace Lumina::Paths
         int result = _putenv_s(name.c_str(), value.c_str());
         if (result == 0)
         {
-            std::cout << "Environment variable " << name << " set to " << value << std::endl;
+            LOG_TRACE("Enviorment variable: {0} set to {1}.", name, value);
             return true;
         }
         else
         {
-            std::cerr << "Failed to set environment variable " << name << std::endl;
+            LOG_WARN("Failed to set enviorment variable.", name);
             return false;
         }
 #else

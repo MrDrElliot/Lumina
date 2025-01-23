@@ -33,6 +33,7 @@ namespace Lumina
         ImageSpec.AnisotropicFilteringLevel =   1;
 
         sInternalData.NearestSampler = FImageSampler::Create(ImageSpec);
+        sInternalData.NearestSampler->SetFriendlyName("Nearest Sampler");
         
         // Linear filtration sampler
         ImageSpec.MinFilteringMode =            ESamplerFilteringMode::LINEAR;
@@ -45,6 +46,7 @@ namespace Lumina
         ImageSpec.AnisotropicFilteringLevel =   1;
 
         sInternalData.LinearSampler = FImageSampler::Create(ImageSpec);
+        sInternalData.LinearSampler->SetFriendlyName("Linear Sampler");
         
         LoadShaderPack();
     }
@@ -58,7 +60,6 @@ namespace Lumina
         sInternalData.RenderFunctionList.clear();
         FShaderLibrary::Get()->Shutdown();
         FPipelineLibrary::Get()->Shutdown();
-        RenderAPI->Shutdown();
         delete RenderAPI;
     }
 

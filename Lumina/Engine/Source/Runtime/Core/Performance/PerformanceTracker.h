@@ -40,6 +40,22 @@ std::chrono::duration<double, std::milli> duration = end - start; \
 FPerformanceTracker::Get()->AddProfileData(#name, duration.count()); \
 } \
 } endScope_##name;
+
+#define PROFILE_SCOPE_LOG(name) \
+struct EndScope { \
+std::chrono::time_point<std::chrono::high_resolution_clock> start; \
+EndScope() : start(std::chrono::high_resolution_clock::now()) {} \
+~EndScope() { \
+auto end = std::chrono::high_resolution_clock::now(); \
+std::chrono::duration<double, std::milli> duration = end - start; \
+LOG_TRACE("Scope Profile: {0} | {1} ms", #name, duration.count()); \
+} \
+}; \
+EndScope endScope_##__COUNTER__;
+
+
+
 #else
-#define PROFILE_SCOPE(name) // Do nothing in release builds
+#define PROFILE_SCOPE_LOG(name)
+#define PROFILE_SCOPE(name)
 #endif

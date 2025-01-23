@@ -16,6 +16,11 @@ namespace Lumina
 
     void SceneOutliner::OnUpdate(double DeltaTime)
     {
+        if (mScene.expired())
+        {
+            return;
+        }
+        
         ImGui::Begin("Scene Outliner", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize);
 
         // Define custom styling for the button
@@ -39,7 +44,7 @@ namespace Lumina
         // Add the button with a custom label
         if (ImGui::Button("+ Add", ImVec2(buttonWidth, 25)))
         {
-            mScene->CreateEntity(FTransform(), "NewEntity");
+            mScene.lock()->CreateEntity(FTransform(), "NewEntity");
         }
 
         // Restore original style colors
@@ -48,9 +53,9 @@ namespace Lumina
         ImGui::SeparatorText("Entities");
         
         // Loop through entities and render them
-        for (auto& Ent : mScene->GetEntityRegistry().view<FNameComponent>())
+        for (auto& Ent : mScene.lock()->GetEntityRegistry().view<FNameComponent>())
         {
-            Entity ent(Ent, mScene);
+            Entity ent(Ent, mScene.lock());
             EntityNode::Render(ent);
         }
         

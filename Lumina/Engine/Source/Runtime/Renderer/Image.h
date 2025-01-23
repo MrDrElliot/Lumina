@@ -2,18 +2,12 @@
 
 #include <filesystem>
 #include <glm/glm.hpp>
-
 #include "PipelineStage.h"
+#include "RenderResource.h"
 #include "Containers/Array.h"
 #include "Containers/String.h"
 #include "GUID/GUID.h"
-#include "Memory/RefCounted.h"
 
-
-namespace Lumina
-{
-    class FImageSampler;
-}
 
 namespace Lumina
 {
@@ -120,7 +114,7 @@ namespace Lumina
     };
 
     
-    class FImage : public RefCounted
+    class FImage : public FRenderResource
     {
     public:
         
@@ -128,10 +122,9 @@ namespace Lumina
         static TRefPtr<FImage> Create(const FImageSpecification& Spec);
 
         virtual ~FImage() = default;
-        virtual void Destroy() = 0;
         virtual FImageSpecification GetSpecification() const = 0;
         FGuid GetGuid() { return Guid; }
-
+    
 
         virtual void SetLayout(
             TRefPtr<FCommandBuffer> CmdBuffer,
@@ -179,12 +172,14 @@ namespace Lumina
         uint8 AnisotropicFilteringLevel;
     };
 
-    class FImageSampler : public RefCounted
+    class FImageSampler : public FRenderResource
     {
     public:
+        
         virtual ~FImageSampler() = default;
 
         static TRefPtr<FImageSampler> Create(const FImageSamplerSpecification& Spec);
+        
 
         virtual void Destroy() = 0;
     };

@@ -18,7 +18,12 @@ namespace Lumina
 {
     class FImageSampler;
     class FVulkanSwapchain;
-    
+
+    struct FVulkanRenderContextFunctions
+    {
+        VkDebugUtilsMessengerEXT DebugMessenger;
+        PFN_vkSetDebugUtilsObjectNameEXT DebugUtilsObjectNameEXT;
+    };
     
     class FVulkanRenderContext : public FRenderContext
     {
@@ -38,14 +43,17 @@ namespace Lumina
         static void GetPhysicalDeviceProperties(VkPhysicalDeviceProperties& OutProps) { OutProps = Get().PhysicalDeviceProperties; }
         static TRefPtr<FVulkanSwapchain>& GetSwapchain() { return Get().Swapchain; }
         static VkQueue GetGeneralQueue() { return Get().GeneralQueue; }
+        static VkCommandPool GetCommandPool() { return Get().CommandPool; }
 
+        static FVulkanRenderContextFunctions GetRenderContextFunctions() { return Get().VulkanRenderContextFunctions; }
+        
         static VkCommandBuffer AllocateTransientCommandBuffer();
         static void ExecuteTransientCommandBuffer(VkCommandBuffer CmdBuffer);
 
     private:
         
         VkInstance VulkanInstance;
-        VkDebugUtilsMessengerEXT DebugMessenger;
+        FVulkanRenderContextFunctions VulkanRenderContextFunctions;
         
         TRefPtr<FVulkanSwapchain> Swapchain;
         
@@ -59,3 +67,4 @@ namespace Lumina
         
     };
 }
+

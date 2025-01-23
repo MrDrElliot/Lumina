@@ -6,6 +6,7 @@
 #include "Events/ApplicationEvent.h"
 #include "Events/KeyEvent.h"
 #include "Events/MouseEvent.h"
+#include "Platform/Platform.h"
 #include "Renderer/Renderer.h"
 #include "Renderer/Swapchain.h"
 
@@ -66,52 +67,45 @@ namespace Lumina
 
 	void FWindow::Init()
 	{
-		if (!bInitialized)
+		if (LIKELY(!bInitialized))
 		{
-
-			LOG_TRACE("Initializing Window: {0} (Width: {1}p Height: {2}p)", Specs.Title, Specs.Width, Specs.Height);
-
 			glfwInit();
 			glfwSetErrorCallback(GLFWErrorCallback);
 			glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-			//glfwWindowHint(GLFW_DECORATED, false);
 
 			if (Specs.bFullscreen)
 			{
 				glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
 			}
-
-
-			Window = glfwCreateWindow((int)Specs.Width, (int)Specs.Height, Specs.Title.c_str(), nullptr, nullptr);
-			if (Window)
+			
+			// Create the window
+			Window = glfwCreateWindow(500, 500, Specs.Title.c_str(), nullptr, nullptr);
+			if (GLFWmonitor* currentMonitor = GetCurrentMonitor(Window))
 			{
-				GLFWmonitor* currentMonitor = GetCurrentMonitor(Window);
+				// Get monitor dimensions
+				int monitorX, monitorY, monitorWidth, monitorHeight;
+				glfwGetMonitorWorkarea(currentMonitor, &monitorX, &monitorY, &monitorWidth, &monitorHeight);
 
-				if (currentMonitor)
+				// Check if Specs.Width or Specs.Height is 0 and set them to the monitor size - 1
+				if (Specs.Width == 0 || Specs.Width >= monitorWidth)
 				{
-					int monitorX, monitorY, monitorWidth, monitorHeight;
-					glfwGetMonitorWorkarea(currentMonitor, &monitorX, &monitorY, &monitorWidth, &monitorHeight);
-
-					// Check and adjust the window dimensions
-					if (Specs.Width >= monitorWidth)
-					{
-						Specs.Width = monitorWidth - 1; // Shrink width by 1 pixel if it's too large
-					}
-					if (Specs.Height >= monitorHeight)
-					{
-						Specs.Height = monitorHeight - 1; // Shrink height by 1 pixel if it's too large
-					}
-
-					// Update the window size after adjustment
-					glfwSetWindowSize(Window, Specs.Width, Specs.Height);
+					Specs.Width = monitorWidth - 1;
 				}
+				if (Specs.Height == 0 || Specs.Height >= monitorHeight)
+				{
+					Specs.Height = monitorHeight - 1;
+				}
+				
+
+				// Log the window's initialization details
+				LOG_TRACE("Initializing Window: {0} (Width: {1}p Height: {2}p)", Specs.Title, Specs.Width, Specs.Height);
+
+				// Update the window size after adjustment
+				glfwSetWindowSize(Window, Specs.Width, Specs.Height);
 			}
 		}
-		else
-		{
-			LOG_ERROR("Init called on a window that's already been initialized!");
-		}
 	}
+
 
 	void FWindow::OnUpdate(double DeltaTime)
 	{

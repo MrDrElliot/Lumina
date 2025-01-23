@@ -260,15 +260,6 @@ namespace Lumina
 	
     FVulkanShader::~FVulkanShader()
     {
-    }
-
-    void FVulkanShader::RestoreShaderModule(std::filesystem::path path)
-    {
-
-    }
-
-    void FVulkanShader::Destroy()
-    {
 		auto Device = FVulkanRenderContext::GetDevice();
 
 		for (auto& Stage : StageCreateInfos)
@@ -290,5 +281,36 @@ namespace Lumina
 		{
 			stage.module = VK_NULL_HANDLE;
 		}
+    }
+
+    void FVulkanShader::SetFriendlyName(const LString& InString)
+    {
+	    FShader::SetFriendlyName(InString);
+		
+		VkDevice Device = FVulkanRenderContext::GetDevice();
+
+		VkDebugUtilsObjectNameInfoEXT NameInfo = {};
+		NameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+		NameInfo.pObjectName = GetFriendlyName().CStr();
+		NameInfo.objectType = VK_OBJECT_TYPE_SHADER_MODULE;
+
+	    for (auto Stage : StageCreateInfos)
+	    {
+			NameInfo.objectHandle = reinterpret_cast<uint64_t>(Stage.module);
+			FVulkanRenderContext::GetRenderContextFunctions().DebugUtilsObjectNameEXT(Device, &NameInfo);
+	    }
+
+	    for (auto Layout : SetLayouts)
+	    {
+	    	NameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+	    	NameInfo.objectHandle = reinterpret_cast<uint64_t>(Layout);
+	    	FVulkanRenderContext::GetRenderContextFunctions().DebugUtilsObjectNameEXT(Device, &NameInfo);
+	    }
+		
+    }
+
+    void FVulkanShader::RestoreShaderModule(std::filesystem::path path)
+    {
+
     }
 }

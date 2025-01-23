@@ -3,12 +3,11 @@
 namespace Lumina
 {
     LTexture::LTexture()
-    {;
+    {
     }
 
     LTexture::~LTexture()
     {
-        Image->Destroy();
         Image = nullptr;
     }
 
@@ -21,5 +20,6 @@ namespace Lumina
     void LTexture::CreateImage()
     {
         Image = FImage::Create(ImageSpec);
+        Image->SetFriendlyName("Image: " + GetAssetMetadata().Name);
     }
 }

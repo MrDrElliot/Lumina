@@ -11,6 +11,36 @@
 
 namespace Lumina
 {
+    VkBool32 VKAPI_PTR VkDebugCallback(
+        VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+        VkDebugUtilsMessageTypeFlagsEXT messageTypes,
+        const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+        void* pUserData)
+    {
+        switch (messageSeverity)
+        {
+            case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
+                LOG_INFO("Vulkan Validation Layer: {0}", pCallbackData->pMessage);
+                break;
+            case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
+                LOG_DEBUG("Vulkan Validation Layer: {0}", pCallbackData->pMessage);
+                break;
+            case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
+                LOG_WARN("Vulkan Validation Layer: {0}", pCallbackData->pMessage);
+                break;
+            case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
+                LOG_ERROR("Vulkan Validation Layer: {0}", pCallbackData->pMessage);
+                break;
+            case VK_DEBUG_UTILS_MESSAGE_SEVERITY_FLAG_BITS_MAX_ENUM_EXT:
+                LOG_ERROR("Vulkan Validation Layer: {0}", pCallbackData->pMessage);
+                break;
+        }
+
+        // Return VK_FALSE to indicate the application should not abort
+        return VK_FALSE;
+    }
+
+    
     FVulkanRenderContext::FVulkanRenderContext(const FRenderConfig& InConfig)
     {
         Instance = this;
@@ -22,10 +52,15 @@ namespace Lumina
         auto InstBuilder = Builder.set_app_name("Lumina Engine")
         .request_validation_layers()
         .use_default_debug_messenger()
+        .set_debug_callback(VkDebugCallback)
+        .enable_extension("VK_EXT_debug_utils")
         .require_api_version(1, 3, 0)
         .build();
 
-        DebugMessenger = InstBuilder->debug_messenger;
+        VulkanRenderContextFunctions.DebugMessenger = InstBuilder->debug_messenger;
+        VulkanRenderContextFunctions.DebugUtilsObjectNameEXT = reinterpret_cast<PFN_vkSetDebugUtilsObjectNameEXT>(
+        vkGetInstanceProcAddr(InstBuilder.value(), "vkSetDebugUtilsObjectNameEXT"));
+        
         VulkanInstance = InstBuilder.value();
         
         VkPhysicalDeviceVulkan13Features features = {};
@@ -71,7 +106,7 @@ namespace Lumina
         VkCommandPoolCreateInfo CmdPoolCreateInfo = {};
         CmdPoolCreateInfo.sType =               VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
         CmdPoolCreateInfo.queueFamilyIndex =    GetQueueFamilyIndex().Graphics;
-        CmdPoolCreateInfo.flags =               VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+        CmdPoolCreateInfo.flags =               VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
         vkCreateCommandPool(Device, &CmdPoolCreateInfo, nullptr, &CommandPool);
 
@@ -100,16 +135,16 @@ namespace Lumina
         
         Swapchain->DestroySwapchain();
         Swapchain->DestroySurface();
-        Swapchain = nullptr;
+        Swapchain->Release();
         
         vkDestroyCommandPool(Device, CommandPool, nullptr);
         
-        FVulkanMemoryAllocator::Destroy();
-        
+        FVulkanMemoryAllocator::Get()->Shutdown();
+
         vkDestroyDevice(Device, nullptr);
 
         auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(VulkanInstance, "vkDestroyDebugUtilsMessengerEXT");
-        func(VulkanInstance, DebugMessenger, nullptr);
+        func(VulkanInstance, VulkanRenderContextFunctions.DebugMessenger, nullptr);
         
         vkDestroyInstance(VulkanInstance, nullptr);
         

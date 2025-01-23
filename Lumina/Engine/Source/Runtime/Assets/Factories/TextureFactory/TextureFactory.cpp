@@ -5,6 +5,7 @@
 
 #include "Assets/AssetTypes/Textures/Texture.h"
 #include "Core/LuminaMacros.h"
+#include "Core/Performance/PerformanceTracker.h"
 
 namespace Lumina
 {
@@ -21,6 +22,8 @@ namespace Lumina
 
     TRefPtr<FImage> FTextureFactory::ImportFromSource(std::filesystem::path Path)
     {
+        PROFILE_SCOPE_LOG(FTextureFactory::ImportFromSource)
+
         FImageSpecification ImageSpec = FImageSpecification::Default();
         ImageSpec.Usage = EImageUsage::TEXTURE;
         ImageSpec.Format = EImageFormat::RGBA32_UNORM;
@@ -39,6 +42,8 @@ namespace Lumina
 
         stbi_image_free(data); // Free the image data
         
-        return FImage::Create(ImageSpec);
+        TRefPtr<FImage> Image = FImage::Create(ImageSpec);
+
+        return Image;
     }
 }

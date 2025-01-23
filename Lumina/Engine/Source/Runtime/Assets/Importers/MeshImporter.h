@@ -6,6 +6,7 @@
 #include <fastgltf/glm_element_traits.hpp>
 #include "AssetImporter.h"
 #include "Assets/AssetTypes/StaticMesh/StaticMesh.h"
+#include "Core/Performance/PerformanceTracker.h"
 
 
 namespace Lumina
@@ -16,6 +17,7 @@ namespace Lumina
 
         bool Import(FArchive& Ar, void* ImportData, const std::filesystem::path& AssetPath) override
         {
+            PROFILE_SCOPE_LOG(MeshImporter::Import)
 
             //TFastVector<std::shared_ptr<LStaticMesh>> ReturnMeshes;
             

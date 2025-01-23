@@ -21,14 +21,5 @@ namespace Lumina
         TRefPtr<FImage> RoughnessMetallic;
         TRefPtr<FImage> Emissive;
         TRefPtr<FImage> AmbientOcclusion;
-
-        void Destroy()
-        {
-            BaseColor->Destroy();
-            Normals->Destroy();
-            Emissive->Destroy();
-            RoughnessMetallic->Destroy();
-            AmbientOcclusion->Destroy();
-        }
     };
 }

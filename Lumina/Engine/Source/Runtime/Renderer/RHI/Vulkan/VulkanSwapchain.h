@@ -23,7 +23,6 @@ namespace Lumina
 
         bool BeginFrame() override;
         void EndFrame() override;
-        
 
         uint32 GetCurrentFrameIndex() override { return CurrentFrameIndex; }
         uint32 GetCurrentImageIndex() override { return CurrentImageIndex;  }

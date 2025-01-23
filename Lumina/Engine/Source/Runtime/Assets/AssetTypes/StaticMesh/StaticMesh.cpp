@@ -20,6 +20,7 @@ namespace Lumina
         VBOSpec.DebugName = "Vertex Buffer Object";
         
         VBO = FBuffer::Create(VBOSpec, MeshData.Vertices.data(), sizeof(FVertex) * MeshData.Vertices.size());
+        VBO->SetFriendlyName("Vertex Buffer Object" + Metadata.Name);
 
         FDeviceBufferSpecification IBOSpec;
         IBOSpec.BufferUsage = EDeviceBufferUsage::INDEX_BUFFER;
@@ -29,6 +30,13 @@ namespace Lumina
         IBOSpec.DebugName = "Index Buffer Object";
 
         IBO = FBuffer::Create(IBOSpec, MeshData.Indices.data(),sizeof(uint32) * MeshData.Indices.size());
+        VBO->SetFriendlyName("Index Buffer Object" + Metadata.Name);
+
+    }
+
+    LStaticMesh::~LStaticMesh()
+    {
+    
     }
 
     std::shared_ptr<LStaticMesh> LStaticMesh::CreateMesh(const FAssetMetadata& Metadata, FMeshAsset InInfo)
@@ -49,6 +57,8 @@ namespace Lumina
         VBOSpec.DebugName = "Vertex Buffer Object";
         
         VBO = FBuffer::Create(VBOSpec, MeshData.Vertices.data(), sizeof(FVertex) * MeshData.Vertices.size());
+        VBO->SetFriendlyName("Vertex Buffer Object" + GetMeshData().Name);
+
 
         FDeviceBufferSpecification IBOSpec;
         IBOSpec.BufferUsage = EDeviceBufferUsage::INDEX_BUFFER;
@@ -58,20 +68,10 @@ namespace Lumina
         IBOSpec.DebugName = "Index Buffer Object";
 
         IBO = FBuffer::Create(IBOSpec, MeshData.Indices.data(),sizeof(uint32) * MeshData.Indices.size());
+        IBO->SetFriendlyName("Index Buffer Object" + GetMeshData().Name);
+
     }
 
-    void LStaticMesh::Destroy()
-    {
-        if(IBO)
-        {
-            IBO->Destroy();
-        }
-
-        if(VBO)
-        {
-            VBO->Destroy();
-        }
-    }
 
     void LStaticMesh::Serialize(FArchive& Ar)
     {

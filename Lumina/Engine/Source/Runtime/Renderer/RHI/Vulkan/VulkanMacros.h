@@ -1,10 +1,9 @@
 #pragma once
 
-#include <vulkan/vulkan.h>
+#include "Platform/Platform.h"
 #include <string>
-#include "Log/Log.h"  // Assuming you have a logging utility
+#include "Log/Log.h"
 
-#include <string>
 
 namespace Lumina::Vulkan
 {
@@ -47,10 +46,11 @@ namespace Lumina::Vulkan
 
 
 // Macro to check Vulkan function results and log errors if necessary
+#ifdef _DEBUG
 #define VK_CHECK(x)                                                       \
 do {                                                                  \
     VkResult result = (x);                                            \
-    if (result < 0)                                              \
+    if (UNLIKELY(result < 0))                                              \
     {                                                            \
         LOG_WARN("===========================================");      \
         LOG_WARN("Vulkan Error Detected!");                           \
@@ -66,15 +66,20 @@ do {                                                                  \
 #define VK_CHECK_RETURN(x, r)                                                       \
 do {                                                                  \
 VkResult result = (x);                                            \
-if (result < 0)                                              \
-{                                                            \
-    LOG_WARN("===========================================");      \
-    LOG_WARN("Vulkan Error Detected!");                           \
-    LOG_WARN("Function Call: {0}", #x);                           \
-    LOG_WARN("File: {0}", __FILE__);                              \
-    LOG_WARN("Line: {0}", __LINE__);                              \
-    LOG_WARN("Error Code: {0} ({1})", result, Vulkan::VkResultToString(result)); \
-    LOG_WARN("===========================================");      \
-    return r;                                                         \
-    }                                                                 \
+    if (UNLIKELY(result < 0))                                              \
+    {                                                            \
+        LOG_WARN("===========================================");      \
+        LOG_WARN("Vulkan Error Detected!");                           \
+        LOG_WARN("Function Call: {0}", #x);                           \
+        LOG_WARN("File: {0}", __FILE__);                              \
+        LOG_WARN("Line: {0}", __LINE__);                              \
+        LOG_WARN("Error Code: {0} ({1})", result, Vulkan::VkResultToString(result)); \
+        LOG_WARN("===========================================");      \
+        return r;                                                         \
+        }                                                                 \
 } while (0)
+
+#else
+#define VK_CHECK(x)
+#define VK_CHECK_RETURN(x, r)
+#endif

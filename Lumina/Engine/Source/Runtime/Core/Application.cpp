@@ -20,7 +20,24 @@ namespace Lumina
     TMulticastDelegate<double> FCoreDelegates::OnEngineUpdate;
     
     FApplication* FApplication::Instance = nullptr;
-    static double accumTime = 0.0;
+
+    void FApplicationStats::PreFrame()
+    {
+        DeltaTime = (CurrentFrameTime - LastFrameTime);
+
+        if (DeltaTime > 0)
+        {
+            FPS = static_cast<uint32>(1000.0f / DeltaTime);
+        }
+
+        FrameCount++;
+    }
+
+    void FApplicationStats::PostFrame()
+    {
+        LastFrameTime =     CurrentFrameTime;
+        CurrentFrameTime =  glfwGetTime() * 1000.0f;
+    }
 
     FApplication::FApplication(const FApplicationSpecs& InAppSpecs)
     {
@@ -30,12 +47,12 @@ namespace Lumina
 
     FApplication::~FApplication()
     {
-        
+        Instance = nullptr;
     }
 
     void FApplication::Run()
     {
-        OnInit();
+        InternalInit();
         
         while(!ShouldExit())
         {
@@ -44,9 +61,9 @@ namespace Lumina
                 PROFILE_SCOPE(ApplicationFrame)
                 PreFrame();
 
-                if (mScene)
+                if (CurrentScene)
                 {
-                    mScene->OnUpdate(Stats.DeltaTime);
+                    CurrentScene->OnUpdate(Stats.DeltaTime);
                 }
                 
                 ApplicationSubsystems.Update(Stats.DeltaTime);
@@ -61,18 +78,51 @@ namespace Lumina
             }
         }
 
-        OnShutdown();
+        InternalShutdown();
+    }
+    
+    void FApplication::InternalInit()
+    {
+        FLog::Init();
+
+        OnInit();
     }
 
-    int FApplication::Close()
+    void FApplication::InternalShutdown()
     {
-        return 0;
+        OnShutdown();
+
+        LOG_TRACE("{0} Shutting Down..", AppSpecs.Name);
+
+        bRunning = false;
+
+        LayerStack.DetachAllLayers();
+
+        ApplicationSubsystems.DeinitializeAll();
+
+        if (CurrentScene)
+        {
+            CurrentScene = nullptr;
+        }
+
+        if (AppSpecs.bRenderImGui)
+        {
+            FImGuiRenderer::Shutdown();
+        }
+        
+        FRenderer::Shutdown();
+        AssetManager::Get()->Shutdown();
+        
+        glfwTerminate();
+        
+        LOG_TRACE(Memory::GetProgramMemoryAsString());
+        
+        FLog::Shutdown();
+        
     }
 
     void FApplication::OnInit()
     {
-        FLog::Init();
-
         LOG_TRACE("Initializing Application: {0}", AppSpecs.Name);
         
         WindowSubsystem* WinSubsystem = ApplicationSubsystems.AddSubsystem<WindowSubsystem>();
@@ -80,8 +130,6 @@ namespace Lumina
         /* Create application window */
         FWindowSpecs AppWindowSpecs;
         AppWindowSpecs.Title = AppSpecs.Name;
-        AppWindowSpecs.Width = AppSpecs.WindowWidth;
-        AppWindowSpecs.Height = AppSpecs.WindowHeight;
         
         WinSubsystem->InitializeWindow(AppWindowSpecs);
         WinSubsystem->GetWindow()->SetEventCallback(BIND_EVENT_FN(OnEvent));
@@ -107,52 +155,19 @@ namespace Lumina
 
     void FApplication::OnShutdown()
     {
-        LOG_TRACE("{0} Shutting Down..", AppSpecs.Name);
-
-        bRunning = false;
-
-        ApplicationSubsystems.DeinitializeAll();
-
-        if (mScene)
-        {
-            mScene->Shutdown();
-        }
-
-        if (AppSpecs.bRenderImGui)
-        {
-            FImGuiRenderer::Shutdown();
-        }
-        
-        FRenderer::Shutdown();
-        AssetManager::Get()->Shutdown();
-        
-        glfwTerminate();
-        
-        LOG_TRACE(Memory::GetProgramMemoryAsString());
-        
-        FLog::Shutdown();
     }
     
     void FApplication::PreFrame()
     {
         Memory::MemoryLeakDetector::PreFrame();
-        Stats.DeltaTime = (Stats.CurrentFrameTime - Stats.LastFrameTime);
-        Stats.LastFrameTime = Stats.CurrentFrameTime;
 
-        if (Stats.DeltaTime > 0)
-        {
-            Stats.FPS = static_cast<uint32>(1.0f / Stats.DeltaTime);
-        }
-
-        Stats.FrameCount++;
-        accumTime += Stats.DeltaTime;
-        
+        Stats.PreFrame();
         FRenderer::BeginFrame();
     }
 
     void FApplication::PostFrame()
     {
-        Stats.CurrentFrameTime = glfwGetTime();
+        Stats.PostFrame();
 
         FRenderer::EndFrame();
         
@@ -225,11 +240,13 @@ namespace Lumina
 
     void FApplication::SetCurrentScene(std::shared_ptr<LScene> InScene)
     {
-        mScene = InScene;
+        CurrentScene = InScene;
     }
 
     bool FApplication::ShouldExit()
     {
         return glfwWindowShouldClose(GetSubsystem<WindowSubsystem>()->GetWindow()->GetWindow()) || !bRunning;
     }
+
+
 }

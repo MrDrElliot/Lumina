@@ -53,12 +53,12 @@ namespace Lumina
 
         LStaticMesh() = default;
         LStaticMesh(const FAssetMetadata& Metadata, FMeshAsset InInfo);
+        virtual ~LStaticMesh();
+        
         static std::shared_ptr<LStaticMesh> CreateMesh(const FAssetMetadata& Metadata, FMeshAsset InInfo);
 
         void CreateNew();
         
-        void Destroy();
-
         FMeshAsset& GetMeshData() { return MeshData; }
         TRefPtr<FBuffer>& GetVertexBuffer() { return VBO; }
         TRefPtr<FBuffer>& GetIndexBuffer() { return IBO; }

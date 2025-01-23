@@ -1,6 +1,7 @@
 ﻿
 #include "EditorLayer.h"
 
+#include "LuminaEditor.h"
 #include "Core/Application.h"
 #include "Panels/ApplicationStats.h"
 #include "Panels/AssetDebugWindow.h"
@@ -22,25 +23,27 @@ namespace Lumina
 {
     void FEditorLayer::OnAttach()
     {
-        PanelManager::Get()->RegisterPanel<ViewportLayer>(FApplication::GetActiveScene());
-        PanelManager::Get()->RegisterPanel<SceneOutliner>(FApplication::GetActiveScene());
-        PanelManager::Get()->RegisterPanel<ContentBrowserWindow>();
-        PanelManager::Get()->RegisterPanel<ConsoleWindow>();
-        PanelManager::Get()->RegisterPanel<ToolbarWindow>();
-        PanelManager::Get()->RegisterPanel<AssetDebugWindow>();
-        PanelManager::Get()->RegisterPanel<ApplicationStats>();
-        PanelManager::Get()->RegisterPanel<NewProjectPanel>();
-        PanelManager::Get()->RegisterPanel<OpenProjectPanel>();
-        PanelManager::Get()->RegisterPanel<SceneSettings>();
-        PanelManager::Get()->RegisterPanel<FEditorSettingsPanel>();
-        PanelManager::Get()->RegisterPanel<FPerformanceTrackerPanel>();
-        PanelManager::Get()->RegisterPanel<FEntityPropertyPanel>();
-
+        if (GEditor->GetSpecs().bRenderImGui)
+        {
+            PanelManager::Get()->RegisterPanel<ViewportLayer>(FApplication::GetActiveScene());
+            PanelManager::Get()->RegisterPanel<SceneOutliner>(FApplication::GetActiveScene());
+            PanelManager::Get()->RegisterPanel<ContentBrowserWindow>();
+            PanelManager::Get()->RegisterPanel<ConsoleWindow>();
+            PanelManager::Get()->RegisterPanel<ToolbarWindow>();
+            PanelManager::Get()->RegisterPanel<AssetDebugWindow>();
+            PanelManager::Get()->RegisterPanel<ApplicationStats>();
+            PanelManager::Get()->RegisterPanel<NewProjectPanel>();
+            PanelManager::Get()->RegisterPanel<OpenProjectPanel>();
+            PanelManager::Get()->RegisterPanel<SceneSettings>();
+            PanelManager::Get()->RegisterPanel<FEditorSettingsPanel>();
+            PanelManager::Get()->RegisterPanel<FPerformanceTrackerPanel>();
+            PanelManager::Get()->RegisterPanel<FEntityPropertyPanel>();
+        }
     }
 
     void FEditorLayer::OnDetach()
     {
-        FLayer::OnDetach();
+        PanelManager::Get()->Shutdown();
     }
 
     void FEditorLayer::OnUpdate(double DeltaTime)

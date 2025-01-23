@@ -34,35 +34,54 @@ namespace Lumina
     {
     }
 
-    void FVulkanMemoryAllocator::Destroy()
+    void FVulkanMemoryAllocator::Shutdown()
     {
-        if (Get()->Allocator)
+        // Log statistics before cleanup
+        LOG_INFO("Allocator Shutdown Started. Current Statistics:");
+        LOG_INFO("Allocated Buffers: {}", Statistics.CurrentlyAllocatedBuffers);
+        LOG_INFO("Allocated Images: {}", Statistics.CurrentlyAllocatedImages);
+        LOG_INFO("Currently Allocated Memory: {} bytes", Statistics.CurrentlyAllocated);
+    
+        // Cleanup allocated buffers
+        for (auto& kvp : Statistics.AllocatedBuffers)
         {
-            for(auto& kvp : Get()->Statistics.AllocatedBuffers)
+            if (kvp.first != VK_NULL_HANDLE)
             {
-                if(kvp.first != VK_NULL_HANDLE)
-                {
-                    LOG_DEBUG("Destroying Buffer Object!");
-                    //kvp.first->Destroy();
-                    vmaDestroyBuffer(Get()->Allocator, kvp.first, kvp.second);
-                }
+                LOG_DEBUG("Destroying Buffer Object with VkBuffer: {}, VmaAllocation: {}", (void*)kvp.first, (void*)kvp.second);
+                vmaDestroyBuffer(Allocator, kvp.first, kvp.second);
             }
-            
-            for(auto& kvp : Get()->Statistics.AllocatedImages)
-            {
-                if(kvp.first != VK_NULL_HANDLE)
-                {
-                    LOG_DEBUG("Destroying Image Object!");
-                    //vkDestroyImageView(FVulkanRenderContext::GetDevice(), kvp.first->GetImageView(), nullptr);
-                    vmaDestroyImage(Get()->Allocator, kvp.first, kvp.second);
-                }
-            }
-            
-            
-            vmaDestroyAllocator(Get()->Allocator);
-            Get()->Allocator = VK_NULL_HANDLE;
         }
+        Statistics.AllocatedBuffers.clear(); // Ensure buffers map is empty after cleanup
+
+        // Cleanup allocated images
+        for (auto& kvp : Statistics.AllocatedImages)
+        {
+            if (kvp.first != VK_NULL_HANDLE)
+            {
+                LOG_DEBUG("Destroying Image Object with VkImage: {}, VmaAllocation: {}", (void*)kvp.first, (void*)kvp.second);
+                vmaDestroyImage(Allocator, kvp.first, kvp.second);
+            }
+        }
+        
+        Statistics.AllocatedImages.clear(); // Ensure images map is empty after cleanup
+
+        // Destroy the Vulkan memory allocator
+        LOG_INFO("Destroying Vulkan Memory Allocator...");
+        vmaDestroyAllocator(Allocator);
+        Allocator = VK_NULL_HANDLE;
+
+        // Reset statistics
+        Statistics.CurrentlyAllocatedBuffers = 0;
+        Statistics.CurrentlyAllocatedImages = 0;
+        Statistics.CurrentlyAllocated = 0;
+
+        // Log final state
+        LOG_INFO("Allocator Shutdown Complete. Final Statistics:");
+        LOG_INFO("Allocated Buffers: {}", Statistics.CurrentlyAllocatedBuffers);
+        LOG_INFO("Allocated Images: {}", Statistics.CurrentlyAllocatedImages);
+        LOG_INFO("Currently Allocated Memory: {} bytes", Statistics.CurrentlyAllocated);
     }
+
 
     VmaAllocation FVulkanMemoryAllocator::AllocateBuffer(VkBufferCreateInfo* CreateInfo, VmaAllocationCreateFlags Flags, VkBuffer* vkBuffer, const char* AllocationName)
     {
@@ -147,7 +166,7 @@ namespace Lumina
             VmaAllocationInfo AllocationInfo;
             vmaGetAllocationInfo(Allocator, Allocation, &AllocationInfo);
 
-            LOG_WARN("Destroying Image: {0}", AllocationInfo.pName);
+            LOG_DEBUG("Destroying Image: {0}", AllocationInfo.pName);
 
             Statistics.CurrentlyAllocated -= AllocationInfo.size;
             Statistics.CurrentlyAllocatedImages--;

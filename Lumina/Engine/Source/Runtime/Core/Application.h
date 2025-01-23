@@ -27,9 +27,6 @@ namespace Lumina
 		const char* Name = "Lumina";
 		std::string WorkingDirectory;
 		
-		uint32 WindowWidth = 1920;
-		uint32 WindowHeight = 1080;
-		
 		uint8 bWindowDecorated:1;
 		uint8 bFullscreen:1;
 		uint8 bVSync:1;
@@ -39,6 +36,9 @@ namespace Lumina
 
 	struct FApplicationStats
 	{
+		void PreFrame();
+		void PostFrame();
+		
 		double DeltaTime = 1.0f / 60.0f;
 		double LastFrameTime = 0.0f;
 		double CurrentFrameTime = 60.0f;
@@ -65,7 +65,6 @@ namespace Lumina
 		static FApplication& Get() { return *Instance; }
 
 		void Run();
-		int Close();
 		
 		virtual void OnInit();
 		virtual void OnUpdate();
@@ -88,7 +87,7 @@ namespace Lumina
 		static FApplicationStats GetStats() { return Instance->Stats; }
 		static double GetDeltaTime() { return Instance->Stats.DeltaTime; }
 		static FWindow& GetWindow();
-		static std::shared_ptr<LScene> GetActiveScene() { return Get().mScene; }
+		static std::shared_ptr<LScene> GetActiveScene() { return Get().CurrentScene; }
 		
 		void SetCurrentScene(std::shared_ptr<LScene> InScene);
 		
@@ -114,11 +113,12 @@ namespace Lumina
 	private:
 
 		bool ShouldExit();
-	
-	
+		void InternalInit();
+		void InternalShutdown();
+		
 	private:
 
-		std::shared_ptr<LScene> mScene;
+		std::shared_ptr<LScene> CurrentScene;
 		
 		FApplicationStats Stats;
 		FApplicationSpecs AppSpecs;
@@ -137,5 +137,5 @@ namespace Lumina
 	};
 
 	/* Implemented by client */
-	static std::unique_ptr<FApplication> CreateApplication(int argc, char** argv);
+	static FApplication* CreateApplication(int argc, char** argv);
 }

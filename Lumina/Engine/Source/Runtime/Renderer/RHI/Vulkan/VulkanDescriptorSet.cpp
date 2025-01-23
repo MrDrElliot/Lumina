@@ -129,13 +129,13 @@ namespace Lumina
 
     FVulkanDescriptorSet::~FVulkanDescriptorSet()
     {
+        VkDevice Device = FVulkanRenderContext::GetDevice();
+        AssertMsg(Device != VK_NULL_HANDLE, "Device was null when trying to destroy a descriptor set!");
+        if (Layout != VK_NULL_HANDLE)
+        {
+            vkDestroyDescriptorSetLayout(Device, Layout, nullptr);
+        }
         
-    }
-
-    void FVulkanDescriptorSet::Destroy()
-    {
-        auto Device = FVulkanRenderContext::GetDevice();
-        vkDestroyDescriptorSetLayout(Device, Layout, nullptr);
         FVulkanRenderAPI::FreeDescriptorSets({ DescriptorSet });
     }
 
@@ -212,5 +212,26 @@ namespace Lumina
         WriteDescriptorSet.pImageInfo = DescriptorImageInfos.data();
 
         vkUpdateDescriptorSets(Device, 1, &WriteDescriptorSet, 0, nullptr);
+    }
+
+    void FVulkanDescriptorSet::SetFriendlyName(const LString& InName)
+    {
+        FDescriptorSet::SetFriendlyName(InName);
+
+        VkDevice Device = FVulkanRenderContext::GetDevice();
+
+        VkDebugUtilsObjectNameInfoEXT NameInfo = {};
+        NameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+        NameInfo.pObjectName = GetFriendlyName().CStr();
+        NameInfo.objectType = VK_OBJECT_TYPE_DESCRIPTOR_SET;
+        NameInfo.objectHandle = reinterpret_cast<uint64_t>(DescriptorSet);
+        
+        FVulkanRenderContext::GetRenderContextFunctions().DebugUtilsObjectNameEXT(Device, &NameInfo);
+
+        NameInfo.objectType = VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT;
+        NameInfo.objectHandle = reinterpret_cast<uint64_t>(Layout);
+
+        FVulkanRenderContext::GetRenderContextFunctions().DebugUtilsObjectNameEXT(Device, &NameInfo);
+
     }
 }

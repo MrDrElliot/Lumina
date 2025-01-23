@@ -48,4 +48,14 @@ namespace Lumina
 			Layers.erase(it);
 		}
 	}
+
+	void FLayerStack::DetachAllLayers()
+	{
+		for (auto Layer : Layers)
+		{
+			Layer->OnDetach();
+		}
+
+		Layers.clear();
+	}
 }

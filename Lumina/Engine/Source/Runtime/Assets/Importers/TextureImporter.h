@@ -2,6 +2,8 @@
 
 #include "AssetImporter.h"
 #include <ThirdParty/stb_image/stb_image.h>
+
+#include "Core/Performance/PerformanceTracker.h"
 #include "Renderer/Image.h"
 
 
@@ -13,6 +15,8 @@ namespace Lumina
 
         bool Import(FArchive& Ar, void* ImportData, const std::filesystem::path& AssetPath) override
         {
+            PROFILE_SCOPE_LOG(TextureImporter::Import)
+
             FImageSpecification* ImageSpec = static_cast<FImageSpecification*>(ImportData);
             if(ImageSpec == nullptr)
             {

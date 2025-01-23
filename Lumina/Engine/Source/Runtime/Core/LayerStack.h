@@ -23,6 +23,7 @@ namespace Lumina
 		void PushOverlay(const TRefPtr<FLayer>& InLayer);
 		void PopLayer(const TRefPtr<FLayer>& InLayer);
 		void PopOverlay(const TRefPtr<FLayer>& InLayer);
+		void DetachAllLayers();
 
 		TRefPtr<FLayer> operator [](uint32 i)
 		{

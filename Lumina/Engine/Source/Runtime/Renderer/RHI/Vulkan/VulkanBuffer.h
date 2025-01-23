@@ -36,6 +36,8 @@ namespace Lumina
         FVulkanBuffer(const FDeviceBufferSpecification& Spec, void* Data, uint64 DataSize);
         ~FVulkanBuffer();
 
+        void SetFriendlyName(const LString& InName) override;
+        
         VkBuffer& GetBuffer() { return Buffer; }
         VkBuffer* GetBufferPtr() { return &Buffer; }
         VmaAllocation GetAllocation() const { return Allocation; }
@@ -45,9 +47,7 @@ namespace Lumina
 
         void UploadData(uint64 Offset, void* Data, uint64 DataSize) override;
         void Resize() override { std::unreachable(); }
-
-        void Destroy() override;
-
+    
     private:
 
         uint64 GetAlignedSizeForBuffer(uint64 Size, EDeviceBufferUsage Usage);

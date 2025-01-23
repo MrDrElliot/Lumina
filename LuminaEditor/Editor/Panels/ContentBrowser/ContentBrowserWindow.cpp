@@ -12,6 +12,7 @@
 #include "Renderer/Image.h"
 #include "Renderer/RenderContext.h"
 #include <Renderer/Material.h>
+
 #include "Panels/Assets/Material/MaterialEditorPanel.h"
 
 #if 0
@@ -52,12 +53,12 @@ namespace Lumina
 {
     void ContentBrowserWindow::OnAttach()
     { 
-        EnginePath = std::filesystem::path(Paths::GetEngineDirectory() / "Resources").string();
-        
-        FolderTexture = FTextureFactory::ImportFromSource("../LuminaEditor/Resources/Icons/ContentBrowser/Folder.png");
+        FolderTexture = FTextureFactory::ImportFromSource(Paths::Relative("Resources/Icons/ContentBrowser/Folder.png"));
+        FolderTexture->SetFriendlyName("Folder Texture");
         ImFolderTexture = FImGuiRenderer::CreateImGuiTexture(FolderTexture, FRenderer::GetLinearSampler(), {512, 512}, 0, true);
     
-        AssetTexture = FTextureFactory::ImportFromSource("../LuminaEditor/Resources/Icons/ContentBrowser/StaticMeshIcon.png");
+        AssetTexture = FTextureFactory::ImportFromSource(Paths::Relative("Resources/Icons/ContentBrowser/StaticMeshIcon.png"));
+        AssetTexture->SetFriendlyName("Asset Texture");
         ImAssetTexture = FImGuiRenderer::CreateImGuiTexture(AssetTexture, FRenderer::GetLinearSampler(), {512, 512}, 0, true);
 
     
@@ -68,14 +69,12 @@ namespace Lumina
 
         mImGuiImporterMap.try_emplace(EAssetType::Texture, std::make_shared<ImGui_TextureImporter>());
         mImGuiImporterMap.try_emplace(EAssetType::StaticMesh, std::make_shared<ImGui_MeshImporter>());
-
-    
     }
 
     void ContentBrowserWindow::OnDetach()
     {
-        FolderTexture->Destroy();
-        AssetTexture->Destroy();
+        FolderTexture->Release();
+        AssetTexture->Release();
     }
 
     void ContentBrowserWindow::OnUpdate(double DeltaTime)

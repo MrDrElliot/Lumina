@@ -29,8 +29,6 @@ enum class ERefCountedCastType
             if(RefCount.fetch_sub(1, std::memory_order_acquire) == 1)
             {
                 std::atomic_thread_fence(std::memory_order_acquire);
-                RefCount = 0;
-
                 delete this;
             }
         }
@@ -53,7 +51,10 @@ public:
     TRefPtr() : Ptr(nullptr) {}
 
     // Destructor
-    ~TRefPtr() { Release(); }
+    ~TRefPtr()
+    {
+        Release();
+    }
     
     // Constructor from raw pointer
     TRefPtr(T* p): Ptr(p)
@@ -88,16 +89,12 @@ public:
 
     // Templated conversion constructor for derived types (rvalue reference)
     template<typename U, typename = std::enable_if_t<std::is_base_of<T, U>::value || std::is_base_of<U, T>::value>>
-    TRefPtr(TRefPtr<U>&& other) noexcept : Ptr(other.Get())
+    TRefPtr(TRefPtr<U>&& other) noexcept : Ptr(std::exchange(other.Ptr, nullptr))
     {
         static_assert(std::is_base_of<RefCounted, U>::value, "U does not inherit from RefCounted");
         static_assert(!std::is_same<T, U>::value, "Cannot convert TRefPtr of the same type.");
-        AddRef();
-        if(other.Get())
-        {
-            other.Release();  // Release other safely
-        }
     }
+
 
     bool operator == (const TRefPtr& other) const noexcept
     {
@@ -121,7 +118,7 @@ public:
         {
             Release();
             Ptr = other.Ptr;
-            other.Ptr = nullptr;  // Prevent double deletion
+            other.Ptr = nullptr;
         }
         return *this;
     }
@@ -133,12 +130,18 @@ public:
     T* Get() const { return Ptr; }
 
 public:
-    void AddRef()
+    
+    FORCEINLINE void AddRef()
     {
         if (Ptr) Ptr->AddRef();
     }
 
-    void Release()
+    FORCEINLINE bool IsValid()
+    {
+        return Ptr != nullptr;
+    }
+    
+    FORCEINLINE void Release()
     {
         if (Ptr)
         {
@@ -159,31 +162,30 @@ public:
 
 
     template<typename T, typename U>
-    std::enable_if_t<std::is_base_of<U, T>::value || std::is_base_of<T, U>::value, TRefPtr<T>>
-    RefPtrCast(const TRefPtr<U>& other, ERefCountedCastType Type = ERefCountedCastType::None)
+    TRefPtr<T> RefPtrCast(const TRefPtr<U>& other, ERefCountedCastType Type = ERefCountedCastType::None)
     {
-        // Check if the original pointer is nullptr
-        if (other.Get() == nullptr)
+        if (!other.Get())
         {
-            if(Type == ERefCountedCastType::AssertNull)
+            if (Type == ERefCountedCastType::AssertNull)
             {
                 AssertMsg(0, "Failed Cast Due to nullptr");
             }
-            else if(Type == ERefCountedCastType::LogNull)
+            else if (Type == ERefCountedCastType::LogNull)
             {
                 LOG_WARN("RefCounted: Casting to a nullptr!");
-                return TRefPtr<T>();
-            } 
-            return TRefPtr<T>();               
+            }
+            return TRefPtr<T>();
         }
-
+    
         if constexpr (std::is_polymorphic<U>::value && std::is_polymorphic<T>::value)
         {
-            return TRefPtr<T>(dynamic_cast<T*>(other.Get()));
+            auto casted = dynamic_cast<T*>(other.Get());
+            return casted ? TRefPtr<T>(casted) : TRefPtr<T>();
         }
         else
         {
             return TRefPtr<T>(static_cast<T*>(other.Get()));
         }
     }
+
 

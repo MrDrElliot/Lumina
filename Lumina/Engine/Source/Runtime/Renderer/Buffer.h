@@ -7,6 +7,8 @@
 #include "Platform/GenericPlatform.h"
 #include <Containers/String.h>
 
+#include "RenderResource.h"
+
 namespace Lumina
 {
 
@@ -56,7 +58,7 @@ namespace Lumina
         const char* DebugName;
     };
     
-    class FBuffer : public RefCounted
+    class FBuffer : public FRenderResource
     {
     public:
         
@@ -65,9 +67,7 @@ namespace Lumina
 
         static TRefPtr<FBuffer> Create(const FDeviceBufferSpecification& Spec);
         static TRefPtr<FBuffer> Create(const FDeviceBufferSpecification& Spec, void* Data, uint64 DataSize);
-
-        virtual void Destroy() = 0;
-
+        
 
         virtual FDeviceBufferSpecification GetSpecification() const = 0;
 

@@ -20,8 +20,8 @@ namespace Lumina
 
         friend class ImGuiAssetImporter;
 
-        ContentBrowserWindow():
-          FolderTexture(), ImFolderTexture(nullptr)
+        ContentBrowserWindow()
+            :FolderTexture(), ImFolderTexture(nullptr), ImAssetTexture(nullptr)
         {
             Name = "Content Browser";
             bVisible = true;

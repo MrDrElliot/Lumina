@@ -4,7 +4,6 @@
 
 #include "Core/Singleton/Singleton.h"
 #include "Log/Log.h"
-#include "Memory/RefCounted.h"
 #include "Paths/Paths.h"
 #include "yaml-cpp/yaml.h"
 

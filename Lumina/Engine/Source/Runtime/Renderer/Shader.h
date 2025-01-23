@@ -1,10 +1,10 @@
 #pragma once
 
-#include <filesystem>
 #include <string>
+
+#include "RenderResource.h"
 #include "ShaderTypes.h"
 #include "Containers/String.h"
-#include "Memory/RefCounted.h"
 
 namespace Lumina
 {
@@ -90,19 +90,17 @@ namespace Lumina
         }
     }
 
-    class FShader : public RefCounted
+    class FShader : public FRenderResource
     {
     public:
 
         static TRefPtr<FShader> Create(const TFastVector<FShaderData>& InData, const LString& Tag);
         virtual ~FShader() {}
-        virtual void Destroy() = 0;
 
         virtual bool IsDirty() const = 0;
         virtual void SetDirty(bool dirty) = 0;
 
         virtual void RestoreShaderModule(std::filesystem::path path) = 0;
-
 
 
         

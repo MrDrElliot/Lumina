@@ -29,6 +29,18 @@ namespace Lumina
     FSceneRenderer::FSceneRenderer(LScene* InScene)
         :CurrentScene(InScene)
     {
+        
+        BaseColor = FTextureFactory::ImportFromSource("../LuminaEditor/Resources/Icons/ContentBrowser/Default_albedo.jpg");
+        BaseColor->SetFriendlyName("Base Color");
+        Normal = FTextureFactory::ImportFromSource("../LuminaEditor/Resources/Icons/ContentBrowser/Default_normal.jpg");
+        Normal->SetFriendlyName("Nromal");
+        Metallic = FTextureFactory::ImportFromSource("../LuminaEditor/Resources/Icons/ContentBrowser/Default_metalRoughness.jpg");
+        Metallic->SetFriendlyName("Metallic");
+        AmbientOcclusion = FTextureFactory::ImportFromSource("../LuminaEditor/Resources/Icons/ContentBrowser/Default_AO.jpg");
+        AmbientOcclusion->SetFriendlyName("Ambient Occlusion");
+        Emissive = FTextureFactory::ImportFromSource("../LuminaEditor/Resources/Icons/ContentBrowser/Default_emissive.jpg");
+        Emissive->SetFriendlyName("Emissive");
+        
         CreateImages();
         InitPipelines();
         InitBuffers();
@@ -56,57 +68,20 @@ namespace Lumina
         FRenderer::WaitIdle();
         
         Camera->Destroy();
-
-        SceneUBO->Destroy();
-        ModelSBO->Destroy();
-        Camera->Destroy();
-        GridUBO->Destroy();
         
-        for (auto RT : RenderTargets)
-        {
-            RT->Destroy();
-        }
-        RenderTargets.clear();
-        
-        for (auto DA : DepthAttachments)
-        {
-            DA->Destroy();
-        }
-        DepthAttachments.clear();
-
-        for(auto Desc : SceneDescriptorSets)
-        {
-            Desc->Destroy();
-        }
-        SceneDescriptorSets.clear();
-        
-        for(auto Desc : GridDescriptorSets)
-        {
-            Desc->Destroy();
-        }
-        GridDescriptorSets.clear();
-        
-        for(auto Desc : TAADescriptorSets)
-        {
-            Desc->Destroy();
-        }
-        TAADescriptorSets.clear();
-
-        GraphicsPipeline->Destroy();
-        InfiniteGridPipeline->Destroy();
     }
 
     void FSceneRenderer::OnSwapchainResized()
     {
         for (auto& RT : RenderTargets)
         {
-            RT->Destroy();
+            RT->Release();
         }
         RenderTargets.clear();
         
         for(auto& DT : DepthAttachments)
         {
-            DT->Destroy();
+            DT->Release();
         }
         DepthAttachments.clear();
 
@@ -325,6 +300,7 @@ namespace Lumina
         GridSpec.DebugName = "GridUBO";
         
         GridUBO = FBuffer::Create(GridSpec);
+        GridUBO->SetFriendlyName("Grid UBO");
         
         
         FDeviceBufferSpecification CameraSpec;
@@ -335,7 +311,8 @@ namespace Lumina
         CameraSpec.DebugName = "Camera Buffer";
         
         CameraUBO = FBuffer::Create(CameraSpec);
-        
+        CameraUBO->SetFriendlyName("Camera UBO");
+
         
         // SceneUBO contains lightPosition, cameraPosition
         FDeviceBufferSpecification LightParamsSpec;
@@ -346,6 +323,8 @@ namespace Lumina
         LightParamsSpec.DebugName = "Scene Parameters UBO";
         
         SceneUBO = FBuffer::Create(LightParamsSpec);
+        SceneUBO->SetFriendlyName("Scene UBO");
+
         
         
         // ModelUBO contains model.
@@ -357,6 +336,7 @@ namespace Lumina
         ModelParamsSpec.DebugName = "Model Storage Buffer";
         
         ModelSBO = FBuffer::Create(ModelParamsSpec);
+        ModelSBO->SetFriendlyName("Model SBO");
     }
 
     
@@ -386,7 +366,8 @@ namespace Lumina
         {
             // Create the descriptor set using the specification
             auto Set = FDescriptorSet::Create(SceneSetSpec);
-
+            Set->SetFriendlyName("Material: " + std::to_string(i));
+            
             // Add the created set to the list of descriptor sets
             SceneDescriptorSets.push_back(std::move(Set));
         }
@@ -401,7 +382,10 @@ namespace Lumina
 
         for (uint32 i = 0; i < FramesInFlight; i++)
         {
-            GridDescriptorSets.push_back(FDescriptorSet::Create(GridSpec));
+            auto Set = FDescriptorSet::Create(GridSpec);
+            Set->SetFriendlyName("Material: " + std::to_string(i));
+            
+            GridDescriptorSets.push_back(Set);
         }
     }
 
@@ -418,6 +402,9 @@ namespace Lumina
         AssertMsg(RenderTargets.empty(), "Render Targets are not empty!");
         for (int i = 0; i < FRenderer::GetConfig().FramesInFlight; ++i)
         {
+            TRefPtr<FImage> Image = FImage::Create(ImageSpecs);
+            Image->SetFriendlyName("Render Target: " + std::to_string(i));
+            
             RenderTargets.push_back(FImage::Create(ImageSpecs));
         }
 
@@ -428,16 +415,13 @@ namespace Lumina
         DepthImageSpecs.Type = EImageType::TYPE_2D;
         DepthImageSpecs.Format = EImageFormat::D32;
         DepthImageSpecs.SampleCount = EImageSampleCount::ONE;
-
-        BaseColor = FTextureFactory::ImportFromSource("../LuminaEditor/Resources/Icons/ContentBrowser/Default_albedo.jpg");
-        Normal = FTextureFactory::ImportFromSource("../LuminaEditor/Resources/Icons/ContentBrowser/Default_normal.jpg");
-        Metallic = FTextureFactory::ImportFromSource("../LuminaEditor/Resources/Icons/ContentBrowser/Default_metalRoughness.jpg");
-        AmbientOcclusion = FTextureFactory::ImportFromSource("../LuminaEditor/Resources/Icons/ContentBrowser/Default_AO.jpg");
-        Emissive = FTextureFactory::ImportFromSource("../LuminaEditor/Resources/Icons/ContentBrowser/Default_emissive.jpg");
         
         AssertMsg(DepthAttachments.empty(), "Render Targets are not empty!");
         for(int i = 0; i < FRenderer::GetConfig().FramesInFlight; ++i)
         {
+            TRefPtr<FImage> Image = FImage::Create(DepthImageSpecs);
+            Image->SetFriendlyName("Depth Image: " + std::to_string(i));
+            
             DepthAttachments.push_back(FImage::Create(DepthImageSpecs));
         }
 

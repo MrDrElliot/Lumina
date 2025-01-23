@@ -24,16 +24,14 @@ namespace Lumina
         for (uint32 i = 0; i < FRenderer::GetConfig().FramesInFlight; i++)
         {
             auto Set = FDescriptorSet::Create(GlobalSetSpec);
+            Set->SetFriendlyName("Material: " + std::to_string(i));
             DescriptorSets.push_back(Set);
         }
     }
 
     LMaterial::~LMaterial()
     {
-        for (auto& Set : DescriptorSets)
-        {
-           Set->Destroy(); 
-        }
+        DescriptorSets.clear();
     }
 
     std::shared_ptr<LMaterial> LMaterial::Create(const TRefPtr<FPipeline>& InPipeline, const FMaterialTextures& Textures, const FMaterialAttributes& Attributes)

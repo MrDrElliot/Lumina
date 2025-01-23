@@ -8,6 +8,7 @@
 #include "VulkanRenderContext.h"
 #include "Core/Application.h"
 #include "Core/Windows/Window.h"
+#include "Platform/Platform.h"
 #include "Source/Runtime/Log/Log.h"
 
 namespace Lumina
@@ -33,14 +34,15 @@ namespace Lumina
     	
         FVulkanRenderContext& RenderContext = FVulkanRenderContext::Get();
         auto Device = FVulkanRenderContext::GetDevice();
-        
+    	
         Images.reserve(InSpec.FramesInFlight);
         AquireSemaphores.reserve(2);
         PresentSemaphores.reserve(2);
         CurrentFrameIndex = 0;
 
-        if(Swapchain) [[likely]]
+        if(LIKELY(Swapchain))
         {
+        	FRenderer::WaitIdle();
             vkDestroySwapchainKHR(FVulkanRenderContext::GetDevice(), Swapchain, nullptr);
         }
     	
@@ -64,12 +66,7 @@ namespace Lumina
 
 
         std::vector<VkImage> RawImages = vkbSwapchain.get_images().value();
-
-        for (TRefPtr<FVulkanImage>& Image : Images)
-        {
-            vkDestroyImageView(Device, Image->GetImageView(), nullptr);
-        }
-
+    	
         Images.clear();
 
     	VkCommandBuffer ImageCreateBuffer = FVulkanRenderContext::AllocateTransientCommandBuffer();
@@ -135,48 +132,87 @@ namespace Lumina
         VkSemaphoreCreateInfo SemaphoreCreateInfo = {};
         SemaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
-        // Handle Present Semaphores
-        size_t currentImageCount = RawImages.size();
-        if (bWasResizedThisFrame)
-        {
-            // Destroy any semaphores that won't be reused due to a lower image count
-            for (uint8 i = currentImageCount; i < PresentSemaphores.size(); i++)
-            {
-                vkDestroySemaphore(Device, PresentSemaphores[i], nullptr);
-            }
-            PresentSemaphores.resize(currentImageCount);  // Adjust size to match new image count
-        }
+		// Handle Present Semaphores
+		size_t currentImageCount = RawImages.size();
+    	
+		// Destroy any excess semaphores
+		for (size_t i = currentImageCount; i < PresentSemaphores.size(); i++)
+		{
+		    vkDestroySemaphore(Device, PresentSemaphores[i], nullptr);
+		}
+		PresentSemaphores.resize(currentImageCount);  // Adjust size to match new image count
+		
+		for (size_t i = 0; i < currentImageCount; i++)
+		{
+		    // Destroy and recreate if resized this frame
+		    if (i < PresentSemaphores.size())
+		    {
+		        vkDestroySemaphore(Device, PresentSemaphores[i], nullptr);
+		    }
+		    
+		    VkSemaphore semaphore = VK_NULL_HANDLE;
+		    VK_CHECK(vkCreateSemaphore(Device, &SemaphoreCreateInfo, nullptr, &semaphore));
+		
+		    if (i >= PresentSemaphores.size())
+		    {
+		        PresentSemaphores.push_back(semaphore);
+		    }
+		    else
+		    {
+		        PresentSemaphores[i] = semaphore;
+		    }
+		
+		    // Assign debug name
+		    std::string name = "Present Semaphore: " + std::to_string(i);
+		    VkDebugUtilsObjectNameInfoEXT NameInfo = {};
+		    NameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+		    NameInfo.pObjectName = name.c_str();
+		    NameInfo.objectType = VK_OBJECT_TYPE_SEMAPHORE;
+		    NameInfo.objectHandle = reinterpret_cast<uint64_t>(semaphore);
+		
+		    FVulkanRenderContext::GetRenderContextFunctions().DebugUtilsObjectNameEXT(Device, &NameInfo);
+		}
+		
+		// Handle Render Semaphores
+		uint8_t currentFrameCount = InSpec.FramesInFlight;
 
-        for (uint8 i = 0; i < currentImageCount; i++)
-        {
-            if (bWasResizedThisFrame)
-            {
-                vkDestroySemaphore(Device, PresentSemaphores[i], nullptr);
-            }
-            VK_CHECK(vkCreateSemaphore(Device, &SemaphoreCreateInfo, nullptr, &PresentSemaphores[i]));
-        }
-
-        // Handle Render Semaphores
-        size_t currentFrameCount = InSpec.FramesInFlight;
-        if (bWasResizedThisFrame)
-        {
-            // Destroy any semaphores that won't be reused due to a lower frame count
-            for (uint8 i = currentFrameCount; i < AquireSemaphores.size(); i++)
-            {
-                vkDestroySemaphore(Device, AquireSemaphores[i], nullptr);
-            }
-            AquireSemaphores.resize(currentFrameCount);  // Adjust size to match new frame count
-        }
-
-        for (uint8 i = 0; i < currentFrameCount; i++)
-        {
-            if (bWasResizedThisFrame)
-            {
-                vkDestroySemaphore(Device, AquireSemaphores[i], nullptr);
-            }
-            VK_CHECK(vkCreateSemaphore(Device, &SemaphoreCreateInfo, nullptr, &AquireSemaphores[i]));
-        }
-
+		// Destroy any excess semaphores
+		for (size_t i = currentFrameCount; i < AquireSemaphores.size(); i++)
+		{
+		    vkDestroySemaphore(Device, AquireSemaphores[i], nullptr);
+		}
+		AquireSemaphores.resize(currentFrameCount);
+		
+		for (size_t i = 0; i < currentFrameCount; i++)
+		{
+		    // Destroy and recreate if resized this frame
+		    if (i < AquireSemaphores.size())
+		    {
+		        vkDestroySemaphore(Device, AquireSemaphores[i], nullptr);
+		    }
+		
+		    VkSemaphore semaphore = VK_NULL_HANDLE;
+		    VK_CHECK(vkCreateSemaphore(Device, &SemaphoreCreateInfo, nullptr, &semaphore));
+		
+		    if (i >= AquireSemaphores.size())
+		    {
+		        AquireSemaphores.push_back(semaphore);
+		    }
+		    else
+		    {
+		        AquireSemaphores[i] = semaphore;
+		    }
+		
+		    // Assign debug name
+		    std::string name = "Aquire Semaphore: " + std::to_string(i);
+		    VkDebugUtilsObjectNameInfoEXT NameInfo = {};
+		    NameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+		    NameInfo.pObjectName = name.c_str();
+		    NameInfo.objectType = VK_OBJECT_TYPE_SEMAPHORE;
+		    NameInfo.objectHandle = reinterpret_cast<uint64_t>(semaphore);
+		
+		    FVulkanRenderContext::GetRenderContextFunctions().DebugUtilsObjectNameEXT(Device, &NameInfo);
+		}
     	
     	if(bWasResizedThisFrame)
     	{
@@ -208,12 +244,10 @@ namespace Lumina
     void FVulkanSwapchain::DestroySwapchain()
     {
     	auto Device = FVulkanRenderContext::GetDevice();
+		FRenderer::WaitIdle();
+    	
+    	Images.clear();
 
-    	VK_CHECK(vkDeviceWaitIdle(Device));
-    	for (auto& Image : Images)
-    	{
-    		vkDestroyImageView(Device, Image->GetImageView(), nullptr);
-    	}
 
     	vkDestroySwapchainKHR(Device, Swapchain, nullptr);
 
@@ -231,6 +265,10 @@ namespace Lumina
     	{
     		vkDestroyFence(Device, Fence, nullptr);
     	}
+
+    	AquireSemaphores.clear();
+    	PresentSemaphores.clear();
+    	Fences.clear();
 
     	Swapchain = VK_NULL_HANDLE;
     }

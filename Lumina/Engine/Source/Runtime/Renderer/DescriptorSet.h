@@ -2,6 +2,7 @@
 
 #include <glm/glm.hpp>
 
+#include "RenderResource.h"
 #include "Containers/Array.h"
 #include "Memory/RefCounted.h"
 #include "Platform/GenericPlatform.h"
@@ -51,15 +52,13 @@ namespace Lumina
         std::vector<FDescriptorBinding> Bindings;
     };
     
-    class FDescriptorSet : public RefCounted
+    class FDescriptorSet : public FRenderResource
     {
     public:
         virtual ~FDescriptorSet() = default;
 
         static TRefPtr<FDescriptorSet> Create(const FDescriptorSetSpecification& InSpec);
-
-        virtual void Destroy() = 0;
-
+        
         virtual void Write(uint16 Binding, uint16 ArrayElement, TRefPtr<FBuffer> Buffer, uint64 Size, uint64 Offset) = 0;
         virtual void Write(uint16 Binding, uint16 ArrayElement, TRefPtr<FImage> Image, TRefPtr<FImageSampler> Sampler) = 0;
         virtual void Write(uint16 Binding, uint16 ArrayElement, TFastVector<TRefPtr<FImage>> Images, TRefPtr<FImageSampler> Sampler) = 0;

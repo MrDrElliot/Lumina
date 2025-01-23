@@ -1,6 +1,5 @@
 #pragma once
-#include "Source/Runtime/Renderer/Image.h"
-#include "Source/Runtime/Renderer/PipelineStage.h"
+#include "Renderer/Image.h"
 #include "vulkanmemoryallocator/src/VmaUsage.h"
 
 
@@ -111,15 +110,15 @@ namespace Lumina
         FVulkanImage(const FImageSpecification& InSpec);
         FVulkanImage(const FImageSpecification& InSpec, VkImage InImage, VkImageView InImageView);
 
+		virtual ~FVulkanImage();
+		
 		void CreateResolveImage();
         void CreateTexture();
         void CreateRenderTarget();
         void CreateDepthBuffer();
 		void CreateFromRaw(const FImageSpecification& InSpec, VkImage InImage, VkImageView InView);
 		FImageSpecification GetSpecification() const override { return Spec; }
-
-        void Destroy() override;
-
+		
         VkImage GetImage() { return Image; }
 		VkImage* GetImagePtr() { return &Image; }
         VkImageView GetImageView() { return ImageView; }
@@ -128,7 +127,7 @@ namespace Lumina
         void SetCurrentLayout(EImageLayout Layout) { CurrentLayout = Layout; }
         void SetLayout(TRefPtr<FCommandBuffer> CmdBuffer, EImageLayout NewLayout, EPipelineStage SrcStage, EPipelineStage DstStage, EPipelineAccess SrcAccess, EPipelineAccess DstAccess) override;
 
-        
+        void SetFriendlyName(const LString& InName) override;
         
     private:
 
@@ -149,6 +148,8 @@ namespace Lumina
         FVulkanImageSampler(const FImageSamplerSpecification& spec);
         void Destroy() override;
 
+    	void SetFriendlyName(const LString& InName) override;
+    	
     	VkSampler GetSampler() { return Sampler; }
 
     private:

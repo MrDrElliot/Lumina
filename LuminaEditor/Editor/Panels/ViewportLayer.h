@@ -10,7 +10,7 @@ namespace Lumina
     {
     public:
     
-        ViewportLayer(const std::shared_ptr<Lumina::LScene>& InScene)
+        ViewportLayer(const std::weak_ptr<Lumina::LScene>& InScene)
         {
             Scene = InScene;
             Name = "Viewport";
@@ -25,7 +25,7 @@ namespace Lumina
     private:
 
         ImVec2 Region;
-        std::shared_ptr<LScene> Scene;
+        std::weak_ptr<LScene> Scene;
     
     };
 }

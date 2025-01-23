@@ -30,6 +30,18 @@ namespace Lumina
     	CreateFromRaw(InSpec, InImage, InImageView);
     }
 
+    FVulkanImage::~FVulkanImage()
+    {
+    	VkDevice Device = FVulkanRenderContext::GetDevice();
+    	FVulkanMemoryAllocator* Allocator = FVulkanMemoryAllocator::Get();
+
+    	vkDestroyImageView(Device, ImageView, nullptr);
+    	Allocator->DestroyImage(Image, Allocation);
+    	
+    	ImageView = VK_NULL_HANDLE;
+    	Image = VK_NULL_HANDLE;
+    }
+
     void FVulkanImage::CreateResolveImage()
     {
 		auto Device = FVulkanRenderContext::GetDevice();
@@ -69,6 +81,7 @@ namespace Lumina
 
 		TRefPtr<FCommandBuffer> TransientCmdBuffer = FCommandBuffer::Create(ECommandBufferLevel::PRIMARY,
 			ECommandBufferType::TRANSIENT, ECommandType::GENERAL);
+    	TransientCmdBuffer->SetFriendlyName("Transient Image Command Buffer");
 
 		TransientCmdBuffer->Begin();
     	
@@ -83,7 +96,7 @@ namespace Lumina
     	
 		TransientCmdBuffer->End();
 		TransientCmdBuffer->Execute(true);
-		TransientCmdBuffer->Destroy();
+		TransientCmdBuffer->Release();
     }
 
     void FVulkanImage::CreateTexture()
@@ -104,12 +117,12 @@ namespace Lumina
 		auto allocator = FVulkanMemoryAllocator::Get();
 		Allocation = allocator->AllocateImage(&texture_create_info, 0, &Image, "Texture");
 
-		FDeviceBufferSpecification staging_buffer_spec = {};
-		staging_buffer_spec.Size = Spec.Pixels.size();
-		staging_buffer_spec.MemoryUsage = EDeviceBufferMemoryUsage::COHERENT_WRITE;
-		staging_buffer_spec.BufferUsage = EDeviceBufferUsage::STAGING_BUFFER;
+		FDeviceBufferSpecification StagingBuffer_spec = {};
+		StagingBuffer_spec.Size = Spec.Pixels.size();
+		StagingBuffer_spec.MemoryUsage = EDeviceBufferMemoryUsage::COHERENT_WRITE;
+		StagingBuffer_spec.BufferUsage = EDeviceBufferUsage::STAGING_BUFFER;
 
-		FVulkanBuffer staging_buffer(staging_buffer_spec, Spec.Pixels.data(), Spec.Pixels.size());
+		TRefPtr<FVulkanBuffer> StagingBuffer = MakeRefPtr<FVulkanBuffer>(StagingBuffer_spec, Spec.Pixels.data(), Spec.Pixels.size());
 
 		auto device = FVulkanRenderContext::GetDevice();
 		VkCommandBuffer cmd_buffer = FVulkanRenderContext::AllocateTransientCommandBuffer();
@@ -164,7 +177,7 @@ namespace Lumina
 		}
 
 		// Submit copy command
-		vkCmdCopyBufferToImage(cmd_buffer, staging_buffer.GetBuffer(), Image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, (uint32)copy_regions.size(), copy_regions.data());
+		vkCmdCopyBufferToImage(cmd_buffer, StagingBuffer->GetBuffer(), Image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, (uint32)copy_regions.size(), copy_regions.data());
 		
 		// Transition layout to shader read only
 		barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
@@ -195,29 +208,23 @@ namespace Lumina
 		//Spec.Pixels.clear();
 
 		// Create image view
-		VkImageViewCreateInfo image_view_create_info = {};
-		image_view_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		image_view_create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		image_view_create_info.image = Image;
-		image_view_create_info.format = convert(Spec.Format);
-		image_view_create_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		image_view_create_info.subresourceRange.baseArrayLayer = 0;
-		image_view_create_info.subresourceRange.layerCount = 1;
-		image_view_create_info.subresourceRange.baseMipLevel = 0;
-		image_view_create_info.subresourceRange.levelCount = texture_create_info.mipLevels;
-		image_view_create_info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-		image_view_create_info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-		image_view_create_info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-		image_view_create_info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+		VkImageViewCreateInfo ImageViewCreateInfo = {};
+		ImageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		ImageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		ImageViewCreateInfo.image = Image;
+		ImageViewCreateInfo.format = convert(Spec.Format);
+		ImageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		ImageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
+		ImageViewCreateInfo.subresourceRange.layerCount = 1;
+		ImageViewCreateInfo.subresourceRange.baseMipLevel = 0;
+		ImageViewCreateInfo.subresourceRange.levelCount = texture_create_info.mipLevels;
+		ImageViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+		ImageViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+		ImageViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+		ImageViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
 
-		vkCreateImageView(device, &image_view_create_info, nullptr, &ImageView);
-
-		//Spec.ArrayLayers = 1;
-		//Spec.MipLevels = texture_create_info.mipLevels;
-		//Spec.Type = EImageType::TYPE_2D;
-		//Spec.Usage = EImageUsage::TEXTURE;
-
-		staging_buffer.Destroy();
+		vkCreateImageView(device, &ImageViewCreateInfo, nullptr, &ImageView);
+    	
 	}
 
     void FVulkanImage::CreateRenderTarget()
@@ -259,6 +266,7 @@ namespace Lumina
 
 		TRefPtr<FCommandBuffer> TransientCmdBuffer = FCommandBuffer::Create(ECommandBufferLevel::PRIMARY,
 			ECommandBufferType::TRANSIENT, ECommandType::GENERAL);
+    	TransientCmdBuffer->SetFriendlyName("Transient Render Target Command Buffer");
 
 		TransientCmdBuffer->Begin();
     	
@@ -266,9 +274,10 @@ namespace Lumina
 			EPipelineAccess::NONE,
 			EPipelineAccess::COLOR_ATTACHMENT_WRITE
 		);
+    	
 		TransientCmdBuffer->End();
 		TransientCmdBuffer->Execute(true);
-		TransientCmdBuffer->Destroy();
+		TransientCmdBuffer->Release();
     }
 
     void FVulkanImage::CreateDepthBuffer()
@@ -310,6 +319,7 @@ namespace Lumina
 
     	TRefPtr<FCommandBuffer> TransientCmdBuffer = FCommandBuffer::Create(ECommandBufferLevel::PRIMARY,
     		ECommandBufferType::TRANSIENT, ECommandType::GENERAL);
+    	TransientCmdBuffer->SetFriendlyName("Transient Depth Buffer Command Buffer");
 
 		TransientCmdBuffer->Begin();
     	
@@ -324,7 +334,7 @@ namespace Lumina
     	
 		TransientCmdBuffer->End();
 		TransientCmdBuffer->Execute(true);
-		TransientCmdBuffer->Destroy();
+		TransientCmdBuffer->Release();
     }
 
     void FVulkanImage::CreateFromRaw(const FImageSpecification& InSpec, VkImage InImage, VkImageView InView)
@@ -333,19 +343,7 @@ namespace Lumina
     	ImageView = InView;
     	Spec = InSpec;
     }
-
-    void FVulkanImage::Destroy()
-    {
-        auto Device = FVulkanRenderContext::GetDevice();
-        auto Allocator = FVulkanMemoryAllocator::Get();
-
-        vkDestroyImageView(Device, ImageView, nullptr);
-        Allocator->DestroyImage(Image, Allocation);
-    	
-        ImageView = VK_NULL_HANDLE;
-		Image = VK_NULL_HANDLE;
-    }
-
+	
     void FVulkanImage::SetLayout(TRefPtr<FCommandBuffer> CmdBuffer, EImageLayout NewLayout,
 	    EPipelineStage SrcStage, EPipelineStage DstStage, EPipelineAccess SrcAccess, EPipelineAccess DstAccess)
     {
@@ -379,6 +377,27 @@ namespace Lumina
 		);
 
     	CurrentLayout = NewLayout;
+    }
+
+    void FVulkanImage::SetFriendlyName(const LString& InName)
+    {
+	    FImage::SetFriendlyName(InName);
+
+    	VkDevice Device = FVulkanRenderContext::GetDevice();
+        
+    	VkDebugUtilsObjectNameInfoEXT NameInfo = {};
+    	NameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+    	NameInfo.pObjectName = GetFriendlyName().CStr();
+    	NameInfo.objectType = VK_OBJECT_TYPE_IMAGE;
+    	NameInfo.objectHandle = reinterpret_cast<uint64_t>(Image);
+    	
+    	FVulkanRenderContext::GetRenderContextFunctions().DebugUtilsObjectNameEXT(Device, &NameInfo);
+
+		NameInfo.objectType = VK_OBJECT_TYPE_IMAGE_VIEW;
+    	NameInfo.objectHandle = reinterpret_cast<uint64_t>(ImageView);
+    	
+    	FVulkanRenderContext::GetRenderContextFunctions().DebugUtilsObjectNameEXT(Device, &NameInfo);
+
     }
 
 
@@ -415,4 +434,21 @@ namespace Lumina
     	vkDestroySampler(Device, Sampler, nullptr);
     	Sampler = VK_NULL_HANDLE;
     }
+
+    void FVulkanImageSampler::SetFriendlyName(const LString& InName)
+    {
+	    FImageSampler::SetFriendlyName(InName);
+
+    	VkDevice Device = FVulkanRenderContext::GetDevice();
+        
+    	VkDebugUtilsObjectNameInfoEXT NameInfo = {};
+    	NameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+    	NameInfo.pObjectName = GetFriendlyName().CStr();
+    	NameInfo.objectType = VK_OBJECT_TYPE_SAMPLER;
+    	NameInfo.objectHandle = reinterpret_cast<uint64_t>(Sampler);
+    	
+    	FVulkanRenderContext::GetRenderContextFunctions().DebugUtilsObjectNameEXT(Device, &NameInfo);
+    	
+    }
+	
 }

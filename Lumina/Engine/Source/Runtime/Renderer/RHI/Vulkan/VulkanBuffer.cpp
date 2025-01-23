@@ -82,6 +82,26 @@ namespace Lumina
 
 	FVulkanBuffer::~FVulkanBuffer()
 	{
+		FVulkanMemoryAllocator* Alloc = FVulkanMemoryAllocator::Get();
+		Alloc->DestroyBuffer(Buffer, Allocation);
+
+		Data = nullptr;
+	}
+
+	void FVulkanBuffer::SetFriendlyName(const LString& InName)
+	{
+		FBuffer::SetFriendlyName(InName);
+
+		VkDevice Device = FVulkanRenderContext::GetDevice();
+        
+		VkDebugUtilsObjectNameInfoEXT NameInfo = {};
+		NameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+		NameInfo.pObjectName = GetFriendlyName().CStr();
+		NameInfo.objectType = VK_OBJECT_TYPE_BUFFER;
+		NameInfo.objectHandle = reinterpret_cast<uint64_t>(Buffer);
+
+
+		FVulkanRenderContext::GetRenderContextFunctions().DebugUtilsObjectNameEXT(Device, &NameInfo);
 	}
 
 	FDeviceBufferSpecification FVulkanBuffer::GetSpecification() const
@@ -103,7 +123,7 @@ namespace Lumina
 			StagingBufferSpec.MemoryUsage = EDeviceBufferMemoryUsage::COHERENT_WRITE;
 			StagingBufferSpec.DebugName = "Staging Buffer";
 		
-			FVulkanBuffer StagingBuffer(StagingBufferSpec, InData, DataSize);
+			TRefPtr<FVulkanBuffer> StagingBuffer = MakeRefPtr<FVulkanBuffer>(StagingBufferSpec, InData, DataSize);
 		
 			VkBufferCopy BufferCopy = {};
 			BufferCopy.size = DataSize;
@@ -112,7 +132,7 @@ namespace Lumina
 		
 			VkCommandBuffer CmdBuffer = RenderContext.AllocateTransientCommandBuffer();
 		
-			vkCmdCopyBuffer(CmdBuffer, StagingBuffer.GetBuffer(), Buffer, 1, &BufferCopy);
+			vkCmdCopyBuffer(CmdBuffer, StagingBuffer->GetBuffer(), Buffer, 1, &BufferCopy);
 		
 			VkBufferMemoryBarrier BufferMemoryBarrier = {};
 			BufferMemoryBarrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
@@ -135,7 +155,7 @@ namespace Lumina
 			);
 		
 			RenderContext.ExecuteTransientCommandBuffer(CmdBuffer);
-			StagingBuffer.Destroy();
+			StagingBuffer->Release();
 			
 		}
 		else 
@@ -176,15 +196,7 @@ namespace Lumina
 			VBOData->VertexCount = DataSize / sizeof(float);
 		}
 	}
-
-	void FVulkanBuffer::Destroy()
-	{
-		FVulkanMemoryAllocator* Alloc = FVulkanMemoryAllocator::Get();
-		Alloc->DestroyBuffer(Buffer, Allocation);
-
-		Data = nullptr;
-	}
-
+	
 	uint64 FVulkanBuffer::GetAlignedSizeForBuffer(uint64 Size, EDeviceBufferUsage Usage)
 	{
 		VkPhysicalDeviceProperties DeviceProps;

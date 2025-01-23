@@ -125,9 +125,18 @@ namespace Lumina
         style.Colors[ImGuiCol_ModalWindowDimBg] =       ImVec4(0.80f, 0.80f, 0.80f, 0.35f);
         style.GrabRounding = style.FrameRounding =      2.3f;
 
-
-        
+    	
         vkCreateDescriptorPool(FVulkanRenderContext::GetDevice(), &PoolInfo, nullptr, &DescriptorPool);
+
+    	VkDevice Device = FVulkanRenderContext::GetDevice();
+        
+    	VkDebugUtilsObjectNameInfoEXT NameInfo = {};
+    	NameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+    	NameInfo.pObjectName = "ImGui Descriptor Pool";
+    	NameInfo.objectType = VK_OBJECT_TYPE_DESCRIPTOR_POOL;
+    	NameInfo.objectHandle = reinterpret_cast<uint64_t>(DescriptorPool);
+    	
+    	FVulkanRenderContext::GetRenderContextFunctions().DebugUtilsObjectNameEXT(Device, &NameInfo);
         
         ImGui_ImplGlfw_InitForVulkan(FApplication::GetWindow().GetWindow(), true);
 
@@ -148,16 +157,19 @@ namespace Lumina
         InitInfo.UseDynamicRendering = true;
         InitInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 
-
-        
+    	
         ImGui_ImplVulkan_Init(&InitInfo);
         ImGui_ImplVulkan_CreateFontsTexture();
-        ImGui_ImplVulkan_DestroyFontsTexture();
 
     }
 
     FVulkanImGuiRenderAPI::~FVulkanImGuiRenderAPI()
     {
+	    for (auto Set : ImGuiImageDescriptorSets)
+	    {
+    		ImGui_ImplVulkan_RemoveTexture(Set.second);
+	    }
+    	
         ImGui_ImplVulkan_Shutdown();
         ImGui_ImplGlfw_Shutdown();
         ImGui::DestroyContext();
@@ -173,33 +185,55 @@ namespace Lumina
 	
     void FVulkanImGuiRenderAPI::RenderImage(const TRefPtr<FImage>& Image, const TRefPtr<FImageSampler>& Sampler, ImVec2 Size, uint32 ImageLayer, bool bFlip)
     {
-        TRefPtr<FVulkanImage> vk_image = RefPtrCast<FVulkanImage>(Image);
-        TRefPtr<FVulkanImageSampler> vk_sampler = RefPtrCast<FVulkanImageSampler>(Sampler);
+        TRefPtr<FVulkanImage> VkImage = RefPtrCast<FVulkanImage>(Image);
+        TRefPtr<FVulkanImageSampler> VkSampler = RefPtrCast<FVulkanImageSampler>(Sampler);
         if (ImGuiImageDescriptorSets.find(Image->GetGuid()) == ImGuiImageDescriptorSets.end())
         {
-            VkDescriptorSet imgui_image_id = ImGui_ImplVulkan_AddTexture
+        	
+            VkDescriptorSet ImGuiImageID = ImGui_ImplVulkan_AddTexture
         	(
-                vk_sampler->GetSampler(),
-                vk_image->GetImageView(),
+                VkSampler->GetSampler(),
+                VkImage->GetImageView(),
                 VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
             );
-            ImGuiImageDescriptorSets.emplace(Image->GetGuid(), imgui_image_id);
+
+        	VkDevice Device = FVulkanRenderContext::GetDevice();
+        	
+        	VkDebugUtilsObjectNameInfoEXT NameInfo = {};
+        	NameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+        	NameInfo.pObjectName = Image->GetFriendlyName().CStr();
+        	NameInfo.objectType = VK_OBJECT_TYPE_DESCRIPTOR_SET;
+        	NameInfo.objectHandle = reinterpret_cast<uint64_t>(ImGuiImageID);
+    	
+        	FVulkanRenderContext::GetRenderContextFunctions().DebugUtilsObjectNameEXT(Device, &NameInfo);
+        	
+            ImGuiImageDescriptorSets.emplace(Image->GetGuid(), ImGuiImageID);
         }
         ImGui::Image(ImGuiImageDescriptorSets[Image->GetGuid()], Size, { 0, (float)!bFlip }, { 1, (float)bFlip });
     }
 
     ImTextureID FVulkanImGuiRenderAPI::CreateImGuiTexture(const TRefPtr<FImage>& Image, const TRefPtr<FImageSampler>& Sampler, ImVec2 Size, uint32 ImageLayer, bool bFlip)
     {
-    	TRefPtr<FVulkanImage> vk_image = RefPtrCast<FVulkanImage>(Image);
-    	TRefPtr<FVulkanImageSampler> vk_sampler = RefPtrCast<FVulkanImageSampler>(Sampler);
+    	TRefPtr<FVulkanImage> VkImage = RefPtrCast<FVulkanImage>(Image);
+    	TRefPtr<FVulkanImageSampler> VkSampler = RefPtrCast<FVulkanImageSampler>(Sampler);
     	if (ImGuiImageDescriptorSets.find(Image->GetGuid()) == ImGuiImageDescriptorSets.end())
     	{
     		VkDescriptorSet ImGuiImageID = ImGui_ImplVulkan_AddTexture(
-				vk_sampler->GetSampler(),
-				vk_image->GetImageView(),
+				VkSampler->GetSampler(),
+				VkImage->GetImageView(),
 				VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
 			);
     		ImGuiImageDescriptorSets.emplace(Image->GetGuid(), ImGuiImageID);
+
+    		VkDevice Device = FVulkanRenderContext::GetDevice();
+
+    		VkDebugUtilsObjectNameInfoEXT NameInfo = {};
+    		NameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+    		NameInfo.pObjectName = Image->GetFriendlyName().CStr();
+    		NameInfo.objectType = VK_OBJECT_TYPE_DESCRIPTOR_SET;
+    		NameInfo.objectHandle = reinterpret_cast<uint64_t>(ImGuiImageID);
+    	
+    		FVulkanRenderContext::GetRenderContextFunctions().DebugUtilsObjectNameEXT(Device, &NameInfo);
     	}
 
     	return ImGuiImageDescriptorSets[Image->GetGuid()];
@@ -208,7 +242,6 @@ namespace Lumina
     void FVulkanImGuiRenderAPI::EndFrame()
     {
         ImGuiIO& Io = ImGui::GetIO();
-        FApplication& App = FApplication::Get();
         Io.DisplaySize.x = (float)FRenderer::GetSwapchain()->GetSpecs().Extent.x;
     	Io.DisplaySize.y = (float)FRenderer::GetSwapchain()->GetSpecs().Extent.y;
 
@@ -259,6 +292,5 @@ namespace Lumina
 
     void FVulkanImGuiRenderAPI::Shutdown()
     {
-    	vkDestroyDescriptorPool(FVulkanRenderContext::GetDevice(), DescriptorPool, nullptr);
     }
 }

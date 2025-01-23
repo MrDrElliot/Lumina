@@ -20,7 +20,7 @@ namespace Lumina
         for (auto& [Key, Shader] : Library)
         {
             LOG_TRACE("Shader Library: Destroying Shader - {0}", Key);
-            Shader->Destroy();
+            Shader->Release();
         }
 
         Library.clear();
@@ -76,7 +76,6 @@ namespace Lumina
             return false;
         }
         
-        Library.find(Name)->second->Destroy();
         Library.erase(Name);
 
         return true;

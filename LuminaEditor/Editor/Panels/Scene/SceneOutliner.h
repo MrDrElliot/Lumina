@@ -9,7 +9,7 @@ namespace Lumina
     {
     public:
 
-        SceneOutliner(const std::shared_ptr<LScene>& InScene)
+        SceneOutliner(const std::weak_ptr<LScene>& InScene)
         {
             mScene = InScene;
             Name = "Scene Outliner";
@@ -25,7 +25,7 @@ namespace Lumina
 
     private:
 
-        std::shared_ptr<LScene> mScene;
+        std::weak_ptr<LScene> mScene;
     
     };
 }

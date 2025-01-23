@@ -18,19 +18,13 @@ namespace Lumina
 
     AssetRegistry::~AssetRegistry()
     {
-        bShouldScan = false;
+        bShouldScan.store(false, std::memory_order_relaxed);
         ScanThread.join();
     }
 
     void AssetRegistry::StartAssetScan()
     {
         ScanThread = std::thread(&AssetRegistry::ScanAssets, this);
-    }
-    
-    void AssetRegistry::Shutdown()
-    {
-        bShouldScan = false;
-        ScanThread.join();
     }
 
     const FAssetMetadata& AssetRegistry::GetMetadata(const FAssetHandle& InHandle)
@@ -97,7 +91,7 @@ namespace Lumina
 
     void AssetRegistry::ScanAssets()
     {
-        while (bShouldScan)
+        while (bShouldScan.load(std::memory_order_relaxed))
         {
             // Use recursive_directory_iterator to scan all subdirectories
             for (const auto& entry : std::filesystem::recursive_directory_iterator(Project::GetProjectContentDirectory()))

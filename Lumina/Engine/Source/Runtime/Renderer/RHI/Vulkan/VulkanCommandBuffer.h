@@ -13,23 +13,20 @@ namespace Lumina
         FVulkanCommandBuffer();
         FVulkanCommandBuffer(ECommandBufferLevel InLevel, ECommandBufferType InBufferType, ECommandType InCmdType);
         ~FVulkanCommandBuffer() override;
+
+        void SetFriendlyName(const LString& InName) override;
         
         void Begin() override;
         void End() override;
         void Reset() override;
         void Execute(bool bWait = false) override;
-
-        void Destroy() override;
-
+        
         VkCommandBuffer& GetCommandBuffer() { return CommandBuffer; }
-        VkCommandPool& GetCommandPool() { return CommandPool; }
 
     private:
 
 
         VkCommandBuffer CommandBuffer;
-        VkCommandPool CommandPool;
-
         
         ECommandBufferLevel Level;
         ECommandBufferType BufferType;

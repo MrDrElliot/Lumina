@@ -66,26 +66,16 @@ namespace Lumina
 
     FVulkanRenderAPI::~FVulkanRenderAPI()
     {
-    }
-
-    void FVulkanRenderAPI::Shutdown()
-    {
     	LOG_TRACE("Vulkan Render API: Shutting Down");
-
-    	//FRenderer::WaitIdle();
-    	
-    	for(auto& Buffer : CommandBuffers)
-    	{
-    		Buffer->Destroy();
-    	}
     	
     	CommandBuffers.clear();
-
+    	Swapchain->Release();
+    	
     	vkDestroyDescriptorPool(FVulkanRenderContext::GetDevice(), DescriptorPool, nullptr);
     	
     	RenderContext->Destroy();
     }
-
+	
     void FVulkanRenderAPI::BeginFrame()
     {
         Swapchain->BeginFrame();
@@ -193,7 +183,7 @@ namespace Lumina
 
     void FVulkanRenderAPI::WaitDevice()
     {
-        vkDeviceWaitIdle(RenderContext->GetDevice());
+        VK_CHECK(vkDeviceWaitIdle(RenderContext->GetDevice()));
     }
 
     TRefPtr<FSwapchain> FVulkanRenderAPI::GetSwapchain()

@@ -17,7 +17,7 @@ namespace Lumina
 
     LScene::~LScene()
     {
-        
+        SceneRenderer->Shutdown();
     }
 
     std::shared_ptr<LScene> LScene::Create(std::shared_ptr<FCamera> Camera)
@@ -41,11 +41,6 @@ namespace Lumina
         SceneRenderer->EndScene();
     }
     
-    void LScene::Shutdown()
-    {
-        SceneRenderer->Shutdown();
-    }
-
     Entity LScene::CreateEntity(const FTransform& Transform, const LString& Name)
     {
         // Check for existing entities with the same name and modify the name if necessary

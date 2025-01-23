@@ -130,7 +130,7 @@ namespace Lumina
             bFirstMouse = true;  // Reset the first-time flag when the mouse button is not pressed
         }
 
-        float velocity = 2.0f * (float)DeltaTime;
+        float velocity = 0.01f * (float)DeltaTime;
         if(Input::IsKeyPressed(Key::LeftShift))
         {
             velocity *= 4;
