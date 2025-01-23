@@ -5,7 +5,9 @@
 #include <Scene/Components/MeshComponent.h>
 
 #include "Panels/SelectionManager.h"
-#include "Scene/Components/UniqueComponent.h"
+#include "Scene/Components/CameraComponent.h"
+#include "Scene/Components/GuidComponent.h"
+#include "Scene/Components/LightComponent.h"
 
 namespace Lumina
 {
@@ -16,10 +18,10 @@ namespace Lumina
         const char* entityName = NameComponent.GetName().Length() > 0 ? NameComponent.GetName().CStr() : "Unnamed Entity";
 
         // Start a tree node with a small rectangle style
-        ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_FramePadding;
+        ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_FramePadding;
 
         // Determine selection state
-        bool isSelected = FSelectionManager::Get()->IsSelected(ESelectionContext::SceneOutliner, InEntity.GetComponent<FUniqueComponent>().GetGUID());
+        bool isSelected = FSelectionManager::Get()->IsSelected(ESelectionContext::SceneOutliner, InEntity.GetComponent<FGUIDComponent>().GetGUID());
         if (isSelected)
         {
             nodeFlags |= ImGuiTreeNodeFlags_Selected;
@@ -44,11 +46,11 @@ namespace Lumina
         {
             if (isSelected)
             {
-                FSelectionManager::Get()->RemoveSelection(ESelectionContext::SceneOutliner, InEntity.GetComponent<FUniqueComponent>().GetGUID());
+                FSelectionManager::Get()->RemoveSelection(ESelectionContext::SceneOutliner, InEntity.GetComponent<FGUIDComponent>().GetGUID());
             }
             else
             {
-                FSelectionManager::Get()->AddSelection(ESelectionContext::SceneOutliner, InEntity.GetComponent<FUniqueComponent>().GetGUID());
+                FSelectionManager::Get()->AddSelection(ESelectionContext::SceneOutliner, InEntity.GetComponent<FGUIDComponent>().GetGUID());
             }
         }
 
@@ -66,40 +68,26 @@ namespace Lumina
             // Render components only if they exist
             if (InEntity.HasComponent<FTransformComponent>())
             {
-                ImGui::Spacing();
-                bool isComponentSelected = isSelected;  // Keep track of selection state for each component
-                
-                // Apply selection style if selected
-                ImVec4 componentStyle = isComponentSelected ? selectedBackgroundColor : componentBackgroundColor;
-                ImGui::PushStyleColor(ImGuiCol_Button, componentStyle);
-                ImGui::PushStyleColor(ImGuiCol_ButtonHovered, componentStyle);
-
-                // Highlightable/selectable component block for Transform
-                if (ImGui::Selectable("Transform Component", false, ImGuiSelectableFlags_AllowDoubleClick))
-                {
-                    // Handle selection or double-click logic if needed
-                }
-
-                ImGui::PopStyleColor(2); // Pop the style changes for the next components
+                ImGui::Spacing();                
+                ImGui::Text("Transform Component");
             }
             
             if (InEntity.HasComponent<FMeshComponent>())
             {
                 ImGui::Spacing();
-                bool isComponentSelected = isSelected;  // Keep track of selection state for each component
-                
-                // Apply selection style if selected
-                ImVec4 componentStyle = isComponentSelected ? selectedBackgroundColor : componentBackgroundColor;
-                ImGui::PushStyleColor(ImGuiCol_Button, componentStyle);
-                ImGui::PushStyleColor(ImGuiCol_ButtonHovered, componentStyle);
-
-                // Highlightable/selectable component block for Mesh
-                if (ImGui::Selectable("Mesh Component", false, ImGuiSelectableFlags_AllowDoubleClick))
-                {
-                    // Handle selection or double-click logic if needed
-                }
-
-                ImGui::PopStyleColor(2); // Pop the style changes for the next components
+                ImGui::Text("Mesh Component");
+            }
+            
+            if (InEntity.HasComponent<FLightComponent>())
+            {
+                ImGui::Spacing();
+                ImGui::Text("Light Component");
+            }
+            
+            if (InEntity.HasComponent<FCameraComponent>())
+            {
+                ImGui::Spacing();
+                ImGui::Text("Camera Component");
             }
 
             // Pop the group style color after rendering components

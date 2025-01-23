@@ -16,6 +16,8 @@ namespace Lumina
         FCamera();
         ~FCamera();
 
+        static std::shared_ptr<FCamera> Create();
+        
         glm::mat4 GetViewProjectionMatrix();
         glm::mat4 GetViewMatrix();
         glm::mat4 GetProjectionMatrix();

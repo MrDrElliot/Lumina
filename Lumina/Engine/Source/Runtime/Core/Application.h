@@ -5,6 +5,7 @@
 #include "Events/Event.h"
 #include "Subsystems/Subsystem.h"
 #include "LayerStack.h"
+#include "Delegates/Delegate.h"
 #include "Memory/RefCounted.h"
 
 
@@ -32,6 +33,7 @@ namespace Lumina
 		uint8 bWindowDecorated:1;
 		uint8 bFullscreen:1;
 		uint8 bVSync:1;
+		uint8 bRenderImGui:1;
 
 	};
 
@@ -44,6 +46,13 @@ namespace Lumina
 		uint32 FPS;
 		uint64 FrameCount = 0;
 
+	};
+
+	struct FCoreDelegates
+	{
+		static TMulticastDelegate<void>		OnEngineInit;
+		static TMulticastDelegate<double>	OnEngineUpdate;
+		static TMulticastDelegate<void>		PreEngineShutdown;
 	};
 	
 	class FApplication
@@ -59,18 +68,20 @@ namespace Lumina
 		int Close();
 		
 		virtual void OnInit();
+		virtual void OnUpdate();
 		virtual void OnShutdown();
 		
-		virtual void PreFrame();
-		virtual void PostFrame();
+		void PreFrame();
+		void PostFrame();
 
 		virtual void UpdateLayerStack(double DeltaTime);
 		void PushLayer(const TRefPtr<FLayer>& InLayer);
 		void PushOverlay(const TRefPtr<FLayer>& InLayer);
 		void PopLayer(const TRefPtr<FLayer>& InLayer);
 		void PopOverlay(const TRefPtr<FLayer>& InLayer);
+		
 
-		virtual void RenderImGui(double DeltaTime);
+		void RenderImGui(double DeltaTime);
 		virtual void OnEvent(FEvent& Event);
 		
 		static FApplicationSpecs GetSpecs() { return Instance->AppSpecs;  }
@@ -78,6 +89,8 @@ namespace Lumina
 		static double GetDeltaTime() { return Instance->Stats.DeltaTime; }
 		static FWindow& GetWindow();
 		static std::shared_ptr<LScene> GetActiveScene() { return Get().mScene; }
+		
+		void SetCurrentScene(std::shared_ptr<LScene> InScene);
 		
 		
 		template<typename T, typename... Args>

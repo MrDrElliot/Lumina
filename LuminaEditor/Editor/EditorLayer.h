@@ -2,7 +2,6 @@
 
 #include <Core/Layer.h>
 #include "Memory/RefCounted.h"
-#include "Containers/Array.h"
 
 namespace Lumina
 {

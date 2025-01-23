@@ -22,10 +22,10 @@ layout(set = 0, binding = 6) uniform sampler2D ambientocclusionTexture;
 // Material properties block
 layout(push_constant) uniform MaterialProperties
 {
-    layout(offset = 16) vec4 baseColor;  //Offset needed from vertex shader push constants
-    float roughness;           // Corresponds to Roughness in C++
-    float metallic;            // Corresponds to Metallic in C++
-    float emissiveIntensity;   // Added to match EmissiveIntensity in C++
+    layout(offset = 16) vec4 baseColor;
+    float roughness;           
+    float metallic;
+    float emissiveIntensity;
 } material;
 
 

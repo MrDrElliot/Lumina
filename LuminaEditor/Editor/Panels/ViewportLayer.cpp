@@ -1,6 +1,8 @@
 #include "ViewportLayer.h"
 
 #include "ImGui/ImGuiRenderer.h"
+#include <ImGuizmo.h>
+
 #include "Scene/Scene.h"
 #include "Scene/SceneRenderer.h"
 
@@ -30,18 +32,18 @@ namespace Lumina
             NewRegion.y = Max.y - Min.y;
             
             float AspectRatio = (NewRegion.x / NewRegion.y);
-            Scene->GetEditorCamera()->SetAspectRatio(AspectRatio);
+            Scene->GetCurrentCamera()->SetAspectRatio(AspectRatio);
             float t = (NewRegion.x - 500) / (1200 - 500);
             t = glm::clamp(t, 0.0f, 1.0f);
             float fov = glm::mix(120.0f, 50.0f, t);
 
-            Scene->GetEditorCamera()->SetFOV(fov);
+            Scene->GetCurrentCamera()->SetFOV(fov);
 
             FImGuiRenderer::RenderImage(RenderTarget, FRenderer::GetLinearSampler(), NewRegion, 0, true);
 
             // Camera position overlay in the top-left corner
             ImVec2 overlayPos = ImVec2(Min.x + 10, Min.y + 10); // Slight padding from the window edge
-            glm::vec3 cameraPosition = Scene->GetEditorCamera()->GetPosition(); // Assuming GetPosition() returns the camera's position
+            glm::vec3 cameraPosition = Scene->GetCurrentCamera()->GetPosition(); // Assuming GetPosition() returns the camera's position
 
             // Display the camera position in the top-left corner
             std::string cameraPosText = "Camera Pos: (" + std::to_string(cameraPosition.x) + ", " + 

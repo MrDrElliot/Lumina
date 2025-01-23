@@ -1,7 +1,6 @@
 #pragma once
-#include <pch.h>
-
 #include "SandboxLayer.h"
+#include "Source/Runtime/Core/Application.h"
 
 
 class FSandboxApp : public Lumina::FApplication
@@ -12,5 +11,7 @@ public:
 	{
 		PushLayer(new FSandboxLayer());
 	}
+
+	void OnUpdate() override;
 	
 };

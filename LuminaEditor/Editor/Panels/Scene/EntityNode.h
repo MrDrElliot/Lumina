@@ -8,6 +8,6 @@ namespace Lumina
 	{
 	public:
 
-		void Render(Entity& InEntity);
+		static void Render(Entity& InEntity);
 	};
 }

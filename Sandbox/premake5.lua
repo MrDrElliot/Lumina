@@ -27,22 +27,14 @@ project "Sandbox"
 
 	includedirs
 	{ 
-		"Source/",
-		"../Lumina/Engine",
-		"../Lumina/Engine/ThirdParty/spdlog/include/",
-		"../Lumina/Engine/ThirdParty/GLFW/include/",
-		"../Lumina/Engine/ThirdParty/GLFW/src/",
-		"../Lumina/Engine/ThirdParty/GLM/",
-		"../Lumina/Engine/ThirdParty/vk-bootstrap/src/",
-		"../Lumina/Engine/ThirdParty/fastgltf/",
-        "../Lumina/Engine/ThirdParty/vulkanmemoryallocator/include/",
-        "../Lumina/Engine/ThirdParty/vulkanmemoryallocator/src/",
-        "../Lumina/Engine/ThirdParty/imgui/",
-        
-         "../Lumina/Engine/ThirdParty/SPIRV-Reflect/include/",
-        
-		"%{IncludeDir.vulkan}/Include/",
-		"%{IncludeDir.vulkan}/Lib/",
+		"Source",
+	    
+	    "%{LuminaEngineDirectory}/Lumina/",
+		"%{LuminaEngineDirectory}/Lumina/Engine/",
+	    "%{LuminaEngineDirectory}/Lumina/Engine/Source/",
+	    "%{LuminaEngineDirectory}/Lumina/Engine/Source/Runtime/",
+		includedependencies();
+		
 	}
 
 

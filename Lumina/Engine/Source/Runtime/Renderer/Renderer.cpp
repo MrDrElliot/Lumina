@@ -5,6 +5,7 @@
 #include "PipelineLibrary.h"
 #include "ShaderLibrary.h"
 #include "Swapchain.h"
+#include "Assets/AssetTypes/StaticMesh/StaticMesh.h"
 #include "Core/LuminaMacros.h"
 #include "Core/Performance/PerformanceTracker.h"
 #include "RHI/Vulkan/VulkanRenderAPI.h"
@@ -19,7 +20,7 @@ namespace Lumina
     {
         LOG_TRACE("Renderer: Initializing");
         RenderAPI = new FVulkanRenderAPI(InConfig);
-
+        
         // Nearest filtration sampler
         FImageSamplerSpecification ImageSpec = {};
         ImageSpec.MinFilteringMode =            ESamplerFilteringMode::LINEAR;
@@ -68,9 +69,7 @@ namespace Lumina
 
         FShaderLibrary::Get()->Load("../Lumina/Engine/Resources/Shaders/InfiniteGrid.vert.spv",
       "../Lumina/Engine/Resources/Shaders/InfiniteGrid.frag.spv", "InfiniteGrid");
-
-        FShaderLibrary::Get()->Load("../Lumina/Engine/Resources/Shaders/TAA.vert.spv",
-        "../Lumina/Engine/Resources/Shaders/TAA.frag.spv", "TAA");
+        
     }
 
     TRefPtr<FImageSampler> FRenderer::GetLinearSampler()
@@ -93,13 +92,15 @@ namespace Lumina
         RenderAPI->BindSet(Set, Pipeline, SetIndex, DynamicOffsets);
     }
 
-    void FRenderer::Submit(const RenderFunction& Functor)
+    void FRenderer::Submit(RenderFunction&& Functor)
     {
-        sInternalData.RenderFunctionList.push_back(Functor);
+        sInternalData.RenderFunctionList.push_back(std::move(Functor));
     }
 
     void FRenderer::BeginFrame()
     {
+        sInternalData.NumDrawCalls = 0;
+        sInternalData.NumVertices = 0;
         RenderAPI->BeginFrame();
     }
 
@@ -140,33 +141,41 @@ namespace Lumina
 
     void FRenderer::RenderMeshIndexed(TRefPtr<FPipeline> Pipeline, TRefPtr<FBuffer> VertexBuffer, TRefPtr<FBuffer> IndexBuffer, FMiscData Data)
     {
+        sInternalData.NumDrawCalls++;
         RenderAPI->RenderMeshIndexed(Pipeline, VertexBuffer, IndexBuffer, Data);
     }
 
     void FRenderer::RenderVertices(uint32 Vertices, uint32 Instances, uint32 FirstVertex, uint32 FirstInstance)
     {
+        sInternalData.NumDrawCalls++;
+        sInternalData.NumVertices += Vertices;
         RenderAPI->RenderVertices(Vertices, Instances, FirstVertex, FirstInstance);
     }
 
-    void FRenderer::RenderStaticMeshWithMaterial(const TRefPtr<FPipeline>& Pipeline, const TAssetHandle<LStaticMesh>& StaticMesh, const TAssetHandle<Material>& Material)
+    void FRenderer::RenderStaticMeshWithMaterial(const TRefPtr<FPipeline>& Pipeline, const std::shared_ptr<LStaticMesh>& StaticMesh, const std::shared_ptr<LMaterial>& Material)
     {
+        sInternalData.NumDrawCalls++;
+        sInternalData.NumVertices += StaticMesh->GetMeshData().Vertices.size();
         RenderAPI->RenderStaticMeshWithMaterial(Pipeline, StaticMesh, Material);
     }
 
     void FRenderer::RenderStaticMesh(const TRefPtr<FPipeline>& Pipeline, std::shared_ptr<LStaticMesh> StaticMesh, uint32 InstanceCount)
     {
+        sInternalData.NumDrawCalls++;
+        sInternalData.NumVertices += StaticMesh->GetMeshData().Vertices.size();
         RenderAPI->RenderStaticMesh(Pipeline, StaticMesh, InstanceCount);
     }
 
     void FRenderer::Render()
     {
-        PROFILE_SCOPE(Render);
+        PROFILE_SCOPE(Render)
+
+        // Submit rendering commands to the render function list
         FRenderer::Submit([]
         {
             TRefPtr<FImage> Image = GetSwapchainImage();
 
-            Image->SetLayout
-            (
+            Image->SetLayout(
                 FRenderer::GetCommandBuffer(),
                 EImageLayout::PRESENT_SRC,
                 EPipelineStage::TRANSFER,
@@ -174,16 +183,23 @@ namespace Lumina
                 EPipelineAccess::TRANSFER_WRITE
             );
         });
-        
+
+        ProcessRenderQueue();
+    }
+
+    void FRenderer::ProcessRenderQueue()
+    {
         RenderAPI->EndCommandRecord();
         RenderAPI->ExecuteCurrentCommands();
+
         
-        auto List = std::move(sInternalData.RenderFunctionList);
-        
-        for(auto& func : List)
+        for (auto& func : sInternalData.RenderFunctionList)
         {
             func();
         }
+        
+        sInternalData.RenderFunctionList.clear();
+        
     }
 
     FRenderConfig FRenderer::GetConfig()

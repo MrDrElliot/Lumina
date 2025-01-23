@@ -7,6 +7,7 @@
 #include "Panels/ViewportLayer.h"
 #include "EntryPoint.h"
 #include "Assets/AssetRegistry/AssetRegistry.h"
+#include "Scene/Scene.h"
 #include "Settings/EditorSettings.h"
 
 namespace Lumina
@@ -16,31 +17,32 @@ namespace Lumina
         FApplicationSpecs AppSpecs;
         AppSpecs.Name = "Lumina Editor";
 
-        AppSpecs.WindowWidth = 1920*2;
-        AppSpecs.WindowHeight = 1080*2;
+        AppSpecs.WindowWidth = 1920/1.3;
+        AppSpecs.WindowHeight = 1080/1.3;
+
+        AppSpecs.bRenderImGui = true;
         
         return std::make_unique<LuminaEditor>(AppSpecs);
     }
     
     LuminaEditor::LuminaEditor(const FApplicationSpecs& AppSpecs)
-    : FApplication(AppSpecs)
+        : FApplication(AppSpecs)
     {
     }
-
-    LuminaEditor::~LuminaEditor()
-    {
-        
-    }
-
+    
     void LuminaEditor::OnInit()
     {
         GEditor = this;
 
         // Update LUNINA_DIR (engine directory) every-time the editor is ran.
         Paths::SetEnvVariable("LUMINA_DIR", std::filesystem::current_path().parent_path().string());
-        
-        FApplication::OnInit();
 
+        FApplication::OnInit();
+        
+        EditorCamera = FCamera::Create();
+        
+        SetCurrentScene(LScene::Create(EditorCamera));
+        
         FEditorSettings::Get()->Deserialize();
         
         EditorLayer = MakeRefPtr<FEditorLayer>("Editor Layer");
@@ -49,11 +51,6 @@ namespace Lumina
         Project::Load(FEditorSettings::Get()->GetStartupProject());
 
         AssetRegistry::Get()->StartAssetScan();
-    }
-
-    void LuminaEditor::PostFrame()
-    {
-        FApplication::PostFrame();
     }
 
     void LuminaEditor::CreateProject()

@@ -50,9 +50,8 @@ namespace Lumina
         // Loop through entities and render them
         for (auto& Ent : mScene->GetEntityRegistry().view<FNameComponent>())
         {
-            EntityNode Node;
             Entity ent(Ent, mScene);
-            Node.Render(ent);
+            EntityNode::Render(ent);
         }
         
 

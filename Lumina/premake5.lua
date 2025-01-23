@@ -28,7 +28,11 @@ project "Lumina"
 	    
         "Engine/ThirdParty/json/include/**.h",
         "Engine/ThirdParty/json/src/**.cpp",
-        
+
+		"Engine/ThirdParty/ImGuizmo/**.h",
+        "Engine/ThirdParty/ImGuizmo/**.cpp",
+       
+		
         "Engine/ThirdParty/yaml-cpp/include/**.h",
         "Engine/ThirdParty/yaml-cpp/src/**.h",
         "Engine/ThirdParty/yaml-cpp/src/**.cpp",

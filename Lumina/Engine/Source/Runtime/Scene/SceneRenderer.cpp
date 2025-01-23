@@ -6,6 +6,7 @@
 #include "Core/Application.h"
 #include "glm/gtc/type_ptr.hpp"
 #include "Assets/Factories/MeshFactory/StaticMeshFactory.h"
+#include "Assets/Factories/TextureFactory/TextureFactory.h"
 #include "Components/MeshComponent.h"
 #include "Core/LuminaMacros.h"
 #include "Core/Windows/Window.h"
@@ -32,6 +33,17 @@ namespace Lumina
         InitPipelines();
         InitBuffers();
         InitDescriptorSets();
+
+        FMaterialTextures Textures;
+        Textures.BaseColor = BaseColor;
+        Textures.Normal = Normal;
+        Textures.AmbientOcclusion = AmbientOcclusion;
+        Textures.MetallicRoughness = Metallic;
+        Textures.Emissive = Emissive;
+
+        FMaterialAttributes Attributes;
+        
+        TestMaterial = LMaterial::Create(GraphicsPipeline, Textures, Attributes);
         
     }
 
@@ -82,7 +94,6 @@ namespace Lumina
 
         GraphicsPipeline->Destroy();
         InfiniteGridPipeline->Destroy();
-        TAAPipeline->Destroy();
     }
 
     void FSceneRenderer::OnSwapchainResized()
@@ -230,7 +241,7 @@ namespace Lumina
         ModelData.clear();
         auto View = CurrentScene->GetEntityRegistry().view<FMeshComponent, FTransformComponent>();
         uint64 ComponentTotal = View.size_hint();
-        ModelData.reserve((uint32)ComponentTotal);
+        ModelData.reserve((int32)ComponentTotal);
         
         for(auto entity : View)
         {
@@ -246,13 +257,15 @@ namespace Lumina
             CurrentDescriptorSet->Write(1, 0, SceneUBO, sizeof(FLightData), 0);
             CurrentDescriptorSet->Write(2, 0, ModelSBO, ComponentTotal * sizeof(glm::mat4), 0);
             
-            CurrentScene->ForEachComponent<FMeshComponent>([&](uint32 Total, uint32 Current, entt::entity& entity, FMeshComponent& Component)
+            CurrentScene->ForEachComponent<FMeshComponent>([&, this](uint32 Total, uint32 Current, entt::entity& entity, FMeshComponent& Component)
             {
-                Entity Ent(entity, CurrentScene);
-                Component.Material->Bind(GraphicsPipeline);
-                FRenderer::PushConstants(EShaderStage::VERTEX,   0, sizeof(uint32), &Current);
-                FRenderer::PushConstants(EShaderStage::FRAGMENT, 16, sizeof(FMaterialAttributes), &Component.Material->GetMaterialAttributes());
-                FRenderer::RenderStaticMeshWithMaterial(GraphicsPipeline, Component.StaticMesh, Component.Material);
+                if(Component.StaticMesh.Get() && TestMaterial)
+                {
+                    TestMaterial->Bind(GraphicsPipeline);
+                    FRenderer::PushConstants(EShaderStage::VERTEX,   0, sizeof(uint32), &Current);
+                    FRenderer::PushConstants(EShaderStage::FRAGMENT, 16, sizeof(FMaterialAttributes), &TestMaterial->GetMaterialAttributes());
+                    FRenderer::RenderStaticMeshWithMaterial(GraphicsPipeline, Component.StaticMesh, TestMaterial);
+                }
             });
         }
         
@@ -269,8 +282,8 @@ namespace Lumina
     {
         DeviceBufferLayoutElement Pos       (EShaderDataType::FLOAT3);
         DeviceBufferLayoutElement Color     (EShaderDataType::FLOAT4);
-        DeviceBufferLayoutElement UV        (EShaderDataType::FLOAT2);
         DeviceBufferLayoutElement Normal    (EShaderDataType::FLOAT3);
+        DeviceBufferLayoutElement UV        (EShaderDataType::FLOAT2);
 
         FDeviceBufferLayout Layout({Pos, Color, Normal, UV});
     
@@ -298,17 +311,6 @@ namespace Lumina
         InfiniteGridPipelineSpecs.input_layout = {};
     
         InfiniteGridPipeline = FPipeline::Create(InfiniteGridPipelineSpecs);
-
-        FPipelineSpecification TAAPipelineSpec = FPipelineSpecification::Default();
-        TAAPipelineSpec.DebugName = "TAA Pipeline";
-        TAAPipelineSpec.shader = FShaderLibrary::GetShader("TAA");
-        TAAPipelineSpec.type = EPipelineType::GRAPHICS;
-        TAAPipelineSpec.culling_mode = EPipelineCullingMode::NONE;
-        TAAPipelineSpec.depth_test_enable = false;
-        TAAPipelineSpec.output_attachments_formats = { EImageFormat::RGBA32_SRGB };
-        TAAPipelineSpec.input_layout = {};
-
-        TAAPipeline = FPipeline::Create(TAAPipelineSpec);
     }
 
 
@@ -401,21 +403,6 @@ namespace Lumina
         {
             GridDescriptorSets.push_back(FDescriptorSet::Create(GridSpec));
         }
-
-        
-        std::vector<FDescriptorBinding> TAABindings;
-        TAABindings.emplace_back(0, EDescriptorBindingType::SAMPLED_IMAGE, 1, 0, EShaderStage::FRAGMENT); // Current frame color
-        TAABindings.emplace_back(1, EDescriptorBindingType::SAMPLED_IMAGE, 1, 0, EShaderStage::FRAGMENT); // Previous frame color
-        TAABindings.emplace_back(2, EDescriptorBindingType::SAMPLED_IMAGE, 1, 0, EShaderStage::FRAGMENT); // Motion vectors
-        
-        // Create descriptor set specification
-        FDescriptorSetSpecification TAASpec = {};
-        TAASpec.Bindings = std::move(TAABindings);
-
-        for (uint32 i = 0; i < FramesInFlight; i++)
-        {
-            GridDescriptorSets.push_back(FDescriptorSet::Create(TAASpec));
-        }
     }
 
     void FSceneRenderer::CreateImages()
@@ -442,6 +429,12 @@ namespace Lumina
         DepthImageSpecs.Format = EImageFormat::D32;
         DepthImageSpecs.SampleCount = EImageSampleCount::ONE;
 
+        BaseColor = FTextureFactory::ImportFromSource("../LuminaEditor/Resources/Icons/ContentBrowser/Default_albedo.jpg");
+        Normal = FTextureFactory::ImportFromSource("../LuminaEditor/Resources/Icons/ContentBrowser/Default_normal.jpg");
+        Metallic = FTextureFactory::ImportFromSource("../LuminaEditor/Resources/Icons/ContentBrowser/Default_metalRoughness.jpg");
+        AmbientOcclusion = FTextureFactory::ImportFromSource("../LuminaEditor/Resources/Icons/ContentBrowser/Default_AO.jpg");
+        Emissive = FTextureFactory::ImportFromSource("../LuminaEditor/Resources/Icons/ContentBrowser/Default_emissive.jpg");
+        
         AssertMsg(DepthAttachments.empty(), "Render Targets are not empty!");
         for(int i = 0; i < FRenderer::GetConfig().FramesInFlight; ++i)
         {

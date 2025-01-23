@@ -5,7 +5,6 @@ def InstallPackage(package):
     subprocess.check_call(['python', '-m', 'pip', 'install', package])
 
 # Mandatory
-# NOTE(Yan): pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html
 InstallPackage('setuptools')
 
 import pkg_resources

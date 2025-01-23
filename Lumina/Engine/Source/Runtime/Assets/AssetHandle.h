@@ -2,69 +2,111 @@
 
 #include "AssetTypes.h"
 #include "AssetManager/AssetManager.h"
-#include "Assets/Asset.h"
-
 
 namespace Lumina
 {
     class AssetRegistry;
-}
-
-namespace Lumina
-{
+    
     template <typename AssetType>
     class TAssetHandle
     {
     public:
-
-        TAssetHandle()
-        : AssetHandle()
-        {
-        }
+        TAssetHandle() = default;
 
         TAssetHandle(const FAssetHandle& InHandle)
-            :AssetHandle(InHandle)
+            : AssetPtr(nullptr), AssetHandle(InHandle)
         {
         }
         
         TAssetHandle(const FAssetMetadata& Metadata)
-            :AssetHandle(Metadata.Guid)
+            : AssetPtr(nullptr), AssetHandle(Metadata.Guid)
         {
         }
 
+        // Custom copy constructor
+        TAssetHandle(const TAssetHandle<AssetType>& other)
+            : AssetPtr(nullptr), AssetHandle(other.AssetHandle)
+        {
+            if (other.AssetPtr) 
+            {
+                AssetPtr = other.AssetPtr;  // Copy the shared_ptr, which shares ownership
+            }
+        }
+
+        // Main function to get the asset. Will only load it if not already loaded.
         std::shared_ptr<AssetType> Get()
         {
-            if(AssetPtr)
+            if (!AssetPtr) 
             {
-                return std::static_pointer_cast<AssetType>(AssetPtr);
+                AssetPtr = LoadAsset();
             }
-            else
-            {
-                AssetManager* Manager = AssetManager::Get();
-                AssetPtr = std::static_pointer_cast<AssetType>(Manager->LoadSynchronous(AssetHandle));
 
-                return std::static_pointer_cast<AssetType>(AssetPtr);
-            }
-       }
-
-        const std::shared_ptr<AssetType>& Get() const
-        {
-            return std::static_pointer_cast<AssetType>(AssetPtr);
+            return AssetPtr;
         }
-        
-        
+
+        // Const version of Get to avoid modification
+        std::shared_ptr<AssetType> Get() const
+        {
+            if (!AssetPtr)
+            {
+                return LoadAsset();
+            }
+
+            return AssetPtr;
+        }
+
+        bool IsValid() const { return Get() != nullptr; }
+
         std::shared_ptr<AssetType> operator -> () { return Get(); }
         const std::shared_ptr<AssetType> operator -> () const { return Get(); }
-        
-        bool operator == (const TAssetHandle<AssetType>& Other) { return Get() == Get(); }
-        operator bool() { return Get() != nullptr; }
-        operator const bool() { return Get() != nullptr; }
-        operator std::shared_ptr<AssetType>() { return Get();  }
-        
+
+        bool operator == (const TAssetHandle<AssetType>& Other) const 
+        {
+            return AssetPtr == Other.AssetPtr;  // Compare the internal AssetPtr of both handles
+        }
+
+        // Assignment operator to copy handle and asset pointer
+        TAssetHandle<AssetType>& operator=(const TAssetHandle<AssetType>& other)
+        {
+            if (this != &other)
+            {
+                AssetHandle = other.AssetHandle;
+                AssetPtr = other.AssetPtr;  // Copy the shared pointer (automatically handles reference counting)
+            }
+            return *this;
+        }
+
+        // Move assignment operator for better performance
+        TAssetHandle<AssetType>& operator=(TAssetHandle<AssetType>&& other) noexcept
+        {
+            if (this != &other)
+            {
+                AssetHandle = std::move(other.AssetHandle);
+                AssetPtr = std::move(other.AssetPtr);  // Move ownership of the shared pointer
+            }
+            return *this;
+        }
+
+        operator bool() const { return Get() != nullptr; }
+        operator std::shared_ptr<AssetType>() { return Get(); }
+
     private:
+        
+        std::shared_ptr<AssetType> LoadAsset() const
+        {
+            AssetManager* Manager = AssetManager::Get();
+            std::shared_ptr<LAsset> rawAsset = Manager->LoadSynchronous(AssetHandle);
+            
+            if (rawAsset)
+            {
+                return std::dynamic_pointer_cast<AssetType>(rawAsset);
+            }
+
+            return nullptr;
+        }
+
 
         FAssetHandle AssetHandle;
-        std::shared_ptr<LAsset> AssetPtr;
+        mutable std::shared_ptr<AssetType> AssetPtr = nullptr; // Mark as mutable to allow modification in const functions
     };
-    
 }

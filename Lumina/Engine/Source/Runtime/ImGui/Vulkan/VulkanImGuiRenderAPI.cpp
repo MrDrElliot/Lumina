@@ -62,9 +62,6 @@ namespace Lumina
         Font::Add("Resources/Fonts/Roboto/Roboto-Medium.ttf", "Roboto-Medium");
         Font::Add("Resources/Fonts/Roboto/Roboto-Bold.ttf", "Roboto-Bold");
         Font::Add("Resources/Fonts/Roboto/Roboto-Italic.ttf", "Roboto-Italic");
-
-
-        
         
         ImGui::StyleColorsDark();
 

@@ -38,9 +38,9 @@ namespace Lumina
 			if (mAssetMap.find(InHandle) != mAssetMap.end())
 			{
 				std::weak_ptr<T> WeakPtr = mAssetMap.at(InHandle);
-				if (WeakPtr)
+				if (WeakPtr.lock())
 				{
-					return WeakPtr;
+					return WeakPtr.lock();
 				}
 				else
 				{

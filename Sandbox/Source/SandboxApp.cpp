@@ -1,1 +1,7 @@
-#pragma once
+
+#include "SandboxApp.h"
+
+void FSandboxApp::OnUpdate()
+{
+	
+}

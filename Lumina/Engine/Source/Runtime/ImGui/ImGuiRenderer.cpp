@@ -22,7 +22,10 @@ namespace Lumina
 
     void FImGuiRenderer::Shutdown()
     {
-        RenderAPI->Shutdown();
+        if (RenderAPI)
+        {
+            RenderAPI->Shutdown();
+        }
     }
 
     void FImGuiRenderer::BeginFrame()

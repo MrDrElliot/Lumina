@@ -2,14 +2,14 @@
 
 #include "Core/Application.h"
 
-
 namespace Lumina
 {
-    class FEditorSettings;
+    class FCamera;
 }
 
 namespace Lumina
 {
+    class FEditorSettings;
     class FEditorLayer;
     class FEditorPanel;
 
@@ -18,10 +18,8 @@ namespace Lumina
     public:
     
         LuminaEditor(const FApplicationSpecs& AppSpecs);
-        ~LuminaEditor();
 
         void OnInit() override;
-        void PostFrame() override;
 
         void CreateProject();
         void OpenProject();
@@ -34,7 +32,8 @@ namespace Lumina
 
     private:
 
-        TRefPtr<FEditorLayer> EditorLayer;
+        TRefPtr<FEditorLayer>       EditorLayer;
+        std::shared_ptr<FCamera>    EditorCamera;
         
     };
     

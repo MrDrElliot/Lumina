@@ -9,20 +9,12 @@
 #include "Memory/RefCounted.h"
 #include "Platform/GenericPlatform.h"
 
+
+
 namespace Lumina
 {
     class FVulkanImage;
-}
-
-namespace Lumina
-{
     class FVulkanBuffer;
-}
-
-namespace Lumina
-{
-    
-    
     class FVulkanMemoryAllocator : public TSingleton<FVulkanMemoryAllocator>
     {
     public:

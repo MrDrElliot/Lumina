@@ -18,6 +18,8 @@ IncludeDir["nvrhi"] =                   "%{LuminaEngineDirectory}/Lumina/Engine/
 IncludeDir["entt"] =					"%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/entt/single_include/"
 IncludeDir["vulkanmemoryallocator"] =   "%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/VulkanMemoryAllocator/include/"
 IncludeDir["yaml"] =                    "%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/yaml-cpp/include/"
+IncludeDir["ImGuizmo"] =                "%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/ImGuizmo/"
+
 
 
 function includedependencies()

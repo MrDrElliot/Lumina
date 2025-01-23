@@ -4,6 +4,7 @@
 
 #include "Core/Singleton/Singleton.h"
 #include <unordered_map>
+#include <any>
 
 #include "Assets/AssetHandle.h"
 
@@ -30,11 +31,13 @@ namespace Lumina
 		void ScanAssets();
 
 		void GetAllRegisteredAssets(TFastVector<FAssetMetadata>& OutAssets);
+		void GetAllAssetsOfType(EAssetType Type, TFastVector<FAssetMetadata>& OutAssets);
 		
 		bool Exists(const FAssetHandle& InHandle) { return mAssetRegistry.find(InHandle) != mAssetRegistry.end(); }
 		uint32 Size() const { return mAssetRegistry.size(); }
 
 		static FAssetHandle ImportAsset(const std::string& Name, void* Data, const std::filesystem::path& ImportFilePath, const std::filesystem::path& NewAssetPath);
+		static FAssetHandle CreateAsset(EAssetType Type, const std::string& Name, void* Data, const std::filesystem::path& NewAssetPath);
 		
 		template<typename T>
 		static TAssetHandle<T> GetAssetByPath(const std::filesystem::path& InPath);
@@ -42,6 +45,8 @@ namespace Lumina
 	private:
 
 		std::unordered_map<FAssetHandle, FAssetMetadata> mAssetRegistry;
+		std::unordered_map<EAssetType, TFastVector<FAssetMetadata>> AssetTypeMap;
+
 		std::thread ScanThread;
 		bool bShouldScan = true;
 	};

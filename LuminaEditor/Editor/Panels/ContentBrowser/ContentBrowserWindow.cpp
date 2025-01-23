@@ -11,6 +11,8 @@
 #include "Project/Project.h"
 #include "Renderer/Image.h"
 #include "Renderer/RenderContext.h"
+#include <Renderer/Material.h>
+#include "Panels/Assets/Material/MaterialEditorPanel.h"
 
 #if 0
 // Convert from std::wstring to std::string
@@ -62,7 +64,7 @@ namespace Lumina
         fileDialog = ImGui::FileBrowser(ImGuiFileBrowserFlags_CloseOnEsc | ImGuiFileBrowserFlags_CreateNewDir);
     
         fileDialog.SetTitle("Select Asset to Import");
-        fileDialog.SetTypeFilters({ ".png", ".gltf" });
+        fileDialog.SetTypeFilters({ ".png", ".gltf", ".jpg" });
 
         mImGuiImporterMap.try_emplace(EAssetType::Texture, std::make_shared<ImGui_TextureImporter>());
         mImGuiImporterMap.try_emplace(EAssetType::StaticMesh, std::make_shared<ImGui_MeshImporter>());
@@ -197,6 +199,7 @@ namespace Lumina
 
         if (!SelectedDirectory.empty())
         {
+            AssetRegistry* Registry = AssetRegistry::Get();
             RenderContentItems();
 
             if (ImGui::IsWindowHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Right))
@@ -208,16 +211,26 @@ namespace Lumina
             {
                 if (ImGui::MenuItem("New Folder"))
                 {
+                    std::filesystem::create_directory(SelectedDirectory + "/NewFolder");
                     ImGui::CloseCurrentPopup();
                 }
 
                 if (ImGui::MenuItem("Material"))
                 {
-                    // Logic to create a material asset
+                    ImGui::OpenPopup("Material Editor");
                     ImGui::CloseCurrentPopup();
                 }
                 ImGui::EndPopup();
             }
+        }
+
+
+        if (ImGui::BeginPopup("Material Editor"))
+        {
+            FMaterialAttributes Attributes;
+            FMaterialEditorPanel::Render(Attributes);
+            ImGui::EndPopup();
+
         }
 
         ImGui::EndChild();

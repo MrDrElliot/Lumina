@@ -62,10 +62,6 @@ public:
         {
             AddRef();
         }
-        else
-        {
-            LOG_WARN("Attempted to create a TRefPtr from a nullptr)");
-        }
     }
     
     // Copy constructor

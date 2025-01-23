@@ -206,12 +206,17 @@ namespace Lumina
         return Swapchain->GetCurrentImage();
     }
 
+    ERHIInterfaceType FVulkanRenderAPI::GetRHIInterfaceType()
+    {
+	    return ERHIInterfaceType::Vulkan;
+    }
+
     void FVulkanRenderAPI::InsertBarrier(const FPipelineBarrierInfo& BarrierInfo)
     {
     		FRenderer::Submit([&, BarrierInfo]
     		{
-				std::vector<VkMemoryBarrier2> memory_barriers;
-				std::vector<VkImageMemoryBarrier2> image_barriers;
+				std::vector<VkMemoryBarrier2> MemoryBarriers;
+				std::vector<VkImageMemoryBarrier2> ImageBarriers;
 				
 				VkDependencyInfo dependency = {};
 				dependency.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
@@ -219,14 +224,14 @@ namespace Lumina
 				for (auto& buffer_barrier : BarrierInfo.BufferBarriers)
 				{
 				
-					VkMemoryBarrier2 vk_barrier = {};
-					vk_barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER_2;
-					vk_barrier.srcStageMask =  buffer_barrier.second.src_stages;
-					vk_barrier.dstStageMask =  buffer_barrier.second.dst_stages;
-					vk_barrier.srcAccessMask = buffer_barrier.second.src_access_mask;
-					vk_barrier.dstAccessMask = buffer_barrier.second.dst_access_mask;
+					VkMemoryBarrier2 VkBarrier = {};
+					VkBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER_2;
+					VkBarrier.srcStageMask =  buffer_barrier.second.src_stages;
+					VkBarrier.dstStageMask =  buffer_barrier.second.dst_stages;
+					VkBarrier.srcAccessMask = buffer_barrier.second.src_access_mask;
+					VkBarrier.dstAccessMask = buffer_barrier.second.dst_access_mask;
 				
-					memory_barriers.push_back(vk_barrier);
+					MemoryBarriers.push_back(VkBarrier);
 				}
 				
 				for (auto& image_barrier : BarrierInfo.ImageBarriers)
@@ -234,30 +239,30 @@ namespace Lumina
 					TRefPtr<FImage> image = image_barrier.first;
 					TRefPtr<FVulkanImage> vk_image = RefPtrCast<FVulkanImage>(image);
 				
-					VkImageMemoryBarrier2 vk_barrier = {};
-					vk_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
-					vk_barrier.srcStageMask = image_barrier.second.src_stages;
-					vk_barrier.dstStageMask = image_barrier.second.dst_stages;
-					vk_barrier.srcAccessMask = image_barrier.second.src_access_mask;
-					vk_barrier.dstAccessMask = image_barrier.second.dst_access_mask;
-					vk_barrier.image = vk_image->GetImage();
-					vk_barrier.oldLayout = (VkImageLayout)vk_image->GetLayout();
-					vk_barrier.newLayout = (VkImageLayout)image_barrier.second.new_image_layout;
-					vk_barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-					vk_barrier.subresourceRange.baseArrayLayer = 0;
-					vk_barrier.subresourceRange.layerCount = image->GetSpecification().ArrayLayers;
-					vk_barrier.subresourceRange.baseMipLevel = 0;
-					vk_barrier.subresourceRange.levelCount = image->GetSpecification().MipLevels;
+					VkImageMemoryBarrier2 VkBarrier = {};
+					VkBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
+					VkBarrier.srcStageMask = image_barrier.second.src_stages;
+					VkBarrier.dstStageMask = image_barrier.second.dst_stages;
+					VkBarrier.srcAccessMask = image_barrier.second.src_access_mask;
+					VkBarrier.dstAccessMask = image_barrier.second.dst_access_mask;
+					VkBarrier.image = vk_image->GetImage();
+					VkBarrier.oldLayout = (VkImageLayout)vk_image->GetLayout();
+					VkBarrier.newLayout = (VkImageLayout)image_barrier.second.new_image_layout;
+					VkBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+					VkBarrier.subresourceRange.baseArrayLayer = 0;
+					VkBarrier.subresourceRange.layerCount = image->GetSpecification().ArrayLayers;
+					VkBarrier.subresourceRange.baseMipLevel = 0;
+					VkBarrier.subresourceRange.levelCount = image->GetSpecification().MipLevels;
 				
 					vk_image->SetCurrentLayout(image_barrier.second.new_image_layout);
 				
-					image_barriers.push_back(vk_barrier);
+					ImageBarriers.push_back(VkBarrier);
 				}	
 				
-				dependency.memoryBarrierCount = (uint32)memory_barriers.size();
-				dependency.pMemoryBarriers = memory_barriers.data();
-				dependency.imageMemoryBarrierCount = (uint32)image_barriers.size();
-				dependency.pImageMemoryBarriers = image_barriers.data();
+				dependency.memoryBarrierCount = (uint32)MemoryBarriers.size();
+				dependency.pMemoryBarriers = MemoryBarriers.data();
+				dependency.imageMemoryBarrierCount = (uint32)ImageBarriers.size();
+				dependency.pImageMemoryBarriers = ImageBarriers.data();
 				
 				vkCmdPipelineBarrier2(
 					CurrentCommandBuffer->GetCommandBuffer(),
@@ -408,7 +413,7 @@ namespace Lumina
     	});
     }
 
-	void FVulkanRenderAPI::RenderStaticMeshWithMaterial(const TRefPtr<FPipeline>& Pipeline, const TAssetHandle<LStaticMesh>& StaticMesh, const TAssetHandle<Material>& Material)
+	void FVulkanRenderAPI::RenderStaticMeshWithMaterial(const TRefPtr<FPipeline>& Pipeline, const std::shared_ptr<LStaticMesh>& StaticMesh, const std::shared_ptr<LMaterial>& Material)
     {
 		FRenderer::Submit([this, Pipeline, StaticMesh]
 		{

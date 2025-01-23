@@ -20,6 +20,12 @@ namespace Lumina
 
     std::shared_ptr<LAsset> AssetManager::LoadSynchronous(const FAssetHandle& InHandle)
     {
+
+        if (mAssetMap.find(InHandle) != mAssetMap.end())
+        {
+            
+        }
+        
         AssetRegistry* Registry = AssetRegistry::Get();
         if(Registry->Exists(InHandle))
         {

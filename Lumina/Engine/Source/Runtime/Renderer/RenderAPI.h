@@ -9,6 +9,7 @@
 
 namespace Lumina
 {
+    class LMaterial;
     enum class EShaderStage : uint8;
     class Material;
     class LStaticMesh;
@@ -19,6 +20,12 @@ namespace Lumina
     class FCommandBuffer;
     struct FRenderConfig;
 
+    enum class ERHIInterfaceType : uint8
+    {
+        Vulkan,
+        OpenGL,
+        DX12,
+    };
     
     class IRenderAPI
     {
@@ -38,6 +45,7 @@ namespace Lumina
         virtual FRenderConfig GetConfig() = 0;
         virtual TRefPtr<FSwapchain> GetSwapchain() = 0;
         virtual TRefPtr<FImage> GetSwapchainImage() = 0;
+        virtual ERHIInterfaceType GetRHIInterfaceType() = 0;
 
         virtual void BindSet(const TRefPtr<FDescriptorSet>& Set, const TRefPtr<FPipeline>& Pipeline, uint8 SetIndex, const TFastVector<uint32>& DynamicOffsets) = 0;
         virtual void BindPipeline(TRefPtr<FPipeline> Pipeline) = 0;
@@ -51,7 +59,7 @@ namespace Lumina
         virtual void RenderMeshTasks(TRefPtr<FPipeline> Pipeline, const glm::uvec3 Dimensions, FMiscData Data) = 0;
         virtual void RenderMeshIndexed(TRefPtr<FPipeline> Pipeline, TRefPtr<FBuffer> VertexBuffer, TRefPtr<FBuffer> IndexBuffer, FMiscData Data) = 0;
         virtual void RenderVertices(uint32 Vertices, uint32 Instances = 1, uint32 FirstVertex = 0, uint32 FirstInstance = 0) = 0;
-        virtual void RenderStaticMeshWithMaterial(const TRefPtr<FPipeline>& Pipeline, const TAssetHandle<LStaticMesh>& StaticMesh, const TAssetHandle<Material>& Material) = 0;
+        virtual void RenderStaticMeshWithMaterial(const TRefPtr<FPipeline>& Pipeline, const std::shared_ptr<LStaticMesh>& StaticMesh, const std::shared_ptr<LMaterial>& Material) = 0;
         virtual void RenderStaticMesh(const TRefPtr<FPipeline>& Pipeline, std::shared_ptr<LStaticMesh> StaticMesh, uint32 InstanceCount) = 0;
 
         virtual TRefPtr<FCommandBuffer> GetCommandBuffer() = 0;

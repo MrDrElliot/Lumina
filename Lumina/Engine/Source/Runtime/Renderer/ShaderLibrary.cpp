@@ -71,8 +71,11 @@ namespace Lumina
 
     bool FShaderLibrary::Unload(std::string Name)
     {
-        if (Library.find(Name) == Library.end()) return false;
-
+        if (Library.find(Name) == Library.end())
+        {
+            return false;
+        }
+        
         Library.find(Name)->second->Destroy();
         Library.erase(Name);
 
@@ -92,10 +95,9 @@ namespace Lumina
 
     TRefPtr<FShader> FShaderLibrary::GetShader(const std::string& Key)
     {
-        TRefPtr<FShader> ReturnShader = Get()->Library.find(Key)->second;
-        if(ReturnShader)
+        if (Get()->Library.find(Key) != Get()->Library.end())
         {
-            return ReturnShader;
+            return Get()->Library[Key];
         }
         
         LOG_ERROR("Failed to load shader with key: {0}", Key);

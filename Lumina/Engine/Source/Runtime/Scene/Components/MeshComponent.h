@@ -2,23 +2,24 @@
 
 #include "Renderer/Material.h"
 #include "Assets/AssetHandle.h"
+#include "Assets/AssetTypes/StaticMesh/StaticMesh.h"
 
 namespace Lumina
 {
-    class FBuffer;
-    class LStaticMesh;
-    class Material;
 
     class FMeshComponent
     {
     public:
 
         FMeshComponent() = default;
-        FMeshComponent(const TAssetHandle<LStaticMesh>& MeshAsset, const TAssetHandle<Material>& InMaterial)
+        FMeshComponent(TAssetHandle<LStaticMesh> MeshAsset, TAssetHandle<LMaterial> InMaterial)
             :StaticMesh(MeshAsset), Material(InMaterial) 
         {}
 
+        void SetMeshAsset(const TAssetHandle<LStaticMesh>& Mesh)        { StaticMesh = Mesh; Material = TAssetHandle<LMaterial>(); }
+        void SetMaterialAsset(const TAssetHandle<LMaterial>& InMaterial) { Material = InMaterial; }
+
         TAssetHandle<LStaticMesh> StaticMesh;
-        TAssetHandle<Material> Material;
+        TAssetHandle<LMaterial> Material;
     };
 }

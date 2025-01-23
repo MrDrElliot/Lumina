@@ -76,7 +76,6 @@ namespace Lumina
         
         TRefPtr<FPipeline> GraphicsPipeline;
         TRefPtr<FPipeline> InfiniteGridPipeline;
-        TRefPtr<FPipeline> TAAPipeline;
         
         TFastVector<TRefPtr<FDescriptorSet>> GridDescriptorSets;
         TFastVector<TRefPtr<FDescriptorSet>> SceneDescriptorSets;
@@ -86,6 +85,12 @@ namespace Lumina
         TFastVector<TRefPtr<FImage>> RenderTargets;
         TFastVector<TRefPtr<FImage>> DepthAttachments;
 
+        TRefPtr<FImage> BaseColor;
+        TRefPtr<FImage> Emissive;
+        TRefPtr<FImage> Normal;
+        TRefPtr<FImage> Metallic;
+        TRefPtr<FImage> AmbientOcclusion;
+        
         
         TRefPtr<FBuffer> SceneUBO;
         TRefPtr<FBuffer> ModelSBO;
@@ -98,6 +103,8 @@ namespace Lumina
         TFastVector<FModelData> ModelData;
 
         std::shared_ptr<FCamera> Camera;
+        std::shared_ptr<LMaterial> TestMaterial;
+        
         LScene* CurrentScene;
 
         uint32 MSAASamples = 4;

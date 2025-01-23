@@ -10,19 +10,11 @@
 #include "Memory/RefCounted.h"
 #include "Platform/GenericPlatform.h"
 
-
 namespace Lumina
 {
+    class LMaterial;
     class FImageSampler;
-}
-
-namespace Lumina
-{
     enum class EShaderStage : uint8;
-}
-
-namespace Lumina
-{
     class Material;
     class LStaticMesh;
     class IRenderAPI;
@@ -44,25 +36,30 @@ namespace Lumina
     {
     public:
         
-        using RenderFunction = std::function<void()>;
+        using RenderFunction = std::move_only_function<void()>;
         
         struct RendererInternalData
         {
-        
-            static std::atomic<bool>                bCommandsRecorded;
-            static std::mutex                       CommandBufferMutex;
-        
-            std::vector<FRenderer::RenderFunction>  RenderFunctionList;
-            TRefPtr<FImageSampler>                  LinearSampler;
-            TRefPtr<FImageSampler>                  NearestSampler;
-        
+            uint32 NumDrawCalls = 0;
+            uint32 NumVertices = 0;
+            
+            std::vector<RenderFunction>      RenderFunctionList;
+            TRefPtr<FImageSampler>           LinearSampler;
+            TRefPtr<FImageSampler>           NearestSampler;
+
+            RendererInternalData(const RendererInternalData&) = delete;
+            RendererInternalData& operator=(const RendererInternalData&) = delete;
+
+            RendererInternalData() = default;
+            ~RendererInternalData() = default;
+            
         } static sInternalData;
         
         static void Init(const FRenderConfig& InConfig);
         static void Shutdown();
 
         /* Don't forget to capture function inputs if needed */
-        static void Submit(const RenderFunction& Functor);
+        static void Submit(RenderFunction&& Functor);
 
         
         static void BeginFrame();
@@ -70,6 +67,7 @@ namespace Lumina
         static void BeginRender(const TFastVector<TRefPtr<FImage>>& Attachments, glm::fvec4 ClearColor = {0.0f, 0.0f, 0.0f, 0.0f});
         static void EndRender();
         static void Render();
+        static void ProcessRenderQueue();
 
         static FRenderConfig GetConfig();
         static uint32 GetCurrentFrameIndex();
@@ -96,7 +94,7 @@ namespace Lumina
         static void RenderMeshTasks(TRefPtr<FPipeline> Pipeline, const glm::uvec3 Dimensions, FMiscData Data);
         static void RenderMeshIndexed(TRefPtr<FPipeline> Pipeline, TRefPtr<FBuffer> VertexBuffer, TRefPtr<FBuffer> IndexBuffer, FMiscData Data);
         static void RenderVertices(uint32 Vertices, uint32 Instances = 1, uint32 FirstVertex = 0, uint32 FirstInstance = 0);
-        static void RenderStaticMeshWithMaterial(const TRefPtr<FPipeline>& Pipeline, const TAssetHandle<LStaticMesh>& StaticMesh, const TAssetHandle<Material>& Material);
+        static void RenderStaticMeshWithMaterial(const TRefPtr<FPipeline>& Pipeline, const std::shared_ptr<LStaticMesh>& StaticMesh, const std::shared_ptr<LMaterial>& Material);
         static void RenderStaticMesh(const TRefPtr<FPipeline>& Pipeline, std::shared_ptr<LStaticMesh> StaticMesh, uint32 InstanceCount = 1);
 
         

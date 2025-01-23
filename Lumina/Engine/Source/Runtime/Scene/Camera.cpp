@@ -1,6 +1,5 @@
 #include "Camera.h"
 
-#include "imgui.h"
 #include "ScenePrimitives.h"
 #include "glm/ext/matrix_clip_space.hpp"
 #include "glm/ext/matrix_transform.hpp"
@@ -8,6 +7,8 @@
 #include "Source/Runtime/Input/Input.h"
 #include "Source/Runtime/Renderer/Buffer.h"
 #include "Source/Runtime/Renderer/Renderer.h"
+
+
 namespace Lumina
 {
     FCamera::FCamera()
@@ -25,6 +26,11 @@ namespace Lumina
 
     FCamera::~FCamera()
     {
+    }
+
+    std::shared_ptr<FCamera> FCamera::Create()
+    {
+        return std::make_shared<FCamera>();
     }
 
     glm::mat4 FCamera::GetViewProjectionMatrix()

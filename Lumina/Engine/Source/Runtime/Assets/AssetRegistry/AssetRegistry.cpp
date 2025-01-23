@@ -8,6 +8,7 @@
 #include "Paths/Paths.h"
 #include "Project/Project.h"
 #include "Renderer/Image.h"
+#include <Renderer/Material.h>
 
 namespace Lumina
 {
@@ -63,14 +64,36 @@ namespace Lumina
         FArchive Ar(EArchiverFlags::Reading);
         Ar.ReadFromFile(InPath.string());
         Ar << Metadata;
-        mAssetRegistry[FAssetHandle(Metadata.Guid)] = Metadata;
+        SetMetadata(FAssetHandle(Metadata.Guid), Metadata);
         return Metadata;
     }
 
     void AssetRegistry::SetMetadata(const FAssetHandle& InHandle, const FAssetMetadata& InMetadata)
     {
+        // Update the main registry
         mAssetRegistry[InHandle] = InMetadata;
+
+        // Retrieve the list of metadata for this asset type
+        TFastVector<FAssetMetadata>& Assets = AssetTypeMap[InMetadata.AssetType];
+
+        // Check for existing metadata with the same AssetID to prevent duplicates
+        auto It = std::find_if(Assets.begin(), Assets.end(), [&](const FAssetMetadata& Meta)
+        {
+            return Meta.Guid == InMetadata.Guid;
+        });
+
+        if (It != Assets.end())
+        {
+            // Update the existing metadata if found
+            *It = InMetadata;
+        }
+        else
+        {
+            // Add new metadata if not found
+            Assets.push_back(InMetadata);
+        }
     }
+
 
     void AssetRegistry::ScanAssets()
     {
@@ -85,7 +108,7 @@ namespace Lumina
                 }
             }
 
-            std::this_thread::sleep_for(std::chrono::seconds(5));
+            std::this_thread::sleep_for(std::chrono::seconds(1));
         }
     }
 
@@ -96,6 +119,22 @@ namespace Lumina
         for (auto& reg : mAssetRegistry)
         {
             OutAssets.push_back(reg.second);
+        }
+    }
+
+    void AssetRegistry::GetAllAssetsOfType(EAssetType Type, TFastVector<FAssetMetadata>& OutAssets)
+    {
+        OutAssets.reserve(100);
+        if (AssetTypeMap.find(Type) != AssetTypeMap.end())
+        {
+            TFastVector<FAssetMetadata> Assets = AssetTypeMap.at(Type);
+            for (FAssetMetadata& Meta : Assets)
+            {
+                if (Meta.AssetType == Type)
+                {
+                    OutAssets.push_back(Meta);
+                }
+            }
         }
     }
 
@@ -144,6 +183,38 @@ namespace Lumina
         Ar.WriteToFile(NewAssetPath / FullFileName);
 
         AssetRegistry->SetMetadata(NewHandle, NewMetadata);
+
+        return NewHandle;
+    }
+
+    FAssetHandle AssetRegistry::CreateAsset(EAssetType Type, const std::string& Name, void* Data, const std::filesystem::path& NewAssetPath)
+    {
+        FAssetHandle NewHandle(FGuid::Generate());
+
+        FAssetMetadata NewMetadata;
+        NewMetadata.Name = Name;
+        NewMetadata.Guid = NewHandle.Handle;
+        NewMetadata.Path = NewAssetPath.string() + "/" + Name + FILE_EXTENSION;
+        NewMetadata.OriginPath = "";
+        NewMetadata.AssetType = Type;
+
+        FArchive Ar(EArchiverFlags::Writing);
+
+        switch (Type)
+        {
+            case(EAssetType::Material):
+            {
+
+                FMaterialAttributes& Attributes = *(FMaterialAttributes*)Data;
+
+               // Ar << Attributes;
+
+                break;
+            }
+        }
+
+        std::string FullFileName = Name + FILE_EXTENSION;
+        Ar.WriteToFile(NewAssetPath / FullFileName);
 
         return NewHandle;
     }

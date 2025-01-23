@@ -32,15 +32,17 @@ namespace Lumina
 
         using EntityRegistry = entt::registry;
         
-        LScene();
+        LScene(std::shared_ptr<FCamera> Camera);
         ~LScene();
+
+        static std::shared_ptr<LScene> Create(std::shared_ptr<FCamera> Camera);
 
         void BeginScene();
         void OnUpdate(double DeltaTime);
         void EndScene();
         void Shutdown();
 
-        std::shared_ptr<FCamera> GetEditorCamera() { return EditorCamera; }
+        std::shared_ptr<FCamera> GetCurrentCamera() { return CurrentCamera; }
         std::shared_ptr<FSceneRenderer> GetSceneRenderer() { return SceneRenderer; }
         
 
@@ -72,7 +74,7 @@ namespace Lumina
         EntityRegistry mEntityRegistery;
         std::unordered_map<FGuid, Entity> EntityIdentifierMap;
         
-        std::shared_ptr<FCamera>        EditorCamera;
+        std::shared_ptr<FCamera>        CurrentCamera;
         std::shared_ptr<FSceneRenderer> SceneRenderer;
 
     };

@@ -14,6 +14,11 @@
 
 namespace Lumina
 {
+
+    TMulticastDelegate<void> FCoreDelegates::OnEngineInit;
+    TMulticastDelegate<void> FCoreDelegates::PreEngineShutdown;
+    TMulticastDelegate<double> FCoreDelegates::OnEngineUpdate;
+    
     FApplication* FApplication::Instance = nullptr;
     static double accumTime = 0.0;
 
@@ -27,7 +32,7 @@ namespace Lumina
     {
         
     }
-     
+
     void FApplication::Run()
     {
         OnInit();
@@ -38,10 +43,18 @@ namespace Lumina
             {
                 PROFILE_SCOPE(ApplicationFrame)
                 PreFrame();
-            
-                mScene->OnUpdate(Stats.DeltaTime);
+
+                if (mScene)
+                {
+                    mScene->OnUpdate(Stats.DeltaTime);
+                }
+                
                 ApplicationSubsystems.Update(Stats.DeltaTime);
+                
+                OnUpdate();
+                
                 RenderImGui(Stats.DeltaTime);
+                
                 FRenderer::Render();
 
                 PostFrame();
@@ -80,9 +93,16 @@ namespace Lumina
         
         ApplicationSubsystems.AddSubsystem<InputSubsystem>();
 
-        mScene = std::make_shared<LScene>();
+        if (AppSpecs.bRenderImGui)
+        {
+            FImGuiRenderer::Init();
+        }
 
-        FImGuiRenderer::Init();
+    }
+
+    void FApplication::OnUpdate()
+    {
+        
     }
 
     void FApplication::OnShutdown()
@@ -92,9 +112,17 @@ namespace Lumina
         bRunning = false;
 
         ApplicationSubsystems.DeinitializeAll();
+
+        if (mScene)
+        {
+            mScene->Shutdown();
+        }
+
+        if (AppSpecs.bRenderImGui)
+        {
+            FImGuiRenderer::Shutdown();
+        }
         
-        mScene->Shutdown();
-        FImGuiRenderer::Shutdown();
         FRenderer::Shutdown();
         AssetManager::Get()->Shutdown();
         
@@ -168,15 +196,18 @@ namespace Lumina
 
     void FApplication::RenderImGui(double DeltaTime)
     {
-        PROFILE_SCOPE(ImGuiRenderUpdate)
-        FImGuiRenderer::BeginFrame();
-
-        for (auto& Layer : LayerStack)
+        if (AppSpecs.bRenderImGui)
         {
-            Layer->ImGuiRender(DeltaTime);    
-        }
+            PROFILE_SCOPE(ImGuiRenderUpdate)
+            FImGuiRenderer::BeginFrame();
+
+            for (auto& Layer : LayerStack)
+            {
+                Layer->ImGuiRender(DeltaTime);    
+            }
         
-        FImGuiRenderer::EndFrame();
+            FImGuiRenderer::EndFrame();
+        }
     }
 
     void FApplication::OnEvent(FEvent& Event)
@@ -190,6 +221,11 @@ namespace Lumina
     FWindow& FApplication::GetWindow()
     {
         return *Get().GetSubsystem<WindowSubsystem>()->GetWindow();
+    }
+
+    void FApplication::SetCurrentScene(std::shared_ptr<LScene> InScene)
+    {
+        mScene = InScene;
     }
 
     bool FApplication::ShouldExit()

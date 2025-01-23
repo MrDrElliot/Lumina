@@ -2,7 +2,7 @@
 #include "glm/vec4.hpp"
 
 
-struct LightComponent
+struct FLightComponent
 {
     
     struct FLightData

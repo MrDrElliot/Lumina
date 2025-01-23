@@ -26,7 +26,7 @@ namespace Lumina
     
     inline EAssetType FileExtensionToAssetType(const std::string& Extension)
     {
-        if(Extension == ".png")
+        if(Extension == ".png" || Extension == ".jpg")
         {
             return EAssetType::Texture;
         }
@@ -90,7 +90,11 @@ namespace Lumina
         FAssetHandle(const FGuid& Guid) :Handle(Guid) {}
 
         
-        FGuid Handle;
+
+        bool IsValid() const
+        {
+            return Handle.IsValid();
+        }
 
         friend FArchive& operator << (FArchive& Ar, FAssetHandle& data)
         {
@@ -103,6 +107,8 @@ namespace Lumina
         {
             return Handle == Other.Handle;
         }
+
+        FGuid Handle;
     };
 }
 

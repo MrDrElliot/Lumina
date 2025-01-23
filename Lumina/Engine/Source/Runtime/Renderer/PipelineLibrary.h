@@ -48,8 +48,11 @@ namespace Lumina
 
         static void AddPipeline(const TRefPtr<FPipeline>& pipeline)
         {
-            std::lock_guard lock(Get()->Mutex);
-            Get()->Pipelines.push_back(pipeline); 
+            if (pipeline != nullptr)
+            {
+                std::lock_guard lock(Get()->Mutex);
+                Get()->Pipelines.push_back(pipeline); 
+            }
         }
 
         void Shutdown() override

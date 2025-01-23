@@ -4,14 +4,14 @@
 #include "SceneRenderer.h"
 #include "Assets/AssetRegistry/AssetRegistry.h"
 #include "Components/NameComponent.h"
-#include "Components/UniqueComponent.h"
+#include "Components/GuidComponent.h"
 #include "Entity/Entity.h"
 
 namespace Lumina
 {
-    LScene::LScene(): LAsset(FAssetMetadata())
+    LScene::LScene(std::shared_ptr<FCamera> Camera): LAsset(FAssetMetadata())
     {
-        EditorCamera = std::make_shared<FCamera>();
+        CurrentCamera = Camera;
         SceneRenderer = FSceneRenderer::Create(this);
     }
 
@@ -20,9 +20,14 @@ namespace Lumina
         
     }
 
+    std::shared_ptr<LScene> LScene::Create(std::shared_ptr<FCamera> Camera)
+    {
+        return std::make_shared<LScene>(Camera);
+    }
+
     void LScene::BeginScene()
     {
-        SceneRenderer->BeginScene(EditorCamera);
+        SceneRenderer->BeginScene(CurrentCamera);
     }
 
     void LScene::OnUpdate(double DeltaTime)
@@ -67,7 +72,7 @@ namespace Lumina
         // Now, create the new entity with the unique name
         Entity NewEntity(mEntityRegistery.create(), this);
         FGuid Guid = FGuid::Generate();
-        NewEntity.AddComponent<FUniqueComponent>(Guid);
+        NewEntity.AddComponent<FGUIDComponent>(Guid);
         NewEntity.AddComponent<FNameComponent>(uniqueName);
         NewEntity.AddComponent<FTransformComponent>(Transform);
 

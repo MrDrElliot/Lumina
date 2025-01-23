@@ -116,6 +116,8 @@ namespace Lumina
         return Allocation;
     }
 
+
+
     void FVulkanMemoryAllocator::DestroyBuffer(VkBuffer Buffer, VmaAllocation Allocation)
     {
         if (Buffer && Allocation)

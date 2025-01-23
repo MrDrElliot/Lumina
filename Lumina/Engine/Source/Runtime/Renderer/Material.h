@@ -39,24 +39,24 @@ namespace Lumina
 
     class FDescriptorSet;
     
-    class Material : public LAsset
+    class LMaterial : public LAsset
     {
     public:
 
-        Material(const TRefPtr<FPipeline>& InPipeline, const FMaterialTextures& InTextures, const FMaterialAttributes& InAttributes);
-        ~Material();
+        LMaterial(const TRefPtr<FPipeline>& InPipeline, const FMaterialTextures& InTextures, const FMaterialAttributes& InAttributes);
+        ~LMaterial();
 
-        static TAssetHandle<Material> Create(const TRefPtr<FPipeline>& InPipeline, const FMaterialTextures& Textures, const FMaterialAttributes& Attributes);
+        static std::shared_ptr<LMaterial> Create(const TRefPtr<FPipeline>& InPipeline, const FMaterialTextures& Textures, const FMaterialAttributes& Attributes);
 
         FMaterialAttributes& GetMaterialAttributes() { return Attributes; }
         
-        virtual void Write(uint16 Binding, uint16 ArrayElement, TRefPtr<FImage> Image, TRefPtr<FImageSampler> Sampler);
-        virtual void Write(uint16 Binding, uint16 ArrayElement, TRefPtr<FBuffer> Buffer, uint64 Size, uint64 Offset);
+        void Write(uint16 Binding, uint16 ArrayElement, TRefPtr<FImage> Image, TRefPtr<FImageSampler> Sampler);
+        void Write(uint16 Binding, uint16 ArrayElement, TRefPtr<FBuffer> Buffer, uint64 Size, uint64 Offset);
 
-        virtual void SetBaseColor(const glm::vec4& Color);
-        virtual void SetRoughness(float Roughness);
-        virtual void SetEmissiveIntensity(float Intensity);
-        virtual void SetMetallic(float Metallic);
+        void SetBaseColor(const glm::vec4& Color);
+        void SetRoughness(float Roughness);
+        void SetEmissiveIntensity(float Intensity);
+        void SetMetallic(float Metallic);
 
         
         virtual void Bind(const TRefPtr<FPipeline>& Pipeline, uint32 Index = 0);
