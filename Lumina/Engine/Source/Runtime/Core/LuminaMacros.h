@@ -2,4 +2,4 @@
 
 #include "Containers/String.h"
 
-const LString NAME_None = "NAME_None";
+const LString NAME_None = "None";

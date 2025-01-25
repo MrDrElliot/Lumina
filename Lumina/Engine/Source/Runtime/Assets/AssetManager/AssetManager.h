@@ -38,15 +38,17 @@ namespace Lumina
 			if (mAssetMap.find(InHandle) != mAssetMap.end())
 			{
 				std::weak_ptr<T> WeakPtr = mAssetMap.at(InHandle);
-				if (WeakPtr.lock())
+				if (std::shared_ptr<T> AssetPtr = WeakPtr.lock())
 				{
-					return WeakPtr.lock();
+					return AssetPtr;
 				}
 				else
 				{
 					return std::shared_ptr<T>();
 				}
 			}
+			
+			return std::shared_ptr<T>();
 		}
 
 		/** Will attempt to get an asset that is valid, if it is not valid, it will sync load */

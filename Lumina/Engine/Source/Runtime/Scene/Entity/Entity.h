@@ -32,7 +32,7 @@ namespace Lumina
         inline void Destroy()                   { if (mScene) mScene->DestroyEntity(*this);  }
         
         template <typename T, typename... Args>
-        void AddComponent(Args&&... args);
+        auto AddComponent(Args&&... args) -> decltype(auto);
 
         template <typename T>
         bool HasComponent();
@@ -63,9 +63,9 @@ namespace Lumina
 
     
     template <typename T, typename... Args>
-    void Entity::AddComponent(Args&&... args)
+    auto Entity::AddComponent(Args&&... args) -> decltype(auto)
     {
-        mScene->GetEntityRegistry().emplace_or_replace<T>(mEntityHandle, std::forward<Args>(args)...);
+        return mScene->GetEntityRegistry().emplace_or_replace<T>(mEntityHandle, std::forward<Args>(args)...);
     }
     
     template <typename T>

@@ -19,7 +19,6 @@ public:
     {
         InvokationList.push([obj, func](FuncArgs&&... args)
         {
-            // Directly call the member function with the forwarded arguments
             (obj->*func)(std::forward<FuncArgs>(args)...);
         });
     }

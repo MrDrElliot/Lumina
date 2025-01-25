@@ -5,6 +5,7 @@
 #include "Platform/GenericPlatform.h"
 #include "GUID/GUID.h"
 #include "Containers/String.h"
+#include "Core/LuminaMacros.h"
 #include "Core/Serialization/Archiver.h"
 
 
@@ -59,9 +60,9 @@ namespace Lumina
     {
         FAssetMetadata()
         {
-            Name = "";
+            Name = NAME_None.CStr();
             Guid = FGuid();
-            Path = "";
+            Path = NAME_None.CStr();
             OriginPath = "";
             AssetType = EAssetType::None;
         }
@@ -109,6 +110,7 @@ namespace Lumina
         }
 
         FGuid Handle;
+
     };
 }
 

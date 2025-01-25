@@ -25,7 +25,9 @@ namespace Lumina
         bool IsSelected(ESelectionContext Context, const FGuid& Guid);
         void GetSelections(ESelectionContext Context, TFastVector<FGuid>& OutSelections);
 
-
+        bool ClearSelectionList(ESelectionContext Context);
+        bool CanMultiSelect(ESelectionContext Context, const FGuid& Guid);
+        
     private:
 
         

@@ -17,8 +17,6 @@ namespace Lumina
     {
         Specifications = InSpec;
     	bWasResizedThisFrame = false;
-        AquireSemaphores = { VK_NULL_HANDLE };
-        PresentSemaphores = { VK_NULL_HANDLE };
     }
 
     void FVulkanSwapchain::CreateSurface(const FSwapchainSpec& InSpec)
@@ -36,8 +34,10 @@ namespace Lumina
         auto Device = FVulkanRenderContext::GetDevice();
     	
         Images.reserve(InSpec.FramesInFlight);
-        AquireSemaphores.reserve(2);
-        PresentSemaphores.reserve(2);
+    	
+    	memset((void*)AquireSemaphores.data(), 0, AquireSemaphores.size() * sizeof(VkSemaphore));
+    	memset((void*)PresentSemaphores.data(), 0, PresentSemaphores.size() * sizeof(VkSemaphore));
+    	
         CurrentFrameIndex = 0;
 
         if(LIKELY(Swapchain))
@@ -138,16 +138,21 @@ namespace Lumina
 		// Destroy any excess semaphores
 		for (size_t i = currentImageCount; i < PresentSemaphores.size(); i++)
 		{
-		    vkDestroySemaphore(Device, PresentSemaphores[i], nullptr);
+			if (PresentSemaphores[i] != nullptr)
+			{
+				vkDestroySemaphore(Device, PresentSemaphores[i], nullptr);
+			}
 		}
-		PresentSemaphores.resize(currentImageCount);  // Adjust size to match new image count
 		
 		for (size_t i = 0; i < currentImageCount; i++)
 		{
 		    // Destroy and recreate if resized this frame
 		    if (i < PresentSemaphores.size())
 		    {
-		        vkDestroySemaphore(Device, PresentSemaphores[i], nullptr);
+		    	if (PresentSemaphores[i] != nullptr)
+		    	{
+		    		vkDestroySemaphore(Device, PresentSemaphores[i], nullptr);
+		    	}
 		    }
 		    
 		    VkSemaphore semaphore = VK_NULL_HANDLE;
@@ -179,16 +184,22 @@ namespace Lumina
 		// Destroy any excess semaphores
 		for (size_t i = currentFrameCount; i < AquireSemaphores.size(); i++)
 		{
-		    vkDestroySemaphore(Device, AquireSemaphores[i], nullptr);
+			if (AquireSemaphores[i] != nullptr)
+			{
+				vkDestroySemaphore(Device, AquireSemaphores[i], nullptr);
+			}
 		}
-		AquireSemaphores.resize(currentFrameCount);
-		
+
+    	
 		for (size_t i = 0; i < currentFrameCount; i++)
 		{
 		    // Destroy and recreate if resized this frame
 		    if (i < AquireSemaphores.size())
 		    {
-		        vkDestroySemaphore(Device, AquireSemaphores[i], nullptr);
+		    	if (AquireSemaphores[i] != nullptr)
+		    	{
+		    		vkDestroySemaphore(Device, AquireSemaphores[i], nullptr);
+		    	}
 		    }
 		
 		    VkSemaphore semaphore = VK_NULL_HANDLE;

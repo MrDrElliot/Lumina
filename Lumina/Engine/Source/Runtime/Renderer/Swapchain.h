@@ -22,7 +22,7 @@ namespace Lumina
         VkSemaphore Present;
     };
     
-    class FSwapchain : public RefCounted
+    class FSwapchain : public FRenderResource
     {
     public:
 

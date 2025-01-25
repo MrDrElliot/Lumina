@@ -20,10 +20,12 @@ namespace Lumina
         {
             return;
         }
-        
+    
         if (std::shared_ptr<FSceneRenderer> SceneRenderer = Scene.lock()->GetSceneRenderer())
         {
             TRefPtr<FImage> RenderTarget = SceneRenderer->GetRenderTarget();
+            
+
             ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
             ImGui::Begin("Viewport");
             ImGui::PopStyleVar();
@@ -33,7 +35,7 @@ namespace Lumina
             ImVec2 NewRegion;
             NewRegion.x = Max.x - Min.x;
             NewRegion.y = Max.y - Min.y;
-            
+        
             float AspectRatio = (NewRegion.x / NewRegion.y);
             Scene.lock()->GetCurrentCamera()->SetAspectRatio(AspectRatio);
             float t = (NewRegion.x - 500) / (1200 - 500);
@@ -49,13 +51,14 @@ namespace Lumina
 
             std::string cameraPosText = "Camera Pos: (" + std::to_string(cameraPosition.x) + ", " + 
                                         std::to_string(cameraPosition.y) + ", " + std::to_string(cameraPosition.z) + ")";
-        
+    
             ImGui::SetCursorPos(overlayPos); 
             ImGui::TextUnformatted(cameraPosText.c_str());
 
             ImGui::End();    
         }
     }
+
 
     void ViewportLayer::OnEvent(FEvent& InEvent)
     {

@@ -8,6 +8,7 @@
 #include "Assets/AssetTypes/StaticMesh/StaticMesh.h"
 #include "Core/LuminaMacros.h"
 #include "Core/Performance/PerformanceTracker.h"
+#include "Paths/Paths.h"
 #include "RHI/Vulkan/VulkanRenderAPI.h"
 #include "Source/Runtime/Log/Log.h"
 
@@ -65,11 +66,11 @@ namespace Lumina
 
     void FRenderer::LoadShaderPack()
     {
-        FShaderLibrary::Get()->Load("../Lumina/Engine/Resources/Shaders/CookTorrance.vert.spv",
-            "../Lumina/Engine/Resources/Shaders/CookTorrance.frag.spv", "Mesh");
+        FShaderLibrary::Get()->Load(Paths::GetEngineDirectory() / "Resources/Shaders/CookTorrance.vert.spv",
+            Paths::GetEngineDirectory() / "Resources/Shaders/CookTorrance.frag.spv", "Mesh");
 
-        FShaderLibrary::Get()->Load("../Lumina/Engine/Resources/Shaders/InfiniteGrid.vert.spv",
-      "../Lumina/Engine/Resources/Shaders/InfiniteGrid.frag.spv", "InfiniteGrid");
+        FShaderLibrary::Get()->Load(Paths::GetEngineDirectory() / "Resources/Shaders/InfiniteGrid.vert.spv",
+      Paths::GetEngineDirectory() / "Resources/Shaders/InfiniteGrid.frag.spv", "InfiniteGrid");
         
     }
 
@@ -153,7 +154,7 @@ namespace Lumina
         RenderAPI->RenderVertices(Vertices, Instances, FirstVertex, FirstInstance);
     }
 
-    void FRenderer::RenderStaticMeshWithMaterial(const TRefPtr<FPipeline>& Pipeline, const std::shared_ptr<LStaticMesh>& StaticMesh, const std::shared_ptr<LMaterial>& Material)
+    void FRenderer::RenderStaticMeshWithMaterial(const TRefPtr<FPipeline>& Pipeline, const std::shared_ptr<LStaticMesh>& StaticMesh, const TRefPtr<FMaterial>& Material)
     {
         sInternalData.NumDrawCalls++;
         sInternalData.NumVertices += StaticMesh->GetMeshData().Vertices.size();

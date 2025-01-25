@@ -10,7 +10,7 @@ namespace Lumina
 {
     class ContentBrowserWindow;
 
-    class ContentBrowserItem : public RefCounted
+    class ContentBrowserItem : public FRefCounted
     {
     public:
 

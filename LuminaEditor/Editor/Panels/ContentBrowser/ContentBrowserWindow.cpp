@@ -53,11 +53,11 @@ namespace Lumina
 {
     void ContentBrowserWindow::OnAttach()
     { 
-        FolderTexture = FTextureFactory::ImportFromSource(Paths::Relative("Resources/Icons/ContentBrowser/Folder.png"));
+        FolderTexture = FTextureFactory::ImportFromSource(Paths::GetEngineInstallDirectory() / "LuminaEditor/Resources/Icons/ContentBrowser/Folder.png");
         FolderTexture->SetFriendlyName("Folder Texture");
         ImFolderTexture = FImGuiRenderer::CreateImGuiTexture(FolderTexture, FRenderer::GetLinearSampler(), {512, 512}, 0, true);
     
-        AssetTexture = FTextureFactory::ImportFromSource(Paths::Relative("Resources/Icons/ContentBrowser/StaticMeshIcon.png"));
+        AssetTexture = FTextureFactory::ImportFromSource(Paths::GetEngineInstallDirectory() / "LuminaEditor/Resources/Icons/ContentBrowser/StaticMeshIcon.png");
         AssetTexture->SetFriendlyName("Asset Texture");
         ImAssetTexture = FImGuiRenderer::CreateImGuiTexture(AssetTexture, FRenderer::GetLinearSampler(), {512, 512}, 0, true);
 
@@ -147,13 +147,13 @@ namespace Lumina
 
         ImGui::Separator();
 
-        if (std::filesystem::exists(EnginePath))
+        if (std::filesystem::exists(Paths::GetEngineDirectory()))
         {
             ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[1]);
             ImGui::Text("Engine Content");
             ImGui::PopFont();
 
-            for (auto& p : std::filesystem::directory_iterator(EnginePath))
+            for (auto& p : std::filesystem::directory_iterator(Paths::GetEngineDirectory()))
             {
                 if (p.is_directory())
                 {

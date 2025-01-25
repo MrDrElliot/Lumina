@@ -403,7 +403,7 @@ namespace Lumina
     	});
     }
 
-	void FVulkanRenderAPI::RenderStaticMeshWithMaterial(const TRefPtr<FPipeline>& Pipeline, const std::shared_ptr<LStaticMesh>& StaticMesh, const std::shared_ptr<LMaterial>& Material)
+	void FVulkanRenderAPI::RenderStaticMeshWithMaterial(const TRefPtr<FPipeline>& Pipeline, const std::shared_ptr<LStaticMesh>& StaticMesh, const TRefPtr<FMaterial>& Material)
     {
 		FRenderer::Submit([this, Pipeline, StaticMesh]
 		{

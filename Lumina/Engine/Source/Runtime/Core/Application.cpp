@@ -2,6 +2,7 @@
 
 #include "Application.h"
 #include "Layer.h"
+#include "Assets/AssetManager/AssetManager.h"
 #include "ImGui/ImGuiRenderer.h"
 #include "Input/InputSubsystem.h"
 #include "Memory/Memory.h"

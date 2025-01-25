@@ -3,16 +3,35 @@
 #include <glm/glm.hpp>
 #include "Core/Serialization/Archiver.h"
 
+#define NO_TEXTURE (-1)
+
 namespace Lumina
 {
 
-    // @DEPRECATED 
     struct FMiscData
     {
         const uint8* Data;
         int32 Size;
     };
 
+    struct FMaterialAttributes
+    {
+        glm::vec4   baseColor = glm::vec4(1.0f);
+        float       roughness = 0.5f;
+        float       metallic = 0.5f;
+        float       emissiveIntensity = 1.0f;
+    };
+
+    struct FMaterialTexturesData
+    {
+        int32 AlbedoID =        NO_TEXTURE;
+        int32 NormalID =        NO_TEXTURE;
+        int32 RoughnessID =     NO_TEXTURE;
+        int32 EmissiveID =      NO_TEXTURE;
+        int32 AOID =            NO_TEXTURE;
+        int32 Padding[3] =      {0, 0, 0};
+    };
+    
     struct FVertex
     {
         friend FArchive& operator << (FArchive& Ar, FVertex& data)

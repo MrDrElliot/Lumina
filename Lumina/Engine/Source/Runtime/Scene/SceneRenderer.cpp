@@ -3,14 +3,17 @@
 #include "Camera.h"
 #include "Scene.h"
 #include "ScenePrimitives.h"
+#include "Assets/AssetRegistry/AssetRegistry.h"
+#include "Assets/AssetTypes/Textures/Texture.h"
 #include "Core/Application.h"
 #include "glm/gtc/type_ptr.hpp"
 #include "Assets/Factories/MeshFactory/StaticMeshFactory.h"
 #include "Assets/Factories/TextureFactory/TextureFactory.h"
+#include "Components/LightComponent.h"
 #include "Components/MeshComponent.h"
-#include "Core/LuminaMacros.h"
 #include "Core/Windows/Window.h"
 #include "Entity/Entity.h"
+#include "Paths/Paths.h"
 #include "Renderer/Buffer.h"
 #include "Renderer/DescriptorSet.h"
 #include "Renderer/Material.h"
@@ -30,32 +33,53 @@ namespace Lumina
         :CurrentScene(InScene)
     {
         
-        BaseColor = FTextureFactory::ImportFromSource("../LuminaEditor/Resources/Icons/ContentBrowser/Default_albedo.jpg");
+        BaseColor = FTextureFactory::ImportFromSource(Paths::GetEngineInstallDirectory() / "LuminaEditor/Resources/Icons/ContentBrowser/Default_albedo.jpg");
         BaseColor->SetFriendlyName("Base Color");
-        Normal = FTextureFactory::ImportFromSource("../LuminaEditor/Resources/Icons/ContentBrowser/Default_normal.jpg");
+        Normal = FTextureFactory::ImportFromSource(Paths::GetEngineInstallDirectory() / "LuminaEditor/Resources/Icons/ContentBrowser/Default_normal.jpg");
         Normal->SetFriendlyName("Nromal");
-        Metallic = FTextureFactory::ImportFromSource("../LuminaEditor/Resources/Icons/ContentBrowser/Default_metalRoughness.jpg");
+        Metallic = FTextureFactory::ImportFromSource(Paths::GetEngineInstallDirectory() / "LuminaEditor/Resources/Icons/ContentBrowser/Default_metalRoughness.jpg");
         Metallic->SetFriendlyName("Metallic");
-        AmbientOcclusion = FTextureFactory::ImportFromSource("../LuminaEditor/Resources/Icons/ContentBrowser/Default_AO.jpg");
+        AmbientOcclusion = FTextureFactory::ImportFromSource(Paths::GetEngineInstallDirectory() / "LuminaEditor/Resources/Icons/ContentBrowser/Default_AO.jpg");
         AmbientOcclusion->SetFriendlyName("Ambient Occlusion");
-        Emissive = FTextureFactory::ImportFromSource("../LuminaEditor/Resources/Icons/ContentBrowser/Default_emissive.jpg");
+        Emissive = FTextureFactory::ImportFromSource(Paths::GetEngineInstallDirectory() / "LuminaEditor/Resources/Icons/ContentBrowser/Default_emissive.jpg");
         Emissive->SetFriendlyName("Emissive");
+
+        MaterialInstance.AssetPtr =                     std::make_shared<LMaterialInstance>();
         
+        MaterialInstance->Albedo.AssetPtr =             std::make_shared<LTexture>();
+        MaterialInstance->Albedo.AssetPtr->SetImage(BaseColor, BaseColor->GetSpecification());
+        
+        MaterialInstance->Normal.AssetPtr =             std::make_shared<LTexture>();
+        MaterialInstance->Normal.AssetPtr->SetImage(Normal, Normal->GetSpecification());
+
+        
+        MaterialInstance->Roughness.AssetPtr =          std::make_shared<LTexture>();
+        MaterialInstance->Roughness.AssetPtr->SetImage(Metallic, Metallic->GetSpecification());
+
+        
+        MaterialInstance->Emissive.AssetPtr =           std::make_shared<LTexture>();
+        MaterialInstance->Emissive.AssetPtr->SetImage(Emissive, Emissive->GetSpecification());
+
+        
+        MaterialInstance->AmbientOcclusion.AssetPtr =   std::make_shared<LTexture>();
+        MaterialInstance->AmbientOcclusion.AssetPtr->SetImage(AmbientOcclusion, AmbientOcclusion->GetSpecification());
+
+        for (int i = 0; i < 10; ++i)
+        {
+            Entity Entity = InScene->CreateEntity(FTransform(), "Teehee");
+            FMeshComponent& Component = Entity.AddComponent<FMeshComponent>();
+            Component.Material = MaterialInstance;
+            
+            TAssetHandle<LStaticMesh> Mesh = AssetRegistry::Get()->GetAssetByPath<LStaticMesh>(Paths::GetEngineInstallDirectory() / "Sandbox/Game/Content/Helmet.lum");
+            Component.StaticMesh = Mesh;
+        }
+
         CreateImages();
         InitPipelines();
         InitBuffers();
         InitDescriptorSets();
-
-        FMaterialTextures Textures;
-        Textures.BaseColor = BaseColor;
-        Textures.Normal = Normal;
-        Textures.AmbientOcclusion = AmbientOcclusion;
-        Textures.MetallicRoughness = Metallic;
-        Textures.Emissive = Emissive;
-
-        FMaterialAttributes Attributes;
         
-        TestMaterial = LMaterial::Create(GraphicsPipeline, Textures, Attributes);
+        TestMaterial = FMaterial::Create(GraphicsPipeline);
         
     }
 
@@ -97,7 +121,6 @@ namespace Lumina
 
         uint32 CurrentFrameIndex = FRenderer::GetCurrentFrameIndex();
         
-        glm::vec3 CameraPos = Camera->GetPosition();
         // Create an identity matrix for the grid
         glm::mat4 GridMat = glm::mat4(1.0f);
 
@@ -152,8 +175,6 @@ namespace Lumina
         }
         
         GeometryPass({CurrentRenderTarget, CurrentDepthAttachment});
-
-        TAAPass();
         
         TRefPtr<FCommandBuffer> CommandBuffer = FRenderer::GetCommandBuffer();
         FRenderer::Submit([CurrentRenderTarget, CommandBuffer]
@@ -166,8 +187,10 @@ namespace Lumina
                 EPipelineAccess::COLOR_ATTACHMENT_WRITE,
                 EPipelineAccess::TRANSFER_READ);
 
-            FRenderer::GetSwapchainImage()->SetLayout(CommandBuffer, EImageLayout::TRANSFER_DST, EPipelineStage::TOP_OF_PIPE,
-                EPipelineStage::TRANSFER,
+            FRenderer::GetSwapchainImage()->SetLayout(CommandBuffer,
+                         EImageLayout::TRANSFER_DST,
+                 EPipelineStage::TOP_OF_PIPE,
+                 EPipelineStage::TRANSFER,
                 EPipelineAccess::NONE,
                 EPipelineAccess::TRANSFER_WRITE);
         });
@@ -176,8 +199,10 @@ namespace Lumina
 
         FRenderer::Submit([CurrentRenderTarget, CommandBuffer]
         {
-            CurrentRenderTarget->SetLayout(CommandBuffer, EImageLayout::SHADER_READ_ONLY, EPipelineStage::TRANSFER,
-                EPipelineStage::COLOR_ATTACHMENT_OUTPUT,
+            CurrentRenderTarget->SetLayout(CommandBuffer,
+                         EImageLayout::SHADER_READ_ONLY,
+                 EPipelineStage::TRANSFER,
+                 EPipelineStage::COLOR_ATTACHMENT_OUTPUT,
                 EPipelineAccess::TRANSFER_READ,
                 EPipelineAccess::COLOR_ATTACHMENT_WRITE);
             
@@ -202,57 +227,142 @@ namespace Lumina
         
         FRenderer::BindPipeline(GraphicsPipeline);
         FRenderer::BindSet(CurrentDescriptorSet, GraphicsPipeline, 1, {});
-        
+
         CameraData.View = Camera->GetViewMatrix();
         CameraData.Projection = Camera->GetProjectionMatrix();
-        SceneLightingData.cameraPosition = glm::vec4(Camera->GetPosition(), 1.0f);
-        
+        CameraData.Location = glm::vec4(Camera->GetPosition(), 1.0f);
         CameraUBO->UploadData(0, &CameraData, sizeof(FCameraData));
-        SceneUBO->UploadData(0, &SceneLightingData, sizeof(FLightData));
-        
         CurrentDescriptorSet->Write(0, 0, CameraUBO, sizeof(FCameraData), 0);
-        CurrentDescriptorSet->Write(1, 0, SceneUBO, sizeof(FLightData), 0);
 
-        ModelData.clear();
+        uint32 NumLights = 0;
+        CurrentScene->ForEachComponent<FLightComponent>([&, this](uint32 Current, entt::entity& entity, FLightComponent& Component)
+        {
+            Entity Ent(entity, CurrentScene);
+            FTransformComponent& TransformComponent = Ent.GetComponent<FTransformComponent>();
+            SceneLightingData.LightPosition[Current] = glm::vec4(TransformComponent.GetLocation(), 1.0f);
+            SceneLightingData.LightColor[Current] = glm::vec4(1.0f);
+            NumLights++;
+        });
+
+        SceneLightingData.NumLights = NumLights;
+        SceneUBO->UploadData(0, &SceneLightingData, sizeof(FSceneLightData));
+        CurrentDescriptorSet->Write(1, 0, SceneUBO, sizeof(FSceneLightData), 0);    
+        
         auto View = CurrentScene->GetEntityRegistry().view<FMeshComponent, FTransformComponent>();
         uint64 ComponentTotal = View.size_hint();
-        ModelData.reserve((int32)ComponentTotal);
-        
-        for(auto entity : View)
-        {
-            auto& Transform = View.get<FTransformComponent>(entity);
-            glm::mat4 Matrix = Transform.GetTransform().GetMatrix();
-    
-            ModelData.emplace_back(std::move(Matrix));
-        }
         
         if(ComponentTotal)
         {
-            ModelSBO->UploadData(0, ModelData.data(), ComponentTotal * sizeof(glm::mat4));
-            CurrentDescriptorSet->Write(1, 0, SceneUBO, sizeof(FLightData), 0);
-            CurrentDescriptorSet->Write(2, 0, ModelSBO, ComponentTotal * sizeof(glm::mat4), 0);
-            
-            CurrentScene->ForEachComponent<FMeshComponent>([&, this](uint32 Total, uint32 Current, entt::entity& entity, FMeshComponent& Component)
+            ModelData.clear();
+            ModelData.reserve((int32)ComponentTotal);
+            std::unordered_map<std::shared_ptr<LMaterialInstance>, std::vector<std::shared_ptr<LStaticMesh>>> MeshInstanceMap;
+
+            CurrentScene->ForEachComponent<FMeshComponent>([&, this](uint32 Current, entt::entity& entity, FMeshComponent& Component)
             {
-                if(Component.StaticMesh.Get() && TestMaterial)
+                if (Component.StaticMesh.IsValid())
                 {
-                    TestMaterial->Bind(GraphicsPipeline);
-                    FRenderer::PushConstants(EShaderStage::VERTEX,   0, sizeof(uint32), &Current);
-                    FRenderer::PushConstants(EShaderStage::FRAGMENT, 16, sizeof(FMaterialAttributes), &TestMaterial->GetMaterialAttributes());
-                    FRenderer::RenderStaticMeshWithMaterial(GraphicsPipeline, Component.StaticMesh, TestMaterial);
+                    Component.Material = MaterialInstance;
+                }
+                
+                if (Component.Material.IsValid() && Component.StaticMesh.IsValid())
+                {
+                    auto& Transform = View.get<FTransformComponent>(entity);
+                    glm::mat4 Matrix = Transform.GetTransform().GetMatrix();
+                    ModelData.emplace_back(std::move(Matrix));
+                    
+                    MeshInstanceMap[MaterialInstance].emplace_back(Component.StaticMesh.Get());
+
                 }
             });
+            
+            ModelSBO->UploadData(0, ModelData.data(), ModelData.size() * sizeof(FModelData));
+            CurrentDescriptorSet->Write(2, 0, ModelSBO, ModelData.size() * sizeof(FModelData), 0);
+
+            TexturesData.clear();
+            TexturesData.reserve(MeshInstanceMap.size());
+
+            // A map to store each texture and its unique ID
+            std::unordered_map<std::shared_ptr<LTexture>, int32> TextureHash;
+
+            // Unique texture counter
+            int32 CurrentTextureID = 0;
+            
+            for (const auto& [MaterialInstance, Meshes] : MeshInstanceMap)
+            {
+                if (MaterialInstance != nullptr && MaterialInstance != nullptr)
+                {
+                    TexturesData.push_back(MaterialInstance->MaterialTextureIDs);
+                }
+                else
+                {
+                    // Skip invalid material instances
+                    continue;
+                }
+
+                // Helper lambda to find or add a texture to the map
+                auto GetOrAddTextureID = [&TextureHash, &CurrentTextureID](const std::shared_ptr<LTexture>& Texture) -> int32
+                {
+                    if (!Texture)
+                    {
+                        return -1; // Invalid texture, -1 represents no image.
+                    }
+        
+                    auto It = TextureHash.find(Texture);
+                    if (It == TextureHash.end())
+                    {
+                        TextureHash[Texture] = CurrentTextureID++;
+                        return TextureHash[Texture];
+                    }
+                    return It->second;
+                };
+
+                
+                // Map each texture to a unique ID (or retrieve an existing ID)
+                TexturesData.back().AlbedoID    = GetOrAddTextureID(MaterialInstance->Albedo);
+                TexturesData.back().NormalID    = GetOrAddTextureID(MaterialInstance->Normal);
+                TexturesData.back().RoughnessID = GetOrAddTextureID(MaterialInstance->Roughness);
+                TexturesData.back().EmissiveID  = GetOrAddTextureID(MaterialInstance->Emissive);
+                TexturesData.back().AOID        = GetOrAddTextureID(MaterialInstance->AmbientOcclusion);
+
+            }
+
+            
+            TestMaterial->Bind(GraphicsPipeline);
+
+            // Write the texture IDs for the multiple textures found in TexturesData
+            for (size_t i = 0; i < TexturesData.size(); ++i)
+            {
+                TestMaterial->Write(1, i, BaseColor, FRenderer::GetLinearSampler());
+                TestMaterial->Write(1, i + 1, Normal, FRenderer::GetLinearSampler());
+                TestMaterial->Write(1, i + 2, Metallic, FRenderer::GetLinearSampler());
+                TestMaterial->Write(1, i + 3, Emissive, FRenderer::GetLinearSampler());
+                TestMaterial->Write(1, i + 4, AmbientOcclusion, FRenderer::GetLinearSampler());   
+            }
+
+            MaterialUBO->UploadData(0, TexturesData.data(), TexturesData.size() * sizeof(FMaterialTexturesData));
+            CurrentDescriptorSet->Write(3, 0, MaterialUBO, TexturesData.size() * sizeof(FMaterialTexturesData), 0);
+
+            uint32 testIndex = 0;
+            for (const auto& [MaterialInstance, Meshes] : MeshInstanceMap)
+            {
+                for (auto StaticMesh : Meshes)
+                {
+                    
+                    Data.ModelIndex = testIndex++;
+                    Data.MaterialIndex = 0;
+                    
+                    FRenderer::PushConstants(EShaderStage::VERTEX, 0, sizeof(FTransientData), &Data);
+                    FRenderer::PushConstants(EShaderStage::FRAGMENT, 16, sizeof(FMaterialAttributes), &Attributes);
+                    
+                    FRenderer::RenderStaticMeshWithMaterial(GraphicsPipeline, StaticMesh, TestMaterial);
+                }
+            }
         }
         
         // End the render
         FRenderer::EndRender();
     }
-
-    void FSceneRenderer::TAAPass()
-    {
-
-    }
-
+    
     void FSceneRenderer::InitPipelines()
     {
         DeviceBufferLayoutElement Pos       (EShaderDataType::FLOAT3);
@@ -319,11 +429,11 @@ namespace Lumina
         LightParamsSpec.Heap = EDeviceBufferMemoryHeap::DEVICE;
         LightParamsSpec.BufferUsage = EDeviceBufferUsage::UNIFORM_BUFFER;
         LightParamsSpec.MemoryUsage = EDeviceBufferMemoryUsage::COHERENT_WRITE;
-        LightParamsSpec.Size = sizeof(FLightData);
-        LightParamsSpec.DebugName = "Scene Parameters UBO";
+        LightParamsSpec.Size = sizeof(FSceneLightData);
+        LightParamsSpec.DebugName = "Scene Parameters SBO";
         
         SceneUBO = FBuffer::Create(LightParamsSpec);
-        SceneUBO->SetFriendlyName("Scene UBO");
+        SceneUBO->SetFriendlyName("Scene Light UBO");
 
         
         
@@ -337,6 +447,17 @@ namespace Lumina
         
         ModelSBO = FBuffer::Create(ModelParamsSpec);
         ModelSBO->SetFriendlyName("Model SBO");
+
+        // ModelUBO contains model.
+        FDeviceBufferSpecification MaterialBufferSpec;
+        MaterialBufferSpec.Heap = EDeviceBufferMemoryHeap::DEVICE;
+        MaterialBufferSpec.BufferUsage = EDeviceBufferUsage::UNIFORM_BUFFER;
+        MaterialBufferSpec.MemoryUsage = EDeviceBufferMemoryUsage::COHERENT_WRITE;
+        MaterialBufferSpec.Size = sizeof(FMaterialTexturesData) * UINT16_MAX;
+        MaterialBufferSpec.DebugName = "Material Uniform Buffer";
+        
+        MaterialUBO = FBuffer::Create(MaterialBufferSpec);
+        MaterialUBO->SetFriendlyName("Material UBO");
     }
 
     
@@ -346,7 +467,7 @@ namespace Lumina
         // Initialize descriptor bindings
         std::vector<FDescriptorBinding> Bindings;
 
-        // Binding 0: MaterialUniforms (UBO view, proj matrices)
+        // Binding 0: CameraUniforms (Pos, View, Proj)
         Bindings.emplace_back( 0, EDescriptorBindingType::UNIFORM_BUFFER, 1, 0, EShaderStage::VERTEX );
 
         // Binding 1: SceneParams (UBO containing light and scene data)
@@ -354,6 +475,9 @@ namespace Lumina
 
         // Binding 2: Containing all model data to be rendered for the scene.
         Bindings.emplace_back( 2, EDescriptorBindingType::STORAGE_BUFFER, 1, 0, EShaderStage::VERTEX );
+
+        // Binding 3: MaterialTextureBuffer
+        Bindings.emplace_back( 3, EDescriptorBindingType::UNIFORM_BUFFER, 1, 0, EShaderStage::FRAGMENT );
 
 
         // Create descriptor set specification
@@ -405,7 +529,7 @@ namespace Lumina
             TRefPtr<FImage> Image = FImage::Create(ImageSpecs);
             Image->SetFriendlyName("Render Target: " + std::to_string(i));
             
-            RenderTargets.push_back(FImage::Create(ImageSpecs));
+            RenderTargets.push_back(std::move(Image));
         }
 
         FImageSpecification DepthImageSpecs = FImageSpecification::Default();
@@ -422,7 +546,7 @@ namespace Lumina
             TRefPtr<FImage> Image = FImage::Create(DepthImageSpecs);
             Image->SetFriendlyName("Depth Image: " + std::to_string(i));
             
-            DepthAttachments.push_back(FImage::Create(DepthImageSpecs));
+            DepthAttachments.push_back(std::move(Image));
         }
 
     }

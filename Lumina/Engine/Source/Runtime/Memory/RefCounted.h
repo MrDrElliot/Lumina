@@ -13,11 +13,11 @@ enum class ERefCountedCastType
 };
 
     /** Intrusive Smart Pointer Implementation */
-    class RefCounted
+    class FRefCounted
     {
     public:
 
-        RefCounted(): RefCount() {}
+        FRefCounted(): RefCount() {}
 
         void AddRef() const
         {
@@ -36,7 +36,7 @@ enum class ERefCountedCastType
 
     protected:
 
-        virtual ~RefCounted() = default;
+        virtual ~FRefCounted() = default;
 
     private:
 
@@ -44,118 +44,119 @@ enum class ERefCountedCastType
     
     };
 
-template<typename T>
-class TRefPtr
-{
-public:
-    TRefPtr() : Ptr(nullptr) {}
-
-    // Destructor
-    ~TRefPtr()
+    template<typename T>
+    class TRefPtr
     {
-        Release();
-    }
+    public:
+        TRefPtr() : Ptr(nullptr) {}
     
-    // Constructor from raw pointer
-    TRefPtr(T* p): Ptr(p)
-    {
-        if(Ptr)
+        // Destructor
+        ~TRefPtr()
+        {
+            Release();
+        }
+        
+        // Constructor from raw pointer
+        TRefPtr(T* p): Ptr(p)
+        {
+            if(Ptr)
+            {
+                AddRef();
+            }
+        }
+        
+        // Copy constructor
+        TRefPtr(const TRefPtr& other) : Ptr(other.Ptr)
         {
             AddRef();
         }
-    }
-    
-    // Copy constructor
-    TRefPtr(const TRefPtr& other) : Ptr(other.Ptr)
-    {
-        AddRef();
-    }
-    
-    // Move constructor
-    TRefPtr(TRefPtr&& other) noexcept : Ptr(other.Ptr)
-    {
-        // Properly take ownership of the pointer and nullify the other
-        other.Ptr = nullptr;  // Now `other` won't call Release() on the original pointer
-    }
-
-    // Templated conversion constructor for derived types (lvalue reference)
-    template<typename U, typename = std::enable_if_t<std::is_base_of<T, U>::value || std::is_base_of<U, T>::value>>
-    TRefPtr(const TRefPtr<U>& other) : Ptr(other.Get())
-    {
-        static_assert(std::is_base_of<RefCounted, U>::value, "U does not inherit from RefCounted");
-        static_assert(!std::is_same<T, U>::value, "Cannot convert TRefPtr of the same type.");
-        AddRef();
-    }
-
-    // Templated conversion constructor for derived types (rvalue reference)
-    template<typename U, typename = std::enable_if_t<std::is_base_of<T, U>::value || std::is_base_of<U, T>::value>>
-    TRefPtr(TRefPtr<U>&& other) noexcept : Ptr(std::exchange(other.Ptr, nullptr))
-    {
-        static_assert(std::is_base_of<RefCounted, U>::value, "U does not inherit from RefCounted");
-        static_assert(!std::is_same<T, U>::value, "Cannot convert TRefPtr of the same type.");
-    }
-
-
-    bool operator == (const TRefPtr& other) const noexcept
-    {
-        return Ptr == other.Ptr;
-    }
-
-    TRefPtr& operator = (const TRefPtr& other)
-    {
-        if (this != &other)
+        
+        // Move constructor
+        TRefPtr(TRefPtr&& other) noexcept : Ptr(other.Ptr)
         {
-            Release();
-            Ptr = other.Ptr;
+            // Properly take ownership of the pointer and nullify the other
+            other.Ptr = nullptr;  // Now `other` won't call Release() on the original pointer
+        }
+    
+        // Templated conversion constructor for derived types (lvalue reference)
+        template<typename U, typename = std::enable_if_t<std::is_base_of<T, U>::value || std::is_base_of<U, T>::value>>
+        TRefPtr(const TRefPtr<U>& other) : Ptr(other.Get())
+        {
+            static_assert(std::is_base_of<FRefCounted, U>::value, "U does not inherit from RefCounted");
+            static_assert(!std::is_same<T, U>::value, "Cannot convert TRefPtr of the same type.");
             AddRef();
         }
-        return *this;
-    }
-
-    TRefPtr& operator = (TRefPtr&& other) noexcept
-    {
-        if (this != &other)
-        {
-            Release();
-            Ptr = other.Ptr;
-            other.Ptr = nullptr;
-        }
-        return *this;
-    }
-
-    T* operator ->() const { return Ptr; }
-    T& operator *() const { return *Ptr; }
-    explicit operator bool() const { return Ptr != nullptr; }
-
-    T* Get() const { return Ptr; }
-
-public:
     
-    FORCEINLINE void AddRef()
-    {
-        if (Ptr) Ptr->AddRef();
-    }
-
-    FORCEINLINE bool IsValid()
-    {
-        return Ptr != nullptr;
-    }
-    
-    FORCEINLINE void Release()
-    {
-        if (Ptr)
+        // Templated conversion constructor for derived types (rvalue reference)
+        template<typename U, typename = std::enable_if_t<std::is_base_of<T, U>::value || std::is_base_of<U, T>::value>>
+        TRefPtr(TRefPtr<U>&& other) noexcept : Ptr(std::exchange(other.Ptr, nullptr))
         {
-            Ptr->Release();
-            Ptr = nullptr; // Prevent dangling pointer after release
+            static_assert(std::is_base_of<FRefCounted, U>::value, "U does not inherit from RefCounted");
+            static_assert(!std::is_same<T, U>::value, "Cannot convert TRefPtr of the same type.");
         }
-    }
-
-    T* Ptr; // Pointer to the managed object
-};
+    
+    
+        bool operator == (const TRefPtr& other) const noexcept
+        {
+            return Ptr == other.Ptr;
+        }
+    
+        TRefPtr& operator = (const TRefPtr& other)
+        {
+            if (this != &other)
+            {
+                Release();
+                Ptr = other.Ptr;
+                AddRef();
+            }
+            return *this;
+        }
+    
+        TRefPtr& operator = (TRefPtr&& other) noexcept
+        {
+            if (this != &other)
+            {
+                Release();
+                Ptr = other.Ptr;
+                other.Ptr = nullptr;
+            }
+            return *this;
+        }
+    
+        T* operator ->() const { return Ptr; }
+        T& operator *() const { return *Ptr; }
+        explicit operator bool() const { return Ptr != nullptr; }
+    
+        T* Get() const { return Ptr; }
+    
+    public:
+        
+        FORCEINLINE void AddRef()
+        {
+            if (Ptr) Ptr->AddRef();
+        }
+    
+        FORCEINLINE bool IsValid()
+        {
+            return Ptr != nullptr;
+        }
+        
+        FORCEINLINE void Release()
+        {
+            if (Ptr)
+            {
+                Ptr->Release();
+                Ptr = nullptr;
+            }
+        }
+    
+        T* Ptr;
+    };
 
 
     template<typename T, typename... Args>
-    TRefPtr<T> MakeRefPtr(Args&&... args)
+    std::enable_if_t<std::is_constructible_v<T, Args...>, TRefPtr<T>>
+    MakeRefPtr(Args&&... args)
     {
         return TRefPtr<T>(new T(std::forward<Args>(args)...));
     }
@@ -164,28 +165,48 @@ public:
     template<typename T, typename U>
     TRefPtr<T> RefPtrCast(const TRefPtr<U>& other, ERefCountedCastType Type = ERefCountedCastType::None)
     {
+        static_assert(std::is_base_of_v<U, T> || std::is_base_of_v<T, U> || std::is_same_v<T, U>, "RefPtrCast: Invalid cast between unrelated types.");
+    
         if (!other.Get())
         {
-            if (Type == ERefCountedCastType::AssertNull)
+            // Handle null pointer cases
+            switch (Type)
             {
+            case ERefCountedCastType::AssertNull:
                 AssertMsg(0, "Failed Cast Due to nullptr");
-            }
-            else if (Type == ERefCountedCastType::LogNull)
-            {
+                break;
+            case ERefCountedCastType::LogNull:
                 LOG_WARN("RefCounted: Casting to a nullptr!");
+                break;
+            default:
+                break;
             }
             return TRefPtr<T>();
         }
     
-        if constexpr (std::is_polymorphic<U>::value && std::is_polymorphic<T>::value)
+        // Use dynamic_cast for polymorphic types
+        if constexpr (std::is_polymorphic_v<U> && std::is_polymorphic_v<T>)
         {
-            auto casted = dynamic_cast<T*>(other.Get());
-            return casted ? TRefPtr<T>(casted) : TRefPtr<T>();
+            if (auto casted = dynamic_cast<T*>(other.Get()))
+            {
+                return TRefPtr<T>(casted);
+            }
+            else
+            {
+                // Optional: Log or assert failed cast
+                if (Type == ERefCountedCastType::LogNull)
+                {
+                    LOG_WARN("RefCounted: Failed dynamic_cast between polymorphic types.");
+                }
+                return TRefPtr<T>();
+            }
         }
         else
         {
+            // Use static_cast for non-polymorphic types or trivial casts
             return TRefPtr<T>(static_cast<T*>(other.Get()));
         }
     }
+
 
 

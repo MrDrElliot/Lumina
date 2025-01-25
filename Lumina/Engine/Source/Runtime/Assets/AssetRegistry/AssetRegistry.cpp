@@ -5,7 +5,6 @@
 #include "Assets/Importers/AssetImporter.h"
 #include "Assets/Importers/MeshImporter.h"
 #include "Assets/Importers/TextureImporter.h"
-#include "Paths/Paths.h"
 #include "Project/Project.h"
 #include "Renderer/Image.h"
 #include <Renderer/Material.h>
@@ -198,11 +197,6 @@ namespace Lumina
         {
             case(EAssetType::Material):
             {
-
-                FMaterialAttributes& Attributes = *(FMaterialAttributes*)Data;
-
-               // Ar << Attributes;
-
                 break;
             }
         }

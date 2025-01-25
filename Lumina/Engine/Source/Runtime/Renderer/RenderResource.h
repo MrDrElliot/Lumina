@@ -8,7 +8,7 @@
  * Base class for all render resources. Lifetime is managed internally with intrusive
  * reference counting.
  */
-class FRenderResource : public RefCounted
+class FRenderResource : public FRefCounted
 {
 public:
 

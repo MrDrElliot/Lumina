@@ -2,11 +2,16 @@
 #include <memory>
 
 #include "ScenePrimitives.h"
+#include "Assets/AssetHandle.h"
 #include "Renderer/Renderer.h"
 #include "Renderer/Image.h"
 
+
+#define MAX_LIGHTS 102
+
 namespace Lumina
 {
+    class LMaterialInstance;
     class LScene;
     class Material;
     class FRenderer;
@@ -16,7 +21,7 @@ namespace Lumina
     class FBuffer;
     class FImage;
     class FCamera;
-
+    
     struct FModelData
     {
         glm::mat4 model;
@@ -30,11 +35,12 @@ namespace Lumina
         float padding[2];       // 8 bytes padding to align to 16 bytes
     };
 
-    struct FLightData
+    struct FSceneLightData
     {
-        glm::vec4 lightPosition =   {0.0f, 0.0f, 0.0f, 0.0f};
-        glm::vec4 cameraPosition =  {0.0f, 0.0f, 0.0f, 0.0f};
-        glm::vec4 lightColor =      {1.0f, 1.0f, 1.0f, 1.0f};
+        uint32 NumLights = 0;
+        uint32 padding[3];
+        glm::vec4 LightPosition [MAX_LIGHTS];
+        glm::vec4 LightColor    [MAX_LIGHTS];
     };
 
     struct FGridData
@@ -59,11 +65,10 @@ namespace Lumina
 
         TRefPtr<FImage> GetRenderTarget() { return      RenderTargets[FRenderer::GetCurrentFrameIndex()]; }
         TRefPtr<FImage> GetDepthAttachment() { return   DepthAttachments[FRenderer::GetCurrentFrameIndex()]; }
-        FLightData& GetSceneLightingData() { return       SceneLightingData; }
+        FSceneLightData& GetSceneLightingData() { return SceneLightingData; }
 
         void RenderGrid();
         void GeometryPass(const TFastVector<TRefPtr<FImage>>& Attachments);
-        void TAAPass();
 
         void InitPipelines();
         void InitBuffers();
@@ -79,7 +84,15 @@ namespace Lumina
         
         TFastVector<TRefPtr<FDescriptorSet>> GridDescriptorSets;
         TFastVector<TRefPtr<FDescriptorSet>> SceneDescriptorSets;
-        TFastVector<TRefPtr<FDescriptorSet>> TAADescriptorSets;
+
+        FMaterialAttributes Attributes;
+        
+        struct FTransientData
+        {
+            uint32 ModelIndex = 0;       // 4 bytes
+            uint32 MaterialIndex = 1;    // 4 bytes
+            uint32 Padding[2];           // 8 bytes padding to make the struct 16 bytes aligned
+        } Data;
 
         
         TFastVector<TRefPtr<FImage>> RenderTargets;
@@ -96,14 +109,20 @@ namespace Lumina
         TRefPtr<FBuffer> ModelSBO;
         TRefPtr<FBuffer> CameraUBO;
         TRefPtr<FBuffer> GridUBO;
+        TRefPtr<FBuffer> MaterialUBO;
 
-        FGridData               GridData;
-        FCameraData             CameraData;
-        FLightData              SceneLightingData;
-        TFastVector<FModelData> ModelData;
 
+        FGridData                           GridData;
+        FCameraData                         CameraData;
+        FSceneLightData                     SceneLightingData;
+        TFastVector<FModelData>             ModelData;
+        TFastVector<FMaterialTexturesData>  TexturesData;
+
+        TAssetHandle<LMaterialInstance> MaterialInstance;
+
+        
         std::shared_ptr<FCamera> Camera;
-        std::shared_ptr<LMaterial> TestMaterial;
+        TRefPtr<FMaterial> TestMaterial;
         
         LScene* CurrentScene;
 

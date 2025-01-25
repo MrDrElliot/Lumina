@@ -7,7 +7,7 @@ namespace Lumina
 {
     class FEvent;
 
-    class EditorImGuiWindow : public RefCounted
+    class EditorImGuiWindow : public FRefCounted
     {
     public:
 

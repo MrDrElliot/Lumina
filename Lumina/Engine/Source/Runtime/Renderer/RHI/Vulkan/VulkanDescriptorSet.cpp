@@ -14,11 +14,11 @@ namespace Lumina
     {
         switch (usage)
         {
-        case EDeviceBufferUsage::UNIFORM_BUFFER:		    return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        case EDeviceBufferUsage::UNIFORM_BUFFER_DYNAMIC:    return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-        case EDeviceBufferUsage::STORAGE_BUFFER:		    return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-        case EDeviceBufferUsage::STORAGE_BUFFER_DYNAMIC:    return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC;
-        default:									    std::unreachable();
+            case EDeviceBufferUsage::UNIFORM_BUFFER:		    return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            case EDeviceBufferUsage::UNIFORM_BUFFER_DYNAMIC:    return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+            case EDeviceBufferUsage::STORAGE_BUFFER:		    return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+            case EDeviceBufferUsage::STORAGE_BUFFER_DYNAMIC:    return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC;
+            default:									    std::unreachable();
         }
     }
 
@@ -26,13 +26,13 @@ namespace Lumina
     {
         switch (type)
         {
-        case EDescriptorBindingType::SAMPLED_IMAGE:		        return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        case EDescriptorBindingType::STORAGE_IMAGE:		        return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-        case EDescriptorBindingType::UNIFORM_BUFFER:	        return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        case EDescriptorBindingType::UNIFORM_BUFFER_DYNAMIC:	return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-        case EDescriptorBindingType::STORAGE_BUFFER:	        return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-        case EDescriptorBindingType::STORAGE_BUFFER_DYNAMIC:    return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC;
-        default:										        std::unreachable();
+            case EDescriptorBindingType::SAMPLED_IMAGE:		        return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            case EDescriptorBindingType::STORAGE_IMAGE:		        return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+            case EDescriptorBindingType::UNIFORM_BUFFER:	        return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            case EDescriptorBindingType::UNIFORM_BUFFER_DYNAMIC:	return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+            case EDescriptorBindingType::STORAGE_BUFFER:	        return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+            case EDescriptorBindingType::STORAGE_BUFFER_DYNAMIC:    return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC;
+            default:										        std::unreachable();
         }
     }
 

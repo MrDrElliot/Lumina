@@ -9,16 +9,19 @@ namespace Lumina
 {
     class FFactory;
 
-    class FactoryRegistry : public TSingleton<FactoryRegistry>
+    class FFactoryRegistry : public TSingleton<FFactoryRegistry>
     {
     public:
         using FactoryPtr = std::unique_ptr<FFactory>;
 
+        FFactoryRegistry();
+        
         void Shutdown() override {}
 
-        void RegisterFactory(EAssetType AssetType, FactoryPtr Factory)
+        template<typename T, EAssetType AssetType, typename = std::enable_if_t<std::is_base_of_v<FFactory, T>>>
+        void RegisterFactory()
         {
-            FactoryMap[AssetType] = std::move(Factory);
+            FactoryMap[AssetType] = std::make_unique<T>();
         }
 
         FFactory* GetFactory(EAssetType AssetType)

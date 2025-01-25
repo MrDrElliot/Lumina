@@ -1,40 +1,65 @@
 #version 450
 
-layout(location = 0) in vec3 fragNormal;        // Original normal (from vertex)
-layout(location = 1) in vec2 fragTexCoord;      // Texture coordinates
-layout(location = 2) in vec3 fragViewPosition;  // Fragment position in view space
-layout(location = 3) in vec3 fragWorldPosition; // Fragment position in world space
-layout(location = 4) flat in uint inModelIndex;      // Index of the model being rendered.
+layout(location = 0) in vec3 fragNormal;                    // Original normal (from vertex)
+layout(location = 1) in vec2 fragTexCoord;                  // Texture coordinates
+layout(location = 2) in vec3 fragViewPosition;              // Fragment position in view space
+layout(location = 3) in vec3 fragWorldPosition;             // Fragment position in world space
+layout(location = 4) flat in uint inModelIndex;             // Index of the model being rendered.
+layout(location = 5) flat in uint inMaterialInstanceIndex;
+layout(location = 6) in vec3 CameraPosition;                // Camera Position Passsed from vertex.
 
-layout(location = 0) out vec4 outColor;         // Final output color
+layout(location = 0) out vec4 outColor;                     // Final output color
+
+#define MAX_LIGHTS      102
+#define MAX_TEXTURES    1024
+#define MAX_MATERIALS   1024
+#define NO_TEXTURE      -1
 
 // Albedo texture sampler
-layout(set = 0, binding = 1) uniform sampler2D albedoTexture;
-// Normal map texture sampler
-layout(set = 0, binding = 3) uniform sampler2D normalTexture;
-// Roughness and metallic texture sampler
-layout(set = 0, binding = 4) uniform sampler2D roughnessTexture;
-// Emissive texture sampler
-layout(set = 0, binding = 5) uniform sampler2D emissiveTexture;
-// Ambient occlusion texture sampler
-layout(set = 0, binding = 6) uniform sampler2D ambientocclusionTexture;
+layout(set = 0, binding = 1) uniform sampler2D Textures[MAX_TEXTURES];
+
 
 // Material properties block
 layout(push_constant) uniform MaterialProperties
 {
+
     layout(offset = 16) vec4 baseColor;
     float roughness;           
     float metallic;
     float emissiveIntensity;
+
 } material;
 
-
-layout(set = 1, binding = 1) uniform SceneParameters
+struct MaterialTexturesData
 {
-    vec4 lightPosition;
-    vec4 cameraPosition;
-    vec4 lightColor;
-} sceneParams;
+    int AlbedoID;
+    int NormalID;
+    int RoughnessID;
+    int EmissiveID;
+    int AOID;
+};
+
+struct SceneLightData
+{
+    int NumLights;
+    vec4 LightPosition[MAX_LIGHTS];
+    vec4 LightColor[MAX_LIGHTS];
+};
+
+layout(set = 1, binding = 3) uniform MaterialTextureBuffer
+{
+
+    MaterialTexturesData MaterialTextures[MAX_MATERIALS];
+
+} MaterialTextureIDs;
+
+
+layout(set = 1, binding = 1) uniform SceneLightBuffer
+{
+
+    SceneLightData LightData;
+
+} SceneLightParams;
 
 
 // Step function (Heaviside function)
@@ -112,25 +137,54 @@ vec3 ReinhardToneMapping(vec3 color, float exposure)
     return pow(color, vec3(1.0 / 2.2));
 }
 
+// Helper function to sample textures with a fallback value
+vec4 sampleTextureOrDefault(int textureIndex, vec2 texCoord, vec4 defaultValue)
+{
+    // Check if the texture index is invalid
+    if (textureIndex == NO_TEXTURE)
+    {
+        return defaultValue;
+    }
+    
+    return texture(Textures[textureIndex], texCoord);
+}
+
 // Sample textures and gather material properties
 void sampleTextures(out vec3 normal, out float roughness, out float metallic, out vec3 emissive, out float ao)
 {
-    normal = texture(normalTexture, fragTexCoord).rgb;
-    normal = normalize(normal * 2.0 - 1.0);
+    // Sample normal map
+    vec4 normalSample = sampleTextureOrDefault(MaterialTextureIDs.MaterialTextures[inMaterialInstanceIndex].NormalID, fragTexCoord, vec4(1.0, 1.0, 1.0, 1.0));
+    normal = normalize(normalSample.rgb * 2.0 - 1.0);
 
-    roughness = texture(roughnessTexture, fragTexCoord).g;
-    metallic = texture(roughnessTexture, fragTexCoord).b;
+    // Sample roughness
+    vec4 roughnessSample = sampleTextureOrDefault(MaterialTextureIDs.MaterialTextures[inMaterialInstanceIndex].RoughnessID, fragTexCoord, vec4(0.5));
+    roughness = roughnessSample.g;
 
-    emissive = texture(emissiveTexture, fragTexCoord).rgb;
-    ao = texture(ambientocclusionTexture, fragTexCoord).r;
+    // Sample metallic
+    vec4 metallicSample = sampleTextureOrDefault(MaterialTextureIDs.MaterialTextures[inMaterialInstanceIndex].RoughnessID, fragTexCoord, vec4(0.5));
+    metallic = metallicSample.b;
+
+    // Sample emissive
+    vec4 emissiveSample = sampleTextureOrDefault(MaterialTextureIDs.MaterialTextures[inMaterialInstanceIndex].EmissiveID, fragTexCoord, vec4(1.0));
+    emissive = emissiveSample.rgb;
+
+    // Sample ambient occlusion
+    vec4 aoSample = sampleTextureOrDefault(MaterialTextureIDs.MaterialTextures[inMaterialInstanceIndex].AOID, fragTexCoord, vec4(0.0));
+    ao = aoSample.r;
 }
 
 // Compute lighting and view directions in world space
 void calculateLightingDirections(out vec3 lightDir, out vec3 viewDir)
 {
-    // Ensure the view direction is correctly calculated
-    lightDir = normalize(sceneParams.lightPosition.rgb - fragWorldPosition);
-    viewDir = normalize(sceneParams.cameraPosition.rgb - fragWorldPosition);
+    vec3 CalculatedLightDirection = vec3(1.0);
+    for(int i = 0; i < SceneLightParams.LightData.NumLights; ++i)
+    {
+        vec3 CurrentLightDir = normalize(SceneLightParams.LightData.LightPosition[i].rgb - fragWorldPosition);
+        CalculatedLightDirection += CurrentLightDir;
+    }
+
+    lightDir = normalize(CalculatedLightDirection);
+    viewDir = normalize(CameraPosition.rgb - fragWorldPosition);
 }
 
 void main()
@@ -144,11 +198,12 @@ void main()
     calculateLightingDirections(lightDir, viewDir);
 
     // Calculate base color and apply base color multiplier
-    vec4 albedo = texture(albedoTexture, fragTexCoord) * material.baseColor;
-
+    int AlbedoTextIndex = MaterialTextureIDs.MaterialTextures[inMaterialInstanceIndex].AlbedoID;
+    vec4 albedo = sampleTextureOrDefault(AlbedoTextIndex, fragTexCoord, vec4(1.0, 1.0, 1.0, 1.0));
+    
     // Compute PBR lighting using Cook-Torrance model
     vec3 color = CookTorranceBRDF(normal, lightDir, viewDir, roughness, metallic, albedo.rgb);
-    color *= sceneParams.lightColor.rgb; // Apply light color
+    //color *= sceneParams.lightColor.rgb; // Apply light color
 
     // Apply tone mapping and gamma correction
     color = ReinhardToneMapping(color, 1.0 /* for now */);
@@ -161,7 +216,7 @@ void main()
 
     // Apply light intensity
     //color *= sceneParams.lightColor.a;
-
+    
     // Output the final color, preserving alpha from the albedo texture
     outColor = vec4(color, albedo.a);
 }

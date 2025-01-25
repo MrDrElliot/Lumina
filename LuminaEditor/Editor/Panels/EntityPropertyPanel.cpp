@@ -138,7 +138,9 @@ namespace Lumina
                         ImGui::Spacing();
 
                         ImGui::Columns(2);
-                        const char* MaterialAssetName = MeshComponent.Material.IsValid() ? MeshComponent.Material->GetAssetMetadata().Name.c_str() : "No Material"; 
+                        
+                        const char* MaterialAssetName = MeshComponent.Material.IsValid() ? MeshComponent.Material->GetAssetMetadata().Name.c_str() : "No Material";
+                        
                         ImGui::Text("Material: ");
         
                         if (ImGui::Button(MaterialAssetName))
@@ -162,7 +164,7 @@ namespace Lumina
                             FAssetMetadata Metadata = {};
                             if (FAssetPropertyPanel::Render(EAssetType::Material, Metadata))
                             {
-                                MeshComponent.SetMaterialAsset(Metadata);
+                                MeshComponent.Material = Metadata;
                                 ImGui::CloseCurrentPopup();
                             }
                             ImGui::EndPopup();
@@ -177,7 +179,7 @@ namespace Lumina
                             FAssetMetadata Metadata = {};
                             if (FAssetPropertyPanel::Render(EAssetType::StaticMesh, Metadata))
                             {
-                                MeshComponent.SetMeshAsset(Metadata);
+                                MeshComponent.StaticMesh = Metadata;
                                 ImGui::CloseCurrentPopup();
                             }
                             ImGui::EndPopup();

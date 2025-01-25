@@ -18,6 +18,8 @@ namespace Lumina
         void Serialize(FArchive& Ar) override;
         void CreateImage();
         TRefPtr<FImage> GetImage() { return Image; }
+
+        void SetImage(const TRefPtr<FImage>& InImage, const FImageSpecification& Spec);
     
     private:
         

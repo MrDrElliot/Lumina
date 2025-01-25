@@ -54,15 +54,14 @@ namespace Lumina
 
 
         template <typename T>
-        void ForEachComponent(const std::function<void(uint32& NumEntires, uint32& CurrentIndex, entt::entity& OutEntity, T& OutComponent)>& Functor)
+        void ForEachComponent(const std::function<void(uint32& CurrentIndex, entt::entity& OutEntity, T& OutComponent)>&& Functor)
         {
             auto view = mEntityRegistery.view<T>();
-
-            uint32 NumEntires = view.end().index();
+            
             uint32 Current = 0;
             for (auto [entity, component] : view.each())
             {
-                Functor(NumEntires, Current, entity, component);
+                Functor(Current, entity, component);
                 Current++;
             }
         }

@@ -72,7 +72,8 @@ namespace Lumina
         features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
         features12.bufferDeviceAddress = true;
         features12.descriptorIndexing =  true;
-
+        features12.descriptorBindingPartiallyBound = true;
+        
         VkPhysicalDeviceFeatures device_features = {};
         device_features.samplerAnisotropy = VK_TRUE;
         device_features.sampleRateShading = VK_TRUE;

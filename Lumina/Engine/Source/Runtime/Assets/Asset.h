@@ -4,10 +4,6 @@
 #include "AssetTypes.h"
 
 
-#define LUMINA_ASSET(Asset, FriendlyName) \
-    public: \
-    constexpr \
-
 
 namespace Lumina
 {

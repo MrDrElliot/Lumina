@@ -117,7 +117,7 @@ namespace Lumina
     };
 
     
-    class FPipeline : public RefCounted
+    class FPipeline : public FRefCounted
     {
     public:
         

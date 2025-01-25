@@ -6,7 +6,7 @@
 
 namespace Lumina
 {
-	class FLayer : public RefCounted
+	class FLayer : public FRefCounted
 	{
 	public:
 

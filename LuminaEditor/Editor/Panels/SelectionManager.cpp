@@ -4,6 +4,12 @@ namespace Lumina
 {
     void FSelectionManager::AddSelection(ESelectionContext Context, const FGuid& Guid)
     {
+
+        if ((!SelectionContexts.empty()) && (!CanMultiSelect(Context, Guid)))
+        {
+            ClearSelectionList(Context);
+        }
+        
         // Check if the context exists, if not, create an empty vector
         if (SelectionContexts.find(Context) == SelectionContexts.end())
         {
@@ -25,11 +31,11 @@ namespace Lumina
         if (it != SelectionContexts.end())
         {
             auto& selectionList = it->second;
-            auto pos = std::find(selectionList.begin(), selectionList.end(), Guid);
-            if (pos != selectionList.end())
+            selectionList.erase(std::remove_if(selectionList.begin(), selectionList.end(), [&] (const FGuid& Other)
             {
-                selectionList.erase(pos);
-            }
+                return Other == Guid;
+            }));
+
         }
     }
 
@@ -53,5 +59,15 @@ namespace Lumina
         {
             OutSelections = SelectionContexts[Context];
         }
+    }
+
+    bool FSelectionManager::ClearSelectionList(ESelectionContext Context)
+    {
+        return SelectionContexts.erase(Context);
+    }
+
+    bool FSelectionManager::CanMultiSelect(ESelectionContext Context, const FGuid& Guid)
+    {
+        return Context != ESelectionContext::SceneOutliner ? true : false;
     }
 }

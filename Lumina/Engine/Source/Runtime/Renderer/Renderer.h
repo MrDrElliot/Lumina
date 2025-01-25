@@ -1,18 +1,17 @@
 #pragma once
+
 #include <functional>
 #include <memory>
 #include <glm/glm.hpp>
-
 #include "CommandBuffer.h"
 #include "PipelineBarrier.h"
 #include "RenderTypes.h"
-#include "Assets/AssetHandle.h"
 #include "Memory/RefCounted.h"
 #include "Platform/GenericPlatform.h"
 
 namespace Lumina
 {
-    class LMaterial;
+    class FMaterial;
     class FImageSampler;
     enum class EShaderStage : uint8;
     class Material;
@@ -94,7 +93,7 @@ namespace Lumina
         static void RenderMeshTasks(TRefPtr<FPipeline> Pipeline, const glm::uvec3 Dimensions, FMiscData Data);
         static void RenderMeshIndexed(TRefPtr<FPipeline> Pipeline, TRefPtr<FBuffer> VertexBuffer, TRefPtr<FBuffer> IndexBuffer, FMiscData Data);
         static void RenderVertices(uint32 Vertices, uint32 Instances = 1, uint32 FirstVertex = 0, uint32 FirstInstance = 0);
-        static void RenderStaticMeshWithMaterial(const TRefPtr<FPipeline>& Pipeline, const std::shared_ptr<LStaticMesh>& StaticMesh, const std::shared_ptr<LMaterial>& Material);
+        static void RenderStaticMeshWithMaterial(const TRefPtr<FPipeline>& Pipeline, const std::shared_ptr<LStaticMesh>& StaticMesh, const TRefPtr<FMaterial>& Material);
         static void RenderStaticMesh(const TRefPtr<FPipeline>& Pipeline, std::shared_ptr<LStaticMesh> StaticMesh, uint32 InstanceCount = 1);
 
         

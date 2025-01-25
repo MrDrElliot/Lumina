@@ -7,7 +7,7 @@
 namespace Lumina
 {
 
-    class Project : public RefCounted
+    class Project : public FRefCounted
     {
     public:
         

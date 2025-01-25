@@ -47,6 +47,7 @@ namespace Lumina
                 LOG_ERROR("Failed to open Editor Settings");
             }
         }
+        
         void Deserialize()
         {
             std::ifstream stream(Paths::GetEngineInstallDirectory() / "LuminaEditor" / "Config" / "EditorSettings.yaml");

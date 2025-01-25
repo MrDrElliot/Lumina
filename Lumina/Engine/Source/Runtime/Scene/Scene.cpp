@@ -43,28 +43,23 @@ namespace Lumina
     
     Entity LScene::CreateEntity(const FTransform& Transform, const LString& Name)
     {
-        // Check for existing entities with the same name and modify the name if necessary
         LString uniqueName = Name;
         int counter = 1;
 
-        // Create a set to track the names we've encountered so far
         std::unordered_set<LString> existingNames;
 
-        // Add existing names to the set
         for (auto& ent : mEntityRegistery.view<FNameComponent>())
         {
             auto& existingName = mEntityRegistery.get<FNameComponent>(ent).GetName();
             existingNames.insert(existingName);
         }
 
-        // If the name already exists, append a number to make it unique
         while (existingNames.count(uniqueName) > 0)
         {
             uniqueName = Name + LString("_") + std::to_string(counter);
             counter++;
         }
 
-        // Now, create the new entity with the unique name
         Entity NewEntity(mEntityRegistery.create(), this);
         FGuid Guid = FGuid::Generate();
         NewEntity.AddComponent<FGUIDComponent>(Guid);

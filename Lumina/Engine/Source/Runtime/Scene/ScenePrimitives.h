@@ -9,7 +9,8 @@ namespace Lumina
     class FImage;
 
     struct FCameraData
-    { 
+    {
+        glm::vec4 Location;
         glm::mat4 View;
         glm::mat4 Projection;
     };

@@ -55,7 +55,6 @@ namespace Lumina
 	{
 		AssertMsg(!InPath.empty(), "Empty Asset Path!");
 		
-		bool bFound = false;
 		for (auto& KVP : Get()->mAssetRegistry)
 		{
 			if(KVP.second.Path == InPath)

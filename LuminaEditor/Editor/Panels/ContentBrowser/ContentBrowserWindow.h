@@ -44,7 +44,6 @@ namespace Lumina
         TRefPtr<FImage> AssetTexture;
         ImTextureID ImAssetTexture;
     
-        std::string EnginePath;
         std::string SelectedDirectory;
         std::filesystem::path SelectedFile;
         TFastVector<TRefPtr<ContentBrowserItem>> ContentItemEntries;

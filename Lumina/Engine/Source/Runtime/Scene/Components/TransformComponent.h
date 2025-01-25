@@ -9,10 +9,7 @@ namespace Lumina
         // Constructor: Initializes with a default or provided transform
         FTransformComponent(const FTransform& InTransform = FTransform()) : Transform(InTransform) {}
 
-        void Serialize(FArchive& Ar) override 
-        {
-            
-        }
+        void Serialize(FArchive& Ar) override {}
     
         // Getter and setter methods for the full transform
         inline FTransform& GetTransform() { return Transform; }
@@ -26,29 +23,29 @@ namespace Lumina
         // Setter methods for location, rotation, and scale
         // These ensure the rotation is applied correctly (typically in quaternions) and maintain consistency in transform calculations
 
-        inline void SetLocation(const glm::vec3& InLocation) 
+        FORCEINLINE void SetLocation(const glm::vec3& InLocation) 
         { 
             Transform.Location = InLocation; 
         }
 
-        inline void SetRotation(const glm::quat& InRotation) 
+        FORCEINLINE void SetRotation(const glm::quat& InRotation) 
         { 
             Transform.Rotation = InRotation; 
         }
 
-        inline void SetRotationFromEuler(const glm::vec3& EulerRotation)
+        FORCEINLINE void SetRotationFromEuler(const glm::vec3& EulerRotation)
         {
             // Converts Euler angles (in degrees or radians) to a quaternion
             Transform.Rotation = glm::quat(glm::radians(EulerRotation));
         }
 
-        inline void SetScale(const glm::vec3& InScale) 
+        FORCEINLINE void SetScale(const glm::vec3& InScale) 
         { 
             Transform.Scale = InScale; 
         }
 
         // Helper function to convert rotation from Euler angles (degrees)
-        inline glm::vec3 GetRotationAsEuler() const 
+        FORCEINLINE glm::vec3 GetRotationAsEuler() const 
         {
             // Convert the stored quaternion back to Euler angles for easier manipulation/display
             return glm::degrees(glm::eulerAngles(Transform.Rotation));

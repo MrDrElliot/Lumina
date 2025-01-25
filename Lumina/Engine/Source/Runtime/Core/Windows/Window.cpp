@@ -79,7 +79,7 @@ namespace Lumina
 			}
 			
 			// Create the window
-			Window = glfwCreateWindow(500, 500, Specs.Title.c_str(), nullptr, nullptr);
+			Window = glfwCreateWindow(1, 1, Specs.Title.c_str(), nullptr, nullptr);
 			if (GLFWmonitor* currentMonitor = GetCurrentMonitor(Window))
 			{
 				// Get monitor dimensions
@@ -89,11 +89,11 @@ namespace Lumina
 				// Check if Specs.Width or Specs.Height is 0 and set them to the monitor size - 1
 				if (Specs.Width == 0 || Specs.Width >= monitorWidth)
 				{
-					Specs.Width = monitorWidth - 1;
+					Specs.Width = monitorWidth/1.3;
 				}
 				if (Specs.Height == 0 || Specs.Height >= monitorHeight)
 				{
-					Specs.Height = monitorHeight - 1;
+					Specs.Height = monitorHeight/1.3;
 				}
 				
 

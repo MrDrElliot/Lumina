@@ -9,9 +9,6 @@ namespace Lumina
 {
     AssetManager::AssetManager()
     {
-        FactoryRegistry* registry = FactoryRegistry::Get();
-        registry->RegisterFactory(EAssetType::Texture, std::make_unique<FTextureFactory>());
-        registry->RegisterFactory(EAssetType::StaticMesh, std::make_unique<FStaticMeshFactory>());
     }
 
     AssetManager::~AssetManager()
@@ -20,32 +17,39 @@ namespace Lumina
 
     std::shared_ptr<LAsset> AssetManager::LoadSynchronous(const FAssetHandle& InHandle)
     {
-
-        if (mAssetMap.find(InHandle) != mAssetMap.end())
+        auto it = mAssetMap.find(InHandle);
+        if (it != mAssetMap.end())
         {
-            
+            if (std::shared_ptr<LAsset> Asset = it->second.lock())
+            {
+                return Asset;
+            }
         }
-        
+    
         AssetRegistry* Registry = AssetRegistry::Get();
-        if(Registry->Exists(InHandle))
+        if (Registry->Exists(InHandle))
         {
             FAssetMetadata Metadata = Registry->GetMetadata(InHandle);
             FArchive Ar(EArchiverFlags::Reading);
             Ar.ReadFromFile(Metadata.Path);
-            
-            // Get the factory for the asset type
-            FactoryRegistry* factoryRegistry = FactoryRegistry::Get();
+        
+            FFactoryRegistry* factoryRegistry = FFactoryRegistry::Get();
             FFactory* Factory = factoryRegistry->GetFactory(Metadata.AssetType);
 
             if (Factory)
             {
                 std::shared_ptr<LAsset> NewAsset = Factory->CreateNew(Metadata, Ar);
-                mAssetMap[InHandle] = NewAsset;
-                return NewAsset;
+                if (NewAsset)
+                {
+                    mAssetMap[InHandle] = NewAsset;
+                    return NewAsset;
+                }
             }
         }
-        return std::shared_ptr<LAsset>();
+
+        return nullptr;
     }
+
 
     void AssetManager::GetAliveAssets(TFastVector<std::shared_ptr<LAsset>>& OutAliveAssets)
     {
