@@ -18,7 +18,7 @@ namespace Lumina
         
         virtual void BeginFrame() override;
         virtual void EndFrame() override;
-        virtual void BeginRender(const TFastVector<TRefPtr<FImage>>& Attachments, glm::fvec4 ClearColor) override;
+        virtual void BeginRender(const TArray<TRefPtr<FImage>>& Attachments, glm::fvec4 ClearColor) override;
         virtual void EndRender() override;
         virtual void WaitDevice() override;
 
@@ -28,7 +28,7 @@ namespace Lumina
         ERHIInterfaceType GetRHIInterfaceType() override;
 
         void InsertBarrier(const FPipelineBarrierInfo& BarrierInfo) override;
-        void BindSet(const TRefPtr<FDescriptorSet>& Set, const TRefPtr<FPipeline>& Pipeline, uint8 SetIndex, const TFastVector<uint32>& DynamicOffsets) override;
+        void BindSet(const TRefPtr<FDescriptorSet>& Set, const TRefPtr<FPipeline>& Pipeline, uint8 SetIndex, const TArray<uint32>& DynamicOffsets) override;
         void BindPipeline(TRefPtr<FPipeline> Pipeline) override;
         
         void CopyToSwapchain(TRefPtr<FImage> ImageToCopy) override;
@@ -60,7 +60,7 @@ namespace Lumina
         std::shared_ptr<FVulkanRenderContext> RenderContext;
         TRefPtr<FVulkanSwapchain> Swapchain;
 
-        TFastVector<TRefPtr<FVulkanCommandBuffer>> CommandBuffers;
+        TArray<TRefPtr<FVulkanCommandBuffer>> CommandBuffers;
         TRefPtr<FVulkanCommandBuffer> CurrentCommandBuffer;
         TRefPtr<FVulkanPipeline> CurrentBoundPipeline;
         

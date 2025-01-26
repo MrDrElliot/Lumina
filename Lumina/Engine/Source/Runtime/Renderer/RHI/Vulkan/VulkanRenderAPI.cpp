@@ -28,7 +28,7 @@ namespace Lumina
         Swapchain = RenderContext->GetSwapchain();
 
         CommandBuffers.resize(Swapchain->GetSpecs().FramesInFlight);
-        CommandBuffers.shrink_to_fit();
+        CommandBuffers.ShrinkToFit();
 
         for (auto& Buffer : CommandBuffers)
         {
@@ -88,7 +88,7 @@ namespace Lumina
         Swapchain->EndFrame();
     }
 
-    void FVulkanRenderAPI::BeginRender(const TFastVector<TRefPtr<FImage>>& Attachments, glm::fvec4 ClearColor)
+    void FVulkanRenderAPI::BeginRender(const TArray<TRefPtr<FImage>>& Attachments, glm::fvec4 ClearColor)
     {
 	    FRenderer::Submit([&, Attachments, ClearColor]
 	    {
@@ -261,7 +261,7 @@ namespace Lumina
 		});
     }
 
-    void FVulkanRenderAPI::BindSet(const TRefPtr<FDescriptorSet>& Set, const TRefPtr<FPipeline>& Pipeline, uint8 SetIndex, const TFastVector<uint32>& DynamicOffsets)
+    void FVulkanRenderAPI::BindSet(const TRefPtr<FDescriptorSet>& Set, const TRefPtr<FPipeline>& Pipeline, uint8 SetIndex, const TArray<uint32>& DynamicOffsets)
     {
     	FRenderer::Submit([&, Set, Pipeline, SetIndex]
     	{

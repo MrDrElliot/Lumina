@@ -64,15 +64,22 @@ namespace Lumina
         MaterialInstance->AmbientOcclusion.AssetPtr =   std::make_shared<LTexture>();
         MaterialInstance->AmbientOcclusion.AssetPtr->SetImage(AmbientOcclusion, AmbientOcclusion->GetSpecification());
 
-        for (int i = 0; i < 10; ++i)
+        /*for (int i = 0; i < 100; ++i)
         {
             Entity Entity = InScene->CreateEntity(FTransform(), "Teehee");
             FMeshComponent& Component = Entity.AddComponent<FMeshComponent>();
+            FTransformComponent& TransformComponent = Entity.GetComponent<FTransformComponent>();
+            TransformComponent.SetLocation(glm::vec3(i * 2, 0.0f, 0.0f));
             Component.Material = MaterialInstance;
+
+            if (i == 0)
+            {
+                Entity.AddComponent<FLightComponent>();
+            }
             
             TAssetHandle<LStaticMesh> Mesh = AssetRegistry::Get()->GetAssetByPath<LStaticMesh>(Paths::GetEngineInstallDirectory() / "Sandbox/Game/Content/Helmet.lum");
             Component.StaticMesh = Mesh;
-        }
+        }*/
 
         CreateImages();
         InitPipelines();
@@ -210,7 +217,7 @@ namespace Lumina
 
     }
 
-    void FSceneRenderer::GeometryPass(const TFastVector<TRefPtr<FImage>>& Attachments)
+    void FSceneRenderer::GeometryPass(const TArray<TRefPtr<FImage>>& Attachments)
     {
         // Begin rendering with the target and depth attachments
         if(CurrentScene->GetSceneSettings().bShowGrid)
@@ -239,8 +246,8 @@ namespace Lumina
         {
             Entity Ent(entity, CurrentScene);
             FTransformComponent& TransformComponent = Ent.GetComponent<FTransformComponent>();
-            SceneLightingData.LightPosition[Current] = glm::vec4(TransformComponent.GetLocation(), 1.0f);
-            SceneLightingData.LightColor[Current] = glm::vec4(1.0f);
+            SceneLightingData.Lights[Current].LightPosition = glm::vec4(TransformComponent.GetLocation(), 1.0f);
+            SceneLightingData.Lights[Current].LightColor = Component.LightColor;
             NumLights++;
         });
 
@@ -267,8 +274,9 @@ namespace Lumina
                 if (Component.Material.IsValid() && Component.StaticMesh.IsValid())
                 {
                     auto& Transform = View.get<FTransformComponent>(entity);
+
                     glm::mat4 Matrix = Transform.GetTransform().GetMatrix();
-                    ModelData.emplace_back(std::move(Matrix));
+                    ModelData.EmplaceBack(std::move(Matrix));
                     
                     MeshInstanceMap[MaterialInstance].emplace_back(Component.StaticMesh.Get());
 
@@ -291,7 +299,7 @@ namespace Lumina
             {
                 if (MaterialInstance != nullptr && MaterialInstance != nullptr)
                 {
-                    TexturesData.push_back(MaterialInstance->MaterialTextureIDs);
+                    TexturesData.PushBack(MaterialInstance->MaterialTextureIDs);
                 }
                 else
                 {
@@ -365,12 +373,12 @@ namespace Lumina
     
     void FSceneRenderer::InitPipelines()
     {
-        DeviceBufferLayoutElement Pos       (EShaderDataType::FLOAT3);
-        DeviceBufferLayoutElement Color     (EShaderDataType::FLOAT4);
-        DeviceBufferLayoutElement Normal    (EShaderDataType::FLOAT3);
-        DeviceBufferLayoutElement UV        (EShaderDataType::FLOAT2);
+        DeviceBufferLayoutElement Pos               (EShaderDataType::FLOAT3);
+        DeviceBufferLayoutElement Color             (EShaderDataType::FLOAT4);
+        DeviceBufferLayoutElement NormalElement     (EShaderDataType::FLOAT3);
+        DeviceBufferLayoutElement UV                (EShaderDataType::FLOAT2);
 
-        FDeviceBufferLayout Layout({Pos, Color, Normal, UV});
+        FDeviceBufferLayout Layout({Pos, Color, NormalElement, UV});
     
         FPipelineSpecification PipelineSpecs = FPipelineSpecification::Default();
         PipelineSpecs.DebugName = "GraphicsPipeline";
@@ -411,7 +419,6 @@ namespace Lumina
         
         GridUBO = FBuffer::Create(GridSpec);
         GridUBO->SetFriendlyName("Grid UBO");
-        
         
         FDeviceBufferSpecification CameraSpec;
         CameraSpec.MemoryUsage = EDeviceBufferMemoryUsage::COHERENT_WRITE;
@@ -493,7 +500,7 @@ namespace Lumina
             Set->SetFriendlyName("Material: " + std::to_string(i));
             
             // Add the created set to the list of descriptor sets
-            SceneDescriptorSets.push_back(std::move(Set));
+            SceneDescriptorSets.PushBack(std::move(Set));
         }
         
         std::vector<FDescriptorBinding> GridBindings;
@@ -509,7 +516,7 @@ namespace Lumina
             auto Set = FDescriptorSet::Create(GridSpec);
             Set->SetFriendlyName("Material: " + std::to_string(i));
             
-            GridDescriptorSets.push_back(Set);
+            GridDescriptorSets.PushBack(Set);
         }
     }
 
@@ -529,7 +536,7 @@ namespace Lumina
             TRefPtr<FImage> Image = FImage::Create(ImageSpecs);
             Image->SetFriendlyName("Render Target: " + std::to_string(i));
             
-            RenderTargets.push_back(std::move(Image));
+            RenderTargets.PushBack(std::move(Image));
         }
 
         FImageSpecification DepthImageSpecs = FImageSpecification::Default();
@@ -546,7 +553,7 @@ namespace Lumina
             TRefPtr<FImage> Image = FImage::Create(DepthImageSpecs);
             Image->SetFriendlyName("Depth Image: " + std::to_string(i));
             
-            DepthAttachments.push_back(std::move(Image));
+            DepthAttachments.PushBack(std::move(Image));
         }
 
     }

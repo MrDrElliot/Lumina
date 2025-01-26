@@ -97,11 +97,11 @@ namespace Lumina
 		}
 	}
 	
-    FVulkanShader::FVulkanShader(const TFastVector<FShaderData>& InData, const LString& Tag)
+    FVulkanShader::FVulkanShader(const TArray<FShaderData>& InData, const LString& Tag)
 	{
 		auto Device = FVulkanRenderContext::GetDevice();
 
-		std::map<uint32, TFastVector<VkDescriptorSetLayoutBinding>> Bindings;
+		std::map<uint32, TArray<VkDescriptorSetLayoutBinding>> Bindings;
 
 		for (auto& StageData : InData)
 		{
@@ -121,7 +121,7 @@ namespace Lumina
 			ShaderStageCreateInfo.pName = "main";
 			ShaderStageCreateInfo.module = ShaderModule;
 
-			StageCreateInfos.push_back(ShaderStageCreateInfo);
+			StageCreateInfos.PushBack(ShaderStageCreateInfo);
 
 			SpvReflectShaderModule ReflectModule;
 			if (spvReflectCreateShaderModule((size_t)StageData.Binaries.size() * 4, StageData.Binaries.data(), &ReflectModule) != SPV_REFLECT_RESULT_SUCCESS)
@@ -134,14 +134,14 @@ namespace Lumina
 			uint32 set_count = 0;
 			spvReflectEnumerateDescriptorSets(&ReflectModule, &set_count, nullptr);
 
-			TFastVector<SpvReflectDescriptorSet*> ReflectDescriptorSets(set_count);
+			TArray<SpvReflectDescriptorSet*> ReflectDescriptorSets(set_count);
 			spvReflectEnumerateDescriptorSets(&ReflectModule, &set_count, ReflectDescriptorSets.data());
 
 			for (SpvReflectDescriptorSet* ReflectSet : ReflectDescriptorSets)
 			{
 				if (!Bindings.contains(ReflectSet->set))
 				{
-					Bindings.emplace(ReflectSet->set, TFastVector<VkDescriptorSetLayoutBinding>());
+					Bindings.emplace(ReflectSet->set, TArray<VkDescriptorSetLayoutBinding>());
 				}
 
 				for (int i = 0; i < ReflectSet->binding_count; i++)
@@ -168,7 +168,7 @@ namespace Lumina
 					
 					if(!bSkipBinding)
 					{
-						Bindings[ReflectSet->set].push_back(layout_binding);
+						Bindings[ReflectSet->set].PushBack(layout_binding);
 					}
 				}
 			}
@@ -192,7 +192,7 @@ namespace Lumina
 				PushConstantRange.size = ReflectRange->size;
 				PushConstantRange.offset = ReflectRange->offset;
 				PushConstantRange.stageFlags = convert(StageData.Stage);
-				Ranges.push_back(PushConstantRange);
+				Ranges.PushBack(PushConstantRange);
 			}
 
 			spvReflectDestroyShaderModule(&ReflectModule);
@@ -227,7 +227,7 @@ namespace Lumina
 			{
 				if (Bindings.find(i) == Bindings.end())
 				{
-					SetLayouts.push_back(VK_NULL_HANDLE);
+					SetLayouts.PushBack(VK_NULL_HANDLE);
 				}
 				else
 				{
@@ -252,7 +252,7 @@ namespace Lumina
 
 					VkDescriptorSetLayout VkDescriptorSetLayout = VK_NULL_HANDLE;
 					vkCreateDescriptorSetLayout(Device, &LayoutCreateInfo, nullptr, &VkDescriptorSetLayout);
-					SetLayouts.push_back(VkDescriptorSetLayout);
+					SetLayouts.PushBack(VkDescriptorSetLayout);
 				}
 			}
 		}

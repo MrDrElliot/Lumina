@@ -63,7 +63,7 @@ namespace Lumina
         
         static void BeginFrame();
         static void EndFrame();
-        static void BeginRender(const TFastVector<TRefPtr<FImage>>& Attachments, glm::fvec4 ClearColor = {0.0f, 0.0f, 0.0f, 0.0f});
+        static void BeginRender(const TArray<TRefPtr<FImage>>& Attachments, glm::fvec4 ClearColor = {0.0f, 0.0f, 0.0f, 0.0f});
         static void EndRender();
         static void Render();
         static void ProcessRenderQueue();
@@ -78,7 +78,7 @@ namespace Lumina
         static TRefPtr<FImageSampler> GetNearestSampler();
         
         static void InsertBarrier(const FPipelineBarrierInfo& BarrierInfo);
-        static void BindSet(const TRefPtr<FDescriptorSet>& Set, const TRefPtr<FPipeline>& Pipeline, uint8 SetIndex, const TFastVector<uint32>& DynamicOffsets);
+        static void BindSet(const TRefPtr<FDescriptorSet>& Set, const TRefPtr<FPipeline>& Pipeline, uint8 SetIndex, const TArray<uint32>& DynamicOffsets);
         static void BindPipeline(TRefPtr<FPipeline> Pipeline);
 
         

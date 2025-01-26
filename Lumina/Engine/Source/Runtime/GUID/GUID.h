@@ -1,85 +1,54 @@
 #pragma once
 
-#include <random>
 #include <string>
+#include <array>
+#include <stdexcept>
 #include <sstream>
 #include <iomanip>
-#include <array>
+#include <algorithm>
 #include <functional>
+#include <objbase.h> // For CoCreateGuid and related functions
 #include "Core/Serialization/Archiver.h"
-
-
-class FArchive;
+#include "Core/Templates/CanBulkSerialize.h"
 
 namespace Lumina
 {
-    // 128-byte globally-unique-identifier (GUID).
+    // 128-bit globally unique identifier (GUID).
     class FGuid
     {
     public:
-        
         // Default constructor: Initializes GUID to zero
         FGuid() : Guid{} {}
 
         // Constructor for initializing GUID with a specific value (array of bytes)
-        explicit FGuid(const std::array<uint8, 16>& New) : Guid(New) {}
-        
-        FGuid(const FGuid& Other)
+        explicit FGuid(const std::array<uint8_t, 16>& NewGuid) : Guid(NewGuid) {}
+
+        // Constructor for initializing GUID from a Windows GUID
+        explicit FGuid(const GUID& WinGuid)
         {
-            std::memcpy(Guid.data(), Other.Guid.data(), sizeof(Guid));  // Copy data properly
+            // Copy the Windows GUID into our array representation
+            memcpy(Guid.data(), &WinGuid, sizeof(GUID));
         }
 
-        FGuid(FGuid&& other) noexcept
-        {
-            Guid = std::move(other.Guid);
-        }
-
-        
         // Constructor for initializing GUID from a string (e.g., "60DBF646-773C-4B6D-AAD9-E9D51BE7E957")
         explicit FGuid(const std::string& GuidString)
         {
-            // Validate and parse the string into Guid
-            if (GuidString.length() != 36)
-            {
-                throw std::invalid_argument("Invalid GUID string length.");
-            }
-
-            std::string cleanedGuid = GuidString;
-            cleanedGuid.erase(std::remove(cleanedGuid.begin(), cleanedGuid.end(), '-'), cleanedGuid.end()); // Remove hyphens
-
-            if (cleanedGuid.length() != 32)
-            {
-                throw std::invalid_argument("Invalid GUID string format.");
-            }
-
-            // Parse the 32-character string into the Guid array (16 bytes)
-            std::istringstream stream(cleanedGuid);
-            for (size_t i = 0; i < 16; ++i)
-            {
-                uint8_t byte;
-                stream >> std::setw(2) >> std::hex >> byte;
-                Guid[i] = byte;
-            }
+            FromString(GuidString);
         }
 
         // Generate a random 128-bit GUID
         static FGuid Generate()
         {
-            std::random_device rd;
-            std::uniform_int_distribution<uint32> dist;
-            std::array<uint8, 16> randomBytes;
-
-            // Generate random 128 bits (16 bytes)
-            for (int i = 0; i < 16; ++i)
+            GUID WinGuid;
+            if (CoCreateGuid(&WinGuid) != S_OK)
             {
-                randomBytes[i] = static_cast<uint8>(dist(rd) & 0xFF);
+                throw std::runtime_error("Failed to generate a GUID.");
             }
-
-            return FGuid(randomBytes);
+            return FGuid(WinGuid);
         }
 
         // Getter for the internal GUID value (as a byte array)
-        const std::array<uint8, 16>& Get() const { return Guid; }
+        const std::array<uint8_t, 16>& Get() const { return Guid; }
 
         // Check if GUID is valid (non-zero)
         bool IsValid() const
@@ -93,19 +62,11 @@ namespace Lumina
             std::ostringstream stream;
             stream << std::hex << std::uppercase << std::setfill('0');
 
-            // Print the first 8 hex digits
-            stream << std::setw(8) << (Guid[0] << 24 | Guid[1] << 16 | Guid[2] << 8 | Guid[3]);
-            stream << '-';
-            // Next 4 hex digits
-            stream << std::setw(4) << (Guid[4] << 8 | Guid[5]);
-            stream << '-';
-            // Next 4 hex digits
-            stream << std::setw(4) << (Guid[6] << 8 | Guid[7]);
-            stream << '-';
-            // Next 4 hex digits
-            stream << std::setw(4) << (Guid[8] << 8 | Guid[9]);
-            stream << '-';
-            // Last 12 hex digits
+            stream << std::setw(8) << *reinterpret_cast<const uint32_t*>(&Guid[0]) << '-';
+            stream << std::setw(4) << *reinterpret_cast<const uint16_t*>(&Guid[4]) << '-';
+            stream << std::setw(4) << *reinterpret_cast<const uint16_t*>(&Guid[6]) << '-';
+            stream << std::setw(4) << *reinterpret_cast<const uint16_t*>(&Guid[8]) << '-';
+
             for (size_t i = 10; i < 16; ++i)
             {
                 stream << std::setw(2) << static_cast<int>(Guid[i]);
@@ -114,98 +75,83 @@ namespace Lumina
             return stream.str();
         }
 
+        
+
         // Convert a string representation back to a GUID (if valid)
-        static FGuid FromString(const std::string& str)
+        void FromString(const std::string& GuidString)
         {
-            std::array<uint8, 16> guidBytes = {};
-            for (size_t i = 0, j = 0; i < str.size() && j < 16; i += 2, ++j)
+            if (GuidString.length() != 36)
             {
-                uint8 byte = static_cast<uint8_t>(std::stoi(str.substr(i, 2), nullptr, 16));
-                guidBytes[j] = byte;
+                throw std::invalid_argument("Invalid GUID string length.");
             }
-            return FGuid(guidBytes);
-        }
 
-        FGuid& operator=(FGuid&& other) noexcept
-        {
-            if (this != &other)
+            std::string cleanedGuid = GuidString;
+            cleanedGuid.erase(std::ranges::remove(cleanedGuid, '-').begin(), cleanedGuid.end());
+
+            if (cleanedGuid.length() != 32)
             {
-                Guid = std::move(other.Guid);  // Move the array
+                throw std::invalid_argument("Invalid GUID string format.");
             }
-            return *this;
-        }
-        
-        FGuid& operator=(const FGuid& other)
-        {
-            if (this != &other)
+
+            std::istringstream stream(cleanedGuid);
+            for (size_t i = 0; i < 16; ++i)
             {
-                Guid = other.Guid;  // Copy the array
+                uint16_t byte;
+                stream >> std::setw(2) >> std::hex >> byte;
+                Guid[i] = static_cast<uint8_t>(byte);
             }
-            return *this;
         }
 
-        
-        // Comparison operators for ease of use
-        bool operator==(const FGuid& Other) const
-        {
-            return Guid == Other.Guid;
-        }
-
-        bool operator!=(const FGuid& Other) const
-        {
-            return Guid != Other.Guid;
-        }
-
-        bool operator<(const FGuid& Other) const
-        {
-            return Guid < Other.Guid;
-        }
-
-        bool operator>(const FGuid& Other) const
-        {
-            return Guid > Other.Guid;
-        }
-
-        // Allows casting FGuid to uint64 (for convenience, but truncated)
-        operator uint64() const
-        {
-            // Only return the first 64 bits (truncated)
-            uint64 result = 0;
-            for (size_t i = 0; i < 8; ++i)
-            {
-                result |= static_cast<uint64>(Guid[i]) << (8 * (7 - i));
-            }
-            return result;
-        }
+        // Comparison operators
+        bool operator==(const FGuid& Other) const { return Guid == Other.Guid; }
+        bool operator!=(const FGuid& Other) const { return !(*this == Other); }
 
         // Serialization operator
         friend FArchive& operator<<(FArchive& Ar, FGuid& Data)
         {
-            for (auto& byte : Data.Guid)
-            {
-                Ar << byte;
-            }
+            Ar.Serialize(Data.Guid.data(), Data.Guid.size());
             return Ar;
         }
 
     private:
-        // 128-bit GUID stored as 16 bytes (128 bits)
-        std::array<uint8, 16> Guid;
+        std::array<uint8_t, 16> Guid; // 128-bit GUID stored as 16 bytes
     };
+
     
+    template<> struct TCanBulkSerialize<FGuid> { enum { Value = true }; };
+    //template <> struct TIsPODType<FGuid> { enum { Value = true }; };
 }
 
 
 namespace std
 {
     template <>
-   struct std::hash<Lumina::FGuid>
+    struct hash<Lumina::FGuid>
     {
         std::size_t operator()(const Lumina::FGuid& Guid) const noexcept
         {
-            // Combine the first 64 bits (or other suitable portion) to create a hash
-            uint64 hashValue = *reinterpret_cast<const uint64*>(&Guid.Get()[0]);
-            return std::hash<uint64>{}(hashValue);
+            return std::hash<std::string>{}(Guid.ToString());
+        }
+    };
+}
+
+namespace fmt
+{
+    template <>
+    struct formatter<Lumina::FGuid>
+    {
+        // Parses the format specifier (not used here, so we ignore it)
+        constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin())
+        {
+            return ctx.begin();
+        }
+
+        // Formats the FGuid instance
+        template <typename FormatContext>
+        auto format(const Lumina::FGuid& guid, FormatContext& ctx) -> decltype(ctx.out())
+        {
+            // Use FGuid's ToString method to get a string representation
+            return fmt::format_to(ctx.out(), "{}", guid.ToString());
         }
     };
 }

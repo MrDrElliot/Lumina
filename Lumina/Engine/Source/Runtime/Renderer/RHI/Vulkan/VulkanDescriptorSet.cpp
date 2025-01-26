@@ -93,8 +93,8 @@ namespace Lumina
     {
         auto Device = FVulkanRenderContext::GetDevice();
 
-        TFastVector<VkDescriptorSetLayoutBinding> SetBindings;
-        TFastVector<VkDescriptorBindingFlags> BindingFlags;
+        TArray<VkDescriptorSetLayoutBinding> SetBindings;
+        TArray<VkDescriptorBindingFlags> BindingFlags;
 
         for (auto& binding : InSpec.Bindings)
         {
@@ -105,8 +105,8 @@ namespace Lumina
             VkBinding.descriptorType = convert(binding.Type);
             VkBinding.binding = binding.Binding;
 
-            SetBindings.push_back(std::move(VkBinding));
-            BindingFlags.push_back(extractFlags(binding.Flags));
+            SetBindings.PushBack(std::move(VkBinding));
+            BindingFlags.PushBack(extractFlags(binding.Flags));
         }
 
         VkDescriptorSetLayoutBindingFlagsCreateInfo VkBindingFlags = {};
@@ -186,11 +186,11 @@ namespace Lumina
         vkUpdateDescriptorSets(Device, 1, &WriteDescriptorSet, 0, nullptr);
     }
 
-    void FVulkanDescriptorSet::Write(uint16 Binding, uint16 ArrayElement, TFastVector<TRefPtr<FImage>> Images, TRefPtr<FImageSampler> Sampler)
+    void FVulkanDescriptorSet::Write(uint16 Binding, uint16 ArrayElement, TArray<TRefPtr<FImage>> Images, TRefPtr<FImageSampler> Sampler)
     {
         auto Device = FVulkanRenderContext::GetDevice();
     
-        TFastVector<VkDescriptorImageInfo> DescriptorImageInfos(Images.size());
+        TArray<VkDescriptorImageInfo> DescriptorImageInfos(Images.size());
 
         for (size_t i = 0; i < Images.size(); ++i)
         {

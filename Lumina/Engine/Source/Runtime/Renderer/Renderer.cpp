@@ -89,7 +89,7 @@ namespace Lumina
         RenderAPI->InsertBarrier(BarrierInfo);
     }
 
-    void FRenderer::BindSet(const TRefPtr<FDescriptorSet>& Set, const TRefPtr<FPipeline>& Pipeline, uint8 SetIndex, const TFastVector<uint32>& DynamicOffsets)
+    void FRenderer::BindSet(const TRefPtr<FDescriptorSet>& Set, const TRefPtr<FPipeline>& Pipeline, uint8 SetIndex, const TArray<uint32>& DynamicOffsets)
     {
         RenderAPI->BindSet(Set, Pipeline, SetIndex, DynamicOffsets);
     }
@@ -111,7 +111,7 @@ namespace Lumina
         RenderAPI->EndFrame();
     }
 
-    void FRenderer::BeginRender(const TFastVector<TRefPtr<FImage>>& Attachments, glm::fvec4 ClearColor)
+    void FRenderer::BeginRender(const TArray<TRefPtr<FImage>>& Attachments, glm::fvec4 ClearColor)
     {
         RenderAPI->BeginRender(Attachments, ClearColor);
     }

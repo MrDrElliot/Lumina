@@ -1,7 +1,6 @@
 #pragma once
 
 #include <spdlog/spdlog.h>
-
 #include "Sinks/ConsoleSink.h"
 
 

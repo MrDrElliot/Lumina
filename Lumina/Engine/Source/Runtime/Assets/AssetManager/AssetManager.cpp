@@ -30,15 +30,21 @@ namespace Lumina
         if (Registry->Exists(InHandle))
         {
             FAssetMetadata Metadata = Registry->GetMetadata(InHandle);
-            FArchive Ar(EArchiverFlags::Reading);
-            Ar.ReadFromFile(Metadata.Path);
-        
+            
+            TArray<uint8> Buffer;
+            if (!FFileHelper::LoadFileToArray(Buffer, Metadata.Path))
+            {
+                LOG_ERROR("Failed to load asset from path: {0}", Metadata.Path);
+                return nullptr;
+            }
+                
+            FMemoryReader Reader(Buffer);
             FFactoryRegistry* factoryRegistry = FFactoryRegistry::Get();
             FFactory* Factory = factoryRegistry->GetFactory(Metadata.AssetType);
 
             if (Factory)
             {
-                std::shared_ptr<LAsset> NewAsset = Factory->CreateNew(Metadata, Ar);
+                std::shared_ptr<LAsset> NewAsset = Factory->CreateNew(Metadata, Reader);
                 if (NewAsset)
                 {
                     mAssetMap[InHandle] = NewAsset;
@@ -51,18 +57,18 @@ namespace Lumina
     }
 
 
-    void AssetManager::GetAliveAssets(TFastVector<std::shared_ptr<LAsset>>& OutAliveAssets)
+    void AssetManager::GetAliveAssets(TArray<std::shared_ptr<LAsset>>& OutAliveAssets)
     {
-        TFastVector<FAssetHandle> DeadAssets;
+        TArray<FAssetHandle> DeadAssets;
         for (auto& KVP : mAssetMap)
         {
             if(KVP.second.lock())
             {
-                OutAliveAssets.push_back(KVP.second.lock());
+                OutAliveAssets.PushBack(KVP.second.lock());
             }
             else
             {
-                DeadAssets.push_back(KVP.first);
+                DeadAssets.PushBack(KVP.first);
             }
         }
 

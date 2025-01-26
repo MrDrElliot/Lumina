@@ -253,11 +253,11 @@ namespace Lumina
             if(bIsLuminaFile)
             {
                 FAssetMetadata Metadata = AssetRegistry::Get()->GetMetadataByPath(p.path());
-                ContentItemEntries.push_back(MakeRefPtr<ContentBrowserItem>(p.path(), Metadata, false));
+                ContentItemEntries.PushBack(MakeRefPtr<ContentBrowserItem>(p.path(), Metadata, false));
             }
             else if(p.is_directory())
             {
-                ContentItemEntries.push_back(MakeRefPtr<ContentBrowserItem>(p.path(), FAssetMetadata(), true));
+                ContentItemEntries.PushBack(MakeRefPtr<ContentBrowserItem>(p.path(), FAssetMetadata(), true));
             }
         }
     }

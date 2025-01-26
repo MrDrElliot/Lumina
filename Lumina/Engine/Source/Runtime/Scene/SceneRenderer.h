@@ -24,23 +24,33 @@ namespace Lumina
     
     struct FModelData
     {
-        glm::mat4 model;
+        glm::mat4 ModelMatrix;
     };
 
     struct FMaterialUniforms
     {
-        glm::vec4 baseColor;    // 16 bytes, already aligned
-        float roughness;        // 4 bytes
-        float metallic;         // 4 bytes
-        float padding[2];       // 8 bytes padding to align to 16 bytes
+        FMaterialUniforms()
+        {
+            memset(padding, 0, sizeof(float) * 2);
+        }
+        
+        glm::vec4 baseColor =    glm::vec4(1.0f);   // 16 bytes, already aligned
+        float roughness =          0.5f;                 // 4 bytes
+        float metallic =           0.5f;                 // 4 bytes
+        float padding[2];                                // 8 bytes padding to align to 16 bytes
+    };
+
+    struct FLight
+    {
+        glm::vec4 LightPosition =   glm::vec4(0.0f);
+        glm::vec4 LightColor =      glm::vec4(0.0f);
     };
 
     struct FSceneLightData
     {
-        uint32 NumLights = 0;
-        uint32 padding[3];
-        glm::vec4 LightPosition [MAX_LIGHTS];
-        glm::vec4 LightColor    [MAX_LIGHTS];
+        uint32 NumLights =  0;
+        uint32 padding      [3];
+        FLight Lights       [MAX_LIGHTS];
     };
 
     struct FGridData
@@ -68,7 +78,7 @@ namespace Lumina
         FSceneLightData& GetSceneLightingData() { return SceneLightingData; }
 
         void RenderGrid();
-        void GeometryPass(const TFastVector<TRefPtr<FImage>>& Attachments);
+        void GeometryPass(const TArray<TRefPtr<FImage>>& Attachments);
 
         void InitPipelines();
         void InitBuffers();
@@ -82,8 +92,8 @@ namespace Lumina
         TRefPtr<FPipeline> GraphicsPipeline;
         TRefPtr<FPipeline> InfiniteGridPipeline;
         
-        TFastVector<TRefPtr<FDescriptorSet>> GridDescriptorSets;
-        TFastVector<TRefPtr<FDescriptorSet>> SceneDescriptorSets;
+        TArray<TRefPtr<FDescriptorSet>> GridDescriptorSets;
+        TArray<TRefPtr<FDescriptorSet>> SceneDescriptorSets;
 
         FMaterialAttributes Attributes;
         
@@ -95,8 +105,8 @@ namespace Lumina
         } Data;
 
         
-        TFastVector<TRefPtr<FImage>> RenderTargets;
-        TFastVector<TRefPtr<FImage>> DepthAttachments;
+        TArray<TRefPtr<FImage>> RenderTargets;
+        TArray<TRefPtr<FImage>> DepthAttachments;
 
         TRefPtr<FImage> BaseColor;
         TRefPtr<FImage> Emissive;
@@ -115,11 +125,10 @@ namespace Lumina
         FGridData                           GridData;
         FCameraData                         CameraData;
         FSceneLightData                     SceneLightingData;
-        TFastVector<FModelData>             ModelData;
-        TFastVector<FMaterialTexturesData>  TexturesData;
+        TArray<FModelData>             ModelData;
+        TArray<FMaterialTexturesData>  TexturesData;
 
         TAssetHandle<LMaterialInstance> MaterialInstance;
-
         
         std::shared_ptr<FCamera> Camera;
         TRefPtr<FMaterial> TestMaterial;

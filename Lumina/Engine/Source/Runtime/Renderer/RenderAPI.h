@@ -38,7 +38,7 @@ namespace Lumina
     
         virtual void BeginFrame() = 0;
         virtual void EndFrame() = 0;
-        virtual void BeginRender(const TFastVector<TRefPtr<FImage>>& Attachments, glm::fvec4 ClearColor) = 0;
+        virtual void BeginRender(const TArray<TRefPtr<FImage>>& Attachments, glm::fvec4 ClearColor) = 0;
         virtual void EndRender() = 0;
         virtual void WaitDevice() = 0;
 
@@ -47,7 +47,7 @@ namespace Lumina
         virtual TRefPtr<FImage> GetSwapchainImage() = 0;
         virtual ERHIInterfaceType GetRHIInterfaceType() = 0;
 
-        virtual void BindSet(const TRefPtr<FDescriptorSet>& Set, const TRefPtr<FPipeline>& Pipeline, uint8 SetIndex, const TFastVector<uint32>& DynamicOffsets) = 0;
+        virtual void BindSet(const TRefPtr<FDescriptorSet>& Set, const TRefPtr<FPipeline>& Pipeline, uint8 SetIndex, const TArray<uint32>& DynamicOffsets) = 0;
         virtual void BindPipeline(TRefPtr<FPipeline> Pipeline) = 0;
 
         virtual void InsertBarrier(const FPipelineBarrierInfo& BarrierInfo) = 0;

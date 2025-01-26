@@ -98,7 +98,7 @@ namespace Lumina
 			SwapchainImageSpec.Type = EImageType::TYPE_2D;
 			SwapchainImageSpec.Format = convert(SurfaceFormat.format);
 
-			Images.push_back(MakeRefPtr<FVulkanImage>(SwapchainImageSpec, RawImage, ImageView));
+			Images.PushBack(MakeRefPtr<FVulkanImage>(SwapchainImageSpec, RawImage, ImageView));
 
 			VkImageMemoryBarrier ImageMemoryBarrier = {};
 			ImageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -160,7 +160,7 @@ namespace Lumina
 		
 		    if (i >= PresentSemaphores.size())
 		    {
-		        PresentSemaphores.push_back(semaphore);
+		        PresentSemaphores.PushBack(semaphore);
 		    }
 		    else
 		    {
@@ -207,7 +207,7 @@ namespace Lumina
 		
 		    if (i >= AquireSemaphores.size())
 		    {
-		        AquireSemaphores.push_back(semaphore);
+		        AquireSemaphores.PushBack(semaphore);
 		    }
 		    else
 		    {
@@ -239,7 +239,7 @@ namespace Lumina
         {
             VkFence Fence;
             VK_CHECK(vkCreateFence(Device, &FenceCreateInfo, nullptr, &Fence));
-            Fences.push_back(Fence);
+            Fences.PushBack(Fence);
         }
     }
 

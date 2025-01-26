@@ -19,7 +19,7 @@ namespace Lumina
         ImGui::Begin("Asset Debug");
 
         // Retrieve the list of alive assets from the Asset Manager
-        TFastVector<std::shared_ptr<LAsset>> AliveAssets;
+        TArray<std::shared_ptr<LAsset>> AliveAssets;
         AssetManager::Get()->GetAliveAssets(AliveAssets);
 
         ImGui::PushStyleColor(0, {0.65f, 0.15f, 0.15f, 1.0});
@@ -42,7 +42,7 @@ namespace Lumina
         ImGui::SeparatorText("Asset Registry");
         ImGui::PopStyleColor();
     
-        TFastVector<FAssetMetadata> RegisteredAssets;
+        TArray<FAssetMetadata> RegisteredAssets;
         AssetRegistry::Get()->GetAllRegisteredAssets(RegisteredAssets);
         for (auto& alive : RegisteredAssets)
         {

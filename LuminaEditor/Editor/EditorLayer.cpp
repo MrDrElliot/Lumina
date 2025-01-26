@@ -66,7 +66,7 @@ namespace Lumina
             ImGui::DockSpaceOverViewport(mainViewport);
         }
 
-        TFastVector<TRefPtr<EditorImGuiWindow>> Panels;
+        TArray<TRefPtr<EditorImGuiWindow>> Panels;
         PanelManager::Get()->GetPanels(Panels);
 
         for (auto& Panel : Panels)
@@ -81,7 +81,7 @@ namespace Lumina
 
     TRefPtr<EditorImGuiWindow> FEditorLayer::GetEditorWindowByName(const LString& Name)
     {
-        TFastVector<TRefPtr<EditorImGuiWindow>> Windows;
+        TArray<TRefPtr<EditorImGuiWindow>> Windows;
         PanelManager::Get()->GetPanels(Windows);
         for (auto& Window : Windows)
         {

@@ -3,6 +3,7 @@
 #include "Core/Singleton/Singleton.h"
 #include <memory>
 #include "Assets/Asset.h"
+#include "Containers/Array.h"
 #include "Core/Serialization/Archiver.h"
 
 
@@ -20,7 +21,7 @@ namespace Lumina
 
 		void Shutdown() override
 		{
-			for (auto& KVP : mAssetMap)
+			/*for (auto& KVP : mAssetMap)
 			{
 				if(const std::shared_ptr<LAsset>& Asset = KVP.second.lock())
 				{
@@ -28,7 +29,7 @@ namespace Lumina
 					Asset->Serialize(Ar);
 					Ar.WriteToFile(Asset->GetAssetMetadata().Path);
 				}
-			}
+			}*/
 		}
 
 		/** Will attempt to return a valid asset, will not automatically load an asset */
@@ -53,7 +54,7 @@ namespace Lumina
 
 		/** Will attempt to get an asset that is valid, if it is not valid, it will sync load */
 		std::shared_ptr<LAsset> LoadSynchronous(const FAssetHandle& InHandle);
-		void GetAliveAssets(TFastVector<std::shared_ptr<LAsset>>& OutAliveAssets);
+		void GetAliveAssets(TArray<std::shared_ptr<LAsset>>& OutAliveAssets);
 
 	private:
 

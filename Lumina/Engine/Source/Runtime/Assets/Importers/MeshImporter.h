@@ -1,4 +1,5 @@
 #pragma once
+#include <random>
 #include <fastgltf/core.hpp>
 #include <fastgltf/types.hpp>
 #include <fastgltf/base64.hpp>
@@ -28,8 +29,6 @@ namespace Lumina
             for (fastgltf::Mesh& Mesh : Asset.meshes)
             {
                 FMeshAsset NewAsset;
-                TFastVector<uint32> Indices;
-                TFastVector<FVertex> Vertices;
     
                 for (auto& Primitive : Mesh.primitives)
                 {
@@ -37,18 +36,18 @@ namespace Lumina
                     NewSurface.StartIndex = Indices.size();
                     NewSurface.Count = Asset.accessors[Primitive.indicesAccessor.value()].count;*/
     
-                    size_t IniitalVert = Vertices.size();
+                    size_t InitialVert = NewAsset.Vertices.size();
     
                     fastgltf::Accessor& IndexAccessor = Asset.accessors[Primitive.indicesAccessor.value()];
-                    Indices.reserve(Indices.size() + IndexAccessor.count);
+                    NewAsset.Indices.reserve(IndexAccessor.count);
     
                     fastgltf::iterateAccessor<std::uint32_t>(Asset, IndexAccessor, [&](std::uint32_t Index)
                     {
-                        Indices.push_back(Index);
+                        NewAsset.Indices.EmplaceBack(Index);
                     });
     
                     fastgltf::Accessor& PosAccessor = Asset.accessors[Primitive.findAttribute("POSITION")->second];
-                    Vertices.resize(Vertices.size() + PosAccessor.count);
+                    NewAsset.Vertices.resize(NewAsset.Vertices.size() + PosAccessor.count);
     
                     fastgltf::iterateAccessorWithIndex<glm::vec3>(Asset, PosAccessor, [&](glm::vec3 V, size_t Index)
                     {
@@ -57,7 +56,7 @@ namespace Lumina
                         Vertex.Color = glm::vec4(1.0f);
                         Vertex.UV = glm::vec2(0.0f);
                         
-                        Vertices[IniitalVert + Index] = Vertex;
+                        NewAsset.Vertices[InitialVert + Index] = Vertex;
                     });
     
                     auto normals = Primitive.findAttribute("NORMAL");
@@ -65,7 +64,7 @@ namespace Lumina
                     {
                         fastgltf::iterateAccessorWithIndex<glm::vec3>(Asset, Asset.accessors[(*normals).second], [&](glm::vec3 v, size_t index)
                         {
-                                Vertices[IniitalVert + index].Normal = v;
+                                NewAsset.Vertices[InitialVert + index].Normal = v;
                         });
                     }
     
@@ -74,8 +73,8 @@ namespace Lumina
                     {
                         fastgltf::iterateAccessorWithIndex<glm::vec2>(Asset, Asset.accessors[(*uv).second], [&](glm::vec2 v, size_t index)
                         {
-                                Vertices[IniitalVert + index].UV.x = v.x;
-                                Vertices[IniitalVert + index].UV.y = 1.0f - v.y;
+                                NewAsset.Vertices[InitialVert + index].UV.x = v.x;
+                                NewAsset.Vertices[InitialVert + index].UV.y = 1.0f - v.y;
                         });
                     }
     
@@ -85,12 +84,10 @@ namespace Lumina
                     {
                         fastgltf::iterateAccessorWithIndex<glm::vec4>(Asset, Asset.accessors[(*colors).second], [&](glm::vec4 v, size_t index)
                         {
-                                Vertices[IniitalVert + index].Color = v;
+                                NewAsset.Vertices[InitialVert + index].Color = v;
                         });
                     }
                     
-                    NewAsset.Indices = std::move(Indices);
-                    NewAsset.Vertices = std::move(Vertices);
                     NewAsset.Name = Mesh.name;
                 }
     
@@ -108,12 +105,14 @@ namespace Lumina
                         vtx.Color = glm::vec4(r, g, b, 1.0f);  // Set the vertex color
                     }
                 }
-                 Ar << NewAsset;
-                 return true; //@TODO fuck.
+                
+                Ar << NewAsset;
+                
+                return true; //@TODO fuck.
                 //ReturnMeshes.push_back(LStaticMesh::CreateMesh(FAssetMetadata(), std::move(NewAsset)));
             }
     
-            //return ReturnMeshes;
+            return true;
         }
 
     private:

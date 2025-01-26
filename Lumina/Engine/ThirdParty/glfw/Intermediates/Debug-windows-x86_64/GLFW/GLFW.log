@@ -2,31 +2,36 @@
 cl : command line  warning D9025: overriding '/MTd' with '/MDd'
   context.c
 cl : command line  warning D9025: overriding '/MTd' with '/MDd'
-  egl_context.c
 cl : command line  warning D9025: overriding '/MTd' with '/MDd'
+cl : command line  warning D9025: overriding '/MTd' with '/MDd'
+  egl_context.c
 cl : command line  warning D9025: overriding '/MTd' with '/MDd'
   init.c
   input.c
-cl : command line  warning D9025: overriding '/MTd' with '/MDd'
-cl : command line  warning D9025: overriding '/MTd' with '/MDd'
   monitor.c
+cl : command line  warning D9025: overriding '/MTd' with '/MDd'
 cl : command line  warning D9025: overriding '/MTd' with '/MDd'
 cl : command line  warning D9025: overriding '/MTd' with '/MDd'
   null_init.c
   null_joystick.c
 cl : command line  warning D9025: overriding '/MTd' with '/MDd'
+cl : command line  warning D9025: overriding '/MTd' with '/MDd'
+cl : command line  warning D9025: overriding '/MTd' with '/MDd'
+cl : command line  warning D9025: overriding '/MTd' with '/MDd'
+cl : command line  warning D9025: overriding '/MTd' with '/MDd'
   null_monitor.c
-cl : command line  warning D9025: overriding '/MTd' with '/MDd'
-cl : command line  warning D9025: overriding '/MTd' with '/MDd'
-cl : command line  warning D9025: overriding '/MTd' with '/MDd'
-cl : command line  warning D9025: overriding '/MTd' with '/MDd'
-cl : command line  warning D9025: overriding '/MTd' with '/MDd'
-cl : command line  warning D9025: overriding '/MTd' with '/MDd'
-cl : command line  warning D9025: overriding '/MTd' with '/MDd'
   null_window.c
+cl : command line  warning D9025: overriding '/MTd' with '/MDd'
   osmesa_context.c
+cl : command line  warning D9025: overriding '/MTd' with '/MDd'
   platform.c
+cl : command line  warning D9025: overriding '/MTd' with '/MDd'
   vulkan.c
+cl : command line  warning D9025: overriding '/MTd' with '/MDd'
+cl : command line  warning D9025: overriding '/MTd' with '/MDd'
+cl : command line  warning D9025: overriding '/MTd' with '/MDd'
+cl : command line  warning D9025: overriding '/MTd' with '/MDd'
+cl : command line  warning D9025: overriding '/MTd' with '/MDd'
   wgl_context.c
   win32_init.c
   win32_joystick.c
@@ -36,4 +41,4 @@ cl : command line  warning D9025: overriding '/MTd' with '/MDd'
   win32_time.c
   win32_window.c
   window.c
-  GLFW.vcxproj -> D:\CPP-Projects\Lumina\Lumina\Engine\ThirdParty\glfw\Binaries\Debug-windows-x86_64\GLFW\GLFW.lib
+  GLFW.vcxproj -> G:\CPP-Projects\Lumina\Lumina\Engine\ThirdParty\glfw\Binaries\Debug-windows-x86_64\GLFW\GLFW.lib

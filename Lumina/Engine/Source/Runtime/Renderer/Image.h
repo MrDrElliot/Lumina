@@ -72,7 +72,7 @@ namespace Lumina
     {
         std::string DebugName;
         glm::uvec3 Extent;
-        TFastVector<uint8> Pixels;
+        TArray<uint8> Pixels;
         uint32 MipLevels;
         int32 SourceChannels;
         EImageFormat Format;

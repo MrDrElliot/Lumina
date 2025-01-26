@@ -45,10 +45,10 @@ namespace Lumina
         VkSurfaceFormatKHR  SurfaceFormat;
         VkPresentModeKHR    CurrentPresentMode;
         
-        TFastVector<TRefPtr<FVulkanImage>>  Images;
-        TFastVector<VkSemaphore>            PresentSemaphores;
-        TFastVector<VkSemaphore>            AquireSemaphores;
-        TFastVector<VkFence>                Fences;
+        TArray<TRefPtr<FVulkanImage>>  Images;
+        TArray<VkSemaphore>            PresentSemaphores;
+        TArray<VkSemaphore>            AquireSemaphores;
+        TArray<VkFence>                Fences;
         
         uint32 CurrentFrameIndex = 0;
         uint32 CurrentImageIndex = 0;

@@ -75,7 +75,7 @@ namespace Lumina
     
                 // Display metadata details
                 ImGui::Text("Name: %s", AssetMetadata.Name.c_str());
-                ImGui::Text("GUID: %llu", AssetMetadata.Guid.Get());
+                ImGui::Text("GUID: %s", AssetMetadata.Guid.ToString().c_str());
                 ImGui::Text("Path: %s", AssetMetadata.Path.c_str());
                 ImGui::Text("Origin Path: %s", AssetMetadata.OriginPath.c_str());
                 ImGui::Text("Type: %s", AssetTypeToString(AssetMetadata.AssetType).c_str());

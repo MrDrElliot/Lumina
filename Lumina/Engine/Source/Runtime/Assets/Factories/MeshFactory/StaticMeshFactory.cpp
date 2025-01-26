@@ -1,4 +1,6 @@
 #include "StaticMeshFactory.h"
+
+#include <random>
 #include <fastgltf/core.hpp>
 #include <fastgltf/tools.hpp>
 #include "Log/Log.h"
@@ -18,11 +20,11 @@ namespace Lumina
         return NewMesh;
     }
 
-    TFastVector<std::shared_ptr<LStaticMesh>> FStaticMeshFactory::Import(std::filesystem::path InPath)
+    TArray<std::shared_ptr<LStaticMesh>> FStaticMeshFactory::Import(std::filesystem::path InPath)
     {
         fastgltf::Asset Asset;
 
-        TFastVector<std::shared_ptr<LStaticMesh>> ReturnMeshes;
+        TArray<std::shared_ptr<LStaticMesh>> ReturnMeshes;
         
         ExtractAsset(&Asset, InPath);
         
@@ -46,7 +48,7 @@ namespace Lumina
 
                 fastgltf::iterateAccessor<std::uint32_t>(Asset, IndexAccessor, [&](std::uint32_t Index)
                 {
-                    NewAsset.Indices.push_back(Index);
+                    NewAsset.Indices.PushBack(Index);
                 });
 
                 fastgltf::Accessor& PosAccessor = Asset.accessors[Primitive.findAttribute("POSITION")->second];
@@ -109,7 +111,7 @@ namespace Lumina
                 }
             }
             
-            ReturnMeshes.push_back(LStaticMesh::CreateMesh(FAssetMetadata(), std::move(NewAsset)));
+            ReturnMeshes.PushBack(LStaticMesh::CreateMesh(FAssetMetadata(), std::move(NewAsset)));
         }
 
         return ReturnMeshes;

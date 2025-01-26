@@ -2,6 +2,7 @@
 
 #include <glm/glm.hpp>
 #include "Core/Serialization/Archiver.h"
+#include "Core/Templates/CanBulkSerialize.h"
 
 #define NO_TEXTURE (-1)
 
@@ -38,16 +39,19 @@ namespace Lumina
         {
             Ar << data.Position.x << data.Position.y << data.Position.z;
             Ar << data.Color.r << data.Color.g << data.Color.b << data.Color.a;
-            Ar << data.UV.x << data.UV.y;
             Ar << data.Normal.x << data.Normal.y << data.Normal.z;
+            Ar << data.UV.x << data.UV.y;
             return Ar;
         }
         
         glm::vec3 Position;
         glm::vec4 Color;
-        glm::vec2 UV;
         glm::vec3 Normal;
+        glm::vec2 UV;
         
     };
+
+    template<> struct TCanBulkSerialize<FVertex> { enum { Value = true }; };
+
     
 }

@@ -13,14 +13,14 @@ namespace Lumina
         // Check if the context exists, if not, create an empty vector
         if (SelectionContexts.find(Context) == SelectionContexts.end())
         {
-            SelectionContexts[Context] = TFastVector<FGuid>();
+            SelectionContexts[Context] = TArray<FGuid>();
         }
 
         // Only add the Guid if it is not already selected
         auto& selectionList = SelectionContexts[Context];
         if (std::find(selectionList.begin(), selectionList.end(), Guid) == selectionList.end())
         {
-            selectionList.push_back(Guid);
+            selectionList.PushBack(Guid);
         }
     }
 
@@ -51,7 +51,7 @@ namespace Lumina
         return false;
     }
 
-    void FSelectionManager::GetSelections(ESelectionContext Context, TFastVector<FGuid>& OutSelections)
+    void FSelectionManager::GetSelections(ESelectionContext Context, TArray<FGuid>& OutSelections)
     {
         // Check if the context exists and the Guid is selected
         auto it = SelectionContexts.find(Context);

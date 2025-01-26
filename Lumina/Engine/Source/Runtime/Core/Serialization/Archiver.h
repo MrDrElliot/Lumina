@@ -1,14 +1,10 @@
 #pragma once
 
-#include <string>
-#include <vector>
-#include <type_traits>
-#include <stdexcept>
-#include <fstream>
-#include <filesystem>
-#include "Core/Assertions/Assert.h"
-#include "Containers/Array.h"
+#include "Core/Templates/IsSigned.h"
+#include "Core/Versioning/CoreVersion.h"
 #include "Log/Log.h"
+#include "Platform/WindowsPlatform.h"
+
 
 enum class EArchiverFlags : uint8
 {
@@ -39,199 +35,199 @@ class FArchive
 {
 public:
     
-    FArchive(EArchiverFlags flags) : Flags(flags) {}
+    FArchive() = default;
+    FArchive(const FArchive&) = default;
+    FArchive& operator=(const FArchive& ArchiveToCopy) = default;
+    virtual ~FArchive() = default;
+
+    
+    virtual void Seek(int64 InPos) { }
+    virtual int64 Tell() { return 0; }
+    virtual int64 TotalSize() { return 0; }
+
+    virtual void Serialize(void* V, int64 Length) {}
 
     // Set, remove, and check flags
-    void SetFlag(EArchiverFlags flag) { Flags = Flags | flag; }
-    void RemoveFlag(EArchiverFlags flag) { Flags = Flags & ~flag; }
-    bool HasFlag(EArchiverFlags flag) const { return (Flags & flag) != EArchiverFlags::None; }
+    FORCEINLINE void SetFlag(EArchiverFlags flag) { Flags = Flags | flag; }
+    FORCEINLINE void RemoveFlag(EArchiverFlags flag) { Flags = Flags & ~flag; }
+    FORCEINLINE bool HasFlag(EArchiverFlags flag) const { return (Flags & flag) != EArchiverFlags::None; }
+    
+    FORCEINLINE bool IsWriting() const { return HasFlag(EArchiverFlags::Writing); }
+    FORCEINLINE bool IsReading() const { return HasFlag(EArchiverFlags::Reading); }
 
-    bool IsWriting() const { return HasFlag(EArchiverFlags::Writing); }
-    bool IsReading() const { return HasFlag(EArchiverFlags::Reading); }
+    FORCEINLINE void SetHasError(bool bIsError) { bHasError = bIsError; }
+    FORCEINLINE bool HasError() const { return bHasError; }
 
-    // Combined << operator for reading/writing data based on mode
-    template<typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value || std::is_enum<T>::value>>
-    FArchive& operator<<(T& value)
+    FORCEINLINE static FPackageFileVersion GetEngineVersion()
     {
-        if (HasFlag(EArchiverFlags::Writing))
-        {
-            WriteToBuffer(reinterpret_cast<const uint8*>(&value), sizeof(T));
-        }
-        else if (HasFlag(EArchiverFlags::Reading))
-        {
-            ReadFromBuffer(reinterpret_cast<uint8*>(&value), sizeof(T));
-        }
-        else
-        {
-            AssertMsg(false, "Archive mode not set to reading or writing.");
-        }
+        return GPackageFileLuminaVersion;
+    }
+    
+    /** Returns the maximum size of data that this archive is allowed to serialize. */
+    FORCEINLINE int64 GetMaxSerializeSize() const { return ArMaxSerializeSize; }
 
+    
+    FORCEINLINE FArchive& operator<<(uint8& Value)
+    {
+        Serialize(&Value, 1);
         return *this;
     }
 
+    FORCEINLINE FArchive& operator<<(int8& Value)
+    {
+        Serialize(&Value, 1);
+        return *this;
+    }
+    
+    FORCEINLINE FArchive& operator<<(uint16& Value)
+    {
+        ByteOrderSerialize(Value);
+        return *this;
+    }
+    
+    FORCEINLINE FArchive& operator<<(int16& Value)
+    {
+        ByteOrderSerialize(reinterpret_cast<uint16&>(Value));
+        return *this;
+    }
+    
+    FORCEINLINE FArchive& operator<<(uint32& Value)
+    {
+        ByteOrderSerialize(Value);
+        return *this;
+    }
+    
+    FORCEINLINE FArchive& operator<<(int32& Value)
+    {
+        ByteOrderSerialize(reinterpret_cast<uint32&>(Value));
+        return *this;
+    }
+
+    FORCEINLINE FArchive& operator<<( bool& D)
+    {
+        SerializeBool(D);
+        return *this;
+    }
+
+    FORCEINLINE FArchive& operator<<(float& Value)
+    {
+        static_assert(sizeof(float) == sizeof(uint32), "Expected float to be 4 bytes to swap as uint32");
+        ByteOrderSerialize(reinterpret_cast<uint32&>(Value));
+        return *this;
+    }
+
+    FORCEINLINE FArchive& operator<<(uint64& Value)
+    {
+        ByteOrderSerialize(Value);
+        return *this;
+    }
+
+    FORCEINLINE FArchive& operator<<(int64& Value)
+    {
+        ByteOrderSerialize(reinterpret_cast<uint64&>(Value));
+        return *this;
+    }
+
+    virtual void SerializeBool(bool& D);
+    
+    FORCEINLINE FArchive& operator<<(std::string& str)
+    {
+        if (IsReading())
+        {
+            int32 SaveNum = 0;
+            *this << SaveNum;
+
+            if (SaveNum < 0)
+            {
+                SetHasError(true);
+                LOG_ERROR("Archive is corrupt!");
+                return *this;
+            }
+            
+            int64 MaxSerializeSize = GetMaxSerializeSize();
+            if ((MaxSerializeSize > 0) && (SaveNum > MaxSerializeSize))
+            {
+                SetHasError(true);
+                LOG_ERROR("String is too large! (Size: {0}, Max: {1})", SaveNum, MaxSerializeSize);
+                return *this;
+            }
+            
+            if (SaveNum)
+            {
+                str.clear();
+                str.resize(SaveNum);
+                Serialize(str.data(), SaveNum);
+            }
+            else
+            {
+                str.clear();
+            }
+        }
+        else
+        {
+            int32 SaveNum = str.size();
+            *this << SaveNum;
+
+            if (SaveNum)
+            {
+                Serialize(str.data(), SaveNum);
+            }
+        }
+        
+        return *this;
+    }
+
+    /*FArchive& operator<<(LString& str)
+    {
+        size_t size = str.Length();
+        Serialize(str.CStr(), size);
+        return *this;
+    }*/
+
+    template<typename EnumType>
+    FORCEINLINE FArchive& operator<<(EnumType& Value)
+    requires (std::is_enum_v<EnumType>)
+    {
+        return *this << reinterpret_cast<std::underlying_type_t<EnumType>&>(Value);
+
+    }
+
+private:
+    
     template<typename T>
-    FArchive& operator << (Lumina::TFastVector<T>& data)
+    FArchive& ByteOrderSerialize(T& Value)
     {
-        if(IsWriting())
-        {
-            size_t size = data.size();
-            *this << size;
-
-            if constexpr (std::is_arithmetic<T>::value)
-            {
-                WriteToBuffer(reinterpret_cast<const uint8*>(data.data()), size * sizeof(T));
-            }
-            else
-            {
-                for (size_t i = 0; i < size; ++i)
-                {
-                    *this << data[i];
-                }
-            }
-        }
-        else if(IsReading())
-        {
-            size_t size;
-            *this << size;
-            data.resize(size);
-
-            if constexpr (std::is_arithmetic<T>::value)
-            {
-                ReadFromBuffer(reinterpret_cast<uint8*>(data.data()), size * sizeof(T));
-            }
-            else
-            {
-                size_t totalSize = size * sizeof(T);
-                uint8* buffer = reinterpret_cast<uint8*>(data.data());
-                ReadFromBuffer(buffer, totalSize);
-                /*for (size_t i = 0; i < size; ++i)
-                {
-                    *this << data[i];
-                }*/
-            }
-        }
-
-        return *this;
-    }
-    
-    // Combined << operator overload for std::string
-    FArchive& operator<<(std::string& str)
-    {
-        if (IsWriting())
-        {
-            size_t size = str.size();
-            *this << size;  // Write the size of the string
-            WriteToBuffer(reinterpret_cast<const uint8*>(str.data()), size);
-        }
-        else if (IsReading())
-        {
-            size_t size;
-            *this << size;  // Read the size of the string
-            str.resize(size);
-            ReadFromBuffer(reinterpret_cast<uint8*>(&str[0]), size);
-        }
-        else
-        {
-             AssertMsg(false, "Archive mode not set to reading or writing.");
-        }
-
+        static_assert(!TIsSigned<T>::Value, "To reduce the number of template instances, cast 'Value' to a uint16&, uint32& or uint64& prior to the call or use ByteOrderSerialize(void*, int32).");
+        
+        Serialize(&Value, sizeof(T));
         return *this;
     }
 
-    
-    // Write the entire buffer to a file
-    void WriteToFile(const std::filesystem::path& filePath)
-    {
-        std::ofstream outFile(filePath, std::ios::binary | std::ios::trunc);
-        if (!outFile)
-        {
-             LOG_ERROR("Failed to open file for writing: {0}", filePath.string());
-        }
-        outFile.write(reinterpret_cast<const char*>(Buffer.data()), Buffer.size());
-        outFile.close();
-    }
 
-    // Load the entire buffer from a file
-    void ReadFromFile(const std::string& filePath)
-    {
-        std::ifstream inFile(filePath, std::ios::binary | std::ios::ate);
-        if (!inFile)
-        {
-            LOG_ERROR("Failed to open file for reading: {0}", filePath);
-            return;
-        }
-
-        std::streamsize fileSize = inFile.tellg();
-        inFile.seekg(0, std::ios::beg);
-
-        Buffer.resize(fileSize);
-        inFile.read(reinterpret_cast<char*>(Buffer.data()), fileSize);
-        inFile.close();
-
-        // Reset read position for future reads from buffer
-        ReadPosition = 0;
-    }
 
 private:
 
     EArchiverFlags Flags;
-    std::vector<uint8> Buffer;
-    size_t ReadPosition = 0;
+    uint8 bHasError:1;
+    int64 ArMaxSerializeSize = INT32_MAX;
 
-    // Helper function to write raw bytes to the buffer
-    bool WriteToBuffer(const uint8_t* data, size_t size)
-    {
-        if (data == nullptr || size == 0)
-        {
-            std::cerr << "WriteToBuffer: Invalid data or size." << std::endl;
-            return false; // Return false on invalid data
-        }
-
-        try
-        {
-            Buffer.insert(Buffer.end(), data, data + size); // Insert data into buffer
-        }
-        // Catch any unexpected exceptions
-        catch (const std::exception& e)  
-        {
-            std::cerr << "WriteToBuffer: Exception occurred: " << e.what() << std::endl;
-            return false;
-        }
-
-        return true;
-    }
-
-
-    // Helper function to read raw bytes from the buffer
-    bool ReadFromBuffer(uint8_t* data, size_t size)
-    {
-        if (data == nullptr || size == 0)  // Check for invalid input data
-            {
-            std::cerr << "ReadFromBuffer: Invalid data or size." << std::endl;
-            return false; // Return false on invalid data
-            }
-
-        if (ReadPosition + size > Buffer.size()) // Bounds checking
-            {
-            std::cerr << "ReadFromBuffer: Out of bounds read attempt." << std::endl;
-            return false; // Return false on out of bounds
-            }
-
-        try
-        {
-            // Perform the read by copying data to the provided buffer
-            std::copy(Buffer.begin() + ReadPosition, Buffer.begin() + ReadPosition + size, data);
-            ReadPosition += size; // Update read position
-        }
-        catch (const std::exception& e)
-        {
-            std::cerr << "ReadFromBuffer: Exception occurred: " << e.what() << std::endl;
-            return false;
-        }
-
-        return true;
-    }
 };
+
+inline void FArchive::SerializeBool(bool& D)
+{
+    uint32 OldUBoolValue;
+
+    OldUBoolValue = D ? 1 : 0;
+    Serialize(&OldUBoolValue, sizeof(OldUBoolValue));
+
+    if (OldUBoolValue > 1)
+    {
+        LOG_ERROR("Invalid boolean encountered while reading archive - stream is most likely corrupted.");
+
+        SetHasError(true);
+    }
+    D = !!OldUBoolValue;
+}
 
 // Example usage for a custom struct
 #if 0

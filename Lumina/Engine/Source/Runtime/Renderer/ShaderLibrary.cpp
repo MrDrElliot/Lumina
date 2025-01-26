@@ -28,7 +28,7 @@ namespace Lumina
 
     bool FShaderLibrary::Load(std::filesystem::path Vertex, std::filesystem::path Fragment, const LString& Tag)
     {
-        TFastVector<FShaderData> Shaders;
+        TArray<FShaderData> Shaders;
         
         FShaderData VertData
         {
@@ -42,8 +42,8 @@ namespace Lumina
             .RawPath = Fragment,
         };
         
-        Shaders.push_back(VertData);
-        Shaders.push_back(FragData);
+        Shaders.PushBack(VertData);
+        Shaders.PushBack(FragData);
 
         for (FShaderData& Shader : Shaders)
         {
@@ -55,7 +55,7 @@ namespace Lumina
             }
             
             size_t Size = (size_t)File.tellg();
-            TFastVector<uint32> Buffer(Size / sizeof(uint32));
+            TArray<uint32> Buffer(Size / sizeof(uint32));
 
             File.seekg(0);
             File.read((char*)Buffer.data(), (uint64)Size);

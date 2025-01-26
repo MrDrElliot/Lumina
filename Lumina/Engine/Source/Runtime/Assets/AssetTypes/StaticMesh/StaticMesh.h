@@ -41,8 +41,8 @@ namespace Lumina
         
         
         std::string Name;
-        TFastVector<FVertex> Vertices;
-        TFastVector<uint32> Indices;
+        TArray<FVertex> Vertices;
+        TArray<uint32> Indices;
         
     };
     

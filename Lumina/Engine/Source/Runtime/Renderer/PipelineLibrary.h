@@ -51,7 +51,7 @@ namespace Lumina
             if (pipeline != nullptr)
             {
                 std::lock_guard lock(Get()->Mutex);
-                Get()->Pipelines.push_back(pipeline); 
+                Get()->Pipelines.PushBack(pipeline); 
             }
         }
 
@@ -66,7 +66,7 @@ namespace Lumina
     private:
 
         
-        TFastVector<TRefPtr<FPipeline>> Pipelines;
+        TArray<TRefPtr<FPipeline>> Pipelines;
         std::shared_mutex Mutex;
 
     };

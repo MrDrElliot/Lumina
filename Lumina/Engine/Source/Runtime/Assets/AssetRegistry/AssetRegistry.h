@@ -7,8 +7,13 @@
 #include <any>
 
 #include "Assets/AssetHandle.h"
+#include "Core/Serialization/MemoryArchiver.h"
+#include "Platform/Filesystem/FileHelper.h"
 
 #define FILE_EXTENSION ".lum"
+
+#define TEXTURE_ASSET_VERSION 1;
+#define STATICMESH_ASSET_VERSION 1;
 
 namespace Lumina
 {
@@ -29,8 +34,8 @@ namespace Lumina
 		void SetMetadata(const FAssetHandle& InHandle, const FAssetMetadata& InMetadata);
 		void ScanAssets();
 
-		void GetAllRegisteredAssets(TFastVector<FAssetMetadata>& OutAssets);
-		void GetAllAssetsOfType(EAssetType Type, TFastVector<FAssetMetadata>& OutAssets);
+		void GetAllRegisteredAssets(TArray<FAssetMetadata>& OutAssets);
+		void GetAllAssetsOfType(EAssetType Type, TArray<FAssetMetadata>& OutAssets);
 		
 		bool Exists(const FAssetHandle& InHandle) { return mAssetRegistry.find(InHandle) != mAssetRegistry.end(); }
 		uint32 Size() const { return mAssetRegistry.size(); }
@@ -44,7 +49,7 @@ namespace Lumina
 	private:
 
 		std::unordered_map<FAssetHandle, FAssetMetadata> mAssetRegistry;
-		std::unordered_map<EAssetType, TFastVector<FAssetMetadata>> AssetTypeMap;
+		std::unordered_map<EAssetType, TArray<FAssetMetadata>> AssetTypeMap;
 
 		std::thread ScanThread;
 		std::atomic<bool> bShouldScan = true;
@@ -64,9 +69,16 @@ namespace Lumina
 		}
 
 		FAssetMetadata Metadata;
-		FArchive Ar(EArchiverFlags::Reading);
-		Ar.ReadFromFile(InPath.string());
-		Ar << Metadata;
+		TArray<uint8> Buffer;
+		FMemoryReader Reader(Buffer);
+		Reader << Metadata;
+		
+		if (FFileHelper::LoadFileToArray(Buffer, InPath))
+		{
+			LOG_ERROR("Failed to load file for asset: {0}", InPath.string());
+			return;
+		}
+		
 		Get()->SetMetadata(Metadata.Guid, Metadata);
 		return TAssetHandle<T>(Metadata.Guid);
 	}

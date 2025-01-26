@@ -32,6 +32,6 @@ namespace Lumina
     private:
 
         TRefPtr<FPipeline> Pipeline;
-        TFastVector<TRefPtr<FDescriptorSet>> DescriptorSets;
+        TArray<TRefPtr<FDescriptorSet>> DescriptorSets;
     };
 }

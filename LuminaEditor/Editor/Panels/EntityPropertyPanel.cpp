@@ -10,6 +10,7 @@
 #include "Assets/AssetTypes/StaticMesh/StaticMesh.h"
 #include "Scene/Components/CameraComponent.h"
 #include "Scene/Components/LightComponent.h"
+#include "ThirdParty/glm/glm/gtc/type_ptr.inl"
 
 
 namespace Lumina
@@ -25,7 +26,7 @@ namespace Lumina
     void FEntityPropertyPanel::OnUpdate(double DeltaTime)
     {
         // Retrieve the list of selected entities' GUIDs from the selection manager
-        TFastVector<FGuid> Selections;
+        TArray<FGuid> Selections;
         FSelectionManager::Get()->GetSelections(ESelectionContext::SceneOutliner, Selections);
 
         // Get the active scene
@@ -186,6 +187,30 @@ namespace Lumina
                         }
                     }
                 }
+
+                if (Ent.HasComponent<FLightComponent>())
+                {
+                    ImGui::Spacing();
+    
+                    auto& LightComponent = Ent.GetComponent<FLightComponent>();
+
+                    if (ImGui::CollapsingHeader("Light Component", ImGuiTreeNodeFlags_DefaultOpen))
+                    {
+                        ImGui::Text("Light Properties");
+                        ImGui::Separator();
+
+                        // Color picker for LightColor (RGB)
+                        ImGui::Text("Light Color:");
+                        ImGui::ColorEdit3("##LightColor", glm::value_ptr(LightComponent.LightColor));
+
+                        // Slider for intensity (stored in alpha)
+                        ImGui::Text("Intensity:");
+                        ImGui::SliderFloat("##LightIntensity", &LightComponent.LightColor.a, 0.0f, 10.0f, "%.2f");
+
+                        ImGui::Spacing();
+                    }
+                }
+
             }
         }
 

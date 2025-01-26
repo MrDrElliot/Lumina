@@ -58,8 +58,9 @@ namespace Lumina
         .build();
 
         VulkanRenderContextFunctions.DebugMessenger = InstBuilder->debug_messenger;
-        VulkanRenderContextFunctions.DebugUtilsObjectNameEXT = reinterpret_cast<PFN_vkSetDebugUtilsObjectNameEXT>(
+        VulkanRenderContextFunctions.DebugUtilsObjectNameEXT = (PFN_vkSetDebugUtilsObjectNameEXT)(
         vkGetInstanceProcAddr(InstBuilder.value(), "vkSetDebugUtilsObjectNameEXT"));
+
         
         VulkanInstance = InstBuilder.value();
         

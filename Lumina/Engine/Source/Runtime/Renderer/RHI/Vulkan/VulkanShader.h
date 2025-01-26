@@ -12,12 +12,12 @@ namespace Lumina
     {
     public:
 
-        FVulkanShader(const TFastVector<FShaderData>& InData, const LString& Tag);
+        FVulkanShader(const TArray<FShaderData>& InData, const LString& Tag);
         ~FVulkanShader() override;
 
-        TFastVector<VkPipelineShaderStageCreateInfo>& GetCreateInfos() { return StageCreateInfos; }
-        TFastVector<VkDescriptorSetLayout>& GetLayouts() { return SetLayouts; }
-        TFastVector<VkPushConstantRange>& GetRanges() { return Ranges; }
+        TArray<VkPipelineShaderStageCreateInfo>& GetCreateInfos() { return StageCreateInfos; }
+        TArray<VkDescriptorSetLayout>& GetLayouts() { return SetLayouts; }
+        TArray<VkPushConstantRange>& GetRanges() { return Ranges; }
 
         virtual void SetFriendlyName(const LString& InString) override;
         
@@ -28,9 +28,9 @@ namespace Lumina
 
     private:
         
-        TFastVector<VkPipelineShaderStageCreateInfo> StageCreateInfos;
-        TFastVector<VkDescriptorSetLayout> SetLayouts;
-        TFastVector<VkPushConstantRange> Ranges;
+        TArray<VkPipelineShaderStageCreateInfo> StageCreateInfos;
+        TArray<VkDescriptorSetLayout> SetLayouts;
+        TArray<VkPushConstantRange> Ranges;
         std::filesystem::path Path;
         bool bDirty = false;
         

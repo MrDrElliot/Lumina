@@ -5,7 +5,7 @@
 
 namespace Lumina
 {
-    TRefPtr<FShader> FShader::Create(const TFastVector<FShaderData>& InData, const LString& Tag)
+    TRefPtr<FShader> FShader::Create(const TArray<FShaderData>& InData, const LString& Tag)
     {
         return MakeRefPtr<FVulkanShader>(InData, Tag);
     }

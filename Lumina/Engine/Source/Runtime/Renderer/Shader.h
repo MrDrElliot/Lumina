@@ -94,7 +94,7 @@ namespace Lumina
     {
     public:
 
-        static TRefPtr<FShader> Create(const TFastVector<FShaderData>& InData, const LString& Tag);
+        static TRefPtr<FShader> Create(const TArray<FShaderData>& InData, const LString& Tag);
         virtual ~FShader() {}
 
         virtual bool IsDirty() const = 0;

@@ -3,10 +3,10 @@
 #include <memory>
 
 #include "Platform/GenericPlatform.h"
-#include "GUID/GUID.h"
 #include "Containers/String.h"
 #include "Core/LuminaMacros.h"
 #include "Core/Serialization/Archiver.h"
+#include "GUID/GUID.h"
 
 
 namespace Lumina
@@ -60,6 +60,7 @@ namespace Lumina
     {
         FAssetMetadata()
         {
+            Version = 1;
             Name = NAME_None.CStr();
             Guid = FGuid();
             Path = NAME_None.CStr();
@@ -67,6 +68,7 @@ namespace Lumina
             AssetType = EAssetType::None;
         }
 
+        uint32 Version;
         std::string Name;
         FGuid Guid;
         std::string Path;
@@ -75,6 +77,7 @@ namespace Lumina
 
         friend FArchive& operator << (FArchive& Ar, FAssetMetadata& data)
         {
+            Ar << data.Version;
             Ar << data.Name;
             Ar << data.Guid;
             Ar << data.Path;
@@ -91,7 +94,6 @@ namespace Lumina
         FAssetHandle(const FGuid& Guid) :Handle(Guid) {}
 
         
-
         bool IsValid() const
         {
             return Handle.IsValid();

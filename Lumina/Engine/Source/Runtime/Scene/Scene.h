@@ -14,9 +14,10 @@ namespace Lumina
     {
         FSceneSettings()
         {
-            BackgroundColor = {0.0f, 0.0f, 0.0f};
+            BackgroundColor = {0.24f, 0.24f, 0.24f};
             bShowGrid = true;
         }
+        
         glm::vec3 BackgroundColor;
         bool bShowGrid;
     };

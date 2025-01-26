@@ -21,7 +21,7 @@ namespace Lumina
         {
             auto Set = FDescriptorSet::Create(GlobalSetSpec);
             Set->SetFriendlyName("Material: " + std::to_string(i));
-            DescriptorSets.push_back(Set);
+            DescriptorSets.PushBack(Set);
         }
     }
 
@@ -53,7 +53,7 @@ namespace Lumina
         TRefPtr<FDescriptorSet> DescriptorSet = DescriptorSets[FRenderer::GetCurrentFrameIndex()];
         AssertMsg(DescriptorSet, "Tried to bind an invalid material descriptor set!");
 
-        TFastVector<uint32> dynamicOffsets;
+        TArray<uint32> dynamicOffsets;
         FRenderer::BindSet(DescriptorSet, Pipeline, (uint8)Index, std::move(dynamicOffsets));
     }
 }
