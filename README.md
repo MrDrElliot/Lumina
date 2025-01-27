@@ -17,7 +17,7 @@ Lumina is a lightweight and flexible game engine built to simplify game developm
 
 ## Features  
 
--  Vulkan is prioritized for its modern rendering techniques, with optional OpenGL support for flexibility.  
+-  Vulkan is prioritized for its modern rendering technique.  
 - **User-Friendly Editor**  
   A built-in editor application powered by ImGui, providing a seamless interface for asset creation and level design.  
 - **Third-party Integrations**  
@@ -31,7 +31,7 @@ Lumina is a lightweight and flexible game engine built to simplify game developm
 ## Requirements  
 
 - **Visual Studio 2022** (or a compatible build system).  
-- **Python** for script automation.  
+- **Python** for script automation (script will attempt to install Python for you)..  
 - **Third-party Dependencies**: Preconfigured libraries (ImGui, GLFW, Vulkan).  
 
 ---
