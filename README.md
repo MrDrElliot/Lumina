@@ -47,8 +47,8 @@ Lumina is a lightweight and flexible game engine built to simplify game developm
 
 ## Applications  
 
-- **Editor**: The main application for designing levels and assets.  
-- **Game Client**: A standalone runtime for playing your game.  
+- **Editor**: The main application for interfacing with the engine's systems in a visual manner.  
+- **Sandbox**: A simple app for testing the engine API.  
 
 ---
 
