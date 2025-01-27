@@ -1,36 +1,50 @@
-# Lumina Game Engine
+Lumina Game Engine
 
-![Example Project Image](https://i.imgur.com/aAomeLN.png)
+Lumina is a lightweight and flexible game engine built to simplify game development while offering powerful tools for creators. Designed with accessibility and efficiency in mind, Lumina empowers developers to bring their creative visions to life.
 
+What’s Included
+	•	Core Engine Features: Serialization, math utilities, logging, and other foundational systems.
+	•	Graphics Rendering: A simple yet effective 3D rendering engine with Vulkan as the primary graphics API for cutting-edge performance.
+	•	Editor with ImGui Integration: A user-friendly editor interface built with ImGui for intuitive workflows.
+	•	Cross-platform Support (Planned): Future support for macOS and Linux in addition to Windows.
 
-Lumina is a lightweight and versatile game engine designed for simplicity and flexibility. Developed with the vision of providing an accessible platform for game development, Lumina aims to empower creators with the tools they need to bring their ideas to life.
+Features
+	•	Vulkan and OpenGL Support: Vulkan is prioritized for its modern rendering techniques, with optional OpenGL support for flexibility.
+	•	User-Friendly Editor: A built-in editor application powered by ImGui, providing a seamless interface for asset creation and level design.
+	•	Third-party Integrations: Built with key libraries, including:
+	•	ImGui for GUI elements.
+	•	GLFW for window and input management.
+	•	Vulkan for high-performance rendering.
 
-## Features (Planned)
+Requirements
+	•	Visual Studio 2022 (or compatible build system).
+	•	Python for script automation.
+	•	Third-party Dependencies: Preconfigured libraries (ImGui, GLFW, Vulkan).
 
-- Cross-platform compatibility: Lumina is designed to run seamlessly on Windows, macOS, and Linux, ensuring accessibility for developers across different operating systems.
-- Graphics API support: Lumina prioritizes Vulkan and OpenGL support, with Vulkan taking precedence as the primary graphics API for its performance and modern feature set.
-- Simple 3D rendering: Lumina provides a straightforward yet powerful 3D rendering engine, enabling developers to create stunning visuals with ease.
-- Graphical User Interface (GUI) powered by ImGUI: Lumina plans to incorporate an intuitive GUI powered by ImGUI, offering a user-friendly interface for editor functionalities and workflow enhancements.
+Building Lumina
+	1.	Clone the repository and ensure all dependencies are included.
+	2.	Run the Python script in the Scripts directory to set up the project.
+	3.	Open the Visual Studio solution and set the Editor project as the default startup project.
+	4.	Build and run the solution.
 
-## Roadmap
+Applications
+	•	Editor: The main application for designing levels and assets.
+	•	Game Client: A standalone runtime for playing your game.
 
-- **Windows Support (Priority First):** Lumina will initially focus on Windows support to establish a robust foundation for development. Windows users will benefit from optimized performance and feature implementation.
-- **Cross-platform Compatibility:** Following Windows support, Lumina will expand its compatibility to macOS and Linux, ensuring that developers can harness Lumina's capabilities regardless of their preferred operating system.
-- **Vulkan as Primary Graphics API:** Lumina will prioritize Vulkan as its primary graphics API due to its performance advantages and support for modern rendering techniques. This choice reflects Lumina's commitment to delivering cutting-edge graphics capabilities.
-- **ImGUI Integration:** Lumina plans to integrate ImGUI for its graphical user interface, providing developers with a familiar and customizable environment for content creation and editing tasks.
+Roadmap
+	•	Windows Support First: Initial focus on Windows to establish a solid foundation.
+	•	Cross-platform Expansion: Planned support for macOS and Linux.
+	•	Advanced Rendering Features: Integration of modern graphics techniques with Vulkan.
+	•	User-defined Plugins: Extensible plugin system for custom game logic.
 
-## License
+License
 
-Lumina is licensed under the [MIT License](LICENSE), granting users the freedom to use, modify, and distribute the engine's source code according to their needs.
+Lumina is licensed under the MIT License, allowing free use, modification, and distribution of the engine’s source code.
 
-## Contributions
+Contributions
 
-Contributions to Lumina are welcome and encouraged! Whether you're interested in adding new features, fixing bugs, or improving documentation, your contributions play a vital role in shaping the future of Lumina. Please refer to the [CONTRIBUTING](CONTRIBUTING.md) file for guidelines on how to contribute to the project.
+Contributions are welcome! Whether you’re adding features, fixing bugs, or improving documentation, your help is vital to Lumina’s growth. Refer to the CONTRIBUTING file for guidelines.
 
-## Getting Started
+Getting Started
 
-Stay tuned for updates on Lumina's development progress and instructions on how to get started with using the engine for your game projects.
-
----
-
-Feel free to customize and expand upon this template as your project evolves. Good luck with the development of Lumina!
+To start developing with Lumina, run the Editor application from the provided Visual Studio solution. Stay tuned for additional documentation and tutorials as the engine evolves.
