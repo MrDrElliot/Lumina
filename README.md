@@ -60,6 +60,8 @@ Lumina is a lightweight and flexible game engine built to simplify game developm
   Planned support for macOS and Linux.  
 - **Advanced Rendering Features**  
   Integration of modern graphics techniques with Vulkan.  
+- **Shared Library**
+  Planned to switch from the current static library to a shared (DLL).
 - **User-defined Plugins**  
   Extensible plugin system for custom game logic.  
 
