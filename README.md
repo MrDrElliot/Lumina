@@ -63,7 +63,8 @@ Lumina is a lightweight and flexible game engine built to simplify game developm
 - **Shared Library**
   Planned to switch from the current static library to a shared (DLL).
 - **User-defined Plugins**  
-  Extensible plugin system for custom game logic.  
+  Extensible plugin system for custom game logic.
+- **Multi-Threaded renderer**
 
 ---
 
