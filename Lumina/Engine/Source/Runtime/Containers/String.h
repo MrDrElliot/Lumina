@@ -189,7 +189,7 @@ namespace Lumina
 namespace fmt
 {
     template <>
-    struct formatter<eastl::string>
+    struct formatter<Lumina::FString>
     {
         constexpr auto parse(::fmt::format_parse_context& ctx) -> decltype(ctx.begin())
         {
@@ -197,12 +197,13 @@ namespace fmt
         }
 
         template <typename FormatContext>
-        auto format(const eastl::string& str, FormatContext& ctx) -> decltype(ctx.out())
+        auto format(const Lumina::FString& str, FormatContext& ctx) -> decltype(ctx.out())
         {
-            return format_to(ctx.out(), "{}", str.c_str());
+            return format_to(ctx.out(), "{}", str.data());
         }
     };
 }
+
 
 namespace eastl
 {
