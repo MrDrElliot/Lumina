@@ -1,5 +1,5 @@
-#include "AssetRegistry.h"
 
+#include "AssetRegistry.h"
 #include <nlohmann/detail/meta/std_fs.hpp>
 #include "nlohmann/json.hpp"
 #include "Assets/Importers/AssetImporter.h"
@@ -8,7 +8,6 @@
 #include "Project/Project.h"
 #include "Renderer/Image.h"
 #include <Renderer/Material.h>
-
 #include "Core/Serialization/MemoryArchiver.h"
 #include "Platform/Filesystem/FileHelper.h"
 
@@ -31,7 +30,7 @@ namespace Lumina
 
     FAssetMetadata AssetRegistry::GetMetadata(const FAssetHandle& InHandle)
     {
-        auto It = eastl::find(mAssetRegistry.begin(), mAssetRegistry.end(), InHandle);
+        auto It = mAssetRegistry.find(InHandle);
         if (It == mAssetRegistry.end())
         {
             LOG_WARN("Failed to find asset metadata for AssetHandle: {0}", InHandle.Handle);
@@ -47,7 +46,7 @@ namespace Lumina
         FAssetMetadata Metadata;
         for (auto& KVP : mAssetRegistry)
         {
-            if(KVP.second.Path == InPath.string().c_str())
+            if(strcmp(KVP.second.Path.c_str(), InPath.string().c_str()) != 0)
             {
                 bFound = true;
                 Metadata = KVP.second;
