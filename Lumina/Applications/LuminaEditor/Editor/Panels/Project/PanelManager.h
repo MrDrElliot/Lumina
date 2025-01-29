@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <typeindex>
+#include <EASTL/unordered_map.h>
 
 #include "Containers/Array.h"
 #include "Core/Singleton/Singleton.h"
@@ -25,7 +26,7 @@ namespace Lumina
             // Attach the panel
             NewPanel->OnAttach();
 
-            PanelMap[typeid(Panel)] = NewPanel;
+            PanelMap[typeid(Panel).hash_code()] = NewPanel;
             EditorPanels.push_back(NewPanel);
             
         }
@@ -35,7 +36,7 @@ namespace Lumina
         {
             for (auto& Panel : Get()->EditorPanels)
             {
-                std::type_index index = typeid(T);
+                uint32 index = typeid(T).hash_code();
                 auto it = Get()->PanelMap.find(index);
                 if(it != Get()->PanelMap.end())
                 {
@@ -61,7 +62,7 @@ namespace Lumina
     private:
 
         TVector<TRefPtr<EditorImGuiWindow>> EditorPanels;
-        eastl::unordered_map<std::type_index, TRefPtr<EditorImGuiWindow>> PanelMap;
+        eastl::unordered_map<uint32, TRefPtr<EditorImGuiWindow>> PanelMap;
 
     };
 }

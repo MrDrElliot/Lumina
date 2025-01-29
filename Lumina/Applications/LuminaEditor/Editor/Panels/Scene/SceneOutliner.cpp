@@ -55,6 +55,11 @@ namespace Lumina
         // Loop through entities and render them
         for (auto& Ent : mScene.lock()->GetEntityRegistry().view<FNameComponent>())
         {
+            if (mScene.expired())
+            {
+                continue;
+            }
+            
             Entity ent(Ent, mScene.lock());
             EntityNode::Render(ent);
         }

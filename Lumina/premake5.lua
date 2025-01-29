@@ -79,6 +79,7 @@ project "Lumina"
 	links
 	 {
 	    "GLFW",
+	    "ImGui",
 	  	"%{VULKAN_SDK}/lib/vulkan-1.lib",  	
 	    "%{VULKAN_SDK}/lib/shaderc.lib",  	
 	 }

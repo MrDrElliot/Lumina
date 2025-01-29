@@ -92,7 +92,7 @@ namespace Lumina
                     FString menuItemName = Window->GetName();
 
                     // Check visibility and create the menu item to toggle the window's visibility
-                    if (ImGui::MenuItem(menuItemName.CStr(), nullptr, Window->IsVisible()))
+                    if (ImGui::MenuItem(menuItemName.c_str(), nullptr, Window->IsVisible()))
                     {
                         // Toggle the visibility of the window
                         Window->SetVisible(!Window->IsVisible());
@@ -120,7 +120,7 @@ namespace Lumina
                 strncpy(projectNameBuffer, Project::GetProjectConfig().Name.c_str(), sizeof(projectNameBuffer));
                 if (ImGui::InputText("Project Name", projectNameBuffer, sizeof(projectNameBuffer)))
                 {
-                    Project::GetProjectConfig().Name = std::string(projectNameBuffer); // Update config when text is edited
+                    Project::GetProjectConfig().Name = projectNameBuffer; // Update config when text is edited
                 }
 
                 // Project Version
@@ -128,7 +128,7 @@ namespace Lumina
                 strncpy(projectVersionBuffer, Project::GetProjectConfig().ProjectVersion.c_str(), sizeof(projectVersionBuffer));
                 if (ImGui::InputText("Project Version", projectVersionBuffer, sizeof(projectVersionBuffer)))
                 {
-                    Project::GetProjectConfig().ProjectVersion = std::string(projectVersionBuffer); // Update project version
+                    Project::GetProjectConfig().ProjectVersion = projectVersionBuffer; // Update project version
                 }
 
                 // Engine Version (view only)

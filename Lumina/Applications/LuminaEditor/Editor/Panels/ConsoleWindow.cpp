@@ -53,7 +53,7 @@ namespace Lumina
             for (const auto& message : OutputMessages)
             {
                 // Format the log message using the log details
-                std::string formattedMessage = "[" + message.Time + "] [" + message.LoggerName + "]: " + message.Message;
+                FString formattedMessage = "[" + message.Time + "] [" + message.LoggerName + "]: " + message.Message;
 
                 // Apply color based on log level
                 if (message.Level == EConsoleLogLevel::Error)

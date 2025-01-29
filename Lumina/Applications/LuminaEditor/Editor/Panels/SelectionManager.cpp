@@ -20,7 +20,7 @@ namespace Lumina
         auto& selectionList = SelectionContexts[Context];
         if (std::find(selectionList.begin(), selectionList.end(), Guid) == selectionList.end())
         {
-            selectionList.PushBack(Guid);
+            selectionList.push_back(Guid);
         }
     }
 

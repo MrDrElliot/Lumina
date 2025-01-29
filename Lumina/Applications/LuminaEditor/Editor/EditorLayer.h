@@ -9,7 +9,7 @@ namespace Lumina
     class FEditorLayer : public FLayer
     {
     public:
-        explicit FEditorLayer(const std::string& InName)
+        explicit FEditorLayer(const FString& InName)
             : FLayer(InName)
         {
         }

@@ -102,7 +102,7 @@ namespace Lumina
         // Popup modal for asset import options
         if (ImGui::BeginPopupModal("Asset Import Options", NULL, ImGuiWindowFlags_AlwaysAutoResize))
         {
-            EAssetType AssetType = FileExtensionToAssetType(SelectedFile.extension().string());
+            EAssetType AssetType = FileExtensionToAssetType(SelectedFile.extension().string().c_str());
 
             if (mImGuiImporterMap.find(AssetType) != mImGuiImporterMap.end())
             {
@@ -253,11 +253,11 @@ namespace Lumina
             if(bIsLuminaFile)
             {
                 FAssetMetadata Metadata = AssetRegistry::Get()->GetMetadataByPath(p.path());
-                ContentItemEntries.PushBack(MakeRefPtr<ContentBrowserItem>(p.path(), Metadata, false));
+                ContentItemEntries.push_back(MakeRefPtr<ContentBrowserItem>(p.path(), Metadata, false));
             }
             else if(p.is_directory())
             {
-                ContentItemEntries.PushBack(MakeRefPtr<ContentBrowserItem>(p.path(), FAssetMetadata(), true));
+                ContentItemEntries.push_back(MakeRefPtr<ContentBrowserItem>(p.path(), FAssetMetadata(), true));
             }
         }
     }

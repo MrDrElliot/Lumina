@@ -15,7 +15,7 @@ namespace Lumina
     {
         // Retrieve the NameComponent to get the entity's name
         auto& NameComponent = InEntity.GetComponent<FNameComponent>();
-        const char* entityName = NameComponent.GetName().Length() > 0 ? NameComponent.GetName().CStr() : "Unnamed Entity";
+        const char* entityName = NameComponent.GetName().length() > 0 ? NameComponent.GetName().c_str() : "Unnamed Entity";
 
         // Start a tree node with a small rectangle style
         ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_FramePadding;

@@ -45,7 +45,7 @@ namespace Lumina
             if (bFound)
             {
                 // Display basic entity information (e.g., name or type)
-                const char* EntityName = Ent.GetName().CStr();
+                const char* EntityName = Ent.GetName().c_str();
 
                 ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[2]);
                 ImGui::Text("Entity: %s", EntityName);
