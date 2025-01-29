@@ -1,9 +1,7 @@
 #pragma once
 
-#include <unordered_set>
 #include "Renderer/RenderContext.h"
 #include <vulkan/vulkan_core.h>
-#include "Containers/String.h"
 
 
 namespace Lumina
@@ -45,18 +43,15 @@ namespace Lumina
 
     private:
         
-        VkInstance VulkanInstance;
-        FVulkanRenderContextFunctions VulkanRenderContextFunctions;
+        VkInstance                          VulkanInstance;
+        FVulkanRenderContextFunctions       VulkanRenderContextFunctions;
+        VkDevice                            Device;
+        VkPhysicalDevice                    PhysicalDevice;
+        VkPhysicalDeviceProperties          PhysicalDeviceProperties;
+        VkCommandPool                       CommandPool;
+        VkQueue                             GeneralQueue;
         
-        TRefPtr<FVulkanSwapchain> Swapchain;
-        
-        VkDevice Device;
-        VkPhysicalDevice PhysicalDevice;
-        VkPhysicalDeviceProperties PhysicalDeviceProperties;
-
-        VkCommandPool CommandPool;
-
-        VkQueue GeneralQueue;
+        TRefPtr<FVulkanSwapchain>           Swapchain;
         
     };
 }
