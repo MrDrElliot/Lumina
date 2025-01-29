@@ -11,7 +11,7 @@ namespace Lumina
         : Pipeline(InPipeline)
     {
         constexpr uint32 MaxTextures = 1024; 
-        std::vector<FDescriptorBinding> Bindings;
+        TInlineVector<FDescriptorBinding, 4> Bindings;
         Bindings.emplace_back(1, EDescriptorBindingType::SAMPLED_IMAGE, MaxTextures, (uint32)EDescriptorFlags::PARTIALLY_BOUND, EShaderStage::FRAGMENT);
 
         FDescriptorSetSpecification GlobalSetSpec = {};

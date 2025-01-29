@@ -49,7 +49,7 @@ namespace Lumina
 
     struct FDescriptorSetSpecification
     {
-        std::vector<FDescriptorBinding> Bindings;
+        TInlineVector<FDescriptorBinding, 4> Bindings;
     };
     
     class FDescriptorSet : public FRenderResource

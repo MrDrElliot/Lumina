@@ -95,9 +95,9 @@ namespace Lumina
             }
             YAML::Node rootNode = data["Project"];
             
-            Config.Name =           rootNode["Name"].as<FString>();
-            Config.ProjectVersion = rootNode["ProjectVersion"].as<FString>();
-            Config.EngineVersion =  rootNode["EngineVersion"].as<FString>();
+            Config.Name =           rootNode["Name"].as<std::string>().c_str();
+            Config.ProjectVersion = rootNode["ProjectVersion"].as<std::string>().c_str();
+            Config.EngineVersion =  rootNode["EngineVersion"].as<std::string>().c_str();
         
             stream.close();
         }

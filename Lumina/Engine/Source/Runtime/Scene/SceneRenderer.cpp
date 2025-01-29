@@ -472,7 +472,7 @@ namespace Lumina
     {
 
         // Initialize descriptor bindings
-        std::vector<FDescriptorBinding> Bindings;
+        TInlineVector<FDescriptorBinding, 4> Bindings;
 
         // Binding 0: CameraUniforms (Pos, View, Proj)
         Bindings.emplace_back( 0, EDescriptorBindingType::UNIFORM_BUFFER, 1, 0, EShaderStage::VERTEX );
@@ -503,7 +503,7 @@ namespace Lumina
             SceneDescriptorSets.push_back(std::move(Set));
         }
         
-        std::vector<FDescriptorBinding> GridBindings;
+        TInlineVector<FDescriptorBinding, 4> GridBindings;
 
         // Binding 0: Grid (UBO view, proj matrices)
         GridBindings.emplace_back( 0, EDescriptorBindingType::UNIFORM_BUFFER, 1, 0, EShaderStage::VERTEX );

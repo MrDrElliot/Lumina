@@ -78,13 +78,10 @@ namespace Lumina
 
     void AssetRegistry::SetMetadata(const FAssetHandle& InHandle, const FAssetMetadata& InMetadata)
     {
-        // Update the main registry
         mAssetRegistry[InHandle] = InMetadata;
 
-        // Retrieve the list of metadata for this asset type
         TVector<FAssetMetadata>& Assets = AssetTypeMap[InMetadata.AssetType];
 
-        // Check for existing metadata with the same AssetID to prevent duplicates
         auto It = eastl::find_if(Assets.begin(), Assets.end(), [&](const FAssetMetadata& Meta)
         {
             return Meta.Guid == InMetadata.Guid;
@@ -92,12 +89,10 @@ namespace Lumina
 
         if (It != Assets.end())
         {
-            // Update the existing metadata if found
             *It = InMetadata;
         }
         else
         {
-            // Add new metadata if not found
             Assets.push_back(InMetadata);
         }
     }
@@ -133,7 +128,7 @@ namespace Lumina
     void AssetRegistry::GetAllAssetsOfType(EAssetType Type, TVector<FAssetMetadata>& OutAssets)
     {
         OutAssets.reserve(100);
-        auto It = eastl::find(AssetTypeMap.begin(), AssetTypeMap.end(), Type);
+        auto It = AssetTypeMap.find(Type);
         if (It != AssetTypeMap.end())
         {
             TVector<FAssetMetadata> Assets = AssetTypeMap.at(Type);

@@ -130,10 +130,19 @@ namespace eastl
     {
         std::size_t operator()(const Lumina::FGuid& Guid) const noexcept
         {
-            return eastl::hash<Lumina::FString>{}(Guid.ToString());
+            const auto* data = reinterpret_cast<const uint8_t*>(Guid.Get().data());
+            std::size_t hashValue = 0;
+
+            for (size_t i = 0; i < 16; ++i)
+            {
+                hashValue = (hashValue << 8) | data[i];
+            }
+
+            return hashValue;
         }
     };
 }
+
 
 namespace fmt
 {

@@ -62,7 +62,7 @@ namespace Lumina
 		
 		for (auto& KVP : Get()->mAssetRegistry)
 		{
-			if(KVP.second.Path == InPath)
+			if(strcmp(KVP.second.Path.c_str(), InPath.string().c_str()) == 0)
 			{
 				return TAssetHandle<T>(KVP.first);
 			}

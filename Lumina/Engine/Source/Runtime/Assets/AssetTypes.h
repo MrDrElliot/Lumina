@@ -106,7 +106,7 @@ namespace Lumina
             return Ar;
         }
         
-        bool operator==(const FAssetHandle& Other) const
+        FORCEINLINE bool operator==(const FAssetHandle& Other) const
         {
             return Handle == Other.Handle;
         }
