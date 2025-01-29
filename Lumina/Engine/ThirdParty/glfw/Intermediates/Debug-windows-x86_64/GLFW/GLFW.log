@@ -10,22 +10,22 @@ cl : command line  warning D9025: overriding '/MTd' with '/MDd'
   egl_context.c
 cl : command line  warning D9025: overriding '/W0' with '/W2'
 cl : command line  warning D9025: overriding '/MTd' with '/MDd'
-cl : command line  warning D9025: overriding '/W0' with '/W2'
-cl : command line  warning D9025: overriding '/MTd' with '/MDd'
   init.c
+cl : command line  warning D9025: overriding '/W0' with '/W2'
+cl : command line  warning D9025: overriding '/MTd' with '/MDd'
+cl : command line  warning D9025: overriding '/W0' with '/W2'
+cl : command line  warning D9025: overriding '/MTd' with '/MDd'
   input.c
-cl : command line  warning D9025: overriding '/W0' with '/W2'
-cl : command line  warning D9025: overriding '/MTd' with '/MDd'
-cl : command line  warning D9025: overriding '/W0' with '/W2'
-cl : command line  warning D9025: overriding '/MTd' with '/MDd'
-cl : command line  warning D9025: overriding '/W0' with '/W2'
-cl : command line  warning D9025: overriding '/MTd' with '/MDd'
-cl : command line  warning D9025: overriding '/W0' with '/W2'
-cl : command line  warning D9025: overriding '/MTd' with '/MDd'
-cl : command line  warning D9025: overriding '/W0' with '/W2'
-cl : command line  warning D9025: overriding '/MTd' with '/MDd'
   monitor.c
   null_init.c
+cl : command line  warning D9025: overriding '/W0' with '/W2'
+cl : command line  warning D9025: overriding '/MTd' with '/MDd'
+cl : command line  warning D9025: overriding '/W0' with '/W2'
+cl : command line  warning D9025: overriding '/MTd' with '/MDd'
+cl : command line  warning D9025: overriding '/W0' with '/W2'
+cl : command line  warning D9025: overriding '/MTd' with '/MDd'
+cl : command line  warning D9025: overriding '/W0' with '/W2'
+cl : command line  warning D9025: overriding '/MTd' with '/MDd'
   null_joystick.c
   null_monitor.c
   null_window.c
@@ -33,29 +33,29 @@ cl : command line  warning D9025: overriding '/W0' with '/W2'
 cl : command line  warning D9025: overriding '/MTd' with '/MDd'
 cl : command line  warning D9025: overriding '/W0' with '/W2'
 cl : command line  warning D9025: overriding '/MTd' with '/MDd'
-cl : command line  warning D9025: overriding '/W0' with '/W2'
-cl : command line  warning D9025: overriding '/MTd' with '/MDd'
-cl : command line  warning D9025: overriding '/W0' with '/W2'
-cl : command line  warning D9025: overriding '/MTd' with '/MDd'
-cl : command line  warning D9025: overriding '/W0' with '/W2'
-cl : command line  warning D9025: overriding '/MTd' with '/MDd'
-cl : command line  warning D9025: overriding '/W0' with '/W2'
-cl : command line  warning D9025: overriding '/MTd' with '/MDd'
-cl : command line  warning D9025: overriding '/W0' with '/W2'
-cl : command line  warning D9025: overriding '/MTd' with '/MDd'
-cl : command line  warning D9025: overriding '/W0' with '/W2'
-cl : command line  warning D9025: overriding '/MTd' with '/MDd'
-cl : command line  warning D9025: overriding '/W0' with '/W2'
-cl : command line  warning D9025: overriding '/MTd' with '/MDd'
-cl : command line  warning D9025: overriding '/W0' with '/W2'
-cl : command line  warning D9025: overriding '/MTd' with '/MDd'
-cl : command line  warning D9025: overriding '/W0' with '/W2'
-cl : command line  warning D9025: overriding '/MTd' with '/MDd'
   osmesa_context.c
+cl : command line  warning D9025: overriding '/W0' with '/W2'
+cl : command line  warning D9025: overriding '/MTd' with '/MDd'
+cl : command line  warning D9025: overriding '/W0' with '/W2'
+cl : command line  warning D9025: overriding '/MTd' with '/MDd'
+cl : command line  warning D9025: overriding '/W0' with '/W2'
+cl : command line  warning D9025: overriding '/MTd' with '/MDd'
   platform.c
   vulkan.c
   wgl_context.c
+cl : command line  warning D9025: overriding '/W0' with '/W2'
+cl : command line  warning D9025: overriding '/MTd' with '/MDd'
   win32_init.c
+cl : command line  warning D9025: overriding '/W0' with '/W2'
+cl : command line  warning D9025: overriding '/MTd' with '/MDd'
+cl : command line  warning D9025: overriding '/W0' with '/W2'
+cl : command line  warning D9025: overriding '/MTd' with '/MDd'
+cl : command line  warning D9025: overriding '/W0' with '/W2'
+cl : command line  warning D9025: overriding '/MTd' with '/MDd'
+cl : command line  warning D9025: overriding '/W0' with '/W2'
+cl : command line  warning D9025: overriding '/MTd' with '/MDd'
+cl : command line  warning D9025: overriding '/W0' with '/W2'
+cl : command line  warning D9025: overriding '/MTd' with '/MDd'
   win32_joystick.c
   win32_module.c
   win32_monitor.c

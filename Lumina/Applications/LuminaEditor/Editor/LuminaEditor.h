@@ -39,4 +39,3 @@ namespace Lumina
     
     inline LuminaEditor* GEditor;
 }
-
