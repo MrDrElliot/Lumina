@@ -32,6 +32,6 @@ namespace Lumina
 
     private:
         
-        std::unordered_map<EAssetType, FactoryPtr> FactoryMap;
+        eastl::unordered_map<EAssetType, FactoryPtr> FactoryMap;
     };
 }

@@ -77,7 +77,7 @@ namespace Lumina
             // Windows Menu
             if (ImGui::BeginMenu("Windows"))
             {
-                TArray<TRefPtr<EditorImGuiWindow>> Windows;
+                TVector<TRefPtr<EditorImGuiWindow>> Windows;
                 PanelManager::Get()->GetPanels(Windows);
              
                 // Loop through each window and create a menu item for it

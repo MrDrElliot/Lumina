@@ -26,7 +26,7 @@ namespace Lumina
     void FEntityPropertyPanel::OnUpdate(double DeltaTime)
     {
         // Retrieve the list of selected entities' GUIDs from the selection manager
-        TArray<FGuid> Selections;
+        TVector<FGuid> Selections;
         FSelectionManager::Get()->GetSelections(ESelectionContext::SceneOutliner, Selections);
 
         // Get the active scene

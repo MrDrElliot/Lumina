@@ -1,5 +1,6 @@
-#include "Scene.h"
 
+
+#include "Scene.h"
 #include "Renderer/Material.h"
 #include "SceneRenderer.h"
 #include "Assets/AssetRegistry/AssetRegistry.h"
@@ -23,7 +24,7 @@ namespace Lumina
 
     TSharedPtr<LScene> LScene::Create(TSharedPtr<FCamera> Camera)
     {
-        return eastl::make_shared<LScene>(Camera);
+        return MakeSharedPtr<LScene>(Camera);
     }
 
     void LScene::BeginScene()

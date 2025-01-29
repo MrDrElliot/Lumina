@@ -1,9 +1,10 @@
 #pragma once
 
 #include <typeindex>
-#include <unordered_map>
 #include <memory>
+#include <EASTL/unordered_map.h>
 
+#include "Memory/SmartPtr.h"
 #include "Core/Performance/PerformanceTracker.h"
 #include "Log/Log.h"
 
@@ -36,7 +37,7 @@ namespace Lumina
         {
             static_assert(std::is_base_of<ISubsystem, T>::value, "T must inherit from ISubsystem!");
 
-            auto subsystem = std::make_unique<T>(std::forward<Args>(args)...);
+            auto subsystem = MakeUniquePtr<T>(std::forward<Args>(args)...);
             T* pSubsystem = subsystem.get();
             Subsystems[typeid(T)] = std::move(subsystem);
             pSubsystem->Initialize();
@@ -76,6 +77,7 @@ namespace Lumina
         }
 
     private:
-        std::unordered_map<std::type_index, std::unique_ptr<ISubsystem>> Subsystems;
+        
+        eastl::unordered_map<std::type_index, TUniquePtr<ISubsystem>> Subsystems;
     };
 }

@@ -204,7 +204,7 @@ namespace fmt
     };
 }
 
-namespace std
+namespace eastl
 {
     template <eastl_size_t S>
     struct hash<eastl::fixed_string<char, S, true>>

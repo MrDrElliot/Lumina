@@ -2,8 +2,7 @@
 
 #include <filesystem>
 #include <fstream>
-#include <string>
-
+#include "Containers/String.h"
 #include "GUID/GUID.h"
 #include "Paths/Paths.h"
 #include "yaml-cpp/yaml.h"

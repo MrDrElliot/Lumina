@@ -1,12 +1,10 @@
 #pragma once
-#include "vk_mem_alloc.h"
-#include <glm/glm.hpp>
 
+#include <EASTL/unordered_map.h>
+#include "vk_mem_alloc.h"
 #include "VulkanBuffer.h"
 #include "VulkanImage.h"
-#include "Containers/Array.h"
 #include "Core/Singleton/Singleton.h"
-#include "Memory/RefCounted.h"
 #include "Platform/GenericPlatform.h"
 
 
@@ -40,8 +38,8 @@ namespace Lumina
         struct AllocatorStatistics 
         {
             std::vector<VmaAllocation> Allocations;
-            std::unordered_map<VkBuffer, VmaAllocation> AllocatedBuffers;
-            std::unordered_map<VkImage, VmaAllocation> AllocatedImages;
+            eastl::unordered_map<VkBuffer, VmaAllocation> AllocatedBuffers;
+            eastl::unordered_map<VkImage, VmaAllocation> AllocatedImages;
             uint64 Allocated = 0;
             uint64 Freed = 0;
             uint64 CurrentlyAllocated = 0;

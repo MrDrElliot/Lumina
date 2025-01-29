@@ -31,7 +31,8 @@ namespace Lumina
 
     FAssetMetadata AssetRegistry::GetMetadata(const FAssetHandle& InHandle)
     {
-        if (!mAssetRegistry.contains(InHandle))
+        auto It = eastl::find(mAssetRegistry.begin(), mAssetRegistry.end(), InHandle);
+        if (It == mAssetRegistry.end())
         {
             LOG_WARN("Failed to find asset metadata for AssetHandle: {0}", InHandle.Handle);
             return {};
@@ -84,7 +85,7 @@ namespace Lumina
         TVector<FAssetMetadata>& Assets = AssetTypeMap[InMetadata.AssetType];
 
         // Check for existing metadata with the same AssetID to prevent duplicates
-        auto It = std::ranges::find_if(Assets, [&](const FAssetMetadata& Meta)
+        auto It = eastl::find_if(Assets.begin(), Assets.end(), [&](const FAssetMetadata& Meta)
         {
             return Meta.Guid == InMetadata.Guid;
         });
@@ -132,7 +133,8 @@ namespace Lumina
     void AssetRegistry::GetAllAssetsOfType(EAssetType Type, TVector<FAssetMetadata>& OutAssets)
     {
         OutAssets.reserve(100);
-        if (AssetTypeMap.contains(Type))
+        auto It = eastl::find(AssetTypeMap.begin(), AssetTypeMap.end(), Type);
+        if (It != AssetTypeMap.end())
         {
             TVector<FAssetMetadata> Assets = AssetTypeMap.at(Type);
             for (FAssetMetadata& Meta : Assets)

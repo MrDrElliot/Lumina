@@ -12,6 +12,8 @@ class FTransform;
 
 namespace Lumina
 {
+    class Entity;
+
     struct FSceneSettings
     {
         FSceneSettings()
@@ -26,7 +28,6 @@ namespace Lumina
     
     class Material;
     class LStaticMesh;
-    class Entity;
     class FSceneRenderer;
     
     class LScene : public LAsset

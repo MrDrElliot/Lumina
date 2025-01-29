@@ -1,8 +1,7 @@
 #pragma once
 
 #include <mutex>
-#include <unordered_map>
-
+#include "EASTL/unordered_map.h"
 #include "Containers/String.h"
 #include "Core/Singleton/Singleton.h"
 
@@ -11,7 +10,7 @@ class FPerformanceTracker : public TSingleton<FPerformanceTracker>
 {
 public:
     // Mapping profile names to durations
-    std::unordered_map<Lumina::FString, double> ProfileMap;
+    eastl::unordered_map<Lumina::FString, double> ProfileMap;
     
     // Mutex to protect access to the map
     std::mutex ProfileMapMutex;

@@ -262,7 +262,7 @@ namespace Lumina
         {
             ModelData.clear();
             ModelData.reserve((int32)ComponentTotal);
-            std::unordered_map<TSharedPtr<LMaterialInstance>, std::vector<TSharedPtr<LStaticMesh>>> MeshInstanceMap;
+            eastl::unordered_map<TSharedPtr<LMaterialInstance>, std::vector<TSharedPtr<LStaticMesh>>> MeshInstanceMap;
 
             CurrentScene->ForEachComponent<FMeshComponent>([&, this](uint32 Current, entt::entity& entity, FMeshComponent& Component)
             {
@@ -290,7 +290,7 @@ namespace Lumina
             TexturesData.reserve(MeshInstanceMap.size());
 
             // A map to store each texture and its unique ID
-            std::unordered_map<TSharedPtr<LTexture>, int32> TextureHash;
+            eastl::unordered_map<TSharedPtr<LTexture>, int32> TextureHash;
 
             // Unique texture counter
             int32 CurrentTextureID = 0;

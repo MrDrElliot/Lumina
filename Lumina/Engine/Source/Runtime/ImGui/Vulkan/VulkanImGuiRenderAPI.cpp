@@ -21,7 +21,7 @@ namespace Lumina
 
     static VkDescriptorPool DescriptorPool = VK_NULL_HANDLE;
 
-    static std::unordered_map<FGuid, VkDescriptorSet> ImGuiImageDescriptorSets;
+    static eastl::unordered_map<FGuid, VkDescriptorSet> ImGuiImageDescriptorSets;
     
     FVulkanImGuiRenderAPI::FVulkanImGuiRenderAPI()
     {

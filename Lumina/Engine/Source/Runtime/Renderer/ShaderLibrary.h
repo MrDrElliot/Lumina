@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <shared_mutex>
 #include <unordered_map>
+#include <EASTL/unordered_map.h>
 
 #include "Shader.h"
 #include "Core/Singleton/Singleton.h"
@@ -27,12 +28,12 @@ namespace Lumina
         bool Has(FString Key);
         
         static TRefPtr<FShader> GetShader(const FString& Key);
-        const std::unordered_map<FString, TRefPtr<FShader>>* GetShaders() const { return &Library; }
+        const eastl::unordered_map<FString, TRefPtr<FShader>>* GetShaders() const { return &Library; }
         EShaderStage EvaluateStage(std::filesystem::path File) const;
 
     private:
 
-        std::unordered_map<FString, TRefPtr<FShader>> Library;
+        eastl::unordered_map<FString, TRefPtr<FShader>> Library;
         std::shared_mutex Mutex;
         
     };

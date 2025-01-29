@@ -46,7 +46,7 @@ namespace Lumina
     
         std::string SelectedDirectory;
         std::filesystem::path SelectedFile;
-        TArray<TRefPtr<ContentBrowserItem>> ContentItemEntries;
+        TVector<TRefPtr<ContentBrowserItem>> ContentItemEntries;
         std::map<EAssetType, TSharedPtr<ImGuiAssetImporter>> mImGuiImporterMap;
     };
 }

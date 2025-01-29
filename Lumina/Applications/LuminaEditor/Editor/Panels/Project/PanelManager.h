@@ -26,7 +26,7 @@ namespace Lumina
             NewPanel->OnAttach();
 
             PanelMap[typeid(Panel)] = NewPanel;
-            EditorPanels.PushBack(NewPanel);
+            EditorPanels.push_back(NewPanel);
             
         }
 
@@ -54,14 +54,14 @@ namespace Lumina
             EditorPanels.clear();
         }
 
-        void GetPanels(TArray<TRefPtr<EditorImGuiWindow>>& Panels) { Panels = EditorPanels; }
+        void GetPanels(TVector<TRefPtr<EditorImGuiWindow>>& Panels) { Panels = EditorPanels; }
         
     
 
     private:
 
-        TArray<TRefPtr<EditorImGuiWindow>> EditorPanels;
-        std::unordered_map<std::type_index, TRefPtr<EditorImGuiWindow>> PanelMap;
+        TVector<TRefPtr<EditorImGuiWindow>> EditorPanels;
+        eastl::unordered_map<std::type_index, TRefPtr<EditorImGuiWindow>> PanelMap;
 
     };
 }

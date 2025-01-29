@@ -48,8 +48,8 @@ namespace Lumina
 		
 	private:
 
-		std::unordered_map<FAssetHandle, FAssetMetadata> mAssetRegistry;
-		std::unordered_map<EAssetType, TVector<FAssetMetadata>> AssetTypeMap;
+		eastl::unordered_map<FAssetHandle, FAssetMetadata> mAssetRegistry;
+		eastl::unordered_map<EAssetType, TVector<FAssetMetadata>> AssetTypeMap;
 
 		std::thread ScanThread;
 		std::atomic<bool> bShouldScan = true;

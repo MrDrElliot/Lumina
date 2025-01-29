@@ -23,7 +23,7 @@ namespace Lumina
         void AddSelection(ESelectionContext Context, const FGuid& Guid);
         void RemoveSelection(ESelectionContext Context, const FGuid& Guid);
         bool IsSelected(ESelectionContext Context, const FGuid& Guid);
-        void GetSelections(ESelectionContext Context, TArray<FGuid>& OutSelections);
+        void GetSelections(ESelectionContext Context, TVector<FGuid>& OutSelections);
 
         bool ClearSelectionList(ESelectionContext Context);
         bool CanMultiSelect(ESelectionContext Context, const FGuid& Guid);
@@ -31,7 +31,7 @@ namespace Lumina
     private:
 
         
-    std::unordered_map<ESelectionContext, TArray<FGuid>> SelectionContexts;
+    eastl::unordered_map<ESelectionContext, TVector<FGuid>> SelectionContexts;
         
     };
 }

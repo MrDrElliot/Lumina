@@ -9,8 +9,6 @@
 
 namespace Lumina
 {
-    class LScene;
-
     class Entity
     {
     public:

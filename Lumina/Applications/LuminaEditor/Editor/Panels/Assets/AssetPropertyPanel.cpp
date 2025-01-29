@@ -8,7 +8,7 @@ namespace Lumina
     bool FAssetPropertyPanel::Render(EAssetType Type, FAssetMetadata& Selected)
     {
         AssetRegistry* Registry = AssetRegistry::Get();
-        TArray<FAssetMetadata> Assets;
+        TVector<FAssetMetadata> Assets;
 
         // Fetch all assets of the specified type
         Registry->GetAllAssetsOfType(Type, Assets);

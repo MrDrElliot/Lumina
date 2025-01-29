@@ -13,7 +13,7 @@ namespace Lumina
         // Check if the context exists, if not, create an empty vector
         if (SelectionContexts.find(Context) == SelectionContexts.end())
         {
-            SelectionContexts[Context] = TArray<FGuid>();
+            SelectionContexts[Context] = TVector<FGuid>();
         }
 
         // Only add the Guid if it is not already selected
@@ -51,7 +51,7 @@ namespace Lumina
         return false;
     }
 
-    void FSelectionManager::GetSelections(ESelectionContext Context, TArray<FGuid>& OutSelections)
+    void FSelectionManager::GetSelections(ESelectionContext Context, TVector<FGuid>& OutSelections)
     {
         // Check if the context exists and the Guid is selected
         auto it = SelectionContexts.find(Context);

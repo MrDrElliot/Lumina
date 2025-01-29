@@ -1,6 +1,7 @@
 #pragma once
 
 #include <typeindex>
+#include <EASTL/unordered_map.h>
 #include "Containers/Array.h"
 #include "Memory/RefCounted.h"
 #include <Platform/GenericPlatform.h>
@@ -51,8 +52,7 @@ namespace Lumina
 	private:
 
 		TVector<TRefPtr<FLayer>> Layers;
-		std::unordered_map<std::type_index, TRefPtr<FLayer>> LayerMap;
-		
+		eastl::unordered_map<uint32, TRefPtr<FLayer>> LayerMap;
 		uint32 LayerInsertIndex = 0;
 	};
 }

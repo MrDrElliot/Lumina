@@ -16,7 +16,7 @@ namespace Lumina
 	void FLayerStack::PushLayer(const TRefPtr<FLayer>& InLayer)
 	{
 		Layers.emplace_back(InLayer);
-		LayerMap[typeid(InLayer)] = InLayer;
+		LayerMap[typeid(InLayer).hash_code()] = InLayer;
 		LayerInsertIndex++;
 	}
 
@@ -27,11 +27,11 @@ namespace Lumina
 
 	void FLayerStack::PopLayer(const TRefPtr<FLayer>& InLayer)
 	{
-		auto it = std::find(Layers.begin(), Layers.end(), InLayer);
+		auto it = eastl::find(Layers.begin(), Layers.end(), InLayer);
 		if (it != Layers.end())
 		{
 			Layers.erase(it);
-			auto mapit = LayerMap.find(typeid(InLayer));
+			auto mapit = LayerMap.find(typeid(InLayer).hash_code());
 			if(mapit != LayerMap.end())
 			{
 				LayerMap.erase(mapit);
@@ -42,7 +42,7 @@ namespace Lumina
 
 	void FLayerStack::PopOverlay(const TRefPtr<FLayer>& InLayer)
 	{
-		auto it = std::find(Layers.begin(), Layers.end(), InLayer);
+		auto it = eastl::find(Layers.begin(), Layers.end(), InLayer);
 		if (it != Layers.end())
 		{
 			Layers.erase(it);
