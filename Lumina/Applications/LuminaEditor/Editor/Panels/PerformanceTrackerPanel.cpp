@@ -1,6 +1,7 @@
 #include "PerformanceTrackerPanel.h"
 
 #include "imgui.h"
+#include "Containers/Array.h"
 #include "Core/Performance/PerformanceTracker.h"
 
 namespace Lumina
@@ -16,7 +17,7 @@ namespace Lumina
 
     void FPerformanceTrackerPanel::OnUpdate(double DeltaTime)
     {
-        FPerformanceTracker* PerfTracker = FPerformanceTracker::Get();
+        /*FPerformanceTracker* PerfTracker = FPerformanceTracker::Get();
         std::lock_guard<std::mutex> lock(PerfTracker->ProfileMapMutex);
 
         if (ImGui::Begin("Performance Profiling"))
@@ -32,7 +33,7 @@ namespace Lumina
                 ImGui::TableHeadersRow();
 
                 // Loop through the profile map and sort by execution time (highest first)
-                std::vector<std::pair<std::string, float>> sortedEntries(PerfTracker->ProfileMap.begin(), PerfTracker->ProfileMap.end());
+                TVector<eastl::pair<FString, double>> sortedEntries(PerfTracker->ProfileMap.begin(), PerfTracker->ProfileMap.end());
 
                 // Sort the vector by execution time in descending order
                 std::sort(sortedEntries.begin(), sortedEntries.end(), [](const std::pair<std::string, float>& a, const std::pair<std::string, float>& b)
@@ -64,7 +65,7 @@ namespace Lumina
             }
 
             ImGui::End();
-        }
+        }*/
     }
 
 

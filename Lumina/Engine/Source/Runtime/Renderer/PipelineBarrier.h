@@ -25,7 +25,7 @@ namespace Lumina
 
     struct FPipelineBarrierInfo
     {
-        TVector<std::pair<TRefPtr<FBuffer>, FPipelineResourceBarrierInfo>> BufferBarriers;
-        TVector<std::pair<TRefPtr<FImage>, FPipelineResourceBarrierInfo>> ImageBarriers;
+        TVector<eastl::pair<TRefPtr<FBuffer>, FPipelineResourceBarrierInfo>> BufferBarriers;
+        TVector<eastl::pair<TRefPtr<FImage>, FPipelineResourceBarrierInfo>> ImageBarriers;
     };
 }
