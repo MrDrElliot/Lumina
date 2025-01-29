@@ -40,7 +40,7 @@ namespace Lumina
 		template<typename T>
 		TRefPtr<T> GetLayerByType()
 		{
-			auto it = LayerMap.find(typeid(T));
+			auto it = LayerMap.find(typeid(T).hash_code());
 			if(it != LayerMap.end())
 			{
 				return RefPtrCast<T>(it->second);

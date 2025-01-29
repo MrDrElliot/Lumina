@@ -1,5 +1,4 @@
 #pragma once
-#include <memory>
 
 #include "ScenePrimitives.h"
 #include "Assets/AssetHandle.h"

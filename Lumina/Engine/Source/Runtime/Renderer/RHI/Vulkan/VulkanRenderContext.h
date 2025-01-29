@@ -8,12 +8,6 @@
 
 namespace Lumina
 {
-    struct VulkanExtensionSet
-    {
-        std::unordered_set<FString> instance;
-        std::unordered_set<FString> layers;
-        std::unordered_set<FString> device;
-    };
     
     class FImageSampler;
     class FVulkanSwapchain;

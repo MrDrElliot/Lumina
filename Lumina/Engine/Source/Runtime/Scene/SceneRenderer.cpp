@@ -10,6 +10,7 @@
 #include "Assets/Factories/MeshFactory/StaticMeshFactory.h"
 #include "Assets/Factories/TextureFactory/TextureFactory.h"
 #include "Components/LightComponent.h"
+#include "Math/Transform.h"
 #include "Components/MeshComponent.h"
 #include "Core/Windows/Window.h"
 #include "Entity/Entity.h"

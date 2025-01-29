@@ -58,10 +58,10 @@ namespace Lumina
             AssetManager* Manager = AssetManager::Get();
             if (AssetPtr)
             {
-                return std::dynamic_pointer_cast<AssetType>(AssetPtr);
+                return eastl::dynamic_pointer_cast<AssetType>(AssetPtr);
             }
 
-            AssetPtr = std::dynamic_pointer_cast<AssetType>(Manager->LoadSynchronous(AssetHandle));
+            AssetPtr = eastl::dynamic_pointer_cast<AssetType>(Manager->LoadSynchronous(AssetHandle));
 
             return AssetPtr;
         }
@@ -107,14 +107,14 @@ namespace Lumina
     };
 }
 
-namespace std
+namespace eastl
 {
     template <typename AssetType>
     struct hash<Lumina::TAssetHandle<AssetType>>
     {
         std::size_t operator()(const Lumina::TAssetHandle<AssetType>& handle) const noexcept
         {
-            return std::hash<Lumina::FAssetHandle>()(handle.AssetHandle);
+            return eastl::hash<Lumina::FAssetHandle>()(handle.AssetHandle);
         }
     };
 }

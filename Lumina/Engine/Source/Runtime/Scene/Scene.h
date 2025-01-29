@@ -8,11 +8,14 @@
 #include "Memory/SmartPtr.h"
 
 
-class FTransform;
 
 namespace Lumina
 {
+    class FTransform;
     class Entity;
+    class Material;
+    class LStaticMesh;
+    class FSceneRenderer;
 
     struct FSceneSettings
     {
@@ -26,9 +29,6 @@ namespace Lumina
         bool bShowGrid;
     };
     
-    class Material;
-    class LStaticMesh;
-    class FSceneRenderer;
     
     class LScene : public LAsset
     {
@@ -74,7 +74,6 @@ namespace Lumina
         
         FSceneSettings Settings;
         EntityRegistry mEntityRegistery;
-        eastl::unordered_map<FGuid, Entity> EntityIdentifierMap;
         
         TSharedPtr<FCamera>        CurrentCamera;
         TSharedPtr<FSceneRenderer> SceneRenderer;

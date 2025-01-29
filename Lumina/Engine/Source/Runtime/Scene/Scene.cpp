@@ -11,6 +11,8 @@
 
 namespace Lumina
 {
+    eastl::unordered_map<FGuid, Entity> EntityIdentifierMap;
+
     LScene::LScene(TSharedPtr<FCamera> Camera): LAsset(FAssetMetadata())
     {
         CurrentCamera = Camera;
@@ -48,18 +50,32 @@ namespace Lumina
         FString uniqueName = Name;
         int counter = 1;
 
-        std::unordered_set<FString> existingNames;
-
+        bool nameExists = false;
         for (auto& ent : mEntityRegistery.view<FNameComponent>())
         {
             auto& existingName = mEntityRegistery.get<FNameComponent>(ent).GetName();
-            existingNames.insert(existingName);
+            if (existingName == uniqueName)
+            {
+                nameExists = true;
+                break;
+            }
         }
 
-        while (existingNames.count(uniqueName) > 0)
+        while (nameExists)
         {
             uniqueName = Name + FString("_") + eastl::to_string(counter);
             counter++;
+
+            nameExists = false;
+            for (auto& ent : mEntityRegistery.view<FNameComponent>())
+            {
+                auto& existingName = mEntityRegistery.get<FNameComponent>(ent).GetName();
+                if (existingName == uniqueName)
+                {
+                    nameExists = true;
+                    break;
+                }
+            }
         }
 
         Entity NewEntity(mEntityRegistery.create(), this);
@@ -72,6 +88,7 @@ namespace Lumina
 
         return NewEntity;
     }
+
     
     void LScene::DestroyEntity(Entity Entity)
     {

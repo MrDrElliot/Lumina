@@ -39,7 +39,7 @@ namespace Lumina
 
             auto subsystem = MakeUniquePtr<T>(std::forward<Args>(args)...);
             T* pSubsystem = subsystem.get();
-            Subsystems[typeid(T)] = std::move(subsystem);
+            Subsystems[typeid(T).hash_code()] = std::move(subsystem);
             pSubsystem->Initialize();
 
             LOG_TRACE("Subsystems: Creating Type: {0}", typeid(T).name());
@@ -49,7 +49,7 @@ namespace Lumina
         template<typename T>
         T* GetSubsystem()
         {
-            auto it = Subsystems.find(typeid(T));
+            auto it = Subsystems.find(typeid(T).hash_code());
             if (it != Subsystems.end())
             {
                 return static_cast<T*>(it->second.get());
@@ -70,7 +70,7 @@ namespace Lumina
         {
             for (auto& [type, S] : Subsystems)
             {
-                LOG_TRACE("Subsystems: Deinitializing Type: {0}", type.name());
+                LOG_TRACE("Subsystems: Deinitializing Type: {0}", std::to_string(type));
                 S->Deinitialize();
                 S = nullptr;
             }
@@ -78,6 +78,6 @@ namespace Lumina
 
     private:
         
-        eastl::unordered_map<std::type_index, TUniquePtr<ISubsystem>> Subsystems;
+        eastl::unordered_map<uint32, TUniquePtr<ISubsystem>> Subsystems;
     };
 }
