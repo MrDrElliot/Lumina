@@ -387,7 +387,7 @@ namespace Lumina
         
     	VkDebugUtilsObjectNameInfoEXT NameInfo = {};
     	NameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
-    	NameInfo.pObjectName = GetFriendlyName().CStr();
+    	NameInfo.pObjectName = GetFriendlyName().c_str();
     	NameInfo.objectType = VK_OBJECT_TYPE_IMAGE;
     	NameInfo.objectHandle = reinterpret_cast<uint64_t>(Image);
     	

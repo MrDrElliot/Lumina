@@ -17,16 +17,16 @@ namespace Lumina
 
 		static bool IsInitialized() { return Logger != nullptr; }
 		static void Init();
-		static TSharedPtr<spdlog::sinks::sink> GetSink();
+		static std::shared_ptr<spdlog::sinks::sink> GetSink();
 		static void GetConsoleLogs(std::vector<ConsoleMessage>& OutLogs) { OutLogs = Logs; }
 		static void Shutdown();
 
 
-		inline static TSharedPtr<spdlog::logger> GetLogger() { return Logger; }
+		inline static std::shared_ptr<spdlog::logger> GetLogger() { return Logger; }
 
 	private:
 
-		static TSharedPtr<spdlog::logger> Logger;
+		static std::shared_ptr<spdlog::logger> Logger;
 		static std::vector<ConsoleMessage> Logs;
 	};
 }

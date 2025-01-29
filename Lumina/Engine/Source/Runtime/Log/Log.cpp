@@ -10,7 +10,7 @@
 namespace Lumina
 {
 
-	TSharedPtr<spdlog::logger> FLog::Logger;
+	std::shared_ptr<spdlog::logger> FLog::Logger;
 	std::vector<ConsoleMessage> FLog::Logs;
 
 	FLog::FLog()
@@ -33,7 +33,7 @@ namespace Lumina
 
 	}
 
-	TSharedPtr<spdlog::sinks::sink> FLog::GetSink()
+	std::shared_ptr<spdlog::sinks::sink> FLog::GetSink()
 	{
 		return Logger->sinks().front();
 	}

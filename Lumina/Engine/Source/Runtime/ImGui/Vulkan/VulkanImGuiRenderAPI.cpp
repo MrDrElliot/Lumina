@@ -229,7 +229,7 @@ namespace Lumina
 
     		VkDebugUtilsObjectNameInfoEXT NameInfo = {};
     		NameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
-    		NameInfo.pObjectName = Image->GetFriendlyName().CStr();
+    		NameInfo.pObjectName = Image->GetFriendlyName().c_str();
     		NameInfo.objectType = VK_OBJECT_TYPE_DESCRIPTOR_SET;
     		NameInfo.objectHandle = reinterpret_cast<uint64_t>(ImGuiImageID);
     	

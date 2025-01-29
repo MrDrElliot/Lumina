@@ -79,7 +79,7 @@ namespace Lumina
 		}
 	}
 
-	constexpr FString DescriptorToString(VkDescriptorType type)
+	FString DescriptorToString(VkDescriptorType type)
 	{
 		switch (type)
 		{

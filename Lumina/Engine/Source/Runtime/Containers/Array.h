@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Core/Serialization/Archiver.h"
+#include "Core/Templates/CanBulkSerialize.h"
 #include "Platform/GenericPlatform.h"
 #include "EASTL/vector.h"
 #include "EASTL/fixed_vector.h"
@@ -20,6 +22,63 @@ namespace Lumina
 
     using Blob = TVector<uint8>;
 
+
+    //-------------------------------------------------------------------------
+    // Serialization of TVector, TInlineVector, and TArray
+    //-------------------------------------------------------------------------
+
+    template<typename ValueType>
+    FArchive& operator << (FArchive& Ar, TVector<ValueType>& Array)
+    {
+        eastl_size_t SerializeNum = 0;
+
+        if (Ar.IsReading())
+        {
+            Ar << SerializeNum; // Read the size
+            Array.clear(); // Ensure the array is empty before resizing
+        }
+        else
+        {
+            SerializeNum = Array.size(); // Use current size when writing
+        }
+
+        if (Ar.HasError())
+        {
+            return Ar;
+        }
+
+        // Case for bulk serialization (e.g., small types like uint8 or types that support it)
+        if constexpr (sizeof(ValueType) == 1 || TCanBulkSerialize<ValueType>::Value)
+        {
+            if (Ar.IsReading())
+            {
+                Array.resize(SerializeNum); // Resize the array based on serialized number
+            }
+
+            Ar.Serialize(Array.data(), SerializeNum * sizeof(ValueType)); // Bulk serialize data
+        }
+        else
+        {
+            if (Ar.IsReading())
+            {
+                for (eastl_size_t i = 0; i < SerializeNum; i++)
+                {
+                    Ar << Array.emplace_back();
+                }
+            }
+            else
+            {
+                for (eastl_size_t i = 0; i < SerializeNum; i++)
+                {
+                    Ar << Array[i];
+                }
+            }
+        }
+
+        return Ar;
+    }
+
+    
     //-------------------------------------------------------------------------
     // Simple utility functions to improve syntactic usage of container types
     //-------------------------------------------------------------------------

@@ -497,7 +497,7 @@ namespace Lumina
         {
             // Create the descriptor set using the specification
             auto Set = FDescriptorSet::Create(SceneSetSpec);
-            Set->SetFriendlyName("Material: " + FString::append(std::to_string(i).c_str()));
+            Set->SetFriendlyName("Material: " + eastl::to_string(i));
             
             // Add the created set to the list of descriptor sets
             SceneDescriptorSets.push_back(std::move(Set));
@@ -514,7 +514,7 @@ namespace Lumina
         for (uint32 i = 0; i < FramesInFlight; i++)
         {
             auto Set = FDescriptorSet::Create(GridSpec);
-            Set->SetFriendlyName("Material: " + FString::append(std::to_string(i).c_str()));
+            Set->SetFriendlyName("Material: " + eastl::to_string(i));
             
             GridDescriptorSets.push_back(Set);
         }
@@ -534,7 +534,7 @@ namespace Lumina
         for (int i = 0; i < FRenderer::GetConfig().FramesInFlight; ++i)
         {
             TRefPtr<FImage> Image = FImage::Create(ImageSpecs);
-            Image->SetFriendlyName("Render Target: " + FString::append(std::to_string(i).c_str()));
+            Image->SetFriendlyName("Render Target: " + eastl::to_string(i));
             
             RenderTargets.push_back(std::move(Image));
         }
@@ -551,7 +551,7 @@ namespace Lumina
         for(int i = 0; i < FRenderer::GetConfig().FramesInFlight; ++i)
         {
             TRefPtr<FImage> Image = FImage::Create(DepthImageSpecs);
-            Image->SetFriendlyName("Depth Image: " + FString::append(std::to_string(i).c_str()));
+            Image->SetFriendlyName("Depth Image: " + eastl::to_string(i));
             
             DepthAttachments.push_back(std::move(Image));
         }
