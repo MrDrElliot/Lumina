@@ -88,7 +88,7 @@ namespace Lumina
 		Data = nullptr;
 	}
 
-	void FVulkanBuffer::SetFriendlyName(const LString& InName)
+	void FVulkanBuffer::SetFriendlyName(const FString& InName)
 	{
 		FBuffer::SetFriendlyName(InName);
 

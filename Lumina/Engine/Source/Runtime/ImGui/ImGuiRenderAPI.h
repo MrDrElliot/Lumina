@@ -19,7 +19,7 @@ namespace Lumina
         
         virtual ~FImGuiRenderAPI() = default;
 
-        static std::shared_ptr<FImGuiRenderAPI> Create();
+        static TSharedPtr<FImGuiRenderAPI> Create();
 
         virtual void BeginFrame() = 0;
         virtual void EndFrame() = 0;

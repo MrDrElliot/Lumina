@@ -379,7 +379,7 @@ namespace Lumina
     	CurrentLayout = NewLayout;
     }
 
-    void FVulkanImage::SetFriendlyName(const LString& InName)
+    void FVulkanImage::SetFriendlyName(const FString& InName)
     {
 	    FImage::SetFriendlyName(InName);
 
@@ -435,7 +435,7 @@ namespace Lumina
     	Sampler = VK_NULL_HANDLE;
     }
 
-    void FVulkanImageSampler::SetFriendlyName(const LString& InName)
+    void FVulkanImageSampler::SetFriendlyName(const FString& InName)
     {
 	    FImageSampler::SetFriendlyName(InName);
 
@@ -443,7 +443,7 @@ namespace Lumina
         
     	VkDebugUtilsObjectNameInfoEXT NameInfo = {};
     	NameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
-    	NameInfo.pObjectName = GetFriendlyName().CStr();
+    	NameInfo.pObjectName = GetFriendlyName().c_str();
     	NameInfo.objectType = VK_OBJECT_TYPE_SAMPLER;
     	NameInfo.objectHandle = reinterpret_cast<uint64_t>(Sampler);
     	

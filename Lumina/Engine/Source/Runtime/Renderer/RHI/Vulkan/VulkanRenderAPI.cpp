@@ -7,7 +7,7 @@
 #include "VulkanMacros.h"
 #include "VulkanPipeline.h"
 #include "Assets/AssetTypes/StaticMesh/StaticMesh.h"
-#include "Core/Application.h"
+#include "Core/Application/Application.h"
 #include "Core/Windows/Window.h"
 #include "Renderer/Material.h"
 #include "Log/Log.h"
@@ -24,11 +24,11 @@ namespace Lumina
 
         Config = InConfig;
 
-        RenderContext = std::make_shared<FVulkanRenderContext>(InConfig);
+        RenderContext = MakeSharedPtr<FVulkanRenderContext>(InConfig);
         Swapchain = RenderContext->GetSwapchain();
 
         CommandBuffers.resize(Swapchain->GetSpecs().FramesInFlight);
-        CommandBuffers.ShrinkToFit();
+        CommandBuffers.shrink_to_fit();
 
         for (auto& Buffer : CommandBuffers)
         {
@@ -88,7 +88,7 @@ namespace Lumina
         Swapchain->EndFrame();
     }
 
-    void FVulkanRenderAPI::BeginRender(const TArray<TRefPtr<FImage>>& Attachments, glm::fvec4 ClearColor)
+    void FVulkanRenderAPI::BeginRender(const TVector<TRefPtr<FImage>>& Attachments, glm::fvec4 ClearColor)
     {
 	    FRenderer::Submit([&, Attachments, ClearColor]
 	    {
@@ -261,7 +261,7 @@ namespace Lumina
 		});
     }
 
-    void FVulkanRenderAPI::BindSet(const TRefPtr<FDescriptorSet>& Set, const TRefPtr<FPipeline>& Pipeline, uint8 SetIndex, const TArray<uint32>& DynamicOffsets)
+    void FVulkanRenderAPI::BindSet(const TRefPtr<FDescriptorSet>& Set, const TRefPtr<FPipeline>& Pipeline, uint8 SetIndex, const TVector<uint32>& DynamicOffsets)
     {
     	FRenderer::Submit([&, Set, Pipeline, SetIndex]
     	{
@@ -403,7 +403,7 @@ namespace Lumina
     	});
     }
 
-	void FVulkanRenderAPI::RenderStaticMeshWithMaterial(const TRefPtr<FPipeline>& Pipeline, const std::shared_ptr<LStaticMesh>& StaticMesh, const TRefPtr<FMaterial>& Material)
+	void FVulkanRenderAPI::RenderStaticMeshWithMaterial(const TRefPtr<FPipeline>& Pipeline, const TSharedPtr<LStaticMesh>& StaticMesh, const TRefPtr<FMaterial>& Material)
     {
 		FRenderer::Submit([this, Pipeline, StaticMesh]
 		{
@@ -422,7 +422,7 @@ namespace Lumina
 		});
       }
 
-    void FVulkanRenderAPI::RenderStaticMesh(const TRefPtr<FPipeline>& Pipeline, std::shared_ptr<LStaticMesh> StaticMesh, uint32 InstanceCount)
+    void FVulkanRenderAPI::RenderStaticMesh(const TRefPtr<FPipeline>& Pipeline, TSharedPtr<LStaticMesh> StaticMesh, uint32 InstanceCount)
     {
     	if(StaticMesh == nullptr)
     	{

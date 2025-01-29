@@ -14,7 +14,7 @@ namespace Lumina
         FVulkanCommandBuffer(ECommandBufferLevel InLevel, ECommandBufferType InBufferType, ECommandType InCmdType);
         ~FVulkanCommandBuffer() override;
 
-        void SetFriendlyName(const LString& InName) override;
+        void SetFriendlyName(const FString& InName) override;
         
         void Begin() override;
         void End() override;

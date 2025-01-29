@@ -6,7 +6,7 @@
 #include "VulkanImage.h"
 #include "VulkanMacros.h"
 #include "VulkanRenderContext.h"
-#include "Core/Application.h"
+#include "Core/Application/Application.h"
 #include "Core/Windows/Window.h"
 #include "Platform/Platform.h"
 #include "Source/Runtime/Log/Log.h"
@@ -98,7 +98,7 @@ namespace Lumina
 			SwapchainImageSpec.Type = EImageType::TYPE_2D;
 			SwapchainImageSpec.Format = convert(SurfaceFormat.format);
 
-			Images.PushBack(MakeRefPtr<FVulkanImage>(SwapchainImageSpec, RawImage, ImageView));
+			Images.push_back(MakeRefPtr<FVulkanImage>(SwapchainImageSpec, RawImage, ImageView));
 
 			VkImageMemoryBarrier ImageMemoryBarrier = {};
 			ImageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -160,7 +160,7 @@ namespace Lumina
 		
 		    if (i >= PresentSemaphores.size())
 		    {
-		        PresentSemaphores.PushBack(semaphore);
+		        PresentSemaphores.push_back(semaphore);
 		    }
 		    else
 		    {
@@ -168,7 +168,7 @@ namespace Lumina
 		    }
 		
 		    // Assign debug name
-		    std::string name = "Present Semaphore: " + std::to_string(i);
+		    FString name = "Present Semaphore: " + eastl::to_string(i);
 		    VkDebugUtilsObjectNameInfoEXT NameInfo = {};
 		    NameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
 		    NameInfo.pObjectName = name.c_str();
@@ -207,7 +207,7 @@ namespace Lumina
 		
 		    if (i >= AquireSemaphores.size())
 		    {
-		        AquireSemaphores.PushBack(semaphore);
+		        AquireSemaphores.push_back(semaphore);
 		    }
 		    else
 		    {
@@ -215,7 +215,7 @@ namespace Lumina
 		    }
 		
 		    // Assign debug name
-		    std::string name = "Aquire Semaphore: " + std::to_string(i);
+		    FString name = "Aquire Semaphore: " + eastl::to_string(i);
 		    VkDebugUtilsObjectNameInfoEXT NameInfo = {};
 		    NameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
 		    NameInfo.pObjectName = name.c_str();
@@ -239,7 +239,7 @@ namespace Lumina
         {
             VkFence Fence;
             VK_CHECK(vkCreateFence(Device, &FenceCreateInfo, nullptr, &Fence));
-            Fences.PushBack(Fence);
+            Fences.push_back(Fence);
         }
     }
 

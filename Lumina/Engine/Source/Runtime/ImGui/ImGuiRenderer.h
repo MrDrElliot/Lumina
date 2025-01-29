@@ -31,7 +31,7 @@ namespace Lumina
 
     private:
 
-        static std::shared_ptr<FImGuiRenderAPI> RenderAPI;
+        static TSharedPtr<FImGuiRenderAPI> RenderAPI;
     
     };
 }

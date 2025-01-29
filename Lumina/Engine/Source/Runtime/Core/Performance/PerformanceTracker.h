@@ -1,10 +1,9 @@
 #pragma once
 
-#include <chrono>
-#include <string>
 #include <mutex>
 #include <unordered_map>
 
+#include "Containers/String.h"
 #include "Core/Singleton/Singleton.h"
 
 // FPerformanceTracker using TSingleton
@@ -12,7 +11,7 @@ class FPerformanceTracker : public TSingleton<FPerformanceTracker>
 {
 public:
     // Mapping profile names to durations
-    std::unordered_map<std::string, double> ProfileMap;
+    std::unordered_map<Lumina::FString, double> ProfileMap;
     
     // Mutex to protect access to the map
     std::mutex ProfileMapMutex;
@@ -20,7 +19,7 @@ public:
     void Shutdown() override {}
 
     // Add or update a profiling entry
-    void AddProfileData(const std::string& name, double duration)
+    void AddProfileData(const Lumina::FString& name, double duration)
     {
 #if _DEBUG
         std::lock_guard<std::mutex> lock(ProfileMapMutex);

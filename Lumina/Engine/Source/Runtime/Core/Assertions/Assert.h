@@ -4,8 +4,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <fstream>
-#include <thread> // Include for std::this_thread::sleep_for
-#include <chrono> // Include for std::chrono::milliseconds
+
 #include "Log/Log.h"
 
 #if LE_PLATFORM_WINDOWS

@@ -54,7 +54,7 @@ virtual const char* GetName() const override { return #type; }
 		virtual EventType GetEventType() const = 0;
 		virtual const char* GetName() const = 0;
 		virtual int GetCategoryFlags() const = 0;
-		virtual std::string ToString() const { return GetName(); }
+		virtual FString ToString() const { return GetName(); }
 
 		bool IsInCategory(EventCategory category)
 		{
@@ -87,6 +87,6 @@ virtual const char* GetName() const override { return #type; }
 
 	inline std::ostream& operator<<(std::ostream& os, const FEvent& e)
 	{
-		return os << e.ToString();
+		return os << e.ToString().c_str();
 	}
 }

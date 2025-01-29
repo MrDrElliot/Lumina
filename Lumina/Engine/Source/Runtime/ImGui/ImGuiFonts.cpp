@@ -16,12 +16,12 @@ namespace Lumina::Font
     static std::vector<FImGuiFont> Fonts;
 
     
-    FImGuiFont Add(const std::string& InFile, const std::string& Name, bool bDefault)
+    FImGuiFont Add(const FString& InFile, const FString& Name, bool bDefault)
     {
         FImGuiFont NewFont;
         ImGuiIO& IO = ImGui::GetIO();
 
-        if(std::filesystem::exists(InFile))
+        if(std::filesystem::exists(InFile.c_str()))
         {
                 ImFontConfig imguiFontConfig;
                 imguiFontConfig.MergeMode = false;
@@ -42,7 +42,7 @@ namespace Lumina::Font
         LOG_ERROR("[.ttf] file not found!");
     }
     
-    FImGuiFont Get(const std::string& Name)
+    FImGuiFont Get(const FString& Name)
     {
         for (auto Font : Fonts)
         {
@@ -54,7 +54,7 @@ namespace Lumina::Font
         return {};
     }
 
-    void PushFont(const std::string& Name)
+    void PushFont(const FString& Name)
     {
         FImGuiFont Font = Get(Name);
         ImGui::PushFont(Font);

@@ -22,9 +22,9 @@ namespace Lumina
     {
     public:
 
-        std::shared_ptr<LAsset> CreateNew(const FAssetMetadata& Metadata, FArchive& Archive) override;
+        TSharedPtr<LAsset> CreateNew(const FAssetMetadata& Metadata, FArchive& Archive) override;
 
-        static TArray<std::shared_ptr<LStaticMesh>> Import(std::filesystem::path InPath);
+        static TVector<TSharedPtr<LStaticMesh>> Import(std::filesystem::path InPath);
 
         static void ExtractAsset(fastgltf::Asset* OutAsset, std::filesystem::path InPath);
 

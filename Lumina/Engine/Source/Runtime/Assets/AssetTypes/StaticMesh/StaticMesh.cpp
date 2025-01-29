@@ -39,12 +39,12 @@ namespace Lumina
     
     }
 
-    std::shared_ptr<LStaticMesh> LStaticMesh::CreateMesh(const FAssetMetadata& Metadata, FMeshAsset InInfo)
+    TSharedPtr<LStaticMesh> LStaticMesh::CreateMesh(const FAssetMetadata& Metadata, FMeshAsset InInfo)
     {
         AssertMsg(InInfo.Vertices.data(), "Attempted to create a static mesh with invalid vertices");
         AssertMsg(InInfo.Indices.data(), "Attempted to create a static mesh with invalid indices");
 
-        return std::make_shared<LStaticMesh>(Metadata, std::move(InInfo));
+        return MakeSharedPtr<LStaticMesh>(Metadata, std::move(InInfo));
     }
 
     void LStaticMesh::CreateNew()

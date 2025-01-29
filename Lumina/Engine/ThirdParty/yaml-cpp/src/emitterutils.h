@@ -33,7 +33,7 @@ StringFormat::value ComputeStringFormat(const std::string& str,
 bool WriteSingleQuotedString(ostream_wrapper& out, const std::string& str);
 bool WriteDoubleQuotedString(ostream_wrapper& out, const std::string& str,
                              bool escapeNonAscii);
-bool WriteLiteralString(ostream_wrapper& out, const std::string& str,
+bool WriteLiteraFString(ostream_wrapper& out, const std::string& str,
                         std::size_t indent);
 bool WriteChar(ostream_wrapper& out, char ch);
 bool WriteComment(ostream_wrapper& out, const std::string& str,

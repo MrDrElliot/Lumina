@@ -70,9 +70,9 @@ namespace Lumina
 
     struct FImageSpecification
     {
-        std::string DebugName;
+        FString DebugName;
         glm::uvec3 Extent;
-        TArray<uint8> Pixels;
+        TVector<uint8> Pixels;
         uint32 MipLevels;
         int32 SourceChannels;
         EImageFormat Format;
@@ -137,7 +137,7 @@ namespace Lumina
 
     private:
 
-        LString DebugName;
+        FString DebugName;
         
     protected:
         

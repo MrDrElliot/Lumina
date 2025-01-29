@@ -3,10 +3,12 @@
 #include <entt/entt.hpp>
 #include "Camera.h"
 #include "Assets/Asset.h"
+#include "EASTL/shared_ptr.h"
+#include "EASTL/unordered_map.h"
+#include "Memory/SmartPtr.h"
 
 
 class FTransform;
-class LString;
 
 namespace Lumina
 {
@@ -33,20 +35,20 @@ namespace Lumina
 
         using EntityRegistry = entt::registry;
         
-        LScene(std::shared_ptr<FCamera> Camera);
+        LScene(TSharedPtr<FCamera> Camera);
         ~LScene();
 
-        static std::shared_ptr<LScene> Create(std::shared_ptr<FCamera> Camera);
+        static TSharedPtr<LScene> Create(TSharedPtr<FCamera> Camera);
 
         void BeginScene();
         void OnUpdate(double DeltaTime);
         void EndScene();
 
-        std::shared_ptr<FCamera> GetCurrentCamera() { return CurrentCamera; }
-        std::shared_ptr<FSceneRenderer> GetSceneRenderer() { return SceneRenderer; }
+        TSharedPtr<FCamera> GetCurrentCamera() { return CurrentCamera; }
+        TSharedPtr<FSceneRenderer> GetSceneRenderer() { return SceneRenderer; }
         
 
-        Entity CreateEntity(const FTransform& Transform, const LString& Name);
+        Entity CreateEntity(const FTransform& Transform, const FString& Name);
         void DestroyEntity(Entity Entity);
         Entity GetEntityByGUID(const FGuid& Guid, bool* bFound = nullptr);
         
@@ -55,7 +57,7 @@ namespace Lumina
 
 
         template <typename T>
-        void ForEachComponent(const std::function<void(uint32& CurrentIndex, entt::entity& OutEntity, T& OutComponent)>&& Functor)
+        void ForEachComponent(const eastl::function<void(uint32& CurrentIndex, entt::entity& OutEntity, T& OutComponent)>&& Functor)
         {
             auto view = mEntityRegistery.view<T>();
             
@@ -71,10 +73,10 @@ namespace Lumina
         
         FSceneSettings Settings;
         EntityRegistry mEntityRegistery;
-        std::unordered_map<FGuid, Entity> EntityIdentifierMap;
+        eastl::unordered_map<FGuid, Entity> EntityIdentifierMap;
         
-        std::shared_ptr<FCamera>        CurrentCamera;
-        std::shared_ptr<FSceneRenderer> SceneRenderer;
+        TSharedPtr<FCamera>        CurrentCamera;
+        TSharedPtr<FSceneRenderer> SceneRenderer;
 
     };
 }

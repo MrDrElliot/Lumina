@@ -22,7 +22,7 @@ namespace Lumina
 		default:										return VK_SHADER_STAGE_FLAG_BITS_MAX_ENUM;
 		}
 	}
-	std::string ShaderStageFlagsToString(VkShaderStageFlags flags)
+	FString ShaderStageFlagsToString(VkShaderStageFlags flags)
 	{
 		std::ostringstream result;
 
@@ -55,7 +55,7 @@ namespace Lumina
 		if (result.str().empty())
 			result << "UNKNOWN";
 
-		return result.str();
+		return result.str().c_str();
 	}
 
 	
@@ -79,7 +79,7 @@ namespace Lumina
 		}
 	}
 
-	constexpr std::string DescriptorToString(VkDescriptorType type)
+	constexpr FString DescriptorToString(VkDescriptorType type)
 	{
 		switch (type)
 		{
@@ -97,11 +97,11 @@ namespace Lumina
 		}
 	}
 	
-    FVulkanShader::FVulkanShader(const TArray<FShaderData>& InData, const LString& Tag)
+    FVulkanShader::FVulkanShader(const TVector<FShaderData>& InData, const FString& Tag)
 	{
 		auto Device = FVulkanRenderContext::GetDevice();
 
-		std::map<uint32, TArray<VkDescriptorSetLayoutBinding>> Bindings;
+		std::map<uint32, TVector<VkDescriptorSetLayoutBinding>> Bindings;
 
 		for (auto& StageData : InData)
 		{
@@ -121,7 +121,7 @@ namespace Lumina
 			ShaderStageCreateInfo.pName = "main";
 			ShaderStageCreateInfo.module = ShaderModule;
 
-			StageCreateInfos.PushBack(ShaderStageCreateInfo);
+			StageCreateInfos.push_back(ShaderStageCreateInfo);
 
 			SpvReflectShaderModule ReflectModule;
 			if (spvReflectCreateShaderModule((size_t)StageData.Binaries.size() * 4, StageData.Binaries.data(), &ReflectModule) != SPV_REFLECT_RESULT_SUCCESS)
@@ -134,14 +134,14 @@ namespace Lumina
 			uint32 set_count = 0;
 			spvReflectEnumerateDescriptorSets(&ReflectModule, &set_count, nullptr);
 
-			TArray<SpvReflectDescriptorSet*> ReflectDescriptorSets(set_count);
+			TVector<SpvReflectDescriptorSet*> ReflectDescriptorSets(set_count);
 			spvReflectEnumerateDescriptorSets(&ReflectModule, &set_count, ReflectDescriptorSets.data());
 
 			for (SpvReflectDescriptorSet* ReflectSet : ReflectDescriptorSets)
 			{
 				if (!Bindings.contains(ReflectSet->set))
 				{
-					Bindings.emplace(ReflectSet->set, TArray<VkDescriptorSetLayoutBinding>());
+					Bindings.emplace(ReflectSet->set, TVector<VkDescriptorSetLayoutBinding>());
 				}
 
 				for (int i = 0; i < ReflectSet->binding_count; i++)
@@ -168,7 +168,7 @@ namespace Lumina
 					
 					if(!bSkipBinding)
 					{
-						Bindings[ReflectSet->set].PushBack(layout_binding);
+						Bindings[ReflectSet->set].push_back(layout_binding);
 					}
 				}
 			}
@@ -192,7 +192,7 @@ namespace Lumina
 				PushConstantRange.size = ReflectRange->size;
 				PushConstantRange.offset = ReflectRange->offset;
 				PushConstantRange.stageFlags = convert(StageData.Stage);
-				Ranges.PushBack(PushConstantRange);
+				Ranges.push_back(PushConstantRange);
 			}
 
 			spvReflectDestroyShaderModule(&ReflectModule);
@@ -227,7 +227,7 @@ namespace Lumina
 			{
 				if (Bindings.find(i) == Bindings.end())
 				{
-					SetLayouts.PushBack(VK_NULL_HANDLE);
+					SetLayouts.push_back(VK_NULL_HANDLE);
 				}
 				else
 				{
@@ -252,7 +252,7 @@ namespace Lumina
 
 					VkDescriptorSetLayout VkDescriptorSetLayout = VK_NULL_HANDLE;
 					vkCreateDescriptorSetLayout(Device, &LayoutCreateInfo, nullptr, &VkDescriptorSetLayout);
-					SetLayouts.PushBack(VkDescriptorSetLayout);
+					SetLayouts.push_back(VkDescriptorSetLayout);
 				}
 			}
 		}
@@ -283,7 +283,7 @@ namespace Lumina
 		}
     }
 
-    void FVulkanShader::SetFriendlyName(const LString& InString)
+    void FVulkanShader::SetFriendlyName(const FString& InString)
     {
 	    FShader::SetFriendlyName(InString);
 		
@@ -291,7 +291,7 @@ namespace Lumina
 
 		VkDebugUtilsObjectNameInfoEXT NameInfo = {};
 		NameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
-		NameInfo.pObjectName = GetFriendlyName().CStr();
+		NameInfo.pObjectName = GetFriendlyName().c_str();
 		NameInfo.objectType = VK_OBJECT_TYPE_SHADER_MODULE;
 
 	    for (auto Stage : StageCreateInfos)

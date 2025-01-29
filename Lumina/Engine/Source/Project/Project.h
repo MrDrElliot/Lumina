@@ -13,10 +13,10 @@ namespace Lumina
         
         struct FProjectConfig
         {
-            std::string Name;
-            std::string ProjectVersion;
-            std::string EngineVersion;
-            std::string StartupScene;
+            FString Name;
+            FString ProjectVersion;
+            FString EngineVersion;
+            FString StartupScene;
         };
     
         
@@ -31,6 +31,8 @@ namespace Lumina
         
         static FProjectConfig& GetProjectConfig() { return sCurrentProject->Config; }
         static std::filesystem::path GetProjectContentDirectory() { return sCurrentProject->ProjectDirectory / "Game"; }
+        static std::filesystem::path GetProjectRootDirectory() { return sCurrentProject->ProjectDirectory; }
+
 
     private:
         

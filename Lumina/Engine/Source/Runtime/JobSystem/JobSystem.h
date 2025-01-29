@@ -32,7 +32,7 @@ public:
     std::future<std::invoke_result_t<Func>> EnqueueTask(Func Task, int Priority = 0)
     {
         using ResultType = std::invoke_result_t<Func>;
-        auto PackagedTask = std::make_shared<std::packaged_task<ResultType()>>(std::move(Task));
+        auto PackagedTask = MakeSharedPtr<std::packaged_task<ResultType()>>(std::move(Task));
         std::future<ResultType> Result = PackagedTask->get_future();
 
         {

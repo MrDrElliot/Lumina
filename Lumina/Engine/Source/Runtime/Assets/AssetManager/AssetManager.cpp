@@ -15,12 +15,12 @@ namespace Lumina
     {
     }
 
-    std::shared_ptr<LAsset> AssetManager::LoadSynchronous(const FAssetHandle& InHandle)
+    TSharedPtr<LAsset> AssetManager::LoadSynchronous(const FAssetHandle& InHandle)
     {
         auto it = mAssetMap.find(InHandle);
         if (it != mAssetMap.end())
         {
-            if (std::shared_ptr<LAsset> Asset = it->second.lock())
+            if (TSharedPtr<LAsset> Asset = it->second.lock())
             {
                 return Asset;
             }
@@ -31,8 +31,8 @@ namespace Lumina
         {
             FAssetMetadata Metadata = Registry->GetMetadata(InHandle);
             
-            TArray<uint8> Buffer;
-            if (!FFileHelper::LoadFileToArray(Buffer, Metadata.Path))
+            TVector<uint8> Buffer;
+            if (!FFileHelper::LoadFileToArray(Buffer, Metadata.Path.c_str()))
             {
                 LOG_ERROR("Failed to load asset from path: {0}", Metadata.Path);
                 return nullptr;
@@ -44,7 +44,7 @@ namespace Lumina
 
             if (Factory)
             {
-                std::shared_ptr<LAsset> NewAsset = Factory->CreateNew(Metadata, Reader);
+                TSharedPtr<LAsset> NewAsset = Factory->CreateNew(Metadata, Reader);
                 if (NewAsset)
                 {
                     mAssetMap[InHandle] = NewAsset;
@@ -57,18 +57,18 @@ namespace Lumina
     }
 
 
-    void AssetManager::GetAliveAssets(TArray<std::shared_ptr<LAsset>>& OutAliveAssets)
+    void AssetManager::GetAliveAssets(TVector<TSharedPtr<LAsset>>& OutAliveAssets)
     {
-        TArray<FAssetHandle> DeadAssets;
+        TVector<FAssetHandle> DeadAssets;
         for (auto& KVP : mAssetMap)
         {
             if(KVP.second.lock())
             {
-                OutAliveAssets.PushBack(KVP.second.lock());
+                OutAliveAssets.push_back(KVP.second.lock());
             }
             else
             {
-                DeadAssets.PushBack(KVP.first);
+                DeadAssets.push_back(KVP.first);
             }
         }
 

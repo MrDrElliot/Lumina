@@ -10,7 +10,7 @@ namespace Lumina
                 
     }
 
-    Entity::Entity(const entt::entity& InHandle, std::shared_ptr<LScene> InScene)
+    Entity::Entity(const entt::entity& InHandle, TSharedPtr<LScene> InScene)
     :mEntityHandle(InHandle), mScene(InScene.get())
     {
     }

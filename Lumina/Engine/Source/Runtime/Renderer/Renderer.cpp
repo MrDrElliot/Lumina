@@ -89,7 +89,7 @@ namespace Lumina
         RenderAPI->InsertBarrier(BarrierInfo);
     }
 
-    void FRenderer::BindSet(const TRefPtr<FDescriptorSet>& Set, const TRefPtr<FPipeline>& Pipeline, uint8 SetIndex, const TArray<uint32>& DynamicOffsets)
+    void FRenderer::BindSet(const TRefPtr<FDescriptorSet>& Set, const TRefPtr<FPipeline>& Pipeline, uint8 SetIndex, const TVector<uint32>& DynamicOffsets)
     {
         RenderAPI->BindSet(Set, Pipeline, SetIndex, DynamicOffsets);
     }
@@ -111,7 +111,7 @@ namespace Lumina
         RenderAPI->EndFrame();
     }
 
-    void FRenderer::BeginRender(const TArray<TRefPtr<FImage>>& Attachments, glm::fvec4 ClearColor)
+    void FRenderer::BeginRender(const TVector<TRefPtr<FImage>>& Attachments, glm::fvec4 ClearColor)
     {
         RenderAPI->BeginRender(Attachments, ClearColor);
     }
@@ -154,14 +154,14 @@ namespace Lumina
         RenderAPI->RenderVertices(Vertices, Instances, FirstVertex, FirstInstance);
     }
 
-    void FRenderer::RenderStaticMeshWithMaterial(const TRefPtr<FPipeline>& Pipeline, const std::shared_ptr<LStaticMesh>& StaticMesh, const TRefPtr<FMaterial>& Material)
+    void FRenderer::RenderStaticMeshWithMaterial(const TRefPtr<FPipeline>& Pipeline, const TSharedPtr<LStaticMesh>& StaticMesh, const TRefPtr<FMaterial>& Material)
     {
         sInternalData.NumDrawCalls++;
         sInternalData.NumVertices += StaticMesh->GetMeshData().Vertices.size();
         RenderAPI->RenderStaticMeshWithMaterial(Pipeline, StaticMesh, Material);
     }
 
-    void FRenderer::RenderStaticMesh(const TRefPtr<FPipeline>& Pipeline, std::shared_ptr<LStaticMesh> StaticMesh, uint32 InstanceCount)
+    void FRenderer::RenderStaticMesh(const TRefPtr<FPipeline>& Pipeline, TSharedPtr<LStaticMesh> StaticMesh, uint32 InstanceCount)
     {
         sInternalData.NumDrawCalls++;
         sInternalData.NumVertices += StaticMesh->GetMeshData().Vertices.size();

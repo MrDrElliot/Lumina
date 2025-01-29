@@ -18,7 +18,7 @@ namespace Lumina
         
         virtual void BeginFrame() override;
         virtual void EndFrame() override;
-        virtual void BeginRender(const TArray<TRefPtr<FImage>>& Attachments, glm::fvec4 ClearColor) override;
+        virtual void BeginRender(const TVector<TRefPtr<FImage>>& Attachments, glm::fvec4 ClearColor) override;
         virtual void EndRender() override;
         virtual void WaitDevice() override;
 
@@ -28,7 +28,7 @@ namespace Lumina
         ERHIInterfaceType GetRHIInterfaceType() override;
 
         void InsertBarrier(const FPipelineBarrierInfo& BarrierInfo) override;
-        void BindSet(const TRefPtr<FDescriptorSet>& Set, const TRefPtr<FPipeline>& Pipeline, uint8 SetIndex, const TArray<uint32>& DynamicOffsets) override;
+        void BindSet(const TRefPtr<FDescriptorSet>& Set, const TRefPtr<FPipeline>& Pipeline, uint8 SetIndex, const TVector<uint32>& DynamicOffsets) override;
         void BindPipeline(TRefPtr<FPipeline> Pipeline) override;
         
         void CopyToSwapchain(TRefPtr<FImage> ImageToCopy) override;
@@ -43,8 +43,8 @@ namespace Lumina
         void RenderMeshTasks(TRefPtr<FPipeline> Pipeline, const glm::uvec3 Dimensions, FMiscData Data) override;
         void RenderMeshIndexed(TRefPtr<FPipeline> Pipeline, TRefPtr<FBuffer> VertexBuffer, TRefPtr<FBuffer> IndexBuffer, FMiscData Data) override;
         void RenderVertices(uint32 Vertices, uint32 Instances, uint32 FirstVertex, uint32 FirstInstance) override;
-        void RenderStaticMeshWithMaterial(const TRefPtr<FPipeline>& Pipeline, const std::shared_ptr<LStaticMesh>& StaticMesh, const TRefPtr<FMaterial>& Material) override;
-        void RenderStaticMesh(const TRefPtr<FPipeline>& Pipeline, std::shared_ptr<LStaticMesh> StaticMesh, uint32 InstanceCount) override;
+        void RenderStaticMeshWithMaterial(const TRefPtr<FPipeline>& Pipeline, const TSharedPtr<LStaticMesh>& StaticMesh, const TRefPtr<FMaterial>& Material) override;
+        void RenderStaticMesh(const TRefPtr<FPipeline>& Pipeline, TSharedPtr<LStaticMesh> StaticMesh, uint32 InstanceCount) override;
         
         
         TRefPtr<FCommandBuffer> GetCommandBuffer() override;
@@ -57,10 +57,10 @@ namespace Lumina
 
         FRenderConfig Config;
         
-        std::shared_ptr<FVulkanRenderContext> RenderContext;
+        TSharedPtr<FVulkanRenderContext> RenderContext;
         TRefPtr<FVulkanSwapchain> Swapchain;
 
-        TArray<TRefPtr<FVulkanCommandBuffer>> CommandBuffers;
+        TVector<TRefPtr<FVulkanCommandBuffer>> CommandBuffers;
         TRefPtr<FVulkanCommandBuffer> CurrentCommandBuffer;
         TRefPtr<FVulkanPipeline> CurrentBoundPipeline;
         

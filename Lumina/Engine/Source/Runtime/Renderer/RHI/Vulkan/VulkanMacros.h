@@ -7,7 +7,7 @@
 
 namespace Lumina::Vulkan
 {
-    inline std::string VkResultToString(VkResult result)
+    inline FString VkResultToString(VkResult result)
     {
         switch (result)
         {

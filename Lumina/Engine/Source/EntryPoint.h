@@ -10,6 +10,7 @@
 
 #include <memory>
 
+#include "Core/Application/ApplicationGlobalState.h"
 
 
 extern Lumina::FApplication* Lumina::CreateApplication(int argc, char** argv);
@@ -27,6 +28,7 @@ inline int GuardedMain(int argc, char** argv)
 	int Exit = 0;
 	while (gApplicationRunning)
 	{
+		Lumina::FApplicationGlobalState GlobalState;
 		Lumina::FApplication* App = Lumina::CreateApplication(argc, argv);
 		App->Run();
 

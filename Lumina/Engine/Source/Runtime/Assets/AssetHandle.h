@@ -28,7 +28,7 @@ namespace Lumina
             }
         }
 
-        FORCEINLINE std::shared_ptr<AssetType> Get()
+        FORCEINLINE TSharedPtr<AssetType> Get()
         {
             if (AssetPtr)
             {
@@ -38,7 +38,7 @@ namespace Lumina
             return LoadSynchronous();
         }
         
-        FORCEINLINE std::shared_ptr<AssetType> Get() const
+        FORCEINLINE TSharedPtr<AssetType> Get() const
         {
             if (AssetPtr)
             {
@@ -48,12 +48,12 @@ namespace Lumina
             return LoadSynchronous();
         }
 
-        FORCEINLINE std::shared_ptr<AssetType> GetIfValid() const
+        FORCEINLINE TSharedPtr<AssetType> GetIfValid() const
         {
             return AssetPtr;
         }
 
-        std::shared_ptr<AssetType> LoadSynchronous() const
+        TSharedPtr<AssetType> LoadSynchronous() const
         {
             AssetManager* Manager = AssetManager::Get();
             if (AssetPtr)
@@ -67,8 +67,8 @@ namespace Lumina
         }
         
 
-        std::shared_ptr<AssetType> operator         -> () { return Get(); }
-        const std::shared_ptr<AssetType> operator   -> () const { return Get(); }
+        TSharedPtr<AssetType> operator         -> () { return Get(); }
+        const TSharedPtr<AssetType> operator   -> () const { return Get(); }
 
         bool operator == (const TAssetHandle<AssetType>& Other) const 
         {
@@ -97,13 +97,13 @@ namespace Lumina
 
         bool IsValid() const { return Get() != nullptr; }
         operator bool() const { return Get() != nullptr; }
-        operator std::shared_ptr<AssetType>() { return Get(); }
+        operator TSharedPtr<AssetType>() { return Get(); }
 
 
     public:
         
         FAssetHandle AssetHandle;
-        mutable std::shared_ptr<AssetType> AssetPtr = nullptr;
+        mutable TSharedPtr<AssetType> AssetPtr = nullptr;
     };
 }
 

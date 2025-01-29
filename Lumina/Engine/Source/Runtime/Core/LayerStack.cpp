@@ -15,14 +15,14 @@ namespace Lumina
 
 	void FLayerStack::PushLayer(const TRefPtr<FLayer>& InLayer)
 	{
-		Layers.EmplaceBack(InLayer);
+		Layers.emplace_back(InLayer);
 		LayerMap[typeid(InLayer)] = InLayer;
 		LayerInsertIndex++;
 	}
 
 	void FLayerStack::PushOverlay(const TRefPtr<FLayer>& InLayer)
 	{
-		Layers.PushBack(InLayer);
+		Layers.push_back(InLayer);
 	}
 
 	void FLayerStack::PopLayer(const TRefPtr<FLayer>& InLayer)

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Memory/RefCounted.h"
-#include "Containers/String.h"
 #include "Events/Event.h"
 
 namespace Lumina
@@ -12,7 +11,7 @@ namespace Lumina
 
 		FLayer() = default;
 		
-		FLayer(const std::string& InName)
+		FLayer(const FString& InName)
 		{
 			DebugName = InName;
 		}
@@ -25,10 +24,10 @@ namespace Lumina
 		virtual void OnEvent(FEvent& InEvent) {}
 		virtual void ImGuiRender(double DeltaTime) {}
 
-		inline const LString& GetName() const { return DebugName; }
+		inline const FString& GetName() const { return DebugName; }
 
 	private:
 
-		LString DebugName;
+		FString DebugName;
 	};
 }

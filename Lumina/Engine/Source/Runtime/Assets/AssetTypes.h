@@ -25,7 +25,7 @@ namespace Lumina
         Max,
     };
     
-    inline EAssetType FileExtensionToAssetType(const std::string& Extension)
+    inline EAssetType FileExtensionToAssetType(const FString& Extension)
     {
         if(Extension == ".png" || Extension == ".jpg")
         {
@@ -38,7 +38,7 @@ namespace Lumina
         return EAssetType::None;
     }
 
-    inline std::string AssetTypeToString(EAssetType InType)
+    inline FString AssetTypeToString(EAssetType InType)
     {
         switch (InType)
         {
@@ -61,18 +61,18 @@ namespace Lumina
         FAssetMetadata()
         {
             Version = 1;
-            Name = NAME_None.CStr();
+            Name = NAME_None.c_str();
             Guid = FGuid();
-            Path = NAME_None.CStr();
+            Path = NAME_None.c_str();
             OriginPath = "";
             AssetType = EAssetType::None;
         }
 
         uint32 Version;
-        std::string Name;
+        FString Name;
         FGuid Guid;
-        std::string Path;
-        std::string OriginPath;
+        FString Path;
+        FString OriginPath;
         EAssetType AssetType;
 
         friend FArchive& operator << (FArchive& Ar, FAssetMetadata& data)
@@ -116,19 +116,19 @@ namespace Lumina
     };
 }
 
-namespace std
+namespace eastl
 {
     template <>
     struct hash<Lumina::FAssetHandle>
     {
-        std::size_t operator()(const Lumina::FAssetHandle& Handle) const noexcept
+        size_t operator()(const Lumina::FAssetHandle& Handle) const noexcept
         {
             if (!Handle.Handle.IsValid())
             {
                 return 0; // Handle empty string or nullptr
             }
             // Use a hash function for C-strings
-            return std::hash<Lumina::FGuid>{}(Handle.Handle);
+            return eastl::hash<Lumina::FGuid>{}(Handle.Handle);
         }
     };
 }

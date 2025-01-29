@@ -17,13 +17,13 @@ namespace Lumina
         
         Entity() = default; // Invalid entity.
         Entity(const entt::entity& InHandle, LScene* InScene);
-        Entity(const entt::entity& InHandle, std::shared_ptr<LScene> InScene);
+        Entity(const entt::entity& InHandle, TSharedPtr<LScene> InScene);
 
         
         LScene* GetScene()                      { return mScene; }
         entt::entity GetHandle()                { return mEntityHandle; }
 
-        inline LString& GetName()                { return GetComponent<FNameComponent>().GetName(); }
+        inline FString& GetName()                { return GetComponent<FNameComponent>().GetName(); }
         inline FTransform GetTransform()        { return GetComponent<FTransformComponent>().GetTransform(); }
         inline glm::vec3 GetLocation()          { return GetComponent<FTransformComponent>().GetLocation(); }
         inline glm::quat GetRotation()          { return GetComponent<FTransformComponent>().GetRotation(); }

@@ -8,7 +8,7 @@
 
 namespace Lumina
 {
-    bool FFileHelper::SaveArrayToFile(const TArray<uint8>& Array, const std::filesystem::path& Path, uint32 WriteFlags)
+    bool FFileHelper::SaveArrayToFile(const TVector<uint8>& Array, const std::filesystem::path& Path, uint32 WriteFlags)
     {
         std::ofstream outFile(Path, std::ios::binary | std::ios::trunc);
         if (!outFile)
@@ -28,7 +28,7 @@ namespace Lumina
         return true;
     }
 
-    bool FFileHelper::LoadFileToArray(TArray<uint8>& Result, const std::filesystem::path& Path, uint32 ReadFlags)
+    bool FFileHelper::LoadFileToArray(TVector<uint8>& Result, const std::filesystem::path& Path, uint32 ReadFlags)
     {
         std::ifstream inFile(Path, std::ios::binary | std::ios::ate);
         if (!inFile)

@@ -4,8 +4,6 @@
 #include "Memory/RefCounted.h"
 
 
-class LString;
-
 namespace Lumina
 {
 

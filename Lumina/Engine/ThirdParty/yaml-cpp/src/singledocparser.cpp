@@ -90,7 +90,7 @@ void SingleDocParser::HandleNode(EventHandler& eventHandler) {
 
   const Token& token = m_scanner.peek();
 
-  if (token.type == Token::PLAIN_SCALAR && IsNullString(token.value)) {
+  if (token.type == Token::PLAIN_SCALAR && IsNulFString(token.value)) {
     eventHandler.OnNull(mark, anchor);
     m_scanner.pop();
     return;

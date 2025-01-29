@@ -26,9 +26,9 @@ namespace Lumina
         Library.clear();
     }
 
-    bool FShaderLibrary::Load(std::filesystem::path Vertex, std::filesystem::path Fragment, const LString& Tag)
+    bool FShaderLibrary::Load(std::filesystem::path Vertex, std::filesystem::path Fragment, const FString& Tag)
     {
-        TArray<FShaderData> Shaders;
+        TVector<FShaderData> Shaders;
         
         FShaderData VertData
         {
@@ -42,8 +42,8 @@ namespace Lumina
             .RawPath = Fragment,
         };
         
-        Shaders.PushBack(VertData);
-        Shaders.PushBack(FragData);
+        Shaders.push_back(VertData);
+        Shaders.push_back(FragData);
 
         for (FShaderData& Shader : Shaders)
         {
@@ -55,7 +55,7 @@ namespace Lumina
             }
             
             size_t Size = (size_t)File.tellg();
-            TArray<uint32> Buffer(Size / sizeof(uint32));
+            TVector<uint32> Buffer(Size / sizeof(uint32));
 
             File.seekg(0);
             File.read((char*)Buffer.data(), (uint64)Size);
@@ -69,7 +69,7 @@ namespace Lumina
         return true;
     }
 
-    bool FShaderLibrary::Unload(std::string Name)
+    bool FShaderLibrary::Unload(FString Name)
     {
         if (Library.find(Name) == Library.end())
         {
@@ -86,13 +86,13 @@ namespace Lumina
         return false;
     }
 
-    bool FShaderLibrary::Has(std::string Key)
+    bool FShaderLibrary::Has(FString Key)
     {
         std::scoped_lock<std::shared_mutex> lock(Mutex);
         return Library.find(Key) != Library.end();
     }
 
-    TRefPtr<FShader> FShaderLibrary::GetShader(const std::string& Key)
+    TRefPtr<FShader> FShaderLibrary::GetShader(const FString& Key)
     {
         if (Get()->Library.find(Key) != Get()->Library.end())
         {

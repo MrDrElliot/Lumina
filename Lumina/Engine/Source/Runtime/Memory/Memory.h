@@ -27,9 +27,14 @@ inline void operator delete(void* ptr, size_t size) noexcept
     free(ptr);
 }
 
+inline void* __cdecl operator new[](size_t size, const char* name, int flags, unsigned debugFlags, const char* file, int line)
+{
+    return new uint8_t[size];
+}
+
 namespace Lumina::Memory
 {
-    inline LString GetProgramMemoryAsString()
+    inline FString GetProgramMemoryAsString()
     {
         const double bytes = static_cast<double>(gProgramMemory);
         const double kibibytes = bytes / 1024.0;
@@ -45,12 +50,12 @@ namespace Lumina::Memory
         << "------- " <<  gibibytes << " GiB  \n"
         << "End Program Memory Dump";
 
-        return LString(ss.str().c_str());
+        return FString(ss.str().c_str());
     }
     
 
     // Function to format size in different units
-    inline LString FormatSize(uint64 bytes)
+    inline FString FormatSize(uint64 bytes)
     {
         const uint64 KiB = 1024;
         const uint64 MiB = KiB * 1024;
@@ -70,6 +75,6 @@ namespace Lumina::Memory
             formattedSize << " (" << std::fixed << std::setprecision(2) << (bytes / KiB) << " KiB)";
         }
 
-        return formattedSize.str();
+        return formattedSize.str().c_str();
     }
 }

@@ -36,7 +36,7 @@ namespace Lumina
         FVulkanBuffer(const FDeviceBufferSpecification& Spec, void* Data, uint64 DataSize);
         ~FVulkanBuffer();
 
-        void SetFriendlyName(const LString& InName) override;
+        void SetFriendlyName(const FString& InName) override;
         
         VkBuffer& GetBuffer() { return Buffer; }
         VkBuffer* GetBufferPtr() { return &Buffer; }

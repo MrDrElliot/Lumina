@@ -697,7 +697,7 @@ Emitter& Emitter::Write(const std::string& str) {
       Utils::WriteDoubleQuotedString(m_stream, str, escapeNonAscii);
       break;
     case StringFormat::Literal:
-      Utils::WriteLiteralString(m_stream, str,
+      Utils::WriteLiteraFString(m_stream, str,
                                 m_pState->CurIndent() + m_pState->GetIndent());
       break;
   }

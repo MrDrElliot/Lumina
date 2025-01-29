@@ -61,7 +61,7 @@ namespace Lumina
         
         virtual void Write(uint16 Binding, uint16 ArrayElement, TRefPtr<FBuffer> Buffer, uint64 Size, uint64 Offset) = 0;
         virtual void Write(uint16 Binding, uint16 ArrayElement, TRefPtr<FImage> Image, TRefPtr<FImageSampler> Sampler) = 0;
-        virtual void Write(uint16 Binding, uint16 ArrayElement, TArray<TRefPtr<FImage>> Images, TRefPtr<FImageSampler> Sampler) = 0;
+        virtual void Write(uint16 Binding, uint16 ArrayElement, TVector<TRefPtr<FImage>> Images, TRefPtr<FImageSampler> Sampler) = 0;
 
     
     };

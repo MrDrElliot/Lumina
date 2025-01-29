@@ -20,19 +20,19 @@ namespace Lumina
 
         void Shutdown();
 
-        bool Load(std::filesystem::path Vertex, std::filesystem::path Fragment, const LString& Tag);
+        bool Load(std::filesystem::path Vertex, std::filesystem::path Fragment, const FString& Tag);
         
-        bool Unload(std::string Name);
+        bool Unload(FString Name);
         bool Reload(std::filesystem::path Name);
-        bool Has(std::string Key);
+        bool Has(FString Key);
         
-        static TRefPtr<FShader> GetShader(const std::string& Key);
-        const std::unordered_map<LString, TRefPtr<FShader>>* GetShaders() const { return &Library; }
+        static TRefPtr<FShader> GetShader(const FString& Key);
+        const std::unordered_map<FString, TRefPtr<FShader>>* GetShaders() const { return &Library; }
         EShaderStage EvaluateStage(std::filesystem::path File) const;
 
     private:
 
-        std::unordered_map<LString, TRefPtr<FShader>> Library;
+        std::unordered_map<FString, TRefPtr<FShader>> Library;
         std::shared_mutex Mutex;
         
     };

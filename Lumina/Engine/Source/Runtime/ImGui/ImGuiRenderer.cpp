@@ -5,7 +5,7 @@
 namespace Lumina
 {
 
-    std::shared_ptr<FImGuiRenderAPI> FImGuiRenderer::RenderAPI = nullptr;
+    TSharedPtr<FImGuiRenderAPI> FImGuiRenderer::RenderAPI = nullptr;
     
     FImGuiRenderer::FImGuiRenderer()
     {

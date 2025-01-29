@@ -20,7 +20,7 @@ namespace Lumina
         {
             PROFILE_SCOPE_LOG(MeshImporter::Import)
 
-            //TFastVector<std::shared_ptr<LStaticMesh>> ReturnMeshes;
+            //TFastVector<TSharedPtr<LStaticMesh>> ReturnMeshes;
             
             fastgltf::Asset Asset;
             ExtractAsset(&Asset, AssetPath);
@@ -43,7 +43,7 @@ namespace Lumina
     
                     fastgltf::iterateAccessor<std::uint32_t>(Asset, IndexAccessor, [&](std::uint32_t Index)
                     {
-                        NewAsset.Indices.EmplaceBack(Index);
+                        NewAsset.Indices.push_back(Index);
                     });
     
                     fastgltf::Accessor& PosAccessor = Asset.accessors[Primitive.findAttribute("POSITION")->second];
@@ -88,7 +88,7 @@ namespace Lumina
                         });
                     }
                     
-                    NewAsset.Name = Mesh.name;
+                    NewAsset.Name = Mesh.name.c_str();
                 }
     
                 std::random_device rd;  // Obtain a random number from hardware

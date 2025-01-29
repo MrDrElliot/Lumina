@@ -15,11 +15,11 @@ namespace Lumina
 		float GetX() const { return MouseX; }
 		float GetY() const { return MouseY; }
 
-		std::string ToString() const override
+		FString ToString() const override
 		{
-			std::stringstream ss;
+            std::stringstream ss;
 			ss << "MouseMovedEvent: " << MouseX << ", " << MouseY;
-			return ss.str();
+			return ss.str().c_str();
 		}
 
 		EVENT_CLASS_TYPE(MouseMoved)
@@ -37,11 +37,11 @@ namespace Lumina
 		float GetXOffset() const { return m_XOffset; }
 		float GetYOffset() const { return m_YOffset; }
 
-		std::string ToString() const override
+		FString ToString() const override
 		{
-			std::stringstream ss;
+            std::stringstream ss;
 			ss << "MouseScrolledEvent: " << GetXOffset() << ", " << GetYOffset();
-			return ss.str();
+			return ss.str().c_str();
 		}
 
 		EVENT_CLASS_TYPE(MouseScrolled)
@@ -69,11 +69,11 @@ namespace Lumina
 		MouseButtonPressedEvent(const MouseCode button)
 			: MouseButtonEvent(button) {}
 
-		std::string ToString() const override
+		FString ToString() const override
 		{
-			std::stringstream ss;
+            std::stringstream ss;
 			ss << "MouseButtonPressedEvent: " << Button;
-			return ss.str();
+			return ss.str().c_str();
 		}
 
 		EVENT_CLASS_TYPE(MouseButtonPressed)
@@ -85,11 +85,11 @@ namespace Lumina
 		MouseButtonReleasedEvent(const MouseCode button)
 			: MouseButtonEvent(button) {}
 
-		std::string ToString() const override
+		FString ToString() const override
 		{
-			std::stringstream ss;
+            std::stringstream ss;
 			ss << "MouseButtonReleasedEvent: " << Button;
-			return ss.str();
+			return ss.str().c_str();
 		}
 
 		EVENT_CLASS_TYPE(MouseButtonReleased)

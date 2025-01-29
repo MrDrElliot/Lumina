@@ -93,8 +93,8 @@ namespace Lumina
     {
         auto Device = FVulkanRenderContext::GetDevice();
 
-        TArray<VkDescriptorSetLayoutBinding> SetBindings;
-        TArray<VkDescriptorBindingFlags> BindingFlags;
+        TVector<VkDescriptorSetLayoutBinding> SetBindings;
+        TVector<VkDescriptorBindingFlags> BindingFlags;
 
         for (auto& binding : InSpec.Bindings)
         {
@@ -105,8 +105,8 @@ namespace Lumina
             VkBinding.descriptorType = convert(binding.Type);
             VkBinding.binding = binding.Binding;
 
-            SetBindings.PushBack(std::move(VkBinding));
-            BindingFlags.PushBack(extractFlags(binding.Flags));
+            SetBindings.push_back(std::move(VkBinding));
+            BindingFlags.push_back(extractFlags(binding.Flags));
         }
 
         VkDescriptorSetLayoutBindingFlagsCreateInfo VkBindingFlags = {};
@@ -186,11 +186,11 @@ namespace Lumina
         vkUpdateDescriptorSets(Device, 1, &WriteDescriptorSet, 0, nullptr);
     }
 
-    void FVulkanDescriptorSet::Write(uint16 Binding, uint16 ArrayElement, TArray<TRefPtr<FImage>> Images, TRefPtr<FImageSampler> Sampler)
+    void FVulkanDescriptorSet::Write(uint16 Binding, uint16 ArrayElement, TVector<TRefPtr<FImage>> Images, TRefPtr<FImageSampler> Sampler)
     {
         auto Device = FVulkanRenderContext::GetDevice();
     
-        TArray<VkDescriptorImageInfo> DescriptorImageInfos(Images.size());
+        TVector<VkDescriptorImageInfo> DescriptorImageInfos(Images.size());
 
         for (size_t i = 0; i < Images.size(); ++i)
         {
@@ -214,7 +214,7 @@ namespace Lumina
         vkUpdateDescriptorSets(Device, 1, &WriteDescriptorSet, 0, nullptr);
     }
 
-    void FVulkanDescriptorSet::SetFriendlyName(const LString& InName)
+    void FVulkanDescriptorSet::SetFriendlyName(const FString& InName)
     {
         FDescriptorSet::SetFriendlyName(InName);
 
@@ -222,7 +222,7 @@ namespace Lumina
 
         VkDebugUtilsObjectNameInfoEXT NameInfo = {};
         NameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
-        NameInfo.pObjectName = GetFriendlyName().CStr();
+        NameInfo.pObjectName = GetFriendlyName().c_str();
         NameInfo.objectType = VK_OBJECT_TYPE_DESCRIPTOR_SET;
         NameInfo.objectHandle = reinterpret_cast<uint64_t>(DescriptorSet);
         

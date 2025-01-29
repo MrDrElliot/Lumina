@@ -5,7 +5,7 @@
 #include "ScenePrimitives.h"
 #include "Assets/AssetRegistry/AssetRegistry.h"
 #include "Assets/AssetTypes/Textures/Texture.h"
-#include "Core/Application.h"
+#include "Core/Application/Application.h"
 #include "glm/gtc/type_ptr.hpp"
 #include "Assets/Factories/MeshFactory/StaticMeshFactory.h"
 #include "Assets/Factories/TextureFactory/TextureFactory.h"
@@ -24,44 +24,44 @@
 
 namespace Lumina
 {
-    std::shared_ptr<FSceneRenderer> FSceneRenderer::Create(LScene* InScene)
+    TSharedPtr<FSceneRenderer> FSceneRenderer::Create(LScene* InScene)
     {
-        return std::make_shared<FSceneRenderer>(InScene);
+        return MakeSharedPtr<FSceneRenderer>(InScene);
     }
 
     FSceneRenderer::FSceneRenderer(LScene* InScene)
         :CurrentScene(InScene)
     {
         
-        BaseColor = FTextureFactory::ImportFromSource(Paths::GetEngineInstallDirectory() / "LuminaEditor/Resources/Icons/ContentBrowser/Default_albedo.jpg");
+        BaseColor = FTextureFactory::ImportFromSource(Paths::GetEngineInstallDirectory() / "Applications/LuminaEditor/Resources/Icons/ContentBrowser/Default_albedo.jpg");
         BaseColor->SetFriendlyName("Base Color");
-        Normal = FTextureFactory::ImportFromSource(Paths::GetEngineInstallDirectory() / "LuminaEditor/Resources/Icons/ContentBrowser/Default_normal.jpg");
+        Normal = FTextureFactory::ImportFromSource(Paths::GetEngineInstallDirectory() / "Applications/LuminaEditor/Resources/Icons/ContentBrowser/Default_normal.jpg");
         Normal->SetFriendlyName("Nromal");
-        Metallic = FTextureFactory::ImportFromSource(Paths::GetEngineInstallDirectory() / "LuminaEditor/Resources/Icons/ContentBrowser/Default_metalRoughness.jpg");
+        Metallic = FTextureFactory::ImportFromSource(Paths::GetEngineInstallDirectory() / "Applications/LuminaEditor/Resources/Icons/ContentBrowser/Default_metalRoughness.jpg");
         Metallic->SetFriendlyName("Metallic");
-        AmbientOcclusion = FTextureFactory::ImportFromSource(Paths::GetEngineInstallDirectory() / "LuminaEditor/Resources/Icons/ContentBrowser/Default_AO.jpg");
+        AmbientOcclusion = FTextureFactory::ImportFromSource(Paths::GetEngineInstallDirectory() / "Applications/LuminaEditor/Resources/Icons/ContentBrowser/Default_AO.jpg");
         AmbientOcclusion->SetFriendlyName("Ambient Occlusion");
-        Emissive = FTextureFactory::ImportFromSource(Paths::GetEngineInstallDirectory() / "LuminaEditor/Resources/Icons/ContentBrowser/Default_emissive.jpg");
+        Emissive = FTextureFactory::ImportFromSource(Paths::GetEngineInstallDirectory() / "Applications/LuminaEditor/Resources/Icons/ContentBrowser/Default_emissive.jpg");
         Emissive->SetFriendlyName("Emissive");
 
-        MaterialInstance.AssetPtr =                     std::make_shared<LMaterialInstance>();
+        MaterialInstance.AssetPtr =                     MakeSharedPtr<LMaterialInstance>();
         
-        MaterialInstance->Albedo.AssetPtr =             std::make_shared<LTexture>();
+        MaterialInstance->Albedo.AssetPtr =             MakeSharedPtr<LTexture>();
         MaterialInstance->Albedo.AssetPtr->SetImage(BaseColor, BaseColor->GetSpecification());
         
-        MaterialInstance->Normal.AssetPtr =             std::make_shared<LTexture>();
+        MaterialInstance->Normal.AssetPtr =             MakeSharedPtr<LTexture>();
         MaterialInstance->Normal.AssetPtr->SetImage(Normal, Normal->GetSpecification());
 
         
-        MaterialInstance->Roughness.AssetPtr =          std::make_shared<LTexture>();
+        MaterialInstance->Roughness.AssetPtr =          MakeSharedPtr<LTexture>();
         MaterialInstance->Roughness.AssetPtr->SetImage(Metallic, Metallic->GetSpecification());
 
         
-        MaterialInstance->Emissive.AssetPtr =           std::make_shared<LTexture>();
+        MaterialInstance->Emissive.AssetPtr =           MakeSharedPtr<LTexture>();
         MaterialInstance->Emissive.AssetPtr->SetImage(Emissive, Emissive->GetSpecification());
 
         
-        MaterialInstance->AmbientOcclusion.AssetPtr =   std::make_shared<LTexture>();
+        MaterialInstance->AmbientOcclusion.AssetPtr =   MakeSharedPtr<LTexture>();
         MaterialInstance->AmbientOcclusion.AssetPtr->SetImage(AmbientOcclusion, AmbientOcclusion->GetSpecification());
 
         /*for (int i = 0; i < 100; ++i)
@@ -154,7 +154,7 @@ namespace Lumina
         FRenderer::EndRender();
     }
 
-    void FSceneRenderer::BeginScene(std::shared_ptr<FCamera> InCamera)
+    void FSceneRenderer::BeginScene(TSharedPtr<FCamera> InCamera)
     {
         Camera = InCamera;
                 
@@ -217,7 +217,7 @@ namespace Lumina
 
     }
 
-    void FSceneRenderer::GeometryPass(const TArray<TRefPtr<FImage>>& Attachments)
+    void FSceneRenderer::GeometryPass(const TVector<TRefPtr<FImage>>& Attachments)
     {
         // Begin rendering with the target and depth attachments
         if(CurrentScene->GetSceneSettings().bShowGrid)
@@ -262,7 +262,7 @@ namespace Lumina
         {
             ModelData.clear();
             ModelData.reserve((int32)ComponentTotal);
-            std::unordered_map<std::shared_ptr<LMaterialInstance>, std::vector<std::shared_ptr<LStaticMesh>>> MeshInstanceMap;
+            std::unordered_map<TSharedPtr<LMaterialInstance>, std::vector<TSharedPtr<LStaticMesh>>> MeshInstanceMap;
 
             CurrentScene->ForEachComponent<FMeshComponent>([&, this](uint32 Current, entt::entity& entity, FMeshComponent& Component)
             {
@@ -276,7 +276,7 @@ namespace Lumina
                     auto& Transform = View.get<FTransformComponent>(entity);
 
                     glm::mat4 Matrix = Transform.GetTransform().GetMatrix();
-                    ModelData.EmplaceBack(std::move(Matrix));
+                    ModelData.emplace_back(std::move(Matrix));
                     
                     MeshInstanceMap[MaterialInstance].emplace_back(Component.StaticMesh.Get());
 
@@ -290,7 +290,7 @@ namespace Lumina
             TexturesData.reserve(MeshInstanceMap.size());
 
             // A map to store each texture and its unique ID
-            std::unordered_map<std::shared_ptr<LTexture>, int32> TextureHash;
+            std::unordered_map<TSharedPtr<LTexture>, int32> TextureHash;
 
             // Unique texture counter
             int32 CurrentTextureID = 0;
@@ -299,7 +299,7 @@ namespace Lumina
             {
                 if (MaterialInstance != nullptr && MaterialInstance != nullptr)
                 {
-                    TexturesData.PushBack(MaterialInstance->MaterialTextureIDs);
+                    TexturesData.push_back(MaterialInstance->MaterialTextureIDs);
                 }
                 else
                 {
@@ -308,7 +308,7 @@ namespace Lumina
                 }
 
                 // Helper lambda to find or add a texture to the map
-                auto GetOrAddTextureID = [&TextureHash, &CurrentTextureID](const std::shared_ptr<LTexture>& Texture) -> int32
+                auto GetOrAddTextureID = [&TextureHash, &CurrentTextureID](const TSharedPtr<LTexture>& Texture) -> int32
                 {
                     if (!Texture)
                     {
@@ -497,10 +497,10 @@ namespace Lumina
         {
             // Create the descriptor set using the specification
             auto Set = FDescriptorSet::Create(SceneSetSpec);
-            Set->SetFriendlyName("Material: " + std::to_string(i));
+            Set->SetFriendlyName("Material: " + FString::append(std::to_string(i).c_str()));
             
             // Add the created set to the list of descriptor sets
-            SceneDescriptorSets.PushBack(std::move(Set));
+            SceneDescriptorSets.push_back(std::move(Set));
         }
         
         std::vector<FDescriptorBinding> GridBindings;
@@ -514,9 +514,9 @@ namespace Lumina
         for (uint32 i = 0; i < FramesInFlight; i++)
         {
             auto Set = FDescriptorSet::Create(GridSpec);
-            Set->SetFriendlyName("Material: " + std::to_string(i));
+            Set->SetFriendlyName("Material: " + FString::append(std::to_string(i).c_str()));
             
-            GridDescriptorSets.PushBack(Set);
+            GridDescriptorSets.push_back(Set);
         }
     }
 
@@ -534,9 +534,9 @@ namespace Lumina
         for (int i = 0; i < FRenderer::GetConfig().FramesInFlight; ++i)
         {
             TRefPtr<FImage> Image = FImage::Create(ImageSpecs);
-            Image->SetFriendlyName("Render Target: " + std::to_string(i));
+            Image->SetFriendlyName("Render Target: " + FString::append(std::to_string(i).c_str()));
             
-            RenderTargets.PushBack(std::move(Image));
+            RenderTargets.push_back(std::move(Image));
         }
 
         FImageSpecification DepthImageSpecs = FImageSpecification::Default();
@@ -551,9 +551,9 @@ namespace Lumina
         for(int i = 0; i < FRenderer::GetConfig().FramesInFlight; ++i)
         {
             TRefPtr<FImage> Image = FImage::Create(DepthImageSpecs);
-            Image->SetFriendlyName("Depth Image: " + std::to_string(i));
+            Image->SetFriendlyName("Depth Image: " + FString::append(std::to_string(i).c_str()));
             
-            DepthAttachments.PushBack(std::move(Image));
+            DepthAttachments.push_back(std::move(Image));
         }
 
     }

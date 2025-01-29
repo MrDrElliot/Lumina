@@ -29,11 +29,12 @@ namespace Lumina
         ScanThread = std::thread(&AssetRegistry::ScanAssets, this);
     }
 
-    const FAssetMetadata& AssetRegistry::GetMetadata(const FAssetHandle& InHandle)
+    FAssetMetadata AssetRegistry::GetMetadata(const FAssetHandle& InHandle)
     {
         if (!mAssetRegistry.contains(InHandle))
         {
             LOG_WARN("Failed to find asset metadata for AssetHandle: {0}", InHandle.Handle);
+            return {};
         }
 
         return mAssetRegistry.at(InHandle);
@@ -45,7 +46,7 @@ namespace Lumina
         FAssetMetadata Metadata;
         for (auto& KVP : mAssetRegistry)
         {
-            if(KVP.second.Path == InPath)
+            if(KVP.second.Path == InPath.string().c_str())
             {
                 bFound = true;
                 Metadata = KVP.second;
@@ -57,18 +58,16 @@ namespace Lumina
             return Metadata;
         }
 
-        TArray<uint8> Buffer;
+        TVector<uint8> Buffer;
         FFileHelper::LoadFileToArray(Buffer, InPath);
 
         FMemoryReader Reader(Buffer);
         Reader << Metadata;
-
-        LOG_WARN("GUID: {0}", Metadata.Guid.ToString());
-
-        if (Metadata.Path != InPath.string())
+        
+        if (strcmp(Metadata.Path.c_str(), InPath.string().c_str()) != 0)
         {
-            LOG_ERROR("Loaded a file that was saved with a different file path!");
-            return {};
+            LOG_WARN("Loaded a file that was saved with a different file path!");
+            Metadata.Path = InPath.string().c_str();
         }
         
         SetMetadata(FAssetHandle(Metadata.Guid), Metadata);
@@ -82,7 +81,7 @@ namespace Lumina
         mAssetRegistry[InHandle] = InMetadata;
 
         // Retrieve the list of metadata for this asset type
-        TArray<FAssetMetadata>& Assets = AssetTypeMap[InMetadata.AssetType];
+        TVector<FAssetMetadata>& Assets = AssetTypeMap[InMetadata.AssetType];
 
         // Check for existing metadata with the same AssetID to prevent duplicates
         auto It = std::ranges::find_if(Assets, [&](const FAssetMetadata& Meta)
@@ -98,7 +97,7 @@ namespace Lumina
         else
         {
             // Add new metadata if not found
-            Assets.PushBack(InMetadata);
+            Assets.push_back(InMetadata);
         }
     }
 
@@ -121,45 +120,47 @@ namespace Lumina
     }
 
 
-    void AssetRegistry::GetAllRegisteredAssets(TArray<FAssetMetadata>& OutAssets)
+    void AssetRegistry::GetAllRegisteredAssets(TVector<FAssetMetadata>& OutAssets)
     {
         OutAssets.reserve(mAssetRegistry.size());
         for (auto& reg : mAssetRegistry)
         {
-            OutAssets.PushBack(reg.second);
+            OutAssets.push_back(reg.second);
         }
     }
 
-    void AssetRegistry::GetAllAssetsOfType(EAssetType Type, TArray<FAssetMetadata>& OutAssets)
+    void AssetRegistry::GetAllAssetsOfType(EAssetType Type, TVector<FAssetMetadata>& OutAssets)
     {
         OutAssets.reserve(100);
         if (AssetTypeMap.contains(Type))
         {
-            TArray<FAssetMetadata> Assets = AssetTypeMap.at(Type);
+            TVector<FAssetMetadata> Assets = AssetTypeMap.at(Type);
             for (FAssetMetadata& Meta : Assets)
             {
                 if (Meta.AssetType == Type)
                 {
-                    OutAssets.PushBack(Meta);
+                    OutAssets.push_back(Meta);
                 }
             }
         }
     }
 
-    FAssetHandle AssetRegistry::ImportAsset(const std::string& Name, void* Data, const std::filesystem::path& ImportFilePath, const std::filesystem::path& NewAssetPath)
+    FAssetHandle AssetRegistry::ImportAsset(const FString& Name, void* Data, const std::filesystem::path& ImportFilePath, const std::filesystem::path& NewAssetPath)
     {
         AssetRegistry* AssetRegistry = AssetRegistry::Get();
         FAssetHandle NewHandle(FGuid::Generate());
 
+        std::filesystem::path FullPath = NewAssetPath / (Name + FILE_EXTENSION).c_str();
+        
         FAssetMetadata NewMetadata;
         NewMetadata.Version = 1;
         NewMetadata.Name = Name;
         NewMetadata.Guid = NewHandle.Handle;
-        NewMetadata.Path = (NewAssetPath / (Name + FILE_EXTENSION)).string();
-        NewMetadata.OriginPath = ImportFilePath.string();
-        NewMetadata.AssetType = FileExtensionToAssetType(ImportFilePath.extension().string());
+        NewMetadata.Path = FullPath.string().c_str();
+        NewMetadata.OriginPath = ImportFilePath.string().c_str();
+        NewMetadata.AssetType = FileExtensionToAssetType(ImportFilePath.extension().string().c_str());
 
-        TArray<uint8> Buffer;
+        TVector<uint8> Buffer;
         FMemoryWriter Ar(Buffer);
         Ar << NewMetadata;
         
@@ -188,8 +189,8 @@ namespace Lumina
                 break;
         }
 
-        std::string FullFileName = Name + FILE_EXTENSION;
-        bool bSuccess = FFileHelper::SaveArrayToFile(Buffer, NewAssetPath / FullFileName);
+        FString FullFileName = Name + FILE_EXTENSION;
+        bool bSuccess = FFileHelper::SaveArrayToFile(Buffer, NewAssetPath / FullFileName.c_str());
         if (!bSuccess)
         {
             LOG_ERROR("Failed to save array to a file when importing asset... {0}", FullFileName);
@@ -201,7 +202,7 @@ namespace Lumina
         return NewHandle;
     }
 
-    FAssetHandle AssetRegistry::CreateAsset(EAssetType Type, const std::string& Name, void* Data, const std::filesystem::path& NewAssetPath)
+    FAssetHandle AssetRegistry::CreateAsset(EAssetType Type, const FString& Name, void* Data, const std::filesystem::path& NewAssetPath)
     {
         std::unreachable();
         return FAssetHandle();

@@ -40,9 +40,9 @@ namespace Lumina
         }
         
         
-        std::string Name;
-        TArray<FVertex> Vertices;
-        TArray<uint32> Indices;
+        FString Name;
+        TVector<FVertex> Vertices;
+        TVector<uint32> Indices;
         
     };
     
@@ -55,7 +55,7 @@ namespace Lumina
         LStaticMesh(const FAssetMetadata& Metadata, FMeshAsset InInfo);
         virtual ~LStaticMesh();
         
-        static std::shared_ptr<LStaticMesh> CreateMesh(const FAssetMetadata& Metadata, FMeshAsset InInfo);
+        static TSharedPtr<LStaticMesh> CreateMesh(const FAssetMetadata& Metadata, FMeshAsset InInfo);
 
         void CreateNew();
         

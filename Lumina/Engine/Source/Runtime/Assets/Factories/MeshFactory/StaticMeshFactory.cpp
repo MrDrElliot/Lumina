@@ -11,20 +11,20 @@
 
 namespace Lumina
 {
-    std::shared_ptr<LAsset> FStaticMeshFactory::CreateNew(const FAssetMetadata& Metadata, FArchive& Archive)
+    TSharedPtr<LAsset> FStaticMeshFactory::CreateNew(const FAssetMetadata& Metadata, FArchive& Archive)
     {
-        auto NewMesh = std::make_shared<LStaticMesh>();
+        auto NewMesh = MakeSharedPtr<LStaticMesh>();
         NewMesh->Serialize(Archive);
         NewMesh->CreateNew();
 
         return NewMesh;
     }
 
-    TArray<std::shared_ptr<LStaticMesh>> FStaticMeshFactory::Import(std::filesystem::path InPath)
+    TVector<TSharedPtr<LStaticMesh>> FStaticMeshFactory::Import(std::filesystem::path InPath)
     {
         fastgltf::Asset Asset;
 
-        TArray<std::shared_ptr<LStaticMesh>> ReturnMeshes;
+        TVector<TSharedPtr<LStaticMesh>> ReturnMeshes;
         
         ExtractAsset(&Asset, InPath);
         
@@ -48,7 +48,7 @@ namespace Lumina
 
                 fastgltf::iterateAccessor<std::uint32_t>(Asset, IndexAccessor, [&](std::uint32_t Index)
                 {
-                    NewAsset.Indices.PushBack(Index);
+                    NewAsset.Indices.push_back(Index);
                 });
 
                 fastgltf::Accessor& PosAccessor = Asset.accessors[Primitive.findAttribute("POSITION")->second];
@@ -93,7 +93,7 @@ namespace Lumina
                     });
                 }
                 
-                NewAsset.Name = Mesh.name;
+                NewAsset.Name = Mesh.name.c_str();
             }
 
             std::random_device rd;  // Obtain a random number from hardware
@@ -111,7 +111,7 @@ namespace Lumina
                 }
             }
             
-            ReturnMeshes.PushBack(LStaticMesh::CreateMesh(FAssetMetadata(), std::move(NewAsset)));
+            ReturnMeshes.push_back(LStaticMesh::CreateMesh(FAssetMetadata(), std::move(NewAsset)));
         }
 
         return ReturnMeshes;

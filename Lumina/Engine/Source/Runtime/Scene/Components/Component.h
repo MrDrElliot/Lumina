@@ -15,7 +15,7 @@ namespace Lumina
 	
 	protected:
 
-		LString DisplayName;
+		FString DisplayName;
 
 	};
 }

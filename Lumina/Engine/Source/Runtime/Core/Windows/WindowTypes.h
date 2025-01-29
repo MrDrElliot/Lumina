@@ -7,7 +7,7 @@ namespace Lumina
 {
     struct FWindowSpecs
     {
-        std::string Title = "Lumina";
+        FString Title = "Lumina";
         uint32 Width =  0;
         uint32 Height = 0;
 

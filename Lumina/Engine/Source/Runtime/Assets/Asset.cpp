@@ -10,7 +10,7 @@ namespace Lumina
     {
     }
 
-    LAsset::LAsset(const std::string& AssetName)
+    LAsset::LAsset(const FString& AssetName)
     {
         Metadata.Name = AssetName;
     }

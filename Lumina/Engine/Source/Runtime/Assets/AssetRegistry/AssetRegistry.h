@@ -29,19 +29,19 @@ namespace Lumina
 
 		void StartAssetScan();
 		
-		const FAssetMetadata& GetMetadata(const FAssetHandle& InHandle);
+		FAssetMetadata GetMetadata(const FAssetHandle& InHandle);
 		FAssetMetadata GetMetadataByPath(const std::filesystem::path& InPath);
 		void SetMetadata(const FAssetHandle& InHandle, const FAssetMetadata& InMetadata);
 		void ScanAssets();
 
-		void GetAllRegisteredAssets(TArray<FAssetMetadata>& OutAssets);
-		void GetAllAssetsOfType(EAssetType Type, TArray<FAssetMetadata>& OutAssets);
+		void GetAllRegisteredAssets(TVector<FAssetMetadata>& OutAssets);
+		void GetAllAssetsOfType(EAssetType Type, TVector<FAssetMetadata>& OutAssets);
 		
 		bool Exists(const FAssetHandle& InHandle) { return mAssetRegistry.find(InHandle) != mAssetRegistry.end(); }
 		uint32 Size() const { return mAssetRegistry.size(); }
 
-		static FAssetHandle ImportAsset(const std::string& Name, void* Data, const std::filesystem::path& ImportFilePath, const std::filesystem::path& NewAssetPath);
-		static FAssetHandle CreateAsset(EAssetType Type, const std::string& Name, void* Data, const std::filesystem::path& NewAssetPath);
+		static FAssetHandle ImportAsset(const FString& Name, void* Data, const std::filesystem::path& ImportFilePath, const std::filesystem::path& NewAssetPath);
+		static FAssetHandle CreateAsset(EAssetType Type, const FString& Name, void* Data, const std::filesystem::path& NewAssetPath);
 		
 		template<typename T>
 		static TAssetHandle<T> GetAssetByPath(const std::filesystem::path& InPath);
@@ -49,7 +49,7 @@ namespace Lumina
 	private:
 
 		std::unordered_map<FAssetHandle, FAssetMetadata> mAssetRegistry;
-		std::unordered_map<EAssetType, TArray<FAssetMetadata>> AssetTypeMap;
+		std::unordered_map<EAssetType, TVector<FAssetMetadata>> AssetTypeMap;
 
 		std::thread ScanThread;
 		std::atomic<bool> bShouldScan = true;
@@ -69,7 +69,7 @@ namespace Lumina
 		}
 
 		FAssetMetadata Metadata;
-		TArray<uint8> Buffer;
+		TVector<uint8> Buffer;
 		FMemoryReader Reader(Buffer);
 		Reader << Metadata;
 		

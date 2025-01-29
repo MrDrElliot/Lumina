@@ -65,12 +65,12 @@ namespace Lumina
     public:
         
 
-        static std::shared_ptr<FSceneRenderer> Create(LScene* InScene);
+        static TSharedPtr<FSceneRenderer> Create(LScene* InScene);
 
         FSceneRenderer(LScene* InScene);
         ~FSceneRenderer();
 
-        void BeginScene(std::shared_ptr<FCamera> InCamera);
+        void BeginScene(TSharedPtr<FCamera> InCamera);
         void EndScene();
 
         TRefPtr<FImage> GetRenderTarget() { return      RenderTargets[FRenderer::GetCurrentFrameIndex()]; }
@@ -78,7 +78,7 @@ namespace Lumina
         FSceneLightData& GetSceneLightingData() { return SceneLightingData; }
 
         void RenderGrid();
-        void GeometryPass(const TArray<TRefPtr<FImage>>& Attachments);
+        void GeometryPass(const TVector<TRefPtr<FImage>>& Attachments);
 
         void InitPipelines();
         void InitBuffers();
@@ -92,8 +92,8 @@ namespace Lumina
         TRefPtr<FPipeline> GraphicsPipeline;
         TRefPtr<FPipeline> InfiniteGridPipeline;
         
-        TArray<TRefPtr<FDescriptorSet>> GridDescriptorSets;
-        TArray<TRefPtr<FDescriptorSet>> SceneDescriptorSets;
+        TVector<TRefPtr<FDescriptorSet>> GridDescriptorSets;
+        TVector<TRefPtr<FDescriptorSet>> SceneDescriptorSets;
 
         FMaterialAttributes Attributes;
         
@@ -105,8 +105,8 @@ namespace Lumina
         } Data;
 
         
-        TArray<TRefPtr<FImage>> RenderTargets;
-        TArray<TRefPtr<FImage>> DepthAttachments;
+        TVector<TRefPtr<FImage>> RenderTargets;
+        TVector<TRefPtr<FImage>> DepthAttachments;
 
         TRefPtr<FImage> BaseColor;
         TRefPtr<FImage> Emissive;
@@ -125,12 +125,12 @@ namespace Lumina
         FGridData                           GridData;
         FCameraData                         CameraData;
         FSceneLightData                     SceneLightingData;
-        TArray<FModelData>             ModelData;
-        TArray<FMaterialTexturesData>  TexturesData;
+        TVector<FModelData>             ModelData;
+        TVector<FMaterialTexturesData>  TexturesData;
 
         TAssetHandle<LMaterialInstance> MaterialInstance;
         
-        std::shared_ptr<FCamera> Camera;
+        TSharedPtr<FCamera> Camera;
         TRefPtr<FMaterial> TestMaterial;
         
         LScene* CurrentScene;

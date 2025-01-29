@@ -31,7 +31,7 @@ namespace Lumina
         }
 
         // Constructor for initializing GUID from a string (e.g., "60DBF646-773C-4B6D-AAD9-E9D51BE7E957")
-        explicit FGuid(const std::string& GuidString)
+        explicit FGuid(const FString& GuidString)
         {
             FromString(GuidString);
         }
@@ -57,7 +57,7 @@ namespace Lumina
         }
 
         // Get the GUID as a string in the format: "60DBF646-773C-4B6D-AAD9-E9D51BE7E957"
-        std::string ToString() const
+        FString ToString() const
         {
             std::ostringstream stream;
             stream << std::hex << std::uppercase << std::setfill('0');
@@ -72,20 +72,20 @@ namespace Lumina
                 stream << std::setw(2) << static_cast<int>(Guid[i]);
             }
 
-            return stream.str();
+            return stream.str().c_str();
         }
 
         
 
         // Convert a string representation back to a GUID (if valid)
-        void FromString(const std::string& GuidString)
+        void FromString(const FString& GuidString)
         {
             if (GuidString.length() != 36)
             {
                 throw std::invalid_argument("Invalid GUID string length.");
             }
 
-            std::string cleanedGuid = GuidString;
+            FString cleanedGuid = GuidString;
             cleanedGuid.erase(std::ranges::remove(cleanedGuid, '-').begin(), cleanedGuid.end());
 
             if (cleanedGuid.length() != 32)
@@ -93,7 +93,7 @@ namespace Lumina
                 throw std::invalid_argument("Invalid GUID string format.");
             }
 
-            std::istringstream stream(cleanedGuid);
+            std::istringstream stream(cleanedGuid.c_str());
             for (size_t i = 0; i < 16; ++i)
             {
                 uint16_t byte;
@@ -123,14 +123,14 @@ namespace Lumina
 }
 
 
-namespace std
+namespace eastl
 {
     template <>
     struct hash<Lumina::FGuid>
     {
         std::size_t operator()(const Lumina::FGuid& Guid) const noexcept
         {
-            return std::hash<std::string>{}(Guid.ToString());
+            return eastl::hash<Lumina::FString>{}(Guid.ToString());
         }
     };
 }

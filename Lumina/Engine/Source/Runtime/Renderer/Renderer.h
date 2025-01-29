@@ -63,7 +63,7 @@ namespace Lumina
         
         static void BeginFrame();
         static void EndFrame();
-        static void BeginRender(const TArray<TRefPtr<FImage>>& Attachments, glm::fvec4 ClearColor = {0.0f, 0.0f, 0.0f, 0.0f});
+        static void BeginRender(const TVector<TRefPtr<FImage>>& Attachments, glm::fvec4 ClearColor = {0.0f, 0.0f, 0.0f, 0.0f});
         static void EndRender();
         static void Render();
         static void ProcessRenderQueue();
@@ -78,7 +78,7 @@ namespace Lumina
         static TRefPtr<FImageSampler> GetNearestSampler();
         
         static void InsertBarrier(const FPipelineBarrierInfo& BarrierInfo);
-        static void BindSet(const TRefPtr<FDescriptorSet>& Set, const TRefPtr<FPipeline>& Pipeline, uint8 SetIndex, const TArray<uint32>& DynamicOffsets);
+        static void BindSet(const TRefPtr<FDescriptorSet>& Set, const TRefPtr<FPipeline>& Pipeline, uint8 SetIndex, const TVector<uint32>& DynamicOffsets);
         static void BindPipeline(TRefPtr<FPipeline> Pipeline);
 
         
@@ -93,8 +93,8 @@ namespace Lumina
         static void RenderMeshTasks(TRefPtr<FPipeline> Pipeline, const glm::uvec3 Dimensions, FMiscData Data);
         static void RenderMeshIndexed(TRefPtr<FPipeline> Pipeline, TRefPtr<FBuffer> VertexBuffer, TRefPtr<FBuffer> IndexBuffer, FMiscData Data);
         static void RenderVertices(uint32 Vertices, uint32 Instances = 1, uint32 FirstVertex = 0, uint32 FirstInstance = 0);
-        static void RenderStaticMeshWithMaterial(const TRefPtr<FPipeline>& Pipeline, const std::shared_ptr<LStaticMesh>& StaticMesh, const TRefPtr<FMaterial>& Material);
-        static void RenderStaticMesh(const TRefPtr<FPipeline>& Pipeline, std::shared_ptr<LStaticMesh> StaticMesh, uint32 InstanceCount = 1);
+        static void RenderStaticMeshWithMaterial(const TRefPtr<FPipeline>& Pipeline, const TSharedPtr<LStaticMesh>& StaticMesh, const TRefPtr<FMaterial>& Material);
+        static void RenderStaticMesh(const TRefPtr<FPipeline>& Pipeline, TSharedPtr<LStaticMesh> StaticMesh, uint32 InstanceCount = 1);
 
         
         static TRefPtr<FCommandBuffer> GetCommandBuffer();

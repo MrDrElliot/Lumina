@@ -15,11 +15,11 @@ namespace Lumina
         unsigned int GetWidth() const { return Width; }
         unsigned int GetHeight() const { return Height; }
 
-        std::string ToString() const override
+        FString ToString() const override
         {
             std::stringstream ss;
             ss << "WindowResizeEvent: " << Width << ", " << Height;
-            return ss.str();
+            return ss.str().c_str();
         }
 
         EVENT_CLASS_TYPE(WindowResize)

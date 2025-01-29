@@ -10,15 +10,15 @@ namespace Lumina
     public:
 
         FNameComponent() = default;
-        FNameComponent(const LString& InName) :Name(InName) {}
+        FNameComponent(const FString& InName) :Name(InName) {}
         FNameComponent(const char* InName) :Name(InName) {}
 
         void Serialize(FArchive& Ar) override {}
 
-        LString& GetName() { return Name; }
+        FString& GetName() { return Name; }
 
     private:
     
-        LString Name;
+        FString Name;
     };
 }

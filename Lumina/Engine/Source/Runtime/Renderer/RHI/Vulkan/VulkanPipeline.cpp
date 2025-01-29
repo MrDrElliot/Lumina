@@ -227,8 +227,8 @@ namespace Lumina
 		MultisampleState.rasterizationSamples = (VkSampleCountFlagBits)Specification.sample_count;
 
 		TRefPtr<FVulkanShader> VkShader = RefPtrCast<FVulkanShader>(Specification.shader);
-		TArray<VkDescriptorSetLayout> DescriptorSetLayouts = VkShader->GetLayouts();
-		TArray<VkPushConstantRange> PushConstantRanges = VkShader->GetRanges();
+		TVector<VkDescriptorSetLayout> DescriptorSetLayouts = VkShader->GetLayouts();
+		TVector<VkPushConstantRange> PushConstantRanges = VkShader->GetRanges();
 
     	/* Pipeline Layout */	
 		VkPipelineLayoutCreateInfo PipelineLayoutCreateInfo = {};
@@ -255,7 +255,7 @@ namespace Lumina
 		PipelineRendering.depthAttachmentFormat = VK_FORMAT_D32_SFLOAT;
 
 
-		TArray<VkPipelineShaderStageCreateInfo> StageInfos = VkShader->GetCreateInfos();
+		TVector<VkPipelineShaderStageCreateInfo> StageInfos = VkShader->GetCreateInfos();
 
     	/* Graphics Pipeline Creation */	
 		VkGraphicsPipelineCreateInfo GraphicsPipelineCreateInfo = {};
@@ -285,8 +285,8 @@ namespace Lumina
     	auto Device = FVulkanRenderContext::GetDevice();	
 	
     	TRefPtr<FVulkanShader> VkShader = RefPtrCast<FVulkanShader>(Specification.shader);
-    	TArray<VkDescriptorSetLayout> DescriptorSetLayouts = VkShader->GetLayouts();
-    	TArray<VkPushConstantRange> PushConstantRanges = VkShader->GetRanges();
+    	TVector<VkDescriptorSetLayout> DescriptorSetLayouts = VkShader->GetLayouts();
+    	TVector<VkPushConstantRange> PushConstantRanges = VkShader->GetRanges();
 
     	VkPipelineLayoutCreateInfo PipelineLayoutCreateInfo = {};
     	PipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -297,7 +297,7 @@ namespace Lumina
 
     	vkCreatePipelineLayout(Device, &PipelineLayoutCreateInfo, nullptr, &PipelineLayout);
 
-    	TArray<VkPipelineShaderStageCreateInfo> StageCreateInfo = VkShader->GetCreateInfos();
+    	TVector<VkPipelineShaderStageCreateInfo> StageCreateInfo = VkShader->GetCreateInfos();
 
     	VkComputePipelineCreateInfo ComputePipelineCreateInfo = {};
     	ComputePipelineCreateInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;

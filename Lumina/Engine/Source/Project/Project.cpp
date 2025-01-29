@@ -5,6 +5,7 @@
 #include <string>
 
 #include "GUID/GUID.h"
+#include "Paths/Paths.h"
 #include "yaml-cpp/yaml.h"
 
 namespace Lumina
@@ -29,17 +30,18 @@ namespace Lumina
 
     TRefPtr<Project> Project::Load(const std::filesystem::path& Path)
     {
+        std::filesystem::path FullPath = Paths::ResolveFromEngine(Path);
         sCurrentProject = MakeRefPtr<Project>();
-        sCurrentProject->ProjectFile = Path;
-        sCurrentProject->ProjectDirectory = Path.parent_path();
-        sCurrentProject->Deserialize(Path);
+        sCurrentProject->ProjectFile = FullPath;
+        sCurrentProject->ProjectDirectory = FullPath.parent_path();
+        sCurrentProject->Deserialize(FullPath);
         return sCurrentProject;
     }
     
 
     void Project::GenerateProjectFromTemplate()
     {
-        std::filesystem::path targetDir = ProjectDirectory;
+        std::filesystem::path targetDir = std::filesystem::absolute(ProjectDirectory);
         try
         {
             std::filesystem::create_directories(targetDir / "Game" / "Content");
@@ -58,10 +60,10 @@ namespace Lumina
         data << YAML::Key << "Project" << YAML::Value;
         {
             data << YAML::BeginMap;
-            data << YAML::Key << "Name" << Config.Name;
-            data << YAML::Key << "ProjectVersion" << Config.ProjectVersion;
-            data << YAML::Key << "EngineVersion" << Config.EngineVersion;
-            data << YAML::Key << "StartupScene" << Config.StartupScene;
+            data << YAML::Key << "Name" << Config.Name.c_str();
+            data << YAML::Key << "ProjectVersion" << Config.ProjectVersion.c_str();
+            data << YAML::Key << "EngineVersion" << Config.EngineVersion.c_str();
+            data << YAML::Key << "StartupScene" << Config.StartupScene.c_str();
         }
         data << YAML::EndMap;
 
@@ -94,9 +96,9 @@ namespace Lumina
             }
             YAML::Node rootNode = data["Project"];
             
-            Config.Name =           rootNode["Name"].as<std::string>();
-            Config.ProjectVersion = rootNode["ProjectVersion"].as<std::string>();
-            Config.EngineVersion =  rootNode["EngineVersion"].as<std::string>();
+            Config.Name =           rootNode["Name"].as<FString>();
+            Config.ProjectVersion = rootNode["ProjectVersion"].as<FString>();
+            Config.EngineVersion =  rootNode["EngineVersion"].as<FString>();
         
             stream.close();
         }

@@ -11,7 +11,7 @@ namespace Lumina
     struct FShaderData
     {
         EShaderStage Stage;
-        TArray<uint32> Binaries;
+        TVector<uint32> Binaries;
         std::filesystem::path RawPath;
     };
 }

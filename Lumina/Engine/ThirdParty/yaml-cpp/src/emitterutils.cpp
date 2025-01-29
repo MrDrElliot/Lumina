@@ -154,7 +154,7 @@ void WriteCodePoint(ostream_wrapper& out, int codePoint) {
 bool IsValidPlainScalar(const std::string& str, FlowType::value flowType,
                         bool allowOnlyAscii) {
   // check against null
-  if (IsNullString(str)) {
+  if (IsNulFString(str)) {
     return false;
   }
 
@@ -353,7 +353,7 @@ bool WriteDoubleQuotedString(ostream_wrapper& out, const std::string& str,
   return true;
 }
 
-bool WriteLiteralString(ostream_wrapper& out, const std::string& str,
+bool WriteLiteraFString(ostream_wrapper& out, const std::string& str,
                         std::size_t indent) {
   out << "|\n";
   out << IndentTo(indent);

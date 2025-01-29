@@ -55,7 +55,7 @@ namespace Lumina
 
     struct FPipelineSpecification
     {
-        LString DebugName;
+        FString DebugName;
         FDeviceBufferLayout input_layout;
         TRefPtr<FShader> shader;
         float line_width;

@@ -7,9 +7,9 @@
 
 namespace Lumina
 {
-    std::shared_ptr<FImGuiRenderAPI> FImGuiRenderAPI::Create()
+    TSharedPtr<FImGuiRenderAPI> FImGuiRenderAPI::Create()
     {
-        return std::make_shared<FVulkanImGuiRenderAPI>();
+        return MakeSharedPtr<FVulkanImGuiRenderAPI>();
     }
     
 }

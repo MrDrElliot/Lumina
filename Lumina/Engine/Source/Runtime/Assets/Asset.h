@@ -13,7 +13,7 @@ namespace Lumina
 
         LAsset() = default;
         LAsset(const FAssetMetadata& InMetadata);
-        LAsset(const std::string& AssetName);
+        LAsset(const FString& AssetName);
         virtual ~LAsset() = default;
         
         static EAssetType GetStaticType() { return EAssetType::None; }
@@ -24,7 +24,7 @@ namespace Lumina
 
         FAssetMetadata& GetAssetMetadata() { return Metadata; }
         EAssetType GetAssetType() const { return Metadata.AssetType; }
-        const std::filesystem::path& GetFilePath() const { return Metadata.Path; }
+        const std::filesystem::path& GetFilePath() const { return Metadata.Path.c_str(); }
         
     private:
 

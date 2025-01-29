@@ -32,8 +32,8 @@ namespace Lumina
 
 		uint32 GetSize() const { return Layers.size(); }
 
-		TArray<TRefPtr<FLayer>>::iterator begin() { return Layers.begin(); }
-		TArray<TRefPtr<FLayer>>::iterator end() { return Layers.end(); }
+		TVector<TRefPtr<FLayer>>::iterator begin() { return Layers.begin(); }
+		TVector<TRefPtr<FLayer>>::iterator end() { return Layers.end(); }
 
 
 		template<typename T>
@@ -50,7 +50,7 @@ namespace Lumina
 
 	private:
 
-		TArray<TRefPtr<FLayer>> Layers;
+		TVector<TRefPtr<FLayer>> Layers;
 		std::unordered_map<std::type_index, TRefPtr<FLayer>> LayerMap;
 		
 		uint32 LayerInsertIndex = 0;

@@ -27,11 +27,11 @@ namespace Lumina
 
         bool IsRepeat() const { return bIsRepeat; }
 
-        std::string ToString() const override
+        FString ToString() const override
         {
             std::stringstream ss;
             ss << "KeyPressedEvent: " << keyCode << " (repeat = " << bIsRepeat << ")";
-            return ss.str();
+            return ss.str().c_str();
         }
 
         EVENT_CLASS_TYPE(KeyPressed)
@@ -45,11 +45,11 @@ namespace Lumina
         KeyReleasedEvent(const KeyCode keycode)
             : FKeyEvent(keycode) {}
 
-        std::string ToString() const override
+        FString ToString() const override
         {
             std::stringstream ss;
             ss << "KeyReleasedEvent: " << keyCode;
-            return ss.str();
+            return ss.str().c_str();
         }
 
         EVENT_CLASS_TYPE(KeyReleased)
@@ -61,11 +61,11 @@ namespace Lumina
         KeyTypedEvent(const KeyCode keycode)
             : FKeyEvent(keycode) {}
 
-        std::string ToString() const override
+        FString ToString() const override
         {
             std::stringstream ss;
             ss << "KeyTypedEvent: " << keyCode;
-            return ss.str();
+            return ss.str().c_str();
         }
 
         EVENT_CLASS_TYPE(KeyTyped)

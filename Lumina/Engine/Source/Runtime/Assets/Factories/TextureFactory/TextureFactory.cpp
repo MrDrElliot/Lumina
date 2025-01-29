@@ -9,10 +9,10 @@
 
 namespace Lumina
 {
-    std::shared_ptr<LAsset> FTextureFactory::CreateNew(const FAssetMetadata& Metadata, FArchive& Archive)
+    TSharedPtr<LAsset> FTextureFactory::CreateNew(const FAssetMetadata& Metadata, FArchive& Archive)
     {
         // Deserialize the texture from Archive
-        auto Texture = std::make_shared<LTexture>();
+        auto Texture = MakeSharedPtr<LTexture>();
         Texture->Serialize(Archive);
         Texture->CreateImage();
 
@@ -33,7 +33,11 @@ namespace Lumina
 
         int x, y, c;
         stbi_uc* data = stbi_load(Path.string().c_str(), &x, &y, &c, STBI_rgb_alpha);
-        AssertMsg(data, "Failed to import texture!");
+        if (data == nullptr)
+        {
+            LOG_WARN("Failed to import texture from source path: {0}", Path.string());
+            return nullptr;
+        }
 
         ImageSpec.Extent.x = x;
         ImageSpec.Extent.y = y;

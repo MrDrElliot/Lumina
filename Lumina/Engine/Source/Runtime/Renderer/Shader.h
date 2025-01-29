@@ -38,7 +38,7 @@ namespace Lumina
         return static_cast<uint8>(stage) == 0;
     }
     
-    inline constexpr std::string StageToString(const EShaderStage& Stage)
+    inline FString StageToString(const EShaderStage& Stage)
     {
         switch (Stage)
         {
@@ -94,7 +94,7 @@ namespace Lumina
     {
     public:
 
-        static TRefPtr<FShader> Create(const TArray<FShaderData>& InData, const LString& Tag);
+        static TRefPtr<FShader> Create(const TVector<FShaderData>& InData, const FString& Tag);
         virtual ~FShader() {}
 
         virtual bool IsDirty() const = 0;

@@ -24,7 +24,7 @@ namespace Lumina
             return nullptr;
         }
 
-        static TRefPtr<FPipeline> GetPipelineByTag(const LString& Tag)
+        static TRefPtr<FPipeline> GetPipelineByTag(const FString& Tag)
         {
             for (TRefPtr<FPipeline>& Pipeline : Get()->Pipelines)
             {
@@ -51,7 +51,7 @@ namespace Lumina
             if (pipeline != nullptr)
             {
                 std::lock_guard lock(Get()->Mutex);
-                Get()->Pipelines.PushBack(pipeline); 
+                Get()->Pipelines.push_back(pipeline); 
             }
         }
 
@@ -66,7 +66,7 @@ namespace Lumina
     private:
 
         
-        TArray<TRefPtr<FPipeline>> Pipelines;
+        TVector<TRefPtr<FPipeline>> Pipelines;
         std::shared_mutex Mutex;
 
     };

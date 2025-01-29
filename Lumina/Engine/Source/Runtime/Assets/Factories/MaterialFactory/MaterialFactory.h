@@ -8,7 +8,7 @@ namespace Lumina
 	{
 	public:
 
-		virtual std::shared_ptr<LAsset> CreateNew(const FAssetMetadata& Metadata, FArchive& Archive) override;
+		virtual TSharedPtr<LAsset> CreateNew(const FAssetMetadata& Metadata, FArchive& Archive) override;
 
 	};
 }

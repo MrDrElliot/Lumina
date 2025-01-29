@@ -41,6 +41,9 @@ project "Lumina"
 	    "Engine/ThirdParty/SPIRV-Reflect/**.h",
 	    "Engine/ThirdParty/SPIRV-Reflect/**.c",
 	    "Engine/ThirdParty/SPIRV-Reflect/**.cpp",
+	    
+	    "Engine/ThirdParty/EASTL/**.h",
+        "Engine/ThirdParty/EASTL/**.cpp",
 
 	    "Engine/ThirdParty/fastgltf/src/**.cpp",
 	    "Engine/ThirdParty/fastgltf/deps/simdjson/**.h",

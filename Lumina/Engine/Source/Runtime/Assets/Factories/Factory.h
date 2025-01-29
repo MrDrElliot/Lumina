@@ -11,6 +11,6 @@ namespace Lumina
     {
     public:
 
-       virtual std::shared_ptr<LAsset> CreateNew(const FAssetMetadata& Metadata, FArchive& Archive) = 0;
+       virtual TSharedPtr<LAsset> CreateNew(const FAssetMetadata& Metadata, FArchive& Archive) = 0;
     };
 }

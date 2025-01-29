@@ -3,80 +3,71 @@
 #include <string>
 #include <filesystem>
 #include <cstdlib>
-
 #include "Project/Project.h"
-
 
 namespace Lumina::Paths
 {
+    // Gets the directory where the Lumina engine is installed.
     inline std::filesystem::path GetEngineDirectory()
     {
-        std::string luminaDirEnv(std::getenv("LUMINA_DIR"));
+        const char* luminaDirEnv = std::getenv("LUMINA_DIR");
 
-        // Check if the environment variable is set
-        if (luminaDirEnv.size() > 0)
+        if (luminaDirEnv && std::strlen(luminaDirEnv) > 0)
         {
-            // Return the directory path from the environment variable
-            std::filesystem::path finalDir = std::filesystem::path(luminaDirEnv) / "Lumina" / "Engine";
-            return finalDir;
+            return std::filesystem::path(luminaDirEnv) / "Lumina" / "Engine";
         }
-        else
-        {
-            // Fall back to the default path if the environment variable is not set
-            return (std::filesystem::current_path().parent_path() / "Lumina" / "Engine").string();
-        }
+
+        // Fallback: Assume the engine is two levels up from the executable
+        return std::filesystem::canonical(std::filesystem::current_path().parent_path().parent_path() / "Lumina" / "Engine");
     }
-    
+
+    // Gets the directory where the Lumina engine is installed (one level up from the engine).
     inline std::filesystem::path GetEngineInstallDirectory()
     {
-        return GetEngineDirectory().parent_path().parent_path();
-    }
-    
-    inline std::filesystem::path Relative(const std::filesystem::path& relativePath)
-    {
-        // Get the current working directory
-        std::filesystem::path currentPath = std::filesystem::current_path();
-
-        // Return the absolute path by resolving the relative path against the current working directory
-        return currentPath / relativePath;
-    }
-    
-    inline std::filesystem::path FromContentDirectory(std::filesystem::path Path)
-    {
-        return Project::GetCurrent()->GetProjectContentDirectory() / Path;
+        return GetEngineDirectory().parent_path();
     }
 
-    inline bool SetEnvVariable(const std::string& name, const std::string& value)
+    // Resolves a relative path from the engine's install directory.
+    inline std::filesystem::path ResolveFromEngine(const std::filesystem::path& relativePath)
     {
-        // Platform-specific environment variable setting
-        #ifdef _WIN32
-        // Windows uses _putenv_s
-        int result = _putenv_s(name.c_str(), value.c_str());
-        if (result == 0)
+        return GetEngineInstallDirectory() / relativePath;
+    }
+
+    // Resolves a relative path from the current project directory.
+    inline std::filesystem::path ResolveFromProject(const std::filesystem::path& relativePath)
+    {
+        if (Project::GetCurrent())
         {
-            LOG_TRACE("Enviorment variable: {0} set to {1}.", name, value);
+            return Project::GetCurrent()->GetProjectRootDirectory() / relativePath;
+        }
+        return std::filesystem::current_path() / relativePath; // Fallback
+    }
+
+    // Gets a path from the project's content directory.
+    inline std::filesystem::path FromContentDirectory(const std::filesystem::path& relativePath)
+    {
+        return Project::GetCurrent()->GetProjectContentDirectory() / relativePath;
+    }
+
+    // Sets an environment variable (cross-platform).
+    inline bool SetEnvVariable(const FString& name, const FString& value)
+    {
+    #ifdef _WIN32
+        if (_putenv_s(name.c_str(), value.c_str()) == 0)
+        {
+            LOG_TRACE("Environment variable {} set to {}", name, value);
             return true;
         }
-        else
+        LOG_WARN("Failed to set environment variable {}", name);
+        return false;
+    #else
+        if (setenv(name.c_str(), value.c_str(), 1) == 0)
         {
-            LOG_WARN("Failed to set enviorment variable.", name);
-            return false;
-        }
-#else
-        // POSIX (Linux/macOS) systems use setenv
-        int result = setenv(name.c_str(), value.c_str(), 1);  // 1 to overwrite existing variable
-        if (result == 0)
-        {
-            std::cout << "Environment variable " << name << " set to " << value << std::endl;
+            LOG_TRACE("Environment variable {} set to {}", name, value);
             return true;
         }
-        else
-        {
-            std::cerr << "Failed to set environment variable " << name << std::endl;
-            return false;
-        }
-#endif
+        LOG_WARN("Failed to set environment variable {}", name);
+        return false;
+    #endif
     }
-
-
 }

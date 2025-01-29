@@ -1,13 +1,7 @@
 #pragma once
 
-
-#include <filesystem>
-#include <fstream>
-#include <memory>
-#include <string>
-#include <vector>
-
 #include "imgui.h"
+#include "Containers/String.h"
 
 
 namespace Lumina::Font
@@ -15,8 +9,8 @@ namespace Lumina::Font
     
         struct FImGuiFont
         {
-            std::string Name;
-            std::string FilePath;
+            FString Name;
+            FString FilePath;
             ImFont* Font;
             float Size = 16.0f;
             
@@ -28,10 +22,10 @@ namespace Lumina::Font
         };
     
 
-        FImGuiFont Add(const std::string& InFile, const std::string& Name = "None", bool bDefault = false);
-        FImGuiFont Get(const std::string& Name);
+        FImGuiFont Add(const FString& InFile, const FString& Name = "None", bool bDefault = false);
+        FImGuiFont Get(const FString& Name);
 
-        void PushFont(const std::string& Name);
+        void PushFont(const FString& Name);
         void PopFont();
         
 }

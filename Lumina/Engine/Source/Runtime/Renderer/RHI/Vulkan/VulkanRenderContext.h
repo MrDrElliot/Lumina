@@ -1,21 +1,20 @@
 #pragma once
 
 #include <unordered_set>
-
 #include "Renderer/RenderContext.h"
 #include <vulkan/vulkan_core.h>
-
 #include "Containers/String.h"
 
-struct VulkanExtensionSet
-{
-    std::unordered_set<LString> instance;
-    std::unordered_set<LString> layers;
-    std::unordered_set<LString> device;
-};
 
 namespace Lumina
 {
+    struct VulkanExtensionSet
+    {
+        std::unordered_set<FString> instance;
+        std::unordered_set<FString> layers;
+        std::unordered_set<FString> device;
+    };
+    
     class FImageSampler;
     class FVulkanSwapchain;
 

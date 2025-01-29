@@ -2,6 +2,7 @@
 
 #include "Archiver.h"
 #include "Containers/Array.h"
+#include "Core/Assertions/Assert.h"
 
 namespace Lumina
 {
@@ -31,7 +32,7 @@ namespace Lumina
     {
     public:
 
-        explicit FMemoryReader(const TArray<uint8>& InBytes, bool bIsPersistent = false )
+        explicit FMemoryReader(const TVector<uint8>& InBytes, bool bIsPersistent = false )
         : Bytes    (InBytes)
         , LimitSize(INT64_MAX)
         {
@@ -73,7 +74,7 @@ namespace Lumina
 
     private:
 
-        const TArray<uint8>& Bytes;
+        const TVector<uint8>& Bytes;
         int64                LimitSize;
     
     };
@@ -82,7 +83,7 @@ namespace Lumina
     {
     public:
 
-        FMemoryWriter(TArray<uint8>& InBytes, bool bSetOffset = false)
+        FMemoryWriter(TVector<uint8>& InBytes, bool bSetOffset = false)
             :Bytes(InBytes)
         {
             this->SetFlag(EArchiverFlags::Writing);
@@ -124,6 +125,6 @@ namespace Lumina
 
     private:
         
-        TArray<uint8>&	Bytes;
+        TVector<uint8>&	Bytes;
     };
 }

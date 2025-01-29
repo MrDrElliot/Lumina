@@ -40,7 +40,7 @@ namespace Lumina
         
     }
 
-    void FVulkanCommandBuffer::SetFriendlyName(const LString& InName)
+    void FVulkanCommandBuffer::SetFriendlyName(const FString& InName)
     {
         FCommandBuffer::SetFriendlyName(InName);
 
@@ -48,7 +48,7 @@ namespace Lumina
         
         VkDebugUtilsObjectNameInfoEXT NameInfo = {};
         NameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
-        NameInfo.pObjectName = GetFriendlyName().CStr();
+        NameInfo.pObjectName = GetFriendlyName().c_str();
         NameInfo.objectType = VK_OBJECT_TYPE_COMMAND_BUFFER;
         NameInfo.objectHandle = reinterpret_cast<uint64_t>(CommandBuffer);
 

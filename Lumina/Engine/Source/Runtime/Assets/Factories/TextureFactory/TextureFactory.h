@@ -11,7 +11,7 @@ namespace Lumina
     {
     public:
 
-        std::shared_ptr<LAsset> CreateNew(const FAssetMetadata& Metadata, FArchive& Archive) override;
+        TSharedPtr<LAsset> CreateNew(const FAssetMetadata& Metadata, FArchive& Archive) override;
         static TRefPtr<FImage> ImportFromSource(std::filesystem::path Path);
 
     };

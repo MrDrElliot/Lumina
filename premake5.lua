@@ -1,7 +1,7 @@
 workspace "Lumina"
 	configurations { "Debug", "Release", "Shipping" }
 	targetdir "Build"
-	startproject "Sandbox"
+	startproject "LuminaEditor"
 	conformancemode "On"
 
 	language "C++"
@@ -35,7 +35,13 @@ workspace "Lumina"
 		symbols "Off"
 
 	filter "system:windows"
-		buildoptions { "/EHsc", "/Zc:preprocessor", "/Zc:__cplusplus" }
+		buildoptions 
+		{ 
+            "/EHsc",
+            "/Zc:preprocessor",
+            "/Zc:__cplusplus",
+            "/W2"
+        }
 
 	group "Dependencies"
 		include "Lumina/Engine/ThirdParty/glfw"
@@ -44,9 +50,9 @@ workspace "Lumina"
 
 	group "Core"
 		include "Lumina"
-		include "LuminaEditor"
 	group ""
 
-	group "Sandbox"
-		include "Sandbox"
+	group "Applications"
+		include "Lumina/Applications/LuminaEditor"
+		include "Lumina/Applications/Sandbox"
 	group ""

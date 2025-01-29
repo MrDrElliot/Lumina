@@ -6,10 +6,11 @@
 #include "Components/NameComponent.h"
 #include "Components/GuidComponent.h"
 #include "Entity/Entity.h"
+#include "Memory/SmartPtr.h"
 
 namespace Lumina
 {
-    LScene::LScene(std::shared_ptr<FCamera> Camera): LAsset(FAssetMetadata())
+    LScene::LScene(TSharedPtr<FCamera> Camera): LAsset(FAssetMetadata())
     {
         CurrentCamera = Camera;
         SceneRenderer = FSceneRenderer::Create(this);
@@ -20,9 +21,9 @@ namespace Lumina
         SceneRenderer->Shutdown();
     }
 
-    std::shared_ptr<LScene> LScene::Create(std::shared_ptr<FCamera> Camera)
+    TSharedPtr<LScene> LScene::Create(TSharedPtr<FCamera> Camera)
     {
-        return std::make_shared<LScene>(Camera);
+        return eastl::make_shared<LScene>(Camera);
     }
 
     void LScene::BeginScene()
@@ -41,12 +42,12 @@ namespace Lumina
         SceneRenderer->EndScene();
     }
     
-    Entity LScene::CreateEntity(const FTransform& Transform, const LString& Name)
+    Entity LScene::CreateEntity(const FTransform& Transform, const FString& Name)
     {
-        LString uniqueName = Name;
+        FString uniqueName = Name;
         int counter = 1;
 
-        std::unordered_set<LString> existingNames;
+        std::unordered_set<FString> existingNames;
 
         for (auto& ent : mEntityRegistery.view<FNameComponent>())
         {
@@ -56,7 +57,7 @@ namespace Lumina
 
         while (existingNames.count(uniqueName) > 0)
         {
-            uniqueName = Name + LString("_") + std::to_string(counter);
+            uniqueName = Name + FString("_") + eastl::to_string(counter);
             counter++;
         }
 

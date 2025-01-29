@@ -1,6 +1,8 @@
 #pragma once
+
 #include <spdlog/sinks/base_sink.h>
 
+#include "Containers/String.h"
 #include "Platform/GenericPlatform.h"
 
 
@@ -21,10 +23,10 @@ namespace Lumina
     
     struct ConsoleMessage
     {
-        std::string Time;               // Time of the log message
-        std::string LoggerName;         // Name of the logger
-        EConsoleLogLevel Level;              // Log level as a string (e.g., "INFO", "WARN")
-        std::string Message;            // The log message content
+        FString Time;               // Time of the log message
+        FString LoggerName;         // Name of the logger
+        EConsoleLogLevel Level;     // Log level as a string (e.g., "INFO", "WARN")
+        FString Message;            // The log message content
     };
 
     class ConsoleSink : public spdlog::sinks::base_sink<std::mutex>
@@ -38,7 +40,7 @@ namespace Lumina
         void sink_it_(const spdlog::details::log_msg& msg) override
         {
             // Format the log message
-            std::string log_message(msg.payload.begin(), msg.payload.end());
+            FString log_message(msg.payload.begin(), msg.payload.end());
 
             // Convert the timestamp to string
             std::time_t timestamp = std::chrono::system_clock::to_time_t(msg.time);
@@ -48,7 +50,7 @@ namespace Lumina
 
             // Create a ConsoleMessage to store the full details
             ConsoleMessage consoleMessage;
-            consoleMessage.Time = log_time;
+            consoleMessage.Time = log_time.c_str();
             consoleMessage.LoggerName = msg.logger_name.data();
             consoleMessage.Level = static_cast<EConsoleLogLevel>(msg.level);
             consoleMessage.Message = log_message;

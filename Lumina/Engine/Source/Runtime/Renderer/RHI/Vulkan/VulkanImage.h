@@ -127,7 +127,7 @@ namespace Lumina
         void SetCurrentLayout(EImageLayout Layout) { CurrentLayout = Layout; }
         void SetLayout(TRefPtr<FCommandBuffer> CmdBuffer, EImageLayout NewLayout, EPipelineStage SrcStage, EPipelineStage DstStage, EPipelineAccess SrcAccess, EPipelineAccess DstAccess) override;
 
-        void SetFriendlyName(const LString& InName) override;
+        void SetFriendlyName(const FString& InName) override;
         
     private:
 
@@ -148,7 +148,7 @@ namespace Lumina
         FVulkanImageSampler(const FImageSamplerSpecification& spec);
         void Destroy() override;
 
-    	void SetFriendlyName(const LString& InName) override;
+    	void SetFriendlyName(const FString& InName) override;
     	
     	VkSampler GetSampler() { return Sampler; }
 
