@@ -14,21 +14,17 @@ namespace Lumina::Memory
 
         static void PreFrame()
         {
-            Get()->PreFrameMemory = gProgramMemory;    
         }
         
         static void PostFrame()
         {
             //@TODO no worky worky
-            //Get()->DetectLeak(Get()->PreFrameMemory, gProgramMemory);
         }
 
         void DetectLeak(uint64 pre, uint64 post)
         {
             if(post > pre)
             {
-                LOG_CRITICAL("Memory Leak Detected! Pre-Frame Memory: {0} | Post-Frame Memory: {1}", pre, post);
-                LOG_CRITICAL("Total Number of Allocations: {0}", gTotalAllocations);
                 PrintCallStack();
             }
         }

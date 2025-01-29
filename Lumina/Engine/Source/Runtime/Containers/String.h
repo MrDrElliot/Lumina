@@ -199,7 +199,7 @@ namespace fmt
         template <typename FormatContext>
         auto format(const Lumina::FString& str, FormatContext& ctx) -> decltype(ctx.out())
         {
-            return format_to(ctx.out(), "{}", str.data());
+            return fmt::format_to(ctx.out(), "{}", str.data());
         }
     };
 }
@@ -212,7 +212,7 @@ namespace eastl
     {
         size_t operator()(const eastl::fixed_string<char, S, true>& str) const noexcept
         {
-            return std::hash<eastl::string_view>{}(eastl::string_view(str.c_str(), str.length()));
+            return eastl::hash<eastl::string_view>{}(eastl::string_view(str.c_str(), str.length()));
         }
     };
 }
