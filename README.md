@@ -39,7 +39,7 @@ Lumina is a lightweight and flexible game engine built to simplify game developm
 ## Building Lumina  
 
 1. Clone the repository and ensure all dependencies are included.  
-2. Run the Python script in the `Scripts` directory to set up the project.  
+2. Run the Python script `Win-GenProjects.py` in the `Scripts` directory to set up the project.  
 3. Open the Visual Studio solution and set the **Editor** project as the default startup project.  
 4. Build and run the solution.  
 
