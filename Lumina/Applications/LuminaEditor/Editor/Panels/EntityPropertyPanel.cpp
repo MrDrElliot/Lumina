@@ -103,7 +103,7 @@ namespace Lumina
 
 
 
-                ImGui::SeparatorText("Components");
+                ImGui::SeparatorText("Comdponents");
 
                 if (Ent.HasComponent<FNameComponent>())
                 {
