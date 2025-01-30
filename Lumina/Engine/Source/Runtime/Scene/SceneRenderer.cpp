@@ -258,7 +258,8 @@ namespace Lumina
         
         auto View = CurrentScene->GetEntityRegistry().view<FMeshComponent, FTransformComponent>();
         uint64 ComponentTotal = View.size_hint();
-        
+
+        bool bHasValidRender = false;
         if(ComponentTotal)
         {
             ModelData.clear();
@@ -270,19 +271,21 @@ namespace Lumina
                 if (Component.StaticMesh.IsValid())
                 {
                     Component.Material = MaterialInstance;
-                }
-                
-                if (Component.Material.IsValid() && Component.StaticMesh.IsValid())
-                {
+
                     auto& Transform = View.get<FTransformComponent>(entity);
 
                     glm::mat4 Matrix = Transform.GetTransform().GetMatrix();
                     ModelData.emplace_back(std::move(Matrix));
                     
                     MeshInstanceMap[MaterialInstance].emplace_back(Component.StaticMesh.Get());
-
+                    bHasValidRender = true;
                 }
             });
+
+            if (!bHasValidRender)
+            {
+                return;
+            }
             
             ModelSBO->UploadData(0, ModelData.data(), ModelData.size() * sizeof(FModelData));
             CurrentDescriptorSet->Write(2, 0, ModelSBO, ModelData.size() * sizeof(FModelData), 0);
@@ -447,9 +450,9 @@ namespace Lumina
         
         // ModelUBO contains model.
         FDeviceBufferSpecification ModelParamsSpec;
-        ModelParamsSpec.Heap = EDeviceBufferMemoryHeap::DEVICE;
-        ModelParamsSpec.BufferUsage = EDeviceBufferUsage::STORAGE_BUFFER;
-        ModelParamsSpec.MemoryUsage = EDeviceBufferMemoryUsage::COHERENT_WRITE;
+        ModelParamsSpec.Heap =          EDeviceBufferMemoryHeap::DEVICE;
+        ModelParamsSpec.BufferUsage =   EDeviceBufferUsage::STORAGE_BUFFER;
+        ModelParamsSpec.MemoryUsage =   EDeviceBufferMemoryUsage::COHERENT_WRITE;
         ModelParamsSpec.Size = sizeof(glm::mat4) * UINT16_MAX;
         ModelParamsSpec.DebugName = "Model Storage Buffer";
         

@@ -1,5 +1,4 @@
 #pragma once
-#include <any>
 
 #include "Assets/AssetHandle.h"
 #include "Assets/AssetTypes.h"

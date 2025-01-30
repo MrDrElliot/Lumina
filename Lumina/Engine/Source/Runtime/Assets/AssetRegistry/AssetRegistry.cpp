@@ -101,8 +101,8 @@ namespace Lumina
     {
         while (bShouldScan.load(std::memory_order_relaxed))
         {
-            // Use recursive_directory_iterator to scan all subdirectories
-            for (const auto& entry : std::filesystem::recursive_directory_iterator(Project::GetProjectContentDirectory()))
+            std::filesystem::path Dir = Project::GetProjectContentDirectory();
+            for (const auto& entry : std::filesystem::recursive_directory_iterator(Dir))
             {
                 if (!entry.is_directory())
                 {

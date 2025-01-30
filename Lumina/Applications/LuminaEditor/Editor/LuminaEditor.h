@@ -5,10 +5,6 @@
 namespace Lumina
 {
     class FCamera;
-}
-
-namespace Lumina
-{
     class FEditorSettings;
     class FEditorLayer;
     class FEditorPanel;

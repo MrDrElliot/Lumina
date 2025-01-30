@@ -154,8 +154,6 @@ namespace Lumina
     
     void FApplication::PreFrame()
     {
-        Memory::MemoryLeakDetector::PreFrame();
-
         Stats.PreFrame();
         FRenderer::BeginFrame();
     }
@@ -168,7 +166,6 @@ namespace Lumina
         
         glfwPollEvents();
 
-        Memory::MemoryLeakDetector::PostFrame();
     }
 
     void FApplication::UpdateLayerStack(double DeltaTime)

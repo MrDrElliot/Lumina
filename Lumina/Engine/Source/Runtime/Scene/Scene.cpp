@@ -11,8 +11,6 @@
 
 namespace Lumina
 {
-    eastl::unordered_map<FGuid, Entity> EntityIdentifierMap;
-
     LScene::LScene(TSharedPtr<FCamera> Camera): LAsset(FAssetMetadata())
     {
         CurrentCamera = Camera;
@@ -83,9 +81,7 @@ namespace Lumina
         NewEntity.AddComponent<FGUIDComponent>(Guid);
         NewEntity.AddComponent<FNameComponent>(uniqueName);
         NewEntity.AddComponent<FTransformComponent>(Transform);
-
-        EntityIdentifierMap[Guid] = NewEntity;
-
+        
         return NewEntity;
     }
 
@@ -97,20 +93,20 @@ namespace Lumina
 
     Entity LScene::GetEntityByGUID(const FGuid& Guid, bool* bFound)
     {
-        if (EntityIdentifierMap.find(Guid) != EntityIdentifierMap.end())
-        {
-            if (bFound)
-            {
-                *bFound = true;
-            }
-            return EntityIdentifierMap.at(Guid);
-        }
-    
-        if (bFound)
-        {
-            *bFound = false;
-        }
-        return Entity();
-    }
+        auto View = mEntityRegistery.view<FGUIDComponent>();
 
+        for (auto& ent : View)
+        {
+            if (View.get<FGUIDComponent>(ent).GetGUID() == Guid)
+            {
+                if (bFound)
+                {
+                    *bFound = true;
+                }
+                return Entity(ent, this);
+            }
+        }
+        
+        return {};
+    }
 }

@@ -11,17 +11,18 @@
 
 namespace Lumina
 {
-    void EntityNode::Render(Entity& InEntity)
+    void FEntityNode::Render(Entity&& InEntity)
     {
+        Entity Ent = std::move(InEntity);
         // Retrieve the NameComponent to get the entity's name
-        auto& NameComponent = InEntity.GetComponent<FNameComponent>();
+        auto& NameComponent = Ent.GetComponent<FNameComponent>();
         const char* entityName = NameComponent.GetName().length() > 0 ? NameComponent.GetName().c_str() : "Unnamed Entity";
 
         // Start a tree node with a small rectangle style
         ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_FramePadding;
 
         // Determine selection state
-        bool isSelected = FSelectionManager::Get()->IsSelected(ESelectionContext::SceneOutliner, InEntity.GetComponent<FGUIDComponent>().GetGUID());
+        bool isSelected = FSelectionManager::Get()->IsSelected(ESelectionContext::SceneOutliner, Ent.GetComponent<FGUIDComponent>().GetGUID());
         if (isSelected)
         {
             nodeFlags |= ImGuiTreeNodeFlags_Selected;
@@ -34,7 +35,7 @@ namespace Lumina
         {
             if (ImGui::MenuItem("Delete"))
             {
-                InEntity.Destroy();
+                Ent.Destroy();
                 ImGui::CloseCurrentPopup();
             }
             
@@ -46,11 +47,11 @@ namespace Lumina
         {
             if (isSelected)
             {
-                FSelectionManager::Get()->RemoveSelection(ESelectionContext::SceneOutliner, InEntity.GetComponent<FGUIDComponent>().GetGUID());
+                FSelectionManager::Get()->RemoveSelection(ESelectionContext::SceneOutliner, Ent.GetComponent<FGUIDComponent>().GetGUID());
             }
             else
             {
-                FSelectionManager::Get()->AddSelection(ESelectionContext::SceneOutliner, InEntity.GetComponent<FGUIDComponent>().GetGUID());
+                FSelectionManager::Get()->AddSelection(ESelectionContext::SceneOutliner, Ent.GetComponent<FGUIDComponent>().GetGUID());
             }
         }
 
@@ -64,27 +65,21 @@ namespace Lumina
 
             // Start a group with the specified background color for components
             ImGui::PushStyleColor(ImGuiCol_ChildBg, groupBackgroundColor);
+
             
-            // Render components only if they exist
-            if (InEntity.HasComponent<FTransformComponent>())
-            {
-                ImGui::Spacing();                
-                ImGui::Text("Transform Component");
-            }
-            
-            if (InEntity.HasComponent<FMeshComponent>())
+            if (Ent.HasComponent<FMeshComponent>())
             {
                 ImGui::Spacing();
                 ImGui::Text("Mesh Component");
             }
             
-            if (InEntity.HasComponent<FLightComponent>())
+            if (Ent.HasComponent<FLightComponent>())
             {
                 ImGui::Spacing();
                 ImGui::Text("Light Component");
             }
             
-            if (InEntity.HasComponent<FCameraComponent>())
+            if (Ent.HasComponent<FCameraComponent>())
             {
                 ImGui::Spacing();
                 ImGui::Text("Camera Component");

@@ -39,12 +39,11 @@ namespace Lumina
         }
         else
         {
-    
-            // Display the .lum file as a button
             if (ImGui::ImageButton(ContentBrowser->ImAssetTexture, ImVec2(buttonSize, buttonSize), ImVec2(0, 1), ImVec2(1, 0)))
             {
                 ImGui::OpenPopup("lum_context_menu");
             }
+            
             ImGui::SetItemTooltip("Click to open context menu for the asset.");
         
             float textWidth = ImGui::CalcTextSize(Path.filename().stem().string().c_str()).x - 10.0f;

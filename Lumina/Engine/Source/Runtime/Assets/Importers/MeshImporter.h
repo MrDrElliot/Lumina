@@ -32,9 +32,6 @@ namespace Lumina
     
                 for (auto& Primitive : Mesh.primitives)
                 {
-                    /*FMeshSurface NewSurface;
-                    NewSurface.StartIndex = Indices.size();
-                    NewSurface.Count = Asset.accessors[Primitive.indicesAccessor.value()].count;*/
     
                     size_t InitialVert = NewAsset.Vertices.size();
     

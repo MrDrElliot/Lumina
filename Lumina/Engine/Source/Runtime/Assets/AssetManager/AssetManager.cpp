@@ -30,20 +30,21 @@ namespace Lumina
         if (Registry->Exists(InHandle))
         {
             FAssetMetadata Metadata = Registry->GetMetadata(InHandle);
-            
-            TVector<uint8> Buffer;
-            if (!FFileHelper::LoadFileToArray(Buffer, Metadata.Path.c_str()))
-            {
-                LOG_ERROR("Failed to load asset from path: {0}", Metadata.Path);
-                return nullptr;
-            }
-                
-            FMemoryReader Reader(Buffer);
+
             FFactoryRegistry* factoryRegistry = FFactoryRegistry::Get();
             FFactory* Factory = factoryRegistry->GetFactory(Metadata.AssetType);
 
             if (Factory)
             {
+                TVector<uint8> Buffer;
+                if (!FFileHelper::LoadFileToArray(Buffer, Metadata.Path.c_str()) || Buffer.empty()) 
+                {
+                    LOG_ERROR("Failed to load asset from path: {0}", Metadata.Path);
+                    return nullptr;
+                }
+                
+                
+                FMemoryReader Reader(Buffer);
                 TSharedPtr<LAsset> NewAsset = Factory->CreateNew(Metadata, Reader);
                 if (NewAsset)
                 {

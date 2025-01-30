@@ -2,9 +2,7 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <ThirdParty/stb_image/stb_image.h>
-
 #include "Assets/AssetTypes/Textures/Texture.h"
-#include "Core/LuminaMacros.h"
 #include "Core/Performance/PerformanceTracker.h"
 
 namespace Lumina
@@ -44,7 +42,7 @@ namespace Lumina
         ImageSpec.SourceChannels = c;
         ImageSpec.Pixels.assign(data, data + (x * y * STBI_rgb_alpha));
 
-        stbi_image_free(data); // Free the image data
+        stbi_image_free(data);
         
         TRefPtr<FImage> Image = FImage::Create(ImageSpec);
 

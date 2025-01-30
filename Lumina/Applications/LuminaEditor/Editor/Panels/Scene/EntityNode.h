@@ -4,10 +4,10 @@
 
 namespace Lumina
 {
-	class EntityNode
+	class FEntityNode
 	{
 	public:
 
-		static void Render(Entity& InEntity);
+		static void Render(Entity&& InEntity);
 	};
 }

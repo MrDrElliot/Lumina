@@ -30,19 +30,21 @@ namespace Lumina
     template<typename ValueType>
     FArchive& operator << (FArchive& Ar, TVector<ValueType>& Array)
     {
-        eastl_size_t SerializeNum = 0;
-
-        if (Ar.IsReading())
+		eastl_size_t SerializeNum = Ar.IsReading() ? 0 : Array.size();
+        Ar << SerializeNum;
+        
+        if (SerializeNum == 0)
         {
-            Ar << SerializeNum; // Read the size
-            Array.clear(); // Ensure the array is empty before resizing
+            // if we are loading, then we have to reset the size to 0, in case it isn't currently 0
+            if (Ar.IsReading())
+            {
+                Array.clear();
+            }
+            
+            return Ar;
         }
-        else
-        {
-            SerializeNum = Array.size(); // Use current size when writing
-        }
-
-        if (Ar.HasError())
+        
+        if (Ar.HasError() || SerializeNum > Ar.GetMaxSerializeSize())
         {
             return Ar;
         }
@@ -52,15 +54,18 @@ namespace Lumina
         {
             if (Ar.IsReading())
             {
-                Array.resize(SerializeNum); // Resize the array based on serialized number
+                Array.resize(SerializeNum);
             }
-
-            Ar.Serialize(Array.data(), SerializeNum * sizeof(ValueType)); // Bulk serialize data
+            
+            Ar.Serialize(Array.data(), SerializeNum * sizeof(ValueType));
         }
         else
         {
             if (Ar.IsReading())
             {
+                Array.clear();
+                Array.resize(SerializeNum);
+
                 for (eastl_size_t i = 0; i < SerializeNum; i++)
                 {
                     Ar << Array.emplace_back();

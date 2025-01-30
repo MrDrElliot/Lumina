@@ -30,7 +30,7 @@ namespace Lumina
     {
         FMaterialUniforms()
         {
-            memset(padding, 0, sizeof(float) * 2);
+            memset(padding, 0, sizeof(padding));
         }
         
         glm::vec4 baseColor =    glm::vec4(1.0f);   // 16 bytes, already aligned
@@ -47,6 +47,11 @@ namespace Lumina
 
     struct FSceneLightData
     {
+        FSceneLightData()
+        {
+            memset(Lights, 0, sizeof(Lights));
+        }
+        
         uint32 NumLights =  0;
         uint32 padding      [3];
         FLight Lights       [MAX_LIGHTS];
@@ -74,7 +79,7 @@ namespace Lumina
 
         TRefPtr<FImage> GetRenderTarget() { return      RenderTargets[FRenderer::GetCurrentFrameIndex()]; }
         TRefPtr<FImage> GetDepthAttachment() { return   DepthAttachments[FRenderer::GetCurrentFrameIndex()]; }
-        FSceneLightData& GetSceneLightingData() { return SceneLightingData; }
+        FSceneLightData& GetSceneLightingData() { return  SceneLightingData; }
 
         void RenderGrid();
         void GeometryPass(const TVector<TRefPtr<FImage>>& Attachments);
@@ -107,6 +112,7 @@ namespace Lumina
         TVector<TRefPtr<FImage>> RenderTargets;
         TVector<TRefPtr<FImage>> DepthAttachments;
 
+        
         TRefPtr<FImage> BaseColor;
         TRefPtr<FImage> Emissive;
         TRefPtr<FImage> Normal;
@@ -124,17 +130,15 @@ namespace Lumina
         FGridData                           GridData;
         FCameraData                         CameraData;
         FSceneLightData                     SceneLightingData;
-        TVector<FModelData>             ModelData;
-        TVector<FMaterialTexturesData>  TexturesData;
+        TVector<FModelData>                 ModelData;
+        TVector<FMaterialTexturesData>      TexturesData;
 
-        TAssetHandle<LMaterialInstance> MaterialInstance;
+        TAssetHandle<LMaterialInstance>     MaterialInstance;
         
         TSharedPtr<FCamera> Camera;
         TRefPtr<FMaterial> TestMaterial;
         
         LScene* CurrentScene;
-
-        uint32 MSAASamples = 4;
         
     };
 }

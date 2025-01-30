@@ -22,12 +22,7 @@ namespace Lumina
         }
         
         ImGui::Begin("Scene Outliner", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize);
-
-        // Define custom styling for the button
-        ImVec4 originalButtonColor = ImGui::GetStyleColorVec4(ImGuiCol_Button);
-        ImVec4 originalButtonHovered = ImGui::GetStyleColorVec4(ImGuiCol_ButtonHovered);
-        ImVec4 originalButtonActive = ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive);
-
+        
         // Custom light red color for the button
         ImVec4 buttonColor = ImVec4(0.8f, 0.3f, 0.3f, 0.8f);       // Normal state
         ImVec4 buttonHovered = ImVec4(0.9f, 0.4f, 0.4f, 0.9f);     // Hovered state
@@ -39,7 +34,7 @@ namespace Lumina
 
         // Align the button to the right
         float buttonWidth = 80.0f; // Small button
-        ImGui::SetCursorPosX(ImGui::GetWindowWidth() - buttonWidth - 10.0f); // Align with 10px padding from the right
+        ImGui::SetCursorPosX(ImGui::GetWindowWidth() - buttonWidth - 10.0f);
 
         // Add the button with a custom label
         if (ImGui::Button("+ Add", ImVec2(buttonWidth, 25)))
@@ -57,17 +52,14 @@ namespace Lumina
         {
             if (mScene.expired())
             {
-                continue;
+                break;
             }
             
             Entity ent(Ent, mScene.lock());
-            EntityNode::Render(ent);
+            FEntityNode::Render(std::move(ent));
         }
         
-
         ImGui::End();
-
-
     }
 
 

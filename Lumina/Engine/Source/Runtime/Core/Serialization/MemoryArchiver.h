@@ -74,8 +74,8 @@ namespace Lumina
 
     private:
 
-        const TVector<uint8>& Bytes;
-        int64                LimitSize;
+        const TVector<uint8>&   Bytes;
+        int64                   LimitSize;
     
     };
 

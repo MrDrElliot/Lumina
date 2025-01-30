@@ -29,7 +29,7 @@ layout(set = 1, binding = 0) uniform CameraUniforms
     mat4 CameraProjection;  // Projection matrix
 } CameraUBO;
 
-layout(set = 1, binding = 2) buffer ModelUniforms
+layout(set = 1, binding = 2) readonly buffer ModelUniforms
 {
     mat4 model[]; // Model matrix
 } ModelUBO;
