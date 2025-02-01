@@ -26,7 +26,7 @@ enum class ERefCountedCastType
 
         void Release() const
         {
-            if(RefCount.fetch_sub(1, std::memory_order_acquire) == 1)
+            if(RefCount.fetch_sub(1, std::memory_order_acq_rel) == 1)
             {
                 std::atomic_thread_fence(std::memory_order_acquire);
                 delete this;
@@ -150,7 +150,7 @@ enum class ERefCountedCastType
             }
         }
     
-        T* Ptr;
+        T* Ptr = nullptr;
     };
 
 

@@ -109,7 +109,7 @@ namespace Lumina
 
 	void FWindow::OnUpdate(double DeltaTime)
 	{
-		glfwPollEvents();
+		
 	}
 
 	void FWindow::Shutdown()

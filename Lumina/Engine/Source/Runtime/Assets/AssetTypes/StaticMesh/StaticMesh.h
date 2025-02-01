@@ -1,5 +1,4 @@
 #pragma once
-#include <filesystem>
 
 #include "Renderer/Buffer.h"
 #include "Memory/RefCounted.h"
@@ -47,15 +46,17 @@ namespace Lumina
     };
     
 
-    class LStaticMesh : public LAsset
+    class AStaticMesh : public IAsset
     {
     public:
 
-        LStaticMesh() = default;
-        LStaticMesh(const FAssetMetadata& Metadata, FMeshAsset InInfo);
-        virtual ~LStaticMesh();
+        AStaticMesh() = default;
+        AStaticMesh(FMeshAsset InInfo);
+        virtual ~AStaticMesh() override;
+
+        DECLARE_ASSET("Static Mesh", StaticMesh, 1);
         
-        static TSharedPtr<LStaticMesh> CreateMesh(const FAssetMetadata& Metadata, FMeshAsset InInfo);
+        static TSharedPtr<AStaticMesh> CreateMesh(FMeshAsset InInfo);
 
         void CreateNew();
         
@@ -67,8 +68,8 @@ namespace Lumina
 
     private:
         
-        FMeshAsset MeshData;
-        TRefPtr<FBuffer> VBO;
-        TRefPtr<FBuffer> IBO;
+        FMeshAsset          MeshData = {};
+        TRefPtr<FBuffer>    VBO;
+        TRefPtr<FBuffer>    IBO;
     };
 }

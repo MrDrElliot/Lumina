@@ -1,41 +1,66 @@
 #pragma once
 #include <stack>
-#include <functional>
 
-template<typename Args>
-class TMulticastDelegate
+#include "Containers/Array.h"
+#include "Core/Functional/Function.h"
+
+
+namespace Lumina
 {
-public:
+    template<typename Args = void>
+    class TMulticastDelegate
+    {
+    public:
 
-    // Add a static function to the invocation list
-    template<typename Func, typename... FuncArgs, std::enable_if_t<std::is_invocable<Func, Args>::value>* = nullptr>
-    void AddStatic(Func&& func)
-    {
-        InvokationList.push(std::forward<Func>(func));
-    }
-
-    template<typename Obj, typename Func, typename... FuncArgs, std::enable_if_t<std::is_member_function_pointer<Func>::value>* = nullptr>
-    void AddMember(Obj* obj, Func func)
-    {
-        InvokationList.push([obj, func](FuncArgs&&... args)
+        // Add a static function to the invocation list
+        template<typename Func, typename... FuncArgs, std::enable_if_t<std::is_invocable<Func, Args>::value>* = nullptr>
+        void AddStatic(Func&& func)
         {
-            (obj->*func)(std::forward<FuncArgs>(args)...);
-        });
-    }
-    
-    template<typename...InvokeArgs>
-    void Broadcast(InvokeArgs... args)
-    {
-        while (!InvokationList.empty())
-        {
-            auto& func = InvokationList.top();
-            func(std::forward<InvokeArgs>(args)...);
-            InvokationList.pop();
+            InvokationList.push_back(std::forward<Func>(func));
         }
-    }
-    
-    
-private:
+        
+        void AddTFunction(TFunction<void(Args)> Functor)
+        {
+            InvokationList.push_back(std::move(Functor));
+        }
 
-    std::stack<std::move_only_function<void(Args)>> InvokationList;
-};
+        void RemoveTFunction(TFunction<void(Args)> Functor)
+        {
+            VectorRemove(InvokationList, Functor);
+        }
+        
+        template<typename... InvokeArgs>
+        void Broadcast(InvokeArgs... args)
+        {
+            TInlineVector<uint32, 2> RemovalList;
+
+            for (int i = 0; i < InvokationList.size(); ++i)
+            {
+                if (InvokationList[i] != nullptr)
+                {
+                    InvokationList[i](std::forward<InvokeArgs>(args)...);
+                }
+                else
+                {
+                    RemovalList.push_back(i);
+                }
+            }
+
+            for (int i = RemovalList.size() - 1; i >= 0; --i)
+            {
+                uint32 Removal = RemovalList[i];
+                InvokationList.erase(InvokationList.begin() + Removal);
+            }
+        }
+
+    
+    
+    private:
+
+        TVector<TFunction<void(Args)>> InvokationList;
+
+    };
+}
+
+#define DECLARE_MULTICAST_DELEGATE(DelegateName, ...) \
+struct DelegateName : public Lumina::TMulticastDelegate<__VA_ARGS__> {}

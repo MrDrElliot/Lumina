@@ -52,7 +52,10 @@ std::string OpenFileDialog()
 namespace Lumina
 {
     void ContentBrowserWindow::OnAttach()
-    { 
+    {
+
+        SelectedDirectory = Project::GetProjectContentDirectory().string() + "/Content/";
+        
         FolderTexture = FTextureFactory::ImportFromSource(Paths::GetEngineInstallDirectory() / "Applications/LuminaEditor/Resources/Icons/ContentBrowser/Folder.png");
         FolderTexture->SetFriendlyName("Folder Texture");
         ImFolderTexture = FImGuiRenderer::CreateImGuiTexture(FolderTexture, FRenderer::GetLinearSampler(), {512, 512}, 0, true);
@@ -67,8 +70,10 @@ namespace Lumina
         fileDialog.SetTitle("Select Asset to Import");
         fileDialog.SetTypeFilters({ ".png", ".gltf", ".jpg" });
 
-        mImGuiImporterMap.try_emplace(EAssetType::Texture, MakeSharedPtr<ImGui_TextureImporter>());
-        mImGuiImporterMap.try_emplace(EAssetType::StaticMesh, MakeSharedPtr<ImGui_MeshImporter>());
+        mImGuiImporterMap.try_emplace(EAssetType::Texture,      MakeSharedPtr<ImGui_TextureImporter>());
+        mImGuiImporterMap.try_emplace(EAssetType::StaticMesh,   MakeSharedPtr<ImGui_MeshImporter>());
+        
+        RefreshItems(SelectedDirectory);
     }
 
     void ContentBrowserWindow::OnDetach()
@@ -85,10 +90,34 @@ namespace Lumina
         ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.4f, 0.4f, 0.4f, 1.0f));
         ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.25f, 0.25f, 0.25f, 1.0f));
-        if (ImGui::Button("Import Asset"))
+
+        if (ImGui::Button("Actions"))
         {
-            fileDialog.Open();
+            ImGui::OpenPopup("ActionsPopup");
         }
+        if (ImGui::BeginPopup("ActionsPopup"))
+        {
+            ImGui::SeparatorText("Content Actions");
+
+            if (ImGui::Selectable("Import Asset"))
+            {
+                fileDialog.Open();
+            }
+            
+            if (ImGui::Selectable("Refresh"))
+            {
+                RefreshItems(SelectedDirectory);
+            }
+                
+            if (ImGui::Selectable("New Folder"))
+            {
+                std::filesystem::create_directory(SelectedDirectory + "/NewFolder");
+                RefreshItems(SelectedDirectory);
+            }
+                
+            ImGui::EndPopup();
+        }
+        
         ImGui::PopStyleColor(3);
 
         fileDialog.Display();
@@ -118,7 +147,7 @@ namespace Lumina
                     SelectedFile.clear();
                 }
             }
-
+            RefreshItems(SelectedDirectory);
             ImGui::EndPopup();
         }
 
@@ -139,7 +168,7 @@ namespace Lumina
                 {
                     if (ImGui::Selectable(p.path().filename().string().c_str(), SelectedDirectory == p.path()))
                     {
-                        OnNewDirectorySelected(p.path());
+                        RefreshItems(p.path());
                     }
                 }
             }
@@ -159,7 +188,7 @@ namespace Lumina
                 {
                     if (ImGui::Selectable(p.path().filename().string().c_str(), SelectedDirectory == p.path()))
                     {
-                        OnNewDirectorySelected(p.path());
+                        RefreshItems(p.path());
                     }
                 }
             }
@@ -170,7 +199,7 @@ namespace Lumina
 
         // Right pane: Contents of selected directory
         ImGui::BeginChild("Contents", ImVec2(rightPaneWidth, 0), true);
-
+        
         // Top bar with current directory and refresh button
         if (!SelectedDirectory.empty())
         {
@@ -179,12 +208,7 @@ namespace Lumina
             ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
             ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.4f, 0.4f, 0.4f, 1.0f));
             ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.25f, 0.25f, 0.25f, 1.0f));
-
-            if (ImGui::Button("Refresh"))
-            {
-                OnNewDirectorySelected(SelectedDirectory);
-            }
-
+            
             ImGui::PopStyleColor(3);
             ImGui::PopStyleVar();
 
@@ -198,42 +222,10 @@ namespace Lumina
 
         if (!SelectedDirectory.empty())
         {
-            AssetRegistry* Registry = AssetRegistry::Get();
             RenderContentItems();
-
-            if (ImGui::IsWindowHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Right))
-            {
-                ImGui::OpenPopup("Create New Asset");
-            }
-
-            if (ImGui::BeginPopup("Create New Asset"))
-            {
-                if (ImGui::MenuItem("New Folder"))
-                {
-                    std::filesystem::create_directory(SelectedDirectory + "/NewFolder");
-                    ImGui::CloseCurrentPopup();
-                }
-
-                if (ImGui::MenuItem("Material"))
-                {
-                    ImGui::OpenPopup("Material Editor");
-                    ImGui::CloseCurrentPopup();
-                }
-                ImGui::EndPopup();
-            }
-        }
-
-
-        if (ImGui::BeginPopup("Material Editor"))
-        {
-            FMaterialAttributes Attributes;
-            FMaterialEditorPanel::Render(Attributes);
-            ImGui::EndPopup();
-
         }
 
         ImGui::EndChild();
-
         ImGui::End();
     }
 
@@ -243,21 +235,22 @@ namespace Lumina
     {
     }
 
-    void ContentBrowserWindow::OnNewDirectorySelected(const std::filesystem::path& InPath)
+    void ContentBrowserWindow::RefreshItems(const std::filesystem::path& InPath)
     {
-        SelectedDirectory = InPath.string();
+        SelectedDirectory = InPath.empty() ? SelectedDirectory : InPath.string();
         ContentItemEntries.clear();
+        
         for (auto& p : std::filesystem::directory_iterator(SelectedDirectory))
         {
             bool bIsLuminaFile = p.path().extension().string() == FILE_EXTENSION;
             if(bIsLuminaFile)
             {
-                FAssetMetadata Metadata = AssetRegistry::Get()->GetMetadataByPath(p.path());
+                FAssetHeader Metadata = AssetRegistry::Get()->GetMetadataByPath(p.path());
                 ContentItemEntries.push_back(MakeRefPtr<ContentBrowserItem>(p.path(), Metadata, false));
             }
             else if(p.is_directory())
             {
-                ContentItemEntries.push_back(MakeRefPtr<ContentBrowserItem>(p.path(), FAssetMetadata(), true));
+                ContentItemEntries.push_back(MakeRefPtr<ContentBrowserItem>(p.path(), FAssetHeader(), true));
             }
         }
     }
@@ -281,8 +274,8 @@ namespace Lumina
             ImGui::PushID(itemIndex);
             ImGui::BeginGroup();
     
-            ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f); // Remove border
-            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0)); // Transparent background for button
+            ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f);
+            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
 
             Entry->OnRender(this);    
             

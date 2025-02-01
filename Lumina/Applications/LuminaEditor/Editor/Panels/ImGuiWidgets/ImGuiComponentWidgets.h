@@ -77,7 +77,7 @@ namespace Lumina::ImGuiWidgets
         
             if (ImGui::BeginPopup("MaterialProperty_Popup"))
             {
-                FAssetMetadata Metadata = {};
+                FAssetHeader Metadata = {};
                 if (FAssetPropertyPanel::Render(EAssetType::Material, Metadata))
                 {
                     Component.Material = Metadata;
@@ -92,7 +92,7 @@ namespace Lumina::ImGuiWidgets
         
             if (ImGui::BeginPopup("MeshProperty_Popup"))
             {
-                FAssetMetadata Metadata = {};
+                FAssetHeader Metadata = {};
                 if (FAssetPropertyPanel::Render(EAssetType::StaticMesh, Metadata))
                 {
                     Component.StaticMesh = Metadata;

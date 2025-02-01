@@ -3,6 +3,8 @@
 #include "Core/Serialization/Archiver.h"
 #include "Core/Templates/CanBulkSerialize.h"
 #include "Platform/GenericPlatform.h"
+#include "EASTL/hash_map.h"
+#include "EASTL/unordered_map.h"
 #include "EASTL/vector.h"
 #include "EASTL/fixed_vector.h"
 #include "EASTL/array.h"
@@ -16,9 +18,13 @@ namespace Lumina
     // Most commonly used containers aliases
     //-------------------------------------------------------------------------
 
-    template<typename T> using TVector = eastl::vector<T>;
-    template<typename T, eastl_size_t S> using TInlineVector = eastl::fixed_vector<T, S, true>;
-    template<typename T, eastl_size_t S> using TArray = eastl::array<T, S>;
+    template<typename T> using TVector =                        eastl::vector<T>;
+    template<typename T, eastl_size_t S> using TInlineVector =  eastl::fixed_vector<T, S, true>;
+    template<typename T, eastl_size_t S> using TArray =         eastl::array<T, S>;
+
+    template<typename K, typename V> using TUnorderedMap =      eastl::unordered_map<K, V>;
+    template<typename K, typename V> using THashMap =           eastl::hash_map<K, V, eastl::hash<K>, eastl::equal_to<K>, eastl::allocator, false>;
+    template<typename K, typename V> using TPair =              eastl::pair<K, V>;
 
     using Blob = TVector<uint8>;
 
@@ -82,7 +88,6 @@ namespace Lumina
 
         return Ar;
     }
-
     
     //-------------------------------------------------------------------------
     // Simple utility functions to improve syntactic usage of container types
@@ -101,6 +106,12 @@ namespace Lumina
     inline typename TVector<T>::const_iterator VectorFind( TVector<T> const& vector, V const& value, Predicate predicate )
     {
         return eastl::find( vector.begin(), vector.end(), value, eastl::forward<Predicate>( predicate ) );
+    }
+
+    template<typename T, typename V>
+    inline void VectorRemove(TVector<T>& Vector, V const& Value)
+    {
+        return Vector.erase(Vector.begin(), Vector.end(), Value, Vector.end());
     }
 
     // Find an element in a vector

@@ -8,13 +8,12 @@
 namespace Lumina
 {
 
-    class LTexture : public LAsset
+    class ATexture : public IAsset
     {
     public:
-        
-        LTexture();
-        ~LTexture();
 
+        DECLARE_ASSET("Texture", Texture, 1);
+        
         void Serialize(FArchive& Ar) override;
         void CreateImage();
         TRefPtr<FImage> GetImage() { return Image; }
@@ -23,7 +22,7 @@ namespace Lumina
     
     private:
         
-        FImageSpecification ImageSpec;
-        TRefPtr<FImage> Image;
+        FImageSpecification     ImageSpec = {};
+        TRefPtr<FImage>         Image;
     };
 }

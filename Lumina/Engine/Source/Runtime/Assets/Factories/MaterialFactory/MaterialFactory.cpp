@@ -2,8 +2,9 @@
 
 namespace Lumina
 {
-    TSharedPtr<LAsset> FMaterialFactory::CreateNew(const FAssetMetadata& Metadata, FArchive& Archive)
+
+    ELoadResult FMaterialFactory::CreateNew(const FAssetHandle& InHandle, const FAssetPath& InPath, FAssetRecord* InRecord, FArchive& Archive)
     {
-        return TSharedPtr<LAsset>();
+        Assert(0);
     }
 }

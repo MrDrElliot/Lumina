@@ -1,67 +1,93 @@
 #pragma once
 
-#include "Core/Singleton/Singleton.h"
-#include <memory>
-#include <EASTL/unordered_map.h>
+#include "Core/Functional/Function.h"
 #include "Assets/Asset.h"
+#include "Assets/AssetRecord.h"
+#include "Assets/AssetHandle.h"
+#include "Assets/AssetRequest.h"
+#include "Assets/Factories/FactoryRegistry.h"
 #include "Containers/Array.h"
-#include "Core/Serialization/Archiver.h"
+#include "Core/Threading/Thread.h"
+#include "Subsystems/Subsystem.h"
 
 
 namespace Lumina
 {
-	struct FAssetHandle;
-	using AssetMap = eastl::unordered_map<FAssetHandle, eastl::weak_ptr<LAsset>>;
-
-	class AssetManager : public TSingleton<AssetManager>
+	class FAssetRecord;
+	
+	class FAssetManager : public ISubsystem
 	{
 	public:
 
-		AssetManager();
-		~AssetManager();
-
-		void Shutdown() override
+		struct FPendingRequest
 		{
-			/*for (auto& KVP : mAssetMap)
-			{
-				if(const TSharedPtr<LAsset>& Asset = KVP.second.lock())
-				{
-					FArchive Ar(EArchiverFlags::Writing);
-					Asset->Serialize(Ar);
-					Ar.WriteToFile(Asset->GetAssetMetadata().Path);
-				}
-			}*/
-		}
+			enum class Type { Load, Unload };
 
-		/** Will attempt to return a valid asset, will not automatically load an asset */
-		template<typename T>
-		TSharedPtr<T> GetAsset(const FAssetHandle& InHandle)
-		{
-			if (mAssetMap.find(InHandle) != mAssetMap.end())
+		public:
+
+			FPendingRequest() = default;
+
+			FPendingRequest(Type InType, FAssetRecord* InRecord, const FAssetRequester& InRequesterID)
+				: Record(InRecord)
+				, RequesterID(InRequesterID)
+				, Type(InType)
 			{
-				std::weak_ptr<T> WeakPtr = mAssetMap.at(InHandle);
-				if (TSharedPtr<T> AssetPtr = WeakPtr.lock())
-				{
-					return AssetPtr;
-				}
-				else
-				{
-					return TSharedPtr<T>();
-				}
+				Assert(InRecord);
 			}
-			
-			return TSharedPtr<T>();
-		}
 
-		/** Will attempt to get an asset that is valid, if it is not valid, it will sync load */
-		TSharedPtr<LAsset> LoadSynchronous(const FAssetHandle& InHandle);
-		void GetAliveAssets(TVector<TSharedPtr<LAsset>>& OutAliveAssets);
+			FAssetRecord*			Record = nullptr;
+			FAssetRequester			RequesterID;
+			Type                    Type = Type::Load;
+		};
 
+		FAssetManager();
+		~FAssetManager() override;
+
+		void Initialize() override;
+		void Deinitialize() override;
+
+		void Update(bool bWaitForAsyncTasks = false);
+
+		
+		void LoadAsset(FAssetHandle& InHandle, const FAssetRequester& Requester = FAssetRequester());
+
+		void UnloadAsset(FAssetHandle& InHandle, const FAssetRequester& Requester = FAssetRequester());
+
+	
+	private:
+		
+		ELoadResult LoadFromDisk(const FAssetHandle& InAssetHandle, const FAssetPath& InPath, FAssetRecord* InRecord);
+
+		FAssetRecord* FindOrCreateAssetRecord(const FGuid& InGuid);
+		FAssetRecord* FindAssetRecordChecked(const FGuid& InGuid);
+		
+		void AddPendingRequest(FPendingRequest&& NewRequest);
+
+		FAssetRequest* TryFindActiveRequest(const FAssetRecord* InRecord) const;
+		
+		void ProcessAssetRequests();
+		
 	private:
 
+		
+		std::thread									AssetRequestThread;
+		eastl::atomic<bool>							bAssetThreadRunning = true;
+		mutable FRecursiveMutex						RecursiveMutex;
 
-		AssetMap mAssetMap;
-
+		FFactoryRegistry							FactoryRegistry;
+		
+		THashMap<FGuid, FAssetRecord*>				AssetRecord;
+		
+		TVector<FPendingRequest>					PendingRequests;
+		TVector<FAssetRequest*>						ActiveRequests;
+		TVector<FAssetRequest*>						CompletedRequests;
 
 	};
+	
+
+
+	//--------------------------------------------------------------------------
+	// Template definitions.
+	//--------------------------------------------------------------------------
+	
 }

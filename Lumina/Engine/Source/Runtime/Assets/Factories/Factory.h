@@ -4,12 +4,17 @@
 #include "Assets/AssetTypes.h"
 
 
+
 namespace Lumina
 {
+    class FAssetRecord;
+    
     class FFactory
     {
     public:
 
-       virtual TSharedPtr<LAsset> CreateNew(const FAssetMetadata& Metadata, FArchive& Archive) = 0;
+        virtual ~FFactory() = default;
+
+       virtual ELoadResult CreateNew(const FAssetHandle& InHandle, const FAssetPath& InPath, FAssetRecord* InRecord, FArchive& Archive) = 0;
     };
 }

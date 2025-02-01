@@ -43,8 +43,8 @@ namespace Lumina
         void RenderMeshTasks(TRefPtr<FPipeline> Pipeline, const glm::uvec3 Dimensions, FMiscData Data) override;
         void RenderMeshIndexed(TRefPtr<FPipeline> Pipeline, TRefPtr<FBuffer> VertexBuffer, TRefPtr<FBuffer> IndexBuffer, FMiscData Data) override;
         void RenderVertices(uint32 Vertices, uint32 Instances, uint32 FirstVertex, uint32 FirstInstance) override;
-        void RenderStaticMeshWithMaterial(const TRefPtr<FPipeline>& Pipeline, const TSharedPtr<LStaticMesh>& StaticMesh, const TRefPtr<FMaterial>& Material) override;
-        void RenderStaticMesh(const TRefPtr<FPipeline>& Pipeline, TSharedPtr<LStaticMesh> StaticMesh, uint32 InstanceCount) override;
+        void RenderStaticMeshWithMaterial(const TRefPtr<FPipeline>& Pipeline, const TSharedPtr<AStaticMesh>& StaticMesh, const TRefPtr<FMaterial>& Material) override;
+        void RenderStaticMesh(const TRefPtr<FPipeline>& Pipeline, TSharedPtr<AStaticMesh> StaticMesh, uint32 InstanceCount) override;
         
         
         TRefPtr<FCommandBuffer> GetCommandBuffer() override;

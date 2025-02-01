@@ -25,63 +25,14 @@
 
 namespace Lumina
 {
-    TSharedPtr<FSceneRenderer> FSceneRenderer::Create(LScene* InScene)
+    TSharedPtr<FSceneRenderer> FSceneRenderer::Create(AScene* InScene)
     {
         return MakeSharedPtr<FSceneRenderer>(InScene);
     }
 
-    FSceneRenderer::FSceneRenderer(LScene* InScene)
+    FSceneRenderer::FSceneRenderer(AScene* InScene)
         :CurrentScene(InScene)
     {
-        
-        BaseColor = FTextureFactory::ImportFromSource(Paths::GetEngineInstallDirectory() / "Applications/LuminaEditor/Resources/Icons/ContentBrowser/Default_albedo.jpg");
-        BaseColor->SetFriendlyName("Base Color");
-        Normal = FTextureFactory::ImportFromSource(Paths::GetEngineInstallDirectory() / "Applications/LuminaEditor/Resources/Icons/ContentBrowser/Default_normal.jpg");
-        Normal->SetFriendlyName("Nromal");
-        Metallic = FTextureFactory::ImportFromSource(Paths::GetEngineInstallDirectory() / "Applications/LuminaEditor/Resources/Icons/ContentBrowser/Default_metalRoughness.jpg");
-        Metallic->SetFriendlyName("Metallic");
-        AmbientOcclusion = FTextureFactory::ImportFromSource(Paths::GetEngineInstallDirectory() / "Applications/LuminaEditor/Resources/Icons/ContentBrowser/Default_AO.jpg");
-        AmbientOcclusion->SetFriendlyName("Ambient Occlusion");
-        Emissive = FTextureFactory::ImportFromSource(Paths::GetEngineInstallDirectory() / "Applications/LuminaEditor/Resources/Icons/ContentBrowser/Default_emissive.jpg");
-        Emissive->SetFriendlyName("Emissive");
-
-        MaterialInstance.AssetPtr =                     MakeSharedPtr<LMaterialInstance>();
-        
-        MaterialInstance->Albedo.AssetPtr =             MakeSharedPtr<LTexture>();
-        MaterialInstance->Albedo.AssetPtr->SetImage(BaseColor, BaseColor->GetSpecification());
-        
-        MaterialInstance->Normal.AssetPtr =             MakeSharedPtr<LTexture>();
-        MaterialInstance->Normal.AssetPtr->SetImage(Normal, Normal->GetSpecification());
-
-        
-        MaterialInstance->Roughness.AssetPtr =          MakeSharedPtr<LTexture>();
-        MaterialInstance->Roughness.AssetPtr->SetImage(Metallic, Metallic->GetSpecification());
-
-        
-        MaterialInstance->Emissive.AssetPtr =           MakeSharedPtr<LTexture>();
-        MaterialInstance->Emissive.AssetPtr->SetImage(Emissive, Emissive->GetSpecification());
-
-        
-        MaterialInstance->AmbientOcclusion.AssetPtr =   MakeSharedPtr<LTexture>();
-        MaterialInstance->AmbientOcclusion.AssetPtr->SetImage(AmbientOcclusion, AmbientOcclusion->GetSpecification());
-
-        /*for (int i = 0; i < 100; ++i)
-        {
-            Entity Entity = InScene->CreateEntity(FTransform(), "Teehee");
-            FMeshComponent& Component = Entity.AddComponent<FMeshComponent>();
-            FTransformComponent& TransformComponent = Entity.GetComponent<FTransformComponent>();
-            TransformComponent.SetLocation(glm::vec3(i * 2, 0.0f, 0.0f));
-            Component.Material = MaterialInstance;
-
-            if (i == 0)
-            {
-                Entity.AddComponent<FLightComponent>();
-            }
-            
-            TAssetHandle<LStaticMesh> Mesh = AssetRegistry::Get()->GetAssetByPath<LStaticMesh>(Paths::GetEngineInstallDirectory() / "Sandbox/Game/Content/Helmet.lum");
-            Component.StaticMesh = Mesh;
-        }*/
-
         CreateImages();
         InitPipelines();
         InitBuffers();
@@ -264,11 +215,11 @@ namespace Lumina
         {
             ModelData.clear();
             ModelData.reserve((int32)ComponentTotal);
-            eastl::unordered_map<TSharedPtr<LMaterialInstance>, std::vector<TSharedPtr<LStaticMesh>>> MeshInstanceMap;
+            eastl::unordered_map<TSharedPtr<AMaterialInstance>, std::vector<TSharedPtr<AStaticMesh>>> MeshInstanceMap;
 
             CurrentScene->ForEachComponent<FMeshComponent>([&, this](uint32 Current, entt::entity& entity, FMeshComponent& Component)
             {
-                if (Component.StaticMesh.IsValid())
+                if (Component.StaticMesh.GetPtr())
                 {
                     Component.Material = MaterialInstance;
 
@@ -277,7 +228,6 @@ namespace Lumina
                     glm::mat4 Matrix = Transform.GetTransform().GetMatrix();
                     ModelData.emplace_back(std::move(Matrix));
                     
-                    MeshInstanceMap[MaterialInstance].emplace_back(Component.StaticMesh.Get());
                     bHasValidRender = true;
                 }
             });
@@ -294,7 +244,7 @@ namespace Lumina
             TexturesData.reserve(MeshInstanceMap.size());
 
             // A map to store each texture and its unique ID
-            eastl::unordered_map<TSharedPtr<LTexture>, int32> TextureHash;
+            eastl::unordered_map<TSharedPtr<ATexture>, int32> TextureHash;
 
             // Unique texture counter
             int32 CurrentTextureID = 0;
@@ -312,7 +262,7 @@ namespace Lumina
                 }
 
                 // Helper lambda to find or add a texture to the map
-                auto GetOrAddTextureID = [&TextureHash, &CurrentTextureID](const TSharedPtr<LTexture>& Texture) -> int32
+                auto GetOrAddTextureID = [&TextureHash, &CurrentTextureID](const TSharedPtr<ATexture>& Texture) -> int32
                 {
                     if (!Texture)
                     {
@@ -328,13 +278,7 @@ namespace Lumina
                     return It->second;
                 };
 
-                
-                // Map each texture to a unique ID (or retrieve an existing ID)
-                TexturesData.back().AlbedoID    = GetOrAddTextureID(MaterialInstance->Albedo);
-                TexturesData.back().NormalID    = GetOrAddTextureID(MaterialInstance->Normal);
-                TexturesData.back().RoughnessID = GetOrAddTextureID(MaterialInstance->Roughness);
-                TexturesData.back().EmissiveID  = GetOrAddTextureID(MaterialInstance->Emissive);
-                TexturesData.back().AOID        = GetOrAddTextureID(MaterialInstance->AmbientOcclusion);
+
 
             }
 

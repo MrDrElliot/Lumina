@@ -3,8 +3,6 @@
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_vulkan.h"
 #include "Core/Application/Application.h"
-#include "Core/Layer.h"
-#include "Core/Performance/PerformanceTracker.h"
 #include "Core/Windows/Window.h"
 #include "GUID/GUID.h"
 #include "ImGui/ImGuiFonts.h"

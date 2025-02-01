@@ -8,19 +8,21 @@
 
 namespace Lumina
 {
-    bool FFileHelper::SaveArrayToFile(const TVector<uint8>& Array, const std::filesystem::path& Path, uint32 WriteFlags)
+    bool FFileHelper::SaveArrayToFile(const TVector<uint8>& Array, const FString& Path, uint32 WriteFlags)
     {
-        std::ofstream outFile(Path, std::ios::binary | std::ios::trunc);
+        std::filesystem::path FilePath = Path.c_str();
+
+        
+        std::ofstream outFile(FilePath, std::ios::binary | std::ios::trunc);
         if (!outFile)
         {
-            LOG_ERROR("Failed to open file for writing: {0}", Path.string());
+            LOG_ERROR("Failed to open file for writing: {0}", FilePath.string());
             return false;
         }
 
-        // Write the array data
         if (!outFile.write(reinterpret_cast<const char*>(Array.data()), Array.size()))
         {
-            LOG_ERROR("Failed to write data to file: {0}", Path.string());
+            LOG_ERROR("Failed to write data to file: {0}", FilePath.string());
             return false;
         }
 
@@ -28,31 +30,31 @@ namespace Lumina
         return true;
     }
 
-    bool FFileHelper::LoadFileToArray(TVector<uint8>& Result, const std::filesystem::path& Path, uint32 ReadFlags)
+    bool FFileHelper::LoadFileToArray(TVector<uint8>& Result, const FString& Path, uint32 ReadFlags)
     {
-        std::ifstream inFile(Path, std::ios::binary | std::ios::ate);
+        std::filesystem::path FilePath = Path.c_str();
+        
+        std::ifstream inFile(FilePath, std::ios::binary | std::ios::ate);
         if (!inFile)
         {
-            LOG_ERROR("Failed to open file for reading: {0}", Path.string());
+            LOG_ERROR("Failed to open file for reading: {0}", FilePath.string());
             return false;
         }
 
         std::streamsize fileSize = inFile.tellg();
         if (fileSize == -1)
         {
-            LOG_ERROR("Failed to get the file size: {0}", Path.string());
+            LOG_ERROR("Failed to get the file size: {0}", FilePath.string());
             return false;
         }
 
         inFile.seekg(0, std::ios::beg);
 
-        // Resize the result vector to hold the file data
         Result.resize(static_cast<size_t>(fileSize));
 
-        // Read the file data into the result vector
         if (!inFile.read(reinterpret_cast<char*>(Result.data()), fileSize))
         {
-            LOG_ERROR("Failed to read data from file: {0}", Path.string());
+            LOG_ERROR("Failed to read data from file: {0}", FilePath.string());
             return false;
         }
 

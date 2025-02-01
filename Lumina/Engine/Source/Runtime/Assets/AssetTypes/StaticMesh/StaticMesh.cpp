@@ -8,8 +8,8 @@ namespace Lumina
 {
 
 
-    LStaticMesh::LStaticMesh(const FAssetMetadata& Metadata, FMeshAsset InInfo)
-    : LAsset(Metadata), MeshData(std::move(InInfo))
+    AStaticMesh::AStaticMesh(FMeshAsset InInfo)
+    : MeshData(std::move(InInfo))
     {
         
         FDeviceBufferSpecification VBOSpec;
@@ -20,7 +20,7 @@ namespace Lumina
         VBOSpec.DebugName = "Vertex Buffer Object";
         
         VBO = FBuffer::Create(VBOSpec, MeshData.Vertices.data(), sizeof(FVertex) * MeshData.Vertices.size());
-        VBO->SetFriendlyName("Vertex Buffer Object" + Metadata.Name);
+        VBO->SetFriendlyName("Vertex Buffer Object");
 
         FDeviceBufferSpecification IBOSpec;
         IBOSpec.BufferUsage = EDeviceBufferUsage::INDEX_BUFFER;
@@ -30,24 +30,24 @@ namespace Lumina
         IBOSpec.DebugName = "Index Buffer Object";
 
         IBO = FBuffer::Create(IBOSpec, MeshData.Indices.data(),sizeof(uint32) * MeshData.Indices.size());
-        VBO->SetFriendlyName("Index Buffer Object" + Metadata.Name);
+        VBO->SetFriendlyName("Index Buffer Object");
 
     }
 
-    LStaticMesh::~LStaticMesh()
+    AStaticMesh::~AStaticMesh()
     {
     
     }
 
-    TSharedPtr<LStaticMesh> LStaticMesh::CreateMesh(const FAssetMetadata& Metadata, FMeshAsset InInfo)
+    TSharedPtr<AStaticMesh> AStaticMesh::CreateMesh(FMeshAsset InInfo)
     {
         AssertMsg(InInfo.Vertices.data(), "Attempted to create a static mesh with invalid vertices");
         AssertMsg(InInfo.Indices.data(), "Attempted to create a static mesh with invalid indices");
 
-        return MakeSharedPtr<LStaticMesh>(Metadata, std::move(InInfo));
+        return MakeSharedPtr<AStaticMesh>(std::move(InInfo));
     }
 
-    void LStaticMesh::CreateNew()
+    void AStaticMesh::CreateNew()
     {
         FDeviceBufferSpecification VBOSpec;
         VBOSpec.BufferUsage = EDeviceBufferUsage::VERTEX_BUFFER;
@@ -73,10 +73,8 @@ namespace Lumina
     }
 
 
-    void LStaticMesh::Serialize(FArchive& Ar)
+    void AStaticMesh::Serialize(FArchive& Ar)
     {
-        LAsset::Serialize(Ar);
-
         Ar << MeshData;
     }
 }

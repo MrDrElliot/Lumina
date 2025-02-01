@@ -21,7 +21,7 @@ namespace Lumina
             // Import button
             if (ImGui::Button("Import", ImVec2(120, 0)))
             {
-                AssetRegistry::ImportAsset(Name, nullptr, ContentBrowser->SelectedFile, ContentBrowser->SelectedDirectory);
+                AssetRegistry::Get()->ImportAsset(Name, nullptr, ContentBrowser->SelectedFile, ContentBrowser->SelectedDirectory);
                 ImGui::CloseCurrentPopup();
                 ContentBrowser->SelectedFile.clear();
             }

@@ -3,8 +3,21 @@
 #include "MeshFactory/StaticMeshFactory.h"
 #include "TextureFactory/TextureFactory.h"
 
-Lumina::FFactoryRegistry::FFactoryRegistry()
+namespace Lumina
 {
-    RegisterFactory<FTextureFactory, EAssetType::Texture>();
-    RegisterFactory<FStaticMeshFactory, EAssetType::StaticMesh>();
+    FFactoryRegistry::FFactoryRegistry()
+    {
+        RegisterFactory<FTextureFactory, EAssetType::Texture>();
+        RegisterFactory<FStaticMeshFactory, EAssetType::StaticMesh>();
+    }
+
+    FFactoryRegistry::~FFactoryRegistry()
+    {
+        for (auto KVP : FactoryMap)
+        {
+            delete KVP.second;    
+        }
+
+        FactoryMap.clear();
+    }
 }

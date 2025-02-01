@@ -20,7 +20,7 @@ namespace Lumina
     public:
         virtual ~ISubsystem() = default;
         virtual void Initialize() = 0;
-        virtual void Update(double DeltaTime) = 0;
+        virtual void Update(double DeltaTime) { }
         virtual void Deinitialize() = 0;
 
     private:
@@ -55,15 +55,6 @@ namespace Lumina
                 return static_cast<T*>(it->second.get());
             }
             return nullptr;
-        }
-
-        void Update(double DeltaTime)
-        {
-            PROFILE_SCOPE(SubsystemUpdate)
-            for (auto& [type, S] : Subsystems)
-            {
-                S->Update(DeltaTime);
-            }
         }
 
         void DeinitializeAll()

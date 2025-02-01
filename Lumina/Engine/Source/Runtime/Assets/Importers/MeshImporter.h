@@ -16,11 +16,11 @@ namespace Lumina
     {
     public:
 
-        bool Import(FArchive& Ar, void* ImportData, const std::filesystem::path& AssetPath) override
+        bool Import(FArchive& Ar, void* ImportData, const FString& AssetPath) override
         {
             PROFILE_SCOPE_LOG(MeshImporter::Import)
 
-            //TFastVector<TSharedPtr<LStaticMesh>> ReturnMeshes;
+            //TFastVector<TSharedPtr<AStaticMesh>> ReturnMeshes;
             
             fastgltf::Asset Asset;
             ExtractAsset(&Asset, AssetPath);
@@ -106,7 +106,7 @@ namespace Lumina
                 Ar << NewAsset;
                 
                 return true; //@TODO fuck.
-                //ReturnMeshes.push_back(LStaticMesh::CreateMesh(FAssetMetadata(), std::move(NewAsset)));
+                //ReturnMeshes.push_back(AStaticMesh::CreateMesh(FAssetMetadata(), std::move(NewAsset)));
             }
     
             return true;
@@ -114,7 +114,7 @@ namespace Lumina
 
     private:
         
-        void ExtractAsset(fastgltf::Asset* OutAsset, std::filesystem::path InPath)
+        void ExtractAsset(fastgltf::Asset* OutAsset, const FString& InPath)
         {
             // Allocate crucial fastgltf objects
             fastgltf::Parser gltf_parser;

@@ -18,7 +18,7 @@ namespace Lumina
 	class FBuffer;
 	class FDescriptorSet;
 	class FImage;
-	class LScene;
+	class AScene;
 	struct FWindowSpecs;
 	class FWindow;
 	class FRenderContext;
@@ -88,9 +88,9 @@ namespace Lumina
 		static FApplicationStats GetStats() { return Instance->Stats; }
 		static double GetDeltaTime() { return Instance->Stats.DeltaTime; }
 		static FWindow& GetWindow();
-		static TSharedPtr<LScene> GetActiveScene() { return Get().CurrentScene; }
+		static TSharedPtr<AScene> GetActiveScene() { return Get().CurrentScene; }
 		
-		void SetCurrentScene(TSharedPtr<LScene> InScene);
+		void SetCurrentScene(TSharedPtr<AScene> InScene);
 		
 		
 		template<typename T, typename... Args>
@@ -100,9 +100,9 @@ namespace Lumina
 		}
 
 		template<typename T>
-		T* GetSubsystem()
+		static T* GetSubsystem()
 		{
-			return ApplicationSubsystems.GetSubsystem<T>();
+			return Get().ApplicationSubsystems.GetSubsystem<T>();
 		}
 
 		template<typename T>
@@ -119,7 +119,7 @@ namespace Lumina
 		
 	private:
 
-		TSharedPtr<LScene> CurrentScene;
+		TSharedPtr<AScene> CurrentScene;
 		
 		FApplicationStats Stats;
 		FApplicationSpecs AppSpecs;

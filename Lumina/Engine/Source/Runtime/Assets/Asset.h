@@ -1,33 +1,51 @@
 #pragma once
 
-#include <filesystem>
 #include "AssetTypes.h"
-
+#include "Containers/String.h"
+#include "Core/Serialization/Archiver.h"
 
 
 namespace Lumina
 {
-    class LAsset : public std::enable_shared_from_this<LAsset>
+    class IAsset
     {
     public:
 
-        LAsset() = default;
-        LAsset(const FAssetMetadata& InMetadata);
-        LAsset(const FString& AssetName);
-        virtual ~LAsset() = default;
+        IAsset() =          default;
+        virtual ~IAsset() = default;
         
-        static EAssetType GetStaticType() { return EAssetType::None; }
-        virtual void Serialize(FArchive& Ar);
-
+        virtual EAssetType GetAssetType()   const = 0;
+        virtual int32 GetAssetVersion()     const = 0;
+        virtual FString GetFriendlyName()   const = 0;
         
-    public:
-
-        FAssetMetadata& GetAssetMetadata() { return Metadata; }
-        EAssetType GetAssetType() const { return Metadata.AssetType; }
-        const std::filesystem::path& GetFilePath() const { return Metadata.Path.c_str(); }
+        virtual void Serialize(FArchive& Ar) = 0;
         
     private:
-
-        FAssetMetadata Metadata;
+        
     };
 }
+
+#define DECLARE_ASSET(FriendlyName, Type, Version) \
+static EAssetType StaticGetAssetType() { static const EAssetType typeID = EAssetType::Type; return typeID; } \
+virtual EAssetType GetAssetType() const override { return StaticGetAssetType(); } \
+\
+static int32 StaticGetAssetVersion() { static const int32 TypeVersion = Version; return TypeVersion; } \
+virtual int32 GetAssetVersion() const { return StaticGetAssetVersion(); } \
+\
+static FString StaticGetFriendlyName() { static const FString TypeName = FriendlyName; return TypeName; } \
+virtual FString GetFriendlyName() const { return StaticGetFriendlyName(); } \
+
+
+#define DEFINE_ASSET_HEADER() \
+FAssetHeader Header;
+
+#define ADD_DEPENDENCY(AssetHandle) \
+Header.Dependencies.emplace_back(AssetHandle.GetAssetGuid());
+
+#define SERIALIZE_HEADER(Ar) \
+Ar << Header;
+
+
+   
+
+

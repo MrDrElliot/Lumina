@@ -5,16 +5,14 @@
 
 namespace Lumina
 {
-    class FNameComponent : public FComponent
+    class FNameComponent : public FEntityComponent
     {
     public:
 
         FNameComponent() = default;
         FNameComponent(const FString& InName) :Name(InName) {}
         FNameComponent(const char* InName) :Name(InName) {}
-
-        void Serialize(FArchive& Ar) override {}
-
+        
         FString& GetName() { return Name; }
 
     private:

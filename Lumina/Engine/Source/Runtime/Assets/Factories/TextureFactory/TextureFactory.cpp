@@ -2,20 +2,21 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <ThirdParty/stb_image/stb_image.h>
+
+#include "Assets/AssetRecord.h"
 #include "Assets/AssetTypes/Textures/Texture.h"
 #include "Core/Performance/PerformanceTracker.h"
 
 namespace Lumina
 {
-    TSharedPtr<LAsset> FTextureFactory::CreateNew(const FAssetMetadata& Metadata, FArchive& Archive)
+    
+    ELoadResult FTextureFactory::CreateNew(const FAssetHandle& InHandle, const FAssetPath& InPath, FAssetRecord* InRecord, FArchive& Archive)
     {
-        // Deserialize the texture from Archive
-        auto Texture = MakeSharedPtr<LTexture>();
+        auto Texture = MakeSharedPtr<ATexture>();
         Texture->Serialize(Archive);
         Texture->CreateImage();
-
-        return Texture;
         
+        return ELoadResult::Succeeded;
     }
 
     TRefPtr<FImage> FTextureFactory::ImportFromSource(std::filesystem::path Path)

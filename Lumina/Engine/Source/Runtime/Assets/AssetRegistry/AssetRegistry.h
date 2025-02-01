@@ -1,85 +1,40 @@
 #pragma once
 
 #include <filesystem>
-
-#include "Core/Singleton/Singleton.h"
 #include <unordered_map>
 #include <any>
-
 #include "Assets/AssetHandle.h"
+#include "Core/Delegates/Delegate.h"
 #include "Core/Serialization/MemoryArchiver.h"
-#include "Platform/Filesystem/FileHelper.h"
 
 #define FILE_EXTENSION ".lum"
 
-#define TEXTURE_ASSET_VERSION 1;
-#define STATICMESH_ASSET_VERSION 1;
+
+DECLARE_MULTICAST_DELEGATE(FAssetRegistryUpdatedDelegate);
 
 namespace Lumina
 {
-	struct FAssetHandle;
-	struct FAssetMetadata;
+	struct FAssetHeader;
 
-	class AssetRegistry : public TSingleton<AssetRegistry>
+	class FAssetRegistry : public ISubsystem
 	{
 	public:
 
-		AssetRegistry();
-		~AssetRegistry();
+		FAssetRegistry() = default;
+		~FAssetRegistry() override = default;
 
-		void StartAssetScan();
-		
-		FAssetMetadata GetMetadata(const FAssetHandle& InHandle);
-		FAssetMetadata GetMetadataByPath(const std::filesystem::path& InPath);
-		void SetMetadata(const FAssetHandle& InHandle, const FAssetMetadata& InMetadata);
-		void ScanAssets();
+		void Initialize() override;
+		void Deinitialize() override;
 
-		void GetAllRegisteredAssets(TVector<FAssetMetadata>& OutAssets);
-		void GetAllAssetsOfType(EAssetType Type, TVector<FAssetMetadata>& OutAssets);
-		
-		bool Exists(const FAssetHandle& InHandle) { return mAssetRegistry.find(InHandle) != mAssetRegistry.end(); }
-		uint32 Size() const { return mAssetRegistry.size(); }
+		void Serialize(FArchive& Ar);
 
-		static FAssetHandle ImportAsset(const FString& Name, void* Data, const std::filesystem::path& ImportFilePath, const std::filesystem::path& NewAssetPath);
-		static FAssetHandle CreateAsset(EAssetType Type, const FString& Name, void* Data, const std::filesystem::path& NewAssetPath);
+		FAssetHeader FindAssetHeader(const FAssetPath& InPath);
 		
-		template<typename T>
-		static TAssetHandle<T> GetAssetByPath(const std::filesystem::path& InPath);
+		TVector<FAssetHeader>& GetAssets() { return Registry; }
 		
 	private:
-
-		eastl::unordered_map<FAssetHandle, FAssetMetadata> mAssetRegistry;
-		eastl::unordered_map<EAssetType, TVector<FAssetMetadata>> AssetTypeMap;
-
-		std::thread ScanThread;
-		std::atomic<bool> bShouldScan = true;
+		
+		TVector<FAssetHeader>						Registry;
+		FAssetRegistryUpdatedDelegate				OnAssetRegistryUpdated;
 	};
-
-	template <typename T>
-	TAssetHandle<T> AssetRegistry::GetAssetByPath(const std::filesystem::path& InPath)
-	{
-		AssertMsg(!InPath.empty(), "Empty Asset Path!");
-		
-		for (auto& KVP : Get()->mAssetRegistry)
-		{
-			if(strcmp(KVP.second.Path.c_str(), InPath.string().c_str()) == 0)
-			{
-				return TAssetHandle<T>(KVP.first);
-			}
-		}
-
-		FAssetMetadata Metadata;
-		TVector<uint8> Buffer;
-		FMemoryReader Reader(Buffer);
-		Reader << Metadata;
-		
-		if (FFileHelper::LoadFileToArray(Buffer, InPath))
-		{
-			LOG_ERROR("Failed to load file for asset: {0}", InPath.string());
-			return;
-		}
-		
-		Get()->SetMetadata(Metadata.Guid, Metadata);
-		return TAssetHandle<T>(Metadata.Guid);
-	}
 }

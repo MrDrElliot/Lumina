@@ -3,17 +3,16 @@
 #include "imgui.h"
 #include <Plugins/ImFileBrowser.h>
 #include "ContentBrowserItem.h"
-#include "ContentBrowserWindow.h"
 #include "Assets/AssetHandle.h"
 #include "Renderer/Image.h"
 #include "Panels/ImGuiWindow.h"
 
 
-
 namespace Lumina
 {
     class ContentBrowserItem;
-    class LTexture;
+    class ATexture;
+    
     class ContentBrowserWindow : public EditorImGuiWindow
     {
     public:
@@ -32,7 +31,7 @@ namespace Lumina
         void OnUpdate(double DeltaTime) override;
         void OnEvent(FEvent& InEvent) override;
 
-        void OnNewDirectorySelected(const std::filesystem::path& InPath);
+        void RefreshItems(const std::filesystem::path& InPath = std::filesystem::path());
         void RenderContentItems();
 
     

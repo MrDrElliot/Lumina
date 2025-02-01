@@ -1,9 +1,7 @@
 
 
 #include "Scene.h"
-#include "Renderer/Material.h"
 #include "SceneRenderer.h"
-#include "Assets/AssetRegistry/AssetRegistry.h"
 #include "Components/NameComponent.h"
 #include "Components/GuidComponent.h"
 #include "Entity/Entity.h"
@@ -11,39 +9,39 @@
 
 namespace Lumina
 {
-    LScene::LScene(TSharedPtr<FCamera> Camera): LAsset(FAssetMetadata())
+    AScene::AScene(TSharedPtr<FCamera> Camera)
     {
         CurrentCamera = Camera;
         SceneRenderer = FSceneRenderer::Create(this);
     }
 
-    LScene::~LScene()
+    AScene::~AScene()
     {
         SceneRenderer->Shutdown();
     }
 
-    TSharedPtr<LScene> LScene::Create(TSharedPtr<FCamera> Camera)
+    TSharedPtr<AScene> AScene::Create(TSharedPtr<FCamera> Camera)
     {
-        return MakeSharedPtr<LScene>(Camera);
+        return MakeSharedPtr<AScene>(Camera);
     }
 
-    void LScene::BeginScene()
+    void AScene::BeginScene()
     {
         SceneRenderer->BeginScene(CurrentCamera);
     }
 
-    void LScene::OnUpdate(double DeltaTime)
+    void AScene::OnUpdate(double DeltaTime)
     {
         BeginScene();
         EndScene();
     }
 
-    void LScene::EndScene()
+    void AScene::EndScene()
     {
         SceneRenderer->EndScene();
     }
     
-    Entity LScene::CreateEntity(const FTransform& Transform, const FString& Name)
+    Entity AScene::CreateEntity(const FTransform& Transform, const FString& Name)
     {
         FString uniqueName = Name;
         int counter = 1;
@@ -86,12 +84,12 @@ namespace Lumina
     }
 
     
-    void LScene::DestroyEntity(Entity Entity)
+    void AScene::DestroyEntity(Entity Entity)
     {
         mEntityRegistery.destroy(Entity);
     }
 
-    Entity LScene::GetEntityByGUID(const FGuid& Guid, bool* bFound)
+    Entity AScene::GetEntityByGUID(const FGuid& Guid, bool* bFound)
     {
         auto View = mEntityRegistery.view<FGUIDComponent>();
 

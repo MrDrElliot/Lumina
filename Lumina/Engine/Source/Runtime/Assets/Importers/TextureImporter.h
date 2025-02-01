@@ -13,7 +13,7 @@ namespace Lumina
     {
     public:
 
-        bool Import(FArchive& Ar, void* ImportData, const std::filesystem::path& AssetPath) override
+        bool Import(FArchive& Ar, void* ImportData, const FString& AssetPath) override
         {
             PROFILE_SCOPE_LOG(TextureImporter::Import)
 
@@ -26,7 +26,7 @@ namespace Lumina
             stbi_set_flip_vertically_on_load(true);
 
             int x, y, c;
-            stbi_uc* data = stbi_load(AssetPath.string().c_str(), &x, &y, &c, STBI_rgb_alpha);
+            stbi_uc* data = stbi_load(AssetPath.c_str(), &x, &y, &c, STBI_rgb_alpha);
             AssertMsg(data, "Failed to import texture!");
 
             ImageSpec->Extent.x = x;

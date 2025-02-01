@@ -1,81 +1,272 @@
-#include "AssetManager.h"
 
+#include "AssetManager.h"
+#include "Assets/AssetRecord.h"
 #include "Assets/AssetRegistry/AssetRegistry.h"
-#include "Assets/Factories/FactoryRegistry.h"
-#include "Assets/Factories/MeshFactory/StaticMeshFactory.h"
-#include "Assets/Factories/TextureFactory/TextureFactory.h"
+#include "Platform/Filesystem/FileHelper.h"
 
 namespace Lumina
 {
-    AssetManager::AssetManager()
+    FAssetManager::FAssetManager()
+    {
+        
+    }
+
+    FAssetManager::~FAssetManager()
     {
     }
 
-    AssetManager::~AssetManager()
+    void FAssetManager::Initialize()
     {
+        AssetRequestThread = std::thread(&FAssetManager::ProcessAssetRequests, this);
     }
 
-    TSharedPtr<LAsset> AssetManager::LoadSynchronous(const FAssetHandle& InHandle)
+    void FAssetManager::Deinitialize()
     {
-        auto it = mAssetMap.find(InHandle);
-        if (it != mAssetMap.end())
+        if (AssetRequestThread.joinable())
         {
-            if (TSharedPtr<LAsset> Asset = it->second.lock())
-            {
-                return Asset;
-            }
+            bAssetThreadRunning.exchange(false);
+            AssetRequestThread.join();
         }
-    
-        AssetRegistry* Registry = AssetRegistry::Get();
-        if (Registry->Exists(InHandle))
+        
+    }
+
+    void FAssetManager::Update(bool bWaitForAsyncTasks)
+    {
+        PROFILE_SCOPE(AssetManager)
+
         {
-            FAssetMetadata Metadata = Registry->GetMetadata(InHandle);
+            FRecursiveScopeLock ScopeLock(RecursiveMutex);
 
-            FFactoryRegistry* factoryRegistry = FFactoryRegistry::Get();
-            FFactory* Factory = factoryRegistry->GetFactory(Metadata.AssetType);
-
-            if (Factory)
+            for (FPendingRequest& PendingRequest : PendingRequests)
             {
-                TVector<uint8> Buffer;
-                if (!FFileHelper::LoadFileToArray(Buffer, Metadata.Path.c_str()) || Buffer.empty()) 
+                FAssetRequest* ActiveRequest = TryFindActiveRequest(PendingRequest.Record);
+
+                if (PendingRequest.Type == FPendingRequest::Type::Load)
                 {
-                    LOG_ERROR("Failed to load asset from path: {0}", Metadata.Path);
-                    return nullptr;
+                    if (ActiveRequest != nullptr)
+                    {
+                        if (ActiveRequest->IsUnloadRequest())
+                        {
+                            // Switch from unload back to load.
+                        }
+                    }
+                    else if (PendingRequest.Record->IsLoaded())
+                    {
+                        // Asset was alraedy loaded (possibily this frame).
+                    }
+                    else
+                    {
+                        FAssetRequest* NewRequest = new FAssetRequest(PendingRequest.RequesterID, FAssetRequest::EType::Load, PendingRequest.Record);
+                        ActiveRequests.emplace_back(NewRequest);
+                    }
                 }
-                
-                
-                FMemoryReader Reader(Buffer);
-                TSharedPtr<LAsset> NewAsset = Factory->CreateNew(Metadata, Reader);
-                if (NewAsset)
+                else /** Unload request */
                 {
-                    mAssetMap[InHandle] = NewAsset;
-                    return NewAsset;
+                    if (ActiveRequest != nullptr)
+                    {
+                        if (ActiveRequest->IsLoadRequest())
+                        {
+                            // Switch from load to unload.
+                        }
+                    }
+                    else if (PendingRequest.Record->IsUnloaded())
+                    {
+                        if (!PendingRequest.Record->HasReferences())
+                        {
+                            auto Iter = AssetRecord.find(PendingRequest.Record->GetAssetGuid());
+                            Assert(Iter != AssetRecord.end());
+                            Assert(Iter->second == PendingRequest.Record);
+
+                            delete PendingRequest.Record;
+                            AssetRecord.erase(Iter);
+                        }
+                    }
+                    else
+                    {
+                        FAssetRequest* UnloadRequest = new FAssetRequest(PendingRequest.RequesterID, FAssetRequest::EType::Unload, PendingRequest.Record);
+                        ActiveRequests.emplace_back(UnloadRequest);
+                    }
                 }
             }
+
+            PendingRequests.clear();
+        }
+
+        
+        {
+            for (FAssetRequest* Request : CompletedRequests)
+            {
+
+                FGuid ID = Request->Get
+
+                
+                if (Request->IsUnloadRequest())
+                {
+                    if (!Request->GetAssetRecord()->HasReferences())
+                    {
+                        auto Itr = AssetRecord.find()
+                    }
+                }
+
+
+                delete Request;
+            }
+
+            CompletedRequests.clear();
+        }
+    }
+
+    void FAssetManager::LoadAsset(FAssetHandle& InHandle, const FAssetRequester& Requester)
+    {
+        FRecursiveScopeLock ScopeLock(RecursiveMutex);
+
+        FAssetRecord* Record = FindOrCreateAssetRecord(InHandle.GetAssetGuid());
+        InHandle.SetRecord(Record);
+
+        if (!Record->HasReferences())
+        {
+            AddPendingRequest(FPendingRequest(FPendingRequest::Type::Load, Record, Requester));
+        }
+
+        Record->AddReference(Requester);
+    }
+
+    void FAssetManager::UnloadAsset(FAssetHandle& InHandle, const FAssetRequester& Requester)
+    {
+        FRecursiveScopeLock ScopeLock(RecursiveMutex);
+
+        FAssetRecord* Record = FindAssetRecordChecked(InHandle.GetAssetGuid());
+        Record->RemoveReference(Requester);
+
+        if (!Record->HasReferences())
+        {
+            AddPendingRequest(FPendingRequest(FPendingRequest::Type::Unload, Record, Requester));
+        }
+    }
+
+    ELoadResult FAssetManager::LoadFromDisk(const FAssetHandle& InAssetHandle, const FAssetPath& InPath, FAssetRecord* InRecord)
+    {
+        TVector<uint8> Buffer;
+        if (!FFileHelper::LoadFileToArray(Buffer, InPath.GetPathAsString()))
+        {
+            LOG_ERROR("Failed to read asset file: {0}", InPath.GetPathAsString().c_str());
+            return ELoadResult::Failed;
+        }
+
+        FMemoryReader Reader(Buffer);
+
+        FAssetHeader Header;
+        Reader << Header;
+
+        InRecord->Dependencies.reserve(Header.Dependencies.size());
+        for (const FGuid& Dependency : Header.Dependencies)
+        {
+            InRecord->AddDependency(Dependency);
+        }
+
+        FFactory* Factory = FactoryRegistry.GetFactory(Header.Type);
+        if (Factory != nullptr)
+        {
+            return Factory->CreateNew(InAssetHandle, InPath, InRecord, Reader);
+        }
+
+        return ELoadResult::Failed;
+    }
+
+    FAssetRecord* FAssetManager::FindOrCreateAssetRecord(const FGuid& InGuid)
+    {
+        FAssetRecord* Record = nullptr;
+        auto It = AssetRecord.find(InGuid);
+        if (It == AssetRecord.end())
+        {
+            Record = new FAssetRecord(InGuid);
+            AssetRecord[InGuid] = Record;
+        }
+        else
+        {
+            Record = It->second;
+        }
+
+        return Record;
+    }
+
+    FAssetRecord* FAssetManager::FindAssetRecordChecked(const FGuid& InGuid)
+    {
+        Assert(InGuid.IsValid());
+        FRecursiveScopeLock ScopeLock(RecursiveMutex);
+
+        auto const Iter = AssetRecord.find(InGuid);
+        Assert(Iter != AssetRecord.end());
+        
+        return Iter->second;
+    }
+    
+    void FAssetManager::AddPendingRequest(FPendingRequest&& NewRequest)
+    {
+        FRecursiveScopeLock ScopeLock(RecursiveMutex);
+
+        auto Predicate = [] (const FPendingRequest& Request, const FGuid& Guid) { return Request.Record->GetAssetGuid() == Guid; };
+        const int32 Index = VectorFindIndex(PendingRequests, NewRequest.Record->GetAssetGuid(), Predicate);
+
+        if (Index == -1)
+        {
+            PendingRequests.emplace_back(eastl::move(NewRequest));
+        }
+        else
+        {
+            PendingRequests[Index] = eastl::move(NewRequest);
+        }
+    }
+
+    FAssetRequest* FAssetManager::TryFindActiveRequest(const FAssetRecord* InRecord) const
+    {
+        FRecursiveScopeLock Lock(RecursiveMutex);
+
+        auto Predicate = [] (const FAssetRequest* Request, const FAssetRecord* Record) { return Request->GetAssetRecord() == Record; };
+        const int32 Index = VectorFindIndex(ActiveRequests, InRecord, Predicate);
+
+        if (Index != -1)
+        {
+            return ActiveRequests[Index];
         }
 
         return nullptr;
     }
-
-
-    void AssetManager::GetAliveAssets(TVector<TSharedPtr<LAsset>>& OutAliveAssets)
+    
+    void FAssetManager::ProcessAssetRequests()
     {
-        TVector<FAssetHandle> DeadAssets;
-        for (auto& KVP : mAssetMap)
+        while (bAssetThreadRunning)
         {
-            if(KVP.second.lock())
-            {
-                OutAliveAssets.push_back(KVP.second.lock());
-            }
-            else
-            {
-                DeadAssets.push_back(KVP.first);
-            }
-        }
+            PROFILE_SCOPE(ProcessAssetRequests)
+            
+            FRecursiveScopeLock Lock(RecursiveMutex);
 
-        for(auto& dead : DeadAssets)
-        {
-            mAssetMap.erase(dead);
+            for (int i = ActiveRequests.size() - 1; i >= 0; --i)
+            {
+                FAssetRequest::FAssetRequestContext Context;
+                Context.LoadAssetCallback = [this] (FAssetHandle& InHandle, const FAssetRequester& Requester) { LoadAsset(InHandle, Requester); };
+                
+                bool bCompleted = false;
+
+                FAssetRequest* Request = ActiveRequests[i];
+
+                if (Request->IsActive())
+                {
+                    bCompleted = Request->Update(Context);
+                }
+                else
+                {
+                    bCompleted = true;
+                }
+
+                if (bCompleted)
+                {
+                    CompletedRequests.emplace_back(Request);
+                    ActiveRequests.erase_unsorted(ActiveRequests.begin() + i);
+                }
+            }
+            
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
     }
 }

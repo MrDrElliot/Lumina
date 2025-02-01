@@ -4,36 +4,31 @@
 #include "Renderer/RenderTypes.h"
 
 
-namespace Lumina
-{
-    class LTexture;
-}
+
 
 namespace Lumina
 {
-    class LMaterialInstance : public LAsset
+    class ATexture;
+
+    class AMaterialInstance : public IAsset
     {
     public:
 
-        LMaterialInstance()
-        {
-            Attributes = {};
-        }
-
+        DECLARE_ASSET("Material Instance", MaterialInstance, 1)
+        
         FMaterialAttributes& GetMaterialAttributes() { return Attributes; }
         void Serialize(FArchive& Ar) override;
 
-        TAssetHandle<LTexture> Albedo;
-        TAssetHandle<LTexture> Normal;
-        TAssetHandle<LTexture> Roughness;
-        TAssetHandle<LTexture> Emissive;
-        TAssetHandle<LTexture> AmbientOcclusion;
+        TAssetHandle<ATexture> Albedo;
+        TAssetHandle<ATexture> Normal;
+        TAssetHandle<ATexture> Roughness;
+        TAssetHandle<ATexture> Emissive;
+        TAssetHandle<ATexture> AmbientOcclusion;
 
         FMaterialTexturesData MaterialTextureIDs;
 
     
     private:
-
         
         FMaterialAttributes Attributes;
     };

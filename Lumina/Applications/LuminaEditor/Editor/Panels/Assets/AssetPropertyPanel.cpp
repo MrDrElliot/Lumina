@@ -5,10 +5,10 @@
 
 namespace Lumina
 {
-    bool FAssetPropertyPanel::Render(EAssetType Type, FAssetMetadata& Selected)
+    bool FAssetPropertyPanel::Render(EAssetType Type, FAssetHeader& Selected)
     {
         AssetRegistry* Registry = AssetRegistry::Get();
-        TVector<FAssetMetadata> Assets;
+        TVector<FAssetHeader> Assets;
 
         // Fetch all assets of the specified type
         Registry->GetAllAssetsOfType(Type, Assets);
@@ -19,7 +19,7 @@ namespace Lumina
             // Make the list scrollable
             ImGui::BeginChild("AssetList", ImVec2(300, 400), true);
 
-            for (FAssetMetadata& Meta : Assets)
+            for (FAssetHeader& Meta : Assets)
             {
                 // Begin a new item row
                 ImGui::PushID(Meta.Name.c_str()); // Make sure each row has a unique ID

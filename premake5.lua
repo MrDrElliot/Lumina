@@ -10,8 +10,6 @@ workspace "Lumina"
 
 	flags  { "MultiProcessorCompile" }
 	
-
-
 	defines
 	{
 		"_CRT_SECURE_NO_WARNINGS",
@@ -40,7 +38,8 @@ workspace "Lumina"
             "/EHsc",
             "/Zc:preprocessor",
             "/Zc:__cplusplus",
-            "/W2"
+            "/W2",
+            "/MP",
         }
 
 	group "Dependencies"

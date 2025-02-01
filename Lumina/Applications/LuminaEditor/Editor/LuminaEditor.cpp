@@ -43,7 +43,7 @@ namespace Lumina
         
         
         EditorCamera = FCamera::Create();
-        SetCurrentScene(LScene::Create(EditorCamera));
+        SetCurrentScene(AScene::Create(EditorCamera));
         
         EditorLayer = MakeRefPtr<FEditorLayer>("Editor Layer");
         PushLayer(EditorLayer);

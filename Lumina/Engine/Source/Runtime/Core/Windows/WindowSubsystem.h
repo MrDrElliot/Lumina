@@ -12,7 +12,7 @@ namespace Lumina
     public:
 
         void Initialize() override;
-        void Update(double DeltaTime) override;
+        void Update(double DeltaTime);
         void Deinitialize() override;
 
         void InitializeWindow(const FWindowSpecs& Specs);

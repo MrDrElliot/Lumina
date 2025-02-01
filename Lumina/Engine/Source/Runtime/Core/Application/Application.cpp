@@ -66,8 +66,8 @@ namespace Lumina
                 {
                     CurrentScene->OnUpdate(Stats.DeltaTime);
                 }
-                
-                ApplicationSubsystems.Update(Stats.DeltaTime);
+
+                ApplicationSubsystems.GetSubsystem<WindowSubsystem>()->Update(Stats.DeltaTime);
                 
                 OnUpdate();
                 
@@ -84,40 +84,7 @@ namespace Lumina
     
     void FApplication::InternalInit()
     {
-        OnInit();
-    }
 
-    void FApplication::InternalShutdown()
-    {
-        OnShutdown();
-
-        LOG_TRACE("{0} Shutting Down..", AppSpecs.Name);
-
-        bRunning = false;
-
-        LayerStack.DetachAllLayers();
-
-        ApplicationSubsystems.DeinitializeAll();
-
-        if (CurrentScene)
-        {
-            CurrentScene = nullptr;
-        }
-
-        if (AppSpecs.bRenderImGui)
-        {
-            FImGuiRenderer::Shutdown();
-        }
-        
-        FRenderer::Shutdown();
-        AssetManager::Get()->Shutdown();
-        
-        glfwTerminate();
-        
-    }
-
-    void FApplication::OnInit()
-    {
         LOG_TRACE("Initializing Application: {0}", AppSpecs.Name);
         
         WindowSubsystem* WinSubsystem = ApplicationSubsystems.AddSubsystem<WindowSubsystem>();
@@ -135,12 +102,49 @@ namespace Lumina
         FRenderer::Init(Config);
         
         ApplicationSubsystems.AddSubsystem<InputSubsystem>();
+        ApplicationSubsystems.AddSubsystem<FAssetManager>();
+
 
         if (AppSpecs.bRenderImGui)
         {
             FImGuiRenderer::Init();
         }
+        
+        OnInit();
+    }
 
+    void FApplication::InternalShutdown()
+    {
+        OnShutdown();
+
+        LOG_TRACE("{0} Shutting Down..", AppSpecs.Name);
+
+        bRunning = false;
+
+        LayerStack.DetachAllLayers();
+
+        GetSubsystem<WindowSubsystem>()->Deinitialize();
+        GetSubsystem<InputSubsystem>()->Deinitialize();
+        GetSubsystem<FAssetManager>()->Deinitialize();
+
+        if (CurrentScene)
+        {
+            CurrentScene = nullptr;
+        }
+
+        if (AppSpecs.bRenderImGui)
+        {
+            FImGuiRenderer::Shutdown();
+        }
+        
+        FRenderer::Shutdown();
+        
+        glfwTerminate();
+        
+    }
+
+    void FApplication::OnInit()
+    {
     }
 
     void FApplication::OnUpdate()
@@ -230,7 +234,7 @@ namespace Lumina
         return *Get().GetSubsystem<WindowSubsystem>()->GetWindow();
     }
 
-    void FApplication::SetCurrentScene(TSharedPtr<LScene> InScene)
+    void FApplication::SetCurrentScene(TSharedPtr<AScene> InScene)
     {
         CurrentScene = InScene;
     }

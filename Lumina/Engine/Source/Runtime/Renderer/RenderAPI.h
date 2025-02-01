@@ -9,11 +9,10 @@
 
 namespace Lumina
 {
-    class FMaterial;
-    class LMaterial;
     enum class EShaderStage : uint8;
+    class FMaterial;
     class Material;
-    class LStaticMesh;
+    class AStaticMesh;
     class FSwapchain;
     class FDescriptorSet;
     class FBuffer;
@@ -59,8 +58,8 @@ namespace Lumina
         virtual void RenderMeshTasks(TRefPtr<FPipeline> Pipeline, const glm::uvec3 Dimensions, FMiscData Data) = 0;
         virtual void RenderMeshIndexed(TRefPtr<FPipeline> Pipeline, TRefPtr<FBuffer> VertexBuffer, TRefPtr<FBuffer> IndexBuffer, FMiscData Data) = 0;
         virtual void RenderVertices(uint32 Vertices, uint32 Instances = 1, uint32 FirstVertex = 0, uint32 FirstInstance = 0) = 0;
-        virtual void RenderStaticMeshWithMaterial(const TRefPtr<FPipeline>& Pipeline, const TSharedPtr<LStaticMesh>& StaticMesh, const TRefPtr<FMaterial>& Material) = 0;
-        virtual void RenderStaticMesh(const TRefPtr<FPipeline>& Pipeline, TSharedPtr<LStaticMesh> StaticMesh, uint32 InstanceCount) = 0;
+        virtual void RenderStaticMeshWithMaterial(const TRefPtr<FPipeline>& Pipeline, const TSharedPtr<AStaticMesh>& StaticMesh, const TRefPtr<FMaterial>& Material) = 0;
+        virtual void RenderStaticMesh(const TRefPtr<FPipeline>& Pipeline, TSharedPtr<AStaticMesh> StaticMesh, uint32 InstanceCount) = 0;
 
         virtual TRefPtr<FCommandBuffer> GetCommandBuffer() = 0;
         virtual void BeginCommandRecord() = 0;

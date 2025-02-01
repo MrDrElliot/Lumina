@@ -1,6 +1,7 @@
 #pragma once
+
 #include "EASTL/internal/function.h"
-#include "glm/glm/gtx/functions.hpp"
+#include <functional>
 
 
 namespace Lumina

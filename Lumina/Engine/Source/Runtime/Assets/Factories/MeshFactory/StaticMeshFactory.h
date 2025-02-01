@@ -11,7 +11,7 @@
 namespace Lumina
 {
 
-    class LStaticMesh;
+    class AStaticMesh;
     struct FMeshSurface
     {
         uint32 StartIndex;
@@ -22,9 +22,9 @@ namespace Lumina
     {
     public:
 
-        TSharedPtr<LAsset> CreateNew(const FAssetMetadata& Metadata, FArchive& Archive) override;
+        ELoadResult CreateNew(const FAssetHandle& InHandle, const FAssetPath& InPath, FAssetRecord* InRecord, FArchive& Archive) override;
 
-        static TVector<TSharedPtr<LStaticMesh>> Import(std::filesystem::path InPath);
+        static TVector<TSharedPtr<AStaticMesh>> Import(std::filesystem::path InPath);
 
         static void ExtractAsset(fastgltf::Asset* OutAsset, std::filesystem::path InPath);
 

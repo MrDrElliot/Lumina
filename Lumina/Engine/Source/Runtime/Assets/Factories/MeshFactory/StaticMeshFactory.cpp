@@ -3,6 +3,8 @@
 #include <random>
 #include <fastgltf/core.hpp>
 #include <fastgltf/tools.hpp>
+
+#include "Assets/AssetRecord.h"
 #include "Log/Log.h"
 #include "Renderer/RenderTypes.h"
 #include "Assets/AssetTypes/StaticMesh/StaticMesh.h"
@@ -11,20 +13,21 @@
 
 namespace Lumina
 {
-    TSharedPtr<LAsset> FStaticMeshFactory::CreateNew(const FAssetMetadata& Metadata, FArchive& Archive)
+
+    ELoadResult FStaticMeshFactory::CreateNew(const FAssetHandle& InHandle, const FAssetPath& InPath, FAssetRecord* InRecord, FArchive& Archive)
     {
-        auto NewMesh = MakeSharedPtr<LStaticMesh>();
+        auto NewMesh = MakeSharedPtr<AStaticMesh>();
         NewMesh->Serialize(Archive);
         NewMesh->CreateNew();
-
-        return NewMesh;
+        
+        return ELoadResult::Succeeded;
     }
 
-    TVector<TSharedPtr<LStaticMesh>> FStaticMeshFactory::Import(std::filesystem::path InPath)
+    TVector<TSharedPtr<AStaticMesh>> FStaticMeshFactory::Import(std::filesystem::path InPath)
     {
         fastgltf::Asset Asset;
 
-        TVector<TSharedPtr<LStaticMesh>> ReturnMeshes;
+        TVector<TSharedPtr<AStaticMesh>> ReturnMeshes;
         
         ExtractAsset(&Asset, InPath);
         
@@ -111,7 +114,7 @@ namespace Lumina
                 }
             }
             
-            ReturnMeshes.push_back(LStaticMesh::CreateMesh(FAssetMetadata(), std::move(NewAsset)));
+            ReturnMeshes.push_back(AStaticMesh::CreateMesh(std::move(NewAsset)));
         }
 
         return ReturnMeshes;

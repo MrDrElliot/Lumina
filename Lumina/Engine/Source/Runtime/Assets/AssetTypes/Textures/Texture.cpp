@@ -2,28 +2,18 @@
 
 namespace Lumina
 {
-    LTexture::LTexture()
+    void ATexture::Serialize(FArchive& Ar)
     {
-    }
-
-    LTexture::~LTexture()
-    {
-        Image = nullptr;
-    }
-
-    void LTexture::Serialize(FArchive& Ar)
-    {
-        LAsset::Serialize(Ar);
         Ar << ImageSpec;
     }
 
-    void LTexture::CreateImage()
+    void ATexture::CreateImage()
     {
         Image = FImage::Create(ImageSpec);
-        Image->SetFriendlyName("Image: " + GetAssetMetadata().Name);
+        Image->SetFriendlyName("Image: ");
     }
 
-    void LTexture::SetImage(const TRefPtr<FImage>& InImage, const FImageSpecification& Spec)
+    void ATexture::SetImage(const TRefPtr<FImage>& InImage, const FImageSpecification& Spec)
     {
         ImageSpec = Spec;
         Image = InImage;

@@ -5,12 +5,12 @@
 
 namespace Lumina
 {
-    class LScene;
+    class AScene;
     class ViewportLayer : public EditorImGuiWindow
     {
     public:
     
-        ViewportLayer(const eastl::weak_ptr<LScene>& InScene)
+        ViewportLayer(const eastl::weak_ptr<AScene>& InScene)
         {
             Scene = InScene;
             Name = "Viewport";
@@ -25,7 +25,7 @@ namespace Lumina
     private:
 
         ImVec2 Region;
-        eastl::weak_ptr<LScene> Scene;
+        eastl::weak_ptr<AScene> Scene;
     
     };
 }

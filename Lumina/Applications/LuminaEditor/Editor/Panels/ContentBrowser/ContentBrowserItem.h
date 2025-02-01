@@ -24,6 +24,10 @@ namespace Lumina
     private:
         
         bool bFolder = false;
+        bool bWantsToRename = false;
+        bool bIsRenaming = false;
+        char buffer[256] = {0};
+        
         FAssetMetadata AssetMetadata;
         std::filesystem::path Path;
     };

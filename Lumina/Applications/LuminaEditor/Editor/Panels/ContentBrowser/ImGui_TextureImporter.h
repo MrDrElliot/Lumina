@@ -26,7 +26,7 @@ namespace Lumina
     
             // Image Format (editable)
             const char* formats[] = {"RGBA32_UNORM", "RGBA16_UNORM", "RGBA32_FLOAT", "RGBA16_FLOAT", "R8_UNORM"};
-            const char* currentFormat = "RGBA32_UNORM"; // Default format
+            const char* currentFormat = "RGBA32_UNORM";
             for (int i = 0; i < IM_ARRAYSIZE(formats); i++)
             {
                 if (ImageSpecs.Format == static_cast<EImageFormat>(i))
@@ -50,22 +50,19 @@ namespace Lumina
                 ImGui::EndCombo();
             }
     
-            // Filter Mode (not editable directly here, but could affect mipmaps or quality)
             static int filterMode = 0;
             ImGui::Text("Filter Mode:");
             ImGui::RadioButton("Nearest", &filterMode, 0);
             ImGui::RadioButton("Linear", &filterMode, 1);
     
-            // Wrap Mode (again, affects texture usage and can be part of the import options)
             static int wrapMode = 0;
             ImGui::Text("Wrap Mode:");
             ImGui::RadioButton("Repeat", &wrapMode, 0);
             ImGui::RadioButton("Clamp to Edge", &wrapMode, 1);
     
-            // Sample Count (we assume a fixed sample count for simplicity)
-            static int sampleCount = 1; // Just an example for single sample, this could be 1, 4, 16, etc.
+            static int sampleCount = 1;
             ImGui::InputInt("Sample Count", &sampleCount);
-            ImageSpecs.SampleCount = EImageSampleCount::ONE; //:static_cast<EImageSampleCount>(sampleCount);
+            ImageSpecs.SampleCount = EImageSampleCount::ONE;
     
             // Separator before Import/Cancel buttons
             ImGui::Separator();
@@ -77,7 +74,7 @@ namespace Lumina
                 LOG_TRACE("Importing asset with selected options.");
                 ImageSpecs.DebugName = Name;
                 ImageSpecs.Format = EImageFormat::RGBA32_UNORM;
-                AssetRegistry::ImportAsset(Name, &ImageSpecs, ContentBrowser->SelectedFile, ContentBrowser->SelectedDirectory);
+                AssetRegistry::Get()->ImportAsset(Name, &ImageSpecs, ContentBrowser->SelectedFile, ContentBrowser->SelectedDirectory);
                 ImGui::CloseCurrentPopup();
                 ContentBrowser->SelectedFile.clear();
             }

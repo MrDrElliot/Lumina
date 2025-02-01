@@ -1,18 +1,21 @@
 #pragma once
 
-
 #include <iostream>
 #include <cstdlib>
 #include <fstream>
-
 #include "Log/Log.h"
 
-#if LE_PLATFORM_WINDOWS
+#ifdef _MSC_VER
+#include <intrin.h>    // for __debugbreak
+#endif
+#include <csignal> // for raise(SIGTRAP)
+
+#ifdef LE_PLATFORM_WINDOWS
 #include <windows.h>
 #include <dbghelp.h>
 #endif
 
-inline void PrintCallStack()   
+inline void PrintCallStack()
 {
 #if LE_PLATFORM_WINDOWS
     void* stack[100];
@@ -20,6 +23,7 @@ inline void PrintCallStack()
     SYMBOL_INFO* symbol;
     HANDLE process = GetCurrentProcess();
 
+    // Initialize symbols for stack trace
     SymInitialize(process, NULL, TRUE);
     frames = CaptureStackBackTrace(0, 100, stack, NULL);
     symbol = (SYMBOL_INFO*)malloc(sizeof(SYMBOL_INFO) + 256 * sizeof(char));
@@ -30,7 +34,7 @@ inline void PrintCallStack()
     for (unsigned short i = 0; i < frames; ++i)
     {
         SymFromAddr(process, (DWORD64)(stack[i]), 0, symbol);
-        if(Lumina::FLog::IsInitialized())
+        if (Lumina::FLog::IsInitialized())
         {
             LOG_ERROR("{0}: {1} - {2}", i, symbol->Name, symbol->Address);
         }
@@ -41,51 +45,55 @@ inline void PrintCallStack()
     }
     LOG_ERROR("=---------------------End of CallStack---------------------=");
 
-
     free(symbol);
 #endif
 }
 
 #if LE_PLATFORM_WINDOWS
-
 inline LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS* exceptionInfo)
 {
     std::ofstream logFile("Logs/crash_log.txt", std::ios::app);
     logFile << "Unhandled Exception Occurred!" << std::endl;
     PrintCallStack();
     logFile.close();
-    
+
     return EXCEPTION_EXECUTE_HANDLER;
 }
 #endif
 
+// Macro for assertion, triggering a breakpoint if the condition fails
 #define Assert(condition)                               \
     do {                                               \
         if (!(condition)) {                            \
             LOG_CRITICAL("Assertion failed: {0} in {1} at line {2}", \
-                #condition, __FILE__, __LINE__);     \
-            PrintCallStack(),                        \
-            std::abort();                             \
+                #condition, __FILE__, __LINE__);       \
+            PrintCallStack();                          \
+            /* Platform-specific debugging */           \
+                __debugbreak();                        \
+            std::abort();                               \
         }                                              \
     } while (false)
 
+// Macro for assertion with a custom message
 #define AssertMsg(condition, msg)                      \
     do {                                               \
         if (!(condition)) {                            \
             LOG_ERROR("Assertion failed: {0} ({1}) in {2} at line {3}", \
-                msg, #condition, __FILE__, __LINE__);            \
-            PrintCallStack(),                          \
-            std::abort();                             \
+                msg, #condition, __FILE__, __LINE__);   \
+            PrintCallStack();                          \
+            /* Platform-specific debugging */           \
+                __debugbreak();                        \
+            std::abort();                               \
         }                                              \
     } while (false)
 
-
+// Ensure macro (will log and sleep for a while on failure)
 #define ensureMsg(condition, msg)                      \
-do {                                               \
-    if (!(condition)) {                            \
+do {                                                   \
+    if (!(condition)) {                                \
         LOG_ERROR("Ensure failed: {0} ({1}) in {2} at line {3}", \
-        msg, #condition, __FILE__, __LINE__);            \
-        PrintCallStack();  \
+        msg, #condition, __FILE__, __LINE__);           \
+        PrintCallStack();                               \
         std::this_thread::sleep_for(std::chrono::milliseconds(100)); \
-    }                                              \
+    }                                                  \
 } while (false)

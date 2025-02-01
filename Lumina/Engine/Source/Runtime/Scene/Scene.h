@@ -5,6 +5,7 @@
 #include "Assets/Asset.h"
 #include "EASTL/shared_ptr.h"
 #include "EASTL/unordered_map.h"
+#include "GUID/GUID.h"
 #include "Memory/SmartPtr.h"
 
 
@@ -14,7 +15,7 @@ namespace Lumina
     class FTransform;
     class Entity;
     class Material;
-    class LStaticMesh;
+    class AStaticMesh;
     class FSceneRenderer;
 
     struct FSceneSettings
@@ -30,16 +31,21 @@ namespace Lumina
     };
     
     
-    class LScene : public LAsset
+    class AScene : public IAsset
     {
     public:
 
         using EntityRegistry = entt::registry;
-        
-        LScene(TSharedPtr<FCamera> Camera);
-        ~LScene();
 
-        static TSharedPtr<LScene> Create(TSharedPtr<FCamera> Camera);
+        AScene() = default;
+        AScene(TSharedPtr<FCamera> Camera);
+        ~AScene();
+
+        DECLARE_ASSET("Scene", Scene, 1);
+
+        void Serialize(FArchive& Ar) override {}
+        
+        static TSharedPtr<AScene> Create(TSharedPtr<FCamera> Camera);
 
         void BeginScene();
         void OnUpdate(double DeltaTime);

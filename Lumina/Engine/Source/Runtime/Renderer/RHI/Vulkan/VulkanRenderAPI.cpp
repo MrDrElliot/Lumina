@@ -403,7 +403,7 @@ namespace Lumina
     	});
     }
 
-	void FVulkanRenderAPI::RenderStaticMeshWithMaterial(const TRefPtr<FPipeline>& Pipeline, const TSharedPtr<LStaticMesh>& StaticMesh, const TRefPtr<FMaterial>& Material)
+	void FVulkanRenderAPI::RenderStaticMeshWithMaterial(const TRefPtr<FPipeline>& Pipeline, const TSharedPtr<AStaticMesh>& StaticMesh, const TRefPtr<FMaterial>& Material)
     {
 		FRenderer::Submit([this, Pipeline, StaticMesh]
 		{
@@ -422,7 +422,7 @@ namespace Lumina
 		});
       }
 
-    void FVulkanRenderAPI::RenderStaticMesh(const TRefPtr<FPipeline>& Pipeline, TSharedPtr<LStaticMesh> StaticMesh, uint32 InstanceCount)
+    void FVulkanRenderAPI::RenderStaticMesh(const TRefPtr<FPipeline>& Pipeline, TSharedPtr<AStaticMesh> StaticMesh, uint32 InstanceCount)
     {
     	if(StaticMesh == nullptr)
     	{

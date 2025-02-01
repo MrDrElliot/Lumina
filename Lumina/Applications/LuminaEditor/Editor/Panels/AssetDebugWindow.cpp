@@ -19,22 +19,21 @@ namespace Lumina
         ImGui::Begin("Asset Debug");
 
         // Retrieve the list of alive assets from the Asset Manager
-        TVector<TSharedPtr<LAsset>> AliveAssets;
-        AssetManager::Get()->GetAliveAssets(AliveAssets);
+        TVector<TSharedPtr<IAsset>> TrackedAssets;
+        FApplication::GetSubsystem<FAssetManager>()->GetTrackedAssets(TrackedAssets);
 
         ImGui::PushStyleColor(0, {0.65f, 0.15f, 0.15f, 1.0});
         ImGui::SeparatorText("Asset Manager");
         ImGui::PopStyleColor();
-        for (auto& alive : AliveAssets)
+        for (auto& Asset : TrackedAssets)
         {
             // If asset is valid, display asset info
-            if (alive)
+            if (Asset != nullptr)
             {
-                ImGui::Text("Asset Name: %s", alive->GetAssetMetadata().Name.c_str());
-                ImGui::Text("Asset GUID: %llu", alive->GetAssetMetadata().Guid.Get());
-                ImGui::Text("Asset Type: %s", AssetTypeToString(alive->GetAssetType()).c_str());
+                ImGui::Text("Asset Name: %s", Asset->GetAssetMetadata().Name.c_str());
+                ImGui::Text("Asset Ref Count: %i", Asset.use_count());
             
-                ImGui::Separator(); // Separate the assets visually
+                ImGui::Separator();
             }
         }
 
@@ -42,15 +41,12 @@ namespace Lumina
         ImGui::SeparatorText("Asset Registry");
         ImGui::PopStyleColor();
     
-        TVector<FAssetMetadata> RegisteredAssets;
+        TVector<FAssetHeader> RegisteredAssets;
         AssetRegistry::Get()->GetAllRegisteredAssets(RegisteredAssets);
         for (auto& alive : RegisteredAssets)
         {
             ImGui::Text("Asset Name: %s", alive.Name.c_str());
-            ImGui::Text("Asset GUID: %llu", alive.Guid.Get());
-            ImGui::Text("Asset Type: %s", AssetTypeToString(alive.AssetType).c_str());
-        
-            ImGui::Separator(); // Separate the assets visually
+            ImGui::Separator();
         }
 
         ImGui::End();

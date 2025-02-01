@@ -9,7 +9,7 @@ namespace Lumina
 	{
 	public:
 		
-		virtual bool Import(FArchive& Ar, void* ImportData, const std::filesystem::path& AssetPath) = 0;
+		virtual bool Import(FArchive& Ar, void* ImportData, const FString& AssetPath) = 0;
 	
 	private:
 

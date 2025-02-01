@@ -10,13 +10,13 @@
 
 namespace Lumina
 {
-    class LMaterialInstance;
-    class LScene;
+    class AMaterialInstance;
+    class AScene;
     class Material;
     class FRenderer;
     class FDescriptorSet;
     class FImageSampler;
-    class LStaticMesh;
+    class AStaticMesh;
     class FBuffer;
     class FImage;
     class FCamera;
@@ -69,9 +69,9 @@ namespace Lumina
     public:
         
 
-        static TSharedPtr<FSceneRenderer> Create(LScene* InScene);
+        static TSharedPtr<FSceneRenderer> Create(AScene* InScene);
 
-        FSceneRenderer(LScene* InScene);
+        FSceneRenderer(AScene* InScene);
         ~FSceneRenderer();
 
         void BeginScene(TSharedPtr<FCamera> InCamera);
@@ -133,12 +133,12 @@ namespace Lumina
         TVector<FModelData>                 ModelData;
         TVector<FMaterialTexturesData>      TexturesData;
 
-        TAssetHandle<LMaterialInstance>     MaterialInstance;
+        TAssetHandle<AMaterialInstance>     MaterialInstance;
         
         TSharedPtr<FCamera> Camera;
         TRefPtr<FMaterial> TestMaterial;
         
-        LScene* CurrentScene;
+        AScene* CurrentScene;
         
     };
 }

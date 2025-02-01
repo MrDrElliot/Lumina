@@ -1,17 +1,14 @@
 #pragma once
 
-#include <Core/Serialization/Archiver.h>
 
 namespace Lumina
 {
-	class FComponent
+	class FEntityComponent
 	{
 	public:
 
-		FComponent() =			default;
-		virtual ~FComponent() = default;
-		
-		virtual void Serialize(FArchive& Ar) = 0;
+		FEntityComponent() =			default;
+		virtual ~FEntityComponent() =	default;
 	
 	protected:
 

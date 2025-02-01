@@ -3,13 +3,12 @@
 
 namespace Lumina
 {
-    class FTransformComponent : public FComponent
+    class FTransformComponent : public FEntityComponent
     {
     public:
         // Constructor: Initializes with a default or provided transform
         FTransformComponent(const FTransform& InTransform = FTransform()) : Transform(InTransform) {}
 
-        void Serialize(FArchive& Ar) override {}
     
         // Getter and setter methods for the full transform
         inline FTransform& GetTransform() { return Transform; }
