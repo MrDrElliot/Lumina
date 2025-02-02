@@ -4,20 +4,37 @@
 #include <fastgltf/core.hpp>
 #include <fastgltf/tools.hpp>
 
-#include "Assets/AssetRecord.h"
 #include "Log/Log.h"
 #include "Renderer/RenderTypes.h"
 #include "Assets/AssetTypes/StaticMesh/StaticMesh.h"
-
+#include "Core/Serialization/MemoryArchiver.h"
+#include "Platform/Filesystem/FileHelper.h"
 
 
 namespace Lumina
 {
 
-    ELoadResult FStaticMeshFactory::CreateNew(const FAssetHandle& InHandle, const FAssetPath& InPath, FAssetRecord* InRecord, FArchive& Archive)
+    ELoadResult FStaticMeshFactory::CreateNew(FAssetHandle& InHandle)
     {
         auto NewMesh = MakeSharedPtr<AStaticMesh>();
-        NewMesh->Serialize(Archive);
+
+        TVector<uint8> Buffer;
+        if (!FFileHelper::LoadFileToArray(Buffer, InHandle.AssetPath.GetPathAsString()))
+        {
+            return ELoadResult::Failed;
+        }
+
+        FMemoryReader Reader(Buffer);
+
+        FAssetHeader Header;
+        Reader << Header;
+
+        if (Header.Type != InHandle.AssetType)
+        {
+            return ELoadResult::Failed;
+        }
+        
+        NewMesh->Serialize(Reader);
         NewMesh->CreateNew();
         
         return ELoadResult::Succeeded;

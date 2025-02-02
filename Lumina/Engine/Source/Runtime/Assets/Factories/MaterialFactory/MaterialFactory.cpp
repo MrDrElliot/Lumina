@@ -3,7 +3,7 @@
 namespace Lumina
 {
 
-    ELoadResult FMaterialFactory::CreateNew(const FAssetHandle& InHandle, const FAssetPath& InPath, FAssetRecord* InRecord, FArchive& Archive)
+    ELoadResult FMaterialFactory::CreateNew(FAssetHandle& InHandle)
     {
         Assert(0);
     }

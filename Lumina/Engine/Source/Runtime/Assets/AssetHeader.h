@@ -5,19 +5,19 @@
 #include "Platform/GenericPlatform.h"
 
 
-
 namespace Lumina
 {
+    class FAssetHandle;
     enum class EAssetType : uint8;
 
     struct FAssetHeader
     {
         
-        int32                   Version = -1;
-        FGuid                   Guid;
-        EAssetType              Type;
-        TVector<FGuid>          Dependencies;
-        FAssetPath              Path;
+        int32                       Version = -1;
+        FGuid                       Guid;
+        EAssetType                  Type;
+        TVector<FAssetHandle>       Dependencies;
+        FAssetPath                  Path;
 
         friend FArchive& operator << (FArchive& Ar, FAssetHeader& data)
         {

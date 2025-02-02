@@ -3,18 +3,38 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <ThirdParty/stb_image/stb_image.h>
 
-#include "Assets/AssetRecord.h"
 #include "Assets/AssetTypes/Textures/Texture.h"
 #include "Core/Performance/PerformanceTracker.h"
+#include "Core/Serialization/MemoryArchiver.h"
+#include "Platform/Filesystem/FileHelper.h"
 
 namespace Lumina
 {
     
-    ELoadResult FTextureFactory::CreateNew(const FAssetHandle& InHandle, const FAssetPath& InPath, FAssetRecord* InRecord, FArchive& Archive)
+    ELoadResult FTextureFactory::CreateNew(FAssetHandle& InHandle)
     {
         auto Texture = MakeSharedPtr<ATexture>();
-        Texture->Serialize(Archive);
+
+        TVector<uint8> Buffer;
+        if (!FFileHelper::LoadFileToArray(Buffer, InHandle.AssetPath.GetPathAsString()))
+        {
+            return ELoadResult::Failed;
+        }
+
+        FMemoryReader Reader(Buffer);
+
+        FAssetHeader Header;
+        Reader << Header;
+
+        if (Header.Type != InHandle.AssetType)
+        {
+            return ELoadResult::Failed;
+        }
+        
+        Texture->Serialize(Reader);
         Texture->CreateImage();
+
+        InHandle.AssetPtr = Texture;
         
         return ELoadResult::Succeeded;
     }

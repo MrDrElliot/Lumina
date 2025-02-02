@@ -8,6 +8,9 @@
 #include "EASTL/vector.h"
 #include "EASTL/fixed_vector.h"
 #include "EASTL/array.h"
+#include "EASTL/queue.h"
+#include "EASTL/set.h"
+#include "EASTL/stack.h"
 
 //-------------------------------------------------------------------------
 #define InvalidIndex -1
@@ -25,12 +28,18 @@ namespace Lumina
     template<typename K, typename V> using TUnorderedMap =      eastl::unordered_map<K, V>;
     template<typename K, typename V> using THashMap =           eastl::hash_map<K, V, eastl::hash<K>, eastl::equal_to<K>, eastl::allocator, false>;
     template<typename K, typename V> using TPair =              eastl::pair<K, V>;
+    template<typename T> using TSet =                           eastl::set<T>;
+    
+    template<typename T> using TQueue =                         eastl::queue<T>;
+    template<typename T> using TDeque =                         eastl::deque<T>;
+    template<typename T> using TStack =                         eastl::stack<T>;
+    
 
     using Blob = TVector<uint8>;
 
 
     //-------------------------------------------------------------------------
-    // Serialization of TVector, TInlineVector, and TArray
+    // Serialization of Containers.
     //-------------------------------------------------------------------------
 
     template<typename ValueType>

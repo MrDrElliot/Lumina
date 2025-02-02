@@ -1,74 +1,60 @@
 ﻿#pragma once
 
-#include "Core/Functional/Function.h"
 #include "AssetHandle.h"
-#include "AssetRequester.h"
-#include "Factories/Factory.h"
+#include "EASTL/internal/atomic/atomic.h"
 #include "Platform/GenericPlatform.h"
 
 
 namespace Lumina
 {
-    
-    class FAssetRequest
+    class FFactory;
+}
+
+namespace Lumina
+{
+    class FAssetLoadRequest
     {
     public:
-        
-        enum class EType : uint8
-        {
-            Invalid = 0,
-            Load,
-            Unload,
-        };
 
-        enum class EStage : uint8
+        enum class ELoadStage : uint8
         {
             None = 0,
-            
-            LoadingAsset,
-            LoadingDependencies,
-            
-            UnloadingAsset,
-            
+            LoadResource,
+            WaitForDependencies,
             Complete,
         };
-        
-        struct FAssetRequestContext
+
+        /** We use this for an anonymous way for a dependant resource to load. */
+        struct FLoadRequestCallbackContext
         {
-            TFunction<void(FAssetHandle&, const FAssetRequester&)>    LoadAssetCallback;
+            TFunction<void(FAssetHandle&)>	LoadAssetCallback;
         };
         
-        FAssetRequest() = default;
-        FAssetRequest(const FAssetRequester& InRequester, EType InType, FAssetRecord* InRecord)
-            : Requester(InRequester)
-            , Type(InType)
-            , Stage(EStage::None)
-            , Record(InRecord)
-        {}
-
-        FORCEINLINE bool IsValid() const { return Record != nullptr; }
-        FORCEINLINE bool IsActive() const { return Stage != EStage::Complete; }
-        FORCEINLINE bool IsComplete() const { return Stage == EStage::Complete; }
-
-        FORCEINLINE bool IsLoadRequest() const { return Type == EType::Load; }
-        FORCEINLINE bool IsUnloadRequest() const { return Type == EType::Unload; }
-
-        FORCEINLINE EStage GetStage() const { return Stage; }
-
-        FORCEINLINE const FAssetRecord* GetAssetRecord() const { return Record; }
-        FORCEINLINE const EAssetType GetAssetType() const { return Record->GetAssetType(); }
-        FORCEINLINE const FGuid& GetGuid() const { return Guid; }
+        FAssetLoadRequest(const FAssetHandle& InHandle, FFactory* InFactory)
+            : AssetHandle(InHandle)
+            , Factory(InFactory)
+        {
+            Assert(AssetHandle.IsSet());
+        }
         
-        bool Update(FAssetRequestContext& Context);
+        FORCEINLINE ELoadStage GetLoadStage() const { return LoadState; }
+        FORCEINLINE bool IsLoadingCompleted() const { return LoadState == ELoadStage::Complete; }
+        FORCEINLINE const FAssetHandle& GetHandle() const { return AssetHandle; }
 
-    
+        bool Update(FLoadRequestCallbackContext& Context);
 
+        void LoadResource(FLoadRequestCallbackContext& Context);
+
+        
+        
     private:
+        
+        FAssetHandle                    AssetHandle;
+        FFactory*                       Factory;
+        eastl::atomic<ELoadStage>       LoadState = ELoadStage::LoadResource;
+        TVector<FAssetHandle>           FinishedDependencies;
+        TVector<FAssetHandle>           PendingDependencies;
 
-        FGuid                   Guid;
-        FAssetRecord*           Record;
-        FAssetRequester         Requester;
-        EType                   Type;
-        EStage                  Stage;
     };
+    
 }

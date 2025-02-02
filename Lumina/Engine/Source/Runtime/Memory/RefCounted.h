@@ -19,13 +19,14 @@ enum class ERefCountedCastType
 
         FRefCounted(): RefCount() {}
 
-        void AddRef() const
+        FORCEINLINE void AddRef() const
         {
             RefCount.fetch_add(1, std::memory_order_relaxed);
         }
 
-        void Release() const
+        FORCEINLINE void Release() const
         {
+            /** Returns the previous value (if previous value is 1, our new value is 0). */
             if(RefCount.fetch_sub(1, std::memory_order_acq_rel) == 1)
             {
                 std::atomic_thread_fence(std::memory_order_acquire);
@@ -33,6 +34,7 @@ enum class ERefCountedCastType
             }
         }
 
+        FORCEINLINE uint32 GetRefCount() const { return RefCount; }
 
     protected:
 
@@ -48,6 +50,9 @@ enum class ERefCountedCastType
     class TRefPtr
     {
     public:
+
+        //static_assert(std::is_base_of_v<FRefCounted, T>, "T must inherit from FRefCounted");
+        
         TRefPtr() : Ptr(nullptr) {}
     
         // Destructor
@@ -123,8 +128,8 @@ enum class ERefCountedCastType
             return *this;
         }
     
-        T* operator ->() const { return Ptr; }
-        T& operator *() const { return *Ptr; }
+        T* operator ->() const { return Get(); }
+        T& operator *() const { return *Get(); }
         explicit operator bool() const { return Ptr != nullptr; }
     
         T* Get() const { return Ptr; }

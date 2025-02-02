@@ -2,79 +2,46 @@
 
 #include "AssetTypes.h"
 #include "AssetHeader.h"
-#include "AssetRecord.h"
 #include "Core/Application/Application.h"
 #include "GUID/GUID.h"
 
 namespace Lumina
 {
-    class FAssetRecord;
-
     
     /**
-     *  Generic Asset Handle
+     *  Generic Asset Handle, prefer to use the template version.
      */
     class FAssetHandle
     {
     public:
         
         FAssetHandle() = default;
-        FAssetHandle(const FGuid& InGUID) :Guid(InGUID) {}
+        FAssetHandle(const FAssetPath& InPath) :AssetPath(InPath) {}
+        virtual ~FAssetHandle() = default;
         
 
         /** Checks if we have a valid AssetID, but doesn't signify of the asset is loaded */
-        FORCEINLINE bool IsSet() const { return Guid.IsValid(); }
+        FORCEINLINE bool IsSet() const { return AssetPath.IsValid(); }
 
-        FORCEINLINE void Clear() { Assert(Record == nullptr); Guid = {}; }
+        FORCEINLINE void Clear() { Assert(AssetPtr == nullptr); AssetPath = {}; }
 
-        FORCEINLINE const FGuid& GetAssetGuid() const { return Guid; }
+        FORCEINLINE bool IsLoaded() const { return AssetPtr != nullptr; }
+        
+        FORCEINLINE const FAssetPath& GetAssetPath() const { return AssetPath; }
 
         FORCEINLINE EAssetType GetAssetType() const { return AssetType; }
-        
-        FORCEINLINE FAssetRecord* GetRecord() const { return Record; }
-        FORCEINLINE void SetRecord(FAssetRecord* InRecord) { Assert(Record == nullptr); Record = InRecord; }
 
-        FORCEINLINE EAssetLoadState GetLoadState() const { return Record ? Record->GetLoadState() : EAssetLoadState::Unloaded; }
-        FORCEINLINE bool IsLoading() const          { return GetLoadState() == EAssetLoadState::Loading;    }
-        FORCEINLINE bool IsLoaded() const           { return GetLoadState() == EAssetLoadState::Loaded;     }
-        FORCEINLINE bool IsUnloading() const        { return GetLoadState() == EAssetLoadState::Unloading;  }
-        FORCEINLINE bool IsUnloaded() const         { return GetLoadState() == EAssetLoadState::Unloaded;   }
-        FORCEINLINE bool HasLoadingFailed() const   { return GetLoadState() == EAssetLoadState::Failed;     }
+        FORCEINLINE uint32 GetReferenceCount() const { return AssetPtr.use_count(); }
 
-
-        FORCEINLINE bool operator==(const FAssetHandle& Other) const { return Guid == Other.Guid; }
-        FORCEINLINE bool operator!=(const FAssetHandle& Other) const { return Guid != Other.Guid; }
+        FORCEINLINE bool operator==(const FAssetHandle& Other) const { return AssetPath == Other.AssetPath; }
+        FORCEINLINE bool operator!=(const FAssetHandle& Other) const { return AssetPath != Other.AssetPath; }
 
         
-        FORCEINLINE FAssetHandle& operator=(const FAssetHandle& Other) 
-        {
-            if (this != &Other)
-            {
-                AssertMsg(Record == nullptr, "cannot change a loaded resource. Unload it first");
-                Guid = Other.Guid;
-                Record = Other.Record;
-            }
-    
-            return *this;
-        }
-
-        FORCEINLINE FAssetHandle& operator=(FAssetHandle&& Other) noexcept
-        {
-            if (this != &Other)
-            {
-                Guid = Other.Guid;
-                Record = Other.Record;
-
-                Other.Guid = {};
-                Other.Record = nullptr;
-            }
-
-            return *this;
-        }
         
         friend FArchive& operator << (FArchive& Ar, FAssetHandle& Data)
         {
-            Ar << Data.Guid;
+            Ar << Data.AssetPath;
+            Ar << Data.AssetType;
             
             return Ar;
         }
@@ -82,9 +49,10 @@ namespace Lumina
 
     public:
 
-        FGuid           Guid;
-        EAssetType      AssetType = EAssetType::Max;
-        FAssetRecord*   Record =    nullptr;
+        FAssetPath          AssetPath;
+        EAssetType          AssetType = EAssetType::Max;
+        TSharedPtr<IAsset>  AssetPtr;
+        
     };
 
     
@@ -96,46 +64,32 @@ namespace Lumina
         //static_assert(std::is_base_of_v<IAsset, T>, "T must be derrived from IAsset");
         
         TAssetHandle() = default;
-        TAssetHandle(FGuid InGuid) : FAssetHandle(InGuid) { Assert(InGuid.IsValid()); }
-        TAssetHandle(const FAssetHandle& Other) { operator=(Other); }
+        TAssetHandle(const FAssetPath& InPath) : FAssetHandle(InPath) { Assert(InPath.IsValid()); }
         
-        FORCEINLINE bool operator == (nullptr_t) const { return Record == nullptr; }
-        FORCEINLINE bool operator != (nullptr_t) const { return Record != nullptr; }
-        FORCEINLINE bool operator == (const FAssetHandle& Other) const { return Guid == Other.Guid; }
-        FORCEINLINE bool operator != (const FAssetHandle& Other) const { return Guid != Other.Guid; }
+        FORCEINLINE bool operator == (nullptr_t) const { return AssetPtr == nullptr; }
+        FORCEINLINE bool operator != (nullptr_t) const { return AssetPtr != nullptr; }
+        //FORCEINLINE bool operator == (const FAssetHandle& Other) const { return AssetPath == Other.AssetPath; }
+        //FORCEINLINE bool operator != (const FAssetHandle& Other) const { return AssetPath != Other.AssetPath; }
 
-        FORCEINLINE const T* operator ->() { Assert(Record != nullptr); return reinterpret_cast<const T*>(Record->GetAssetData()); }
-        FORCEINLINE const T* GetPtr() const { Assert(Record != nullptr); return reinterpret_cast<const T*>(Record->GetAssetData()); }
+        FORCEINLINE TSharedPtr<T> GetPtr() const { Assert(AssetPtr != nullptr); return eastl::dynamic_shared_pointer_cast<T>(AssetPtr); }
 
-        FORCEINLINE TAssetHandle<T>& operator = (const FAssetHandle& Other)
+        FORCEINLINE TSharedPtr<T> operator ->()  { Assert(AssetPtr != nullptr); return GetPtr(); }
+
+        
+        template<typename U>
+        FORCEINLINE bool operator == (const TAssetHandle<T>& Other) { return AssetPath = Other.AssetPath; }
+
+        template<typename U>
+        FORCEINLINE bool operator != (const TAssetHandle<T>& Other) { return AssetPath != Other.AssetPath; }
+        
+
+        friend FArchive& operator << (FArchive& Ar, TAssetHandle& Data)
         {
-            AssertMsg(Record == nullptr || Record->IsUnloaded(), "Cannot change a loaded resource");
-
-            if (Other.IsSet())
-            {
-                if (Other.GetAssetType() == T::StaticGetAssetType())
-                {
-                    FAssetHandle::operator=(Other);
-                }
-                else
-                {
-                    AssertMsg(0, "Tried to assign invalid asset type");
-                }
-            }
-            else
-            {
-                Guid = {};
-            }
-
-            return *this;
-
+            Ar << Data.AssetPath;
+            Ar << Data.AssetType;
+            
+            return Ar;
         }
-
-        template<typename U>
-        FORCEINLINE bool operator == (const TAssetHandle<T>& Other) { return Guid = Other.Guid; }
-
-        template<typename U>
-        FORCEINLINE bool operator != (const TAssetHandle<T>& Other) { return Guid != Other.Guid; }
         
     };
 }
@@ -159,7 +113,7 @@ namespace eastl
     {
         size_t operator()(const Lumina::FAssetHandle& Handle) const noexcept
         {
-            return eastl::hash<Lumina::FGuid>{}(Handle.GetAssetGuid());
+            return eastl::hash<Lumina::FAssetPath>{}(Handle.GetAssetPath());
         }
     };
 }

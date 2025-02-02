@@ -19,6 +19,8 @@ namespace Lumina
         virtual FString GetFriendlyName()   const = 0;
         
         virtual void Serialize(FArchive& Ar) = 0;
+
+        
         
     private:
         
@@ -40,7 +42,7 @@ virtual FString GetFriendlyName() const { return StaticGetFriendlyName(); } \
 FAssetHeader Header;
 
 #define ADD_DEPENDENCY(AssetHandle) \
-Header.Dependencies.emplace_back(AssetHandle.GetAssetGuid());
+Header.Dependencies.emplace_back(AssetHandle);
 
 #define SERIALIZE_HEADER(Ar) \
 Ar << Header;
