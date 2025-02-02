@@ -25,6 +25,7 @@ namespace Lumina
 		
 		void LoadAsset(FAssetHandle& Asset);
 
+		void NotifyAssetRequestCompleted(FAssetLoadRequest* Request);
 		
 	private:
 
@@ -43,7 +44,7 @@ namespace Lumina
 		
 		THashMap<FAssetHandle, TWeakPtr<IAsset>>	AssetRecord;
 
-		TQueue<FAssetLoadRequest*>					LoadRequests;
+		TQueue<FAssetLoadRequest*>					LoadingQueue;
 		TSet<FAssetLoadRequest*>					ActiveLoadRequests;
 
 	};

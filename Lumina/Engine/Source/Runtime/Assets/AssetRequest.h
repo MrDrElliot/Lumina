@@ -20,8 +20,10 @@ namespace Lumina
         {
             None = 0,
             LoadResource,
+            LoadingResource,
             WaitForDependencies,
             Complete,
+            Failed,
         };
 
         /** We use this for an anonymous way for a dependant resource to load. */
@@ -43,7 +45,14 @@ namespace Lumina
 
         bool Update(FLoadRequestCallbackContext& Context);
 
+        /** Process initial loading and setup */
         void LoadResource(FLoadRequestCallbackContext& Context);
+
+        /** Some assets such as render resources may take time for RHI, so we update and wait */
+        void UpdateResourceFactory();
+
+        /** Asset dependencies are updated, and processsed */
+        void ProcessDependencies(FLoadRequestCallbackContext& Context);
 
         
         
@@ -52,7 +61,6 @@ namespace Lumina
         FAssetHandle                    AssetHandle;
         FFactory*                       Factory;
         eastl::atomic<ELoadStage>       LoadState = ELoadStage::LoadResource;
-        TVector<FAssetHandle>           FinishedDependencies;
         TVector<FAssetHandle>           PendingDependencies;
 
     };

@@ -25,7 +25,7 @@ namespace Lumina
 
         FORCEINLINE void Clear() { Assert(AssetPtr == nullptr); AssetPath = {}; }
 
-        FORCEINLINE bool IsLoaded() const { return AssetPtr != nullptr; }
+        FORCEINLINE bool IsLoaded() const { return LoadState == EAssetLoadState::Loaded; }
         
         FORCEINLINE const FAssetPath& GetAssetPath() const { return AssetPath; }
 
@@ -49,9 +49,17 @@ namespace Lumina
 
     public:
 
-        FAssetPath          AssetPath;
-        EAssetType          AssetType = EAssetType::Max;
-        TSharedPtr<IAsset>  AssetPtr;
+        /** Path to this asset */
+        FAssetPath                      AssetPath;
+
+        /** Serialized asset type for safety */
+        EAssetType                      AssetType = EAssetType::Max;
+
+        /** This state is to guard against accessing an asset which may have a valid pointer, but is not loaded */
+        eastl::atomic<EAssetLoadState>  LoadState = EAssetLoadState::Unloaded;
+
+        /** Having a valid pointer does not represent an asset being in a fully loaded and safe state */
+        TSharedPtr<IAsset>              AssetPtr;
         
     };
 

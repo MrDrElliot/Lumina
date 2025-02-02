@@ -10,9 +10,9 @@ namespace Lumina
     class FFactory
     {
     public:
-
+        
         virtual ~FFactory() = default;
-
-       virtual ELoadResult CreateNew(FAssetHandle& InHandle) = 0;
+        virtual ELoadResult CreateNew(FAssetHandle& InHandle) = 0;
+        virtual ELoadResult UpdateInProcessRequest(FAssetHandle& InHandle) = 0;
     };
 }
