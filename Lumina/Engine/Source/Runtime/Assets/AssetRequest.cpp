@@ -5,7 +5,7 @@
 
 namespace Lumina
 {
-    bool FAssetLoadRequest::Update(FLoadRequestCallbackContext& Context)
+    bool FAssetRequest::Update(FRequestCallbackContext& Context)
     {
         switch (LoadState)
         {
@@ -25,17 +25,13 @@ namespace Lumina
                ProcessDependencies(Context);
             }
             break;
-            
-            default:
-            {
-                std::unreachable();
-            }
         }
 
         /** If we haven't completed or failed, request a process next update */
-        if (LoadState < ELoadStage::WaitForDependencies)
+        if (LoadState != ELoadStage::Complete)
         {
-            Context.LoadAssetCallback(AssetHandle);
+            FAssetHandle Handle(AssetRecord->GetAssetPath(), AssetRecord->GetAssetType());
+            Context.LoadAssetCallback(Handle);
             return false;
         }
         else
@@ -44,15 +40,16 @@ namespace Lumina
         }
     }
 
-    void FAssetLoadRequest::LoadResource(FLoadRequestCallbackContext& Context)
+    void FAssetRequest::LoadResource(FRequestCallbackContext& Context)
     {
+        ELoadResult LoadResult = Factory->CreateNew(AssetRecord);
+        AssetRecord->SetLoadingState(EAssetLoadState::Loading);
         
-        ELoadResult LoadResult = Factory->CreateNew(AssetHandle);
         if (LoadResult == ELoadResult::Failed)
         {
-            LOG_ERROR("Resource Request: Failed to load resource data {0}!", AssetHandle.AssetPath.GetPathAsString());
+            LOG_ERROR("Resource Request: Failed to load resource data {0}!", AssetRecord->GetAssetPath());
             LoadState = ELoadStage::Complete;
-            AssetHandle.AssetPtr.reset();
+            AssetRecord->SetLoadingState(EAssetLoadState::Failed);
             return;
         }
 
@@ -60,28 +57,35 @@ namespace Lumina
         if (LoadResult == ELoadResult::InProgress)
         {
             LoadState = ELoadStage::LoadingResource;
+            return;
         }
+
+        /** Send our dependencies to get loaded as well, only happens once. Then they process themselves. */
+        PendingDependencies = AssetRecord->AssetDependencies;
+        for (FAssetHandle& Handle : PendingDependencies)
+        {
+            Context.LoadAssetCallback(Handle);
+        }
+
+        /** This resource is fully loaded, wait for dependencies to finish */
+        LoadState = ELoadStage::WaitForDependencies;
         
     }
 
-    void FAssetLoadRequest::UpdateResourceFactory()
+    void FAssetRequest::UpdateResourceFactory()
     {
-        Factory->UpdateInProcessRequest(AssetHandle);
+        Factory->UpdateInProcessRequest(AssetRecord);
     }
 
-    void FAssetLoadRequest::ProcessDependencies(FLoadRequestCallbackContext& Context)
+    void FAssetRequest::ProcessDependencies(FRequestCallbackContext& Context)
     {
         /** Check if all of our dependencies are fully loaded */
-        TVector<FAssetHandle> FinishedDependencies;
+        TInlineVector<FAssetHandle, 4> FinishedDependencies;
         for (FAssetHandle& Handle : PendingDependencies)
         {
             if (Handle.IsLoaded())
             {
                 FinishedDependencies.push_back(Handle);
-            }
-            else
-            {
-                Context.LoadAssetCallback(Handle);
             }
         }
 
@@ -91,7 +95,10 @@ namespace Lumina
         }
         else
         {
+            AssetRecord->GetAssetPtr()->PostLoadDependencies();
             LoadState = ELoadStage::Complete;
+            AssetRecord->SetLoadingState(EAssetLoadState::Loaded);
+            AssetRecord->GetAssetPtr()->PostLoad();
         }
     }
 }

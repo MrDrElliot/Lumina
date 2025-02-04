@@ -3,7 +3,7 @@
 #include "DescriptorSet.h"
 #include "Renderer.h"
 #include "Shader.h"
-#include "RHI/Vulkan/VulkanRenderContext.h"
+#include "Renderer/Swapchain.h"
 
 namespace Lumina
 {

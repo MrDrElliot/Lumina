@@ -2,7 +2,7 @@
 
 #include "vk-bootstrap/src/VkBootstrap.h"
 #include <glfw/glfw3.h>
-
+#include "Renderer/Pipeline.h"
 #include "VulkanImage.h"
 #include "VulkanMacros.h"
 #include "VulkanRenderContext.h"
@@ -19,19 +19,20 @@ namespace Lumina
     	bWasResizedThisFrame = false;
     }
 
-    void FVulkanSwapchain::CreateSurface(const FSwapchainSpec& InSpec)
+    void FVulkanSwapchain::CreateSurface(IRenderContext* Context, const FSwapchainSpec& InSpec)
     {
-        VkInstance Instance = FVulkanRenderContext::Get().GetVulkanInstance();
+    	FVulkanRenderContext* RenderContext = static_cast<FVulkanRenderContext*>(Context);
+        VkInstance Instance = RenderContext->GetVulkanInstance();
         
         VK_CHECK(glfwCreateWindowSurface(Instance, InSpec.Window->GetWindow(), nullptr, &Surface));
     }
 
-    void FVulkanSwapchain::CreateSwapchain(const FSwapchainSpec& InSpec)
+    void FVulkanSwapchain::CreateSwapchain(IRenderContext* Context, const FSwapchainSpec& InSpec)
     {
     	Specifications = InSpec;
     	
-        FVulkanRenderContext& RenderContext = FVulkanRenderContext::Get();
-        auto Device = FVulkanRenderContext::GetDevice();
+    	FVulkanRenderContext* RenderContext = static_cast<FVulkanRenderContext*>(Context);
+        VkDevice Device = RenderContext->GetDevice();
     	
         Images.reserve(InSpec.FramesInFlight);
     	
@@ -43,10 +44,10 @@ namespace Lumina
         if(LIKELY(Swapchain))
         {
         	FRenderer::WaitIdle();
-            vkDestroySwapchainKHR(FVulkanRenderContext::GetDevice(), Swapchain, nullptr);
+            vkDestroySwapchainKHR(Device, Swapchain, nullptr);
         }
     	
-        vkb::SwapchainBuilder swapchainBuilder{ RenderContext.GetPhysicalDevice(), Device, Surface };
+        vkb::SwapchainBuilder swapchainBuilder { RenderContext->GetPhysicalDevice(), Device, Surface };
 
     	Format = VK_FORMAT_B8G8R8A8_UNORM;
         SurfaceFormat.format = VK_FORMAT_B8G8R8A8_UNORM;
@@ -69,7 +70,7 @@ namespace Lumina
     	
         Images.clear();
 
-    	VkCommandBuffer ImageCreateBuffer = FVulkanRenderContext::AllocateTransientCommandBuffer();
+    	VkCommandBuffer ImageCreateBuffer = RenderContext->AllocateTransientCommandBuffer();
     	
         for (VkImage RawImage : RawImages)
         {
@@ -127,7 +128,7 @@ namespace Lumina
 			);
         }
 
-    	FVulkanRenderContext::ExecuteTransientCommandBuffer(ImageCreateBuffer);
+    	RenderContext->ExecuteTransientCommandBuffer(ImageCreateBuffer);
     	
         VkSemaphoreCreateInfo SemaphoreCreateInfo = {};
         SemaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -175,7 +176,7 @@ namespace Lumina
 		    NameInfo.objectType = VK_OBJECT_TYPE_SEMAPHORE;
 		    NameInfo.objectHandle = reinterpret_cast<uint64_t>(semaphore);
 		
-		    FVulkanRenderContext::GetRenderContextFunctions().DebugUtilsObjectNameEXT(Device, &NameInfo);
+		    RenderContext->GetRenderContextFunctions().DebugUtilsObjectNameEXT(Device, &NameInfo);
 		}
 		
 		// Handle Render Semaphores
@@ -222,7 +223,7 @@ namespace Lumina
 		    NameInfo.objectType = VK_OBJECT_TYPE_SEMAPHORE;
 		    NameInfo.objectHandle = reinterpret_cast<uint64_t>(semaphore);
 		
-		    FVulkanRenderContext::GetRenderContextFunctions().DebugUtilsObjectNameEXT(Device, &NameInfo);
+		    RenderContext->GetRenderContextFunctions().DebugUtilsObjectNameEXT(Device, &NameInfo);
 		}
     	
     	if(bWasResizedThisFrame)
@@ -249,12 +250,17 @@ namespace Lumina
 
     void FVulkanSwapchain::DestroySurface()
     {
-    	vkDestroySurfaceKHR(FVulkanRenderContext::GetVulkanInstance(), Surface, nullptr);
+    	FVulkanRenderContext* RenderContext = FRenderer::GetRenderContext<FVulkanRenderContext>();
+    	VkInstance Instance = RenderContext->GetVulkanInstance();
+    	
+    	vkDestroySurfaceKHR(Instance, Surface, nullptr);
     }
 
     void FVulkanSwapchain::DestroySwapchain()
     {
-    	auto Device = FVulkanRenderContext::GetDevice();
+    	FVulkanRenderContext* RenderContext = FRenderer::GetRenderContext<FVulkanRenderContext>();
+
+    	auto Device = RenderContext->GetDevice();
 		FRenderer::WaitIdle();
     	
     	Images.clear();
@@ -287,13 +293,12 @@ namespace Lumina
     void FVulkanSwapchain::RecreateSwapchain()
     {
     	LOG_WARN("Re-sizing Swapchain");
-    	uint32 Height = FApplication::GetWindow().GetHeight();
-    	uint32 Width = FApplication::GetWindow().GetWidth();
+    	uint32 Height = FApplication::Get().GetWindow()->GetHeight();
+    	uint32 Width = FApplication::Get().GetWindow()->GetWidth();
     	GetSpecs().Extent = {Width, Height};
-    	
+
     	FRenderer::WaitIdle();
-		CreateSwapchain(GetSpecs());
-    	//FRenderer::WaitIdle();
+		CreateSwapchain(FRenderer::GetRenderContext(), GetSpecs());
     	
     	bWasResizedThisFrame = true;
     	bDirty = false;
@@ -306,7 +311,8 @@ namespace Lumina
     	{
     		RecreateSwapchain();
     	}
-        auto Device = FVulkanRenderContext::GetDevice();
+    	
+        VkDevice Device = FRenderer::GetRenderContext<FVulkanRenderContext>()->GetDevice();
     	
     	if(Swapchain == VK_NULL_HANDLE)
     	{
@@ -347,9 +353,9 @@ namespace Lumina
         PresentInfo.pWaitSemaphores = &PresentSemaphore;
         PresentInfo.pResults = nullptr;
 
-    	VkQueue Queue = FVulkanRenderContext::GetGeneralQueue();
-    	assert(Queue != VK_NULL_HANDLE);
+    	FVulkanRenderContext* RenderContext = FRenderer::GetRenderContext<FVulkanRenderContext>();
     	
+    	VkQueue Queue = RenderContext->GetGeneralQueue();
         VkResult Result = vkQueuePresentKHR(Queue, &PresentInfo);
 
         if (Result == VK_ERROR_OUT_OF_DATE_KHR || Result == VK_SUBOPTIMAL_KHR || bDirty)

@@ -14,11 +14,11 @@ namespace Lumina
     public:
         
         Entity() = default;
-        Entity(const entt::entity& InHandle, AScene* InScene);
-        Entity(const entt::entity& InHandle, TSharedPtr<AScene> InScene);
+        Entity(const entt::entity& InHandle, FScene* InScene);
+        Entity(const entt::entity& InHandle, TSharedPtr<FScene> InScene);
 
         
-        AScene* GetScene()                      { return mScene; }
+        FScene* GetScene()                      { return mScene; }
         entt::entity GetHandle()                { return mEntityHandle; }
 
         inline FString& GetName()               { return GetComponent<FNameComponent>().GetName(); }
@@ -55,7 +55,7 @@ namespace Lumina
     private:
 
         entt::entity mEntityHandle;
-        AScene* mScene = nullptr;
+        FScene* mScene = nullptr;
     
     };
 

@@ -1,5 +1,5 @@
 #include "VulkanImGuiRenderAPI.h"
-
+#include "Renderer/Pipeline.h"
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_vulkan.h"
 #include "Core/Application/Application.h"
@@ -123,10 +123,11 @@ namespace Lumina
         style.Colors[ImGuiCol_ModalWindowDimBg] =       ImVec4(0.80f, 0.80f, 0.80f, 0.35f);
         style.GrabRounding = style.FrameRounding =      2.3f;
 
+    	FVulkanRenderContext* VkRenderContext = FRenderer::GetRenderContext<FVulkanRenderContext>();
+    	VkDevice Device = VkRenderContext->GetDevice();
     	
-        vkCreateDescriptorPool(FVulkanRenderContext::GetDevice(), &PoolInfo, nullptr, &DescriptorPool);
+        vkCreateDescriptorPool(Device, &PoolInfo, nullptr, &DescriptorPool);
 
-    	VkDevice Device = FVulkanRenderContext::GetDevice();
         
     	VkDebugUtilsObjectNameInfoEXT NameInfo = {};
     	NameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
@@ -134,21 +135,21 @@ namespace Lumina
     	NameInfo.objectType = VK_OBJECT_TYPE_DESCRIPTOR_POOL;
     	NameInfo.objectHandle = reinterpret_cast<uint64_t>(DescriptorPool);
     	
-    	FVulkanRenderContext::GetRenderContextFunctions().DebugUtilsObjectNameEXT(Device, &NameInfo);
+    	VkRenderContext->GetRenderContextFunctions().DebugUtilsObjectNameEXT(Device, &NameInfo);
         
-        ImGui_ImplGlfw_InitForVulkan(FApplication::GetWindow().GetWindow(), true);
+        ImGui_ImplGlfw_InitForVulkan(FApplication::Get().GetWindow()->GetWindow(), true);
 
         VkPipelineRenderingCreateInfo RenderPipeline = {};
         RenderPipeline.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
-        RenderPipeline.pColorAttachmentFormats = &FVulkanRenderContext::GetSwapchain()->GetFormat();
+        RenderPipeline.pColorAttachmentFormats = &VkRenderContext->GetSwapchain<FVulkanSwapchain>()->GetFormat();
         RenderPipeline.colorAttachmentCount = 1;
 
         ImGui_ImplVulkan_InitInfo InitInfo = {};
         InitInfo.PipelineRenderingCreateInfo = RenderPipeline;
-        InitInfo.Instance = FVulkanRenderContext::GetVulkanInstance();
-        InitInfo.PhysicalDevice = FVulkanRenderContext::GetPhysicalDevice();
-        InitInfo.Device = FVulkanRenderContext::GetDevice();
-        InitInfo.Queue = FVulkanRenderContext::GetGeneralQueue();
+        InitInfo.Instance = VkRenderContext->GetVulkanInstance();
+        InitInfo.PhysicalDevice = VkRenderContext->GetPhysicalDevice();
+        InitInfo.Device = VkRenderContext->GetDevice();
+        InitInfo.Queue = VkRenderContext->GetGeneralQueue();
         InitInfo.DescriptorPool = DescriptorPool;
         InitInfo.MinImageCount = 2;
         InitInfo.ImageCount = 2;
@@ -178,7 +179,6 @@ namespace Lumina
         ImGui_ImplVulkan_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
-
     }
 	
     void FVulkanImGuiRenderAPI::RenderImage(const TRefPtr<FImage>& Image, const TRefPtr<FImageSampler>& Sampler, ImVec2 Size, uint32 ImageLayer, bool bFlip)
@@ -195,7 +195,8 @@ namespace Lumina
                 VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
             );
 
-        	VkDevice Device = FVulkanRenderContext::GetDevice();
+        	FVulkanRenderContext* VkRenderContext = FRenderer::GetRenderContext<FVulkanRenderContext>();
+        	VkDevice Device = VkRenderContext->GetDevice();
         	
         	VkDebugUtilsObjectNameInfoEXT NameInfo = {};
         	NameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
@@ -203,7 +204,7 @@ namespace Lumina
         	NameInfo.objectType = VK_OBJECT_TYPE_DESCRIPTOR_SET;
         	NameInfo.objectHandle = reinterpret_cast<uint64_t>(ImGuiImageID);
     	
-        	FVulkanRenderContext::GetRenderContextFunctions().DebugUtilsObjectNameEXT(Device, &NameInfo);
+        	VkRenderContext->GetRenderContextFunctions().DebugUtilsObjectNameEXT(Device, &NameInfo);
         	
             ImGuiImageDescriptorSets.emplace(Image->GetGuid(), ImGuiImageID);
         }
@@ -223,7 +224,8 @@ namespace Lumina
 			);
     		ImGuiImageDescriptorSets.emplace(Image->GetGuid(), ImGuiImageID);
 
-    		VkDevice Device = FVulkanRenderContext::GetDevice();
+    		FVulkanRenderContext* VkRenderContext = FRenderer::GetRenderContext<FVulkanRenderContext>();
+    		VkDevice Device = VkRenderContext->GetDevice();
 
     		VkDebugUtilsObjectNameInfoEXT NameInfo = {};
     		NameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
@@ -231,7 +233,7 @@ namespace Lumina
     		NameInfo.objectType = VK_OBJECT_TYPE_DESCRIPTOR_SET;
     		NameInfo.objectHandle = reinterpret_cast<uint64_t>(ImGuiImageID);
     	
-    		FVulkanRenderContext::GetRenderContextFunctions().DebugUtilsObjectNameEXT(Device, &NameInfo);
+    		VkRenderContext->GetRenderContextFunctions().DebugUtilsObjectNameEXT(Device, &NameInfo);
     	}
 
     	return ImGuiImageDescriptorSets[Image->GetGuid()];
@@ -240,8 +242,8 @@ namespace Lumina
     void FVulkanImGuiRenderAPI::EndFrame()
     {
         ImGuiIO& Io = ImGui::GetIO();
-        Io.DisplaySize.x = (float)FRenderer::GetSwapchain()->GetSpecs().Extent.x;
-    	Io.DisplaySize.y = (float)FRenderer::GetSwapchain()->GetSpecs().Extent.y;
+        Io.DisplaySize.x = (float)FRenderer::GetRenderContext()->GetSwapchain()->GetSpecs().Extent.x;
+    	Io.DisplaySize.y = (float)FRenderer::GetRenderContext()->GetSwapchain()->GetSpecs().Extent.y;
 
         ImGui::Render();
     	
@@ -261,7 +263,7 @@ namespace Lumina
             
 				VkRenderingAttachmentInfo colorAttachment = {};
 				colorAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
-				colorAttachment.imageView = FVulkanRenderContext::GetSwapchain()->GetCurrentImage()->GetImageView();
+				colorAttachment.imageView = FRenderer::GetRenderContext()->GetSwapchain()->GetCurrentImage().As<FVulkanImage>()->GetImageView();
 				colorAttachment.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 				colorAttachment.clearValue = {1, 1, 1, };
 				colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -271,8 +273,8 @@ namespace Lumina
 				renderInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
 				renderInfo.pColorAttachments = &colorAttachment;
 				renderInfo.colorAttachmentCount = 1;
-				renderInfo.renderArea.extent.height =	FRenderer::GetSwapchain()->GetSpecs().Extent.y;
-				renderInfo.renderArea.extent.width =	FRenderer::GetSwapchain()->GetSpecs().Extent.x;
+				renderInfo.renderArea.extent.height =	FRenderer::GetRenderContext()->GetSwapchain()->GetSpecs().Extent.y;
+				renderInfo.renderArea.extent.width =	FRenderer::GetRenderContext()->GetSwapchain()->GetSpecs().Extent.x;
 				renderInfo.layerCount = 1;
             
 				vkCmdBeginRendering(CmdBuffer, &renderInfo);

@@ -1,18 +1,17 @@
-#include "pch.h"
 
 #include "InputSubsystem.h"
 
 namespace Lumina
 {
-    void InputSubsystem::Initialize()
+    void FInputSubsystem::Initialize()
     {
     }
 
-    void InputSubsystem::Update(double DeltaTime)
+    void FInputSubsystem::Update(double DeltaTime)
     {
     }
 
-    void InputSubsystem::Deinitialize()
+    void FInputSubsystem::Deinitialize()
     {
     }
 }

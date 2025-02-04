@@ -1,12 +1,13 @@
 #include "pch.h"
 
 #include "Window.h"
-
+#include "Renderer/Pipeline.h"
 #include "Core/Application/Application.h"
 #include "Events/ApplicationEvent.h"
 #include "Events/KeyEvent.h"
 #include "Events/MouseEvent.h"
 #include "Platform/Platform.h"
+#include "Renderer/RenderContext.h"
 #include "Renderer/Renderer.h"
 #include "Renderer/Swapchain.h"
 
@@ -105,16 +106,16 @@ namespace Lumina
 			}
 		}
 	}
-
-
-	void FWindow::OnUpdate(double DeltaTime)
-	{
-		
-	}
-
+	
 	void FWindow::Shutdown()
 	{
 		glfwDestroyWindow(Window);
+		glfwTerminate();
+	}
+
+	void FWindow::ProcessMessages()
+	{
+		glfwPollEvents();
 	}
 
 	bool FWindow::IsMinimized() const
@@ -134,7 +135,7 @@ namespace Lumina
 		WindowResizeEvent event(width, height);
 		data.EventCallback(event);
 
-		FRenderer::GetSwapchain()->SetSwapchainDirty();
+		FRenderer::GetRenderContext()->GetSwapchain()->SetSwapchainDirty();
 	}
 
 	void FWindow::SetEventCallback(const std::function<void(FEvent&)>& Callback)

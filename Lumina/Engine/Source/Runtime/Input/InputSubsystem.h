@@ -4,7 +4,7 @@
 
 namespace Lumina
 {
-    class InputSubsystem : public ISubsystem
+    class FInputSubsystem : public ISubsystem
     {
     public:
 

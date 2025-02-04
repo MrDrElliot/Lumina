@@ -4,13 +4,13 @@
 
 namespace Lumina
 {
-    Entity::Entity(const entt::entity& InHandle, AScene* InScene)
+    Entity::Entity(const entt::entity& InHandle, FScene* InScene)
     :mEntityHandle(InHandle), mScene(InScene)
     {
                 
     }
 
-    Entity::Entity(const entt::entity& InHandle, TSharedPtr<AScene> InScene)
+    Entity::Entity(const entt::entity& InHandle, TSharedPtr<FScene> InScene)
     :mEntityHandle(InHandle), mScene(InScene.get())
     {
     }

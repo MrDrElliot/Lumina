@@ -96,14 +96,17 @@ namespace Lumina
 
     void FVulkanPipeline::Destroy()
     {
-    	auto device = FVulkanRenderContext::GetDevice();
+    	FVulkanRenderContext* RenderContext = FRenderer::GetRenderContext<FVulkanRenderContext>();		
+    		
+    	VkDevice device = RenderContext->GetDevice();
     	vkDestroyPipeline(device, Pipeline, nullptr);
     	vkDestroyPipelineLayout(device, PipelineLayout, nullptr);
     }
 
     void FVulkanPipeline::CreateGraphics()
     {
-		auto Device = FVulkanRenderContext::GetDevice();
+    	FVulkanRenderContext* RenderContext = FRenderer::GetRenderContext<FVulkanRenderContext>();		
+    	VkDevice Device = RenderContext->GetDevice();
 
     	/* Vertex Input Binding */	
 		VkVertexInputBindingDescription VertexInputBinding = {};
@@ -281,8 +284,8 @@ namespace Lumina
 
     void FVulkanPipeline::CreateCompute()
     {
-
-    	auto Device = FVulkanRenderContext::GetDevice();	
+    	FVulkanRenderContext* RenderContext = FRenderer::GetRenderContext<FVulkanRenderContext>();		
+    	VkDevice Device = RenderContext->GetDevice();
 	
     	TRefPtr<FVulkanShader> VkShader = RefPtrCast<FVulkanShader>(Specification.shader);
     	TVector<VkDescriptorSetLayout> DescriptorSetLayouts = VkShader->GetLayouts();

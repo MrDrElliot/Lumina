@@ -12,7 +12,7 @@ namespace Lumina
     public:
         
         virtual ~FFactory() = default;
-        virtual ELoadResult CreateNew(FAssetHandle& InHandle) = 0;
-        virtual ELoadResult UpdateInProcessRequest(FAssetHandle& InHandle) = 0;
+        virtual ELoadResult CreateNew(FAssetRecord* InRecord) = 0;
+        virtual ELoadResult UpdateInProcessRequest(FAssetRecord* InRecord) { return ELoadResult::Succeeded; };
     };
 }

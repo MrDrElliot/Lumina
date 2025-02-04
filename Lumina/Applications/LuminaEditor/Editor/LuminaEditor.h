@@ -9,29 +9,36 @@ namespace Lumina
     class FEditorLayer;
     class FEditorPanel;
 
+    class FEditorEngine : public FEngine
+    {
+    public:
+
+
+    private:
+    };
+    
+
     class LuminaEditor : public FApplication
     {
     public:
     
-        LuminaEditor(const FApplicationSpecs& AppSpecs);
+        LuminaEditor();
 
-        void OnInit() override;
-
+        bool Initialize() override;
+        bool ApplicationLoop() override;
+        
         void CreateProject();
         void OpenProject();
 
-        void OnShutdown() override;
-
+        void CreateImGuiPanels();
+        
+        void Shutdown() override;
         void OnEvent(FEvent& Event) override;
-
-        TRefPtr<FEditorLayer> GetEditorLayer() { return EditorLayer; }
-
+    
     private:
-
-        TRefPtr<FEditorLayer>       EditorLayer;
+        
         TSharedPtr<FCamera>    EditorCamera;
         
     };
     
-    inline LuminaEditor* GEditor;
 }

@@ -1,8 +1,10 @@
 #include "VulkanRenderContext.h"
-
+#include "Renderer/Swapchain.h"
+#include "Renderer/Pipeline.h"
+#include "VulkanMacros.h"
 #include "vk-bootstrap/src/VkBootstrap.h"
 #include "VulkanMemoryAllocator.h"
-
+#include "Renderer/CommandBuffer.h"
 #include "VulkanSwapchain.h"
 #include "Core/Windows/Window.h"
 #include "Log/Log.h"
@@ -39,11 +41,31 @@ namespace Lumina
         // Return VK_FALSE to indicate the application should not abort
         return VK_FALSE;
     }
-
     
-    FVulkanRenderContext::FVulkanRenderContext(const FRenderConfig& InConfig)
+    FVulkanRenderContext::~FVulkanRenderContext()
     {
-        Instance = this;
+        LOG_TRACE("VulkanRenderContext: Shutting Down");
+        
+        Swapchain->DestroySwapchain();
+        Swapchain->DestroySurface();
+        Swapchain->Release();
+        
+        vkDestroyDescriptorPool(Device, DescriptorPool, nullptr);
+        
+        vkDestroyCommandPool(Device, CommandPool, nullptr);
+        
+        FVulkanMemoryAllocator::Get()->Shutdown();
+
+        vkDestroyDevice(Device, nullptr);
+
+        auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(VulkanInstance, "vkDestroyDebugUtilsMessengerEXT");
+        func(VulkanInstance, VulkanRenderContextFunctions.DebugMessenger, nullptr);
+        
+        vkDestroyInstance(VulkanInstance, nullptr);
+    }
+
+    void FVulkanRenderContext::Initialize()
+    {
         AssertMsg(glfwVulkanSupported(), "Vulkan Is Not Supported!");
         
         LOG_TRACE("Vulkan Render Context: Initializing");
@@ -113,55 +135,83 @@ namespace Lumina
         vkCreateCommandPool(Device, &CmdPoolCreateInfo, nullptr, &CommandPool);
 
         FSwapchainSpec SwapchainSpec;
-        SwapchainSpec.Window =          InConfig.Window;
-        SwapchainSpec.Extent.x =        (int)InConfig.Window->GetWidth();
-        SwapchainSpec.Extent.y =        (int)InConfig.Window->GetHeight();
-        SwapchainSpec.FramesInFlight =  2;
+        SwapchainSpec.Window =          Config.Window;
+        SwapchainSpec.Extent.x =        (int)Config.Window->GetWidth();
+        SwapchainSpec.Extent.y =        (int)Config.Window->GetHeight();
+        SwapchainSpec.FramesInFlight =  Config.FramesInFlight;
         
         Swapchain = MakeRefPtr<FVulkanSwapchain>(SwapchainSpec);
-        Swapchain->CreateSurface(SwapchainSpec);
-        Swapchain->CreateSwapchain(SwapchainSpec);
+        Swapchain->CreateSurface(this, SwapchainSpec);
+        Swapchain->CreateSwapchain(this, SwapchainSpec);
         
 
-        physicalDevice.surface = Swapchain->GetSurface();
+        physicalDevice.surface = GetSwapchain<FVulkanSwapchain>()->GetSurface();
         PhysicalDevice = physicalDevice;
+
+        CommandBuffers.resize(Config.FramesInFlight);
+
+        for (auto& Buffer : CommandBuffers)
+        {
+            Buffer = FCommandBuffer::Create(ECommandBufferLevel::PRIMARY, ECommandBufferType::GENERAL, ECommandType::GENERAL);
+
+        }
+
+        uint32 Count = 100 * Config.FramesInFlight;
+
+        TInlineVector<VkDescriptorPoolSize, 8> PoolSizes =
+        {
+            { VK_DESCRIPTOR_TYPE_SAMPLER,							Count }, 
+            { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,			Count },
+            { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,					Count },
+            { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,					Count },
+            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,					Count },
+            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC,			Count },
+            { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,					Count },
+            { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC,			Count },
+            { VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,				Count }
+        };
+
+        VkDescriptorPoolCreateInfo PoolInfo = {};
+        PoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+        PoolInfo.maxSets = 1000;
+        PoolInfo.poolSizeCount = (uint32)PoolSizes.size();
+        PoolInfo.pPoolSizes = PoolSizes.data();
+        PoolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+
+        vkCreateDescriptorPool(Device, &PoolInfo, nullptr, &DescriptorPool);
     }
 
-    FVulkanRenderContext::~FVulkanRenderContext()
+
+    TVector<VkDescriptorSet> FVulkanRenderContext::AllocateDescriptorSets(VkDescriptorSetLayout InLayout, uint32 InCount)
     {
+        TVector<VkDescriptorSet> sets(InCount);
+
+        VkDescriptorSetAllocateInfo AllocateInfo = {};
+        AllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+        AllocateInfo.descriptorPool = DescriptorPool;
+        AllocateInfo.descriptorSetCount = InCount;
+        AllocateInfo.pSetLayouts = &InLayout;
+
+        VK_CHECK(vkAllocateDescriptorSets(Device, &AllocateInfo, sets.data()));
+
+        return sets;
     }
 
-    void FVulkanRenderContext::Destroy()
+    void FVulkanRenderContext::FreeDescriptorSets(const TVector<VkDescriptorSet>& InSets)
     {
-        LOG_TRACE("VulkanRenderContext: Shutting Down");
-        
-        Swapchain->DestroySwapchain();
-        Swapchain->DestroySurface();
-        Swapchain->Release();
-        
-        vkDestroyCommandPool(Device, CommandPool, nullptr);
-        
-        FVulkanMemoryAllocator::Get()->Shutdown();
-
-        vkDestroyDevice(Device, nullptr);
-
-        auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(VulkanInstance, "vkDestroyDebugUtilsMessengerEXT");
-        func(VulkanInstance, VulkanRenderContextFunctions.DebugMessenger, nullptr);
-        
-        vkDestroyInstance(VulkanInstance, nullptr);
-        
+        vkFreeDescriptorSets(Device, DescriptorPool, (uint32)InSets.size(), InSets.data());
     }
 
     VkCommandBuffer FVulkanRenderContext::AllocateTransientCommandBuffer()
     {
         VkCommandBufferAllocateInfo AllocateInfo = {};
         AllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-        AllocateInfo.commandPool = Get().CommandPool;
+        AllocateInfo.commandPool = CommandPool;
         AllocateInfo.commandBufferCount = 1;
         AllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 
         VkCommandBuffer CmdBuffer;
-        vkAllocateCommandBuffers(Get().Device, &AllocateInfo, &CmdBuffer);
+        vkAllocateCommandBuffers(Device, &AllocateInfo, &CmdBuffer);
 
         VkCommandBufferBeginInfo BeginInfo = {};
         BeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -185,14 +235,14 @@ namespace Lumina
         VkFenceCreateInfo FenceCreateInfo = {};
         FenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 
-        vkCreateFence(Get().Device, &FenceCreateInfo, nullptr, &Fence);
+        vkCreateFence(Device, &FenceCreateInfo, nullptr, &Fence);
 
-        vkQueueSubmit(Get().GeneralQueue, 1, &SubmitInfo, Fence);
-        vkWaitForFences(Get().Device, 1, &Fence, VK_TRUE, UINT64_MAX);
+        vkQueueSubmit(GeneralQueue, 1, &SubmitInfo, Fence);
+        vkWaitForFences(Device, 1, &Fence, VK_TRUE, UINT64_MAX);
 
-        vkResetCommandPool(Get().Device, Get().CommandPool, 0);
-        vkFreeCommandBuffers(Get().Device, Get().CommandPool, 1, &CmdBuffer);
+        vkResetCommandPool(Device, CommandPool, 0);
+        vkFreeCommandBuffers(Device, CommandPool, 1, &CmdBuffer);
 
-        vkDestroyFence(Get().Device, Fence, nullptr);
+        vkDestroyFence(Device, Fence, nullptr);
     }
 }

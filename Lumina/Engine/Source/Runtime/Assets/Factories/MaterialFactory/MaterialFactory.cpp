@@ -2,9 +2,9 @@
 
 namespace Lumina
 {
-
-    ELoadResult FMaterialFactory::CreateNew(FAssetHandle& InHandle)
+    
+    ELoadResult FMaterialFactory::CreateNew(FAssetRecord* InRecord)
     {
-        Assert(0);
+        return {};
     }
 }

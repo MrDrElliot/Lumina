@@ -31,25 +31,19 @@ namespace Lumina
     };
     
     
-    class AScene : public IAsset
+    class FScene : public FRefCounted
     {
     public:
 
         using EntityRegistry = entt::registry;
 
-        AScene() = default;
-        AScene(TSharedPtr<FCamera> Camera);
-        ~AScene();
-
-        DECLARE_ASSET("Scene", Scene, 1);
-
-        void Serialize(FArchive& Ar) override {}
+        explicit FScene(TSharedPtr<FCamera> Camera);
         
-        static TSharedPtr<AScene> Create(TSharedPtr<FCamera> Camera);
+        ~FScene();
+        
+        static TRefPtr<FScene> Create(TSharedPtr<FCamera> Camera);
 
-        void BeginScene();
-        void OnUpdate(double DeltaTime);
-        void EndScene();
+        void Update(double DeltaTime);
 
         TSharedPtr<FCamera> GetCurrentCamera() { return CurrentCamera; }
         TSharedPtr<FSceneRenderer> GetSceneRenderer() { return SceneRenderer; }

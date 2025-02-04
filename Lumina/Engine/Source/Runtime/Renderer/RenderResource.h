@@ -4,6 +4,11 @@
 #include "Core/LuminaMacros.h"
 #include "Memory/RefCounted.h"
 
+namespace Lumina
+{
+    class IRenderContext;
+}
+
 /**
  * Base class for all render resources. Lifetime is managed internally with intrusive
  * reference counting.

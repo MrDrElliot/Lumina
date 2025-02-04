@@ -4,15 +4,11 @@
 #include "EASTL/internal/atomic/atomic.h"
 #include "Platform/GenericPlatform.h"
 
-
 namespace Lumina
 {
     class FFactory;
-}
-
-namespace Lumina
-{
-    class FAssetLoadRequest
+    
+    class FAssetRequest
     {
     public:
 
@@ -23,42 +19,43 @@ namespace Lumina
             LoadingResource,
             WaitForDependencies,
             Complete,
-            Failed,
         };
 
         /** We use this for an anonymous way for a dependant resource to load. */
-        struct FLoadRequestCallbackContext
+        struct FRequestCallbackContext
         {
             TFunction<void(FAssetHandle&)>	LoadAssetCallback;
         };
         
-        FAssetLoadRequest(const FAssetHandle& InHandle, FFactory* InFactory)
-            : AssetHandle(InHandle)
+        FAssetRequest(FAssetRecord* InRecord, FFactory* InFactory)
+            : AssetRecord(InRecord)
             , Factory(InFactory)
         {
-            Assert(AssetHandle.IsSet());
+            Assert(InRecord != nullptr);
+            Assert(InFactory != nullptr);
         }
-        
+
+        FORCEINLINE FAssetRecord* GetAssetRecord() const { return AssetRecord; }
+        FORCEINLINE FFactory* GetFactory() const { return Factory; }
         FORCEINLINE ELoadStage GetLoadStage() const { return LoadState; }
         FORCEINLINE bool IsLoadingCompleted() const { return LoadState == ELoadStage::Complete; }
-        FORCEINLINE const FAssetHandle& GetHandle() const { return AssetHandle; }
 
-        bool Update(FLoadRequestCallbackContext& Context);
+        bool Update(FRequestCallbackContext& Context);
 
         /** Process initial loading and setup */
-        void LoadResource(FLoadRequestCallbackContext& Context);
+        void LoadResource(FRequestCallbackContext& Context);
 
         /** Some assets such as render resources may take time for RHI, so we update and wait */
         void UpdateResourceFactory();
 
         /** Asset dependencies are updated, and processsed */
-        void ProcessDependencies(FLoadRequestCallbackContext& Context);
+        void ProcessDependencies(FRequestCallbackContext& Context);
 
         
         
     private:
         
-        FAssetHandle                    AssetHandle;
+        FAssetRecord*                   AssetRecord;
         FFactory*                       Factory;
         eastl::atomic<ELoadStage>       LoadState = ELoadStage::LoadResource;
         TVector<FAssetHandle>           PendingDependencies;

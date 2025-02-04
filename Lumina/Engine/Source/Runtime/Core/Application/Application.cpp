@@ -1,15 +1,9 @@
-#include "pch.h"
-
 #include "Application.h"
-#include "Core/Layer.h"
 #include "Assets/AssetManager/AssetManager.h"
+#include "Core/Performance/PerformanceTracker.h"
 #include "ImGui/ImGuiRenderer.h"
-#include "Input/InputSubsystem.h"
-#include "Memory/Memory.h"
-#include "Memory/MemoryLeakDetection.h"
 #include "Renderer/Renderer.h"
 #include "Core/Windows/Window.h"
-#include "Core/Windows/WindowSubsystem.h"
 #include "Core/Windows/WindowTypes.h"
 #include "Scene/Scene.h"
 
@@ -22,27 +16,10 @@ namespace Lumina
     
     FApplication* FApplication::Instance = nullptr;
 
-    void FApplicationStats::PreFrame()
+    FApplication::FApplication(FString InApplicationName, uint32 AppFlags)
     {
-        DeltaTime = (CurrentFrameTime - LastFrameTime);
-
-        if (DeltaTime > 0)
-        {
-            FPS = static_cast<uint32>(1000.0f / DeltaTime);
-        }
-
-        FrameCount++;
-    }
-
-    void FApplicationStats::PostFrame()
-    {
-        LastFrameTime =     CurrentFrameTime;
-        CurrentFrameTime =  glfwGetTime() * 1000.0f;
-    }
-
-    FApplication::FApplication(const FApplicationSpecs& InAppSpecs)
-    {
-        AppSpecs = InAppSpecs;
+        ApplicationName = InApplicationName;
+        ApplicationFlags = AppFlags;
         Instance = this;
     }
 
@@ -51,197 +28,98 @@ namespace Lumina
         Instance = nullptr;
     }
 
-    void FApplication::Run()
+    int32 FApplication::Run()
     {
-        InternalInit();
+        LOG_TRACE("Initializing Application: {0}", ApplicationName.c_str());
+
+        //---------------------------------------------------------------
+        // Application initialization.
+        //--------------------------------------------------------------
         
-        while(!ShouldExit())
+        CreateApplicationWindow();
+        Engine = InitializeEngine();
+        
+        if (!Initialize())
         {
-            if (true)
-            {
-                PROFILE_SCOPE(ApplicationFrame)
-                PreFrame();
+            Shutdown();
+            return 1;
+        }
+        
+        
+        //---------------------------------------------------------------
+        // Core application loop.
+        //--------------------------------------------------------------
 
-                if (CurrentScene)
-                {
-                    CurrentScene->OnUpdate(Stats.DeltaTime);
-                }
-
-                ApplicationSubsystems.GetSubsystem<WindowSubsystem>()->Update(Stats.DeltaTime);
-                
-                OnUpdate();
-                
-                RenderImGui(Stats.DeltaTime);
-                
-                FRenderer::Render();
-
-                PostFrame();
-            }
+        
+        bool bExitRequested = false;
+        while(!ShouldExit() && !bExitRequested)
+        {
+            PROFILE_SCOPE(ApplicationFrame)
+            
+            bExitRequested = !ApplicationLoop();
+            
+            Window->ProcessMessages();
         }
 
-        InternalShutdown();
+        
+        //---------------------------------------------------------------
+        // Application shutdown.
+        //--------------------------------------------------------------
+
+        LOG_TRACE("Shutting down application: {0}", ApplicationName.c_str());
+        
+        Shutdown();
+        
+        ApplicationSubsystems.DeinitializeAll();
+
+        Engine->Shutdown();
+        
+        Window->Shutdown();
+
+        delete Window;
+        
+        return 0;
+    }
+
+    bool FApplication::HasAnyFlags(EApplicationFlags Flags)
+    {
+        return ApplicationFlags & static_cast<uint32>(Flags) != 0;
     }
     
-    void FApplication::InternalInit()
+    FWindow* FApplication::GetWindow()
     {
+        return Get().Window;
+    }
 
-        LOG_TRACE("Initializing Application: {0}", AppSpecs.Name);
-        
-        WindowSubsystem* WinSubsystem = ApplicationSubsystems.AddSubsystem<WindowSubsystem>();
-        
-        /* Create application window */
+    FEngine* FApplication::InitializeEngine()
+    {
+        FEngine* NewEngine = new FEngine();
+        NewEngine->Initialize(this);
+        return NewEngine;
+    }
+    
+    bool FApplication::CreateApplicationWindow()
+    {
         FWindowSpecs AppWindowSpecs;
-        AppWindowSpecs.Title = AppSpecs.Name;
-        
-        WinSubsystem->InitializeWindow(AppWindowSpecs);
-        WinSubsystem->GetWindow()->SetEventCallback(BIND_EVENT_FN(OnEvent));
+        AppWindowSpecs.Title = ApplicationName.c_str();
 
-        FRenderConfig Config;
-        Config.Window = WinSubsystem->GetWindow();
-        Config.FramesInFlight = 2;
-        FRenderer::Init(Config);
+        Window = FWindow::Create(AppWindowSpecs);
+        Window->Init();
         
-        ApplicationSubsystems.AddSubsystem<InputSubsystem>();
-        ApplicationSubsystems.AddSubsystem<FAssetManager>();
+        Window->SetEventCallback(BIND_EVENT_FN(OnEvent));
 
-
-        if (AppSpecs.bRenderImGui)
-        {
-            FImGuiRenderer::Init();
-        }
-        
-        OnInit();
+        return true;
     }
 
-    void FApplication::InternalShutdown()
-    {
-        OnShutdown();
-
-        LOG_TRACE("{0} Shutting Down..", AppSpecs.Name);
-
-        bRunning = false;
-
-        LayerStack.DetachAllLayers();
-
-        GetSubsystem<WindowSubsystem>()->Deinitialize();
-        GetSubsystem<InputSubsystem>()->Deinitialize();
-        GetSubsystem<FAssetManager>()->Deinitialize();
-
-        if (CurrentScene)
-        {
-            CurrentScene = nullptr;
-        }
-
-        if (AppSpecs.bRenderImGui)
-        {
-            FImGuiRenderer::Shutdown();
-        }
-        
-        FRenderer::Shutdown();
-        
-        glfwTerminate();
-        
-    }
-
-    void FApplication::OnInit()
-    {
-    }
-
-    void FApplication::OnUpdate()
-    {
-        
-    }
-
-    void FApplication::OnShutdown()
-    {
-    }
     
-    void FApplication::PreFrame()
+    bool FApplication::FatalError(const FString& Error)
     {
-        Stats.PreFrame();
-        FRenderer::BeginFrame();
-    }
-
-    void FApplication::PostFrame()
-    {
-        Stats.PostFrame();
-
-        FRenderer::EndFrame();
-        
-        glfwPollEvents();
-
-    }
-
-    void FApplication::UpdateLayerStack(double DeltaTime)
-    {
-        PROFILE_SCOPE(LayerStackUpdate)
-        for (TRefPtr<FLayer>& Layer : LayerStack)
-        {
-            Layer->OnUpdate(DeltaTime);    
-        }
-    }
-    
-    void FApplication::PushLayer(const TRefPtr<FLayer>& InLayer)
-    {
-        LayerStack.PushLayer(InLayer);
-        InLayer->OnAttach();
-    }
-
-    void FApplication::PushOverlay(const TRefPtr<FLayer>& InLayer)
-    {
-        LayerStack.PushOverlay(InLayer);
-        InLayer->OnAttach();
-    }
-
-    void FApplication::PopLayer(const TRefPtr<FLayer>& InLayer)
-    {
-        LayerStack.PopLayer(InLayer);
-        InLayer->OnDetach();
-    }
-
-    void FApplication::PopOverlay(const TRefPtr<FLayer>& InLayer)
-    {
-        LayerStack.PopOverlay(InLayer);
-        InLayer->OnDetach();
-    }
-
-    void FApplication::RenderImGui(double DeltaTime)
-    {
-        if (AppSpecs.bRenderImGui)
-        {
-            PROFILE_SCOPE(ImGuiRenderUpdate)
-            FImGuiRenderer::BeginFrame();
-
-            for (auto& Layer : LayerStack)
-            {
-                Layer->ImGuiRender(DeltaTime);    
-            }
-        
-            FImGuiRenderer::EndFrame();
-        }
-    }
-
-    void FApplication::OnEvent(FEvent& Event)
-    {
-        for (auto& Layer : LayerStack)
-        {
-            Layer->OnEvent(Event);
-        }
-    }
-
-    FWindow& FApplication::GetWindow()
-    {
-        return *Get().GetSubsystem<WindowSubsystem>()->GetWindow();
-    }
-
-    void FApplication::SetCurrentScene(TSharedPtr<AScene> InScene)
-    {
-        CurrentScene = InScene;
+        return false;
     }
 
     bool FApplication::ShouldExit()
     {
-        return glfwWindowShouldClose(GetSubsystem<WindowSubsystem>()->GetWindow()->GetWindow()) || !bRunning;
+        return glfwWindowShouldClose(Window->GetWindow());
     }
 
 

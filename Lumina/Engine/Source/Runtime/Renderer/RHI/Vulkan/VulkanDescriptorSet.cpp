@@ -1,5 +1,5 @@
 #include "VulkanDescriptorSet.h"
-
+#include "Renderer/Swapchain.h"
 #include "VulkanBuffer.h"
 #include "VulkanImage.h"
 #include "VulkanRenderAPI.h"
@@ -91,7 +91,9 @@ namespace Lumina
     FVulkanDescriptorSet::FVulkanDescriptorSet(const FDescriptorSetSpecification& InSpec)
     : DescriptorSet(VK_NULL_HANDLE), Layout(VK_NULL_HANDLE)
     {
-        auto Device = FVulkanRenderContext::GetDevice();
+        FVulkanRenderContext* RenderContext = FRenderer::GetRenderContext<FVulkanRenderContext>();		
+
+        auto Device = RenderContext->GetDevice();
 
         TVector<VkDescriptorSetLayoutBinding> SetBindings;
         TVector<VkDescriptorBindingFlags> BindingFlags;
@@ -123,25 +125,28 @@ namespace Lumina
 
         vkCreateDescriptorSetLayout(Device, &LayoutCreateInfo, nullptr, &Layout);
 
-        std::vector<VkDescriptorSet> set = FVulkanRenderAPI::AllocateDescriptorSets(Layout, 1);
+        TVector<VkDescriptorSet> set = FRenderer::GetRenderContext<FVulkanRenderContext>()->AllocateDescriptorSets(Layout, 1);
         DescriptorSet = set[0];
     }
 
     FVulkanDescriptorSet::~FVulkanDescriptorSet()
     {
-        VkDevice Device = FVulkanRenderContext::GetDevice();
+        FVulkanRenderContext* RenderContext = FRenderer::GetRenderContext<FVulkanRenderContext>();
+        VkDevice Device = RenderContext->GetDevice();
+        
         AssertMsg(Device != VK_NULL_HANDLE, "Device was null when trying to destroy a descriptor set!");
         if (Layout != VK_NULL_HANDLE)
         {
             vkDestroyDescriptorSetLayout(Device, Layout, nullptr);
         }
         
-        FVulkanRenderAPI::FreeDescriptorSets({ DescriptorSet });
+        FRenderer::GetRenderContext<FVulkanRenderContext>()->FreeDescriptorSets({ DescriptorSet });
     }
 
     void FVulkanDescriptorSet::Write(uint16 Binding, uint16 ArrayElement, TRefPtr<FBuffer> Buffer, uint64 Size, uint64 Offset)
     {
-        auto Device = FVulkanRenderContext::GetDevice();
+        FVulkanRenderContext* RenderContext = FRenderer::GetRenderContext<FVulkanRenderContext>();
+        VkDevice Device = RenderContext->GetDevice();
         
         TRefPtr<FVulkanBuffer> vkBuffer = RefPtrCast<FVulkanBuffer>(Buffer);
 
@@ -165,7 +170,9 @@ namespace Lumina
 
     void FVulkanDescriptorSet::Write(uint16 Binding, uint16 ArrayElement, TRefPtr<FImage> Image, TRefPtr<FImageSampler> Sampler)
     {
-        auto Device = FVulkanRenderContext::GetDevice();
+        FVulkanRenderContext* RenderContext = FRenderer::GetRenderContext<FVulkanRenderContext>();
+        VkDevice Device = RenderContext->GetDevice();
+        
         TRefPtr<FVulkanImage> vkImage = RefPtrCast<FVulkanImage>(Image);
         TRefPtr<FVulkanImageSampler> vk_sampler = RefPtrCast<FVulkanImageSampler>(Sampler);
 
@@ -188,7 +195,8 @@ namespace Lumina
 
     void FVulkanDescriptorSet::Write(uint16 Binding, uint16 ArrayElement, TVector<TRefPtr<FImage>> Images, TRefPtr<FImageSampler> Sampler)
     {
-        auto Device = FVulkanRenderContext::GetDevice();
+        FVulkanRenderContext* RenderContext = FRenderer::GetRenderContext<FVulkanRenderContext>();
+        VkDevice Device = RenderContext->GetDevice();
     
         TVector<VkDescriptorImageInfo> DescriptorImageInfos(Images.size());
 
@@ -218,7 +226,8 @@ namespace Lumina
     {
         FDescriptorSet::SetFriendlyName(InName);
 
-        VkDevice Device = FVulkanRenderContext::GetDevice();
+        FVulkanRenderContext* RenderContext = FRenderer::GetRenderContext<FVulkanRenderContext>();
+        VkDevice Device = RenderContext->GetDevice();
 
         VkDebugUtilsObjectNameInfoEXT NameInfo = {};
         NameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
@@ -226,12 +235,12 @@ namespace Lumina
         NameInfo.objectType = VK_OBJECT_TYPE_DESCRIPTOR_SET;
         NameInfo.objectHandle = reinterpret_cast<uint64_t>(DescriptorSet);
         
-        FVulkanRenderContext::GetRenderContextFunctions().DebugUtilsObjectNameEXT(Device, &NameInfo);
+        RenderContext->GetRenderContextFunctions().DebugUtilsObjectNameEXT(Device, &NameInfo);
 
         NameInfo.objectType = VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT;
         NameInfo.objectHandle = reinterpret_cast<uint64_t>(Layout);
 
-        FVulkanRenderContext::GetRenderContextFunctions().DebugUtilsObjectNameEXT(Device, &NameInfo);
+        RenderContext->GetRenderContextFunctions().DebugUtilsObjectNameEXT(Device, &NameInfo);
 
     }
 }

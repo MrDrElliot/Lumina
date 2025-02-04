@@ -10,7 +10,6 @@
 namespace Lumina
 {
 
-	class FVulkanSwapChain;
 	class FRendererContext;
 	
 	class FWindow
@@ -23,9 +22,9 @@ namespace Lumina
 		virtual ~FWindow();
 
 
-		virtual void Init();
-		virtual void OnUpdate(double DeltaTime);
-		virtual void Shutdown();
+		void Init();
+		void Shutdown();
+		void ProcessMessages();
 
 		GLFWwindow* GetWindow() const { return Window; }
 		bool IsMinimized() const;

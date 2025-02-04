@@ -1,6 +1,5 @@
 #pragma once
 
-#include <filesystem>
 #include <glm/glm.hpp>
 #include "PipelineStage.h"
 #include "RenderResource.h"

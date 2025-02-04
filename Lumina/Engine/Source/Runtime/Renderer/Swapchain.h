@@ -1,13 +1,10 @@
 #pragma once
 
-#include <vulkan/vulkan_core.h>
-
 #include "Renderer.h"
 
 
 namespace Lumina
 {
-    class FVulkanImage;
 
     struct FSwapchainSpec
     {
@@ -15,23 +12,21 @@ namespace Lumina
         glm::ivec2 Extent;
         uint8 FramesInFlight;
     };
-
-    struct FSwapchainSemaphores
-    {
-        VkSemaphore Render;
-        VkSemaphore Present;
-    };
     
     class FSwapchain : public FRenderResource
     {
     public:
 
-        FSwapchain() :Specifications({}), bDirty(false) {}
+        FSwapchain()
+            :Specifications({})
+            , bDirty(false)
+            , bWasResizedThisFrame(false)
+        {}
         
         static TRefPtr<FSwapchain> Create(const FSwapchainSpec& InSpec);
 
-        virtual void CreateSurface(const FSwapchainSpec& InSpec) = 0;
-        virtual void CreateSwapchain(const FSwapchainSpec& InSpec) = 0;
+        virtual void CreateSurface(IRenderContext* Context, const FSwapchainSpec& InSpec) = 0;
+        virtual void CreateSwapchain(IRenderContext* Context, const FSwapchainSpec& InSpec) = 0;
         virtual void CreateImages() = 0;
 
         virtual void DestroySurface() = 0;
@@ -40,20 +35,26 @@ namespace Lumina
         
         virtual bool BeginFrame() = 0;
         virtual void EndFrame() = 0;
-
+        
         inline bool WasSwapchainResizedThisFrame() const { return bWasResizedThisFrame; }
         inline bool IsSwapchainDirty() const { return bDirty; }
         inline void SetSwapchainDirty() { bDirty = true; }
+
+        TRefPtr<FImage>& GetCurrentImage() { return Images[CurrentImageIndex]; }
         
-        virtual uint32 GetCurrentFrameIndex() = 0;
-        virtual uint32 GetCurrentImageIndex() = 0;
+        uint32 GetCurrentFrameIndex() { return CurrentFrameIndex; }
+        uint32 GetCurrentImageIndex() { return CurrentImageIndex; }
         FSwapchainSpec& GetSpecs() { return Specifications; }
 
     protected:
         
         FSwapchainSpec Specifications;
+        TVector<TRefPtr<FImage>>  Images;
+
         uint8 bDirty:1;
         uint8 bWasResizedThisFrame:1;
+        uint32 CurrentFrameIndex = 0;
+        uint32 CurrentImageIndex = 0;
 
     };
 }

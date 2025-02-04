@@ -14,8 +14,8 @@ namespace Lumina
         FVulkanSwapchain(const FSwapchainSpec& InSpec);
         
 
-        void CreateSurface(const FSwapchainSpec& InSpec) override;
-        void CreateSwapchain(const FSwapchainSpec& InSpec) override;
+        void CreateSurface(IRenderContext* Context, const FSwapchainSpec& InSpec) override;
+        void CreateSwapchain(IRenderContext* Context, const FSwapchainSpec& InSpec) override;
         void CreateImages() override;
         void DestroySurface() override;
         void DestroySwapchain() override;
@@ -24,33 +24,26 @@ namespace Lumina
         bool BeginFrame() override;
         void EndFrame() override;
 
-        uint32 GetCurrentFrameIndex() override { return CurrentFrameIndex; }
-        uint32 GetCurrentImageIndex() override { return CurrentImageIndex;  }
-
         VkSemaphore             GetAquireSemaphore() { return AquireSemaphores[CurrentFrameIndex]; }
         VkSemaphore             GetPresentSemaphore() { return PresentSemaphores[CurrentImageIndex]; }
 
         VkFence                 GetCurrentFence() { return Fences[CurrentFrameIndex]; }
-        TRefPtr<FVulkanImage>&  GetCurrentImage() { return Images[CurrentImageIndex]; }
         VkSwapchainKHR          GetSwapchain() { return Swapchain; }
         VkSurfaceKHR            GetSurface() { return Surface; }
         VkFormat&               GetFormat() { return Format; }
         
     private:
 
-        VkSurfaceKHR    Surface = VK_NULL_HANDLE;
-        VkFormat        Format;
+        VkSurfaceKHR                    Surface = VK_NULL_HANDLE;
+        VkFormat                        Format;
 
-        VkSwapchainKHR      Swapchain = VK_NULL_HANDLE;
-        VkSurfaceFormatKHR  SurfaceFormat;
-        VkPresentModeKHR    CurrentPresentMode;
+        VkSwapchainKHR                  Swapchain = VK_NULL_HANDLE;
+        VkSurfaceFormatKHR              SurfaceFormat;
+        VkPresentModeKHR                CurrentPresentMode;
         
-        TVector<TRefPtr<FVulkanImage>>  Images;
         TVector<VkSemaphore>            PresentSemaphores;
         TVector<VkSemaphore>            AquireSemaphores;
         TVector<VkFence>                Fences;
         
-        uint32 CurrentFrameIndex = 0;
-        uint32 CurrentImageIndex = 0;
     };
 }

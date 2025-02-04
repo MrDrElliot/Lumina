@@ -8,7 +8,9 @@ project "Sandbox"
 
 	targetdir ("../Binaries/" .. outputdir .. "/%{prj.name}")
 	objdir ("../Intermediates/" .. outputdir .. "/%{prj.name}")
-	
+		
+	removedefines { "WITH_DEVELOPMENT_TOOLS" }
+		
 	links
 	 {
 		"Lumina",
@@ -37,8 +39,6 @@ project "Sandbox"
 		
 	}
 
-
-	defines { "GLM_FORCE_DEPTH_ZERO_TO_ONE", }
 
 	filter "system:linux"
 		defines { "LE_PLATFORM_LINUX" }

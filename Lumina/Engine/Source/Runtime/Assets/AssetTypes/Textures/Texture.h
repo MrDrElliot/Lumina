@@ -11,14 +11,17 @@ namespace Lumina
     class ATexture : public IAsset
     {
     public:
+        
+        ATexture(const FAssetPath& InPath)
+            : IAsset(InPath)
+        {}
 
-        DECLARE_ASSET("Texture", Texture, 1);
+        DECLARE_ASSET("Texture", Texture, 1)
         
         void Serialize(FArchive& Ar) override;
-        void CreateImage();
+        void PostLoad() override;
+        
         TRefPtr<FImage> GetImage() { return Image; }
-
-        void SetImage(const TRefPtr<FImage>& InImage, const FImageSpecification& Spec);
     
     private:
         

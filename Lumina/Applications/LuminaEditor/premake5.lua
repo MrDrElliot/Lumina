@@ -18,7 +18,7 @@ project "Editor"
 	  	"$(VULKAN_SDK)/lib/vulkan-1.lib",
 	    "%{VULKAN_SDK}/lib/shaderc.lib",  	
 	 }
-
+	 
 	files
 	{
 		"Editor/**.h",
@@ -34,10 +34,6 @@ project "Editor"
 	    "%{LuminaEngineDirectory}/Lumina/Engine/Source/",
 	    "%{LuminaEngineDirectory}/Lumina/Engine/Source/Runtime/",
 		includedependencies();
-	}
-
-	defines {
-	    "GLM_FORCE_DEPTH_ZERO_TO_ONE",
 	}
 	 
 	filter "system:linux"

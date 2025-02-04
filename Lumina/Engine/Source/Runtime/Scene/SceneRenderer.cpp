@@ -4,6 +4,7 @@
 #include "Scene.h"
 #include "ScenePrimitives.h"
 #include "Assets/AssetRegistry/AssetRegistry.h"
+#include "Assets/AssetTypes/Mesh/StaticMesh/StaticMesh.h"
 #include "Assets/AssetTypes/Textures/Texture.h"
 #include "Core/Application/Application.h"
 #include "glm/gtc/type_ptr.hpp"
@@ -12,6 +13,7 @@
 #include "Components/LightComponent.h"
 #include "Math/Transform.h"
 #include "Components/MeshComponent.h"
+#include "Core/Performance/PerformanceTracker.h"
 #include "Core/Windows/Window.h"
 #include "Entity/Entity.h"
 #include "Paths/Paths.h"
@@ -19,18 +21,19 @@
 #include "Renderer/DescriptorSet.h"
 #include "Renderer/Material.h"
 #include "Renderer/Pipeline.h"
+#include "Renderer/RenderContext.h"
 #include "Renderer/Renderer.h"
 #include "Renderer/ShaderLibrary.h"
 #include "Renderer/Swapchain.h"
 
 namespace Lumina
 {
-    TSharedPtr<FSceneRenderer> FSceneRenderer::Create(AScene* InScene)
+    TSharedPtr<FSceneRenderer> FSceneRenderer::Create(FScene* InScene)
     {
         return MakeSharedPtr<FSceneRenderer>(InScene);
     }
 
-    FSceneRenderer::FSceneRenderer(AScene* InScene)
+    FSceneRenderer::FSceneRenderer(FScene* InScene)
         :CurrentScene(InScene)
     {
         CreateImages();
@@ -101,23 +104,16 @@ namespace Lumina
         GridUBO->UploadData(0, &GridData, sizeof(FGridData));
         GridDescriptorSets[CurrentFrameIndex]->Write(0, 0, GridUBO, sizeof(FGridData), 0);
         
-        FRenderer::RenderVertices(6);
+        FRenderer::DrawVertices(6);
 
         FRenderer::EndRender();
     }
-
-    void FSceneRenderer::BeginScene(TSharedPtr<FCamera> InCamera)
-    {
-        Camera = InCamera;
-                
-        InCamera->Update(FApplication::GetDeltaTime());
-    }
-
-    void FSceneRenderer::EndScene()
+    
+    void FSceneRenderer::Update(double DeltaTime)
     {
         PROFILE_SCOPE(SceneRender)
         
-        if(FRenderer::GetSwapchain()->WasSwapchainResizedThisFrame())
+        if(FRenderer::GetRenderContext()->GetSwapchain()->WasSwapchainResizedThisFrame())
         {
             OnSwapchainResized();
         }
@@ -146,7 +142,7 @@ namespace Lumina
                 EPipelineAccess::COLOR_ATTACHMENT_WRITE,
                 EPipelineAccess::TRANSFER_READ);
 
-            FRenderer::GetSwapchainImage()->SetLayout(CommandBuffer,
+            FRenderer::GetRenderContext()->GetSwapchain()->GetCurrentImage()->SetLayout(CommandBuffer,
                          EImageLayout::TRANSFER_DST,
                  EPipelineStage::TOP_OF_PIPE,
                  EPipelineStage::TRANSFER,
@@ -219,7 +215,7 @@ namespace Lumina
 
             CurrentScene->ForEachComponent<FMeshComponent>([&, this](uint32 Current, entt::entity& entity, FMeshComponent& Component)
             {
-                if (Component.StaticMesh.GetPtr())
+                if (Component.StaticMesh.IsLoaded())
                 {
                     Component.Material = MaterialInstance;
 
@@ -303,14 +299,14 @@ namespace Lumina
             {
                 for (auto StaticMesh : Meshes)
                 {
-                    
                     Data.ModelIndex = testIndex++;
                     Data.MaterialIndex = 0;
                     
-                    FRenderer::PushConstants(EShaderStage::VERTEX, 0, sizeof(FTransientData), &Data);
-                    FRenderer::PushConstants(EShaderStage::FRAGMENT, 16, sizeof(FMaterialAttributes), &Attributes);
+                    FRenderer::PushConstants(GraphicsPipeline, EShaderStage::VERTEX, 0, sizeof(FTransientData), &Data);
+                    FRenderer::PushConstants(GraphicsPipeline, EShaderStage::FRAGMENT, 16, sizeof(FMaterialAttributes), &Attributes);
                     
-                    FRenderer::RenderStaticMeshWithMaterial(GraphicsPipeline, StaticMesh, TestMaterial);
+                    FRenderer::DrawIndexed(StaticMesh->GetVertexBuffer(), StaticMesh->GetIndexBuffer());
+                    
                 }
             }
         }
@@ -470,9 +466,10 @@ namespace Lumina
 
     void FSceneRenderer::CreateImages()
     {
+        glm::uvec3 SwapchainSize = FRenderer::GetRenderContext()->GetSwapchain()->GetCurrentImage()->GetSpecification().Extent;
         FImageSpecification ImageSpecs = FImageSpecification::Default();
-        ImageSpecs.Extent.x = FRenderer::GetSwapchainImage()->GetSpecification().Extent.x;
-        ImageSpecs.Extent.y = FRenderer::GetSwapchainImage()->GetSpecification().Extent.y;
+        ImageSpecs.Extent.x = SwapchainSize.x;
+        ImageSpecs.Extent.y = SwapchainSize.y;
         ImageSpecs.Usage = EImageUsage::RENDER_TARGET;
         ImageSpecs.Type = EImageType::TYPE_2D;
         ImageSpecs.Format = EImageFormat::RGBA32_SRGB;
@@ -488,8 +485,8 @@ namespace Lumina
         }
 
         FImageSpecification DepthImageSpecs = FImageSpecification::Default();
-        DepthImageSpecs.Extent.x = FRenderer::GetSwapchainImage()->GetSpecification().Extent.x;
-        DepthImageSpecs.Extent.y = FRenderer::GetSwapchainImage()->GetSpecification().Extent.y;
+        DepthImageSpecs.Extent.x = SwapchainSize.x;
+        DepthImageSpecs.Extent.y = SwapchainSize.y;
         DepthImageSpecs.Usage = EImageUsage::DEPTH_BUFFER;
         DepthImageSpecs.Type = EImageType::TYPE_2D;
         DepthImageSpecs.Format = EImageFormat::D32;

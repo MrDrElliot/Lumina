@@ -7,15 +7,9 @@ namespace Lumina
         Ar << ImageSpec;
     }
 
-    void ATexture::CreateImage()
+    void ATexture::PostLoad()
     {
         Image = FImage::Create(ImageSpec);
         Image->SetFriendlyName("Image: ");
-    }
-
-    void ATexture::SetImage(const TRefPtr<FImage>& InImage, const FImageSpecification& Spec)
-    {
-        ImageSpec = Spec;
-        Image = InImage;
     }
 }

@@ -7,7 +7,9 @@ namespace Lumina
 {
     class FWindow;
     class FApplication;
-
+    class FSwapchain;
+    class FPipeline;
+    
     struct FQueueFamilyIndex 
     {
         uint32 Graphics;
@@ -16,23 +18,48 @@ namespace Lumina
         uint32 Present;
     };
     
-    class FRenderContext
+    class IRenderContext
     {
     public:
 
-        FRenderContext() = default;
-        virtual ~FRenderContext() = default;
+        IRenderContext(const FRenderConfig& InConfig)
+            : Config(InConfig)
+            , QueueFamilyIndex()
+        {}
 
-        static FRenderContext* Create(const FRenderConfig& InConfig);
-        virtual void Destroy() = 0;
+        virtual ~IRenderContext() = default;
+
+        virtual void Initialize() = 0;
         
-        static FQueueFamilyIndex GetQueueFamilyIndex() { return Instance->QueueFamilyIndex; }
+        FQueueFamilyIndex GetQueueFamilyIndex() { return QueueFamilyIndex; }
 
+        void SetCommandBufferForFrame(uint32 FrameIndex) { CurrentCommandBuffer = CommandBuffers[FrameIndex]; }
+        TRefPtr<FCommandBuffer> GetCommandBuffer() { return CurrentCommandBuffer; }
+        
+
+        template<typename T>
+        TRefPtr<T> GetCommandBuffer()
+        {
+            return RefPtrCast<T>(CurrentCommandBuffer);
+        }
+
+        TRefPtr<FSwapchain> GetSwapchain() const { return Swapchain; }
+
+        template<typename T>
+        TRefPtr<T> GetSwapchain()
+        {
+            return RefPtrCast<T>(Swapchain);
+        }
+    
     
     protected:
 
-        static FRenderContext* Instance;
-        FQueueFamilyIndex QueueFamilyIndex;
+        FRenderConfig                     Config;
+        TVector<TRefPtr<FCommandBuffer>>  CommandBuffers;
+        TRefPtr<FCommandBuffer>           CurrentCommandBuffer;
+        FQueueFamilyIndex                 QueueFamilyIndex;
+        TRefPtr<FSwapchain>               Swapchain;
+        TRefPtr<FPipeline>                CurrentBoundPipeline;
         
     };
 }

@@ -2,8 +2,10 @@
 
 #include "AssetTypes.h"
 #include "AssetHeader.h"
+#include "AssetRecord.h"
 #include "Core/Application/Application.h"
 #include "GUID/GUID.h"
+
 
 namespace Lumina
 {
@@ -16,27 +18,29 @@ namespace Lumina
     public:
         
         FAssetHandle() = default;
-        FAssetHandle(const FAssetPath& InPath) :AssetPath(InPath) {}
+        FAssetHandle(const FAssetPath& InPath, EAssetType InType) :AssetPath(InPath), AssetType(InType) {}
         virtual ~FAssetHandle() = default;
         
 
         /** Checks if we have a valid AssetID, but doesn't signify of the asset is loaded */
         FORCEINLINE bool IsSet() const { return AssetPath.IsValid(); }
-
-        FORCEINLINE void Clear() { Assert(AssetPtr == nullptr); AssetPath = {}; }
-
-        FORCEINLINE bool IsLoaded() const { return LoadState == EAssetLoadState::Loaded; }
+        
         
         FORCEINLINE const FAssetPath& GetAssetPath() const { return AssetPath; }
 
         FORCEINLINE EAssetType GetAssetType() const { return AssetType; }
+        
+        FORCEINLINE bool HasRecord() const { return AssetRecord != nullptr; }
 
-        FORCEINLINE uint32 GetReferenceCount() const { return AssetPtr.use_count(); }
+        FORCEINLINE EAssetLoadState GetLoadState() const { return HasRecord() ? AssetRecord->GetLoadState() : EAssetLoadState::Unloaded; }
+        FORCEINLINE bool IsLoaded() const { return GetLoadState() == EAssetLoadState::Loaded; }
+        FORCEINLINE bool IsUnLoaded() const { return GetLoadState() == EAssetLoadState::Unloaded; }
+        FORCEINLINE bool IsLoading() const { return GetLoadState() == EAssetLoadState::Unloading; }
+
 
         FORCEINLINE bool operator==(const FAssetHandle& Other) const { return AssetPath == Other.AssetPath; }
         FORCEINLINE bool operator!=(const FAssetHandle& Other) const { return AssetPath != Other.AssetPath; }
 
-        
         
         friend FArchive& operator << (FArchive& Ar, FAssetHandle& Data)
         {
@@ -49,17 +53,14 @@ namespace Lumina
 
     public:
 
-        /** Path to this asset */
+        /** Path to this asset, serialized. */
         FAssetPath                      AssetPath;
 
-        /** Serialized asset type for safety */
-        EAssetType                      AssetType = EAssetType::Max;
+        /** Type this asset is, serailized. */
+        EAssetType                      AssetType;
 
-        /** This state is to guard against accessing an asset which may have a valid pointer, but is not loaded */
-        eastl::atomic<EAssetLoadState>  LoadState = EAssetLoadState::Unloaded;
-
-        /** Having a valid pointer does not represent an asset being in a fully loaded and safe state */
-        TSharedPtr<IAsset>              AssetPtr;
+        /** Transient record containing information about this asset. */
+        const FAssetRecord*             AssetRecord;
         
     };
 
@@ -72,17 +73,20 @@ namespace Lumina
         //static_assert(std::is_base_of_v<IAsset, T>, "T must be derrived from IAsset");
         
         TAssetHandle() = default;
-        TAssetHandle(const FAssetPath& InPath) : FAssetHandle(InPath) { Assert(InPath.IsValid()); }
+        TAssetHandle(const FAssetPath& InPath, EAssetType InType)
+            : FAssetHandle(InPath, InType)
+        {
+            Assert(InPath.IsValid());
+        }
         
-        FORCEINLINE bool operator == (nullptr_t) const { return AssetPtr == nullptr; }
-        FORCEINLINE bool operator != (nullptr_t) const { return AssetPtr != nullptr; }
+        FORCEINLINE bool operator == (nullptr_t) const { return AssetRecord == nullptr; }
+        FORCEINLINE bool operator != (nullptr_t) const { return AssetRecord != nullptr; }
         //FORCEINLINE bool operator == (const FAssetHandle& Other) const { return AssetPath == Other.AssetPath; }
         //FORCEINLINE bool operator != (const FAssetHandle& Other) const { return AssetPath != Other.AssetPath; }
 
-        FORCEINLINE TSharedPtr<T> GetPtr() const { Assert(AssetPtr != nullptr); return eastl::dynamic_shared_pointer_cast<T>(AssetPtr); }
-
-        FORCEINLINE TSharedPtr<T> operator ->()  { Assert(AssetPtr != nullptr); return GetPtr(); }
-
+        FORCEINLINE const T* GetPtr() { Assert(IsLoaded()); return AssetRecord->GetAssetPtr(); }
+        FORCEINLINE const T* operator ->()  { return GetPtr(); }
+        
         
         template<typename U>
         FORCEINLINE bool operator == (const TAssetHandle<T>& Other) { return AssetPath = Other.AssetPath; }
@@ -95,7 +99,7 @@ namespace Lumina
         {
             Ar << Data.AssetPath;
             Ar << Data.AssetType;
-            
+
             return Ar;
         }
         

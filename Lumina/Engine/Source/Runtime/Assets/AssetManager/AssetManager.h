@@ -23,13 +23,16 @@ namespace Lumina
 		void Initialize() override;
 		void Deinitialize() override;
 		
-		void LoadAsset(FAssetHandle& Asset);
+		void LoadAsset(FAssetHandle& InAsset);
+		void UnloadAsset(FAssetHandle& InAsset);
 
-		void NotifyAssetRequestCompleted(FAssetLoadRequest* Request);
+		void NotifyAssetRequestCompleted(FAssetRequest* Request);
+
 		
 	private:
 
-		FAssetLoadRequest* FindOrCreateRequest(FAssetHandle& Asset);
+		FAssetRecord* FindOrCreateAssetRecord(const FAssetHandle& InAsset);
+		FAssetRequest* TryFindActiveRequest(FAssetRecord* Record);
 
 		void ProcessAssetRequests();
 	
@@ -42,14 +45,13 @@ namespace Lumina
 
 		FFactoryRegistry							FactoryRegistry;
 		
-		THashMap<FAssetHandle, TWeakPtr<IAsset>>	AssetRecord;
+		THashMap<FAssetPath, FAssetRecord*>			AssetRecord;
 
-		TQueue<FAssetLoadRequest*>					LoadingQueue;
-		TSet<FAssetLoadRequest*>					ActiveLoadRequests;
+		TQueue<FAssetRequest*>						RequestQueue;
+		TSet<FAssetRequest*>						ActiveRequests;
 
 	};
 	
-
 
 	//--------------------------------------------------------------------------
 	// Template definitions.

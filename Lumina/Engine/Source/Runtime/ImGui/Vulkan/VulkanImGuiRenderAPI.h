@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Core/LayerStack.h"
 #include "ImGui/ImGuiRenderAPI.h"
 
 namespace Lumina

@@ -10,13 +10,12 @@
 
 namespace Lumina
 {
-    
-    ELoadResult FTextureFactory::CreateNew(FAssetHandle& InHandle)
+    ELoadResult FTextureFactory::CreateNew(FAssetRecord* InRecord)
     {
-        auto Texture = MakeSharedPtr<ATexture>();
+        ATexture* Texture = new ATexture(InRecord->GetAssetPath());
 
         TVector<uint8> Buffer;
-        if (!FFileHelper::LoadFileToArray(Buffer, InHandle.AssetPath.GetPathAsString()))
+        if (!FFileHelper::LoadFileToArray(Buffer, InRecord->GetAssetPath().GetPathAsString()))
         {
             return ELoadResult::Failed;
         }
@@ -26,15 +25,15 @@ namespace Lumina
         FAssetHeader Header;
         Reader << Header;
 
-        if (Header.Type != InHandle.AssetType)
+        if (Header.Type != InRecord->GetAssetType())
         {
             return ELoadResult::Failed;
         }
+
+        InRecord->SetDependencies(eastl::move(Header.Dependencies));
         
         Texture->Serialize(Reader);
-        Texture->CreateImage();
-
-        InHandle.AssetPtr = Texture;
+        InRecord->SetAssetPtr(Texture);
         
         return ELoadResult::Succeeded;
     }

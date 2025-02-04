@@ -1,8 +1,8 @@
 #include "VulkanBuffer.h"
-
+#include "Renderer/Pipeline.h"
+#include "Renderer/Swapchain.h"
 #include "VulkanMemoryAllocator.h"
 #include "VulkanRenderContext.h"
-#include "Core/LuminaMacros.h"
 #include "glm/glm.hpp"
 #include "Math/Alignment.h"
 
@@ -36,8 +36,10 @@ namespace Lumina
 	}
     
 	FVulkanBuffer::FVulkanBuffer(const FDeviceBufferSpecification& Spec)
-	: Buffer(VK_NULL_HANDLE), Specification(Spec), Data(nullptr)
+	: Buffer(VK_NULL_HANDLE)
 	{
+		Specification = Spec;
+		
 		FVulkanMemoryAllocator* Alloc = FVulkanMemoryAllocator::Get();
 		VmaAllocationCreateFlags VmaFlags = convert(Spec.MemoryUsage);
 		
@@ -55,10 +57,10 @@ namespace Lumina
 	}
 
 	FVulkanBuffer::FVulkanBuffer(const FDeviceBufferSpecification& Spec, void* InData, uint64 DataSize)
-	: Buffer(VK_NULL_HANDLE), Specification(Spec), Data(InData)
+	: Buffer(VK_NULL_HANDLE)
 	{
-		AssertMsg(InData, "Cannot create a Vulkan Buffer with empty data!");
-
+		Specification = Spec;
+		
 		FVulkanMemoryAllocator* Alloc = FVulkanMemoryAllocator::Get();
 		VmaAllocationCreateFlags AllocationCreateFlags = convert(Spec.MemoryUsage);
 
@@ -84,15 +86,14 @@ namespace Lumina
 	{
 		FVulkanMemoryAllocator* Alloc = FVulkanMemoryAllocator::Get();
 		Alloc->DestroyBuffer(Buffer, Allocation);
-
-		Data = nullptr;
 	}
 
 	void FVulkanBuffer::SetFriendlyName(const FString& InName)
 	{
 		FBuffer::SetFriendlyName(InName);
 
-		VkDevice Device = FVulkanRenderContext::GetDevice();
+		FVulkanRenderContext* RenderContext = FRenderer::GetRenderContext<FVulkanRenderContext>();		
+		VkDevice Device = RenderContext->GetDevice();
         
 		VkDebugUtilsObjectNameInfoEXT NameInfo = {};
 		NameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
@@ -101,7 +102,7 @@ namespace Lumina
 		NameInfo.objectHandle = reinterpret_cast<uint64_t>(Buffer);
 
 
-		FVulkanRenderContext::GetRenderContextFunctions().DebugUtilsObjectNameEXT(Device, &NameInfo);
+		RenderContext->GetRenderContextFunctions().DebugUtilsObjectNameEXT(Device, &NameInfo);
 	}
 
 	FDeviceBufferSpecification FVulkanBuffer::GetSpecification() const
@@ -115,7 +116,8 @@ namespace Lumina
 
 		if (Specification.MemoryUsage == EDeviceBufferMemoryUsage::NO_HOST_ACCESS) 
 		{
-			FVulkanRenderContext& RenderContext = FVulkanRenderContext::Get();
+			FVulkanRenderContext* RenderContext = FRenderer::GetRenderContext<FVulkanRenderContext>();		
+
 		
 			FDeviceBufferSpecification StagingBufferSpec = {};
 			StagingBufferSpec.Size = DataSize;
@@ -130,7 +132,7 @@ namespace Lumina
 			BufferCopy.srcOffset = 0;
 			BufferCopy.dstOffset = 0;
 		
-			VkCommandBuffer CmdBuffer = RenderContext.AllocateTransientCommandBuffer();
+			VkCommandBuffer CmdBuffer = RenderContext->AllocateTransientCommandBuffer();
 		
 			vkCmdCopyBuffer(CmdBuffer, StagingBuffer->GetBuffer(), Buffer, 1, &BufferCopy);
 		
@@ -154,9 +156,7 @@ namespace Lumina
 				nullptr
 			);
 		
-			RenderContext.ExecuteTransientCommandBuffer(CmdBuffer);
-			StagingBuffer->Release();
-			
+			RenderContext->ExecuteTransientCommandBuffer(CmdBuffer);
 		}
 		else 
 		{
@@ -174,7 +174,7 @@ namespace Lumina
 		if (Specification.BufferUsage == EDeviceBufferUsage::INDEX_BUFFER) 
 		{
 			
-			FIndexBufferData* IboData = static_cast<FIndexBufferData*>(Data);
+			FIndexBufferData* IboData = static_cast<FIndexBufferData*>(InData);
 			AssertMsg(IboData, "Invalid Index Buffer!");
 
 			
@@ -190,7 +190,7 @@ namespace Lumina
 		
 		else if (Specification.BufferUsage == EDeviceBufferUsage::VERTEX_BUFFER)
 		{
-			FVertexBufferData* VBOData = static_cast<FVertexBufferData*>(Data);
+			FVertexBufferData* VBOData = static_cast<FVertexBufferData*>(InData);
 			AssertMsg(VBOData, "Invalid Vertex Buffer!");
 			
 			VBOData->VertexCount = DataSize / sizeof(float);
@@ -200,7 +200,10 @@ namespace Lumina
 	uint64 FVulkanBuffer::GetAlignedSizeForBuffer(uint64 Size, EDeviceBufferUsage Usage)
 	{
 		VkPhysicalDeviceProperties DeviceProps;
-		FVulkanRenderContext::GetPhysicalDeviceProperties(DeviceProps);
+		FVulkanRenderContext* RenderContext = FRenderer::GetRenderContext<FVulkanRenderContext>();		
+	
+		
+		RenderContext->GetPhysicalDeviceProperties(DeviceProps);
     
 		uint64 MinAlignment = 1;  // Default alignment
     

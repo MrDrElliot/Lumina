@@ -19,7 +19,6 @@ namespace Lumina
 
         FVulkanMemoryAllocator();
         ~FVulkanMemoryAllocator();
-        void Shutdown() override;
         
         VmaAllocation AllocateBuffer(VkBufferCreateInfo* CreateInfo, VmaAllocationCreateFlags Flags, VkBuffer* vkBuffer, const char* AllocationName);
         VmaAllocation AllocateImage(VkImageCreateInfo* CreateInfo, VmaAllocationCreateFlags Flags, VkImage* vkImage, const char* AllocationName);

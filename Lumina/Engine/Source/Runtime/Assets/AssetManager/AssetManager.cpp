@@ -1,6 +1,8 @@
 
 #include "AssetManager.h"
 
+#include "Core/Performance/PerformanceTracker.h"
+
 namespace Lumina
 {
     FAssetManager::FAssetManager()
@@ -27,27 +29,79 @@ namespace Lumina
         
     }
 
-    void FAssetManager::LoadAsset(FAssetHandle& Asset)
+    void FAssetManager::LoadAsset(FAssetHandle& InAsset)
     {
-        FAssetLoadRequest* ActiveRequest = FindOrCreateRequest(Asset);
-        LoadingQueue.push(ActiveRequest);
+        FAssetRecord* FoundRecord = FindOrCreateAssetRecord(InAsset);
+        Assert(FoundRecord);
+        InAsset.AssetRecord = FoundRecord;
+
+        if (FoundRecord->IsLoaded() && FoundRecord->GetAssetPtr() != nullptr && FoundRecord->GetReferenceCount() > 0)
+        {
+            FoundRecord->AddRef();
+        }
+        
+        FAssetRequest* ActiveRequest = TryFindActiveRequest(FoundRecord);
+        Assert(ActiveRequest);
+        
+        RequestQueue.push(ActiveRequest);
     }
 
-    void FAssetManager::NotifyAssetRequestCompleted(FAssetLoadRequest* Request)
+    void FAssetManager::UnloadAsset(FAssetHandle& InAsset)
+    {
+        FAssetRecord* FoundRecord = FindOrCreateAssetRecord(InAsset);
+        Assert(FoundRecord);
+
+        if (FoundRecord->GetReferenceCount() > 0)
+        {
+            FoundRecord->Release();
+        }
+        else
+        {
+            FoundRecord->SetLoadingState(EAssetLoadState::Unloaded);
+            FoundRecord->FreeAssetMemory();
+        }
+    }
+
+    void FAssetManager::NotifyAssetRequestCompleted(FAssetRequest* Request)
     {
         
+
+        delete Request;
     }
 
-    FAssetLoadRequest* FAssetManager::FindOrCreateRequest(FAssetHandle& Asset)
+    FAssetRecord* FAssetManager::FindOrCreateAssetRecord(const FAssetHandle& InAsset)
     {
-        FAssetLoadRequest* NewRequest = nullptr;
-        auto It = eastl::find(ActiveLoadRequests.begin(), ActiveLoadRequests.end(), Asset);
-        if (It == ActiveLoadRequests.end())
+        Assert(InAsset.IsSet());
+        FRecursiveScopeLock ScopeLock(RecursiveMutex);
+
+        FAssetRecord* Record;
+        auto const Itr = AssetRecord.find(InAsset.GetAssetPath());
+        if (Itr == AssetRecord.end())
         {
-            EAssetType AssetType = Asset.AssetType;
-            FFactory* Factory = FactoryRegistry.GetFactory(AssetType);
+            Record = new FAssetRecord(InAsset.GetAssetPath(), InAsset.GetAssetType());
+        }
+        else
+        {
+            Record = Itr->second;
+        }
+
+        return Record;
+        
+    }
+    
+    FAssetRequest* FAssetManager::TryFindActiveRequest(FAssetRecord* Record)
+    {
+        FAssetRequest* NewRequest = nullptr;
+        auto It = eastl::find_if(ActiveRequests.begin(), ActiveRequests.end(), [Record] (const FAssetRequest* Request)
+        {
+            return Request->GetAssetRecord() == Record;
+        });
+        
+        if (It == ActiveRequests.end())
+        {
             
-            NewRequest = new FAssetLoadRequest(Asset, Factory);
+            FFactory* Factory = FactoryRegistry.GetFactory(Record->GetAssetType());
+            NewRequest = new FAssetRequest(Record, Factory);
         }
         else
         {
@@ -65,24 +119,23 @@ namespace Lumina
             
             FRecursiveScopeLock ScopeLock(RecursiveMutex);
 
-            FAssetLoadRequest::FLoadRequestCallbackContext Context;
+            FAssetRequest::FRequestCallbackContext Context;
             Context.LoadAssetCallback = [this] (FAssetHandle& Handle) { LoadAsset(Handle); };
 
             
-            while (!LoadingQueue.empty())
+            while (!RequestQueue.empty())
             {
-                FAssetLoadRequest* Request = LoadingQueue.front();
+                FAssetRequest* Request = RequestQueue.front();
                 
                 if (Request->Update(Context))
                 {
                     NotifyAssetRequestCompleted(Request);
                 }
                 
-                LoadingQueue.pop();
+                RequestQueue.pop();
             }
 
             
-
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
     }

@@ -1,6 +1,7 @@
 #pragma once
-#include <string>
 
+#include "Containers/String.h"
+#include <sstream>
 
 namespace Lumina
 {
@@ -87,6 +88,6 @@ virtual const char* GetName() const override { return #type; }
 
 	inline std::ostream& operator<<(std::ostream& os, const FEvent& e)
 	{
-		return os << e.ToString().c_str();
+		return os << e.GetName();
 	}
 }

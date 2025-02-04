@@ -3,13 +3,13 @@
 
 namespace Lumina
 {
-    class AScene;
+    class FScene;
 
     class SceneOutliner : public EditorImGuiWindow
     {
     public:
 
-        SceneOutliner(const eastl::weak_ptr<AScene>& InScene)
+        SceneOutliner(const eastl::weak_ptr<FScene>& InScene)
         {
             mScene = InScene;
             Name = "Scene Outliner";
@@ -25,7 +25,7 @@ namespace Lumina
 
     private:
 
-        eastl::weak_ptr<AScene> mScene;
+        eastl::weak_ptr<FScene> mScene;
     
     };
 }

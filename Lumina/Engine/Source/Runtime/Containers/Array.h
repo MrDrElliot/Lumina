@@ -18,7 +18,7 @@
 namespace Lumina
 {
     //-------------------------------------------------------------------------
-    // Most commonly used containers aliases
+    // Commonly used containers aliases
     //-------------------------------------------------------------------------
 
     template<typename T> using TVector =                        eastl::vector<T>;
@@ -39,7 +39,7 @@ namespace Lumina
 
 
     //-------------------------------------------------------------------------
-    // Serialization of Containers.
+    // Serialization for containers.
     //-------------------------------------------------------------------------
 
     template<typename ValueType>

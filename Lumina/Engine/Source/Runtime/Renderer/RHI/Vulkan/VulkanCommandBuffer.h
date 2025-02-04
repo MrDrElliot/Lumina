@@ -10,7 +10,6 @@ namespace Lumina
     {
     public:
 
-        FVulkanCommandBuffer();
         FVulkanCommandBuffer(ECommandBufferLevel InLevel, ECommandBufferType InBufferType, ECommandType InCmdType);
         ~FVulkanCommandBuffer() override;
 
@@ -24,13 +23,8 @@ namespace Lumina
         VkCommandBuffer& GetCommandBuffer() { return CommandBuffer; }
 
     private:
-
-
-        VkCommandBuffer CommandBuffer;
         
-        ECommandBufferLevel Level;
-        ECommandBufferType BufferType;
-        ECommandType CmdType;
+        VkCommandBuffer CommandBuffer;
 
         inline static std::shared_mutex SubmissionMutex;
     

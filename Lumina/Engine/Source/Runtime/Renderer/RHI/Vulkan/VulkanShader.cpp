@@ -1,8 +1,8 @@
 #include "VulkanShader.h"
-
+#include "Renderer/Pipeline.h"
 #include "VulkanRenderContext.h"
 #include "Source/Runtime/Log/Log.h"
-
+#include "Renderer/Swapchain.h"
 #include "SPIRV-Reflect/spirv_reflect.h"
 
 namespace Lumina
@@ -99,7 +99,9 @@ namespace Lumina
 	
     FVulkanShader::FVulkanShader(const TVector<FShaderData>& InData, const FString& Tag)
 	{
-		auto Device = FVulkanRenderContext::GetDevice();
+		FVulkanRenderContext* RenderContext = FRenderer::GetRenderContext<FVulkanRenderContext>();		
+
+		VkDevice Device = RenderContext->GetDevice();
 
 		std::map<uint32, TVector<VkDescriptorSetLayoutBinding>> Bindings;
 
@@ -260,7 +262,9 @@ namespace Lumina
 	
     FVulkanShader::~FVulkanShader()
     {
-		auto Device = FVulkanRenderContext::GetDevice();
+		FVulkanRenderContext* RenderContext = FRenderer::GetRenderContext<FVulkanRenderContext>();		
+
+		auto Device = RenderContext->GetDevice();
 
 		for (auto& Stage : StageCreateInfos)
 		{
@@ -286,8 +290,10 @@ namespace Lumina
     void FVulkanShader::SetFriendlyName(const FString& InString)
     {
 	    FShader::SetFriendlyName(InString);
+		FVulkanRenderContext* RenderContext = FRenderer::GetRenderContext<FVulkanRenderContext>();		
+
 		
-		VkDevice Device = FVulkanRenderContext::GetDevice();
+		VkDevice Device = RenderContext->GetDevice();
 
 		VkDebugUtilsObjectNameInfoEXT NameInfo = {};
 		NameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
@@ -297,14 +303,14 @@ namespace Lumina
 	    for (auto Stage : StageCreateInfos)
 	    {
 			NameInfo.objectHandle = reinterpret_cast<uint64_t>(Stage.module);
-			FVulkanRenderContext::GetRenderContextFunctions().DebugUtilsObjectNameEXT(Device, &NameInfo);
+			RenderContext->GetRenderContextFunctions().DebugUtilsObjectNameEXT(Device, &NameInfo);
 	    }
 
 	    for (auto Layout : SetLayouts)
 	    {
 	    	NameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
 	    	NameInfo.objectHandle = reinterpret_cast<uint64_t>(Layout);
-	    	FVulkanRenderContext::GetRenderContextFunctions().DebugUtilsObjectNameEXT(Device, &NameInfo);
+	    	RenderContext->GetRenderContextFunctions().DebugUtilsObjectNameEXT(Device, &NameInfo);
 	    }
 		
     }

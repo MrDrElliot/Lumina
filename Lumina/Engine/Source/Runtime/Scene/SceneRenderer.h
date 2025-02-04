@@ -4,14 +4,16 @@
 #include "Assets/AssetHandle.h"
 #include "Renderer/Renderer.h"
 #include "Renderer/Image.h"
+#include "Renderer/RenderTypes.h"
 
 
 #define MAX_LIGHTS 102
 
 namespace Lumina
 {
+    struct FMaterialTexturesData;
     class AMaterialInstance;
-    class AScene;
+    class FScene;
     class Material;
     class FRenderer;
     class FDescriptorSet;
@@ -69,13 +71,12 @@ namespace Lumina
     public:
         
 
-        static TSharedPtr<FSceneRenderer> Create(AScene* InScene);
+        static TSharedPtr<FSceneRenderer> Create(FScene* InScene);
 
-        FSceneRenderer(AScene* InScene);
+        FSceneRenderer(FScene* InScene);
         ~FSceneRenderer();
 
-        void BeginScene(TSharedPtr<FCamera> InCamera);
-        void EndScene();
+        void Update(double DeltaTime);
 
         TRefPtr<FImage> GetRenderTarget() { return      RenderTargets[FRenderer::GetCurrentFrameIndex()]; }
         TRefPtr<FImage> GetDepthAttachment() { return   DepthAttachments[FRenderer::GetCurrentFrameIndex()]; }
@@ -138,7 +139,7 @@ namespace Lumina
         TSharedPtr<FCamera> Camera;
         TRefPtr<FMaterial> TestMaterial;
         
-        AScene* CurrentScene;
+        FScene* CurrentScene;
         
     };
 }

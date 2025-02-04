@@ -1,14 +1,24 @@
-#include "SandboxApp.h"
-#include "Source/Runtime/Core/Application/Application.h"
+
+#include "Sandbox.h"
 #include "EntryPoint.h"
+
+bool FSandbox::ApplicationLoop()
+{
+	
+	return true;
+}
+
+bool FSandbox::Initialize()
+{
+	return true;
+}
+
+void FSandbox::Shutdown()
+{
+}
 
 
 Lumina::FApplication* Lumina::CreateApplication(int argc, char** argv)
 {
-	FApplicationSpecs AppSpecs;
-	AppSpecs.Name = "Sandbox";
-	AppSpecs.bRenderImGui = false;
-	
-	return new FSandboxApp(AppSpecs);
-
+	return new FSandbox();
 }

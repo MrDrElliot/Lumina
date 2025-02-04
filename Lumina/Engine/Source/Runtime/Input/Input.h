@@ -9,9 +9,9 @@
 namespace Lumina::Input
 {
     
-    inline bool IsMouseButtonPressed(const KeyCode Key)
+    inline bool IsMouseButtonPressed(const KeyCode Key) 
     {
-        auto* Window = Lumina::FApplication::GetWindow().GetWindow();
+        GLFWwindow* Window = FApplication::Get().GetWindow()->GetWindow();
         auto State = glfwGetMouseButton(Window, Key);
 
         return State == GLFW_PRESS;
@@ -19,7 +19,7 @@ namespace Lumina::Input
 
     inline bool IsKeyPressed(const KeyCode Key)
     {
-        auto* Window = Lumina::FApplication::GetWindow().GetWindow();
+        GLFWwindow* Window = FApplication::Get().GetWindow()->GetWindow();
         auto State = glfwGetKey(Window, Key);
 
         return State == GLFW_PRESS;
@@ -27,9 +27,9 @@ namespace Lumina::Input
 
     inline glm::vec2 GetMousePos()
     {
-        auto* window = Lumina::FApplication::GetWindow().GetWindow();
+        GLFWwindow* Window = FApplication::Get().GetWindow()->GetWindow();
         double xpos, ypos;
-        glfwGetCursorPos(window, &xpos, &ypos);
+        glfwGetCursorPos(Window, &xpos, &ypos);
 
         return { (float)xpos, (float)ypos };
     }

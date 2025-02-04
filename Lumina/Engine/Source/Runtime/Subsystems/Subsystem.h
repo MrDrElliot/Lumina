@@ -1,74 +1,92 @@
 #pragma once
 
-#include <typeindex>
-#include <memory>
-#include <EASTL/unordered_map.h>
-
-#include "Memory/SmartPtr.h"
-#include "Core/Performance/PerformanceTracker.h"
+#include "Containers/Array.h"
+#include "EASTL/sort.h"
 #include "Log/Log.h"
-
-enum ESubsystemFlags
-{
-    Flag_ManualShutdown,
-};
 
 namespace Lumina
 {
     class ISubsystem
     {
     public:
+
+        friend class FSubsystemManager;
+        
         virtual ~ISubsystem() = default;
         virtual void Initialize() = 0;
         virtual void Update(double DeltaTime) { }
         virtual void Deinitialize() = 0;
 
     private:
-        uint32_t Flags = 0; // Ensure you have the right type for your flags.
+
     };
 
-    class SubsystemManager
+    class FSubsystemManager
     {
     public:
-        ~SubsystemManager() = default;
+        
+        ~FSubsystemManager() { DeinitializeAll(); }
 
-        template<typename T, int Priority = 1, typename... Args>
+        template<typename T, typename... Args>
         T* AddSubsystem(Args&&... args)
         {
-            static_assert(std::is_base_of<ISubsystem, T>::value, "T must inherit from ISubsystem!");
+            static_assert(std::is_base_of_v<ISubsystem, T>, "T must inherit from ISubsystem!");
 
-            auto subsystem = MakeUniquePtr<T>(std::forward<Args>(args)...);
-            T* pSubsystem = subsystem.get();
-            Subsystems[typeid(T).hash_code()] = std::move(subsystem);
+            uint32_t typeHash = typeid(T).hash_code();
+            RemoveSubsystem<T>();
+
+            T* pSubsystem = new T(std::forward<Args>(args)...);
+            
+            FlatUpdateList.push_back(pSubsystem);
+            SubsystemLookup[typeHash] = pSubsystem;
+            
+
             pSubsystem->Initialize();
-
-            LOG_TRACE("Subsystems: Creating Type: {0}", typeid(T).name());
+            LOG_TRACE("Subsystems: Created Type: {0}", typeid(T).name());
             return pSubsystem;
+        }
+
+        template<typename T>
+        void RemoveSubsystem()
+        {
+            uint32_t typeHash = typeid(T).hash_code();
+            auto it = SubsystemLookup.find(typeHash);
+            if (it != SubsystemLookup.end())
+            {
+                ISubsystem* pSubsystem = it->second;
+
+                FlatUpdateList.erase(std::remove(FlatUpdateList.begin(), FlatUpdateList.end(), pSubsystem), FlatUpdateList.end());
+
+                delete pSubsystem;
+                SubsystemLookup.erase(typeHash);
+
+                LOG_TRACE("Subsystems: Removed Type: {0}", typeid(T).name());
+            }
         }
 
         template<typename T>
         T* GetSubsystem()
         {
-            auto it = Subsystems.find(typeid(T).hash_code());
-            if (it != Subsystems.end())
-            {
-                return static_cast<T*>(it->second.get());
-            }
-            return nullptr;
+            uint32_t typeHash = typeid(T).hash_code();
+            auto it = SubsystemLookup.find(typeHash);
+            return (it != SubsystemLookup.end()) ? static_cast<T*>(it->second) : nullptr;
         }
 
         void DeinitializeAll()
         {
-            for (auto& [type, S] : Subsystems)
+            for (ISubsystem* subsystem : FlatUpdateList)
             {
-                LOG_TRACE("Subsystems: Deinitializing Type: {0}", std::to_string(type));
-                S->Deinitialize();
-                S = nullptr;
+                subsystem->Deinitialize();
+                delete subsystem;
             }
+            FlatUpdateList.clear();
+            SubsystemLookup.clear();
+            LOG_TRACE("Subsystems: All deinitialized");
         }
 
     private:
         
-        eastl::unordered_map<uint32, TUniquePtr<ISubsystem>> Subsystems;
+        TVector<ISubsystem*> FlatUpdateList;
+        THashMap<uint32, ISubsystem*> SubsystemLookup;
     };
 }

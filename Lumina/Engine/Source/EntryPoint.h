@@ -25,22 +25,18 @@ inline int GuardedMain(int argc, char** argv)
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 #endif
 	
-	int Exit = 0;
-	while (gApplicationRunning)
+	int Result = 0;
 	{
 		Lumina::FApplicationGlobalState GlobalState;
 		Lumina::FApplication* App = Lumina::CreateApplication(argc, argv);
-		App->Run();
-
-		delete App;
-		gApplicationRunning = false;
+		Result = App->Run();
 	}
 	
 #ifdef LE_PLATFORM_WINDOWS
 	_CrtDumpMemoryLeaks();
 #endif
 	
-	return Exit;
+	return Result;
 }
 
 #if LE_PLATFORM_WINDOWS

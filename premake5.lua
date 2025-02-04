@@ -1,7 +1,7 @@
 workspace "Lumina"
 	configurations { "Debug", "Release", "Shipping" }
 	targetdir "Build"
-	startproject "LuminaEditor"
+	startproject "Editor"
 	conformancemode "On"
 
 	language "C++"
@@ -13,6 +13,8 @@ workspace "Lumina"
 	defines
 	{
 		"_CRT_SECURE_NO_WARNINGS",
+		"GLM_FORCE_DEPTH_ZERO_TO_ONE",
+		"WITH_DEVELOPMENT_TOOLS",
 	}
 
 	filter "action:vs"

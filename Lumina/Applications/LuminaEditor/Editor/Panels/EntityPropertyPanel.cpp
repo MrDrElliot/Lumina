@@ -28,7 +28,7 @@ namespace Lumina
         FSelectionManager::Get()->GetSelections(ESelectionContext::SceneOutliner, Selections);
 
         // Get the active scene
-        TSharedPtr<AScene> Scene = FApplication::Get().GetActiveScene();
+        TSharedPtr<FScene> Scene = FApplication::Get().GetActiveScene();
 
         // Begin ImGui window for Entity Properties
         ImGui::Begin("Entity Properties");

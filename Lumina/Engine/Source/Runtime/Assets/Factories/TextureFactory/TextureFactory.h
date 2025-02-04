@@ -11,7 +11,7 @@ namespace Lumina
     {
     public:
 
-        ELoadResult CreateNew(FAssetHandle& InHandle) override;
+        ELoadResult CreateNew(FAssetRecord* InRecord) override;
         static TRefPtr<FImage> ImportFromSource(std::filesystem::path Path);
 
     };

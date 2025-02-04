@@ -1,9 +1,10 @@
 #pragma once
-#include <memory>
+
 #include "Assets/AssetHandle.h"
 #include "Image.h"
 #include "PipelineBarrier.h"
-#include "RenderTypes.h"
+#include "RenderContext.h"
+#include "Renderer.h"
 #include "Containers/Array.h"
 #include "Memory/RefCounted.h"
 
@@ -34,6 +35,13 @@ namespace Lumina
         virtual ~IRenderAPI() = default;
 
         static IRenderAPI* Create(const FRenderConfig& InConfig);
+
+        FORCEINLINE IRenderContext* GetRenderContext() const { return RenderContext; }
+
+        virtual void Initialize(const FRenderConfig& InConfig) = 0;
+        
+        template<typename T>
+        T* GetRenderContext();
     
         virtual void BeginFrame() = 0;
         virtual void EndFrame() = 0;
@@ -41,9 +49,7 @@ namespace Lumina
         virtual void EndRender() = 0;
         virtual void WaitDevice() = 0;
 
-        virtual FRenderConfig GetConfig() = 0;
-        virtual TRefPtr<FSwapchain> GetSwapchain() = 0;
-        virtual TRefPtr<FImage> GetSwapchainImage() = 0;
+        virtual FRenderConfig GetConfig() { return Config; }
         virtual ERHIInterfaceType GetRHIInterfaceType() = 0;
 
         virtual void BindSet(const TRefPtr<FDescriptorSet>& Set, const TRefPtr<FPipeline>& Pipeline, uint8 SetIndex, const TVector<uint32>& DynamicOffsets) = 0;
@@ -53,17 +59,31 @@ namespace Lumina
         virtual void ClearColor(const TRefPtr<FImage>& Image, const glm::fvec4& Value) = 0;
         virtual void CopyToSwapchain(TRefPtr<FImage> ImageToCopy) = 0;
 
-        virtual void PushConstants(EShaderStage ShaderStage, uint16 Offset, uint32 Size, const void* Data) = 0;
+        virtual void PushConstants(TRefPtr<FPipeline> Pipeline, EShaderStage ShaderStage, uint16 Offset, uint32 Size, const void* Data) = 0;
         
-        virtual void RenderMeshTasks(TRefPtr<FPipeline> Pipeline, const glm::uvec3 Dimensions, FMiscData Data) = 0;
-        virtual void RenderMeshIndexed(TRefPtr<FPipeline> Pipeline, TRefPtr<FBuffer> VertexBuffer, TRefPtr<FBuffer> IndexBuffer, FMiscData Data) = 0;
-        virtual void RenderVertices(uint32 Vertices, uint32 Instances = 1, uint32 FirstVertex = 0, uint32 FirstInstance = 0) = 0;
-        virtual void RenderStaticMeshWithMaterial(const TRefPtr<FPipeline>& Pipeline, const TSharedPtr<AStaticMesh>& StaticMesh, const TRefPtr<FMaterial>& Material) = 0;
-        virtual void RenderStaticMesh(const TRefPtr<FPipeline>& Pipeline, TSharedPtr<AStaticMesh> StaticMesh, uint32 InstanceCount) = 0;
+        virtual void DrawIndexed(TRefPtr<FBuffer> VertexBuffer, TRefPtr<FBuffer> IndexBuffer) = 0;
+        virtual void DrawVertices(uint32 Vertices, uint32 Instances = 1, uint32 FirstVertex = 0, uint32 FirstInstance = 0) = 0;
 
-        virtual TRefPtr<FCommandBuffer> GetCommandBuffer() = 0;
         virtual void BeginCommandRecord() = 0;
         virtual void EndCommandRecord() = 0;
         virtual void ExecuteCurrentCommands() = 0;
+    
+    protected:
+
+        IRenderContext*                         RenderContext = nullptr;
+        FRenderConfig                           Config = {};
+
     };
+
+    //--------------------------------------------------------------
+    // Templates
+    //--------------------------------------------------------------
+
+    template <typename T>
+    T* IRenderAPI::GetRenderContext()
+    {
+        static_assert(std::is_base_of_v<IRenderContext, T>, "T must be a subclass of IRenderContext");
+        return static_cast<T*>(RenderContext);
+    }
+
 }

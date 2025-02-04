@@ -1,13 +1,10 @@
 #pragma once
 
 #include <memory>
-#include <string>
-
-#include "Core/LayerStack.h"
 #include "Events/Event.h"
 #include "Subsystems/Subsystem.h"
 #include "Core/Delegates/Delegate.h"
-#include "Memory/RefCounted.h"
+#include "Core/Engine/Engine.h"
 
 
 namespace Lumina
@@ -18,79 +15,48 @@ namespace Lumina
 	class FBuffer;
 	class FDescriptorSet;
 	class FImage;
-	class AScene;
+	class FScene;
 	struct FWindowSpecs;
 	class FWindow;
 	class FRenderContext;
 
-	struct FApplicationSpecs
+	enum class EApplicationFlags : uint32
 	{
-		const char* Name = "Lumina";
-		FString WorkingDirectory;
-		
-		uint8 bWindowDecorated:1;
-		uint8 bFullscreen:1;
-		uint8 bVSync:1;
-		uint8 bRenderImGui:1;
-
+		DevelopmentTools =		1 << 0,
 	};
 
-	struct FApplicationStats
+	constexpr EApplicationFlags operator|(EApplicationFlags lhs, EApplicationFlags rhs)
 	{
-		void PreFrame();
-		void PostFrame();
-		
-		double DeltaTime = 1.0f / 60.0f;
-		double LastFrameTime = 0.0f;
-		double CurrentFrameTime = 60.0f;
-		
-		uint32 FPS;
-		uint64 FrameCount = 0;
+		return static_cast<EApplicationFlags>(static_cast<uint32>(lhs) | static_cast<uint32>(rhs));
+	}
 
-	};
-
-	struct FCoreDelegates
+	constexpr EApplicationFlags operator&(EApplicationFlags lhs, EApplicationFlags rhs)
 	{
-		static TMulticastDelegate<void>		OnEngineInit;
-		static TMulticastDelegate<double>	OnEngineUpdate;
-		static TMulticastDelegate<void>		PreEngineShutdown;
-	};
+		return static_cast<EApplicationFlags>(static_cast<uint32>(lhs) & static_cast<uint32>(rhs));
+	}
 	
 	class FApplication
 	{
 	public:
 
-		FApplication(const FApplicationSpecs& InAppSpecs);
+		FApplication() = default;
+		FApplication(FString InApplicationName = "Unnamed Application", uint32 AppFlags = 0);
 		virtual ~FApplication();
 
 		static FApplication& Get() { return *Instance; }
 
-		void Run();
-		
-		virtual void OnInit();
-		virtual void OnUpdate();
-		virtual void OnShutdown();
-		
-		void PreFrame();
-		void PostFrame();
+		int32 Run();
 
-		virtual void UpdateLayerStack(double DeltaTime);
-		void PushLayer(const TRefPtr<FLayer>& InLayer);
-		void PushOverlay(const TRefPtr<FLayer>& InLayer);
-		void PopLayer(const TRefPtr<FLayer>& InLayer);
-		void PopOverlay(const TRefPtr<FLayer>& InLayer);
+		virtual bool ApplicationLoop() = 0;
 		
+		virtual bool Initialize() = 0;
+		virtual void Shutdown() = 0;
 
-		void RenderImGui(double DeltaTime);
-		virtual void OnEvent(FEvent& Event);
-		
-		static FApplicationSpecs GetSpecs() { return Instance->AppSpecs;  }
-		static FApplicationStats GetStats() { return Instance->Stats; }
-		static double GetDeltaTime() { return Instance->Stats.DeltaTime; }
-		static FWindow& GetWindow();
-		static TSharedPtr<AScene> GetActiveScene() { return Get().CurrentScene; }
-		
-		void SetCurrentScene(TSharedPtr<AScene> InScene);
+		virtual void RenderImGui(double DeltaTime) { }
+		virtual void OnEvent(FEvent& Event) { }
+
+		bool HasAnyFlags(EApplicationFlags Flags);
+		FWindow* GetWindow();
 		
 		
 		template<typename T, typename... Args>
@@ -105,35 +71,31 @@ namespace Lumina
 			return Get().ApplicationSubsystems.GetSubsystem<T>();
 		}
 
-		template<typename T>
-		TRefPtr<T> GetLayerByType()
-		{
-			return LayerStack.GetLayerByType<T>();
-		}
+
+	protected:
+
+		virtual FEngine* InitializeEngine();
 	
 	private:
-
+		
+		bool CreateApplicationWindow();
+		bool FatalError(const FString& Error);
+		
 		bool ShouldExit();
-		void InternalInit();
-		void InternalShutdown();
 		
 	private:
 
-		TSharedPtr<AScene> CurrentScene;
+		FWindow*					Window = nullptr;
 		
-		FApplicationStats Stats;
-		FApplicationSpecs AppSpecs;
+		FString ApplicationName =	"Unnamed Application";
+		
+		static FApplication*		Instance;
+		
+		FSubsystemManager			ApplicationSubsystems;
 
-		bool bRunning = true;
-		
-		/* Application Instance */
-		static FApplication* Instance;
+		uint32						ApplicationFlags = 0;
 
-		/* Layer Stack */
-		FLayerStack LayerStack;
-		
-		/** Container of application subsystems. */
-		SubsystemManager ApplicationSubsystems;
+		FEngine*					Engine;
 		
 	};
 

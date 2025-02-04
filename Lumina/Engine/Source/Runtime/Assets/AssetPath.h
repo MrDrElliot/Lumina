@@ -65,3 +65,24 @@ namespace eastl
         }
     };
 }
+
+namespace fmt
+{
+    template <>
+    struct formatter<Lumina::FAssetPath>
+    {
+        // Parses the format specifier (not used here, so we ignore it)
+        constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin())
+        {
+            return ctx.begin();
+        }
+
+        // Formats the FGuid instance
+        template <typename FormatContext>
+        auto format(const Lumina::FAssetPath& guid, FormatContext& ctx) -> decltype(ctx.out())
+        {
+            // Use FGuid's ToString method to get a string representation
+            return fmt::format_to(ctx.out(), "{}", guid.GetPathAsString());
+        }
+    };
+}

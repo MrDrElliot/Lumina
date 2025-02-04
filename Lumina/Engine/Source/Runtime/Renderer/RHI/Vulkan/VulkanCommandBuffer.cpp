@@ -1,20 +1,20 @@
-#include "VulkanCommandBuffer.h"
 
+#include "VulkanCommandBuffer.h"
+#include "Renderer/Pipeline.h"
+#include "VulkanSwapchain.h"
 #include "VulkanRenderContext.h"
 
 namespace Lumina
 {
-    FVulkanCommandBuffer::FVulkanCommandBuffer()
-    : CommandBuffer(nullptr), Level(), BufferType(), CmdType()
-    {
-        std::unreachable();
-    }
-
     FVulkanCommandBuffer::FVulkanCommandBuffer(ECommandBufferLevel InLevel, ECommandBufferType InBufferType, ECommandType InCmdType)
-    : CommandBuffer(VK_NULL_HANDLE), Level(InLevel), BufferType(InBufferType), CmdType(InCmdType)
+    : CommandBuffer(VK_NULL_HANDLE), FCommandBuffer(InLevel, InBufferType, InCmdType)
     {
         //FQueueFamilyIndex Index = FRenderContext::GetQueueFamilyIndex();
-        VkDevice Device = FVulkanRenderContext::GetDevice();
+
+        FVulkanRenderContext* RenderContext = FRenderer::GetRenderContext<FVulkanRenderContext>();		
+
+        
+        VkDevice Device = RenderContext->GetDevice();
         
         /*
         VkCommandPoolCreateInfo PoolInfo = {};
@@ -26,25 +26,24 @@ namespace Lumina
         
         VkCommandBufferAllocateInfo BufferInfo =  {};
         BufferInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-        BufferInfo.commandPool = FVulkanRenderContext::GetCommandPool();
+        BufferInfo.commandPool = RenderContext->GetCommandPool();
         BufferInfo.commandBufferCount = 1;
         BufferInfo.level = Level == ECommandBufferLevel::PRIMARY ?  VK_COMMAND_BUFFER_LEVEL_PRIMARY : VK_COMMAND_BUFFER_LEVEL_SECONDARY;
         vkAllocateCommandBuffers(Device, &BufferInfo, &CommandBuffer);
-
-
         
     }
 
     FVulkanCommandBuffer::~FVulkanCommandBuffer()
     {
-        
     }
 
     void FVulkanCommandBuffer::SetFriendlyName(const FString& InName)
     {
         FCommandBuffer::SetFriendlyName(InName);
+        FVulkanRenderContext* RenderContext = FRenderer::GetRenderContext<FVulkanRenderContext>();		
 
-        VkDevice Device = FVulkanRenderContext::GetDevice();
+        
+        VkDevice Device = RenderContext->GetDevice();
         
         VkDebugUtilsObjectNameInfoEXT NameInfo = {};
         NameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
@@ -53,7 +52,7 @@ namespace Lumina
         NameInfo.objectHandle = reinterpret_cast<uint64_t>(CommandBuffer);
 
 
-        FVulkanRenderContext::GetRenderContextFunctions().DebugUtilsObjectNameEXT(Device, &NameInfo);
+        RenderContext->GetRenderContextFunctions().DebugUtilsObjectNameEXT(Device, &NameInfo);
         
     }
 
@@ -83,7 +82,9 @@ namespace Lumina
         SubmitInfo.commandBufferCount = 1;
         SubmitInfo.pCommandBuffers = &CommandBuffer;
 
-        VkQueue Queue = FVulkanRenderContext::GetGeneralQueue();
+        FVulkanRenderContext* RenderContext = FRenderer::GetRenderContext<FVulkanRenderContext>();		
+        VkDevice Device = RenderContext->GetDevice();
+        VkQueue Queue = RenderContext->GetGeneralQueue();
 
         VkFence Fence = VK_NULL_HANDLE;
         if(bWait)
@@ -91,7 +92,7 @@ namespace Lumina
             VkFenceCreateInfo FenceInfo = {};
             FenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 
-            vkCreateFence(FVulkanRenderContext::GetDevice(), &FenceInfo, nullptr, &Fence);
+            vkCreateFence(Device, &FenceInfo, nullptr, &Fence);
         }
         
         SubmissionMutex.lock();
@@ -100,7 +101,6 @@ namespace Lumina
 
         if(bWait)
         {
-            auto Device = FVulkanRenderContext::GetDevice();
             vkWaitForFences(Device, 1, &Fence, VK_TRUE, UINT64_MAX);
             vkDestroyFence(Device, Fence, nullptr);
         }

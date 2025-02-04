@@ -12,6 +12,5 @@ public:
     TSingleton* operator = (const TSingleton*) = delete;
 
     static T* Get() { static T Instance; return &Instance; }
-    virtual void Shutdown() {};
     
 };

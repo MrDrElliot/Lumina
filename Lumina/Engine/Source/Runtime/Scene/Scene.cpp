@@ -9,39 +9,28 @@
 
 namespace Lumina
 {
-    AScene::AScene(TSharedPtr<FCamera> Camera)
+    FScene::FScene(TSharedPtr<FCamera> Camera)
     {
         CurrentCamera = Camera;
         SceneRenderer = FSceneRenderer::Create(this);
     }
 
-    AScene::~AScene()
+    FScene::~FScene()
     {
         SceneRenderer->Shutdown();
     }
 
-    TSharedPtr<AScene> AScene::Create(TSharedPtr<FCamera> Camera)
+    TRefPtr<FScene> FScene::Create(TSharedPtr<FCamera> Camera)
     {
-        return MakeSharedPtr<AScene>(Camera);
+        return MakeRefPtr<FScene>(Camera);
     }
 
-    void AScene::BeginScene()
+    void FScene::Update(double DeltaTime)
     {
-        SceneRenderer->BeginScene(CurrentCamera);
-    }
-
-    void AScene::OnUpdate(double DeltaTime)
-    {
-        BeginScene();
-        EndScene();
-    }
-
-    void AScene::EndScene()
-    {
-        SceneRenderer->EndScene();
+        SceneRenderer->Update(DeltaTime);
     }
     
-    Entity AScene::CreateEntity(const FTransform& Transform, const FString& Name)
+    Entity FScene::CreateEntity(const FTransform& Transform, const FString& Name)
     {
         FString uniqueName = Name;
         int counter = 1;
@@ -84,12 +73,12 @@ namespace Lumina
     }
 
     
-    void AScene::DestroyEntity(Entity Entity)
+    void FScene::DestroyEntity(Entity Entity)
     {
         mEntityRegistery.destroy(Entity);
     }
 
-    Entity AScene::GetEntityByGUID(const FGuid& Guid, bool* bFound)
+    Entity FScene::GetEntityByGUID(const FGuid& Guid, bool* bFound)
     {
         auto View = mEntityRegistery.view<FGUIDComponent>();
 

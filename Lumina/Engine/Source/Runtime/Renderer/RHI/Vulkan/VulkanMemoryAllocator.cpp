@@ -1,28 +1,27 @@
 #include "VulkanMemoryAllocator.h"
-
+#include "Renderer/Swapchain.h"
+#include "Renderer/Pipeline.h"
 #include "VulkanBuffer.h"
-#include "VulkanImage.h"
 #include "VulkanMacros.h"
 #include "VulkanRenderContext.h"
 #include "Memory/Memory.h"
 #include "Source/Runtime/Log/Log.h"
-#include "vulkan/vulkan.h"
 
 namespace Lumina
 {
     FVulkanMemoryAllocator::FVulkanMemoryAllocator()
     {
-        FVulkanRenderContext& RenderContext = FVulkanRenderContext::Get();
-
+        FVulkanRenderContext* RenderContext = FRenderer::GetRenderContext<FVulkanRenderContext>();		
+    		
         VmaVulkanFunctions Functions = {};
         Functions.vkGetInstanceProcAddr = &vkGetInstanceProcAddr;
         Functions.vkGetDeviceProcAddr = &vkGetDeviceProcAddr;
 
         VmaAllocatorCreateInfo Info = {};
         Info.vulkanApiVersion = VK_API_VERSION_1_3;
-        Info.instance = RenderContext.GetVulkanInstance();
-        Info.physicalDevice = RenderContext.GetPhysicalDevice();
-        Info.device = RenderContext.GetDevice();
+        Info.instance = RenderContext->GetVulkanInstance();
+        Info.physicalDevice = RenderContext->GetPhysicalDevice();
+        Info.device = RenderContext->GetDevice();
         Info.pVulkanFunctions = &Functions;
 
         VK_CHECK(vmaCreateAllocator(&Info, &Allocator));
@@ -32,11 +31,7 @@ namespace Lumina
 
     FVulkanMemoryAllocator::~FVulkanMemoryAllocator()
     {
-    }
-
-    void FVulkanMemoryAllocator::Shutdown()
-    {
-        // Log statistics before cleanup
+                // Log statistics before cleanup
         LOG_INFO("Allocator Shutdown Started. Current Statistics:");
         LOG_INFO("Allocated Buffers: {}", Statistics.CurrentlyAllocatedBuffers);
         LOG_INFO("Allocated Images: {}", Statistics.CurrentlyAllocatedImages);
@@ -81,8 +76,7 @@ namespace Lumina
         LOG_INFO("Allocated Images: {}", Statistics.CurrentlyAllocatedImages);
         LOG_INFO("Currently Allocated Memory: {} bytes", Statistics.CurrentlyAllocated);
     }
-
-
+    
     VmaAllocation FVulkanMemoryAllocator::AllocateBuffer(VkBufferCreateInfo* CreateInfo, VmaAllocationCreateFlags Flags, VkBuffer* vkBuffer, const char* AllocationName)
     {
         VmaAllocationCreateInfo Info = {};

@@ -1,16 +1,16 @@
 #pragma once
-#include "EditorLayer.h"
+
 #include "imgui.h"
 #include "ImGuiWindow.h"
 
 namespace Lumina
 {
-    class AScene;
+    class FScene;
     class ViewportLayer : public EditorImGuiWindow
     {
     public:
     
-        ViewportLayer(const eastl::weak_ptr<AScene>& InScene)
+        ViewportLayer(const eastl::weak_ptr<FScene>& InScene)
         {
             Scene = InScene;
             Name = "Viewport";
@@ -25,7 +25,7 @@ namespace Lumina
     private:
 
         ImVec2 Region;
-        eastl::weak_ptr<AScene> Scene;
+        eastl::weak_ptr<FScene> Scene;
     
     };
 }

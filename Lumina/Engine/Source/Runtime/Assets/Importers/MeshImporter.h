@@ -6,8 +6,8 @@
 #include <glm/glm.hpp>
 #include <fastgltf/glm_element_traits.hpp>
 #include "AssetImporter.h"
-#include "Assets/AssetTypes/StaticMesh/StaticMesh.h"
 #include "Core/Performance/PerformanceTracker.h"
+#include "Renderer/MeshData.h"
 
 
 namespace Lumina

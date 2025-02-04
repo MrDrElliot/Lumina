@@ -5,8 +5,7 @@
 #include "PipelineLibrary.h"
 #include "ShaderLibrary.h"
 #include "Swapchain.h"
-#include "Assets/AssetTypes/StaticMesh/StaticMesh.h"
-#include "Core/LuminaMacros.h"
+#include "Assets/AssetTypes/Mesh/StaticMesh/StaticMesh.h"
 #include "Core/Performance/PerformanceTracker.h"
 #include "Paths/Paths.h"
 #include "RHI/Vulkan/VulkanRenderAPI.h"
@@ -20,7 +19,8 @@ namespace Lumina
     void FRenderer::Init(const FRenderConfig& InConfig)
     {
         LOG_TRACE("Renderer: Initializing");
-        RenderAPI = new FVulkanRenderAPI(InConfig);
+        RenderAPI = IRenderAPI::Create(InConfig);
+        RenderAPI->Initialize(InConfig);
         
         // Nearest filtration sampler
         FImageSamplerSpecification ImageSpec = {};
@@ -101,9 +101,6 @@ namespace Lumina
 
     void FRenderer::BeginFrame()
     {
-        sInternalData.NumDrawCalls = 0;
-        sInternalData.NumVertices = 0;
-        RenderAPI->BeginFrame();
     }
 
     void FRenderer::EndFrame()
@@ -120,12 +117,7 @@ namespace Lumina
     {
         RenderAPI->EndRender();
     }
-
-    TRefPtr<FImage> FRenderer::GetSwapchainImage()
-    {
-        return RenderAPI->GetSwapchainImage();
-    }
-
+    
     void FRenderer::CopyToSwapchain(TRefPtr<FImage> ImageToCopy)
     {
         RenderAPI->CopyToSwapchain(ImageToCopy);
@@ -136,47 +128,44 @@ namespace Lumina
         RenderAPI->BindPipeline(Pipeline);
     }
 
-    TRefPtr<FSwapchain> FRenderer::GetSwapchain()
+    IRenderContext* FRenderer::GetRenderContext()
     {
-        return RenderAPI->GetSwapchain();
+        return RenderAPI->GetRenderContext();
     }
-
-    void FRenderer::RenderMeshIndexed(TRefPtr<FPipeline> Pipeline, TRefPtr<FBuffer> VertexBuffer, TRefPtr<FBuffer> IndexBuffer, FMiscData Data)
+    
+    void FRenderer::DrawIndexed(TRefPtr<FBuffer> VertexBuffer, TRefPtr<FBuffer> IndexBuffer)
     {
         sInternalData.NumDrawCalls++;
-        RenderAPI->RenderMeshIndexed(Pipeline, VertexBuffer, IndexBuffer, Data);
+        RenderAPI->DrawIndexed(VertexBuffer, IndexBuffer);
     }
 
-    void FRenderer::RenderVertices(uint32 Vertices, uint32 Instances, uint32 FirstVertex, uint32 FirstInstance)
+    void FRenderer::DrawVertices(uint32 Vertices, uint32 Instances, uint32 FirstVertex, uint32 FirstInstance)
     {
         sInternalData.NumDrawCalls++;
         sInternalData.NumVertices += Vertices;
-        RenderAPI->RenderVertices(Vertices, Instances, FirstVertex, FirstInstance);
+        RenderAPI->DrawVertices(Vertices, Instances, FirstVertex, FirstInstance);
     }
 
-    void FRenderer::RenderStaticMeshWithMaterial(const TRefPtr<FPipeline>& Pipeline, const TSharedPtr<AStaticMesh>& StaticMesh, const TRefPtr<FMaterial>& Material)
+
+    void FRenderer::Update()
     {
-        sInternalData.NumDrawCalls++;
-        sInternalData.NumVertices += StaticMesh->GetMeshData().Vertices.size();
-        RenderAPI->RenderStaticMeshWithMaterial(Pipeline, StaticMesh, Material);
+        PROFILE_SCOPE(Renderer_Update)
+
+        sInternalData.NumDrawCalls = 0;
+        sInternalData.NumVertices = 0;
+
+        RenderAPI->BeginFrame();
+        ProcessRenderQueue();
+        RenderAPI->EndFrame();
+
     }
 
-    void FRenderer::RenderStaticMesh(const TRefPtr<FPipeline>& Pipeline, TSharedPtr<AStaticMesh> StaticMesh, uint32 InstanceCount)
+    void FRenderer::ProcessRenderQueue()
     {
-        sInternalData.NumDrawCalls++;
-        sInternalData.NumVertices += StaticMesh->GetMeshData().Vertices.size();
-        RenderAPI->RenderStaticMesh(Pipeline, StaticMesh, InstanceCount);
-    }
-
-    void FRenderer::Render()
-    {
-        PROFILE_SCOPE(Render)
-
-        // Submit rendering commands to the render function list
         FRenderer::Submit([]
         {
-            TRefPtr<FImage> Image = GetSwapchainImage();
-
+            TRefPtr<FImage> Image = GetRenderContext()->GetSwapchain()->GetCurrentImage();
+        
             Image->SetLayout(
                 FRenderer::GetCommandBuffer(),
                 EImageLayout::PRESENT_SRC,
@@ -185,15 +174,6 @@ namespace Lumina
                 EPipelineAccess::TRANSFER_WRITE
             );
         });
-
-        ProcessRenderQueue();
-    }
-
-    void FRenderer::ProcessRenderQueue()
-    {
-        RenderAPI->EndCommandRecord();
-        RenderAPI->ExecuteCurrentCommands();
-
         
         for (auto& func : sInternalData.RenderFunctionList)
         {
@@ -211,7 +191,7 @@ namespace Lumina
 
     uint32 FRenderer::GetCurrentFrameIndex()
     {
-        return RenderAPI->GetSwapchain()->GetCurrentFrameIndex();
+        return RenderAPI->GetRenderContext()->GetSwapchain()->GetCurrentFrameIndex();
     }
 
     void FRenderer::WaitIdle()
@@ -224,18 +204,13 @@ namespace Lumina
         RenderAPI->ClearColor(Image, Value);
     }
 
-    void FRenderer::PushConstants(EShaderStage ShaderStage, uint16 Offset, uint32 Size, const void* Data)
+    void FRenderer::PushConstants(TRefPtr<FPipeline> Pipeline, EShaderStage ShaderStage, uint16 Offset, uint32 Size, const void* Data)
     {
-        RenderAPI->PushConstants(ShaderStage, Offset, Size, Data);
+        RenderAPI->PushConstants(Pipeline, ShaderStage, Offset, Size, Data);
     }
-
-    void FRenderer::RenderMeshTasks(TRefPtr<FPipeline> Pipeline, const glm::uvec3 Dimensions, FMiscData Data)
-    {
-        RenderAPI->RenderMeshTasks(Pipeline, Dimensions, Data);
-    }
-
+    
     TRefPtr<FCommandBuffer> FRenderer::GetCommandBuffer()
     {
-        return RenderAPI->GetCommandBuffer();
+        return GetRenderContext()->GetCommandBuffer();
     }
 }

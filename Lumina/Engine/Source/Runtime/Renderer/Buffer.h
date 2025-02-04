@@ -61,18 +61,23 @@ namespace Lumina
     class FBuffer : public FRenderResource
     {
     public:
-        
+
+        FBuffer() = default;
         virtual ~FBuffer() {}
         
 
         static TRefPtr<FBuffer> Create(const FDeviceBufferSpecification& Spec);
         static TRefPtr<FBuffer> Create(const FDeviceBufferSpecification& Spec, void* Data, uint64 DataSize);
         
-
         virtual FDeviceBufferSpecification GetSpecification() const = 0;
 
         virtual void UploadData(uint64 Offset, void* Data, uint64 DataSize) = 0;
         
         virtual void Resize() = 0;
+
+    protected:
+
+        FDeviceBufferSpecification Specification;
+
     };
 }

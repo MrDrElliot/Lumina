@@ -34,14 +34,13 @@ namespace Lumina
 
         FVulkanBuffer(const FDeviceBufferSpecification& Spec);
         FVulkanBuffer(const FDeviceBufferSpecification& Spec, void* Data, uint64 DataSize);
-        ~FVulkanBuffer();
+        ~FVulkanBuffer() override;
 
         void SetFriendlyName(const FString& InName) override;
         
         VkBuffer& GetBuffer() { return Buffer; }
         VkBuffer* GetBufferPtr() { return &Buffer; }
         VmaAllocation GetAllocation() const { return Allocation; }
-        void* GetAdditionalData() const { return Data; }
 
         FDeviceBufferSpecification GetSpecification() const override;
 
@@ -57,8 +56,5 @@ namespace Lumina
         VkBuffer Buffer;
         VmaAllocation Allocation;
 
-        FDeviceBufferSpecification Specification;
-        void* Data;
-    
     };
 }

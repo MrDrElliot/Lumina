@@ -21,6 +21,7 @@ enum class ERefCountedCastType
 
         FORCEINLINE void AddRef() const
         {
+            /** Add 1 to the reference count */
             RefCount.fetch_add(1, std::memory_order_relaxed);
         }
 
@@ -42,6 +43,7 @@ enum class ERefCountedCastType
 
     private:
 
+        /** Atomic for safety across threads */
         mutable std::atomic<int> RefCount = 0;
     
     };
@@ -50,8 +52,6 @@ enum class ERefCountedCastType
     class TRefPtr
     {
     public:
-
-        //static_assert(std::is_base_of_v<FRefCounted, T>, "T must inherit from FRefCounted");
         
         TRefPtr() : Ptr(nullptr) {}
     
@@ -94,12 +94,24 @@ enum class ERefCountedCastType
     
         // Templated conversion constructor for derived types (rvalue reference)
         template<typename U, typename = std::enable_if_t<std::is_base_of<T, U>::value || std::is_base_of<U, T>::value>>
-        TRefPtr(TRefPtr<U>&& other) noexcept : Ptr(std::exchange(other.Ptr, nullptr))
+        TRefPtr(TRefPtr<U>&& other) noexcept : Ptr(eastl::move(std::exchange(other.Ptr, nullptr)))
         {
             static_assert(std::is_base_of<FRefCounted, U>::value, "U does not inherit from RefCounted");
             static_assert(!std::is_same<T, U>::value, "Cannot convert TRefPtr of the same type.");
         }
-    
+
+        template<typename U>
+        TRefPtr<U> As()
+        {
+            return TRefPtr<U>(static_cast<U*>(Ptr));
+        }
+
+        template<typename U>
+        TRefPtr<U> As() const
+        {
+            return TRefPtr<U>(static_cast<U*>(Ptr));
+        }
+
     
         bool operator == (const TRefPtr& other) const noexcept
         {
@@ -128,13 +140,14 @@ enum class ERefCountedCastType
             return *this;
         }
     
-        T* operator ->() const { return Get(); }
+        T* operator ->() const { Assert(Ptr != nullptr); return Get(); }
         T& operator *() const { return *Get(); }
         explicit operator bool() const { return Ptr != nullptr; }
     
         T* Get() const { return Ptr; }
     
     public:
+        
         
         FORCEINLINE void AddRef()
         {
@@ -198,7 +211,6 @@ enum class ERefCountedCastType
             }
             else
             {
-                // Optional: Log or assert failed cast
                 if (Type == ERefCountedCastType::LogNull)
                 {
                     LOG_WARN("RefCounted: Failed dynamic_cast between polymorphic types.");
