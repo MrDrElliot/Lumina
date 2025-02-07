@@ -1,9 +1,15 @@
 #pragma once
 
 #include "Assets/Asset.h"
+#include "Assets/AssetHandle.h"
 #include "Renderer/Buffer.h"
 #include "Renderer/MeshData.h"
 
+
+namespace Lumina
+{
+    class AMaterialInstance;
+}
 
 namespace Lumina
 {
@@ -22,7 +28,7 @@ namespace Lumina
 
         FORCEINLINE const uint32 GetNumIndicies() const { return (uint32)MeshData.Indices.size(); }
         FORCEINLINE const uint32 GetNumVertices() const { return (uint32)MeshData.Indices.size(); }
-
+        
         void PostLoad() override;
         
         void Serialize(FArchive& Ar) override
@@ -32,10 +38,11 @@ namespace Lumina
         
     private:
 
-                
-        FMeshAsset          MeshData = {};
-        TRefPtr<FBuffer>    VBO;
-        TRefPtr<FBuffer>    IBO;
+        
+        FMeshAsset                                  MeshData = {};
+        TVector<TAssetHandle<AMaterialInstance>>    Materials;
+        TRefPtr<FBuffer>                            VBO;
+        TRefPtr<FBuffer>                            IBO;
     };
     
 }

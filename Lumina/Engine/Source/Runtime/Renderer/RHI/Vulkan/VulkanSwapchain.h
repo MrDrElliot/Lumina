@@ -1,12 +1,18 @@
 #pragma once
 
-#include <optional>
 
 #include "Source/Runtime/Renderer/Swapchain.h"
 #include <vulkan/vulkan_core.h>
+#include "VulkanSemaphore.h"
 
 namespace Lumina
 {
+}
+
+namespace Lumina
+{
+    class FVulkanSemaphore;
+    
     class FVulkanSwapchain : public FSwapchain
     {
     public:
@@ -24,8 +30,8 @@ namespace Lumina
         bool BeginFrame() override;
         void EndFrame() override;
 
-        VkSemaphore             GetAquireSemaphore() { return AquireSemaphores[CurrentFrameIndex]; }
-        VkSemaphore             GetPresentSemaphore() { return PresentSemaphores[CurrentImageIndex]; }
+        VkSemaphore             GetAquireSemaphore() { return AquireSemaphores[CurrentFrameIndex]->GetVkSemaphore(); }
+        VkSemaphore             GetPresentSemaphore() { return PresentSemaphores[CurrentImageIndex]->GetVkSemaphore(); }
 
         VkFence                 GetCurrentFence() { return Fences[CurrentFrameIndex]; }
         VkSwapchainKHR          GetSwapchain() { return Swapchain; }
@@ -41,9 +47,9 @@ namespace Lumina
         VkSurfaceFormatKHR              SurfaceFormat;
         VkPresentModeKHR                CurrentPresentMode;
         
-        TVector<VkSemaphore>            PresentSemaphores;
-        TVector<VkSemaphore>            AquireSemaphores;
-        TVector<VkFence>                Fences;
+        TVector<TRefPtr<FVulkanSemaphore>>       PresentSemaphores;
+        TVector<TRefPtr<FVulkanSemaphore>>       AquireSemaphores;
+        TVector<VkFence>                         Fences;
         
     };
 }

@@ -48,14 +48,13 @@ namespace Lumina
         
         Swapchain->DestroySwapchain();
         Swapchain->DestroySurface();
-        Swapchain->Release();
         
         vkDestroyDescriptorPool(Device, DescriptorPool, nullptr);
         
         vkDestroyCommandPool(Device, CommandPool, nullptr);
-        
-        FVulkanMemoryAllocator::Get()->Shutdown();
 
+        FVulkanMemoryAllocator::Get()->ClearAllAllocations();
+        
         vkDestroyDevice(Device, nullptr);
 
         auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(VulkanInstance, "vkDestroyDebugUtilsMessengerEXT");
@@ -92,7 +91,7 @@ namespace Lumina
         features.synchronization2 = true;
 
         VkPhysicalDeviceVulkan12Features features12 = {};
-        features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+        features12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
         features12.bufferDeviceAddress = true;
         features12.descriptorIndexing =  true;
         features12.descriptorBindingPartiallyBound = true;
@@ -111,12 +110,15 @@ namespace Lumina
             .select()
             .value();
 
-
+        /** Required for ImGui viewports. */
+        physicalDevice.enable_extension_if_present("VK_KHR_dynamic_rendering");
+        
         vkb::DeviceBuilder deviceBuilder{ physicalDevice };
         vkb::Device vkbDevice = deviceBuilder.build().value();
 
         Device = vkbDevice.device;
         PhysicalDevice = physicalDevice.physical_device;
+
 
         vkGetPhysicalDeviceProperties(PhysicalDevice, &PhysicalDeviceProperties);
         LOG_INFO("Creating Vulkan Device: {0}", PhysicalDeviceProperties.deviceName);
@@ -143,19 +145,19 @@ namespace Lumina
         Swapchain = MakeRefPtr<FVulkanSwapchain>(SwapchainSpec);
         Swapchain->CreateSurface(this, SwapchainSpec);
         Swapchain->CreateSwapchain(this, SwapchainSpec);
-        
-
         physicalDevice.surface = GetSwapchain<FVulkanSwapchain>()->GetSurface();
         PhysicalDevice = physicalDevice;
 
         CommandBuffers.resize(Config.FramesInFlight);
 
-        for (auto& Buffer : CommandBuffers)
+        for (int i = 0; i < CommandBuffers.size(); ++i)
         {
-            Buffer = FCommandBuffer::Create(ECommandBufferLevel::PRIMARY, ECommandBufferType::GENERAL, ECommandType::GENERAL);
-
+            CommandBuffers[i] = FCommandBuffer::Create(ECommandBufferLevel::PRIMARY, ECommandBufferType::GENERAL, ECommandType::GENERAL);
+            CommandBuffers[i]->SetFriendlyName("Command Buffer : " + eastl::to_string(i));
         }
 
+        CurrentCommandBuffer = CommandBuffers[0];
+        
         uint32 Count = 100 * Config.FramesInFlight;
 
         TInlineVector<VkDescriptorPoolSize, 8> PoolSizes =
@@ -173,7 +175,7 @@ namespace Lumina
 
         VkDescriptorPoolCreateInfo PoolInfo = {};
         PoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-        PoolInfo.maxSets = 1000;
+        PoolInfo.maxSets = Count;
         PoolInfo.poolSizeCount = (uint32)PoolSizes.size();
         PoolInfo.pPoolSizes = PoolSizes.data();
         PoolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;

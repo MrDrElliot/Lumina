@@ -14,7 +14,7 @@ namespace Lumina
     {
     public:
 
-        ContentBrowserItem(const std::filesystem::path& InPath, const FAssetMetadata& Metadata, bool bIsFolder = false);
+        ContentBrowserItem(const std::filesystem::path& InPath);
         ~ContentBrowserItem();
         
         void OnRender(TRefPtr<ContentBrowserWindow> ContentBrowser);
@@ -28,7 +28,6 @@ namespace Lumina
         bool bIsRenaming = false;
         char buffer[256] = {0};
         
-        FAssetMetadata AssetMetadata;
         std::filesystem::path Path;
     };
 }

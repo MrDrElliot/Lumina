@@ -5,40 +5,65 @@
 #include "Components/NameComponent.h"
 #include "Components/GuidComponent.h"
 #include "Entity/Entity.h"
-#include "Memory/SmartPtr.h"
 
 namespace Lumina
 {
-    FScene::FScene(TSharedPtr<FCamera> Camera)
+    FScene::FScene(ESceneType InType)
     {
-        CurrentCamera = Camera;
+        SceneType = InType;
+        CurrentCamera = MakeRefPtr<FCamera>();
         SceneRenderer = FSceneRenderer::Create(this);
     }
 
     FScene::~FScene()
     {
-        SceneRenderer->Shutdown();
     }
 
-    TRefPtr<FScene> FScene::Create(TSharedPtr<FCamera> Camera)
+    TRefPtr<FScene> FScene::Create(ESceneType InType)
     {
-        return MakeRefPtr<FScene>(Camera);
-    }
-
-    void FScene::Update(double DeltaTime)
-    {
-        SceneRenderer->Update(DeltaTime);
+        return MakeRefPtr<FScene>(InType);
     }
     
+    void FScene::Initialize(const FUpdateContext& UpdateContext)
+    {
+        SystemManager = UpdateContext.GetSubsystemManager();
+    }
+
+    void FScene::Shutdown()
+    {
+        SceneRenderer->Shutdown();
+        
+        SystemManager = nullptr;
+    }
+
+    void FScene::StartFrame()
+    {
+        SceneRenderer->StartFrame();
+    }
+    
+    void FScene::Update(const FUpdateContext& UpdateContext)
+    {
+    }
+    
+    void FScene::EndFrame()
+    {
+        SceneRenderer->EndFrame();
+    }
+
+    TRefPtr<FSceneRenderer> FScene::GetSceneRenderer() const
+    {
+        return SceneRenderer;
+    }
+
     Entity FScene::CreateEntity(const FTransform& Transform, const FString& Name)
     {
         FString uniqueName = Name;
         int counter = 1;
 
         bool nameExists = false;
-        for (auto& ent : mEntityRegistery.view<FNameComponent>())
+        for (auto& ent : EntityRegistery.view<FNameComponent>())
         {
-            auto& existingName = mEntityRegistery.get<FNameComponent>(ent).GetName();
+            auto& existingName = EntityRegistery.get<FNameComponent>(ent).GetName();
             if (existingName == uniqueName)
             {
                 nameExists = true;
@@ -52,9 +77,9 @@ namespace Lumina
             counter++;
 
             nameExists = false;
-            for (auto& ent : mEntityRegistery.view<FNameComponent>())
+            for (auto& ent : EntityRegistery.view<FNameComponent>())
             {
-                auto& existingName = mEntityRegistery.get<FNameComponent>(ent).GetName();
+                auto& existingName = EntityRegistery.get<FNameComponent>(ent).GetName();
                 if (existingName == uniqueName)
                 {
                     nameExists = true;
@@ -63,7 +88,7 @@ namespace Lumina
             }
         }
 
-        Entity NewEntity(mEntityRegistery.create(), this);
+        Entity NewEntity(EntityRegistery.create(), this);
         FGuid Guid = FGuid::Generate();
         NewEntity.AddComponent<FGUIDComponent>(Guid);
         NewEntity.AddComponent<FNameComponent>(uniqueName);
@@ -75,12 +100,12 @@ namespace Lumina
     
     void FScene::DestroyEntity(Entity Entity)
     {
-        mEntityRegistery.destroy(Entity);
+        EntityRegistery.destroy(Entity);
     }
 
     Entity FScene::GetEntityByGUID(const FGuid& Guid, bool* bFound)
     {
-        auto View = mEntityRegistery.view<FGUIDComponent>();
+        auto View = EntityRegistery.view<FGUIDComponent>();
 
         for (auto& ent : View)
         {

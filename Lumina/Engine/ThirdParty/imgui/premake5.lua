@@ -3,8 +3,8 @@ project "ImGui"
     staticruntime "on"
 	language "C++"
 
-	targetdir ("Binaries/" .. outputdir .. "/%{prj.name}")
-	objdir ("Intermediates/" .. outputdir .. "/%{prj.name}")
+	targetdir ("%{wks.location}/Binaries/" .. outputdir .. "/%{prj.name}")
+	objdir ("%{wks.location}/Intermediates/" .. outputdir .. "/%{prj.name}")
 
 	files
 	{
@@ -18,7 +18,7 @@ project "ImGui"
 		"imstb_textedit.h",
 		"imstb_truetype.h",
 		"imgui_demo.cpp",
-        "imgui_tables.cpp"
+        "imgui_tables.cpp",
 	}
 
 	filter "system:windows"

@@ -1,11 +1,10 @@
-#pragma once
+/*#pragma once
 
 #include "imgui.h"
 #include <Plugins/ImFileBrowser.h>
 #include "ContentBrowserItem.h"
 #include "Assets/AssetHandle.h"
 #include "Renderer/Image.h"
-#include "Panels/ImGuiWindow.h"
 
 
 namespace Lumina
@@ -48,4 +47,4 @@ namespace Lumina
         TVector<TRefPtr<ContentBrowserItem>> ContentItemEntries;
         std::map<EAssetType, TSharedPtr<ImGuiAssetImporter>> mImGuiImporterMap;
     };
-}
+}*/

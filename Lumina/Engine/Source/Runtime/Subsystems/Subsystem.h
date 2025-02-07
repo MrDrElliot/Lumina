@@ -3,9 +3,12 @@
 #include "Containers/Array.h"
 #include "EASTL/sort.h"
 #include "Log/Log.h"
+#include "Memory/Memory.h"
 
 namespace Lumina
 {
+    class FUpdateContext;
+
     class ISubsystem
     {
     public:
@@ -13,8 +16,7 @@ namespace Lumina
         friend class FSubsystemManager;
         
         virtual ~ISubsystem() = default;
-        virtual void Initialize() = 0;
-        virtual void Update(double DeltaTime) { }
+        virtual void Initialize(const FSubsystemManager& Manager) = 0;
         virtual void Deinitialize() = 0;
 
     private:
@@ -25,7 +27,7 @@ namespace Lumina
     {
     public:
         
-        ~FSubsystemManager() { DeinitializeAll(); }
+        ~FSubsystemManager() { }
 
         template<typename T, typename... Args>
         T* AddSubsystem(Args&&... args)
@@ -35,13 +37,13 @@ namespace Lumina
             uint32_t typeHash = typeid(T).hash_code();
             RemoveSubsystem<T>();
 
-            T* pSubsystem = new T(std::forward<Args>(args)...);
+            T* pSubsystem = FMemory::New<T>(std::forward<Args>(args)...);
             
             FlatUpdateList.push_back(pSubsystem);
             SubsystemLookup[typeHash] = pSubsystem;
             
 
-            pSubsystem->Initialize();
+            pSubsystem->Initialize(*this);
             LOG_TRACE("Subsystems: Created Type: {0}", typeid(T).name());
             return pSubsystem;
         }
@@ -54,10 +56,10 @@ namespace Lumina
             if (it != SubsystemLookup.end())
             {
                 ISubsystem* pSubsystem = it->second;
-
                 FlatUpdateList.erase(std::remove(FlatUpdateList.begin(), FlatUpdateList.end(), pSubsystem), FlatUpdateList.end());
-
-                delete pSubsystem;
+            
+                pSubsystem->Deinitialize();
+                FMemory::Delete(pSubsystem);
                 SubsystemLookup.erase(typeHash);
 
                 LOG_TRACE("Subsystems: Removed Type: {0}", typeid(T).name());
@@ -70,18 +72,6 @@ namespace Lumina
             uint32_t typeHash = typeid(T).hash_code();
             auto it = SubsystemLookup.find(typeHash);
             return (it != SubsystemLookup.end()) ? static_cast<T*>(it->second) : nullptr;
-        }
-
-        void DeinitializeAll()
-        {
-            for (ISubsystem* subsystem : FlatUpdateList)
-            {
-                subsystem->Deinitialize();
-                delete subsystem;
-            }
-            FlatUpdateList.clear();
-            SubsystemLookup.clear();
-            LOG_TRACE("Subsystems: All deinitialized");
         }
 
     private:

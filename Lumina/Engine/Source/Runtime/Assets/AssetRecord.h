@@ -6,6 +6,11 @@
 
 namespace Lumina
 {
+    class FAssetManager;
+}
+
+namespace Lumina
+{
     class FAssetHandle;
 
     class FAssetRecord
@@ -15,8 +20,9 @@ namespace Lumina
         friend class FAssetRequest;
         friend class FFactory;
 
-        FAssetRecord(const FAssetPath& InPath, EAssetType InType)
-            : AssetPath(InPath)
+        FAssetRecord(FAssetManager* InManager, const FAssetPath& InPath, EAssetType InType)
+            : Manager(InManager)
+            , AssetPath(InPath)
             , AssetType(InType)
         {}
 
@@ -58,7 +64,8 @@ namespace Lumina
 
         /** Reference count of this resource. */
         uint32                              ReferenceCount = 0;
-        
+
+        FAssetManager*                      Manager;
     };
     
 }

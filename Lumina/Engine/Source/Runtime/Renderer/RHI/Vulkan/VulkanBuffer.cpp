@@ -4,7 +4,7 @@
 #include "VulkanMemoryAllocator.h"
 #include "VulkanRenderContext.h"
 #include "glm/glm.hpp"
-#include "Math/Alignment.h"
+#include "Core/Math/Alignment.h"
 
 namespace Lumina
 {

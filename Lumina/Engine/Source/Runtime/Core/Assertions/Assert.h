@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <fstream>
 #include "Log/Log.h"
+#include "Platform/Platform.h"
 
 #ifdef _MSC_VER
 #include <intrin.h>    // for __debugbreak

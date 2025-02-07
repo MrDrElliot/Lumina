@@ -9,6 +9,7 @@
 namespace Lumina
 {
     using FString = eastl::basic_string<char>;
+    using FStringView = eastl::string_view;
     template<eastl_size_t S> using TInlineString = eastl::fixed_string<char, S, true>;
     using FInlineString = eastl::fixed_string<char, 255, true>;
     using FWString = eastl::basic_string<wchar_t>;

@@ -52,30 +52,19 @@ namespace Lumina
 		virtual bool Initialize() = 0;
 		virtual void Shutdown() = 0;
 
-		virtual void RenderImGui(double DeltaTime) { }
+		virtual void RenderDeveloperTools(const FUpdateContext& UpdateContext) { }
 		virtual void OnEvent(FEvent& Event) { }
 
 		bool HasAnyFlags(EApplicationFlags Flags);
 		FWindow* GetWindow();
 		
 		
-		template<typename T, typename... Args>
-		T* AddSubsystem(Args&&... args)
-		{
-			return ApplicationSubsystems.AddSubsystem<T>(std::forward<Args>(args)...);
-		}
-
-		template<typename T>
-		static T* GetSubsystem()
-		{
-			return Get().ApplicationSubsystems.GetSubsystem<T>();
-		}
 
 
 	protected:
 
-		virtual FEngine* InitializeEngine();
-	
+		virtual void CreateEngine() = 0;
+		
 	private:
 		
 		bool CreateApplicationWindow();
@@ -83,7 +72,7 @@ namespace Lumina
 		
 		bool ShouldExit();
 		
-	private:
+	protected:
 
 		FWindow*					Window = nullptr;
 		
@@ -91,8 +80,6 @@ namespace Lumina
 		
 		static FApplication*		Instance;
 		
-		FSubsystemManager			ApplicationSubsystems;
-
 		uint32						ApplicationFlags = 0;
 
 		FEngine*					Engine;

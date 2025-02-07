@@ -118,7 +118,7 @@ namespace Lumina
     }
 
     template<typename T, typename V>
-    inline void VectorRemove(TVector<T>& Vector, V const& Value)
+    inline void VectorRemove(TVector<T>& Vector, const V& Value)
     {
         return Vector.erase(Vector.begin(), Vector.end(), Value, Vector.end());
     }

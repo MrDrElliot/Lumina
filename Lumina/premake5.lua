@@ -6,8 +6,8 @@ project "Lumina"
 
 	outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
-	targetdir ("../Binaries/" .. outputdir .. "/%{prj.name}")
-	objdir ("../Intermediates/" .. outputdir .. "/%{prj.name}")
+	targetdir ("%{wks.location}/Binaries/" .. outputdir .. "/%{prj.name}")
+	objdir ("%{wks.location}/Intermediates/" .. outputdir .. "/%{prj.name}")
 	
 	files
 	{
@@ -63,25 +63,31 @@ project "Lumina"
 		"Engine/ThirdParty/entt/src/**.hpp",
 	  	"Engine/ThirdParty/entt/src/**.cpp",
 
+        "Engine/ThirdParty/rpmalloc/**.h",
+        "Engine/ThirdParty/rpmalloc/**.c",
+        
+        "Engine/ThirdParty/xxhash/**.h",
+        "Engine/ThirdParty/xxhash/**.c"
+        
 	}
 
 
 	includedirs
-	{ 
+	{
 		"Engine",
 		"Engine/Source",
 		"Engine/Source/Runtime",
 		"Engine/ThirdParty/",
-		
+
 		includedependencies();
 	}
-	
+
 	links
 	 {
 	    "GLFW",
 	    "ImGui",
-	  	"%{VULKAN_SDK}/lib/vulkan-1.lib",  	
-	    "%{VULKAN_SDK}/lib/shaderc.lib",  	
+	  	"%{VULKAN_SDK}/lib/vulkan-1.lib",
+	    "%{VULKAN_SDK}/lib/shaderc.lib",
 	 }
 
 	defines
@@ -89,6 +95,7 @@ project "Lumina"
 		 "GLM_FORCE_DEPTH_ZERO_TO_ONE",
 		 "GLFW_INCLUDE_NONE",
 		 "_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS",
+		 "IMGUI_IMPL_VULKAN_HAS_DYNAMIC_RENDERING",
 	 }
 
 	filter "system:linux"

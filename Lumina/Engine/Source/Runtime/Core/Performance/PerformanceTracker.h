@@ -14,9 +14,7 @@ public:
     
     // Mutex to protect access to the map
     std::mutex ProfileMapMutex;
-
-    void Shutdown() override {}
-
+    
     // Add or update a profiling entry
     void AddProfileData(const Lumina::FString& name, double duration)
     {

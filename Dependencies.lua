@@ -21,6 +21,8 @@ IncludeDir["yaml"] =                    "%{LuminaEngineDirectory}/Lumina/Engine/
 IncludeDir["ImGuizmo"] =                "%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/ImGuizmo/"
 IncludeDir["EASTL"] =                   "%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/EA/EASTL/include/"
 IncludeDir["EABase"] =                  "%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/EA/EABase/include/Common/"
+IncludeDir["rpmalloc"] =                "%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/rpmalloc/"
+IncludeDir["xxhash"] =                "%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/xxhash/"
 
 
 

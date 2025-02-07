@@ -3,11 +3,11 @@
 
 namespace Lumina
 {
-    void FInputSubsystem::Initialize()
+    void FInputSubsystem::Initialize(const FSubsystemManager& Manager)
     {
     }
 
-    void FInputSubsystem::Update(double DeltaTime)
+    void FInputSubsystem::Update(const FUpdateContext& UpdateContext)
     {
     }
 

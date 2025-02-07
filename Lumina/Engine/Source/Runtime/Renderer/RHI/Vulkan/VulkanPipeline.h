@@ -1,6 +1,6 @@
 #pragma once
-#include <vulkan/vulkan_core.h>
 
+#include <vulkan/vulkan_core.h>
 #include "Source/Runtime/Renderer/Pipeline.h"
 
 namespace Lumina
@@ -10,22 +10,18 @@ namespace Lumina
     public:
 
         FVulkanPipeline(const FPipelineSpecification& InSpec);
-        ~FVulkanPipeline();
+        ~FVulkanPipeline() override;
 
-        const FPipelineSpecification& GetSpecification() const override { return Specification; }
         VkPipeline GetPipeline() { return Pipeline; }
         VkPipelineLayout GetPipelineLayout() { return PipelineLayout; }
-        
-        void Destroy() override;
 
-        void CreateGraphics();
-        void CreateCompute();
+        void SetFriendlyName(const FString& InName) override;
 
+        void CreateGraphics() override;
+        void CreateCompute() override;
 
     private:
         
-        FPipelineSpecification Specification;
-
         VkPipeline Pipeline;
         VkPipelineLayout PipelineLayout;
     };

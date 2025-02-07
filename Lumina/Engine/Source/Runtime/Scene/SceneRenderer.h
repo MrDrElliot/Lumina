@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Memory/RefCounted.h"
 #include "ScenePrimitives.h"
 #include "Assets/AssetHandle.h"
 #include "Renderer/Renderer.h"
@@ -52,6 +53,7 @@ namespace Lumina
         FSceneLightData()
         {
             memset(Lights, 0, sizeof(Lights));
+            memset(padding, 0, sizeof(padding));
         }
         
         uint32 NumLights =  0;
@@ -65,18 +67,23 @@ namespace Lumina
         glm::mat4 Projection =   glm::mat4(1.0f);
         glm::vec3 Position =     {0.0f, 0.0f, 0.0f};
     };
-    
-    class FSceneRenderer
+
+    /**
+     * Scene renderer's are stateful renderes that interface with the state-less renderer.
+     * Responsible for managing all low-level scene rendering.
+     */
+    class FSceneRenderer : public FRefCounted
     {
     public:
         
 
-        static TSharedPtr<FSceneRenderer> Create(FScene* InScene);
+        static TRefPtr<FSceneRenderer> Create(FScene* InScene);
 
         FSceneRenderer(FScene* InScene);
         ~FSceneRenderer();
 
-        void Update(double DeltaTime);
+        void StartFrame();
+        void EndFrame();
 
         TRefPtr<FImage> GetRenderTarget() { return      RenderTargets[FRenderer::GetCurrentFrameIndex()]; }
         TRefPtr<FImage> GetDepthAttachment() { return   DepthAttachments[FRenderer::GetCurrentFrameIndex()]; }
@@ -134,12 +141,11 @@ namespace Lumina
         TVector<FModelData>                 ModelData;
         TVector<FMaterialTexturesData>      TexturesData;
 
-        TAssetHandle<AMaterialInstance>     MaterialInstance;
         
-        TSharedPtr<FCamera> Camera;
+        TRefPtr<FCamera> Camera;
         TRefPtr<FMaterial> TestMaterial;
         
-        FScene* CurrentScene;
+        TRefPtr<FScene> CurrentScene;
         
     };
 }

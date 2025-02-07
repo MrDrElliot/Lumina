@@ -91,16 +91,32 @@ namespace Lumina
 
     FVulkanPipeline::~FVulkanPipeline()
     {
-
-    }
-
-    void FVulkanPipeline::Destroy()
-    {
     	FVulkanRenderContext* RenderContext = FRenderer::GetRenderContext<FVulkanRenderContext>();		
-    		
     	VkDevice device = RenderContext->GetDevice();
     	vkDestroyPipeline(device, Pipeline, nullptr);
     	vkDestroyPipelineLayout(device, PipelineLayout, nullptr);
+    }
+
+    void FVulkanPipeline::SetFriendlyName(const FString& InName)
+    {
+    	FPipeline::SetFriendlyName(InName);
+    		
+    	FVulkanRenderContext* RenderContext = FRenderer::GetRenderContext<FVulkanRenderContext>();		
+
+    	VkDevice Device = RenderContext->GetDevice();
+        
+    	VkDebugUtilsObjectNameInfoEXT NameInfo = {};
+    	NameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+    	NameInfo.pObjectName = GetFriendlyName().c_str();
+    	NameInfo.objectType = VK_OBJECT_TYPE_PIPELINE;
+    	NameInfo.objectHandle = reinterpret_cast<uint64_t>(Pipeline);
+    	
+    	RenderContext->GetRenderContextFunctions().DebugUtilsObjectNameEXT(Device, &NameInfo);
+
+    	NameInfo.objectType = VK_OBJECT_TYPE_PIPELINE_LAYOUT;
+    	NameInfo.objectHandle = reinterpret_cast<uint64_t>(PipelineLayout);
+    	
+    	RenderContext->GetRenderContextFunctions().DebugUtilsObjectNameEXT(Device, &NameInfo);
     }
 
     void FVulkanPipeline::CreateGraphics()
@@ -241,7 +257,7 @@ namespace Lumina
 		PipelineLayoutCreateInfo.pushConstantRangeCount = (uint32)PushConstantRanges.size();
 		PipelineLayoutCreateInfo.pPushConstantRanges = PushConstantRanges.data();
 
-		vkCreatePipelineLayout(Device, &PipelineLayoutCreateInfo, nullptr, &PipelineLayout);
+		VK_CHECK(vkCreatePipelineLayout(Device, &PipelineLayoutCreateInfo, nullptr, &PipelineLayout));
 
 		std::vector<VkFormat> formats;
 		for (const auto& format : Specification.output_attachments_formats)
@@ -298,7 +314,7 @@ namespace Lumina
     	PipelineLayoutCreateInfo.pushConstantRangeCount = (uint32)PushConstantRanges.size();
     	PipelineLayoutCreateInfo.pPushConstantRanges = PushConstantRanges.data();
 
-    	vkCreatePipelineLayout(Device, &PipelineLayoutCreateInfo, nullptr, &PipelineLayout);
+    	VK_CHECK(vkCreatePipelineLayout(Device, &PipelineLayoutCreateInfo, nullptr, &PipelineLayout));
 
     	TVector<VkPipelineShaderStageCreateInfo> StageCreateInfo = VkShader->GetCreateInfos();
 

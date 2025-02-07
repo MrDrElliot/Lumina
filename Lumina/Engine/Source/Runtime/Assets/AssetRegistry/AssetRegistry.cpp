@@ -7,7 +7,7 @@
 
 namespace Lumina
 {
-    void FAssetRegistry::Initialize()
+    void FAssetRegistry::Initialize(const FSubsystemManager& Manager)
     {
         TVector<uint8> Buffer;
         using Path = std::filesystem::path;

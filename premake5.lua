@@ -14,7 +14,7 @@ workspace "Lumina"
 	{
 		"_CRT_SECURE_NO_WARNINGS",
 		"GLM_FORCE_DEPTH_ZERO_TO_ONE",
-		"WITH_DEVELOPMENT_TOOLS",
+		"IMGUI_DEFINE_MATH_OPERATORS",
 	}
 
 	filter "action:vs"

@@ -1,3 +1,4 @@
+/*
 #include "ContentBrowserItem.h"
 
 #include "ContentBrowserWindow.h"
@@ -6,11 +7,9 @@
 
 namespace Lumina
 {
-    ContentBrowserItem::ContentBrowserItem(const std::filesystem::path& InPath, const FAssetHeader& Metadata, bool bIsFolder)
+    ContentBrowserItem::ContentBrowserItem(const std::filesystem::path& InPath)
     {
         Path = InPath;
-        AssetMetadata = Metadata;
-        bFolder = bIsFolder;
     }
 
     ContentBrowserItem::~ContentBrowserItem()
@@ -136,10 +135,10 @@ namespace Lumina
                 ImGui::Text("Size: %ld bytes", std::filesystem::file_size(Path));
     
                 // Display metadata details
-                ImGui::Text("Name: %s", AssetMetadata.Name.c_str());
+                /*ImGui::Text("Name: %s", AssetMetadata.Name.c_str());
                 ImGui::Text("Type: %s", AssetTypeToString(AssetMetadata.AssetType).c_str());
                 ImGui::Text("Path: %s", AssetMetadata.Path.c_str());
-                ImGui::Text("Origin Path: %s", AssetMetadata.OriginPath.c_str());
+                ImGui::Text("Origin Path: %s", AssetMetadata.OriginPath.c_str());#1#
             
                 ImGui::Separator();
     
@@ -166,3 +165,4 @@ namespace Lumina
         }
     }
 }
+*/

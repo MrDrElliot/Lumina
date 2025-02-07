@@ -1,14 +1,16 @@
 #pragma once
-#include <Assets/AssetTypes.h>
-#include <functional>
+
 
 namespace Lumina
 {
+	enum class EAssetType : unsigned char;
+	struct FAssetHeader;
+	
 	class FAssetPropertyPanel
 	{
 		
 	public:
 
-		static bool Render(EAssetType Type, FAssetMetadata& Selected);
+		static bool Render(EAssetType Type, FAssetHeader& Selected);
 	};
 }

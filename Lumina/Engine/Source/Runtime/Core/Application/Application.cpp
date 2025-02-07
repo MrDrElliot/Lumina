@@ -1,7 +1,7 @@
 #include "Application.h"
+#include "Scene/SceneRenderer.h"
 #include "Assets/AssetManager/AssetManager.h"
 #include "Core/Performance/PerformanceTracker.h"
-#include "ImGui/ImGuiRenderer.h"
 #include "Renderer/Renderer.h"
 #include "Core/Windows/Window.h"
 #include "Core/Windows/WindowTypes.h"
@@ -37,7 +37,7 @@ namespace Lumina
         //--------------------------------------------------------------
         
         CreateApplicationWindow();
-        Engine = InitializeEngine();
+        CreateEngine();
         
         if (!Initialize())
         {
@@ -56,6 +56,7 @@ namespace Lumina
         {
             PROFILE_SCOPE(ApplicationFrame)
             
+            Engine->Update();
             bExitRequested = !ApplicationLoop();
             
             Window->ProcessMessages();
@@ -70,8 +71,6 @@ namespace Lumina
         
         Shutdown();
         
-        ApplicationSubsystems.DeinitializeAll();
-
         Engine->Shutdown();
         
         Window->Shutdown();
@@ -83,20 +82,14 @@ namespace Lumina
 
     bool FApplication::HasAnyFlags(EApplicationFlags Flags)
     {
-        return ApplicationFlags & static_cast<uint32>(Flags) != 0;
+        return (ApplicationFlags & static_cast<uint32>(Flags)) != 0;
     }
     
     FWindow* FApplication::GetWindow()
     {
         return Get().Window;
     }
-
-    FEngine* FApplication::InitializeEngine()
-    {
-        FEngine* NewEngine = new FEngine();
-        NewEngine->Initialize(this);
-        return NewEngine;
-    }
+    
     
     bool FApplication::CreateApplicationWindow()
     {

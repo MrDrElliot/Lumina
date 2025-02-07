@@ -14,9 +14,14 @@
 namespace Lumina
 {
     FVulkanSwapchain::FVulkanSwapchain(const FSwapchainSpec& InSpec)
+		: Format()
+		, SurfaceFormat()
+		, CurrentPresentMode()
     {
-        Specifications = InSpec;
-    	bWasResizedThisFrame = false;
+	    Specifications = InSpec;
+	    bWasResizedThisFrame = false;
+    	memset((void*)AquireSemaphores.data(), 0, AquireSemaphores.size() * sizeof(VkSemaphore));
+    	memset((void*)PresentSemaphores.data(), 0, PresentSemaphores.size() * sizeof(VkSemaphore));
     }
 
     void FVulkanSwapchain::CreateSurface(IRenderContext* Context, const FSwapchainSpec& InSpec)
@@ -35,16 +40,13 @@ namespace Lumina
         VkDevice Device = RenderContext->GetDevice();
     	
         Images.reserve(InSpec.FramesInFlight);
-    	
-    	memset((void*)AquireSemaphores.data(), 0, AquireSemaphores.size() * sizeof(VkSemaphore));
-    	memset((void*)PresentSemaphores.data(), 0, PresentSemaphores.size() * sizeof(VkSemaphore));
-    	
-        CurrentFrameIndex = 0;
 
+    	bool bBeingResized = false;
         if(LIKELY(Swapchain))
         {
         	FRenderer::WaitIdle();
             vkDestroySwapchainKHR(Device, Swapchain, nullptr);
+        	bBeingResized = true;
         }
     	
         vkb::SwapchainBuilder swapchainBuilder { RenderContext->GetPhysicalDevice(), Device, Surface };
@@ -129,102 +131,64 @@ namespace Lumina
         }
 
     	RenderContext->ExecuteTransientCommandBuffer(ImageCreateBuffer);
-    	
-        VkSemaphoreCreateInfo SemaphoreCreateInfo = {};
-        SemaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
-		// Handle Present Semaphores
-		size_t currentImageCount = RawImages.size();
-    	
-		// Destroy any excess semaphores
-		for (size_t i = currentImageCount; i < PresentSemaphores.size(); i++)
-		{
-			if (PresentSemaphores[i] != nullptr)
-			{
-				vkDestroySemaphore(Device, PresentSemaphores[i], nullptr);
-			}
-		}
-		
-		for (size_t i = 0; i < currentImageCount; i++)
-		{
-		    // Destroy and recreate if resized this frame
-		    if (i < PresentSemaphores.size())
-		    {
-		    	if (PresentSemaphores[i] != nullptr)
-		    	{
-		    		vkDestroySemaphore(Device, PresentSemaphores[i], nullptr);
-		    	}
-		    }
-		    
-		    VkSemaphore semaphore = VK_NULL_HANDLE;
-		    VK_CHECK(vkCreateSemaphore(Device, &SemaphoreCreateInfo, nullptr, &semaphore));
-		
-		    if (i >= PresentSemaphores.size())
-		    {
-		        PresentSemaphores.push_back(semaphore);
-		    }
-		    else
-		    {
-		        PresentSemaphores[i] = semaphore;
-		    }
-		
-		    // Assign debug name
-		    FString name = "Present Semaphore: " + eastl::to_string(i);
-		    VkDebugUtilsObjectNameInfoEXT NameInfo = {};
-		    NameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
-		    NameInfo.pObjectName = name.c_str();
-		    NameInfo.objectType = VK_OBJECT_TYPE_SEMAPHORE;
-		    NameInfo.objectHandle = reinterpret_cast<uint64_t>(semaphore);
-		
-		    RenderContext->GetRenderContextFunctions().DebugUtilsObjectNameEXT(Device, &NameInfo);
-		}
-		
-		// Handle Render Semaphores
-		uint8_t currentFrameCount = InSpec.FramesInFlight;
+    	size_t currentImageCount = RawImages.size();
 
-		// Destroy any excess semaphores
-		for (size_t i = currentFrameCount; i < AquireSemaphores.size(); i++)
-		{
-			if (AquireSemaphores[i] != nullptr)
-			{
-				vkDestroySemaphore(Device, AquireSemaphores[i], nullptr);
-			}
-		}
+    	// Destroy excess PresentSemaphores and resize down
+    	if (PresentSemaphores.size() > currentImageCount)
+    	{
+    		for (size_t i = currentImageCount; i < PresentSemaphores.size(); i++)
+    		{
+    			PresentSemaphores[i].Release();
+    		}
 
-    	
-		for (size_t i = 0; i < currentFrameCount; i++)
-		{
-		    // Destroy and recreate if resized this frame
-		    if (i < AquireSemaphores.size())
-		    {
-		    	if (AquireSemaphores[i] != nullptr)
-		    	{
-		    		vkDestroySemaphore(Device, AquireSemaphores[i], nullptr);
-		    	}
-		    }
-		
-		    VkSemaphore semaphore = VK_NULL_HANDLE;
-		    VK_CHECK(vkCreateSemaphore(Device, &SemaphoreCreateInfo, nullptr, &semaphore));
-		
-		    if (i >= AquireSemaphores.size())
-		    {
-		        AquireSemaphores.push_back(semaphore);
-		    }
-		    else
-		    {
-		        AquireSemaphores[i] = semaphore;
-		    }
-		
-		    // Assign debug name
-		    FString name = "Aquire Semaphore: " + eastl::to_string(i);
-		    VkDebugUtilsObjectNameInfoEXT NameInfo = {};
-		    NameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
-		    NameInfo.pObjectName = name.c_str();
-		    NameInfo.objectType = VK_OBJECT_TYPE_SEMAPHORE;
-		    NameInfo.objectHandle = reinterpret_cast<uint64_t>(semaphore);
-		
-		    RenderContext->GetRenderContextFunctions().DebugUtilsObjectNameEXT(Device, &NameInfo);
-		}
+    		// Now safely resize down
+    		PresentSemaphores.resize(currentImageCount);
+    	}
+
+    	// Ensure PresentSemaphores has enough slots (initialize with null)
+    	if (PresentSemaphores.size() < currentImageCount)
+    	{
+    		PresentSemaphores.clear();
+    		PresentSemaphores.resize(currentImageCount);
+    	}
+
+    	// Create new semaphores
+    	for (size_t i = 0; i < currentImageCount; i++)
+    	{
+    		PresentSemaphores[i] = MakeRefPtr<FVulkanSemaphore>();
+    		PresentSemaphores[i]->SetFriendlyName("Present Semaphore: " + eastl::to_string(i));
+    	}
+
+    	// --------- AQUIRE SEMAPHORES MANAGEMENT --------- //
+
+    	uint8 currentFrameCount = InSpec.FramesInFlight;
+
+    	// Destroy excess AquireSemaphores
+    	if (AquireSemaphores.size() > currentFrameCount)
+    	{
+    		for (size_t i = currentFrameCount; i < AquireSemaphores.size(); i++)
+    		{
+    			AquireSemaphores[i].Release();
+    		}
+    		
+    		AquireSemaphores.resize(currentFrameCount);
+    	}
+
+    	// Ensure AquireSemaphores has enough slots
+    	if (AquireSemaphores.size() < currentFrameCount)
+    	{
+    		AquireSemaphores.clear();
+    		AquireSemaphores.resize(currentFrameCount);
+    	}
+
+    	// Create new Aquire semaphores
+    	for (size_t i = 0; i < currentFrameCount; i++)
+    	{
+    		AquireSemaphores[i] = MakeRefPtr<FVulkanSemaphore>();
+    		AquireSemaphores[i]->SetFriendlyName("Aquire Semaphore: " + eastl::to_string(i));
+    	}
+
     	
     	if(bWasResizedThisFrame)
     	{
@@ -264,27 +228,17 @@ namespace Lumina
 		FRenderer::WaitIdle();
     	
     	Images.clear();
-
-
+    	
     	vkDestroySwapchainKHR(Device, Swapchain, nullptr);
-
-    	for (auto& Semaphore : AquireSemaphores)
-    	{
-    		vkDestroySemaphore(Device, Semaphore, nullptr);
-    	}
-        
-        for (auto& Semaphore : PresentSemaphores)
-        {
-            vkDestroySemaphore(Device, Semaphore, nullptr);
-        }
-
-    	for (auto& Fence : Fences)
-    	{
-    		vkDestroyFence(Device, Fence, nullptr);
-    	}
-
+    	
     	AquireSemaphores.clear();
     	PresentSemaphores.clear();
+    	
+	    for (int i = 0; i < Fences.size(); ++i)
+	    {
+		    vkDestroyFence(Device, Fences[i], nullptr);
+	    }
+    	
     	Fences.clear();
 
     	Swapchain = VK_NULL_HANDLE;
@@ -307,14 +261,14 @@ namespace Lumina
     bool FVulkanSwapchain::BeginFrame()
     {
     	bWasResizedThisFrame = false;
-    	if(bDirty)
+    	if(UNLIKELY(bDirty))
     	{
     		RecreateSwapchain();
     	}
     	
         VkDevice Device = FRenderer::GetRenderContext<FVulkanRenderContext>()->GetDevice();
     	
-    	if(Swapchain == VK_NULL_HANDLE)
+    	if(UNLIKELY(Swapchain == VK_NULL_HANDLE))
     	{
     		LOG_WARN("Attempted to begin swap chain frame before swap chain creation");
     		return false;
@@ -325,7 +279,7 @@ namespace Lumina
         VkResult AcquireResult = vkAcquireNextImageKHR(Device, Swapchain, UINT64_MAX, GetAquireSemaphore(),
             VK_NULL_HANDLE, &CurrentImageIndex);
 
-        if (AcquireResult == VK_ERROR_OUT_OF_DATE_KHR || AcquireResult == VK_SUBOPTIMAL_KHR || bDirty)
+        if (UNLIKELY(AcquireResult == VK_ERROR_OUT_OF_DATE_KHR || AcquireResult == VK_SUBOPTIMAL_KHR))
         {
         	bDirty = true;
         }
@@ -341,8 +295,7 @@ namespace Lumina
 	        return;
         }
 
-        auto PresentSemaphore = GetPresentSemaphore();
-
+        VkSemaphore PresentSemaphore = GetPresentSemaphore();
     	
         VkPresentInfoKHR PresentInfo = {};
         PresentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -358,9 +311,13 @@ namespace Lumina
     	VkQueue Queue = RenderContext->GetGeneralQueue();
         VkResult Result = vkQueuePresentKHR(Queue, &PresentInfo);
 
-        if (Result == VK_ERROR_OUT_OF_DATE_KHR || Result == VK_SUBOPTIMAL_KHR || bDirty)
+        if (UNLIKELY(Result == VK_ERROR_OUT_OF_DATE_KHR || Result == VK_SUBOPTIMAL_KHR))
         {
         	bDirty = true;
+        }
+        else
+        {
+	        VK_CHECK(Result);
         }
     	
         CurrentFrameIndex = (CurrentFrameIndex + 1) % Specifications.FramesInFlight;

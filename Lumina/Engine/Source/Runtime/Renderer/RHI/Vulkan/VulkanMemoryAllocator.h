@@ -11,14 +11,19 @@
 
 namespace Lumina
 {
+    class FVulkanRenderContext;
     class FVulkanImage;
     class FVulkanBuffer;
+
+    
     class FVulkanMemoryAllocator : public TSingleton<FVulkanMemoryAllocator>
     {
     public:
 
         FVulkanMemoryAllocator();
         ~FVulkanMemoryAllocator();
+
+        void ClearAllAllocations();
         
         VmaAllocation AllocateBuffer(VkBufferCreateInfo* CreateInfo, VmaAllocationCreateFlags Flags, VkBuffer* vkBuffer, const char* AllocationName);
         VmaAllocation AllocateImage(VkImageCreateInfo* CreateInfo, VmaAllocationCreateFlags Flags, VkImage* vkImage, const char* AllocationName);
@@ -34,11 +39,11 @@ namespace Lumina
         
         VmaAllocator Allocator = nullptr;
 
-        struct AllocatorStatistics 
+        struct FAllocatorStatistics 
         {
-            std::vector<VmaAllocation> Allocations;
-            eastl::unordered_map<VkBuffer, VmaAllocation> AllocatedBuffers;
-            eastl::unordered_map<VkImage, VmaAllocation> AllocatedImages;
+            TVector<VmaAllocation> Allocations;
+            THashMap<VkBuffer, VmaAllocation> AllocatedBuffers;
+            THashMap<VkImage, VmaAllocation> AllocatedImages;
             uint64 Allocated = 0;
             uint64 Freed = 0;
             uint64 CurrentlyAllocated = 0;

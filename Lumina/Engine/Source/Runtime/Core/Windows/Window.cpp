@@ -72,15 +72,14 @@ namespace Lumina
 		{
 			glfwInit();
 			glfwSetErrorCallback(GLFWErrorCallback);
+			glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 			glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+			glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
+			glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
 
-			if (Specs.bFullscreen)
-			{
-				glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
-			}
 			
 			// Create the window
-			Window = glfwCreateWindow(1, 1, Specs.Title.c_str(), nullptr, nullptr);
+			Window = glfwCreateWindow(800, 900, Specs.Title.c_str(), nullptr, nullptr);
 			if (GLFWmonitor* currentMonitor = GetCurrentMonitor(Window))
 			{
 				// Get monitor dimensions
@@ -90,11 +89,11 @@ namespace Lumina
 				// Check if Specs.Width or Specs.Height is 0 and set them to the monitor size - 1
 				if (Specs.Width == 0 || Specs.Width >= monitorWidth)
 				{
-					Specs.Width = monitorWidth/1.3;
+					Specs.Width = monitorWidth/1.15;
 				}
 				if (Specs.Height == 0 || Specs.Height >= monitorHeight)
 				{
-					Specs.Height = monitorHeight/1.3;
+					Specs.Height = monitorHeight/1.15;
 				}
 				
 
@@ -103,6 +102,7 @@ namespace Lumina
 
 				// Update the window size after adjustment
 				glfwSetWindowSize(Window, Specs.Width, Specs.Height);
+				
 			}
 		}
 	}

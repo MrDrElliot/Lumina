@@ -31,12 +31,10 @@ namespace Lumina
 
     FVulkanMemoryAllocator::~FVulkanMemoryAllocator()
     {
-                // Log statistics before cleanup
-        LOG_INFO("Allocator Shutdown Started. Current Statistics:");
-        LOG_INFO("Allocated Buffers: {}", Statistics.CurrentlyAllocatedBuffers);
-        LOG_INFO("Allocated Images: {}", Statistics.CurrentlyAllocatedImages);
-        LOG_INFO("Currently Allocated Memory: {} bytes", Statistics.CurrentlyAllocated);
-    
+    }
+
+    void FVulkanMemoryAllocator::ClearAllAllocations()
+    {
         // Cleanup allocated buffers
         for (auto& kvp : Statistics.AllocatedBuffers)
         {
@@ -76,7 +74,7 @@ namespace Lumina
         LOG_INFO("Allocated Images: {}", Statistics.CurrentlyAllocatedImages);
         LOG_INFO("Currently Allocated Memory: {} bytes", Statistics.CurrentlyAllocated);
     }
-    
+
     VmaAllocation FVulkanMemoryAllocator::AllocateBuffer(VkBufferCreateInfo* CreateInfo, VmaAllocationCreateFlags Flags, VkBuffer* vkBuffer, const char* AllocationName)
     {
         VmaAllocationCreateInfo Info = {};

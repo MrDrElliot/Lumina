@@ -8,8 +8,8 @@ namespace Lumina
     {
     public:
 
-        void Initialize() override;
-        void Update(double DeltaTime) override;
+        void Initialize(const FSubsystemManager& Manager) override;
+        void Update(const FUpdateContext& UpdateContext);
         void Deinitialize() override;
     
     };

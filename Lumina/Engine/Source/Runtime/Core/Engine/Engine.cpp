@@ -1,10 +1,12 @@
 ﻿#include "Engine.h"
-
 #include "Assets/AssetManager/AssetManager.h"
 #include "glfw/glfw3.h"
-#include "ImGui/ImGuiRenderer.h"
 #include "Input/InputSubsystem.h"
+#include "Scene/Scene.h"
+#include "Scene/SceneManager.h"
 #include "Renderer/Renderer.h"
+#include "Tools/UI/DevelopmentToolUI.h"
+#include "Tools/UI/ImGui/Vulkan/VulkanImGuiRender.h"
 
 namespace Lumina
 {
@@ -15,22 +17,27 @@ namespace Lumina
         //-------------------------------------------------------------------------
         
         Application = App;
-        EngineSubsystems = new FSubsystemManager;
-        EngineSubsystems->AddSubsystem<FInputSubsystem>();
-        EngineSubsystems->AddSubsystem<FAssetManager>();
-
-        UpdateContext.SubsystemManager = EngineSubsystems;
         
         FRenderConfig Config;
         Config.Window = App->GetWindow();
         Config.FramesInFlight = 2;
         
         FRenderer::Init(Config);
+        
+        InputSubsystem = EngineSubsystems.AddSubsystem<FInputSubsystem>();
+        AssetManagerSubystem = EngineSubsystems.AddSubsystem<FAssetManager>();
+        SceneManager = EngineSubsystems.AddSubsystem<FSceneManager>();
+        #if WITH_DEVELOPMENT_TOOLS
+        ImGuiRenderer = EngineSubsystems.AddSubsystem<FVulkanImGuiRender>();
+        #endif
+        
+        UpdateContext.SubsystemManager = &EngineSubsystems;
 
-        if (App->HasAnyFlags(EApplicationFlags::DevelopmentTools))
-        {
-            CreateDevelopmentUITools();
-        }
+
+        #if WITH_DEVELOPMENT_TOOLS
+        CreateDevelopmentTools();
+        DeveloperToolUI->Initialize(UpdateContext);
+        #endif
         
         PostInitialize();
         
@@ -39,47 +46,150 @@ namespace Lumina
 
     bool FEngine::Shutdown()
     {
-        PreShutdown();
-
+        //-------------------------------------------------------------------------
+        // Shutdown core engine state.
+        //-------------------------------------------------------------------------
         
-        if (Application->HasAnyFlags(EApplicationFlags::DevelopmentTools))
-        {
-            FImGuiRenderer::Shutdown();
-        }
+        PreShutdown();
+        
+        #if WITH_DEVELOPMENT_TOOLS
+        DeveloperToolUI->Deinitialize(UpdateContext);
+        delete DeveloperToolUI;
+        EngineSubsystems.RemoveSubsystem<FVulkanImGuiRender>();
+        #endif
 
+        EngineSubsystems.RemoveSubsystem<FInputSubsystem>();
+        EngineSubsystems.RemoveSubsystem<FAssetManager>();
+        EngineSubsystems.RemoveSubsystem<FSceneManager>();
+        
         FRenderer::Shutdown();
+        
         return false;
     }
 
     bool FEngine::Update()
     {
+        //-------------------------------------------------------------------------
+        // Update core engine state.
+        //-------------------------------------------------------------------------
+        
         UpdateContext.MarkFrameStart();
-        double DeltaTime = UpdateContext.GetDeltaTime();
-        
-        EngineSubsystems->GetSubsystem<FInputSubsystem>()->Update(DeltaTime);
-        EngineSubsystems->GetSubsystem<FAssetManager>()->Update(DeltaTime);
-        
+        FRenderer::BeginFrame();
 
-        DrawDevelopmentTools();
-        FRenderer::Update();
+        bool bRunEngineUpdate = true;
 
+        AssetManagerSubystem->Update();
+
+        
+        if (bRunEngineUpdate)
+        {
+            UpdateContext.UpdateStage = FUpdateContext::EUpdateStage::FrameStart;
+
+            // Frame Start
+            //-------------------------------------------------------------------
+            {
+                SceneManager->StartFrame();
+
+                InputSubsystem->Update(UpdateContext);
+                
+                #if WITH_DEVELOPMENT_TOOLS
+                ImGuiRenderer->StartFrame();
+                DeveloperToolUI->StartFrame(UpdateContext);
+                #endif
+
+                #if WITH_DEVELOPMENT_TOOLS
+                DeveloperToolUI->Update(UpdateContext);
+                #endif
+                
+                SceneManager->UpdateScenes(UpdateContext);
+            }
+
+            // Pre Physics
+            //-------------------------------------------------------------------
+            {
+                UpdateContext.UpdateStage = FUpdateContext::EUpdateStage::PrePhysics;
+
+                SceneManager->UpdateScenes(UpdateContext);
+
+                #if WITH_DEVELOPMENT_TOOLS
+                DeveloperToolUI->Update(UpdateContext);
+                #endif
+                
+            }
+
+            // During Physics
+            //-------------------------------------------------------------------
+            {
+                UpdateContext.UpdateStage = FUpdateContext::EUpdateStage::DuringPhysics;
+
+                SceneManager->UpdateScenes(UpdateContext);
+
+                #if WITH_DEVELOPMENT_TOOLS
+                DeveloperToolUI->Update(UpdateContext);
+                #endif
+                
+            }
+
+            // Post Phsyics
+            //-------------------------------------------------------------------
+            {
+                UpdateContext.UpdateStage = FUpdateContext::EUpdateStage::PostPhysics;
+
+                SceneManager->UpdateScenes(UpdateContext);
+
+                #if WITH_DEVELOPMENT_TOOLS
+                DeveloperToolUI->Update(UpdateContext);
+                #endif
+
+            }
+
+            // Paused
+            //-------------------------------------------------------------------
+            {
+                UpdateContext.UpdateStage = FUpdateContext::EUpdateStage::Paused;
+
+                SceneManager->UpdateScenes(UpdateContext);
+
+                #if WITH_DEVELOPMENT_TOOLS
+                DeveloperToolUI->Update(UpdateContext);
+                #endif
+
+            }
+
+            // Frame End
+            //-------------------------------------------------------------------
+            {
+                UpdateContext.UpdateStage = FUpdateContext::EUpdateStage::FrameEnd;
+
+                #if WITH_DEVELOPMENT_TOOLS
+                DeveloperToolUI->Update(UpdateContext);
+                #endif
+
+                SceneManager->UpdateScenes(UpdateContext);
+
+                #if WITH_DEVELOPMENT_TOOLS
+                DeveloperToolUI->EndFrame(UpdateContext);
+                ImGuiRenderer->EndFrame();
+                #endif
+                
+                SceneManager->EndFrame();
+                
+                FRenderer::Render();
+                FRenderer::EndFrame();
+            }
+        }
+        
+        
         UpdateContext.MarkFrameEnd(glfwGetTime());
         
-        return false;
+        return true;
     }
 
     void FEngine::DrawDevelopmentTools()
     {
         if (Application->HasAnyFlags(EApplicationFlags::DevelopmentTools))
         {
-            FImGuiRenderer::BeginFrame();
-            Application->RenderImGui(UpdateContext.GetDeltaTime());
-            FImGuiRenderer::EndFrame();
+            Application->RenderDeveloperTools(UpdateContext);
         }
-    }
-
-    void FEngine::CreateDevelopmentUITools()
-    {
-        FImGuiRenderer::Init();
     }
 }

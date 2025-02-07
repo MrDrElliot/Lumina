@@ -1,7 +1,8 @@
+/*
 #pragma once
 
 #include "imgui.h"
-#include "ImGuiWindow.h"
+#include "Memory/RefCounted.h"
 
 namespace Lumina
 {
@@ -19,13 +20,15 @@ namespace Lumina
 
         void OnAttach() override;
         void OnDetach() override;
-        void OnUpdate(double DeltaTime) override;
+        void OnUpdate(const FUpdateContext& UpdateContext) override;
         void OnEvent(FEvent& InEvent) override;
 
     private:
 
-        ImVec2 Region;
-        eastl::weak_ptr<FScene> Scene;
+        ImVec2          Region;
+        TRefPtr<FScene> Scene;
+        ImGuiX::U 
     
     };
 }
+*/

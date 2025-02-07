@@ -12,7 +12,6 @@
 #include "Core/Windows/Window.h"
 #include "Renderer/Material.h"
 #include "Log/Log.h"
-#include "Renderer/PipelineLibrary.h"
 
 namespace Lumina
 {
@@ -38,9 +37,7 @@ namespace Lumina
 
     void FVulkanRenderAPI::EndFrame()
     {
-    	EndCommandRecord();
-    	ExecuteCurrentCommands();
-        GetRenderContext()->GetSwapchain()->EndFrame();
+    	GetRenderContext()->GetSwapchain()->EndFrame();
     }
 
     void FVulkanRenderAPI::BeginRender(const TVector<TRefPtr<FImage>>& Attachments, glm::fvec4 ClearColor)
@@ -255,7 +252,7 @@ namespace Lumina
     	{
     		TRefPtr<FVulkanCommandBuffer> VkCommandBuffer = GetRenderContext()->GetCommandBuffer<FVulkanCommandBuffer>();
 
-    		TRefPtr<FVulkanImage> vk_image = RefPtrCast<FVulkanImage>(ImageToCopy);
+    		TRefPtr<FVulkanImage> vk_image = ImageToCopy.As<FVulkanImage>();
 			TRefPtr<FImage> swapchain_image = GetRenderContext()->GetSwapchain<FVulkanSwapchain>()->GetCurrentImage();
 			glm::uvec3 swapchain_resolution = swapchain_image->GetSpecification().Extent;
 			glm::uvec3 src_image_resolution = ImageToCopy->GetSpecification().Extent;
@@ -294,7 +291,7 @@ namespace Lumina
     	FRenderer::Submit([&, Pipeline]
     	{
     		TRefPtr<FVulkanCommandBuffer> VkCommandBuffer = GetRenderContext()->GetCommandBuffer<FVulkanCommandBuffer>();
-    		TRefPtr<FVulkanPipeline> VkPipeline = RefPtrCast<FVulkanPipeline>(Pipeline);
+    		TRefPtr<FVulkanPipeline> VkPipeline = Pipeline.As<FVulkanPipeline>();
     		vkCmdBindPipeline(VkCommandBuffer->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, VkPipeline->GetPipeline());
     	});
     }
@@ -305,12 +302,13 @@ namespace Lumina
         {
         	TRefPtr<FVulkanCommandBuffer> VkCommandBuffer = GetRenderContext()->GetCommandBuffer<FVulkanCommandBuffer>();
 		
-            Image->SetLayout(
-                        VkCommandBuffer,
-                        EImageLayout::TRANSFER_DST,
-                        EPipelineStage::TOP_OF_PIPE,
-                        EPipelineStage::TRANSFER
-                    );
+            Image->SetLayout
+        	(
+        		VkCommandBuffer,
+        		EImageLayout::TRANSFER_DST,
+        		EPipelineStage::TOP_OF_PIPE,
+                EPipelineStage::TRANSFER
+            );
             
             TRefPtr<FVulkanImage> VkImage = RefPtrCast<FVulkanImage>(Image);
             
@@ -409,10 +407,10 @@ namespace Lumina
         {
             VkPipelineStageFlags StageMasks[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 
-            auto VkCmdBuffer = GetRenderContext()->GetCommandBuffer().As<FVulkanCommandBuffer>();
-
-            auto AquireSemaphore = GetRenderContext()->GetSwapchain<FVulkanSwapchain>()->GetAquireSemaphore();
-            auto PresentSemaphore = GetRenderContext()->GetSwapchain<FVulkanSwapchain>()->GetPresentSemaphore();
+            TRefPtr<FVulkanCommandBuffer> VkCmdBuffer = GetRenderContext()->GetCommandBuffer().As<FVulkanCommandBuffer>();
+        	uint32 Test = GetRenderContext()->GetSwapchain()->GetCurrentFrameIndex();
+            VkSemaphore AquireSemaphore = GetRenderContext()->GetSwapchain<FVulkanSwapchain>()->GetAquireSemaphore();
+            VkSemaphore PresentSemaphore = GetRenderContext()->GetSwapchain<FVulkanSwapchain>()->GetPresentSemaphore();
 
             VkSubmitInfo SubmitInfo = {};
             SubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -425,7 +423,7 @@ namespace Lumina
             SubmitInfo.pWaitDstStageMask = StageMasks;
 
         	TRefPtr<FVulkanSwapchain> VkSwapchain = GetRenderContext()->GetSwapchain<FVulkanSwapchain>();
-            vkQueueSubmit(GetRenderContext<FVulkanRenderContext>()->GetGeneralQueue(), 1, &SubmitInfo, VkSwapchain->GetCurrentFence());
+            VK_CHECK(vkQueueSubmit(GetRenderContext<FVulkanRenderContext>()->GetGeneralQueue(), 1, &SubmitInfo, VkSwapchain->GetCurrentFence()));
             
         });
     }

@@ -6,17 +6,14 @@
 #include "Assets/AssetRegistry/AssetRegistry.h"
 #include "Assets/AssetTypes/Mesh/StaticMesh/StaticMesh.h"
 #include "Assets/AssetTypes/Textures/Texture.h"
-#include "Core/Application/Application.h"
 #include "glm/gtc/type_ptr.hpp"
 #include "Assets/Factories/MeshFactory/StaticMeshFactory.h"
-#include "Assets/Factories/TextureFactory/TextureFactory.h"
 #include "Components/LightComponent.h"
-#include "Math/Transform.h"
+#include "Core/Math/Transform.h"
 #include "Components/MeshComponent.h"
 #include "Core/Performance/PerformanceTracker.h"
 #include "Core/Windows/Window.h"
 #include "Entity/Entity.h"
-#include "Paths/Paths.h"
 #include "Renderer/Buffer.h"
 #include "Renderer/DescriptorSet.h"
 #include "Renderer/Material.h"
@@ -28,9 +25,9 @@
 
 namespace Lumina
 {
-    TSharedPtr<FSceneRenderer> FSceneRenderer::Create(FScene* InScene)
+    TRefPtr<FSceneRenderer> FSceneRenderer::Create(FScene* InScene)
     {
-        return MakeSharedPtr<FSceneRenderer>(InScene);
+        return MakeRefPtr<FSceneRenderer>(InScene);
     }
 
     FSceneRenderer::FSceneRenderer(FScene* InScene)
@@ -40,21 +37,16 @@ namespace Lumina
         InitPipelines();
         InitBuffers();
         InitDescriptorSets();
-        
-        TestMaterial = FMaterial::Create(GraphicsPipeline);
-        
     }
 
     FSceneRenderer::~FSceneRenderer()
     {
       
     }
+    
     void FSceneRenderer::Shutdown()
     {
         FRenderer::WaitIdle();
-        
-        Camera->Destroy();
-        
     }
 
     void FSceneRenderer::OnSwapchainResized()
@@ -108,8 +100,13 @@ namespace Lumina
 
         FRenderer::EndRender();
     }
+
+    void FSceneRenderer::StartFrame()
+    {
+        
+    }
     
-    void FSceneRenderer::Update(double DeltaTime)
+    void FSceneRenderer::EndFrame()
     {
         PROFILE_SCOPE(SceneRender)
         
@@ -217,7 +214,6 @@ namespace Lumina
             {
                 if (Component.StaticMesh.IsLoaded())
                 {
-                    Component.Material = MaterialInstance;
 
                     auto& Transform = View.get<FTransformComponent>(entity);
 
@@ -334,6 +330,7 @@ namespace Lumina
         PipelineSpecs.input_layout = Layout;
         
         GraphicsPipeline = FPipeline::Create(PipelineSpecs);
+        GraphicsPipeline->SetFriendlyName("Graphics Pipeline");
         
         
         FPipelineSpecification InfiniteGridPipelineSpecs = FPipelineSpecification::Default();
@@ -348,6 +345,7 @@ namespace Lumina
         InfiniteGridPipelineSpecs.input_layout = {};
     
         InfiniteGridPipeline = FPipeline::Create(InfiniteGridPipelineSpecs);
+        InfiniteGridPipeline->SetFriendlyName("Infinite Grid Pipeline");
     }
 
 

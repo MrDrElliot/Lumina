@@ -73,12 +73,7 @@ namespace Lumina
         //static_assert(std::is_base_of_v<IAsset, T>, "T must be derrived from IAsset");
         
         TAssetHandle() = default;
-        TAssetHandle(const FAssetPath& InPath, EAssetType InType)
-            : FAssetHandle(InPath, InType)
-        {
-            Assert(InPath.IsValid());
-        }
-        
+
         FORCEINLINE bool operator == (nullptr_t) const { return AssetRecord == nullptr; }
         FORCEINLINE bool operator != (nullptr_t) const { return AssetRecord != nullptr; }
         //FORCEINLINE bool operator == (const FAssetHandle& Other) const { return AssetPath == Other.AssetPath; }

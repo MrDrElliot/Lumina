@@ -2,6 +2,7 @@
 
 #include <atomic>
 
+#include "Memory.h"
 #include "Core/Assertions/Assert.h"
 #include "Log/Log.h"
 
@@ -17,7 +18,7 @@ enum class ERefCountedCastType
     {
     public:
 
-        FRefCounted(): RefCount() {}
+        FRefCounted() {}
 
         FORCEINLINE void AddRef() const
         {
@@ -164,7 +165,6 @@ enum class ERefCountedCastType
             if (Ptr)
             {
                 Ptr->Release();
-                Ptr = nullptr;
             }
         }
     
@@ -173,8 +173,8 @@ enum class ERefCountedCastType
 
 
     template<typename T, typename... Args>
-    std::enable_if_t<std::is_constructible_v<T, Args...>, TRefPtr<T>>
-    MakeRefPtr(Args&&... args)
+    TRefPtr<T> MakeRefPtr(Args&&... args)
+    requires (std::is_constructible_v<T, Args...>)
     {
         return TRefPtr<T>(new T(std::forward<Args>(args)...));
     }

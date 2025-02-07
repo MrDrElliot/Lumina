@@ -1,12 +1,8 @@
 #pragma once
 
-#include <memory>
-#include <string>
-#include <glm/glm.hpp>
-
 #include "BufferLayout.h"
 #include "Image.h"
-#include "Memory/RefCounted.h"
+#include "Renderer/RenderResource.h"
 #include "GUID/GUID.h"
 #include "Platform/GenericPlatform.h"
 
@@ -117,23 +113,25 @@ namespace Lumina
     };
 
     
-    class FPipeline : public FRefCounted
+    class FPipeline : public FRenderResource
     {
     public:
         
+        FPipeline() = default;
         virtual ~FPipeline() = default;
 
         static TRefPtr<FPipeline> Create(const FPipelineSpecification& InSpec);
-        virtual void Destroy() = 0;
 
-        virtual const FPipelineSpecification& GetSpecification() const = 0;
-        FGuid GetID() const { return Guid; }
-
-    private:
-
+        FORCEINLINE const FPipelineSpecification& GetSpecification() const { return Specification; }
+        FORCEINLINE const FGuid& GetID() const { return Guid; }
+        
+        
+        virtual void CreateGraphics() = 0;
+        virtual void CreateCompute() = 0;
 
     protected:
-        
+
+        FPipelineSpecification Specification = {};
         FGuid Guid;
     
     };

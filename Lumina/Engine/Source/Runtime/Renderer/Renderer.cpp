@@ -2,11 +2,11 @@
 #include "Assets/AssetHandle.h"
 #include "Buffer.h"
 #include "Image.h"
-#include "PipelineLibrary.h"
 #include "ShaderLibrary.h"
 #include "Swapchain.h"
 #include "Assets/AssetTypes/Mesh/StaticMesh/StaticMesh.h"
 #include "Core/Performance/PerformanceTracker.h"
+#include "Memory/Memory.h"
 #include "Paths/Paths.h"
 #include "RHI/Vulkan/VulkanRenderAPI.h"
 #include "Source/Runtime/Log/Log.h"
@@ -56,11 +56,11 @@ namespace Lumina
     {
         LOG_TRACE("Renderer: Shutting Down");
         WaitIdle();
+        
         sInternalData.LinearSampler->Destroy();
         sInternalData.NearestSampler->Destroy();
-        sInternalData.RenderFunctionList.clear();
+
         FShaderLibrary::Get()->Shutdown();
-        FPipelineLibrary::Get()->Shutdown();
         delete RenderAPI;
     }
 
@@ -96,11 +96,12 @@ namespace Lumina
 
     void FRenderer::Submit(RenderFunction&& Functor)
     {
-        sInternalData.RenderFunctionList.push_back(std::move(Functor));
+        sInternalData.RenderFunctionList.push(eastl::move(Functor));
     }
 
     void FRenderer::BeginFrame()
     {
+        RenderAPI->BeginFrame();
     }
 
     void FRenderer::EndFrame()
@@ -147,17 +148,14 @@ namespace Lumina
     }
 
 
-    void FRenderer::Update()
+    void FRenderer::Render()
     {
-        PROFILE_SCOPE(Renderer_Update)
+        PROFILE_SCOPE(FRenderer_Render)
 
         sInternalData.NumDrawCalls = 0;
         sInternalData.NumVertices = 0;
-
-        RenderAPI->BeginFrame();
+        
         ProcessRenderQueue();
-        RenderAPI->EndFrame();
-
     }
 
     void FRenderer::ProcessRenderQueue()
@@ -174,14 +172,17 @@ namespace Lumina
                 EPipelineAccess::TRANSFER_WRITE
             );
         });
+
+        RenderAPI->EndCommandRecord();
+        RenderAPI->ExecuteCurrentCommands();
         
-        for (auto& func : sInternalData.RenderFunctionList)
+        while (!sInternalData.RenderFunctionList.empty())
         {
-            func();
+            auto& Func = sInternalData.RenderFunctionList.front();
+            Func();
+
+            sInternalData.RenderFunctionList.pop();
         }
-        
-        sInternalData.RenderFunctionList.clear();
-        
     }
 
     FRenderConfig FRenderer::GetConfig()

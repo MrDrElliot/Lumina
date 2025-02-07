@@ -57,7 +57,7 @@ namespace Lumina::ImGuiWidgets
         
             ImGui::Columns(2);
                     
-            const char* MaterialAssetName = Component.Material.IsValid() ? Component.Material->GetAssetMetadata().Name.c_str() : "No Material";
+            const char* MaterialAssetName = "No Material";
             ImGui::Text("Material: ");
         
             if (ImGui::Button(MaterialAssetName))
@@ -67,7 +67,7 @@ namespace Lumina::ImGuiWidgets
         
             ImGui::NextColumn();
         
-            const char* MeshAssetName = Component.StaticMesh.IsValid() ? Component.StaticMesh->GetAssetMetadata().Name.c_str() : "No Mesh"; 
+            const char* MeshAssetName = "No Mesh"; 
             ImGui::Text("Static Mesh: ");
         
             if (ImGui::Button(MeshAssetName))
@@ -78,9 +78,8 @@ namespace Lumina::ImGuiWidgets
             if (ImGui::BeginPopup("MaterialProperty_Popup"))
             {
                 FAssetHeader Metadata = {};
-                if (FAssetPropertyPanel::Render(EAssetType::Material, Metadata))
+                if (FAssetPropertyPanel::Render(EAssetType::MaterialInstance, Metadata))
                 {
-                    Component.Material = Metadata;
                     ImGui::CloseCurrentPopup();
                 }
                 
@@ -95,7 +94,6 @@ namespace Lumina::ImGuiWidgets
                 FAssetHeader Metadata = {};
                 if (FAssetPropertyPanel::Render(EAssetType::StaticMesh, Metadata))
                 {
-                    Component.StaticMesh = Metadata;
                     ImGui::CloseCurrentPopup();
                 }
                 ImGui::EndPopup();

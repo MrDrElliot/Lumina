@@ -5,6 +5,7 @@
 
 namespace Lumina
 {
+    class FVulkanMemoryAllocator;
     class FVulkanCommandBuffer;
 
     class FImageSampler;
@@ -46,13 +47,14 @@ namespace Lumina
 
         TVector<VkDescriptorSet> AllocateDescriptorSets(VkDescriptorSetLayout InLayout, uint32 InCount);
         void FreeDescriptorSets(const TVector<VkDescriptorSet>& InSets);
-        
+
+        VkDescriptorPool GetVkDescriptorPool() const { return DescriptorPool; }
         
         VkCommandBuffer AllocateTransientCommandBuffer();
         void ExecuteTransientCommandBuffer(VkCommandBuffer CmdBuffer);
 
     private:
-        
+
         VkDescriptorPool                        DescriptorPool;
         VkInstance                              VulkanInstance;
         FVulkanRenderContextFunctions           VulkanRenderContextFunctions;
@@ -61,6 +63,7 @@ namespace Lumina
         VkPhysicalDeviceProperties              PhysicalDeviceProperties;
         VkCommandPool                           CommandPool;
         VkQueue                                 GeneralQueue;
+
         
     };
 }

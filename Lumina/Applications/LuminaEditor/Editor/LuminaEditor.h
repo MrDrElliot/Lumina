@@ -13,7 +13,9 @@ namespace Lumina
     {
     public:
 
+        void CreateDevelopmentTools() override;
 
+        
     private:
     };
     
@@ -25,19 +27,20 @@ namespace Lumina
         LuminaEditor();
 
         bool Initialize() override;
+        void CreateEngine() override;
+        
         bool ApplicationLoop() override;
         
         void CreateProject();
         void OpenProject();
 
-        void CreateImGuiPanels();
+        void RenderDeveloperTools(const FUpdateContext& UpdateContext) override;
         
         void Shutdown() override;
         void OnEvent(FEvent& Event) override;
     
     private:
         
-        TSharedPtr<FCamera>    EditorCamera;
         
     };
     

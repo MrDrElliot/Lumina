@@ -23,7 +23,7 @@ namespace Lumina
 		FAssetRegistry() = default;
 		~FAssetRegistry() override = default;
 
-		void Initialize() override;
+		void Initialize(const FSubsystemManager& Manager) override;
 		void Deinitialize() override;
 
 		void Serialize(FArchive& Ar);

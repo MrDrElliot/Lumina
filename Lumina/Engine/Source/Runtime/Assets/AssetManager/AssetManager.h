@@ -20,8 +20,10 @@ namespace Lumina
 		FAssetManager();
 		~FAssetManager() override;
 
-		void Initialize() override;
+		void Initialize(const FSubsystemManager& Manager) override;
 		void Deinitialize() override;
+
+		void Update();
 		
 		void LoadAsset(FAssetHandle& InAsset);
 		void UnloadAsset(FAssetHandle& InAsset);

@@ -14,9 +14,7 @@ namespace Lumina
     public:
         inline std::filesystem::path GetStartupProject() const { return StartupProject; }
         void SetStartupProject(const std::filesystem::path& Path) { StartupProject = Path; }
-
-        void Shutdown() override {}
-
+        
         FORCEINLINE void Serialize()
         {
             YAML::Emitter Emitter;

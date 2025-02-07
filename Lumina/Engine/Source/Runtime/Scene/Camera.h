@@ -9,7 +9,7 @@ namespace Lumina
 {
     class FBuffer;
 
-    class FCamera
+    class FCamera : public FRefCounted
     {
     public:
 

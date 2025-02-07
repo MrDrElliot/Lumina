@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 #include "CommandBuffer.h"
 #include "PipelineBarrier.h"
+#include "Core/Functional/Function.h"
 #include "Memory/RefCounted.h"
 #include "Platform/GenericPlatform.h"
 
@@ -25,7 +26,7 @@ namespace Lumina
 
     struct FRenderConfig
     {
-        uint32 FramesInFlight;
+        uint8 FramesInFlight;
         FWindow* Window;
     };
     
@@ -33,14 +34,14 @@ namespace Lumina
     {
     public:
         
-        using RenderFunction = std::move_only_function<void()>;
+        using RenderFunction = TMoveOnlyFunction<void()>;
         
         struct RendererInternalData
         {
             uint32 NumDrawCalls = 0;
             uint32 NumVertices = 0;
             
-            std::vector<RenderFunction>      RenderFunctionList;
+            TQueue<RenderFunction>           RenderFunctionList;
             TRefPtr<FImageSampler>           LinearSampler;
             TRefPtr<FImageSampler>           NearestSampler;
 
@@ -61,7 +62,7 @@ namespace Lumina
         static void EndFrame();
         static void BeginRender(const TVector<TRefPtr<FImage>>& Attachments, glm::fvec4 ClearColor = {0.0f, 0.0f, 0.0f, 0.0f});
         static void EndRender();
-        static void Update();
+        static void Render();
         static void ProcessRenderQueue();
 
         static FRenderConfig GetConfig();
@@ -89,9 +90,9 @@ namespace Lumina
         
         static void CopyToSwapchain(TRefPtr<FImage> ImageToCopy);
         static void ClearColor(const TRefPtr<FImage>& Image, const glm::fvec4& Value);
+
         
         static void PushConstants(TRefPtr<FPipeline> Pipeline, EShaderStage ShaderStage, uint16 Offset, uint32 Size, const void* Data);
-
         static void DrawIndexed(TRefPtr<FBuffer> VertexBuffer, TRefPtr<FBuffer> IndexBuffer);
         static void DrawVertices(uint32 Vertices, uint32 Instances = 1, uint32 FirstVertex = 0, uint32 FirstInstance = 0);
 

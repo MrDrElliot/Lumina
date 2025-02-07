@@ -14,19 +14,22 @@ namespace Lumina
     {
     }
 
-    void FAssetManager::Initialize()
+    void FAssetManager::Initialize(const FSubsystemManager& Manager)
     {
-        AssetRequestThread = std::thread(&FAssetManager::ProcessAssetRequests, this);
+        //AssetRequestThread = std::thread(&FAssetManager::ProcessAssetRequests, this);
     }
 
     void FAssetManager::Deinitialize()
     {
+        bAssetThreadRunning.exchange(false);
         if (AssetRequestThread.joinable())
         {
-            bAssetThreadRunning.exchange(false);
             AssetRequestThread.join();
         }
-        
+    }
+
+    void FAssetManager::Update()
+    {
     }
 
     void FAssetManager::LoadAsset(FAssetHandle& InAsset)
@@ -78,7 +81,7 @@ namespace Lumina
         auto const Itr = AssetRecord.find(InAsset.GetAssetPath());
         if (Itr == AssetRecord.end())
         {
-            Record = new FAssetRecord(InAsset.GetAssetPath(), InAsset.GetAssetType());
+            Record = new FAssetRecord(this, InAsset.GetAssetPath(), InAsset.GetAssetType());
         }
         else
         {
@@ -117,7 +120,7 @@ namespace Lumina
         {
             PROFILE_SCOPE(ProcessAssetRequests)
             
-            FRecursiveScopeLock ScopeLock(RecursiveMutex);
+            //FRecursiveScopeLock ScopeLock(RecursiveMutex);
 
             FAssetRequest::FRequestCallbackContext Context;
             Context.LoadAssetCallback = [this] (FAssetHandle& Handle) { LoadAsset(Handle); };

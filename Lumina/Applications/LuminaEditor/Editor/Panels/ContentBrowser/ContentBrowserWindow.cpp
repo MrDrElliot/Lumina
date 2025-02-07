@@ -1,19 +1,14 @@
+/*
 #include "ContentBrowserWindow.h"
 #include <string>
 #include <filesystem>
-#include "ImGuiAssetImporter.h"
-#include "ImGui_MeshImporter.h"
-#include "ImGui_TextureImporter.h"
 #include "Assets/AssetTypes/Textures/Texture.h"
 #include "Assets/Factories/TextureFactory/TextureFactory.h"
 #include "ImGui/ImGuiRenderer.h"
 #include "Paths/Paths.h"
 #include "Project/Project.h"
 #include "Renderer/Image.h"
-#include "Renderer/RenderContext.h"
-#include <Renderer/Material.h>
-
-#include "Panels/Assets/Material/MaterialEditorPanel.h"
+#include "Renderer/Renderer.h"
 
 #if 0
 // Convert from std::wstring to std::string
@@ -53,7 +48,6 @@ namespace Lumina
 {
     void ContentBrowserWindow::OnAttach()
     {
-
         SelectedDirectory = Project::GetProjectContentDirectory().string() + "/Content/";
         
         FolderTexture = FTextureFactory::ImportFromSource(Paths::GetEngineInstallDirectory() / "Applications/LuminaEditor/Resources/Icons/ContentBrowser/Folder.png");
@@ -243,14 +237,9 @@ namespace Lumina
         for (auto& p : std::filesystem::directory_iterator(SelectedDirectory))
         {
             bool bIsLuminaFile = p.path().extension().string() == FILE_EXTENSION;
-            if(bIsLuminaFile)
+            if(p.is_directory())
             {
-                FAssetHeader Metadata = AssetRegistry::Get()->GetMetadataByPath(p.path());
-                ContentItemEntries.push_back(MakeRefPtr<ContentBrowserItem>(p.path(), Metadata, false));
-            }
-            else if(p.is_directory())
-            {
-                ContentItemEntries.push_back(MakeRefPtr<ContentBrowserItem>(p.path(), FAssetHeader(), true));
+                ContentItemEntries.push_back(MakeRefPtr<ContentBrowserItem>(p.path()));
             }
         }
     }
@@ -289,3 +278,4 @@ namespace Lumina
         }
     }
 }
+*/

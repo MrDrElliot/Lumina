@@ -1,4 +1,5 @@
 
+/*
 #include "ViewportLayer.h"
 #include "ImGui/ImGuiRenderer.h"
 #include "Scene/Scene.h"
@@ -14,14 +15,14 @@ namespace Lumina
     {
     }
 
-    void ViewportLayer::OnUpdate(double DeltaTime)
+    void ViewportLayer::OnUpdate(const FUpdateContext& UpdateContext)
     {
-        if (Scene.expired())
+        if (Scene == nullptr)
         {
             return;
         }
     
-        if (TSharedPtr<FSceneRenderer> SceneRenderer = Scene.lock()->GetSceneRenderer())
+        if (TRefPtr<FSceneRenderer> SceneRenderer = Scene->GetSceneRenderer())
         {
             TRefPtr<FImage> RenderTarget = SceneRenderer->GetRenderTarget();
             
@@ -43,8 +44,8 @@ namespace Lumina
             float fov = glm::mix(120.0f, 50.0f, t);
 
             Scene.lock()->GetCurrentCamera()->SetFOV(fov);
-
-            FImGuiRenderer::RenderImage(RenderTarget, FRenderer::GetLinearSampler(), NewRegion, 0, true);
+            
+            FImGuiRenderer::RenderImage(RenderTarget, NewRegion);
 
             ImVec2 overlayPos = ImVec2(Min.x + 10, Min.y + 10);
             glm::vec3 cameraPosition = Scene.lock()->GetCurrentCamera()->GetPosition();
@@ -63,4 +64,4 @@ namespace Lumina
     void ViewportLayer::OnEvent(FEvent& InEvent)
     {
     }
-}
+}*/

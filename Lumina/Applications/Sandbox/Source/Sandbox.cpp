@@ -4,7 +4,6 @@
 
 bool FSandbox::ApplicationLoop()
 {
-	
 	return true;
 }
 
