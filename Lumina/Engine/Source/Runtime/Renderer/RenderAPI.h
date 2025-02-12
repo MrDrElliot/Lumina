@@ -45,7 +45,7 @@ namespace Lumina
     
         virtual void BeginFrame() = 0;
         virtual void EndFrame() = 0;
-        virtual void BeginRender(const TVector<TRefPtr<FImage>>& Attachments, glm::fvec4 ClearColor) = 0;
+        virtual void BeginRender(const TVector<TRefPtr<FImage>>& Attachments, const glm::fvec4& ClearColor) = 0;
         virtual void EndRender() = 0;
         virtual void WaitDevice() = 0;
 

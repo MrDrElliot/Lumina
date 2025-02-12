@@ -1,19 +1,20 @@
 #include "SceneRenderer.h"
 
-#include "Camera.h"
 #include "Scene.h"
 #include "ScenePrimitives.h"
+#include "SceneUpdateContext.h"
 #include "Assets/AssetRegistry/AssetRegistry.h"
 #include "Assets/AssetTypes/Mesh/StaticMesh/StaticMesh.h"
 #include "Assets/AssetTypes/Textures/Texture.h"
 #include "glm/gtc/type_ptr.hpp"
 #include "Assets/Factories/MeshFactory/StaticMeshFactory.h"
-#include "Components/LightComponent.h"
 #include "Core/Math/Transform.h"
-#include "Components/MeshComponent.h"
 #include "Core/Performance/PerformanceTracker.h"
 #include "Core/Windows/Window.h"
 #include "Entity/Entity.h"
+#include "Entity/Components/CameraComponent.h"
+#include "Entity/Components/LightComponent.h"
+#include "Entity/Components/MeshComponent.h"
 #include "Renderer/Buffer.h"
 #include "Renderer/DescriptorSet.h"
 #include "Renderer/Material.h"
@@ -22,28 +23,48 @@
 #include "Renderer/Renderer.h"
 #include "Renderer/ShaderLibrary.h"
 #include "Renderer/Swapchain.h"
+#include "Subsystems/FCameraManager.h"
 
 namespace Lumina
 {
-    TRefPtr<FSceneRenderer> FSceneRenderer::Create(FScene* InScene)
+    FSceneRenderer* FSceneRenderer::Create(FScene* InScene)
     {
-        return MakeRefPtr<FSceneRenderer>(InScene);
+        return FMemory::New<FSceneRenderer>(InScene);
     }
 
     FSceneRenderer::FSceneRenderer(FScene* InScene)
         :CurrentScene(InScene)
     {
-        CreateImages();
-        InitPipelines();
-        InitBuffers();
-        InitDescriptorSets();
+
     }
 
     FSceneRenderer::~FSceneRenderer()
     {
       
     }
-    
+
+    void FSceneRenderer::Initialize(const FSubsystemManager& Manager)
+    {
+        CreateImages();
+        InitPipelines();
+        InitBuffers();
+        InitDescriptorSets();
+
+        // Create an identity matrix for the grid
+        glm::mat4 GridMat = glm::mat4(1.0f);
+
+        // Apply scaling to the grid (scale it by 5.0 in all directions)
+        GridMat = glm::scale(GridMat, glm::vec3(5.0f));
+
+        // Rotate the grid 90 degrees along the X-axis
+        GridMat = glm::rotate(GridMat, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        
+    }
+
+    void FSceneRenderer::Deinitialize()
+    {
+    }
+
     void FSceneRenderer::Shutdown()
     {
         FRenderer::WaitIdle();
@@ -70,31 +91,17 @@ namespace Lumina
     void FSceneRenderer::RenderGrid()
     {
         // Begin rendering with the target and depth attachments
-        TRefPtr<FImage> CurrentRenderTarget = GetRenderTarget();
+        TRefPtr<FImage> CurrentRenderTarget = GetPrimaryRenderTarget();
         TRefPtr<FImage> CurrentDepthAttachment = GetDepthAttachment();
 
         uint32 CurrentFrameIndex = FRenderer::GetCurrentFrameIndex();
-        
-        // Create an identity matrix for the grid
-        glm::mat4 GridMat = glm::mat4(1.0f);
-
-        // Apply scaling to the grid (scale it by 5.0 in all directions)
-        GridMat = glm::scale(GridMat, glm::vec3(5.0f));
-
-        // Rotate the grid 90 degrees along the X-axis
-        GridMat = glm::rotate(GridMat, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-        
-        GridData.View = Camera->GetViewMatrix();
-        GridData.Projection = Camera->GetProjectionMatrixNoReverse();
-        GridData.Position = Camera->GetPosition();
         
         FRenderer::BeginRender({CurrentRenderTarget, CurrentDepthAttachment}, glm::vec4(CurrentScene->GetSceneSettings().BackgroundColor, 1.0f));
 
         FRenderer::BindPipeline(InfiniteGridPipeline);
         FRenderer::BindSet(GridDescriptorSets[CurrentFrameIndex], InfiniteGridPipeline, 0, {});
         
-        GridUBO->UploadData(0, &GridData, sizeof(FGridData));
-        GridDescriptorSets[CurrentFrameIndex]->Write(0, 0, GridUBO, sizeof(FGridData), 0);
+        GridDescriptorSets[CurrentFrameIndex]->Write(0, 0, CameraUBO, sizeof(FCameraData), 0);
         
         FRenderer::DrawVertices(6);
 
@@ -103,32 +110,38 @@ namespace Lumina
 
     void FSceneRenderer::StartFrame()
     {
-        
-    }
-    
-    void FSceneRenderer::EndFrame()
-    {
-        PROFILE_SCOPE(SceneRender)
+        PROFILE_SCOPE(StartFrame)
         
         if(FRenderer::GetRenderContext()->GetSwapchain()->WasSwapchainResizedThisFrame())
         {
             OnSwapchainResized();
         }
-        
-        uint32 CurrentFrameIndex = FRenderer::GetCurrentFrameIndex();
-        TRefPtr<FDescriptorSet> CurrentDescriptorSet = SceneDescriptorSets[CurrentFrameIndex];
-        
-        TRefPtr<FImage> CurrentRenderTarget = GetRenderTarget();
-        TRefPtr<FImage> CurrentDepthAttachment = GetDepthAttachment();
 
+        FCameraManager* CameraManager = CurrentScene->GetSceneSubsystem<FCameraManager>();
+        FCameraComponent& CameraComponent = CameraManager->GetActiveCameraEntity().GetComponent<FCameraComponent>();
+        
+        CameraData.Location =   glm::vec4(CameraComponent.GetPosition(), 1.0f);
+        CameraData.View =       CameraComponent.GetViewMatrix();
+        CameraData.Projection = CameraComponent.GetProjectionMatrix();
+        
+
+        CameraUBO->UploadData(0, &CameraData, sizeof(FCameraData));
+
+        
         if(CurrentScene->GetSceneSettings().bShowGrid)
         {
             RenderGrid();
         }
         
-        GeometryPass({CurrentRenderTarget, CurrentDepthAttachment});
-        
+        //GeometryPass(SceneContext);
+    }
+    
+    void FSceneRenderer::EndFrame()
+    {
+        PROFILE_SCOPE(EndFrame)
+
         TRefPtr<FCommandBuffer> CommandBuffer = FRenderer::GetCommandBuffer();
+        TRefPtr<FImage> CurrentRenderTarget = GetPrimaryRenderTarget();
         FRenderer::Submit([CurrentRenderTarget, CommandBuffer]
         {
             CurrentRenderTarget->SetLayout(
@@ -162,12 +175,18 @@ namespace Lumina
 
     }
 
-    void FSceneRenderer::GeometryPass(const TVector<TRefPtr<FImage>>& Attachments)
+    void FSceneRenderer::GeometryPass(const FSceneUpdateContext& SceneContext)
     {
+        TRefPtr<FImage> CurrentRenderTarget = GetPrimaryRenderTarget();
+        TRefPtr<FImage> CurrentDepthTarget = GetDepthAttachment();
+        
+        TVector<TRefPtr<FImage>> Attachments = {CurrentRenderTarget, CurrentDepthTarget, };
+
+        glm::vec4 ClearColor = glm::vec4(0.0f);
         // Begin rendering with the target and depth attachments
         if(CurrentScene->GetSceneSettings().bShowGrid)
         {
-            FRenderer::BeginRender(Attachments);
+            FRenderer::BeginRender(Attachments, ClearColor);
         }
         else
         {
@@ -180,11 +199,8 @@ namespace Lumina
         FRenderer::BindPipeline(GraphicsPipeline);
         FRenderer::BindSet(CurrentDescriptorSet, GraphicsPipeline, 1, {});
 
-        CameraData.View = Camera->GetViewMatrix();
-        CameraData.Projection = Camera->GetProjectionMatrix();
-        CameraData.Location = glm::vec4(Camera->GetPosition(), 1.0f);
-        CameraUBO->UploadData(0, &CameraData, sizeof(FCameraData));
         CurrentDescriptorSet->Write(0, 0, CameraUBO, sizeof(FCameraData), 0);
+
 
         uint32 NumLights = 0;
         CurrentScene->ForEachComponent<FLightComponent>([&, this](uint32 Current, entt::entity& entity, FLightComponent& Component)
@@ -275,8 +291,6 @@ namespace Lumina
             }
 
             
-            TestMaterial->Bind(GraphicsPipeline);
-
             // Write the texture IDs for the multiple textures found in TexturesData
             for (size_t i = 0; i < TexturesData.size(); ++i)
             {
@@ -300,6 +314,7 @@ namespace Lumina
                     
                     FRenderer::PushConstants(GraphicsPipeline, EShaderStage::VERTEX, 0, sizeof(FTransientData), &Data);
                     FRenderer::PushConstants(GraphicsPipeline, EShaderStage::FRAGMENT, 16, sizeof(FMaterialAttributes), &Attributes);
+
                     
                     FRenderer::DrawIndexed(StaticMesh->GetVertexBuffer(), StaticMesh->GetIndexBuffer());
                     
@@ -351,16 +366,6 @@ namespace Lumina
 
     void FSceneRenderer::InitBuffers()
     {
-
-        FDeviceBufferSpecification GridSpec;
-        GridSpec.MemoryUsage = EDeviceBufferMemoryUsage::COHERENT_WRITE;
-        GridSpec.Heap = EDeviceBufferMemoryHeap::DEVICE;
-        GridSpec.BufferUsage = EDeviceBufferUsage::UNIFORM_BUFFER;
-        GridSpec.Size = sizeof(FGridData);
-        GridSpec.DebugName = "GridUBO";
-        
-        GridUBO = FBuffer::Create(GridSpec);
-        GridUBO->SetFriendlyName("Grid UBO");
         
         FDeviceBufferSpecification CameraSpec;
         CameraSpec.MemoryUsage = EDeviceBufferMemoryUsage::COHERENT_WRITE;

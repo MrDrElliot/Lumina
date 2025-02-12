@@ -7,11 +7,15 @@
 #include "Renderer/Renderer.h"
 #include "Renderer/Swapchain.h"
 #include "Scene/SceneManager.h"
+#include "Scene/SceneRenderer.h"
+#include "Scene/Entity/Systems/DebugCameraEntitySystem.h"
 #include "Tools/ConsoleLogEditorTool.h"
 #include "Tools/EditorTool.h"
 #include "Tools/UI/ImGui/ImGuiDesignIcons.h"
 #include "Tools/UI/ImGui/ImGuiX.h"
 #include "Tools/EntitySceneEditorTool.h"
+#include "Tools/RendererInfoEditorTool.h"
+#include "Tools/UI/ImGui/Vulkan/VulkanImGuiRender.h"
 
 namespace Lumina
 {
@@ -38,8 +42,9 @@ namespace Lumina
         SceneManager = UpdateContext.GetSubsystem<FSceneManager>();
 
         
-        TRefPtr<FScene> NewScene = SceneManager->CreateScene(ESceneType::Tool);
+        FScene* NewScene = SceneManager->CreateScene(ESceneType::Tool);
         NewScene->Initialize(UpdateContext);
+        NewScene->RegisterSystem(FMemory::New<FDebugCameraEntitySystem>());
         
         
         SceneEditorTool = FMemory::New<FEntitySceneEditorTool>(this, NewScene);
@@ -50,6 +55,11 @@ namespace Lumina
         ConsoleLogTool = FMemory::New<FConsoleLogEditorTool>(this);
         ConsoleLogTool->Initialize(UpdateContext);
         EditorTools.emplace_back(ConsoleLogTool);
+
+        
+        RendererInfo = FMemory::New<FRendererInfoEditorTool>(this);
+        RendererInfo->Initialize(UpdateContext);
+        EditorTools.emplace_back(RendererInfo);
     }
 
     void FEditorUI::Deinitialize(const FUpdateContext& UpdateContext)
@@ -65,7 +75,7 @@ namespace Lumina
 
     void FEditorUI::OnStartFrame(const FUpdateContext& UpdateContext)
     {
-        Assert(UpdateContext.GetUpdateStage() == FUpdateContext::EUpdateStage::FrameStart);
+        Assert(UpdateContext.GetUpdateStage() == EUpdateStage::FrameStart);
 
         auto TitleBarLeftContents = [this, &UpdateContext] ()
         {
@@ -77,7 +87,7 @@ namespace Lumina
             DrawTitleBarInfoStats(UpdateContext);
         };
 
-        TitleBar.Draw( TitleBarLeftContents, 100, TitleBarRightContents, 160 );
+        TitleBar.Draw(TitleBarLeftContents, 250, TitleBarRightContents, 160);
 
         const ImGuiID DockspaceID = ImGui::GetID("EditorDockSpace");
 
@@ -101,18 +111,22 @@ namespace Lumina
                 ImGui::DockBuilderAddNode(DockspaceID, ImGuiDockNodeFlags_DockSpace);
                 ImGui::DockBuilderSetNodeSize(DockspaceID, ImGui::GetContentRegionAvail());
 
-                ImGuiID leftDockID = 0, rightDockID = 0, bottomDockID = 0;
-                ImGui::DockBuilderSplitNode(DockspaceID, ImGuiDir_Down, 0.1f, &bottomDockID, &leftDockID);
-                ImGui::DockBuilderSplitNode(leftDockID, ImGuiDir_Left, 0.25f, &leftDockID, &rightDockID);
-                ImGui::DockBuilderFinish(DockspaceID);
-                
+                // Create Dock IDs
+                ImGuiID topDockID = 0, bottomDockID = 0;
+                ImGuiID bottomLeftDockID = 0, bottomRightDockID = 0;
 
-                //-------------------------------------------------------------------------
-                
-                
-                ImGui::DockBuilderDockWindow(SceneEditorTool->GetToolName().c_str(), rightDockID);
-                ImGui::DockBuilderDockWindow(ConsoleLogTool->GetToolName().c_str(), bottomDockID);
-                
+                // Split main dock into top (scene editor) and bottom (console + renderer info)
+                ImGui::DockBuilderSplitNode(DockspaceID, ImGuiDir_Down, 0.3f, &bottomDockID, &topDockID);
+
+                // Split bottom dock into left (console) and right (renderer info)
+                ImGui::DockBuilderSplitNode(bottomDockID, ImGuiDir_Left, 0.5f, &bottomLeftDockID, &bottomRightDockID);
+
+                ImGui::DockBuilderFinish(DockspaceID);
+
+                // Dock windows into appropriate sections
+                ImGui::DockBuilderDockWindow(SceneEditorTool->GetToolName().c_str(), topDockID);
+                ImGui::DockBuilderDockWindow(ConsoleLogTool->GetToolName().c_str(), bottomLeftDockID);
+                ImGui::DockBuilderDockWindow(RendererInfo->GetToolName().c_str(), bottomRightDockID);
             }
 
             // Create the actual dock space
@@ -120,6 +134,7 @@ namespace Lumina
             ImGui::DockSpace(DockspaceID, viewport->WorkSize, 0, &EditorWindowClass);
             ImGui::PopStyleVar();
         }
+
         
         ImGui::End();
         
@@ -274,13 +289,13 @@ namespace Lumina
         
         ImGuiWindowFlags WindowFlags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_MenuBar;
         
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(255, 0, 0, 255));
+       // ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(255, 0, 0, 255));
         ImGui::SetNextWindowSizeConstraints(ImVec2(128, 128), ImVec2(FLT_MAX, FLT_MAX));
         ImGui::SetNextWindowSize(ImVec2(1024, 768), ImGuiCond_FirstUseEver);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 1.0f);
         ImGui::Begin(EditorTool->GetToolName().c_str(), pIsToolOpen, WindowFlags);
         ImGui::PopStyleVar();
-        ImGui::PopStyleColor();
+      //  ImGui::PopStyleColor();
 
         ImGuiWindow* pCurrentWindow = ImGui::FindWindowByName(EditorTool->GetToolName().c_str());
 
@@ -367,7 +382,7 @@ namespace Lumina
                     size_t windowNameLength = strlen( pWindowName );
                     if ( windowNameLength >= windowSuffixLength )
                     {
-                        if ( strcmp( pWindowName + windowNameLength - windowSuffixLength, windowSuffix ) == 0 ) // Compare suffix
+                        if (strcmp( pWindowName + windowNameLength - windowSuffixLength, windowSuffix ) == 0) // Compare suffix
                         {
                             ImGui::ClearWindowSettings( pWindowName );
                         }
@@ -467,6 +482,21 @@ namespace Lumina
                     constexpr ImGuiWindowFlags viewportWindowFlags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNavFocus;
                     ImGui::SetNextWindowClass(&Tool->ToolWindowsClass);
 
+                    //-- Setup viewport for scene.
+                    
+                    FScene* Scene = Tool->GetScene();
+                    Assert(Scene != nullptr);
+                    
+                    FSceneRenderer* SceneRenderer = Scene->GetSceneRenderer();
+                    Assert(SceneRenderer != nullptr);
+                    
+                    TRefPtr<FImage> SceneRenderTarget = SceneRenderer->GetPrimaryRenderTarget();
+                    Assert(SceneRenderTarget != nullptr);
+
+                    FVulkanImGuiRender* ImGuiRenderer = UpdateContext.GetSubsystem<FVulkanImGuiRender>();
+
+                    ImGuiX::FImGuiImageInfo Image = ImGuiRenderer->CreateImGuiTexture(SceneRenderTarget, ImVec2(100, 100));
+                    
                     ImGui::SetNextWindowSizeConstraints(ImVec2(128, 128), ImVec2(FLT_MAX, FLT_MAX));
                     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
                     bool const DrawViewportWindow = ImGui::Begin(ToolWindowName.c_str(), nullptr, viewportWindowFlags);
@@ -474,7 +504,7 @@ namespace Lumina
                 
                     if (DrawViewportWindow)
                     {
-                        Tool->DrawViewport(UpdateContext, nullptr);
+                        Tool->DrawViewport(UpdateContext, Image.ID);
                     }
                     
                     ImGui::End();
@@ -521,6 +551,21 @@ namespace Lumina
         ImGui::Text(LE_ICON_GAVEL);
         ImGui::SameLine();
         ImGui::Text("Lumina");
+
+        ImGui::SameLine();
+
+        if (ImGui::BeginMenu("Editor"))
+        {
+            ImGui::MenuItem( "ImGui Demo Window", nullptr, &bDearImGuiDemoWindowOpen, !bDearImGuiDemoWindowOpen);
+
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("System"))
+        {
+            ImGui::MenuItem( "RHI Info", nullptr, &bRHIInfoOpen, !bRHIInfoOpen);
+            ImGui::EndMenu();
+        }
     }
     
     void FEditorUI::DrawTitleBarInfoStats(const FUpdateContext& UpdateContext)

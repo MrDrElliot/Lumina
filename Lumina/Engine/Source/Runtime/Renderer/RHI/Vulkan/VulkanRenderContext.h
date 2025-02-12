@@ -26,29 +26,37 @@ namespace Lumina
               VulkanInstance(VK_NULL_HANDLE),
               VulkanRenderContextFunctions(),
               Device(VK_NULL_HANDLE),
-              PhysicalDevice(VK_NULL_HANDLE),
-              PhysicalDeviceProperties(),
+              PhysicalDevice(VK_NULL_HANDLE)
+            , PhysicalDeviceFeatures(),
+              PhysicalDeviceProperties()
+            , PhysicslDeviceMemoryProperties(),
               CommandPool(VK_NULL_HANDLE),
               GeneralQueue(VK_NULL_HANDLE)
-        {}
+        {
+        }
 
         FVulkanRenderContext(const FVulkanRenderContext&) = delete;
         ~FVulkanRenderContext() override;
 
         void Initialize() override;
-        VkInstance GetVulkanInstance() { return VulkanInstance; }
-        VkDevice GetDevice() { return Device; }
-        VkPhysicalDevice GetPhysicalDevice() { return PhysicalDevice; }
-        void GetPhysicalDeviceProperties(VkPhysicalDeviceProperties& OutProps) { OutProps = PhysicalDeviceProperties; }
-        VkQueue GetGeneralQueue() { return GeneralQueue; }
-        VkCommandPool GetCommandPool() { return CommandPool; }
+        FORCEINLINE VkInstance GetVulkanInstance() { return VulkanInstance; }
+        FORCEINLINE VkDevice GetDevice() { return Device; }
+        FORCEINLINE VkPhysicalDevice GetPhysicalDevice() { return PhysicalDevice; }
+        
+        FORCEINLINE const VkPhysicalDeviceProperties& GetPhysicalDeviceProperties() const { return PhysicalDeviceProperties; }
+        FORCEINLINE const VkPhysicalDeviceFeatures& GetPhysicalDeviceFeatures() const { return PhysicalDeviceFeatures; }
+        FORCEINLINE const VkPhysicalDeviceMemoryProperties& GetPhysicalDeviceMemoryProperties() const { return PhysicslDeviceMemoryProperties; }
+        
+        FORCEINLINE VkQueue GetGeneralQueue() { return GeneralQueue; }
+        FORCEINLINE VkCommandPool GetCommandPool() { return CommandPool; }
 
-        FVulkanRenderContextFunctions GetRenderContextFunctions() { return VulkanRenderContextFunctions; }
+        FORCEINLINE FVulkanRenderContextFunctions GetRenderContextFunctions() { return VulkanRenderContextFunctions; }
+        
+        FORCEINLINE VkDescriptorPool GetVkDescriptorPool() const { return DescriptorPool; }
 
         TVector<VkDescriptorSet> AllocateDescriptorSets(VkDescriptorSetLayout InLayout, uint32 InCount);
         void FreeDescriptorSets(const TVector<VkDescriptorSet>& InSets);
 
-        VkDescriptorPool GetVkDescriptorPool() const { return DescriptorPool; }
         
         VkCommandBuffer AllocateTransientCommandBuffer();
         void ExecuteTransientCommandBuffer(VkCommandBuffer CmdBuffer);
@@ -60,7 +68,9 @@ namespace Lumina
         FVulkanRenderContextFunctions           VulkanRenderContextFunctions;
         VkDevice                                Device;
         VkPhysicalDevice                        PhysicalDevice;
+        VkPhysicalDeviceFeatures                PhysicalDeviceFeatures;
         VkPhysicalDeviceProperties              PhysicalDeviceProperties;
+        VkPhysicalDeviceMemoryProperties        PhysicslDeviceMemoryProperties;
         VkCommandPool                           CommandPool;
         VkQueue                                 GeneralQueue;
 

@@ -109,7 +109,7 @@ namespace Lumina
         RenderAPI->EndFrame();
     }
 
-    void FRenderer::BeginRender(const TVector<TRefPtr<FImage>>& Attachments, glm::fvec4 ClearColor)
+    void FRenderer::BeginRender(const TVector<TRefPtr<FImage>>& Attachments, const glm::fvec4& ClearColor)
     {
         RenderAPI->BeginRender(Attachments, ClearColor);
     }

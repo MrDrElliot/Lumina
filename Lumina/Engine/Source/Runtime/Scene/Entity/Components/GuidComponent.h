@@ -1,9 +1,10 @@
 #pragma once
+#include "Component.h"
 #include "GUID/GUID.h"
 
 namespace Lumina
 {
-    class FGUIDComponent
+    class FGUIDComponent : public FEntityComponent
     {
     public:
 

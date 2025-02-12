@@ -3,15 +3,19 @@
 #include "imgui_internal.h"
 #include "ToolFlags.h"
 #include "Core/Math/Hash/Hash.h"
+#include "Scene/SceneManager.h"
+#include "Scene/Entity/Components/CameraComponent.h"
+#include "Scene/Subsystems/FCameraManager.h"
 #include "Tools/UI/ImGui/ImGuiX.h"
 
 namespace Lumina
 {
-    FEditorTool::FEditorTool(const IEditorToolContext* Context, const FString& DisplayName, TRefPtr<FScene> InScene)
+    FEditorTool::FEditorTool(const IEditorToolContext* Context, const FString& DisplayName, FScene* InScene)
         : ToolContext(Context)
         , ToolName(DisplayName)
         , ID(Hash::GetHash32(DisplayName))
-        , Scene(eastl::move(InScene))
+        , Scene(InScene)
+        , EditorEntity()
     {
         ToolFlags |= EEditorToolFlags::Tool_WantsToolbar;
     }
@@ -27,6 +31,13 @@ namespace Lumina
         
         if (HasScene())
         {
+            
+            FTransform EditorEntityTransform = FTransform();
+            EditorEntityTransform.Location = {0.0f, -10.0f, 0.0f};
+            EditorEntity = Scene->CreateEntity(EditorEntityTransform, "Tool_Entity_" + ToolName);
+            EditorEntity.AddComponent<FCameraComponent>();
+            Scene->GetSceneCameraManager()->SetActiveCamera(EditorEntity);
+            
             FToolWindow* NewWindow = CreateToolWindow(ViewportWindowName, [] (const FUpdateContext& Contxt, bool bIsFocused)
             {
                 //.. Intentially blank.
@@ -46,7 +57,12 @@ namespace Lumina
         {
             FMemory::Delete(Window);
         }
-
+        
+        if (HasScene())
+        {
+            UpdateContext.GetSubsystem<FSceneManager>()->DestroyScene(Scene);
+        }
+        
         ToolWindows.clear();
     }
 
@@ -70,7 +86,7 @@ namespace Lumina
 
         //-------------------------------------------------------------------------
 
-        if ( ImGui::MenuItem(LE_ICON_REDO_VARIANT"##Redo"))
+        if (ImGui::MenuItem(LE_ICON_REDO_VARIANT"##Redo"))
         {
             
         }
@@ -93,6 +109,7 @@ namespace Lumina
         const ImVec2 ViewportSize(eastl::max(ImGui::GetContentRegionAvail().x, 64.0f), eastl::max(ImGui::GetContentRegionAvail().y, 64.0f));
         const ImVec2 WindowPosition = ImGui::GetWindowPos();
         
+        ImGui::Image(ViewportTexture, ViewportSize);
         
         if (ImGuiDockNode* pDockNode = ImGui::GetWindowDockNode())
         {

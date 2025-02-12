@@ -1,4 +1,5 @@
 #pragma once
+#include "UpdateStage.h"
 #include "Platform/GenericPlatform.h"
 #include "Platform/WindowsPlatform.h"
 #include "Subsystems/Subsystem.h"
@@ -13,22 +14,12 @@ namespace Lumina
     public:
 
         friend class FEngine;
-
-        enum class EUpdateStage : uint8
-        {
-            FrameStart,
-            PrePhysics,
-            DuringPhysics,
-            PostPhysics,
-            FrameEnd,
-            Paused,
-            Max,
-        };
-
+        
         FORCEINLINE void MarkFrameStart()
         {
             UpdateStage = EUpdateStage::FrameStart;
         }
+        
         FORCEINLINE void MarkFrameEnd(double Time)
         {
             DeltaTime = Time - LastFrameTime;

@@ -20,16 +20,16 @@ namespace Lumina
         void UpdateScenes(const FUpdateContext& UpdateContext);
         void EndFrame();
         
-        TRefPtr<FScene> CreateScene(ESceneType InType);
-        void DestroyScene(const TRefPtr<FScene>& SceneToRemove);
+        FScene* CreateScene(ESceneType InType);
+        void DestroyScene(FScene* SceneToRemove);
 
-        void GetAllScenes(TVector<TRefPtr<FScene>>& OutScenes);
-        TRefPtr<FScene> GetGameScene();
+        void GetAllScenes(TVector<FScene*>& OutScenes) const;
+        FORCEINLINE FScene* GetGameScene() const { return GameScene; }
     
     private:
 
-        TVector<TRefPtr<FScene>>    Scenes;
-        TRefPtr<FScene>             GameScene;
+        TVector<FScene*>            Scenes;
+        FScene*                     GameScene = nullptr;
         
     };
 }

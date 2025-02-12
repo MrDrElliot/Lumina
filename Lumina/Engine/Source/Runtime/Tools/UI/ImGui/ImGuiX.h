@@ -12,8 +12,6 @@ namespace Lumina::ImGuiX
         ImTextureID     ID = 0;
         ImVec2          Size = ImVec2(0, 0);
     };
-
-
     
     //--------------------------------------------------------------
     // Generic draw helpers...
@@ -47,7 +45,7 @@ namespace Lumina::ImGuiX
     public:
 
         // This function takes two delegates and sizes each representing the title bar menu and an extra optional controls section
-        void Draw( TFunction<void()>&& menuSectionDrawFunction = TFunction<void()>(), float menuSectionWidth = 0, TFunction<void()>&& controlsSectionDrawFunction = TFunction<void()>(), float controlsSectionWidth = 0 );
+        void Draw(TFunction<void()>&& menuSectionDrawFunction = TFunction<void()>(), float menuSectionWidth = 0, TFunction<void()>&& controlsSectionDrawFunction = TFunction<void()>(), float controlsSectionWidth = 0);
 
         // Get the screen space rectangle for this title bar
         glm::vec4 const& GetScreenRectangle() const { return Rect; }

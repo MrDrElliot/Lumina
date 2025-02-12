@@ -3,14 +3,13 @@
 #include "Pipeline.h"
 #include "Renderer.h"
 #include "Image.h"
-
+#include "Swapchain.h"
 
 
 namespace Lumina
 {
     class FWindow;
     class FApplication;
-    class FSwapchain;
     
     struct FQueueFamilyIndex 
     {

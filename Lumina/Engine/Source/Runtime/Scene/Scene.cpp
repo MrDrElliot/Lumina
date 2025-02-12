@@ -2,35 +2,36 @@
 
 #include "Scene.h"
 #include "SceneRenderer.h"
-#include "Components/NameComponent.h"
-#include "Components/GuidComponent.h"
+#include "SceneUpdateContext.h"
 #include "Entity/Entity.h"
+#include "Entity/Components/NameComponent.h"
+#include "Entity/Components/TransformComponent.h"
+#include "Entity/Systems/EntitySystem.h"
+#include "Subsystems/FCameraManager.h"
 
 namespace Lumina
 {
     FScene::FScene(ESceneType InType)
+        : SceneType(InType)
     {
-        SceneType = InType;
-        CurrentCamera = MakeRefPtr<FCamera>();
-        SceneRenderer = FSceneRenderer::Create(this);
     }
 
     FScene::~FScene()
     {
     }
-
-    TRefPtr<FScene> FScene::Create(ESceneType InType)
-    {
-        return MakeRefPtr<FScene>(InType);
-    }
     
     void FScene::Initialize(const FUpdateContext& UpdateContext)
     {
         SystemManager = UpdateContext.GetSubsystemManager();
+        
+        SceneSubsystemManager = FMemory::New<FSubsystemManager>();
+        SceneRenderer = SceneSubsystemManager->AddSubsystem<FSceneRenderer>(this);
+        SceneSubsystemManager->AddSubsystem<FCameraManager>();
     }
 
     void FScene::Shutdown()
     {
+
         SceneRenderer->Shutdown();
         
         SystemManager = nullptr;
@@ -43,6 +44,12 @@ namespace Lumina
     
     void FScene::Update(const FUpdateContext& UpdateContext)
     {
+        FSceneUpdateContext SceneContext(UpdateContext, this);
+        
+        for (FEntitySystem* System : SystemUpdateList[(uint32)UpdateContext.GetUpdateStage()])
+        {
+            System->Update(SceneEntityRegistery, SceneContext);
+        }
     }
     
     void FScene::EndFrame()
@@ -50,49 +57,71 @@ namespace Lumina
         SceneRenderer->EndFrame();
     }
 
-    TRefPtr<FSceneRenderer> FScene::GetSceneRenderer() const
+    bool FScene::RegisterSystem(FEntitySystem* NewSystem)
     {
-        return SceneRenderer;
+        Assert(NewSystem != nullptr);
+        
+        NewSystem->Scene = this;
+        NewSystem->Initialize(SceneSubsystemManager);
+        EntitySystems.push_back(NewSystem);
+
+        for (uint8 i = 0; i < (uint8)EUpdateStage::Max; ++i)
+        {
+            if (NewSystem->GetRequiredUpdatePriorities().IsStageEnabled((EUpdateStage)i))
+            {
+                SystemUpdateList[i].push_back(NewSystem);
+            }
+
+            auto Predicate = [i] (FEntitySystem* A, FEntitySystem* B)
+            {
+                const uint8 PriorityA = A->GetRequiredUpdatePriorities().GetPriorityForStage((EUpdateStage)i);
+                const uint8 PriorityB = B->GetRequiredUpdatePriorities().GetPriorityForStage((EUpdateStage)i);
+                return PriorityA > PriorityB;
+            };
+
+            eastl::sort(SystemUpdateList[i].begin(), SystemUpdateList[i].end(), Predicate);
+        }
+
+        return true;
     }
 
     Entity FScene::CreateEntity(const FTransform& Transform, const FString& Name)
     {
         FString uniqueName = Name;
-        int counter = 1;
+        int Counter = 1;
 
-        bool nameExists = false;
-        for (auto& ent : EntityRegistery.view<FNameComponent>())
+        bool bNameExists = false;
+        for (auto& ent : SceneEntityRegistery.view<FNameComponent>())
         {
-            auto& existingName = EntityRegistery.get<FNameComponent>(ent).GetName();
+            auto& existingName = SceneEntityRegistery.get<FNameComponent>(ent).GetName();
             if (existingName == uniqueName)
             {
-                nameExists = true;
+                bNameExists = true;
                 break;
             }
         }
 
-        while (nameExists)
+        while (bNameExists)
         {
-            uniqueName = Name + FString("_") + eastl::to_string(counter);
-            counter++;
+            uniqueName = Name + FString("_") + eastl::to_string(Counter);
+            Counter++;
 
-            nameExists = false;
-            for (auto& ent : EntityRegistery.view<FNameComponent>())
+            bNameExists = false;
+            for (auto& ent : SceneEntityRegistery.view<FNameComponent>())
             {
-                auto& existingName = EntityRegistery.get<FNameComponent>(ent).GetName();
+                auto& existingName = SceneEntityRegistery.get<FNameComponent>(ent).GetName();
                 if (existingName == uniqueName)
                 {
-                    nameExists = true;
+                    bNameExists = true;
                     break;
                 }
             }
         }
 
-        Entity NewEntity(EntityRegistery.create(), this);
-        FGuid Guid = FGuid::Generate();
-        NewEntity.AddComponent<FGUIDComponent>(Guid);
+        Entity NewEntity(SceneEntityRegistery.create(), this);
         NewEntity.AddComponent<FNameComponent>(uniqueName);
         NewEntity.AddComponent<FTransformComponent>(Transform);
+
         
         return NewEntity;
     }
@@ -100,25 +129,11 @@ namespace Lumina
     
     void FScene::DestroyEntity(Entity Entity)
     {
-        EntityRegistery.destroy(Entity);
+        SceneEntityRegistery.destroy(Entity);
     }
 
-    Entity FScene::GetEntityByGUID(const FGuid& Guid, bool* bFound)
+    FCameraManager* FScene::GetSceneCameraManager() const
     {
-        auto View = EntityRegistery.view<FGUIDComponent>();
-
-        for (auto& ent : View)
-        {
-            if (View.get<FGUIDComponent>(ent).GetGUID() == Guid)
-            {
-                if (bFound)
-                {
-                    *bFound = true;
-                }
-                return Entity(ent, this);
-            }
-        }
-        
-        return {};
+        return SceneSubsystemManager->GetSubsystem<FCameraManager>();
     }
 }

@@ -1,11 +1,11 @@
 #version 450 core
 
-layout(set = 0, binding = 0) uniform ViewUniforms
+layout(set = 0, binding = 0) uniform CameraUniforms
 {
-    mat4 view;
-    mat4 proj;
-    vec3 pos;
-} view;
+    vec4 CameraPosition;    // Camera Position
+    mat4 CameraView;        // View matrix
+    mat4 CameraProjection;  // Projection matrix
+} CameraUBO;
 
 // Define outputs to the fragment shader
 layout(location = 0) out float fragNear;  // Passing near value
@@ -34,15 +34,15 @@ void main()
 {
     // Define near and far plane distances
     fragNear = 0.01f;
-    fragFar = 100.0f;
+    fragFar = 1000.0f;
 
     vec3 p = gridPlane[gl_VertexIndex].xyz;
-    nearPoint = UnprojectPoint(p.x, p.y, 0.0, view.view, view.proj).xyz; // Unproject on the near plane
-    farPoint = UnprojectPoint(p.x, p.y, 1.0, view.view, view.proj).xyz;  // Unproject on the far plane
+    nearPoint = UnprojectPoint(p.x, p.y, 0.0, CameraUBO.CameraView, CameraUBO.CameraProjection).xyz; // Unproject on the near plane
+    farPoint = UnprojectPoint(p.x, p.y, 1.0, CameraUBO.CameraView, CameraUBO.CameraProjection).xyz;  // Unproject on the far plane
 
     // Pass view and projection matrices
-    fragView = view.view;
-    fragProj = view.proj;
+    fragView = CameraUBO.CameraView;
+    fragProj = CameraUBO.CameraProjection;
 
-    gl_Position = vec4(p, 1.0); // Use directly the clip coordinates
+    gl_Position = vec4(p, 1.0);
 }

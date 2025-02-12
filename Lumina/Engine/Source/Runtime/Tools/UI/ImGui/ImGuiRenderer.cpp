@@ -55,17 +55,17 @@ namespace Lumina
     	float const size18 = std::floor( 18 * DPIScale );
     	float const size24 = std::floor( 24 * DPIScale );
 
-    	CreateFont( FontData, size12, size14, ImGuiX::Font::EFont::Tiny, "Tiny", ImVec2( 0, 2 ) );
-    	CreateFont( BoldFontData, size12, size14, ImGuiX::Font::EFont::TinyBold, "Tiny Bold", ImVec2( 0, 2 ) );
+    	CreateFont(FontData, size12, size14, ImGuiX::Font::EFont::Tiny, "Tiny", ImVec2( 0, 2 ) );
+    	CreateFont(BoldFontData, size12, size14, ImGuiX::Font::EFont::TinyBold, "Tiny Bold", ImVec2( 0, 2 ) );
 
-    	CreateFont( FontData, size14, size16, ImGuiX::Font::EFont::Small, "Small", ImVec2( 0, 2 ) );
-    	CreateFont( BoldFontData, size14, size16, ImGuiX::Font::EFont::SmallBold, "Small Bold", ImVec2( 0, 2 ) );
+    	CreateFont(FontData, size14, size16, ImGuiX::Font::EFont::Small, "Small", ImVec2( 0, 2 ) );
+    	CreateFont(BoldFontData, size14, size16, ImGuiX::Font::EFont::SmallBold, "Small Bold", ImVec2( 0, 2 ) );
 
-    	CreateFont( FontData, size16, size18, ImGuiX::Font::EFont::Medium, "Medium", ImVec2( 0, 2 ) );
-    	CreateFont( BoldFontData, size16, size18, ImGuiX::Font::EFont::MediumBold, "Medium Bold", ImVec2( 0, 2 ) );
+    	CreateFont(FontData, size16, size18, ImGuiX::Font::EFont::Medium, "Medium", ImVec2( 0, 2 ) );
+    	CreateFont(BoldFontData, size16, size18, ImGuiX::Font::EFont::MediumBold, "Medium Bold", ImVec2( 0, 2 ) );
 
-    	CreateFont( FontData, size24, size24, ImGuiX::Font::EFont::Large, "Large", ImVec2( 0, 2 ) );
-    	CreateFont( BoldFontData, size24, size24, ImGuiX::Font::EFont::LargeBold, "Large Bold", ImVec2( 0, 2 ) );
+    	CreateFont(FontData, size24, size24, ImGuiX::Font::EFont::Large, "Large", ImVec2( 0, 2 ) );
+    	CreateFont(BoldFontData, size24, size24, ImGuiX::Font::EFont::LargeBold, "Large Bold", ImVec2( 0, 2 ) );
 
     	io.Fonts->TexDesiredWidth = 4096;
     	io.Fonts->Build();
@@ -164,7 +164,6 @@ namespace Lumina
     void IImGuiRenderer::StartFrame()
     {
     	OnStartFrame();
-    	
     }
 
     void IImGuiRenderer::EndFrame()
@@ -183,5 +182,6 @@ namespace Lumina
     		ImGui::UpdatePlatformWindows();
     		ImGui::RenderPlatformWindowsDefault();
     	}
+    	
     }
 }

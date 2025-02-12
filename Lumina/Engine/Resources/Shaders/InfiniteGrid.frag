@@ -65,4 +65,5 @@ void main()
     // Apply grid and axis coloring
     outColor = (grid(fragPos3D, GRID_SCALE, true) + grid(fragPos3D, 1.0, true)) * float(t > 0);
     outColor.a *= fading;  // Apply fading based on depth
+    
 }

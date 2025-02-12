@@ -19,7 +19,7 @@ namespace Lumina
 
         void Initialize(const FSubsystemManager& Manager) override;
         void Deinitialize() override { }
-
+        
         void StartFrame();
         void EndFrame();
         
@@ -29,15 +29,16 @@ namespace Lumina
         virtual void RenderImage(TRefPtr<FImage> Image, ImVec2 Size) = 0;
         virtual void RenderImage(const ImGuiX::FImGuiImageInfo& ImageInfo) = 0;
         
+        virtual ImGuiX::FImGuiImageInfo CreateImGuiTexture(TRefPtr<FImage> Image, ImVec2 Size) = 0;
         virtual ImGuiX::FImGuiImageInfo CreateImGuiTexture(const FString& RawPath) = 0;
         
         virtual void DestroyImGuiTexture(const ImGuiX::FImGuiImageInfo& ImageInfo) = 0;
         virtual void DestroyImGuiTexture(const TRefPtr<FImage>& Image) = 0;
 
-
+    
     protected:
 
         THashMap<FGuid, ImGuiX::FImGuiImageInfo> ImageCache;
-
+        
     };
 }

@@ -3,7 +3,7 @@
 
 namespace Lumina
 {
-    FSceneEditorTool::FSceneEditorTool(const IEditorToolContext* Context, const TRefPtr<FScene>& InScene)
+    FSceneEditorTool::FSceneEditorTool(const IEditorToolContext* Context, FScene* InScene)
         :FEditorTool(Context, "Scene Editor", InScene)
     {
         Assert(Scene != nullptr);

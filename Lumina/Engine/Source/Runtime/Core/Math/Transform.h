@@ -56,3 +56,23 @@ namespace Lumina
         }
     };
 }
+
+template <>
+struct fmt::formatter<Lumina::FTransform>\
+{
+    constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin())
+    {
+        return ctx.begin();
+    }
+
+    // Format function
+    template <typename FormatContext>
+    auto format(const Lumina::FTransform& transform, FormatContext& ctx) -> decltype(ctx.out())
+    {
+        return fmt::format_to(ctx.out(), 
+            "Location: ({:.2f}, {:.2f}, {:.2f}) | Rotation: ({:.2f}, {:.2f}, {:.2f}, {:.2f}) | Scale: ({:.2f}, {:.2f}, {:.2f})",
+            transform.Location.x, transform.Location.y, transform.Location.z,
+            transform.Rotation.w, transform.Rotation.x, transform.Rotation.y, transform.Rotation.z,
+            transform.Scale.x, transform.Scale.y, transform.Scale.z);
+    }
+};

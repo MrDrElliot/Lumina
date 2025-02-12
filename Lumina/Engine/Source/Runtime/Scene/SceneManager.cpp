@@ -7,23 +7,22 @@ namespace Lumina
 {
     void FSceneManager::Initialize(const FSubsystemManager& Manager)
     {
-        GameScene = CreateScene(ESceneType::Game);
     }
 
     void FSceneManager::Deinitialize()
     {
-        for (const TRefPtr<FScene>& Scene : Scenes)
+        for (FScene* Scene : Scenes)
         {
             Scene->Shutdown();
+            FMemory::Delete(Scene);
         }
         
-        GameScene.Release();
         Scenes.clear();
     }
 
     void FSceneManager::StartFrame()
     {
-        for (const TRefPtr<FScene>& Scene : Scenes)
+        for (FScene* Scene : Scenes)
         {
             Scene->StartFrame();       
         }
@@ -31,51 +30,55 @@ namespace Lumina
 
     void FSceneManager::UpdateScenes(const FUpdateContext& UpdateContext)
     {
-        for (const TRefPtr<FScene>& Scene : Scenes)
+        for (FScene* Scene : Scenes)
         {
-            Scene->Update(UpdateContext);            
+            Scene->Update(UpdateContext);       
         }
     }
 
     void FSceneManager::EndFrame()
     {
-        
+        for (FScene* Scene : Scenes)
+        {
+            Scene->EndFrame();       
+        }
     }
 
-    TRefPtr<FScene> FSceneManager::CreateScene(ESceneType InType)
+    FScene* FSceneManager::CreateScene(ESceneType InType)
     {
         if (InType == ESceneType::Game)
         {
-            AssertMsg(!GameScene.IsValid(), "Only one game scene is allowed"); 
+            AssertMsg(GameScene == nullptr, "Only one game scene is allowed"); 
         }
 
-        TRefPtr<FScene> NewScene = MakeRefPtr<FScene>(InType);
+        FScene* NewScene = FMemory::New<FScene>(InType);
         Scenes.push_back(NewScene);
 
         return NewScene;
     }
 
-    void FSceneManager::DestroyScene(const TRefPtr<FScene>& SceneToRemove)
+    void FSceneManager::DestroyScene(FScene* SceneToRemove)
     {
-        if (SceneToRemove == GameScene)
-        {
-            GameScene.Release();
-            GameScene = nullptr;
-        }
-
+        Assert(SceneToRemove != nullptr);
+        
         auto Itr = eastl::find(Scenes.begin(), Scenes.end(), SceneToRemove);
         AssertMsg(Itr != Scenes.end(), "Scene was not found in manager!");
         Scenes.erase(Itr);
         SceneToRemove->Shutdown();
+
+        if (SceneToRemove == GameScene)
+        {
+            GameScene = nullptr;
+        }
+
+        FMemory::Delete(SceneToRemove);
+        
     }
 
-    void FSceneManager::GetAllScenes(TVector<TRefPtr<FScene>>& OutScenes)
+    void FSceneManager::GetAllScenes(TVector<FScene*>& OutScenes) const
     {
         OutScenes = Scenes;
     }
 
-    TRefPtr<FScene> FSceneManager::GetGameScene()
-    {
-        return GameScene;
-    }
+
 }

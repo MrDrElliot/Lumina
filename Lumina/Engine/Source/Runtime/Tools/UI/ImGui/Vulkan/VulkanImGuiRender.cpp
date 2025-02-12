@@ -94,7 +94,7 @@ namespace Lumina
 		FRenderer::WaitIdle();
     	for (auto& KVP : ImageCache)
     	{
-    		ImGui_ImplVulkan_RemoveTexture(reinterpret_cast<VkDescriptorSet>(KVP.second.ID));
+    		ImGui_ImplVulkan_RemoveTexture(static_cast<VkDescriptorSet>(KVP.second.ID));
     	}
     	
     	ImGui_ImplVulkan_Shutdown();
@@ -143,29 +143,59 @@ namespace Lumina
 	
     void FVulkanImGuiRender::RenderImage(const ImGuiX::FImGuiImageInfo& ImageInfo)
     {
-        ImGui::Image(ImageInfo.ID, ImageInfo.Size, { 0, 1 }, { 1, 0 });
+        ImGui::Image(ImageInfo.ID, ImageInfo.Size, { 0, 0 }, { 1, 1 });
     }
 
-    ImGuiX::FImGuiImageInfo FVulkanImGuiRender::CreateImGuiTexture(const FString& RawPath)
-    {
-    	TRefPtr<FVulkanImage> Image = FTextureFactory::ImportFromSource(RawPath.c_str()).As<FVulkanImage>();
-    	Image->SetFriendlyName(RawPath);
-    	
-    	TRefPtr<FVulkanImageSampler> Sampler = FRenderer::GetLinearSampler().As<FVulkanImageSampler>();
-    	
-    	VkDescriptorSet ImGuiImageID = ImGui_ImplVulkan_AddTexture(Sampler->GetSampler(), Image->GetImageView(),
+	ImGuiX::FImGuiImageInfo FVulkanImGuiRender::CreateImGuiTexture(TRefPtr<FImage> Image, ImVec2 Size)
+	{
+		auto It = ImageCache.find(Image->GetGuid());
+		if (It != ImageCache.end())
+		{
+			return It->second;
+		}
+
+		TRefPtr<FVulkanImage> VkImage = Image.As<FVulkanImage>();
+		TRefPtr<FVulkanImageSampler> Sampler = FRenderer::GetLinearSampler().As<FVulkanImageSampler>();
+    
+		VkDescriptorSet ImGuiImageID = ImGui_ImplVulkan_AddTexture(Sampler->GetSampler(), VkImage->GetImageView(),
 				VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-    	ImGuiX::FImGuiImageInfo NewInfo;
-    	NewInfo.Size.x = (float)Image->GetSpecification().Extent.x;
-    	NewInfo.Size.y = (float)Image->GetSpecification().Extent.y;
-    	NewInfo.ID = reinterpret_cast<ImTextureID>(ImGuiImageID);
-    	ImageCache.emplace(Image->GetGuid(), NewInfo);
+		ImGuiX::FImGuiImageInfo NewInfo;
+		NewInfo.Size = Size;
+		NewInfo.ID = reinterpret_cast<ImTextureID>(ImGuiImageID);
+		ImageCache.emplace(Image->GetGuid(), NewInfo);
 
-    	RegisterNewImage(Image->GetGuid(), NewInfo.ID, Image->GetFriendlyName());
-    	
-    	return NewInfo;
-    }
+		RegisterNewImage(Image->GetGuid(), NewInfo.ID, "ImGui_" + Image->GetFriendlyName());
+    
+		return NewInfo;
+	}
+
+	ImGuiX::FImGuiImageInfo FVulkanImGuiRender::CreateImGuiTexture(const FString& RawPath)
+	{
+		TRefPtr<FVulkanImage> Image = FTextureFactory::ImportFromSource(RawPath.c_str()).As<FVulkanImage>();
+		Image->SetFriendlyName(RawPath);
+    
+		auto It = ImageCache.find(Image->GetGuid());
+		if (It != ImageCache.end())
+		{
+			return It->second;
+		}
+    
+		TRefPtr<FVulkanImageSampler> Sampler = FRenderer::GetLinearSampler().As<FVulkanImageSampler>();
+    
+		VkDescriptorSet ImGuiImageID = ImGui_ImplVulkan_AddTexture(Sampler->GetSampler(), Image->GetImageView(),
+				VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+		ImGuiX::FImGuiImageInfo NewInfo;
+		NewInfo.Size.x = (float)Image->GetSpecification().Extent.x;
+		NewInfo.Size.y = (float)Image->GetSpecification().Extent.y;
+		NewInfo.ID = reinterpret_cast<ImTextureID>(ImGuiImageID);
+		ImageCache.emplace(Image->GetGuid(), NewInfo);
+
+		RegisterNewImage(Image->GetGuid(), NewInfo.ID, "ImGui_" + Image->GetFriendlyName());
+    
+		return NewInfo;
+	}
 
     void FVulkanImGuiRender::DestroyImGuiTexture(const ImGuiX::FImGuiImageInfo& ImageInfo)
     {
@@ -179,7 +209,7 @@ namespace Lumina
     
     void FVulkanImGuiRender::RegisterNewImage(FGuid Guid, ImTextureID NewImage, const FString& DebugName)
     {
-    	Assert(ImageCache.find(Guid) == ImageCache.end());
+    	Assert(ImageCache.find(Guid) != ImageCache.end());
     	
     	FVulkanRenderContext* VkRenderContext = FRenderer::GetRenderContext<FVulkanRenderContext>();
     	VkDevice Device = VkRenderContext->GetDevice();

@@ -51,6 +51,8 @@ namespace Lumina
         template<typename T>
         void RemoveSubsystem()
         {
+            static_assert(std::is_base_of_v<ISubsystem, T>, "T must inherit from ISubsystem!");
+
             uint32_t typeHash = typeid(T).hash_code();
             auto it = SubsystemLookup.find(typeHash);
             if (it != SubsystemLookup.end())
@@ -69,6 +71,8 @@ namespace Lumina
         template<typename T>
         T* GetSubsystem()
         {
+            static_assert(std::is_base_of_v<ISubsystem, T>, "T must inherit from ISubsystem!");
+
             uint32_t typeHash = typeid(T).hash_code();
             auto it = SubsystemLookup.find(typeHash);
             return (it != SubsystemLookup.end()) ? static_cast<T*>(it->second) : nullptr;

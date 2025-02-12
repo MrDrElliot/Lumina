@@ -3,15 +3,15 @@
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "ToolFlags.h"
+#include "Core/Math/Hash/Hash.h"
 #include "Containers/Array.h"
 #include "Containers/String.h"
 #include "Core/UpdateContext.h"
 #include "Core/Functional/Function.h"
 #include "Memory/RefCounted.h"
 #include "Scene/Scene.h"
+#include "Scene/Entity/Entity.h"
 #include "Tools/UI/ImGui/ImGuiDesignIcons.h"
-#include "Core/Math/Hash/Hash.h"
-
 
 namespace Lumina
 {
@@ -60,7 +60,7 @@ namespace Lumina
 
     public:
 
-        FEditorTool(const IEditorToolContext* Context, const FString& DisplayName, TRefPtr<FScene> Scene = nullptr);
+        FEditorTool(const IEditorToolContext* Context, const FString& DisplayName, FScene* Scene = nullptr);
 
         virtual void Initialize(const FUpdateContext& UpdateContext);
         virtual void Deinitialize(const FUpdateContext& UpdateContext);
@@ -81,7 +81,8 @@ namespace Lumina
         FORCEINLINE ImGuiWindowClass* GetWindowClass() { return &ToolWindowsClass; }
         FORCEINLINE EEditorToolFlags GetToolFlags() const { return ToolFlags; }
         FORCEINLINE bool HasFlag(EEditorToolFlags Flag) const {  return (ToolFlags & Flag) == Flag; }
-        
+
+        FORCEINLINE FScene* GetScene() const { return Scene; }
         FORCEINLINE bool HasScene() const { return Scene != nullptr; }
         FORCEINLINE ImGuiID GetCurrentDockspaceID() const { return CurrDockspaceID; }
 
@@ -147,19 +148,20 @@ namespace Lumina
         ImGuiID                         ID = 0;                 // Document identifier (unique)
         
         ImGuiID                         CurrDockID = 0;
-        ImGuiID                         DesiredDockID = 0;        // The dock we wish to be in
+        ImGuiID                         DesiredDockID = 0;      // The dock we wish to be in
         ImGuiID                         CurrLocationID = 0;     // Current Dock node we are docked into _OR_ window ID if floating window
         ImGuiID                         PrevLocationID = 0;     // Previous dock node we are docked into _OR_ window ID if floating window
         ImGuiID                         CurrDockspaceID = 0;    // Dockspace ID ~~ Hash of LocationID + DocType (with MYEDITOR_CONFIG_SAME_LOCATION_SHARE_LAYOUT=1)
         ImGuiID                         PrevDockspaceID = 0;
-        ImGuiWindowClass                ToolWindowsClass;  // All our tools windows will share the same WindowClass (based on ID) to avoid mixing tools from different top-level editor
+        ImGuiWindowClass                ToolWindowsClass;       // All our tools windows will share the same WindowClass (based on ID) to avoid mixing tools from different top-level editor
 
-        const IEditorToolContext*       ToolContext;
+        const IEditorToolContext*       ToolContext = nullptr;
         FString                         ToolName;
         
         TVector<FToolWindow*>           ToolWindows;
         
-        TRefPtr<FScene>                 Scene;
+        FScene*                         Scene = nullptr;
+        Entity                          EditorEntity;
         ImTextureID                     SceneViewportTexture = nullptr;
 
         EEditorToolFlags                ToolFlags = EEditorToolFlags::Tool_WantsToolbar;

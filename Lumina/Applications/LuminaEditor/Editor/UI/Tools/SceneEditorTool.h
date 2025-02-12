@@ -13,7 +13,7 @@ namespace Lumina
         
     public:
         
-        FSceneEditorTool(const IEditorToolContext* Context, const TRefPtr<FScene>& Scene);
+        FSceneEditorTool(const IEditorToolContext* Context, FScene* InScene);
 
         void OnInitialize(const FUpdateContext& UpdateContext) override;
         void OnDeinitialize(const FUpdateContext& UpdateContext) override { }

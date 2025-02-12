@@ -25,6 +25,8 @@ namespace Lumina
         void RenderImage(TRefPtr<FImage> Image, ImVec2 Size) override;
         void RenderImage(const ImGuiX::FImGuiImageInfo& ImageInfo) override;
         
+
+        ImGuiX::FImGuiImageInfo CreateImGuiTexture(TRefPtr<FImage> Image, ImVec2 Size) override;
         ImGuiX::FImGuiImageInfo CreateImGuiTexture(const FString& RawPath) override;
         
         void DestroyImGuiTexture(const ImGuiX::FImGuiImageInfo& ImageInfo) override;

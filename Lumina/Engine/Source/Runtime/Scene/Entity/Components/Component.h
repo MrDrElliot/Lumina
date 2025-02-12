@@ -1,4 +1,5 @@
 #pragma once
+#include "Containers/String.h"
 
 
 namespace Lumina
@@ -11,7 +12,7 @@ namespace Lumina
 		virtual ~FEntityComponent() =	default;
 	
 	protected:
-
+		
 		FString DisplayName;
 
 	};

@@ -12,6 +12,11 @@
 
 namespace Lumina
 {
+    class FSceneUpdateContext;
+}
+
+namespace Lumina
+{
     struct FMaterialTexturesData;
     class AMaterialInstance;
     class FScene;
@@ -60,37 +65,33 @@ namespace Lumina
         uint32 padding      [3];
         FLight Lights       [MAX_LIGHTS];
     };
-
-    struct FGridData
-    {
-        glm::mat4 View =         glm::mat4(1.0f);
-        glm::mat4 Projection =   glm::mat4(1.0f);
-        glm::vec3 Position =     {0.0f, 0.0f, 0.0f};
-    };
-
+    
     /**
      * Scene renderer's are stateful renderes that interface with the state-less renderer.
      * Responsible for managing all low-level scene rendering.
      */
-    class FSceneRenderer : public FRefCounted
+    class FSceneRenderer : public ISubsystem
     {
     public:
         
 
-        static TRefPtr<FSceneRenderer> Create(FScene* InScene);
+        static FSceneRenderer* Create(FScene* InScene);
 
         FSceneRenderer(FScene* InScene);
         ~FSceneRenderer();
 
+        void Initialize(const FSubsystemManager& Manager) override;
+        void Deinitialize() override;
+        
         void StartFrame();
         void EndFrame();
 
-        TRefPtr<FImage> GetRenderTarget() { return      RenderTargets[FRenderer::GetCurrentFrameIndex()]; }
-        TRefPtr<FImage> GetDepthAttachment() { return   DepthAttachments[FRenderer::GetCurrentFrameIndex()]; }
-        FSceneLightData& GetSceneLightingData() { return  SceneLightingData; }
+        TRefPtr<FImage> GetPrimaryRenderTarget() { return RenderTargets[FRenderer::GetCurrentFrameIndex()]; }
+        TRefPtr<FImage> GetDepthAttachment() { return DepthAttachments[FRenderer::GetCurrentFrameIndex()]; }
+        FSceneLightData& GetSceneLightingData() { return SceneLightingData; }
 
         void RenderGrid();
-        void GeometryPass(const TVector<TRefPtr<FImage>>& Attachments);
+        void GeometryPass(const FSceneUpdateContext& SceneContext);
 
         void InitPipelines();
         void InitBuffers();
@@ -106,7 +107,7 @@ namespace Lumina
         
         TVector<TRefPtr<FDescriptorSet>> GridDescriptorSets;
         TVector<TRefPtr<FDescriptorSet>> SceneDescriptorSets;
-
+        
         FMaterialAttributes Attributes;
         
         struct FTransientData
@@ -131,21 +132,17 @@ namespace Lumina
         TRefPtr<FBuffer> SceneUBO;
         TRefPtr<FBuffer> ModelSBO;
         TRefPtr<FBuffer> CameraUBO;
-        TRefPtr<FBuffer> GridUBO;
         TRefPtr<FBuffer> MaterialUBO;
 
 
-        FGridData                           GridData;
         FCameraData                         CameraData;
         FSceneLightData                     SceneLightingData;
         TVector<FModelData>                 ModelData;
         TVector<FMaterialTexturesData>      TexturesData;
-
         
-        TRefPtr<FCamera> Camera;
         TRefPtr<FMaterial> TestMaterial;
         
-        TRefPtr<FScene> CurrentScene;
+        FScene* CurrentScene = nullptr;
         
     };
 }

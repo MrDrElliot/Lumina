@@ -199,12 +199,9 @@ namespace Lumina
 	
 	uint64 FVulkanBuffer::GetAlignedSizeForBuffer(uint64 Size, EDeviceBufferUsage Usage)
 	{
-		VkPhysicalDeviceProperties DeviceProps;
 		FVulkanRenderContext* RenderContext = FRenderer::GetRenderContext<FVulkanRenderContext>();		
-	
+		VkPhysicalDeviceProperties DeviceProps = RenderContext->GetPhysicalDeviceProperties();
 		
-		RenderContext->GetPhysicalDeviceProperties(DeviceProps);
-    
 		uint64 MinAlignment = 1;  // Default alignment
     
 		// Only care about uniform and dynamic uniform buffer

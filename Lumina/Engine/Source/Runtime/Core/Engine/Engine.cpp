@@ -83,7 +83,7 @@ namespace Lumina
         
         if (bRunEngineUpdate)
         {
-            UpdateContext.UpdateStage = FUpdateContext::EUpdateStage::FrameStart;
+            UpdateContext.UpdateStage = EUpdateStage::FrameStart;
 
             // Frame Start
             //-------------------------------------------------------------------
@@ -107,72 +107,72 @@ namespace Lumina
             // Pre Physics
             //-------------------------------------------------------------------
             {
-                UpdateContext.UpdateStage = FUpdateContext::EUpdateStage::PrePhysics;
+                UpdateContext.UpdateStage = EUpdateStage::PrePhysics;
 
-                SceneManager->UpdateScenes(UpdateContext);
 
                 #if WITH_DEVELOPMENT_TOOLS
                 DeveloperToolUI->Update(UpdateContext);
                 #endif
                 
+                SceneManager->UpdateScenes(UpdateContext);
             }
 
             // During Physics
             //-------------------------------------------------------------------
             {
-                UpdateContext.UpdateStage = FUpdateContext::EUpdateStage::DuringPhysics;
+                UpdateContext.UpdateStage = EUpdateStage::DuringPhysics;
 
-                SceneManager->UpdateScenes(UpdateContext);
 
                 #if WITH_DEVELOPMENT_TOOLS
                 DeveloperToolUI->Update(UpdateContext);
                 #endif
                 
+                SceneManager->UpdateScenes(UpdateContext);
             }
 
             // Post Phsyics
             //-------------------------------------------------------------------
             {
-                UpdateContext.UpdateStage = FUpdateContext::EUpdateStage::PostPhysics;
+                UpdateContext.UpdateStage = EUpdateStage::PostPhysics;
 
-                SceneManager->UpdateScenes(UpdateContext);
 
                 #if WITH_DEVELOPMENT_TOOLS
                 DeveloperToolUI->Update(UpdateContext);
                 #endif
 
+                SceneManager->UpdateScenes(UpdateContext);
             }
 
             // Paused
             //-------------------------------------------------------------------
             {
-                UpdateContext.UpdateStage = FUpdateContext::EUpdateStage::Paused;
-
-                SceneManager->UpdateScenes(UpdateContext);
+                UpdateContext.UpdateStage = EUpdateStage::Paused;
 
                 #if WITH_DEVELOPMENT_TOOLS
                 DeveloperToolUI->Update(UpdateContext);
                 #endif
 
+                SceneManager->UpdateScenes(UpdateContext);
             }
 
             // Frame End
             //-------------------------------------------------------------------
             {
-                UpdateContext.UpdateStage = FUpdateContext::EUpdateStage::FrameEnd;
+                UpdateContext.UpdateStage = EUpdateStage::FrameEnd;
 
                 #if WITH_DEVELOPMENT_TOOLS
                 DeveloperToolUI->Update(UpdateContext);
                 #endif
 
                 SceneManager->UpdateScenes(UpdateContext);
+
+                SceneManager->EndFrame();
 
                 #if WITH_DEVELOPMENT_TOOLS
                 DeveloperToolUI->EndFrame(UpdateContext);
                 ImGuiRenderer->EndFrame();
                 #endif
                 
-                SceneManager->EndFrame();
                 
                 FRenderer::Render();
                 FRenderer::EndFrame();

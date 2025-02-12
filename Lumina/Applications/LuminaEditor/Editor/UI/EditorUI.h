@@ -7,6 +7,11 @@
 
 namespace Lumina
 {
+    class FRendererInfoEditorTool;
+}
+
+namespace Lumina
+{
     class FConsoleLogEditorTool;
 }
 
@@ -64,11 +69,16 @@ namespace Lumina
         FSceneManager*                                  SceneManager = nullptr;
         FEntitySceneEditorTool*                         SceneEditorTool = nullptr;
 
+        FRendererInfoEditorTool*                        RendererInfo = nullptr;
         FConsoleLogEditorTool*                          ConsoleLogTool = nullptr;
         TVector<FEditorTool*>                           EditorTools;
         FEditorTool*                                    LastActiveTool = nullptr;
-        bool                                            bDearImGuiDemoWindowOpen = false;
         FString                                         FocusTargetWindowName; // If this is set we need to switch focus to this window
+
+
+        
+        bool                                            bDearImGuiDemoWindowOpen = false;
+        bool                                            bRHIInfoOpen = false;
 
     };
     

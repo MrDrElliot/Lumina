@@ -1,20 +1,24 @@
 #pragma once
 
-#include <entt/entt.hpp>
-#include "Camera.h"
 #include "SceneTypes.h"
 #include "Assets/Asset.h"
-#include "EASTL/unordered_map.h"
-#include "GUID/GUID.h"
+#include "glm/glm.hpp"
+#include <entt/entt.hpp>
+
+#include "Core/UpdateContext.h"
+#include "Core/Functional/Function.h"
+#include "Subsystems/Subsystem.h"
 
 
 namespace Lumina
 {
-    class FUpdateContext;
+    class FEntitySystem;
 }
 
 namespace Lumina
 {
+    class FCameraManager;
+    class FUpdateContext;
     class FSceneRenderer;
     class FSubsystemManager;
     class FTransform;
@@ -29,7 +33,7 @@ namespace Lumina
             BackgroundColor = {0.24f, 0.24f, 0.24f};
             bShowGrid = true;
         }
-        
+
         glm::vec3 BackgroundColor;
         bool bShowGrid;
     };
@@ -44,8 +48,6 @@ namespace Lumina
         FScene(ESceneType InType);
         ~FScene();
         
-        static TRefPtr<FScene> Create(ESceneType InType);
-
 
         void Initialize(const FUpdateContext& UpdateContext);
         void Shutdown();
@@ -54,42 +56,68 @@ namespace Lumina
         void Update(const FUpdateContext& UpdateContext);
         void EndFrame();
         
-        FORCEINLINE TRefPtr<FCamera> GetCurrentCamera() { return CurrentCamera; }
-        FORCEINLINE TRefPtr<FSceneRenderer> GetSceneRenderer() const;
-        
+        bool RegisterSystem(FEntitySystem* NewSystem);
 
         Entity CreateEntity(const FTransform& Transform, const FString& Name);
         void DestroyEntity(Entity Entity);
-        Entity GetEntityByGUID(const FGuid& Guid, bool* bFound = nullptr);
         
-        EntityRegistry& GetEntityRegistry() { return EntityRegistery; }
+        EntityRegistry& GetEntityRegistry() { return SceneEntityRegistery; }
         FSceneSettings& GetSceneSettings() { return Settings; }
 
+        FORCEINLINE FSubsystemManager* GetSceneSubsystemManager() const { return SceneSubsystemManager; }
+        FCameraManager* GetSceneCameraManager() const;
+
+        FORCEINLINE FSceneRenderer* GetSceneRenderer() const { return SceneRenderer; }
+
+
+        template<typename T>
+        T* GetSceneSubsystem() const;
+        
 
         template <typename T>
-        void ForEachComponent(const eastl::function<void(uint32& CurrentIndex, entt::entity& OutEntity, T& OutComponent)>&& Functor)
-        {
-            auto view = EntityRegistery.view<T>();
-            
-            uint32 Current = 0;
-            for (auto [entity, component] : view.each())
-            {
-                Functor(Current, entity, component);
-                Current++;
-            }
-        }
-    
-    private:
+        void ForEachComponent(const TFunction<void(uint32& CurrentIndex, entt::entity& OutEntity, T& OutComponent)>&& Functor);
 
-        const FSubsystemManager*        SystemManager = nullptr;
-        ESceneType                      SceneType;
+    
+
+        
+    private:
         
         FSceneSettings                  Settings;
-        EntityRegistry                  EntityRegistery;
+        ESceneType                      SceneType;
+
+        const FSubsystemManager*        SystemManager = nullptr;
         
-        TRefPtr<FCamera>                CurrentCamera;
-        TRefPtr<FSceneRenderer>         SceneRenderer;
+        FSubsystemManager*              SceneSubsystemManager = nullptr;
+
+        TVector<FEntitySystem*>         EntitySystems;
+        TVector<FEntitySystem*>         SystemUpdateList[(uint32)EUpdateStage::Max];
+        EntityRegistry                  SceneEntityRegistery;
+        
+        FSceneRenderer*                 SceneRenderer = nullptr;
 
     };
 
+
+    //--------------------------------------------------------------------------------------------------
+    // Templates
+    //--------------------------------------------------------------------------------------------------
+
+    template <typename T>
+    T* FScene::GetSceneSubsystem() const
+    {
+        return GetSceneSubsystemManager()->GetSubsystem<T>();
+    }
+
+    template <typename T>
+    void FScene::ForEachComponent(const eastl::function<void(uint32& CurrentIndex, entt::entity& OutEntity, T& OutComponent)>&& Functor)
+    {
+        auto view = SceneEntityRegistery.view<T>();
+        
+        uint32 Current = 0;
+        for (auto [entity, component] : view.each())
+        {
+            Functor(Current, entity, component);
+            Current++;
+        }
+    }
 }

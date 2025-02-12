@@ -19,7 +19,7 @@ namespace Lumina
         
         virtual void BeginFrame() override;
         virtual void EndFrame() override;
-        virtual void BeginRender(const TVector<TRefPtr<FImage>>& Attachments, glm::fvec4 ClearColor) override;
+        virtual void BeginRender(const TVector<TRefPtr<FImage>>& Attachments, const glm::fvec4& ClearColor) override;
         virtual void EndRender() override;
         virtual void WaitDevice() override;
         

@@ -60,7 +60,7 @@ namespace Lumina
         
         static void BeginFrame();
         static void EndFrame();
-        static void BeginRender(const TVector<TRefPtr<FImage>>& Attachments, glm::fvec4 ClearColor = {0.0f, 0.0f, 0.0f, 0.0f});
+        static void BeginRender(const TVector<TRefPtr<FImage>>& Attachments, const glm::fvec4& ClearColor);
         static void EndRender();
         static void Render();
         static void ProcessRenderQueue();

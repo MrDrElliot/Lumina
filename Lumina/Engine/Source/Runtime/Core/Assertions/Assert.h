@@ -27,21 +27,45 @@ inline void PrintCallStack()
     // Initialize symbols for stack trace
     SymInitialize(process, NULL, TRUE);
     frames = CaptureStackBackTrace(0, 100, stack, NULL);
+
+    // Allocate symbol structure
     symbol = (SYMBOL_INFO*)malloc(sizeof(SYMBOL_INFO) + 256 * sizeof(char));
     symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
     symbol->MaxNameLen = 255;
+
+    // Struct to hold source file and line number info
+    IMAGEHLP_LINE64 line;
+    DWORD displacement;
+    line.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
 
     LOG_ERROR("=---------------------Dumping Callstack---------------------=");
     for (unsigned short i = 0; i < frames; ++i)
     {
         SymFromAddr(process, (DWORD64)(stack[i]), 0, symbol);
-        if (Lumina::FLog::IsInitialized())
+
+        if (SymGetLineFromAddr64(process, (DWORD64)(stack[i]), &displacement, &line))
         {
-            LOG_ERROR("{0}: {1} - {2}", i, symbol->Name, symbol->Address);
+            if (Lumina::FLog::IsInitialized())
+            {
+                LOG_ERROR("{0}: {1} - {2} (File: {3}, Line: {4})",
+                          i, symbol->Name, symbol->Address, line.FileName, line.LineNumber);
+            }
+            else
+            {
+                std::cout << i << ": " << symbol->Name << " - " << symbol->Address
+                          << " (File: " << line.FileName << ", Line: " << line.LineNumber << ")" << std::endl;
+            }
         }
         else
         {
-            std::cout << i << ": " << symbol->Name << " - " << symbol->Address << std::endl;
+            if (Lumina::FLog::IsInitialized())
+            {
+                LOG_ERROR("{0}: {1} - {2} (No Line Info)", i, symbol->Name, symbol->Address);
+            }
+            else
+            {
+                std::cout << i << ": " << symbol->Name << " - " << symbol->Address << " (No Line Info)" << std::endl;
+            }
         }
     }
     LOG_ERROR("=---------------------End of CallStack---------------------=");

@@ -40,7 +40,7 @@ namespace Lumina
     	GetRenderContext()->GetSwapchain()->EndFrame();
     }
 
-    void FVulkanRenderAPI::BeginRender(const TVector<TRefPtr<FImage>>& Attachments, glm::fvec4 ClearColor)
+    void FVulkanRenderAPI::BeginRender(const TVector<TRefPtr<FImage>>& Attachments, const glm::fvec4& ClearColor)
     {
 	    FRenderer::Submit([&, Attachments, ClearColor]
 	    {
@@ -124,6 +124,8 @@ namespace Lumina
 			vkCmdSetScissor(VkCommandBuffer->GetCommandBuffer(), 0, 1, &scissor);
 			vkCmdSetViewport(VkCommandBuffer->GetCommandBuffer(), 0, 1, &viewport);
 			vkCmdBeginRendering(VkCommandBuffer->GetCommandBuffer(), &RenderingInfo);
+
+	    	
 		});
     }
 
@@ -298,7 +300,7 @@ namespace Lumina
 
     void FVulkanRenderAPI::ClearColor(const TRefPtr<FImage>& Image, const glm::fvec4& Value)
     {
-        FRenderer::Submit([&, Image, Value]
+        FRenderer::Submit([&, Image]
         {
         	TRefPtr<FVulkanCommandBuffer> VkCommandBuffer = GetRenderContext()->GetCommandBuffer<FVulkanCommandBuffer>();
 		
@@ -340,13 +342,13 @@ namespace Lumina
 		FRenderer::Submit([&, VertexBuffer, IndexBuffer]
 		{
 			TRefPtr<FVulkanCommandBuffer> VkCommandBuffer = GetRenderContext()->GetCommandBuffer<FVulkanCommandBuffer>();
-			TRefPtr<FVulkanBuffer> VkVertexBuffer = RefPtrCast<FVulkanBuffer>(VertexBuffer);
-			TRefPtr<FVulkanBuffer> VkIndexBuffer = RefPtrCast<FVulkanBuffer>(IndexBuffer);
 			
-			VkBuffer BindBuffer = VkVertexBuffer->GetBuffer();
+			TRefPtr<FVulkanBuffer> VkVertexBuffer = VertexBuffer.As<FVulkanBuffer>();
+			TRefPtr<FVulkanBuffer> VkIndexBuffer = IndexBuffer.As<FVulkanBuffer>();
+			
 			VkDeviceSize Offsets[] = {0};
 			
-			vkCmdBindVertexBuffers(VkCommandBuffer->GetCommandBuffer(), 0, 1, &BindBuffer, Offsets);
+			vkCmdBindVertexBuffers(VkCommandBuffer->GetCommandBuffer(), 0, 1, &VkVertexBuffer->GetBuffer(), Offsets);
 			vkCmdBindIndexBuffer(VkCommandBuffer->GetCommandBuffer(), VkIndexBuffer->GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
 
 			uint32 IndexCount = VkIndexBuffer->GetSpecification().Size / sizeof(uint32);

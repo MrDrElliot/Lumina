@@ -119,8 +119,9 @@ namespace Lumina
         Device = vkbDevice.device;
         PhysicalDevice = physicalDevice.physical_device;
 
-
+        vkGetPhysicalDeviceMemoryProperties(PhysicalDevice, &PhysicslDeviceMemoryProperties);
         vkGetPhysicalDeviceProperties(PhysicalDevice, &PhysicalDeviceProperties);
+
         LOG_INFO("Creating Vulkan Device: {0}", PhysicalDeviceProperties.deviceName);
         
         GeneralQueue = vkbDevice.get_queue(vkb::QueueType::graphics).value();
