@@ -1,6 +1,6 @@
 # Lumina Game Engine  
 
-![Example Project Image](https://i.imgur.com/aAomeLN.png)  
+![image](https://github.com/user-attachments/assets/5efc3b14-caff-4465-8597-33f8d70e50cd)
 
 Lumina is a lightweight and flexible game engine built to simplify game development while offering powerful tools for creators. Designed with accessibility and efficiency in mind, Lumina empowers developers to bring their creative visions to life.  
 
