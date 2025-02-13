@@ -538,7 +538,7 @@ namespace Lumina
 
         if (Tool->HasScene())
         {
-            Tool->SetEditorCameraEnabled(Tool->bViewportFocused && Tool->bViewportHovered);
+            Tool->SetEditorCameraEnabled(Tool->bViewportFocused);
         }
     }
 

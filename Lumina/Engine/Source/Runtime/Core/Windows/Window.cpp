@@ -75,7 +75,7 @@ namespace Lumina
 			glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 			glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 			glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
-			glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
+			//glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
 
 			
 			// Create the window

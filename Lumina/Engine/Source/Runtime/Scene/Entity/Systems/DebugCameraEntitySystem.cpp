@@ -2,6 +2,7 @@
 
 #include "Events/MouseCodes.h"
 #include "Input/Input.h"
+#include "Input/InputSubsystem.h"
 #include "Log/Log.h"
 #include "Scene/SceneUpdateContext.h"
 #include "Scene/Entity/Entity.h"
@@ -27,17 +28,18 @@ namespace Lumina
 
         for (auto CameraEntity : EntityRegistry.view<FEditorComponent, FCameraComponent>())
         {
-            FTransformComponent& Transform =    EntityRegistry.get<FTransformComponent>(CameraEntity);
+            FTransformComponent& TransformComponent =    EntityRegistry.get<FTransformComponent>(CameraEntity);
             FCameraComponent& CameraComponent = EntityRegistry.get<FCameraComponent>(CameraEntity);
             FEditorComponent& EditorComponent = EntityRegistry.get<FEditorComponent>(CameraEntity);
+
 
             if (EditorComponent.IsEnabled() == false)
             {
                 continue;
             }
             
-            glm::vec3 Forward = Transform.Transform.Rotation * glm::vec3(0.0f, 0.0f, -1.0f);
-            glm::vec3 Right = Transform.Transform.Rotation * glm::vec3(1.0f, 0.0f, 0.0f);
+            glm::vec3 Forward = TransformComponent.Transform.Rotation * glm::vec3(0.0f, 0.0f, -1.0f);
+            glm::vec3 Right = TransformComponent.Transform.Rotation * glm::vec3(1.0f, 0.0f, 0.0f);
 
             if (Input::IsKeyPressed(Key::LeftShift))
             {
@@ -46,71 +48,63 @@ namespace Lumina
 
             if (Input::IsKeyPressed(Key::W)) // Move Forward
             {
-                Transform.Transform.Location += Forward * Speed * (float)DeltaTime;
+                TransformComponent.Transform.Location += Forward * Speed * (float)DeltaTime;
             }
 
             if (Input::IsKeyPressed(Key::S)) // Move Backward
             {
-                Transform.Transform.Location -= Forward * Speed * (float)DeltaTime;
+                TransformComponent.Transform.Location -= Forward * Speed * (float)DeltaTime;
             }
 
             if (Input::IsKeyPressed(Key::A)) // Move Left
             {
-                Transform.Transform.Location -= Right * Speed * (float)DeltaTime;
+                TransformComponent.Transform.Location -= Right * Speed * (float)DeltaTime;
             }
 
             if (Input::IsKeyPressed(Key::D)) // Move Right
             {
-                Transform.Transform.Location += Right * Speed * (float)DeltaTime;
+                TransformComponent.Transform.Location += Right * Speed * (float)DeltaTime;
             }
 
             if (Input::IsKeyPressed(Key::Q)) // Move Down (world space)
             {
-                Transform.Transform.Location += glm::vec3(0.0f, -1.0f, 0.0f) * Speed * (float)DeltaTime;
+                TransformComponent.Transform.Location += glm::vec3(0.0f, -1.0f, 0.0f) * Speed * (float)DeltaTime;
             }
 
             if (Input::IsKeyPressed(Key::E)) // Move Up (world space)
             {
-                Transform.Transform.Location += glm::vec3(0.0f, 1.0f, 0.0f) * Speed * (float)DeltaTime;
+                TransformComponent.Transform.Location += glm::vec3(0.0f, 1.0f, 0.0f) * Speed * (float)DeltaTime;
             }
 
             if (Input::IsMouseButtonPressed(Mouse::ButtonRight))
             {
                 //@TODO Fixme, better interface for the application window without needing to access the application itself.
-                glfwSetInputMode(FApplication::Get().GetWindow()->GetWindow(), GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
-                
-                glm::vec2 CurrentMousePos = Input::GetMousePos();
+                glfwSetInputMode(FApplication::Get().GetWindow()->GetWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-                if (bFirstMove)
-                {
-                    PreviousMousePos = CurrentMousePos;
-                    bFirstMove = false;
-                }
-    
-                glm::vec2 MouseDelta = CurrentMousePos - PreviousMousePos;
+                float MousePitchDelta = UpdateContext.GetSubsystem<FInputSubsystem>()->GetMouseDeltaPitch();
+                float MouseYawDelta = UpdateContext.GetSubsystem<FInputSubsystem>()->GetMouseDeltaYaw();
 
-                PreviousMousePos = CurrentMousePos;
 
                 constexpr float Sensitivity = 0.1f;
-                float YawDelta   = -MouseDelta.x * Sensitivity;
-                float PitchDelta = -MouseDelta.y * Sensitivity;
+                float YawDelta   = -MouseYawDelta * Sensitivity;
+                float PitchDelta = -MousePitchDelta * Sensitivity;
 
                 glm::quat yawQuat = glm::angleAxis(glm::radians(YawDelta), glm::vec3(0.0f, 1.0f, 0.0f));
 
-                glm::vec3 RightAxis = Transform.Transform.Rotation * glm::vec3(1.0f, 0.0f, 0.0f);
+                glm::vec3 RightAxis = TransformComponent.Transform.Rotation * glm::vec3(1.0f, 0.0f, 0.0f);
                 glm::quat pitchQuat = glm::angleAxis(glm::radians(PitchDelta), RightAxis);
 
-                Transform.Transform.Rotation = yawQuat * pitchQuat * Transform.Transform.Rotation;
+                TransformComponent.Transform.Rotation = yawQuat * pitchQuat * TransformComponent.Transform.Rotation;
             }
             else
             {
-                bFirstMove = true;
+                glfwSetInputMode(FApplication::Get().GetWindow()->GetWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
             }
             
-            glm::vec3 updatedForward = Transform.Transform.Rotation * glm::vec3(0.0f, 0.0f, -1.0f);
-            glm::vec3 updatedUp = Transform.Transform.Rotation * glm::vec3(0.0f, 1.0f, 0.0f);
+            glm::vec3 updatedForward = TransformComponent.Transform.Rotation * glm::vec3(0.0f, 0.0f, -1.0f);
+            glm::vec3 updatedUp = TransformComponent.Transform.Rotation * glm::vec3(0.0f, 1.0f, 0.0f);
     
-            CameraComponent.SetView(Transform.Transform.Location, Transform.Transform.Location + updatedForward, updatedUp);            
+            CameraComponent.SetView(TransformComponent.Transform.Location, TransformComponent.Transform.Location + updatedForward, updatedUp);            
         }
     }
 

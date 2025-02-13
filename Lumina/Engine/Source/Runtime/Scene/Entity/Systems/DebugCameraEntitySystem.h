@@ -21,8 +21,6 @@ namespace Lumina
         void Update(FEntityRegistry& EntityRegistry, const FSceneUpdateContext& UpdateContext) override;
 
     private:
-        
-        glm::vec2 PreviousMousePos = glm::vec2(0.0f);
-        bool bFirstMove = true;
+
     };
 }

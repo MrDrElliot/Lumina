@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Subsystems/Subsystem.h"
+#include <glm/glm.hpp>
 
 namespace Lumina
 {
@@ -12,10 +13,14 @@ namespace Lumina
         void Update(const FUpdateContext& UpdateContext);
         void Deinitialize() override;
 
+        FORCEINLINE float GetMouseDeltaYaw() const { return MouseDeltaYaw; }
+        FORCEINLINE float GetMouseDeltaPitch() const { return MouseDeltaPitch; }
+
     private:
 
-        float MouseYaw =    0.0f;
-        float MousePitch =  0.0f;
+        float MouseDeltaYaw =    0.0f;
+        float MouseDeltaPitch =  0.0f;
+        glm::vec2 MousePosLastFrame = glm::vec2(0.0f);
     
     };
 }
