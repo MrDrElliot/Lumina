@@ -31,57 +31,59 @@ namespace Lumina
 
     void FConsoleLogEditorTool::DrawLogWindow(const FUpdateContext& UpdateContext, bool bIsFocused)
     {
+        ImGui::SetNextWindowSize(ImVec2(600, 400), ImGuiCond_FirstUseEver);
+            
         ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
-        
-            FLog::GetConsoleLogs(OutputMessages);
-            for (const auto& message : OutputMessages)
+    
+        ImGui::BeginChild("LogMessages", ImVec2(0, -ImGui::GetFrameHeightWithSpacing()), true, ImGuiWindowFlags_HorizontalScrollbar);
+    
+        FLog::GetConsoleLogs(OutputMessages);
+    
+        ImGuiListClipper Clipper;
+        Clipper.Begin(OutputMessages.size());
+        while (Clipper.Step())
+        {
+            for (int i = Clipper.DisplayStart; i < Clipper.DisplayEnd; ++i)
             {
+                const auto& message = OutputMessages[i];
                 FString formattedMessage = "[" + message.Time + "] [" + message.LoggerName + "]: " + message.Message;
-
-                if (message.Level == EConsoleLogLevel::Error)
+    
+                ImVec4 Color;
+                switch (message.Level)
                 {
-                    ImGui::TextColored(ImVec4(1.0f, 0.2f, 0.2f, 1.0f), "%s", formattedMessage.c_str());
+                    case EConsoleLogLevel::Error: Color = ImVec4(1.0f, 0.2f, 0.2f, 1.0f); break;
+                    case EConsoleLogLevel::Warn:  Color = ImVec4(1.0f, 0.6f, 0.0f, 1.0f); break;
+                    case EConsoleLogLevel::Info:  Color = ImVec4(0.9f, 0.9f, 0.9f, 1.0f); break;
+                    case EConsoleLogLevel::Debug: Color = ImVec4(0.4f, 0.8f, 1.0f, 1.0f); break;
+                    case EConsoleLogLevel::Trace: Color = ImVec4(0.5f, 0.5f, 0.5f, 1.0f); break;
+                    default:                      Color = ImVec4(0.7f, 0.7f, 0.7f, 1.0f); break;
                 }
-                else if (message.Level == EConsoleLogLevel::Warn)
-                {
-                    ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.0f, 1.0f), "%s", formattedMessage.c_str());
-                }
-                else if (message.Level == EConsoleLogLevel::Info)
-                {
-                    ImGui::TextColored(ImVec4(0.9f, 0.9f, 0.9f, 1.0f), "%s", formattedMessage.c_str());
-                }
-                else if (message.Level == EConsoleLogLevel::Debug)
-                {
-                    ImGui::TextColored(ImVec4(0.4f, 0.8f, 1.0f, 1.0f), "%s", formattedMessage.c_str());
-                }
-                else if (message.Level == EConsoleLogLevel::Trace)
-                {
-                    ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), "%s", formattedMessage.c_str());
-                }
-                else
-                {
-                    ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "%s", formattedMessage.c_str());
-                }
+    
+                ImGui::TextColored(Color, "%s", formattedMessage.c_str());
             }
-
-            if (ScrollToBottom)
-            {
-                ImGui::SetScrollHereY(1.0f);
-                ScrollToBottom = false;
-            }
-
+        }
+        Clipper.End();
+    
+        if (ScrollToBottom)
+        {
+            ImGui::SetScrollHereY(1.0f);
+            ScrollToBottom = false;
+        }
+    
+        ImGui::EndChild();
         ImGui::PopStyleColor();
-
+    
         ImGui::Separator();
-        
-        if (ImGui::InputText("Input", CurrentCommand.data(), CurrentCommand.capacity(), ImGuiInputTextFlags_EnterReturnsTrue))
+        ImGui::SetNextItemWidth(-1);
+        if (ImGui::InputText("##Input", CurrentCommand.data(), CurrentCommand.capacity(), ImGuiInputTextFlags_EnterReturnsTrue))
         {
             ProcessCommand(CurrentCommand);
             CommandHistory.push_back(CurrentCommand);
             HistoryIndex = CommandHistory.size();
             CurrentCommand.clear();
+            ScrollToBottom = true;
         }
-
+    
         if (ImGui::IsItemActive() && ImGui::IsKeyPressed(ImGuiKey_UpArrow))
         {
             if (HistoryIndex > 0) 
@@ -104,6 +106,7 @@ namespace Lumina
             }
         }
     }
+
 
     void FConsoleLogEditorTool::ProcessCommand(const std::string& Command)
     {
