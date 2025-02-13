@@ -5,8 +5,10 @@
 #include "glm/glm.hpp"
 #include <entt/entt.hpp>
 
+#include "Containers/Name.h"
 #include "Core/UpdateContext.h"
 #include "Core/Functional/Function.h"
+#include "Entity/Registry/EntityRegistry.h"
 #include "Subsystems/Subsystem.h"
 
 
@@ -19,7 +21,6 @@ namespace Lumina
 {
     class FCameraManager;
     class FUpdateContext;
-    class FSceneRenderer;
     class FSubsystemManager;
     class FTransform;
     class Entity;
@@ -30,7 +31,7 @@ namespace Lumina
     {
         FSceneSettings()
         {
-            BackgroundColor = {0.24f, 0.24f, 0.24f};
+            BackgroundColor = {0.0f, 0.0f, 0.0f};
             bShowGrid = true;
         }
 
@@ -42,9 +43,7 @@ namespace Lumina
     class FScene : public FRefCounted
     {
     public:
-
-        using EntityRegistry = entt::registry;
-
+        
         FScene(ESceneType InType);
         ~FScene();
         
@@ -58,17 +57,17 @@ namespace Lumina
         
         bool RegisterSystem(FEntitySystem* NewSystem);
 
-        Entity CreateEntity(const FTransform& Transform, const FString& Name);
+        Entity CreateEntity(const FTransform& Transform, const FName& Name);
         void DestroyEntity(Entity Entity);
         
-        EntityRegistry& GetEntityRegistry() { return SceneEntityRegistery; }
+        FEntityRegistry& GetMutableEntityRegistry() { return EntityRegistry; }
+        const FEntityRegistry& GetConstEntityRegistry() const { return EntityRegistry; }
+        
         FSceneSettings& GetSceneSettings() { return Settings; }
 
         FORCEINLINE FSubsystemManager* GetSceneSubsystemManager() const { return SceneSubsystemManager; }
         FCameraManager* GetSceneCameraManager() const;
-
-        FORCEINLINE FSceneRenderer* GetSceneRenderer() const { return SceneRenderer; }
-
+        
 
         template<typename T>
         T* GetSceneSubsystem() const;
@@ -91,10 +90,9 @@ namespace Lumina
 
         TVector<FEntitySystem*>         EntitySystems;
         TVector<FEntitySystem*>         SystemUpdateList[(uint32)EUpdateStage::Max];
-        EntityRegistry                  SceneEntityRegistery;
-        
-        FSceneRenderer*                 SceneRenderer = nullptr;
+        FEntityRegistry                 EntityRegistry;
 
+        THashMap<FName, entt::entity>   EntityNameMap;
     };
 
 
@@ -111,7 +109,7 @@ namespace Lumina
     template <typename T>
     void FScene::ForEachComponent(const eastl::function<void(uint32& CurrentIndex, entt::entity& OutEntity, T& OutComponent)>&& Functor)
     {
-        auto view = SceneEntityRegistery.view<T>();
+        auto view = EntityRegistry.view<T>();
         
         uint32 Current = 0;
         for (auto [entity, component] : view.each())

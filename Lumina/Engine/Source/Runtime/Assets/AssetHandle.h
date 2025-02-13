@@ -79,8 +79,8 @@ namespace Lumina
         //FORCEINLINE bool operator == (const FAssetHandle& Other) const { return AssetPath == Other.AssetPath; }
         //FORCEINLINE bool operator != (const FAssetHandle& Other) const { return AssetPath != Other.AssetPath; }
 
-        FORCEINLINE const T* GetPtr() { Assert(IsLoaded()); return AssetRecord->GetAssetPtr(); }
-        FORCEINLINE const T* operator ->()  { return GetPtr(); }
+        FORCEINLINE const T* GetPtr() const { Assert(IsLoaded()); return (const T*)AssetRecord->GetConstAssetPtr(); }
+        FORCEINLINE const T* operator ->() const { return GetPtr(); }
         
         
         template<typename U>

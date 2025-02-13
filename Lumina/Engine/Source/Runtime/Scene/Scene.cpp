@@ -3,6 +3,7 @@
 #include "Scene.h"
 #include "SceneRenderer.h"
 #include "SceneUpdateContext.h"
+#include "Containers/Name.h"
 #include "Entity/Entity.h"
 #include "Entity/Components/NameComponent.h"
 #include "Entity/Components/TransformComponent.h"
@@ -25,21 +26,18 @@ namespace Lumina
         SystemManager = UpdateContext.GetSubsystemManager();
         
         SceneSubsystemManager = FMemory::New<FSubsystemManager>();
-        SceneRenderer = SceneSubsystemManager->AddSubsystem<FSceneRenderer>(this);
         SceneSubsystemManager->AddSubsystem<FCameraManager>();
     }
 
     void FScene::Shutdown()
     {
 
-        SceneRenderer->Shutdown();
         
         SystemManager = nullptr;
     }
 
     void FScene::StartFrame()
     {
-        SceneRenderer->StartFrame();
     }
     
     void FScene::Update(const FUpdateContext& UpdateContext)
@@ -48,13 +46,12 @@ namespace Lumina
         
         for (FEntitySystem* System : SystemUpdateList[(uint32)UpdateContext.GetUpdateStage()])
         {
-            System->Update(SceneEntityRegistery, SceneContext);
+            System->Update(EntityRegistry, SceneContext);
         }
     }
     
     void FScene::EndFrame()
     {
-        SceneRenderer->EndFrame();
     }
 
     bool FScene::RegisterSystem(FEntitySystem* NewSystem)
@@ -85,51 +82,61 @@ namespace Lumina
         return true;
     }
 
-    Entity FScene::CreateEntity(const FTransform& Transform, const FString& Name)
+    Entity FScene::CreateEntity(const FTransform& Transform, const FName& Name)
     {
-        FString uniqueName = Name;
-        int Counter = 1;
-
-        bool bNameExists = false;
-        for (auto& ent : SceneEntityRegistery.view<FNameComponent>())
+        auto GenerateUniqueName = [] (const FInlineString& baseName, int32 counterValue)
         {
-            auto& existingName = SceneEntityRegistery.get<FNameComponent>(ent).GetName();
-            if (existingName == uniqueName)
-            {
-                bNameExists = true;
-                break;
-            }
-        }
+            FInlineString finalName;
 
-        while (bNameExists)
-        {
-            uniqueName = Name + FString("_") + eastl::to_string(Counter);
-            Counter++;
-
-            bNameExists = false;
-            for (auto& ent : SceneEntityRegistery.view<FNameComponent>())
+            if (baseName.length() > 3)
             {
-                auto& existingName = SceneEntityRegistery.get<FNameComponent>(ent).GetName();
-                if (existingName == uniqueName)
+                // Check if the last three characters are a numeric set, if so then increment the value and replace them
+                if (isdigit( baseName[baseName.length() - 1]) && isdigit(baseName[baseName.length() - 2]) && isdigit(baseName[baseName.length() - 3]))
                 {
-                    bNameExists = true;
-                    break;
+                    finalName.sprintf("%s%03u", baseName.substr(0, baseName.length() - 3).c_str(), counterValue);
+                    return finalName;
                 }
             }
+
+            finalName.sprintf( "%s %03u", baseName.c_str(), counterValue );
+            return finalName;
+        };
+
+        //-------------------------------------------------------------------------
+
+        FInlineString desiredName = Name.c_str();
+        FInlineString finalName = desiredName;
+        FName finalNameID(finalName.c_str());
+
+        uint32_t counter = 1;
+        bool isUniqueName = false;
+
+        while (!isUniqueName)
+        {
+            isUniqueName = EntityNameMap.find(finalNameID) == EntityNameMap.end();
+
+            if (!isUniqueName)
+            {
+                finalName = GenerateUniqueName(desiredName, counter++);
+                finalNameID = FName(finalName.c_str());
+            }
         }
 
-        Entity NewEntity(SceneEntityRegistery.create(), this);
-        NewEntity.AddComponent<FNameComponent>(uniqueName);
-        NewEntity.AddComponent<FTransformComponent>(Transform);
-
+        entt::entity NewEntity = EntityRegistry.create();
+        EntityRegistry.emplace<FNameComponent>(NewEntity, finalNameID);
+        EntityRegistry.emplace<FTransformComponent>(NewEntity, Transform);
         
-        return NewEntity;
+        EntityNameMap.insert(TPair<FName, entt::entity>(finalNameID, NewEntity));
+
+        return Entity(NewEntity, this);
     }
+
 
     
     void FScene::DestroyEntity(Entity Entity)
     {
-        SceneEntityRegistery.destroy(Entity);
+        EntityNameMap.erase(EntityNameMap.find(Entity.GetName()));
+        EntityRegistry.destroy(Entity);
     }
 
     FCameraManager* FScene::GetSceneCameraManager() const

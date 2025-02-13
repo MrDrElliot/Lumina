@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Scene.h"
 #include "Memory/RefCounted.h"
 #include "ScenePrimitives.h"
 #include "Assets/AssetHandle.h"
@@ -75,23 +76,25 @@ namespace Lumina
     public:
         
 
-        static FSceneRenderer* Create(FScene* InScene);
+        static FSceneRenderer* Create();
 
-        FSceneRenderer(FScene* InScene);
-        ~FSceneRenderer();
+        FSceneRenderer();
+        virtual ~FSceneRenderer() override;
 
         void Initialize(const FSubsystemManager& Manager) override;
         void Deinitialize() override;
         
-        void StartFrame();
-        void EndFrame();
-
+        void RenderScene(const FScene* Scene);
+        
         TRefPtr<FImage> GetPrimaryRenderTarget() { return RenderTargets[FRenderer::GetCurrentFrameIndex()]; }
         TRefPtr<FImage> GetDepthAttachment() { return DepthAttachments[FRenderer::GetCurrentFrameIndex()]; }
         FSceneLightData& GetSceneLightingData() { return SceneLightingData; }
 
-        void RenderGrid();
-        void GeometryPass(const FSceneUpdateContext& SceneContext);
+    protected:
+        
+        void RenderGrid(const FScene* Scene);
+        void RenderGeometry(const FScene* Scene);
+        void BuildSceneRenderData(FSceneRenderData* RenderData, const FScene* Scene);
 
         void InitPipelines();
         void InitBuffers();
@@ -100,6 +103,7 @@ namespace Lumina
         void Shutdown();
         void OnSwapchainResized();
 
+        
     private:
         
         TRefPtr<FPipeline> GraphicsPipeline;
@@ -120,13 +124,6 @@ namespace Lumina
         
         TVector<TRefPtr<FImage>> RenderTargets;
         TVector<TRefPtr<FImage>> DepthAttachments;
-
-        
-        TRefPtr<FImage> BaseColor;
-        TRefPtr<FImage> Emissive;
-        TRefPtr<FImage> Normal;
-        TRefPtr<FImage> Metallic;
-        TRefPtr<FImage> AmbientOcclusion;
         
         
         TRefPtr<FBuffer> SceneUBO;
@@ -140,9 +137,6 @@ namespace Lumina
         TVector<FModelData>                 ModelData;
         TVector<FMaterialTexturesData>      TexturesData;
         
-        TRefPtr<FMaterial> TestMaterial;
-        
-        FScene* CurrentScene = nullptr;
         
     };
 }

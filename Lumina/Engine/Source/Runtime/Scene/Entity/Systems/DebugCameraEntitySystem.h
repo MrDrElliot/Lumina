@@ -18,7 +18,7 @@ namespace Lumina
         void Initialize(const FSubsystemManager* SubsystemManager) override;
         void Shutdown() override;
 
-        void Update(entt::registry& EntityRegistry, const FSceneUpdateContext& UpdateContext) override;
+        void Update(FEntityRegistry& EntityRegistry, const FSceneUpdateContext& UpdateContext) override;
 
     private:
         

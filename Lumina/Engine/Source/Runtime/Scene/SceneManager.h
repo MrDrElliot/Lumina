@@ -1,9 +1,15 @@
 ﻿#pragma once
 
 #include "SceneTypes.h"
+#include "Core/UpdateContext.h"
 #include "Memory/RefCounted.h"
 #include "Subsystems/Subsystem.h"
 
+
+namespace Lumina
+{
+    class FSceneRenderer;
+}
 
 namespace Lumina
 {
@@ -19,6 +25,7 @@ namespace Lumina
         void StartFrame();
         void UpdateScenes(const FUpdateContext& UpdateContext);
         void EndFrame();
+        void RenderScenes(const FUpdateContext& UpdateContext);
         
         FScene* CreateScene(ESceneType InType);
         void DestroyScene(FScene* SceneToRemove);

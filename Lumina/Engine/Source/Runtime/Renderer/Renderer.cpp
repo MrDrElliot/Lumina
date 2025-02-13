@@ -4,7 +4,6 @@
 #include "Image.h"
 #include "ShaderLibrary.h"
 #include "Swapchain.h"
-#include "Assets/AssetTypes/Mesh/StaticMesh/StaticMesh.h"
 #include "Core/Performance/PerformanceTracker.h"
 #include "Memory/Memory.h"
 #include "Paths/Paths.h"

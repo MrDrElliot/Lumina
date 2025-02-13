@@ -8,18 +8,21 @@ layout(set = 0, binding = 0) uniform CameraUniforms
 } CameraUBO;
 
 // Define outputs to the fragment shader
-layout(location = 0) out float fragNear;  // Passing near value
-layout(location = 1) out float fragFar;   // Passing far value
-layout(location = 2) out vec3 nearPoint;
-layout(location = 3) out vec3 farPoint;
-layout(location = 4) out mat4 fragView;   // Passing view matrix
+layout(location = 0) out vec3 nearPoint;
+layout(location = 1) out vec3 farPoint;
+layout(location = 2) out mat4 fragView;   // Passing view matrix
+layout(location = 7) out vec3 CameraPos;
 layout(location = 8) out mat4 fragProj;   // Passing projection matrix
 
 // Grid position in clip space
 vec3 gridPlane[6] = vec3[]
 (
-    vec3(1, 1, 0), vec3(-1, -1, 0), vec3(-1, 1, 0),
-    vec3(-1, -1, 0), vec3(1, 1, 0), vec3(1, -1, 0)
+    vec3( 1,  1, 0),
+    vec3(-1, -1, 0),
+    vec3(-1,  1, 0),
+    vec3(-1, -1, 0),
+    vec3( 1,  1, 0),
+    vec3( 1, -1, 0)
 );
 
 vec3 UnprojectPoint(float x, float y, float z, mat4 view, mat4 projection)
@@ -32,17 +35,14 @@ vec3 UnprojectPoint(float x, float y, float z, mat4 view, mat4 projection)
 
 void main()
 {
-    // Define near and far plane distances
-    fragNear = 0.01f;
-    fragFar = 1000.0f;
-
     vec3 p = gridPlane[gl_VertexIndex].xyz;
     nearPoint = UnprojectPoint(p.x, p.y, 0.0, CameraUBO.CameraView, CameraUBO.CameraProjection).xyz; // Unproject on the near plane
     farPoint = UnprojectPoint(p.x, p.y, 1.0, CameraUBO.CameraView, CameraUBO.CameraProjection).xyz;  // Unproject on the far plane
 
-    // Pass view and projection matrices
     fragView = CameraUBO.CameraView;
     fragProj = CameraUBO.CameraProjection;
+    
+    CameraPos = CameraUBO.CameraPosition.xyz;
 
     gl_Position = vec4(p, 1.0);
 }

@@ -29,7 +29,7 @@ namespace Lumina
         FORCEINLINE entt::entity GetHandle() const          { return EntityHandle; }
         FORCEINLINE entt::entity GetHandleChecked() const   { Assert(EntityHandle != entt::null); return EntityHandle; }
 
-        FORCEINLINE FString& GetName()               { return GetComponent<FNameComponent>().GetName(); }
+        FORCEINLINE const FName& GetName() const     { return GetConstComponent<FNameComponent>().GetName(); }
         FORCEINLINE FTransform GetTransform()        { return GetComponent<FTransformComponent>().GetTransform(); }
         FORCEINLINE glm::vec3 GetLocation()          { return GetComponent<FTransformComponent>().GetLocation(); }
         FORCEINLINE glm::quat GetRotation()          { return GetComponent<FTransformComponent>().GetRotation(); }
@@ -52,6 +52,9 @@ namespace Lumina
         template <typename T>
         T& GetComponent();
 
+        template <typename T>
+        const T& GetConstComponent() const;
+
         
         inline operator entt::entity() const               { return EntityHandle; }
         inline operator uint32()                           { return static_cast<uint32>(EntityHandle); }
@@ -72,7 +75,7 @@ namespace Lumina
     template <typename T, typename... Args>
     auto Entity::AddComponent(Args&&... args) -> decltype(auto)
     {
-        return Scene->GetEntityRegistry().emplace_or_replace<T>(EntityHandle, std::forward<Args>(args)...);
+        return Scene->GetMutableEntityRegistry().emplace_or_replace<T>(EntityHandle, std::forward<Args>(args)...);
     }
     
     template <typename T>
@@ -80,7 +83,7 @@ namespace Lumina
     {
         if(Entity::Scene)
         {
-            return Scene->GetEntityRegistry().all_of<T>(EntityHandle);
+            return Scene->GetMutableEntityRegistry().all_of<T>(EntityHandle);
         }
         
         return false;
@@ -89,12 +92,18 @@ namespace Lumina
     template <typename T>
     T* Entity::TryGetComponent()
     {
-        return Scene->GetEntityRegistry().try_get<T>(EntityHandle);
+        return Scene->GetMutableEntityRegistry().try_get<T>(EntityHandle);
     }
 
     template <typename T>
     T& Entity::GetComponent()
     {
-        return Scene->GetEntityRegistry().get<T>(EntityHandle);
+        return Scene->GetMutableEntityRegistry().get<T>(EntityHandle);
+    }
+
+    template <typename T>
+    const T& Entity::GetConstComponent() const
+    {
+        return Scene->GetMutableEntityRegistry().get<T>(EntityHandle);
     }
 }

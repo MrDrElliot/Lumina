@@ -36,6 +36,17 @@ namespace Lumina
         }
     }
 
+    void FSceneManager::RenderScenes(const FUpdateContext& UpdateContext)
+    {
+        FSceneRenderer* SceneRenderer = UpdateContext.GetSubsystem<FSceneRenderer>();
+        Assert(SceneRenderer != nullptr);
+        
+        for (FScene* Scene : Scenes)
+        {
+            SceneRenderer->RenderScene(Scene);  
+        }
+    }
+
     void FSceneManager::EndFrame()
     {
         for (FScene* Scene : Scenes)

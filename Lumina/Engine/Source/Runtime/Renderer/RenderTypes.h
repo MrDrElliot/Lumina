@@ -8,13 +8,6 @@
 
 namespace Lumina
 {
-
-    struct FMiscData
-    {
-        const uint8* Data;
-        int32 Size;
-    };
-
     struct FMaterialAttributes
     {
         glm::vec4   baseColor = glm::vec4(1.0f);
@@ -23,7 +16,7 @@ namespace Lumina
         float       emissiveIntensity = 1.0f;
     };
 
-    struct FMaterialTexturesData
+    struct FMaterialTexturesData final
     {
         int32 AlbedoID =        NO_TEXTURE;
         int32 NormalID =        NO_TEXTURE;

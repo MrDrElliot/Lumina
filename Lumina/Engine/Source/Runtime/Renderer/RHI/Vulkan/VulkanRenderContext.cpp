@@ -112,6 +112,7 @@ namespace Lumina
 
         /** Required for ImGui viewports. */
         physicalDevice.enable_extension_if_present("VK_KHR_dynamic_rendering");
+        physicalDevice.enable_extension_if_present("VK_EXT_conservative_rasterization");
         
         vkb::DeviceBuilder deviceBuilder{ physicalDevice };
         vkb::Device vkbDevice = deviceBuilder.build().value();

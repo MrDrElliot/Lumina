@@ -2,6 +2,8 @@
 
 namespace Lumina
 {
+    
+    
     class FApplicationGlobalState
     {
     public:

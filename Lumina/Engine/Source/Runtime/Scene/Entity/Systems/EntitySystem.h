@@ -5,6 +5,7 @@
 
 namespace Lumina
 {
+    class FEntityRegistry;
     class Entity;
     class FSceneUpdateContext;
     class FSubsystemManager;
@@ -36,7 +37,7 @@ namespace Lumina
     protected:
 
         /** Called per-update */
-        virtual void Update(entt::registry& EntityRegistry, const FSceneUpdateContext& UpdateContext) = 0;
+        virtual void Update(FEntityRegistry& EntityRegistry, const FSceneUpdateContext& UpdateContext) = 0;
 
     private:
 

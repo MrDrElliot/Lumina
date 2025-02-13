@@ -5,6 +5,7 @@
 #include "Core/Math/Hash/Hash.h"
 #include "Scene/SceneManager.h"
 #include "Scene/Entity/Components/CameraComponent.h"
+#include "Scene/Entity/Components/EditorComponent.h"
 #include "Scene/Subsystems/FCameraManager.h"
 #include "Tools/UI/ImGui/ImGuiX.h"
 
@@ -31,11 +32,11 @@ namespace Lumina
         
         if (HasScene())
         {
-            
             FTransform EditorEntityTransform = FTransform();
-            EditorEntityTransform.Location = {0.0f, -10.0f, 0.0f};
-            EditorEntity = Scene->CreateEntity(EditorEntityTransform, "Tool_Entity_" + ToolName);
+            EditorEntityTransform.Location = {0.0f, 10.0f, 0.0f};
+            EditorEntity = Scene->CreateEntity(EditorEntityTransform, FName("Tool_Entity_" + ToolName));
             EditorEntity.AddComponent<FCameraComponent>();
+            EditorEntity.AddComponent<FEditorComponent>();
             Scene->GetSceneCameraManager()->SetActiveCamera(EditorEntity);
             
             FToolWindow* NewWindow = CreateToolWindow(ViewportWindowName, [] (const FUpdateContext& Contxt, bool bIsFocused)
@@ -108,6 +109,29 @@ namespace Lumina
     {
         const ImVec2 ViewportSize(eastl::max(ImGui::GetContentRegionAvail().x, 64.0f), eastl::max(ImGui::GetContentRegionAvail().y, 64.0f));
         const ImVec2 WindowPosition = ImGui::GetWindowPos();
+        const ImVec2 WindowBottomRight = { WindowPosition.x + ViewportSize.x, WindowPosition.y + ViewportSize.y };
+
+        /** Mostly for debug, so we can easily see if there's some transparency issue */
+        ImGui::GetWindowDrawList()->AddRectFilled(WindowPosition, WindowBottomRight, IM_COL32(255, 0, 0, 255));
+        
+        if (bViewportHovered)
+        {
+            if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) || ImGui::IsMouseClicked(ImGuiMouseButton_Right) || ImGui::IsMouseClicked(ImGuiMouseButton_Middle))
+            {
+                ImGui::SetWindowFocus();
+                bViewportFocused = true;
+            }
+        }
+        
+        
+        float AspectRatio = (ViewportSize.x / ViewportSize.y);
+        float t = (ViewportSize.x - 500) / (1200 - 500);
+        t = glm::clamp(t, 0.0f, 1.0f);
+        float NewFOV = glm::mix(120.0f, 50.0f, t);
+
+        EditorEntity.GetComponent<FCameraComponent>().SetAspectRatio(AspectRatio);
+        EditorEntity.GetComponent<FCameraComponent>().SetFOV(NewFOV);
+
         
         ImGui::Image(ViewportTexture, ViewportSize);
         
@@ -135,6 +159,11 @@ namespace Lumina
         });
         
         return pToolWindow;
+    }
+
+    void FEditorTool::SetEditorCameraEnabled(bool bNewEnable)
+    {
+        EditorEntity.GetComponent<FEditorComponent>().SetEnabled(bNewEnable);
     }
 
     void FEditorTool::DrawHelpTextRow(const char* pLabel, const char* pText) const

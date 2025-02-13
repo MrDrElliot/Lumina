@@ -192,6 +192,12 @@ namespace Lumina
 		DynamicState.pDynamicStates = DynamicStates;
 		DynamicState.dynamicStateCount = 2;
 
+    	/* Conservative rasterization state */
+    	VkPipelineRasterizationConservativeStateCreateInfoEXT ConservativeRasterInfo = {};
+    	ConservativeRasterInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_CONSERVATIVE_STATE_CREATE_INFO_EXT;
+    	ConservativeRasterInfo.conservativeRasterizationMode = VK_CONSERVATIVE_RASTERIZATION_MODE_OVERESTIMATE_EXT;
+    	ConservativeRasterInfo.extraPrimitiveOverestimationSize = 0.0f;
+    		
     	/* Rasterization State */	
 		VkPipelineRasterizationStateCreateInfo RasterizationState = {};
 		RasterizationState.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
@@ -201,6 +207,7 @@ namespace Lumina
 		RasterizationState.lineWidth = Specification.line_width;
 		RasterizationState.cullMode = convert(Specification.culling_mode);
 		RasterizationState.frontFace = convert(Specification.front_face);
+    	RasterizationState.pNext = Specification.bUseConservativeRasterization ? &ConservativeRasterInfo : nullptr;
     		
     	/* Viewport */	
 		VkPipelineViewportStateCreateInfo ViewportState = {};

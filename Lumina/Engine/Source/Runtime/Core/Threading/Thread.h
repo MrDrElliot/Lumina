@@ -13,4 +13,15 @@ namespace Lumina
     
     using FRecursiveScopeLock = std::lock_guard<FRecursiveMutex>;
 
+
+    namespace Threading
+    {
+
+        bool IsMainThread();
+        
+        void Initialize(const char* MainThreadName);
+        void Shutdown();
+    }
+    
+
 }

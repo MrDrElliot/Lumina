@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Component.h"
-#include "Containers/String.h"
+#include "Containers/Name.h"
 
 namespace Lumina
 {
@@ -10,13 +10,13 @@ namespace Lumina
     public:
 
         FNameComponent() = default;
-        FNameComponent(const FString& InName) :Name(InName) {}
+        FNameComponent(const FName& InName) :Name(InName) {}
         FNameComponent(const char* InName) :Name(InName) {}
         
-        FString& GetName() { return Name; }
+        const FName& GetName() const { return Name; }
 
     private:
     
-        FString Name;
+        FName Name;
     };
 }

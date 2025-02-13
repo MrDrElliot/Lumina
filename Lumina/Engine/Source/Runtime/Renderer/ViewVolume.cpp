@@ -10,7 +10,7 @@ namespace Lumina
         UpVector =      glm::vec3(0.0f, 1.0f, 0.0f);
         ForwardVector = glm::vec3(0.0f, 0.0f, -1.0f);
         RightVector =   glm::normalize(glm::cross(ForwardVector, UpVector));
-        
+
         if (DepthRange.x <= 0.0f || DepthRange.x >= DepthRange.y)
         {
             DepthRange = glm::vec2(0.1f, 1000.0f);

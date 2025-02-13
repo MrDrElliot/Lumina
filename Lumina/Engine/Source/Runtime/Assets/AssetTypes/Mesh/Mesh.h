@@ -13,36 +13,35 @@ namespace Lumina
 
 namespace Lumina
 {
-    class FMesh : public IAsset
+    class AMesh : public IAsset
     {
         
     public:
-        FMesh(const FAssetPath& InPath)
+        
+        AMesh(const FAssetPath& InPath)
             : IAsset(InPath)
         {}
 
-        FORCEINLINE const FMeshAsset& GetMeshData() { return MeshData; }
-        
-        FORCEINLINE const TRefPtr<FBuffer>& GetVertexBuffer()   { return VBO; }
-        FORCEINLINE const TRefPtr<FBuffer>& GetIndexBuffer()    { return IBO; }
-
-        FORCEINLINE const uint32 GetNumIndicies() const { return (uint32)MeshData.Indices.size(); }
-        FORCEINLINE const uint32 GetNumVertices() const { return (uint32)MeshData.Indices.size(); }
-        
         void PostLoad() override;
         
         void Serialize(FArchive& Ar) override
         {
-            Ar << MeshData;
+            Ar << MeshResource;
         }
-        
-    private:
 
         
-        FMeshAsset                                  MeshData = {};
+        FORCEINLINE const FMeshResource& GetMeshResource() const { return MeshResource; }
+        FORCEINLINE const uint32 GetNumIndicies() const { return (uint32)MeshResource.Indices.size(); }
+        FORCEINLINE const uint32 GetNumVertices() const { return (uint32)MeshResource.Indices.size(); }
+        FORCEINLINE const TVector<TAssetHandle<AMaterialInstance>>& GetMaterials() const { return Materials; }
+
+        
+
+        
+    private:
+        
+        FMeshResource                               MeshResource = {};
         TVector<TAssetHandle<AMaterialInstance>>    Materials;
-        TRefPtr<FBuffer>                            VBO;
-        TRefPtr<FBuffer>                            IBO;
     };
     
 }

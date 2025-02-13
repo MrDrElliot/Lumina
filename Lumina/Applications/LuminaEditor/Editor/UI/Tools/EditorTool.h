@@ -126,6 +126,9 @@ namespace Lumina
         
         FToolWindow* CreateToolWindow(const FString& InName, const TFunction<void(const FUpdateContext&, bool)>& DrawFunction, const ImVec2& WindowPadding = ImVec2( -1, -1 ), bool DisableScrolling = false);
 
+
+        /** Changes the movability of the editor camera */
+        void SetEditorCameraEnabled(bool bNewEnable);
         
     protected:
 
@@ -165,6 +168,9 @@ namespace Lumina
         ImTextureID                     SceneViewportTexture = nullptr;
 
         EEditorToolFlags                ToolFlags = EEditorToolFlags::Tool_WantsToolbar;
+
+        bool                            bViewportFocused = false;
+        bool                            bViewportHovered = false;
     };
     
 }

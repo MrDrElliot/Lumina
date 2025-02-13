@@ -27,6 +27,8 @@ namespace Lumina
         InputSubsystem = EngineSubsystems.AddSubsystem<FInputSubsystem>();
         AssetManagerSubystem = EngineSubsystems.AddSubsystem<FAssetManager>();
         SceneManager = EngineSubsystems.AddSubsystem<FSceneManager>();
+        SceneRenderer = EngineSubsystems.AddSubsystem<FSceneRenderer>();
+        
         #if WITH_DEVELOPMENT_TOOLS
         ImGuiRenderer = EngineSubsystems.AddSubsystem<FVulkanImGuiRender>();
         #endif
@@ -167,7 +169,11 @@ namespace Lumina
                 SceneManager->UpdateScenes(UpdateContext);
 
                 SceneManager->EndFrame();
+                
+                SceneManager->RenderScenes(UpdateContext);
 
+
+                
                 #if WITH_DEVELOPMENT_TOOLS
                 DeveloperToolUI->EndFrame(UpdateContext);
                 ImGuiRenderer->EndFrame();

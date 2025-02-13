@@ -1,10 +1,13 @@
 ﻿#include "SceneEditorTool.h"
 
+#include "Scene/Entity/Components/NameComponent.h"
+#include "Scene/Entity/Components/EditorComponent.h"
+
 
 namespace Lumina
 {
     FSceneEditorTool::FSceneEditorTool(const IEditorToolContext* Context, FScene* InScene)
-        :FEditorTool(Context, "Scene Editor", InScene)
+        : FEditorTool(Context, "Scene Editor", InScene), OutlinerContext()
     {
         Assert(Scene != nullptr);
     }
@@ -16,15 +19,15 @@ namespace Lumina
             DrawOutliner( Context, bisFocused );
         });
         
-        CreateToolWindow("Entity", [this] (const FUpdateContext& Context, bool bisFocused)
+        CreateToolWindow("Entity Details", [this] (const FUpdateContext& Context, bool bisFocused)
         {
             DrawEntityEditor( Context, bisFocused );
         });
-        
-        CreateToolWindow("Properties", [this] (const FUpdateContext& Context, bool bisFocused)
+
+        OutlinerContext.DrawItemContextMenuFunction = [](const TVector<FTreeListViewItem*> Items)
         {
-            DrawPropertyEditor(Context, bisFocused);
-        });
+            
+        };
     }
 
     void FSceneEditorTool::InitializeDockingLayout(ImGuiID InDockspaceID, const ImVec2& InDockspaceSize) const
@@ -36,13 +39,20 @@ namespace Lumina
 
         ImGui::DockBuilderDockWindow(GetToolWindowName(ViewportWindowName).c_str(), topDockID);
         ImGui::DockBuilderDockWindow(GetToolWindowName("Outliner").c_str(), bottomLeftDockID);
-        ImGui::DockBuilderDockWindow(GetToolWindowName("Entity").c_str(), bottomCenterDockID);
-        ImGui::DockBuilderDockWindow(GetToolWindowName("Properties").c_str(), bottomRightDockID);
+        ImGui::DockBuilderDockWindow(GetToolWindowName("Entity Details").c_str(), bottomCenterDockID);
 
     }
 
     void FSceneEditorTool::DrawOutliner(const FUpdateContext& UpdateContext, bool bFocused)
     {
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.15f, 0.65f, 0.15f, 1.0f));
+        if (ImGui::Button("Create New Entity", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f)))
+        {
+            CreateEntity();
+        }
+        ImGui::PopStyleColor();
+        
+        OutlinerListView.Draw(OutlinerContext);
         
     }
 
@@ -54,5 +64,11 @@ namespace Lumina
     void FSceneEditorTool::DrawPropertyEditor(const FUpdateContext& UpdateContext, bool bFocused)
     {
         
+    }
+
+    void FSceneEditorTool::CreateEntity()
+    {
+        Entity NewEntity = Scene->CreateEntity(FTransform(), FName("New Entity"));
+        OutlinerListView.AddItemToTree<FEntityListViewItem>(nullptr, eastl::move(NewEntity));
     }
 }

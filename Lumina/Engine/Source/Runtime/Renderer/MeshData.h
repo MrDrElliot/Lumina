@@ -1,39 +1,51 @@
 #pragma once
+
 #include "Containers/Array.h"
-#include "Containers/String.h"
+#include "Renderer/RenderTypes.h"
 
 namespace Lumina
 {
     struct FVertex;
 
-    struct FMeshAsset
+    class FMeshResource final
     {
+    public:
 
-        FMeshAsset() = default;
+        friend class AMesh;
         
-        FMeshAsset(FMeshAsset&& Other) noexcept
+        FMeshResource() = default;
+        
+        FMeshResource(FMeshResource&& Other) noexcept
             : Vertices(std::move(Other.Vertices))
             , Indices(std::move(Other.Indices))
         {}
 
 
         /** This data is much to large to accept copying. */
-        FMeshAsset(const FMeshAsset&) = delete;
-        FMeshAsset& operator=(const FMeshAsset&) = delete;
+        FMeshResource(const FMeshResource&) = delete;
+        FMeshResource& operator=(const FMeshResource&) = delete;
+
         
+        FORCEINLINE const TRefPtr<FBuffer>& GetVertexBuffer()   { return VBO; }
+        FORCEINLINE const TRefPtr<FBuffer>& GetIndexBuffer()    { return IBO; }
         
-        friend FArchive& operator << (FArchive& Ar, FMeshAsset& data)
+        friend FArchive& operator << (FArchive& Ar, FMeshResource& Data)
         {
-            Ar << data.Vertices;
-            Ar << data.Indices;
+            Ar << Data.Vertices;
+            Ar << Data.Indices;
 
             return Ar;
         }
 
-    public:
+    private:
         
-        TVector<FVertex> Vertices;
-        TVector<uint32> Indices;
+        TVector<FVertex>          Vertices;
+        TVector<uint32>           Indices;
+
+        // -------- Transient Data --------
+        
+        TRefPtr<FBuffer>          VBO;
+        TRefPtr<FBuffer>          IBO;
         
     };
 }

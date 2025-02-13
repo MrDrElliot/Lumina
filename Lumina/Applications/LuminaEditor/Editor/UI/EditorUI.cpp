@@ -60,6 +60,8 @@ namespace Lumina
         RendererInfo = FMemory::New<FRendererInfoEditorTool>(this);
         RendererInfo->Initialize(UpdateContext);
         EditorTools.emplace_back(RendererInfo);
+
+        
     }
 
     void FEditorUI::Deinitialize(const FUpdateContext& UpdateContext)
@@ -371,7 +373,7 @@ namespace Lumina
                 ImFormatString( windowSuffix, IM_ARRAYSIZE( windowSuffix ), "##%08X", Tool->PrevDockspaceID);
                 size_t windowSuffixLength = strlen( windowSuffix );
                 ImGuiContext& g = *GImGui;
-                for ( ImGuiWindowSettings* settings = g.SettingsWindows.begin(); settings != NULL; settings = g.SettingsWindows.next_chunk( settings ) )
+                for (ImGuiWindowSettings* settings = g.SettingsWindows.begin(); settings != nullptr; settings = g.SettingsWindows.next_chunk(settings))
                 {
                     if ( settings->ID == 0 )
                     {
@@ -382,7 +384,7 @@ namespace Lumina
                     size_t windowNameLength = strlen( pWindowName );
                     if ( windowNameLength >= windowSuffixLength )
                     {
-                        if (strcmp( pWindowName + windowNameLength - windowSuffixLength, windowSuffix ) == 0) // Compare suffix
+                        if (strcmp(pWindowName + windowNameLength - windowSuffixLength, windowSuffix) == 0) // Compare suffix
                         {
                             ImGui::ClearWindowSettings( pWindowName );
                         }
@@ -415,6 +417,8 @@ namespace Lumina
         const bool bIsLastFocusedTool = (LastActiveTool == Tool);
         
         Tool->Update(UpdateContext);
+        Tool->bViewportFocused = false;
+        Tool->bViewportHovered = false;
         
         if (!bVisible)
         {
@@ -487,7 +491,7 @@ namespace Lumina
                     FScene* Scene = Tool->GetScene();
                     Assert(Scene != nullptr);
                     
-                    FSceneRenderer* SceneRenderer = Scene->GetSceneRenderer();
+                    FSceneRenderer* SceneRenderer = UpdateContext.GetSubsystem<FSceneRenderer>();
                     Assert(SceneRenderer != nullptr);
                     
                     TRefPtr<FImage> SceneRenderTarget = SceneRenderer->GetPrimaryRenderTarget();
@@ -504,6 +508,8 @@ namespace Lumina
                 
                     if (DrawViewportWindow)
                     {
+                        Tool->bViewportFocused = ImGui::IsWindowFocused();
+                        Tool->bViewportHovered = ImGui::IsWindowHovered();
                         Tool->DrawViewport(UpdateContext, Image.ID);
                     }
                     
@@ -528,6 +534,11 @@ namespace Lumina
                     ImGui::End();
                 }
             }
+        }
+
+        if (Tool->HasScene())
+        {
+            Tool->SetEditorCameraEnabled(Tool->bViewportFocused && Tool->bViewportHovered);
         }
     }
 

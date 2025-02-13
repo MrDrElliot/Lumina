@@ -62,12 +62,13 @@ namespace Lumina
         EPipelineFrontFace front_face;
         EPipelineTopology topology;
         EPipelineFillMode fill_mode;
-        std::vector<EImageFormat> output_attachments_formats;
-        bool primitive_restart_enable;
-        bool color_blending_enable;
-        bool depth_test_enable;
-        bool multisampling_enable;
-        uint8 sample_count;
+        TVector<EImageFormat> output_attachments_formats;
+        uint8 primitive_restart_enable:1;
+        uint8 color_blending_enable:1;
+        uint8 depth_test_enable:1;
+        uint8 multisampling_enable:1;
+        uint8 bUseConservativeRasterization:1;
+        uint8 sample_count:1;
 
         static FPipelineSpecification Default()
         {
@@ -88,6 +89,7 @@ namespace Lumina
             spec.color_blending_enable = true;
             spec.depth_test_enable = true;
             spec.multisampling_enable = false;
+            spec.bUseConservativeRasterization = false;
             spec.sample_count = 1;
 
             return spec;

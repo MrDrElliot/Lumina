@@ -6,6 +6,7 @@
 #include "Scene/SceneUpdateContext.h"
 #include "Scene/Entity/Entity.h"
 #include "Scene/Entity/Components/CameraComponent.h"
+#include "Scene/Entity/Components/EditorComponent.h"
 
 namespace Lumina
 {
@@ -19,19 +20,29 @@ namespace Lumina
         
     }
 
-    void FDebugCameraEntitySystem::Update(entt::registry& EntityRegistry, const FSceneUpdateContext& UpdateContext)
+    void FDebugCameraEntitySystem::Update(FEntityRegistry& EntityRegistry, const FSceneUpdateContext& UpdateContext)
     {
         double DeltaTime = UpdateContext.GetDeltaTime();
-        float Speed = 5.0f; // Adjust movement speed
+        float Speed = 5.0f;
 
-        for (auto CameraEntity : EntityRegistry.view<FCameraComponent, FTransformComponent>())
+        for (auto CameraEntity : EntityRegistry.view<FEditorComponent, FCameraComponent>())
         {
-            FTransformComponent& Transform = EntityRegistry.get<FTransformComponent>(CameraEntity);
-            FCameraComponent& Camera = EntityRegistry.get<FCameraComponent>(CameraEntity);
+            FTransformComponent& Transform =    EntityRegistry.get<FTransformComponent>(CameraEntity);
+            FCameraComponent& CameraComponent = EntityRegistry.get<FCameraComponent>(CameraEntity);
+            FEditorComponent& EditorComponent = EntityRegistry.get<FEditorComponent>(CameraEntity);
 
-            // Assuming Transform.Position is a glm::vec3
+            if (EditorComponent.IsEnabled() == false)
+            {
+                continue;
+            }
+            
             glm::vec3 Forward = Transform.Transform.Rotation * glm::vec3(0.0f, 0.0f, -1.0f);
             glm::vec3 Right = Transform.Transform.Rotation * glm::vec3(1.0f, 0.0f, 0.0f);
+
+            if (Input::IsKeyPressed(Key::LeftShift))
+            {
+                Speed *= 3.0f;
+            }
 
             if (Input::IsKeyPressed(Key::W)) // Move Forward
             {
@@ -65,6 +76,9 @@ namespace Lumina
 
             if (Input::IsMouseButtonPressed(Mouse::ButtonRight))
             {
+                //@TODO Fixme, better interface for the application window without needing to access the application itself.
+                glfwSetInputMode(FApplication::Get().GetWindow()->GetWindow(), GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+                
                 glm::vec2 CurrentMousePos = Input::GetMousePos();
 
                 if (bFirstMove)
@@ -96,7 +110,7 @@ namespace Lumina
             glm::vec3 updatedForward = Transform.Transform.Rotation * glm::vec3(0.0f, 0.0f, -1.0f);
             glm::vec3 updatedUp = Transform.Transform.Rotation * glm::vec3(0.0f, 1.0f, 0.0f);
     
-            Camera.SetView(Transform.Transform.Location, Transform.Transform.Location + updatedForward, updatedUp);            
+            CameraComponent.SetView(Transform.Transform.Location, Transform.Transform.Location + updatedForward, updatedUp);            
         }
     }
 

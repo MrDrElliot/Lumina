@@ -7,6 +7,11 @@
 
 namespace Lumina
 {
+    class FSceneRenderer;
+}
+
+namespace Lumina
+{
     class IImGuiRenderer;
     class IDevelopmentToolUI;
     class FSceneManager;
@@ -55,5 +60,7 @@ namespace Lumina
         FInputSubsystem*    InputSubsystem =        nullptr;
         FAssetManager*      AssetManagerSubystem =  nullptr;
         FSceneManager*      SceneManager =          nullptr;
+        FSceneRenderer*     SceneRenderer =          nullptr;
+
     };
 }
