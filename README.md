@@ -1,6 +1,6 @@
 # Lumina Game Engine  
 
-![Example Project Image](https://i.imgur.com/aAomeLN.png)  
+![image](https://github.com/user-attachments/assets/5efc3b14-caff-4465-8597-33f8d70e50cd)
 
 Lumina is a lightweight and flexible game engine built to simplify game development while offering powerful tools for creators. Designed with accessibility and efficiency in mind, Lumina empowers developers to bring their creative visions to life.  
 
@@ -24,7 +24,11 @@ Lumina is a lightweight and flexible game engine built to simplify game developm
   Lumina includes the following key libraries:  
   - **ImGui** for GUI elements.  
   - **GLFW** for window and input management.  
-  - **Vulkan** for high-performance rendering.  
+  - **Vulkan** for high-performance rendering.
+  - **EASTL** for versatile code.
+  - **EnTT** Possibly temporary, for quick ECS
+  - **Vulkan Memory Allocator** Ease of use allocating Vk memory
+  - **VkBootstrap** Save some time with initial VK setup.
 
 ---
 
