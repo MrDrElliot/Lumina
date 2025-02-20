@@ -1,14 +1,12 @@
 #include "VulkanRenderContext.h"
-#include "Renderer/Swapchain.h"
-#include "Renderer/Pipeline.h"
+
 #include "VulkanMacros.h"
 #include "vk-bootstrap/src/VkBootstrap.h"
 #include "VulkanMemoryAllocator.h"
-#include "Renderer/CommandBuffer.h"
 #include "VulkanSwapchain.h"
 #include "Core/Windows/Window.h"
+#include "Renderer/RHIIncl.h"
 #include "Log/Log.h"
-#include "Renderer/Image.h"
 
 
 namespace Lumina
@@ -138,19 +136,20 @@ namespace Lumina
 
         vkCreateCommandPool(Device, &CmdPoolCreateInfo, nullptr, &CommandPool);
 
-        FSwapchainSpec SwapchainSpec;
-        SwapchainSpec.Window =          Config.Window;
-        SwapchainSpec.Extent.x =        (int)Config.Window->GetWidth();
-        SwapchainSpec.Extent.y =        (int)Config.Window->GetHeight();
-        SwapchainSpec.FramesInFlight =  Config.FramesInFlight;
+        const FWindow* PrimaryWindow = Windowing::GetPrimaryWindowHandle();
         
-        Swapchain = MakeRefPtr<FVulkanSwapchain>(SwapchainSpec);
+        FSwapchainSpec SwapchainSpec;
+        SwapchainSpec.Window =          PrimaryWindow;
+        SwapchainSpec.Extent.X =        (int)PrimaryWindow->GetWidth();
+        SwapchainSpec.Extent.Y =        (int)PrimaryWindow->GetHeight();
+        
+        Swapchain = MakeRefCount<FVulkanSwapchain>(SwapchainSpec);
         Swapchain->CreateSurface(this, SwapchainSpec);
         Swapchain->CreateSwapchain(this, SwapchainSpec);
         physicalDevice.surface = GetSwapchain<FVulkanSwapchain>()->GetSurface();
         PhysicalDevice = physicalDevice;
 
-        CommandBuffers.resize(Config.FramesInFlight);
+        CommandBuffers.resize(FRAMES_IN_FLIGHT);
 
         for (int i = 0; i < CommandBuffers.size(); ++i)
         {
@@ -160,7 +159,7 @@ namespace Lumina
 
         CurrentCommandBuffer = CommandBuffers[0];
         
-        uint32 Count = 100 * Config.FramesInFlight;
+        uint32 Count = 100 * FRAMES_IN_FLIGHT;
 
         TInlineVector<VkDescriptorPoolSize, 8> PoolSizes =
         {

@@ -6,6 +6,8 @@
 #include "backends/imgui_impl_vulkan.h"
 #include "Core/Application/Application.h"
 #include "Core/Windows/Window.h"
+#include "Renderer/Shader.h"
+#include "Renderer/RHIIncl.h"
 
 #include "Renderer/RHI/Vulkan/VulkanCommandBuffer.h"
 #include "Renderer/RHI/Vulkan/VulkanImage.h"
@@ -13,8 +15,6 @@
 #include "Renderer/RHI/Vulkan/VulkanRenderContext.h"
 #include "Renderer/RHI/Vulkan/VulkanSwapchain.h"
 #include "Scene/Scene.h"
-#include "Scene/SceneRenderer.h"
-#include "Tools/UI/ImGui/ImGuiFonts.h"
 
 namespace Lumina
 {
@@ -62,7 +62,7 @@ namespace Lumina
     	VkRenderContext->GetRenderContextFunctions().DebugUtilsObjectNameEXT(Device, &NameInfo);
 		
 		
-        Assert(ImGui_ImplGlfw_InitForVulkan(FApplication::Get().GetWindow()->GetWindow(), true));
+        Assert(ImGui_ImplGlfw_InitForVulkan(FApplication::Get().GetMainWindow()->GetWindow(), true));
 
         VkPipelineRenderingCreateInfo RenderPipeline = {};
         RenderPipeline.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
@@ -115,18 +115,19 @@ namespace Lumina
         ImGui::NewFrame();
     }
 	
-	void FVulkanImGuiRender::RenderImage(TRefPtr<FImage> Image, ImVec2 Size)
+	void FVulkanImGuiRender::RenderImage(FRHIImage Image, ImVec2 Size)
     {
     	FGuid Guid = Image->GetGuid();
 	    if (ImageCache.find(Guid) == ImageCache.end())
 	    {
-	    	TRefPtr<FVulkanImageSampler> Sampler = FRenderer::GetLinearSampler().As<FVulkanImageSampler>();
+	    	TRefCountPtr<FVulkanImageSampler> Sampler = FRenderer::GetLinearSampler().As<FVulkanImageSampler>();
     	
 	    	VkDescriptorSet ImGuiImageID = ImGui_ImplVulkan_AddTexture(Sampler->GetSampler(),
 	    			Image.As<FVulkanImage>()->GetImageView(),
 					VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 	    	ImGuiX::FImGuiImageInfo NewInfo;
+            NewInfo.Image = Image;
 	    	NewInfo.Size = Size;
 	    	NewInfo.ID = reinterpret_cast<ImTextureID>(ImGuiImageID);
 	    	ImageCache.emplace(Guid, NewInfo);
@@ -146,7 +147,7 @@ namespace Lumina
         ImGui::Image(ImageInfo.ID, ImageInfo.Size, { 0, 0 }, { 1, 1 });
     }
 
-	ImGuiX::FImGuiImageInfo FVulkanImGuiRender::CreateImGuiTexture(TRefPtr<FImage> Image, ImVec2 Size)
+	ImGuiX::FImGuiImageInfo FVulkanImGuiRender::CreateImGuiTexture(FRHIImage Image, ImVec2 Size)
 	{
 		auto It = ImageCache.find(Image->GetGuid());
 		if (It != ImageCache.end())
@@ -154,13 +155,14 @@ namespace Lumina
 			return It->second;
 		}
 
-		TRefPtr<FVulkanImage> VkImage = Image.As<FVulkanImage>();
-		TRefPtr<FVulkanImageSampler> Sampler = FRenderer::GetLinearSampler().As<FVulkanImageSampler>();
+		TRefCountPtr<FVulkanImage> VkImage = Image.As<FVulkanImage>();
+		TRefCountPtr<FVulkanImageSampler> Sampler = FRenderer::GetLinearSampler().As<FVulkanImageSampler>();
     
 		VkDescriptorSet ImGuiImageID = ImGui_ImplVulkan_AddTexture(Sampler->GetSampler(), VkImage->GetImageView(),
 				VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 		ImGuiX::FImGuiImageInfo NewInfo;
+        NewInfo.Image = Image;
 		NewInfo.Size = Size;
 		NewInfo.ID = reinterpret_cast<ImTextureID>(ImGuiImageID);
 		ImageCache.emplace(Image->GetGuid(), NewInfo);
@@ -172,7 +174,7 @@ namespace Lumina
 
 	ImGuiX::FImGuiImageInfo FVulkanImGuiRender::CreateImGuiTexture(const FString& RawPath)
 	{
-		TRefPtr<FVulkanImage> Image = FTextureFactory::ImportFromSource(RawPath.c_str()).As<FVulkanImage>();
+		TRefCountPtr<FVulkanImage> Image = FTextureFactory::ImportFromSource(RawPath.c_str()).As<FVulkanImage>();
 		Image->SetFriendlyName(RawPath);
     
 		auto It = ImageCache.find(Image->GetGuid());
@@ -181,12 +183,13 @@ namespace Lumina
 			return It->second;
 		}
     
-		TRefPtr<FVulkanImageSampler> Sampler = FRenderer::GetLinearSampler().As<FVulkanImageSampler>();
+		TRefCountPtr<FVulkanImageSampler> Sampler = FRenderer::GetLinearSampler().As<FVulkanImageSampler>();
     
 		VkDescriptorSet ImGuiImageID = ImGui_ImplVulkan_AddTexture(Sampler->GetSampler(), Image->GetImageView(),
 				VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 		ImGuiX::FImGuiImageInfo NewInfo;
+        NewInfo.Image = Image;
 		NewInfo.Size.x = (float)Image->GetSpecification().Extent.x;
 		NewInfo.Size.y = (float)Image->GetSpecification().Extent.y;
 		NewInfo.ID = reinterpret_cast<ImTextureID>(ImGuiImageID);
@@ -202,7 +205,7 @@ namespace Lumina
     	
     }
 	
-	void FVulkanImGuiRender::DestroyImGuiTexture(const TRefPtr<FImage>& Image)
+	void FVulkanImGuiRender::DestroyImGuiTexture(const FRHIImage& Image)
     {
     	
     }
@@ -218,7 +221,7 @@ namespace Lumina
     	NameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
     	NameInfo.pObjectName = DebugName.c_str();
     	NameInfo.objectType = VK_OBJECT_TYPE_DESCRIPTOR_SET;
-    	NameInfo.objectHandle = reinterpret_cast<uint64_t>(NewImage);
+    	NameInfo.objectHandle = reinterpret_cast<uint64>(NewImage);
     	
     	VkRenderContext->GetRenderContextFunctions().DebugUtilsObjectNameEXT(Device, &NameInfo);
     }
@@ -229,7 +232,7 @@ namespace Lumina
         {
 			if(ImDrawData* DrawData = ImGui::GetDrawData())
 			{
-				TRefPtr<FVulkanCommandBuffer> Buffer = RefPtrCast<FVulkanCommandBuffer>(FRenderer::GetCommandBuffer());
+				TRefCountPtr<FVulkanCommandBuffer> Buffer = FRenderer::GetCommandBuffer().As<FVulkanCommandBuffer>();
 				VkCommandBuffer CmdBuffer = Buffer->GetCommandBuffer();
             
 				VkRenderingAttachmentInfo colorAttachment = {};
@@ -244,8 +247,8 @@ namespace Lumina
 				renderInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
 				renderInfo.pColorAttachments = &colorAttachment;
 				renderInfo.colorAttachmentCount = 1;
-				renderInfo.renderArea.extent.height =	FRenderer::GetRenderContext()->GetSwapchain()->GetSpecs().Extent.y;
-				renderInfo.renderArea.extent.width =	FRenderer::GetRenderContext()->GetSwapchain()->GetSpecs().Extent.x;
+				renderInfo.renderArea.extent.height =	FRenderer::GetRenderContext()->GetSwapchain()->GetSpecs().Extent.Y;
+				renderInfo.renderArea.extent.width =	FRenderer::GetRenderContext()->GetSwapchain()->GetSpecs().Extent.X;
 				renderInfo.layerCount = 1;
             
 				vkCmdBeginRendering(CmdBuffer, &renderInfo);

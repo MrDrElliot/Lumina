@@ -1,5 +1,8 @@
 #version 450 core
 
+#pragma shader_stage(vertex)
+
+
 layout(set = 0, binding = 0) uniform CameraUniforms
 {
     vec4 CameraPosition;    // Camera Position

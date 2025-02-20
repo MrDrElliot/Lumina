@@ -20,16 +20,16 @@ namespace Lumina
     class FVulkanRenderContext : public IRenderContext
     {
     public:
-        FVulkanRenderContext(const FRenderConfig& InConfig)
-            : IRenderContext(InConfig),
-              DescriptorPool(VK_NULL_HANDLE),
+        FVulkanRenderContext()
+            : IRenderContext()
+            , DescriptorPool(VK_NULL_HANDLE),
               VulkanInstance(VK_NULL_HANDLE),
               VulkanRenderContextFunctions(),
               Device(VK_NULL_HANDLE),
               PhysicalDevice(VK_NULL_HANDLE)
-            , PhysicalDeviceFeatures(),
+              , PhysicalDeviceFeatures(),
               PhysicalDeviceProperties()
-            , PhysicslDeviceMemoryProperties(),
+              , PhysicslDeviceMemoryProperties(),
               CommandPool(VK_NULL_HANDLE),
               GeneralQueue(VK_NULL_HANDLE)
         {
@@ -73,7 +73,6 @@ namespace Lumina
         VkPhysicalDeviceMemoryProperties        PhysicslDeviceMemoryProperties;
         VkCommandPool                           CommandPool;
         VkQueue                                 GeneralQueue;
-
         
     };
 }

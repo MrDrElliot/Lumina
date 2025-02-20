@@ -21,7 +21,7 @@ namespace Lumina
 
         FName() = default;
         explicit FName(nullptr_t) : ID(0) {}
-        explicit FName(const char* Char);
+        FName(const char* Char);
         explicit FName(uint64 InID) :ID(InID) {}
         explicit FName(const FString& Str);
         explicit FName(const FInlineString& Str);
@@ -30,6 +30,8 @@ namespace Lumina
         FORCEINLINE uint64 GetID() const { return ID; }
         FORCEINLINE operator uint64() const { return ID; }
 
+        FORCEINLINE FString ToString() const;
+        
         FORCEINLINE void Clear() { ID = 0; }
         const char* c_str() const;
 

@@ -9,6 +9,7 @@
 
 namespace Lumina
 {
+	
 
 	class FRendererContext;
 	
@@ -18,7 +19,10 @@ namespace Lumina
 		
 		static FWindow* Create(const FWindowSpecs& InSpecs);
 
-		FWindow(const FWindowSpecs& InSpecsn);
+		FWindow(const FWindowSpecs& InSpecs)
+			:Specs(InSpecs)
+		{}
+		 
 		virtual ~FWindow();
 
 
@@ -38,8 +42,15 @@ namespace Lumina
 	
 	private:
 
-		GLFWwindow* Window;
+		GLFWwindow* Window = nullptr;
 		bool bInitialized = false;
 		FWindowSpecs Specs;
 	};
+
+	namespace Windowing
+	{
+		const FWindow* GetPrimaryWindowHandle();
+		void SetPrimaryWindowHandle(const FWindow* InWindow);
+	}
+	
 }

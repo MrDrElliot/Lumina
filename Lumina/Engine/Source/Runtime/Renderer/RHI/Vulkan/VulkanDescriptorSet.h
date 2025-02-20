@@ -12,13 +12,13 @@ namespace Lumina
 
         FVulkanDescriptorSet(const FDescriptorSetSpecification& InSpec);
         ~FVulkanDescriptorSet() override;
+
+        void* GetPlatformDescriptorSet() const override { return DescriptorSet; }
+        void* GetPlatformDescriptorSetLayout() const override { return Layout; }
         
-        VkDescriptorSet GetSet() { return DescriptorSet; }
-        VkDescriptorSetLayout GetLayout() { return Layout; }
-        
-        void Write(uint16 Binding, uint16 ArrayElement, TRefPtr<FBuffer> Buffer, uint64 Size, uint64 Offset) override;
-        void Write(uint16 Binding, uint16 ArrayElement, TRefPtr<FImage> Image, TRefPtr<FImageSampler> Sampler) override;
-        void Write(uint16 Binding, uint16 ArrayElement, TVector<TRefPtr<FImage>> Images, TRefPtr<FImageSampler> Sampler) override;
+        void Write(uint16 Binding, uint16 ArrayElement, FRHIBuffer Buffer, uint64 Size, uint64 Offset) override;
+        void Write(uint16 Binding, uint16 ArrayElement, FRHIImage Image, FRHIImageSampler Sampler) override;
+        void Write(uint16 Binding, uint16 ArrayElement, TVector<FRHIImage> Images, FRHIImageSampler Sampler) override;
 
         void SetFriendlyName(const FString& InName) override;
 

@@ -1,13 +1,18 @@
 #pragma once
 
-#include <string>
-
 #include "RenderResource.h"
+#include "RenderTypes.h"
+#include "ShaderParameters.h"
 #include "ShaderTypes.h"
+#include "spirv_reflect.h"
 #include "Containers/String.h"
+#include "Containers/Name.h"
 
 namespace Lumina
 {
+    class FBuffer;
+    class FDescriptorSet;
+
     enum class EShaderStage : uint8
     {
         NONE                    = 0,           // No shader stage
@@ -49,60 +54,68 @@ namespace Lumina
         }
         return "error";
     }
-
     
-    enum class EShaderDataType : uint8
+    struct FPushConstantMember
     {
-        INT,
-        INT2,
-        INT3,
-        INT4,
-
-        FLOAT,
-        FLOAT2,
-        FLOAT3,
-        FLOAT4,
-
-        IMAT3,
-        IMAT4,
-
-        MAT3,
-        MAT4
+        FName Name;
+        uint32 Size;
+        uint32 Offset;
     };
 
-    constexpr uint32 DeviceDataTypeSize(const EShaderDataType& Type)
+    struct FPushConstantRange
     {
-        switch (Type)
-        {
-            case EShaderDataType::INT:			return 4;
-            case EShaderDataType::INT2:			return 4 * 2;
-            case EShaderDataType::INT3:			return 4 * 3;
-            case EShaderDataType::INT4:			return 4 * 4;
-            case EShaderDataType::FLOAT:		return 4;
-            case EShaderDataType::FLOAT2:		return 4 * 2;
-            case EShaderDataType::FLOAT3:		return 4 * 3;
-            case EShaderDataType::FLOAT4:		return 4 * 4;
-            case EShaderDataType::IMAT3:		return 4 * 3 * 3;
-            case EShaderDataType::IMAT4:		return 4 * 4 * 4;
-            case EShaderDataType::MAT3:			return 4 * 3 * 3;
-            case EShaderDataType::MAT4:			return 4 * 4 * 4;
-            default:							std::unreachable();
-        }
-    }
+        FName Name;
+        TVector<FPushConstantMember>    Members;
+        uint32                          StageFlags = 0;
+        
+        // This is the lowest offset of all memebers
+        uint32                          Offset = 0;
+        uint32                          AbsoluteOffset = 0;
+        uint32                          Size = 0;
+        uint32                          PaddedSize = 0;
+    };
 
-    class FShader : public FRenderResource
+    struct FInputVariableBinding
+    {
+        FName Name;                  // The name of the input variable
+        uint32 Location = 0;         // The location (or binding) of the input variable in the shader
+        uint32 Size = 0;             // Size of the input variable in bytes
+        uint32 Count = 0;            // Number of elements (for arrays or vectors)
+    };
+    
+    struct FShaderReflectionData
+    {
+        TVector<THashMap<FName, FDescriptorBinding>>    DescriptorBindings;
+        THashMap<FName, FPushConstantRange>             PushConstantRanges;
+        TVector<FInputVariableBinding>                  InputVariableBindings;
+    };
+
+    class FShader : public IRenderResource
     {
     public:
-
-        static TRefPtr<FShader> Create(const TVector<FShaderData>& InData, const FString& Tag);
+        
+        static TRefCountPtr<FShader> Create();
         virtual ~FShader() {}
 
-        virtual bool IsDirty() const = 0;
-        virtual void SetDirty(bool dirty) = 0;
-
-        virtual void RestoreShaderModule(std::filesystem::path path) = 0;
-
-
+        virtual void CreateStage(const FShaderStage& StageData) = 0;
         
+        /** Generate platform-agonstic shader reflection data. */
+        void GenerateShaderStageReflectionData(const FShaderStage& StageData, SpvReflectShaderModule* ReflectionModule);
+
+        /** Give the platform specific shader a chance to generate reflection data. Called after all stages have been reflected. */
+        virtual void GeneratePlatformShaderStageReflectionData(const FShaderReflectionData& ReflectionData) = 0;
+
+        /** Returns platform agonistic shader reflection data */
+        FORCEINLINE const FShaderReflectionData& GetShaderReflectionData() const { return ShaderReflectionData; }
+
+        /** Do not store this pointer, it is transient and tied to the lifetime of this shader, you will end up with stale or invalid memory */
+        FORCEINLINE virtual const void* GetPlatformReflectionData() const = 0;
+        
+        
+        void PrintShaderReflectionData();
+        
+    protected:
+
+        FShaderReflectionData                       ShaderReflectionData;
     };
 }

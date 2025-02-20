@@ -5,10 +5,6 @@
 #include "Subsystems/Subsystem.h"
 
 
-namespace Lumina
-{
-    class FSceneRenderer;
-}
 
 namespace Lumina
 {
@@ -19,7 +15,11 @@ namespace Lumina
     class FInputSubsystem;
     class FApplication;
     class FWindow;
+    class FSceneRenderer;
+}
 
+namespace Lumina
+{
     struct FCoreDelegates
     {
         static TMulticastDelegate<void>		OnEngineInit;
@@ -48,19 +48,18 @@ namespace Lumina
 
     protected:
         
-        FUpdateContext      UpdateContext;
-        FApplication*       Application =           nullptr;
+        FUpdateContext          UpdateContext;
+        FApplication*           Application =           nullptr;
 
         #if WITH_DEVELOPMENT_TOOLS
-        IDevelopmentToolUI* DeveloperToolUI =       nullptr;
-        IImGuiRenderer*     ImGuiRenderer =         nullptr;
+        IDevelopmentToolUI*     DeveloperToolUI =       nullptr;
+        IImGuiRenderer*         ImGuiRenderer =         nullptr;
         #endif
 
-        FSubsystemManager   EngineSubsystems;
-        FInputSubsystem*    InputSubsystem =        nullptr;
-        FAssetManager*      AssetManagerSubystem =  nullptr;
-        FSceneManager*      SceneManager =          nullptr;
-        FSceneRenderer*     SceneRenderer =          nullptr;
+        FSubsystemManager       EngineSubsystems;
+        FInputSubsystem*        InputSubsystem =        nullptr;
+        FAssetManager*          AssetManagerSubystem =  nullptr;
+        FSceneManager*          SceneManager =          nullptr;
 
     };
 }

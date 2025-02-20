@@ -1,29 +1,18 @@
 #include "SceneRenderer.h"
 
-#include "Scene.h"
-#include "ScenePrimitives.h"
-#include "SceneUpdateContext.h"
 #include "Assets/AssetRegistry/AssetRegistry.h"
 #include "Assets/AssetTypes/Mesh/StaticMesh/StaticMesh.h"
-#include "Assets/AssetTypes/Textures/Texture.h"
-#include "glm/gtc/type_ptr.hpp"
 #include "Assets/Factories/MeshFactory/StaticMeshFactory.h"
-#include "Core/Math/Transform.h"
 #include "Core/Performance/PerformanceTracker.h"
 #include "Core/Windows/Window.h"
-#include "Entity/Entity.h"
 #include "Entity/Components/CameraComponent.h"
-#include "Entity/Components/LightComponent.h"
-#include "Entity/Components/MeshComponent.h"
 #include "Entity/Components/StaicMeshComponent.h"
-#include "Renderer/Buffer.h"
-#include "Renderer/DescriptorSet.h"
-#include "Renderer/Material.h"
-#include "Renderer/Pipeline.h"
-#include "Renderer/RenderContext.h"
-#include "Renderer/Renderer.h"
-#include "Renderer/ShaderLibrary.h"
-#include "Renderer/Swapchain.h"
+#include "Entity/Entity.h"
+#include "glm/gtc/type_ptr.hpp"
+#include "Renderer/RHIIncl.h"
+#include "Scene.h"
+#include "SceneUpdateContext.h"
+#include "Renderer/RenderPass.h"
 #include "Subsystems/FCameraManager.h"
 
 namespace Lumina
@@ -34,110 +23,42 @@ namespace Lumina
     }
 
     FSceneRenderer::FSceneRenderer()
-        : Data()
-        , CameraData()
+        : SceneGlobalData()
     {
     }
 
     FSceneRenderer::~FSceneRenderer()
     {
-        
     }
 
-    void FSceneRenderer::Initialize(const FSubsystemManager& Manager)
+    void FSceneRenderer::Initialize()
     {
         CreateImages();
         InitPipelines();
-        InitBuffers();
-        InitDescriptorSets();
+        //InitBuffers();
+        //InitDescriptorSets();
     }
 
     void FSceneRenderer::Deinitialize()
     {
+
     }
 
-    void FSceneRenderer::Shutdown()
+    void FSceneRenderer::StartScene(const FScene* Scene)
     {
-        FRenderer::WaitIdle();
+        FRenderPassBeginInfo PassInfo;
+        PassInfo.Attachments = { GetPrimaryRenderTarget(), GetDepthAttachment() };
+        PassInfo.bClearValue = true;
+        PassInfo.ClearColor = FColor(0.0f, 0.0f, 0.0f, 1.0f);
+        PassInfo.RenderAreaOffset = FIntVector2D(0, 0);
+        PassInfo.RenderAreaExtent.Y = Windowing::GetPrimaryWindowHandle()->GetHeight();
+        PassInfo.RenderAreaExtent.X = Windowing::GetPrimaryWindowHandle()->GetWidth();
+        
+        FRenderer::BeginRender(PassInfo);
+
     }
 
-    void FSceneRenderer::OnSwapchainResized()
-    {
-        for (auto& RT : RenderTargets)
-        {
-            RT->Release();
-        }
-        RenderTargets.clear();
-        
-        for(auto& DT : DepthAttachments)
-        {
-            DT->Release();
-        }
-        DepthAttachments.clear();
-
-        CreateImages();
-        
-    }
-
-    void FSceneRenderer::RenderGrid(const FScene* Scene)
-    {
-        // Begin rendering with the target and depth attachments
-        TRefPtr<FImage> CurrentRenderTarget = GetPrimaryRenderTarget();
-        TRefPtr<FImage> CurrentDepthAttachment = GetDepthAttachment();
-
-        uint32 CurrentFrameIndex = FRenderer::GetCurrentFrameIndex();
-        
-        FRenderer::BeginRender({CurrentRenderTarget, CurrentDepthAttachment}, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
-
-        FRenderer::BindPipeline(InfiniteGridPipeline);
-        FRenderer::BindSet(GridDescriptorSets[CurrentFrameIndex], InfiniteGridPipeline, 0, {});
-        
-        GridDescriptorSets[CurrentFrameIndex]->Write(0, 0, CameraUBO, sizeof(FCameraData), 0);
-        
-        FRenderer::DrawVertices(6);
-
-        FRenderer::EndRender();
-    }
-
-    void FSceneRenderer::RenderGeometry(const FScene* Scene)
-    {
-        FSceneRenderData RenderData;
-        BuildSceneRenderData(&RenderData, Scene);
-
-        uint32 CurrentFrameIndex = FRenderer::GetCurrentFrameIndex();
-        TRefPtr<FDescriptorSet> CurrentDescriptorSet = SceneDescriptorSets[CurrentFrameIndex];
-        
-        FRenderer::BindPipeline(GraphicsPipeline);
-        FRenderer::BindSet(CurrentDescriptorSet, GraphicsPipeline, 1, {});
-
-        CurrentDescriptorSet->Write(0, 0, CameraUBO, sizeof(FCameraData), 0);
-
-        
-        for (auto& MeshAssetHandle : RenderData.VisibleStaticMeshes)
-        {
-            const FMeshResource& MeshResource = MeshAssetHandle->GetMeshResource();
-
-        } 
-    }
-
-    void FSceneRenderer::BuildSceneRenderData(FSceneRenderData* RenderData, const FScene* Scene)
-    {
-        Assert(RenderData != nullptr);
-        
-        auto RenderableView = Scene->GetConstEntityRegistry().view<FStaticMeshComponent>();
-
-        for (auto Entity : RenderableView)
-        {
-            const FStaticMeshComponent& StaticMeshComponent = Scene->GetConstEntityRegistry().get<FStaticMeshComponent>(Entity);
-
-            if (StaticMeshComponent.IsLoaded())
-            {
-                RenderData->VisibleStaticMeshes.push_back(StaticMeshComponent.StaticMesh);
-            }
-        }
-    }
-
-    void FSceneRenderer::RenderScene(const FScene* Scene)
+    void FSceneRenderer::EndScene(const FScene* Scene)
     {
         PROFILE_SCOPE(StartFrame)
 
@@ -148,38 +69,29 @@ namespace Lumina
         }
 
 
-        // Setup camera uniform buffer.
+        // Setup scene global render state.
         //-------------------------------------------------------------------
         
         FCameraManager* CameraManager = Scene->GetSceneSubsystem<FCameraManager>();
         FCameraComponent& CameraComponent = CameraManager->GetActiveCameraEntity().GetComponent<FCameraComponent>();
         
-        CameraData.Location =   glm::vec4(CameraComponent.GetPosition(), 1.0f);
-        CameraData.View =       CameraComponent.GetViewMatrix();
-        CameraData.Projection = CameraComponent.GetProjectionMatrix();
-        CameraUBO->UploadData(0, &CameraData, sizeof(FCameraData));
-
+        SceneGlobalData.CameraData.Location =   glm::vec4(CameraComponent.GetPosition(), 1.0f);
+        SceneGlobalData.CameraData.View =       CameraComponent.GetViewMatrix();
+        SceneGlobalData.CameraData.Projection = CameraComponent.GetProjectionMatrix();
+        SceneGlobalData.Time =                  glfwGetTime();
+        SceneGlobalData.DeltaTime =             Scene->GetSceneDeltaTime();
 
         
-        // Render debug grid.
-        //-------------------------------------------------------------------
-        {
-            RenderGrid(Scene);
-        }
+        ForwardRenderPass(Scene);
 
-        // Render scene geometry.
-        //-------------------------------------------------------------------
-        {
-            RenderGeometry(Scene);
-        }
-
-
-
+        FRenderer::EndRender();
+        
+        
         // Copy render target to the swapchain image
         //-------------------------------------------------------------------
         
-        TRefPtr<FCommandBuffer> CommandBuffer = FRenderer::GetCommandBuffer();
-        TRefPtr<FImage> CurrentRenderTarget = GetPrimaryRenderTarget();
+        FRHICommandBuffer CommandBuffer = FRenderer::GetCommandBuffer();
+        FRHIImage CurrentRenderTarget = GetPrimaryRenderTarget();
         FRenderer::Submit([CurrentRenderTarget, CommandBuffer]
         {
             CurrentRenderTarget->SetLayout
@@ -218,12 +130,75 @@ namespace Lumina
         });
     }
 
+    void FSceneRenderer::Shutdown()
+    {
+        FRenderer::WaitIdle();
+    }
+
+    void FSceneRenderer::OnSwapchainResized()
+    {
+        RenderTargets.clear();
+        DepthAttachments.clear();
+
+        CreateImages();
+        
+    }
+
+    void FSceneRenderer::ForwardRenderPass(const FScene* Scene)
+    {
+    }
+    
+    void FSceneRenderer::DrawPrimitives(const FScene* Scene)
+    {
+        
+    }
+    
+    void FSceneRenderer::RenderGrid(const FScene* Scene)
+    {
+        // Begin rendering with the target and depth attachments
+        FRHIImage CurrentRenderTarget = GetPrimaryRenderTarget();
+        FRHIImage CurrentDepthAttachment = GetDepthAttachment();
+        
+    }
+
+    void FSceneRenderer::RenderGeometry(const FScene* Scene)
+    {
+        FSceneRenderData RenderData;
+        BuildSceneRenderData(&RenderData, Scene);
+
+        uint32 CurrentFrameIndex = FRenderer::GetCurrentFrameIndex();
+        FRHIDescriptorSet CurrentDescriptorSet = SceneGlobalDescriptorSets[CurrentFrameIndex];
+        
+        for (auto& MeshAssetHandle : RenderData.VisibleStaticMeshes)
+        {
+            const FMeshResource& MeshResource = MeshAssetHandle->GetMeshResource();
+
+        } 
+    }
+
+    void FSceneRenderer::BuildSceneRenderData(FSceneRenderData* RenderData, const FScene* Scene)
+    {
+        Assert(RenderData != nullptr);
+        
+        auto RenderableView = Scene->GetConstEntityRegistry().view<FStaticMeshComponent>();
+
+        for (auto Entity : RenderableView)
+        {
+            const FStaticMeshComponent& StaticMeshComponent = Scene->GetConstEntityRegistry().get<FStaticMeshComponent>(Entity);
+
+            if (StaticMeshComponent.IsLoaded())
+            {
+                RenderData->VisibleStaticMeshes.push_back(StaticMeshComponent.StaticMesh);
+            }
+        }
+    }
+    
     /*void FSceneRenderer::GeometryPass(const FSceneUpdateContext& SceneContext)
     {
-        TRefPtr<FImage> CurrentRenderTarget = GetPrimaryRenderTarget();
-        TRefPtr<FImage> CurrentDepthTarget = GetDepthAttachment();
+        FRHIImage CurrentRenderTarget = GetPrimaryRenderTarget();
+        FRHIImage CurrentDepthTarget = GetDepthAttachment();
         
-        TVector<TRefPtr<FImage>> Attachments = {CurrentRenderTarget, CurrentDepthTarget, };
+        TVector<FRHIImage> Attachments = {CurrentRenderTarget, CurrentDepthTarget, };
 
         glm::vec4 ClearColor = glm::vec4(0.0f);
         // Begin rendering with the target and depth attachments
@@ -237,7 +212,7 @@ namespace Lumina
         }
         
         uint32 CurrentFrameIndex = FRenderer::GetCurrentFrameIndex();
-        TRefPtr<FDescriptorSet> CurrentDescriptorSet = SceneDescriptorSets[CurrentFrameIndex];
+        TRefCountPtr<FDescriptorSet> CurrentDescriptorSet = SceneDescriptorSets[CurrentFrameIndex];
         
         FRenderer::BindPipeline(GraphicsPipeline);
         FRenderer::BindSet(CurrentDescriptorSet, GraphicsPipeline, 1, {});
@@ -367,144 +342,69 @@ namespace Lumina
     
     void FSceneRenderer::InitPipelines()
     {
-        DeviceBufferLayoutElement Pos               (EShaderDataType::FLOAT3);
-        DeviceBufferLayoutElement Color             (EShaderDataType::FLOAT4);
-        DeviceBufferLayoutElement NormalElement     (EShaderDataType::FLOAT3);
-        DeviceBufferLayoutElement UV                (EShaderDataType::FLOAT2);
-
-        FDeviceBufferLayout Layout({Pos, Color, NormalElement, UV});
+        
+        /*FMaterialPipelineSpecification InfiniteGridPipelineSpecs = FMaterialPipelineSpecification::Default();
+        InfiniteGridPipelineSpecs
+        .SetShader("InfiniteGrid")
+        .SetPipelineType(EPipelineType::GRAPHICS)
+        .SetCullingMode(EPipelineCullingMode::NONE)
+        .SetEnableDepthTest(true)
+        .SetAlphaBlendSrcFactor(EPipelineBlending::BLEND_FACTOR_ZERO)
+        .SetAlphaBlendDstFactor(EPipelineBlending::BLEND_FACTOR_ONE)
+        .SetRenderTargetFormats({EImageFormat::RGBA32_SRGB});
     
-        FPipelineSpecification PipelineSpecs = FPipelineSpecification::Default();
-        PipelineSpecs.DebugName = "GraphicsPipeline";
-        PipelineSpecs.shader = FShaderLibrary::GetShader("Mesh");
-        PipelineSpecs.type = EPipelineType::GRAPHICS;
-        PipelineSpecs.culling_mode = EPipelineCullingMode::BACK;
-        PipelineSpecs.depth_test_enable = true;
-        PipelineSpecs.output_attachments_formats = { EImageFormat::RGBA32_SRGB };
-        PipelineSpecs.input_layout = Layout;
-        
-        GraphicsPipeline = FPipeline::Create(PipelineSpecs);
-        GraphicsPipeline->SetFriendlyName("Graphics Pipeline");
-        
-        
-        FPipelineSpecification InfiniteGridPipelineSpecs = FPipelineSpecification::Default();
-        InfiniteGridPipelineSpecs.DebugName = "InfiniteGrid Pipeline";
-        InfiniteGridPipelineSpecs.shader = FShaderLibrary::GetShader("InfiniteGrid");
-        InfiniteGridPipelineSpecs.type = EPipelineType::GRAPHICS;
-        InfiniteGridPipelineSpecs.culling_mode = EPipelineCullingMode::NONE;
-        InfiniteGridPipelineSpecs.depth_test_enable = false;
-        InfiniteGridPipelineSpecs.SrcAlphaBlendFactor = EPipelineBlending::BLEND_FACTOR_ZERO;
-        InfiniteGridPipelineSpecs.DstAlphaBlendFactor = EPipelineBlending::BLEND_FACTOR_ONE;
-        InfiniteGridPipelineSpecs.output_attachments_formats = { EImageFormat::RGBA32_SRGB };
-        InfiniteGridPipelineSpecs.input_layout = {};
-    
-        InfiniteGridPipeline = FPipeline::Create(InfiniteGridPipelineSpecs);
-        InfiniteGridPipeline->SetFriendlyName("Infinite Grid Pipeline");
+        SceneGlobalsPipeline = FPipeline::Create(InfiniteGridPipelineSpecs);
+        SceneGlobalsPipeline->SetFriendlyName("Infinite Grid Pipeline");*/
     }
 
 
     void FSceneRenderer::InitBuffers()
     {
+        //---------------------------------------------------------------
+        // Scene Global Data (UBO)
         
-        FDeviceBufferSpecification CameraSpec;
-        CameraSpec.MemoryUsage = EDeviceBufferMemoryUsage::COHERENT_WRITE;
-        CameraSpec.Heap = EDeviceBufferMemoryHeap::DEVICE;
-        CameraSpec.BufferUsage = EDeviceBufferUsage::UNIFORM_BUFFER;
-        CameraSpec.Size = sizeof(FCameraData);
-        CameraSpec.DebugName = "Camera Buffer";
+        FDeviceBufferSpecification SceneGlobalDataSpec;
+        SceneGlobalDataSpec.Heap = EDeviceBufferMemoryHeap::DEVICE;
+        SceneGlobalDataSpec.BufferUsage = EDeviceBufferUsage::UNIFORM_BUFFER;
+        SceneGlobalDataSpec.MemoryUsage = EDeviceBufferMemoryUsage::COHERENT_WRITE;
+        SceneGlobalDataSpec.Size = sizeof(FSceneGlobalData);
         
-        CameraUBO = FBuffer::Create(CameraSpec);
-        CameraUBO->SetFriendlyName("Camera UBO");
+        SceneGlobalUBO = FBuffer::Create(SceneGlobalDataSpec);
+        SceneGlobalUBO->SetFriendlyName("Scene Global UBO");
 
         
-        // SceneUBO contains lightPosition, cameraPosition
+        //---------------------------------------------------------------
+        // Scene Light Data (SSBO)
+        
         FDeviceBufferSpecification LightParamsSpec;
         LightParamsSpec.Heap = EDeviceBufferMemoryHeap::DEVICE;
-        LightParamsSpec.BufferUsage = EDeviceBufferUsage::UNIFORM_BUFFER;
+        LightParamsSpec.BufferUsage = EDeviceBufferUsage::STORAGE_BUFFER;
         LightParamsSpec.MemoryUsage = EDeviceBufferMemoryUsage::COHERENT_WRITE;
         LightParamsSpec.Size = sizeof(FSceneLightData);
-        LightParamsSpec.DebugName = "Scene Parameters SBO";
         
-        SceneUBO = FBuffer::Create(LightParamsSpec);
-        SceneUBO->SetFriendlyName("Scene Light UBO");
+        LightSSBO = FBuffer::Create(LightParamsSpec);
+        LightSSBO->SetFriendlyName("Scene Light SSBO");
+
 
         
+        //---------------------------------------------------------------
+        // Model Data (SSBO)
         
-        // ModelUBO contains model.
         FDeviceBufferSpecification ModelParamsSpec;
         ModelParamsSpec.Heap =          EDeviceBufferMemoryHeap::DEVICE;
         ModelParamsSpec.BufferUsage =   EDeviceBufferUsage::STORAGE_BUFFER;
         ModelParamsSpec.MemoryUsage =   EDeviceBufferMemoryUsage::COHERENT_WRITE;
-        ModelParamsSpec.Size = sizeof(glm::mat4) * UINT16_MAX;
-        ModelParamsSpec.DebugName = "Model Storage Buffer";
+        ModelParamsSpec.Size = sizeof(FMeshModelData) * UINT16_MAX;
         
-        ModelSBO = FBuffer::Create(ModelParamsSpec);
-        ModelSBO->SetFriendlyName("Model SBO");
-
-        // ModelUBO contains model.
-        FDeviceBufferSpecification MaterialBufferSpec;
-        MaterialBufferSpec.Heap = EDeviceBufferMemoryHeap::DEVICE;
-        MaterialBufferSpec.BufferUsage = EDeviceBufferUsage::UNIFORM_BUFFER;
-        MaterialBufferSpec.MemoryUsage = EDeviceBufferMemoryUsage::COHERENT_WRITE;
-        MaterialBufferSpec.Size = sizeof(FMaterialTexturesData) * UINT16_MAX;
-        MaterialBufferSpec.DebugName = "Material Uniform Buffer";
+        ModelSSBO = FBuffer::Create(ModelParamsSpec);
+        ModelSSBO->SetFriendlyName("Model SSBO");
         
-        MaterialUBO = FBuffer::Create(MaterialBufferSpec);
-        MaterialUBO->SetFriendlyName("Material UBO");
     }
 
     
     void FSceneRenderer::InitDescriptorSets()
     {
-
-        // Initialize descriptor bindings
-        TInlineVector<FDescriptorBinding, 4> Bindings;
-
-        // Binding 0: CameraUniforms (Pos, View, Proj)
-        Bindings.emplace_back( 0, EDescriptorBindingType::UNIFORM_BUFFER, 1, 0, EShaderStage::VERTEX );
-
-        // Binding 1: SceneParams (UBO containing light and scene data)
-        Bindings.emplace_back( 1, EDescriptorBindingType::UNIFORM_BUFFER, 1, 0, EShaderStage::FRAGMENT );
-
-        // Binding 2: Containing all model data to be rendered for the scene.
-        Bindings.emplace_back( 2, EDescriptorBindingType::STORAGE_BUFFER, 1, 0, EShaderStage::VERTEX );
-
-        // Binding 3: MaterialTextureBuffer
-        Bindings.emplace_back( 3, EDescriptorBindingType::UNIFORM_BUFFER, 1, 0, EShaderStage::FRAGMENT );
-
-
-        // Create descriptor set specification
-        FDescriptorSetSpecification SceneSetSpec = {};
-        SceneSetSpec.Bindings = std::move(Bindings);
-
-        uint32 FramesInFlight = FRenderer::GetConfig().FramesInFlight;
-        // Create descriptor sets for each frame
-        for (uint32 i = 0; i < FramesInFlight; i++)
-        {
-            // Create the descriptor set using the specification
-            TRefPtr<FDescriptorSet> Set = FDescriptorSet::Create(SceneSetSpec);
-            Set->SetFriendlyName("Scene Descriptor: " + eastl::to_string(i));
-            
-            // Add the created set to the list of descriptor sets
-            SceneDescriptorSets.push_back(std::move(Set));
-        }
-        
-        TInlineVector<FDescriptorBinding, 4> GridBindings;
-
-        // Binding 0: Grid (UBO view, proj matrices)
-        GridBindings.emplace_back(0, EDescriptorBindingType::UNIFORM_BUFFER, 1, 0, EShaderStage::VERTEX);
-
-        
-        FDescriptorSetSpecification GridSpec = {};
-        GridSpec.Bindings = std::move(GridBindings);
-
-        for (uint32 i = 0; i < FramesInFlight; i++)
-        {
-            TRefPtr<FDescriptorSet> Set = FDescriptorSet::Create(GridSpec);
-            Set->SetFriendlyName("Grid Descriptor: " + eastl::to_string(i));
-            
-            GridDescriptorSets.push_back(Set);
-        }
+        //GridMaterial = FMaterial::Create(InfiniteGridPipeline, FShaderLibrary::GetShader("Mesh"));
     }
 
     void FSceneRenderer::CreateImages()
@@ -519,9 +419,9 @@ namespace Lumina
         ImageSpecs.SampleCount = EImageSampleCount::ONE;
 
         AssertMsg(RenderTargets.empty(), "Render Targets are not empty!");
-        for (int i = 0; i < FRenderer::GetConfig().FramesInFlight; ++i)
+        for (int i = 0; i < FRAMES_IN_FLIGHT; ++i)
         {
-            TRefPtr<FImage> Image = FImage::Create(ImageSpecs);
+            FRHIImage Image = FImage::Create(ImageSpecs);
             Image->SetFriendlyName("Render Target: " + eastl::to_string(i));
             
             RenderTargets.push_back(std::move(Image));
@@ -536,9 +436,9 @@ namespace Lumina
         DepthImageSpecs.SampleCount = EImageSampleCount::ONE;
         
         AssertMsg(DepthAttachments.empty(), "Render Targets are not empty!");
-        for(int i = 0; i < FRenderer::GetConfig().FramesInFlight; ++i)
+        for(int i = 0; i < FRAMES_IN_FLIGHT; ++i)
         {
-            TRefPtr<FImage> Image = FImage::Create(DepthImageSpecs);
+            FRHIImage Image = FImage::Create(DepthImageSpecs);
             Image->SetFriendlyName("Depth Image: " + eastl::to_string(i));
             
             DepthAttachments.push_back(std::move(Image));

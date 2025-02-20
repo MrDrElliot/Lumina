@@ -13,6 +13,8 @@ namespace Lumina
 
         friend class FTreeListView;
     public:
+        
+        virtual ~FTreeListViewItem() = default;
 
         FTreeListViewItem(FTreeListViewItem* InParent)
             : Parent(InParent)
@@ -57,19 +59,39 @@ namespace Lumina
     struct FTreeListViewContext
     {
         /** Callback to draw any context menus this item may want */
-        TFunction<void(const TVector<FTreeListViewItem*>&)>          DrawItemContextMenuFunction;
+        TFunction<void(const TVector<FTreeListViewItem*>&)>         DrawItemContextMenuFunction;
+
+        /** Called when a rebuild of the widget tree is requested */
+        TFunction<void(FTreeListView*)>                             RebuildTreeFunction;
     };
     
     
     class FTreeListView
     {
-        
-        
     public:
+
+        FTreeListView()
+            : bCurrentlyDrawing(false)
+            , bDirty(false)
+        {}
+
+        ~FTreeListView()
+        {
+            ClearTree();
+        }
+
+        FTreeListView(const FTreeListView&) = delete;
+        FTreeListView& operator=(const FTreeListView&) = delete;
+        
 
         void Draw(FTreeListViewContext Context);
 
         void ClearTree();
+
+        FORCEINLINE void MarkTreeDirty() { bDirty = true; }
+
+        FORCEINLINE bool IsCurrentlyDrawing() const { return bCurrentlyDrawing; }
+        FORCEINLINE bool IsDirty() const { return bDirty; }
         
         template<typename T, typename... Args>
         void AddItemToTree(Args&&... args)
@@ -82,6 +104,8 @@ namespace Lumina
         }
         
     private:
+
+        void RebuildTree(FTreeListViewContext Context);
         
         void DrawListItem(FTreeListViewItem* ItemToDraw, FTreeListViewContext Context);
 
@@ -92,6 +116,9 @@ namespace Lumina
 
         TVector<FTreeListViewItem*>             Selections;
         TVector<FTreeListViewItem*>             ListItems;
+
+        uint8                                   bDirty:1;
+        uint8                                   bCurrentlyDrawing:1;
     };
     
 }

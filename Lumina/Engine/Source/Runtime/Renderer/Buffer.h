@@ -1,13 +1,8 @@
 #pragma once
 
-#include <memory>
-#include <glm/glm.hpp>
-
-#include "Memory/RefCounted.h"
 #include "Platform/GenericPlatform.h"
-#include <Containers/String.h>
-
 #include "RenderResource.h"
+#include "RHIFwd.h"
 
 namespace Lumina
 {
@@ -33,6 +28,7 @@ namespace Lumina
         STAGING_BUFFER,
         SHADER_DEVICE_ADDRESS,
         INDIRECT_PARAMS,
+        MAX,
     };
 
     enum class EDeviceBufferMemoryUsage
@@ -51,14 +47,13 @@ namespace Lumina
     struct FDeviceBufferSpecification
     {
         uint64 Size;
-        uint8 Flags;
+        uint64 Flags;
         EDeviceBufferUsage BufferUsage;
         EDeviceBufferMemoryUsage MemoryUsage;
         EDeviceBufferMemoryHeap Heap;
-        const char* DebugName;
     };
     
-    class FBuffer : public FRenderResource
+    class FBuffer : public IRenderResource
     {
     public:
 
@@ -66,8 +61,8 @@ namespace Lumina
         virtual ~FBuffer() {}
         
 
-        static TRefPtr<FBuffer> Create(const FDeviceBufferSpecification& Spec);
-        static TRefPtr<FBuffer> Create(const FDeviceBufferSpecification& Spec, void* Data, uint64 DataSize);
+        static FRHIBuffer Create(const FDeviceBufferSpecification& Spec);
+        static FRHIBuffer Create(const FDeviceBufferSpecification& Spec, void* Data, uint64 DataSize);
         
         virtual FDeviceBufferSpecification GetSpecification() const = 0;
 

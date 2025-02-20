@@ -1,19 +1,20 @@
 #include "VulkanPipeline.h"
 
+#include "VulkanCommon.h"
 #include "Containers/Array.h"
 #include "VulkanRenderContext.h"
 #include "VulkanShader.h"
 #include "VulkanImage.h"
-#include "VulkanSwapchain.h"
 #include "Log/Log.h"
 #include "VulkanMacros.h"
+#include "Renderer/RHIIncl.h"
 
 namespace Lumina
 {
 
 
-    	constexpr VkFormat convert(const EShaderDataType& type)
-		{
+    constexpr VkFormat convert(const EShaderDataType& type)
+	{
 		switch (type)
 		{
 			case EShaderDataType::INT:				return VK_FORMAT_R32_SINT;
@@ -75,15 +76,14 @@ namespace Lumina
 	}
 
     
-    FVulkanPipeline::FVulkanPipeline(const FPipelineSpecification& InSpec)
+    FVulkanPipeline::FVulkanPipeline(const FPipelineSpec& PipelineSpec)
     {
-    	Specification = InSpec;	
-        Guid = FGuid::Generate();
+    	Specification = PipelineSpec;	
 
-    	switch (InSpec.type)
+    	switch (PipelineSpec.PipelineType)
     	{
-    		case EPipelineType::GRAPHICS:		CreateGraphics(); break;
-    		case EPipelineType::COMPUTE:		CreateCompute();  break;
+    		case EPipelineType::GRAPHICS:		this->CreateGraphics(); break;
+    		case EPipelineType::COMPUTE:		this->CreateCompute();  break;
     		case EPipelineType::RAY_TRACING:	std::unreachable();
     		default:							std::unreachable();
     	}
@@ -109,12 +109,12 @@ namespace Lumina
     	NameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
     	NameInfo.pObjectName = GetFriendlyName().c_str();
     	NameInfo.objectType = VK_OBJECT_TYPE_PIPELINE;
-    	NameInfo.objectHandle = reinterpret_cast<uint64_t>(Pipeline);
+    	NameInfo.objectHandle = reinterpret_cast<uint64>(Pipeline);
     	
     	RenderContext->GetRenderContextFunctions().DebugUtilsObjectNameEXT(Device, &NameInfo);
 
     	NameInfo.objectType = VK_OBJECT_TYPE_PIPELINE_LAYOUT;
-    	NameInfo.objectHandle = reinterpret_cast<uint64_t>(PipelineLayout);
+    	NameInfo.objectHandle = reinterpret_cast<uint64>(PipelineLayout);
     	
     	RenderContext->GetRenderContextFunctions().DebugUtilsObjectNameEXT(Device, &NameInfo);
     }
@@ -124,61 +124,44 @@ namespace Lumina
     	FVulkanRenderContext* RenderContext = FRenderer::GetRenderContext<FVulkanRenderContext>();		
     	VkDevice Device = RenderContext->GetDevice();
 
-    	/* Vertex Input Binding */	
-		VkVertexInputBindingDescription VertexInputBinding = {};
-		VertexInputBinding.binding = 0;
-		VertexInputBinding.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-		VertexInputBinding.stride = Specification.input_layout.GetStride();
-		std::vector<VkVertexInputAttributeDescription> VertexInputAttributes;
+    	TRefCountPtr<FVulkanShader> VkShader = (FShaderLibrary::Get()->GetShader(Specification.GetShader()).As<FVulkanShader>());
+    	const FVulkanShaderReflctionData* VkShaderReflectionData = ((const FVulkanShaderReflctionData*)VkShader->GetPlatformReflectionData());
+    		
+    	TVector<VkDescriptorSetLayout> DescriptorSetLayouts = VkShaderReflectionData->SetLayouts;
+    	TVector<VkPushConstantRange> PushConstantRanges = VkShaderReflectionData->Ranges;
 
-		VkPipelineVertexInputStateCreateInfo VertexInputState = {};
-		VertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+    	TVector<VkVertexInputAttributeDescription> VertexAttributeDescriptions;
+	    for (const FPipelineSpec::FVertexAttribute& VertexAttribute : Specification.VertexAttributes)
+	    {
+	    	VkVertexInputAttributeDescription VkVertexAttribute = {};
+	    	VkVertexAttribute.binding = 0;
+	    	VkVertexAttribute.format = convert(VertexAttribute.Format);
+	    	VkVertexAttribute.location = VertexAttribute.Location;
+	    	VkVertexAttribute.offset = VertexAttribute.Offset;
+	    	
+	    	VertexAttributeDescriptions.push_back(VkVertexAttribute);
+	    }
 
-		if (Specification.input_layout.GetStride())
-		{
-			int PreviousLocWidth = 0;
-			for (const auto& element : Specification.input_layout.GetElements())
-			{
-				uint32 location;
-				float LocationComputeResult = (float)element.Size / 16.0f;
-				if (LocationComputeResult <= 1.0f)
-				{
-					location = PreviousLocWidth;
-					PreviousLocWidth += 1;
-				}
-				else
-				{
-					location = PreviousLocWidth;
-					PreviousLocWidth += (int32)LocationComputeResult;
-				}
-
-				VertexInputAttributes.push_back(
-				{
-					.location = location,
-					.binding = 0,
-					.format = convert(element.Format),
-					.offset = element.Offset
-				});
-			}
-
-			VertexInputState.vertexBindingDescriptionCount = 1;
-			VertexInputState.pVertexBindingDescriptions = &VertexInputBinding;
-			VertexInputState.pVertexAttributeDescriptions = VertexInputAttributes.data();
-			VertexInputState.vertexAttributeDescriptionCount = (uint32)VertexInputAttributes.size();
-		}
-		else
-		{
-			VertexInputState.vertexBindingDescriptionCount = 0;
-			VertexInputState.pVertexBindingDescriptions = nullptr;
-			VertexInputState.vertexAttributeDescriptionCount = 0;
-			VertexInputState.pVertexAttributeDescriptions = nullptr;
-		}
-		
+    	
+    	
+		VkVertexInputBindingDescription VertexBindingDescription = {};
+    	VertexBindingDescription.binding = Specification.VertexBinding.Binding;
+    	VertexBindingDescription.stride = Specification.VertexBinding.Stride;
+    	VertexBindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+    	
+    	VkPipelineVertexInputStateCreateInfo VertexInputStateInfo = {};
+    	VertexInputStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+    	VertexInputStateInfo.vertexBindingDescriptionCount = 1;
+    	VertexInputStateInfo.pVertexBindingDescriptions = &VertexBindingDescription;
+    	VertexInputStateInfo.vertexAttributeDescriptionCount = static_cast<uint32>(VertexAttributeDescriptions.size());
+    	VertexInputStateInfo.pVertexAttributeDescriptions = VertexAttributeDescriptions.data();
+    	
+    	
 		/* Input Assembly State */
 		VkPipelineInputAssemblyStateCreateInfo InputAssemblyState = {};
 		InputAssemblyState.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-		InputAssemblyState.topology = convert(Specification.topology);
-		InputAssemblyState.primitiveRestartEnable = Specification.primitive_restart_enable;
+		InputAssemblyState.topology = convert(Specification.GetPrimitiveTopology());
+		InputAssemblyState.primitiveRestartEnable = Specification.GetEnablePrimitiveRestart();
 
 		VkDynamicState DynamicStates[] =
 		{
@@ -203,11 +186,11 @@ namespace Lumina
 		RasterizationState.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 		RasterizationState.depthClampEnable = VK_FALSE;
 		RasterizationState.rasterizerDiscardEnable = VK_FALSE;
-		RasterizationState.polygonMode = Specification.fill_mode == EPipelineFillMode::FILL ? VK_POLYGON_MODE_FILL : VK_POLYGON_MODE_LINE;
-		RasterizationState.lineWidth = Specification.line_width;
-		RasterizationState.cullMode = convert(Specification.culling_mode);
-		RasterizationState.frontFace = convert(Specification.front_face);
-    	RasterizationState.pNext = Specification.bUseConservativeRasterization ? &ConservativeRasterInfo : nullptr;
+		RasterizationState.polygonMode = Specification.GetPolygonFillMode() == EPipelineFillMode::FILL ? VK_POLYGON_MODE_FILL : VK_POLYGON_MODE_LINE;
+		RasterizationState.lineWidth = Specification.GetLineWidth();
+		RasterizationState.cullMode = convert(Specification.GetCullingMode());
+		RasterizationState.frontFace = convert(Specification.GetFaceOrientation());
+    	RasterizationState.pNext = Specification.GetUseConservativeRasterization() ? &ConservativeRasterInfo : nullptr;
     		
     	/* Viewport */	
 		VkPipelineViewportStateCreateInfo ViewportState = {};
@@ -216,15 +199,15 @@ namespace Lumina
 		ViewportState.scissorCount = 1;
 
     	/* Blend States */	
-		std::vector<VkPipelineColorBlendAttachmentState> BlendStates(Specification.output_attachments_formats.size());
-		for (auto& state : BlendStates)
+		TVector<VkPipelineColorBlendAttachmentState> BlendStates(Specification.GetRenderTargetFormats().size());
+		for (VkPipelineColorBlendAttachmentState& state : BlendStates)
 		{
-			state.blendEnable = Specification.color_blending_enable;
+			state.blendEnable = Specification.GetEnableAlphaBlending();
 			state.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
 			state.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
 			state.colorBlendOp = VK_BLEND_OP_ADD;
-			state.srcAlphaBlendFactor = static_cast<VkBlendFactor>(Specification.SrcAlphaBlendFactor);//VK_BLEND_FACTOR_ZERO;
-			state.dstAlphaBlendFactor = static_cast<VkBlendFactor>(Specification.DstAlphaBlendFactor);//VK_BLEND_FACTOR_ONE;
+			state.srcAlphaBlendFactor = static_cast<VkBlendFactor>(Specification.GetAlphaBlendSrcFactor());
+			state.dstAlphaBlendFactor = static_cast<VkBlendFactor>(Specification.GetAlphaBlendDstFactor());
 			state.alphaBlendOp = VK_BLEND_OP_ADD;
 			state.colorWriteMask = VK_COLOR_COMPONENT_FLAG_BITS_MAX_ENUM;
 		}
@@ -240,8 +223,8 @@ namespace Lumina
 		/* Depth Stencil State */
 		VkPipelineDepthStencilStateCreateInfo DepthStencilState = {};
 		DepthStencilState.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-		DepthStencilState.depthTestEnable = Specification.depth_test_enable;
-		DepthStencilState.depthWriteEnable = Specification.depth_test_enable;
+		DepthStencilState.depthTestEnable = Specification.GetEnableDepthTest();
+		DepthStencilState.depthWriteEnable = Specification.GetEnableDepthTest();
 		DepthStencilState.depthCompareOp = VK_COMPARE_OP_GREATER_OR_EQUAL;
 		DepthStencilState.depthBoundsTestEnable = VK_FALSE;
 		DepthStencilState.stencilTestEnable = VK_FALSE;
@@ -249,13 +232,9 @@ namespace Lumina
     	/* MSAA */	
 		VkPipelineMultisampleStateCreateInfo MultisampleState = {};
 		MultisampleState.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-		MultisampleState.sampleShadingEnable = Specification.multisampling_enable;
-		MultisampleState.rasterizationSamples = (VkSampleCountFlagBits)Specification.sample_count;
-
-		TRefPtr<FVulkanShader> VkShader = RefPtrCast<FVulkanShader>(Specification.shader);
-		TVector<VkDescriptorSetLayout> DescriptorSetLayouts = VkShader->GetLayouts();
-		TVector<VkPushConstantRange> PushConstantRanges = VkShader->GetRanges();
-
+		MultisampleState.sampleShadingEnable = Specification.GetEnableMultisampling();
+		MultisampleState.rasterizationSamples = (VkSampleCountFlagBits)Specification.GetSampleCount();
+    	
     	/* Pipeline Layout */	
 		VkPipelineLayoutCreateInfo PipelineLayoutCreateInfo = {};
 		PipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -266,10 +245,11 @@ namespace Lumina
 
 		VK_CHECK(vkCreatePipelineLayout(Device, &PipelineLayoutCreateInfo, nullptr, &PipelineLayout));
 
-		std::vector<VkFormat> formats;
-		for (const auto& format : Specification.output_attachments_formats)
+		TVector<VkFormat> formats;
+    	formats.reserve(Specification.GetRenderTargetFormats().size());
+		for (const EImageFormat& format : Specification.GetRenderTargetFormats())
 		{
-			formats.push_back(convert(format));
+			formats.emplace_back(convert(format));
 		}
 
     	/* Pipeline Rendering Info */	
@@ -281,15 +261,15 @@ namespace Lumina
 		PipelineRendering.depthAttachmentFormat = VK_FORMAT_D32_SFLOAT;
 
 
-		TVector<VkPipelineShaderStageCreateInfo> StageInfos = VkShader->GetCreateInfos();
+		TVector<VkPipelineShaderStageCreateInfo> StageInfos = VkShaderReflectionData->StageCreateInfos;
 
     	/* Graphics Pipeline Creation */	
-		VkGraphicsPipelineCreateInfo GraphicsPipelineCreateInfo = {};
-		GraphicsPipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+		VkGraphicsPipelineCreateInfo GraphicsPipelineCreateInfo;
+    	ZeroVkStruct(GraphicsPipelineCreateInfo, VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO);
 		GraphicsPipelineCreateInfo.pNext = &PipelineRendering;
 		GraphicsPipelineCreateInfo.pStages = StageInfos.data();
 		GraphicsPipelineCreateInfo.stageCount = (uint32)StageInfos.size();
-		GraphicsPipelineCreateInfo.pVertexInputState = &VertexInputState;
+		GraphicsPipelineCreateInfo.pVertexInputState = &VertexInputStateInfo;
 		GraphicsPipelineCreateInfo.pInputAssemblyState = &InputAssemblyState;
 		GraphicsPipelineCreateInfo.pDynamicState = &DynamicState;
 		GraphicsPipelineCreateInfo.pRasterizationState = &RasterizationState;
@@ -298,21 +278,21 @@ namespace Lumina
 		GraphicsPipelineCreateInfo.pMultisampleState = &MultisampleState;
 		GraphicsPipelineCreateInfo.layout = PipelineLayout;
 		GraphicsPipelineCreateInfo.pViewportState = &ViewportState;
-		GraphicsPipelineCreateInfo.renderPass = VK_NULL_HANDLE;
+		GraphicsPipelineCreateInfo.renderPass = nullptr; // Dynamic rendering
 
-		VK_CHECK(vkCreateGraphicsPipelines(Device, VK_NULL_HANDLE, 1, &GraphicsPipelineCreateInfo, nullptr, &Pipeline));
+		VK_CHECK(vkCreateGraphicsPipelines(Device, nullptr, 1, &GraphicsPipelineCreateInfo, nullptr, &Pipeline));
 
-		LOG_TRACE("Pipeline {0} created successfully", Specification.DebugName);	
     }
 
     void FVulkanPipeline::CreateCompute()
     {
     	FVulkanRenderContext* RenderContext = FRenderer::GetRenderContext<FVulkanRenderContext>();		
     	VkDevice Device = RenderContext->GetDevice();
+
+    	const FVulkanShaderReflctionData* VkShaderReflectionData;//TODO = ((const FVulkanShaderReflctionData*)Specification.GetShader()->GetPlatformReflectionData());
 	
-    	TRefPtr<FVulkanShader> VkShader = RefPtrCast<FVulkanShader>(Specification.shader);
-    	TVector<VkDescriptorSetLayout> DescriptorSetLayouts = VkShader->GetLayouts();
-    	TVector<VkPushConstantRange> PushConstantRanges = VkShader->GetRanges();
+    	TVector<VkDescriptorSetLayout> DescriptorSetLayouts = VkShaderReflectionData->SetLayouts;
+    	TVector<VkPushConstantRange> PushConstantRanges = VkShaderReflectionData->Ranges;
 
     	VkPipelineLayoutCreateInfo PipelineLayoutCreateInfo = {};
     	PipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -323,15 +303,14 @@ namespace Lumina
 
     	VK_CHECK(vkCreatePipelineLayout(Device, &PipelineLayoutCreateInfo, nullptr, &PipelineLayout));
 
-    	TVector<VkPipelineShaderStageCreateInfo> StageCreateInfo = VkShader->GetCreateInfos();
+    	TVector<VkPipelineShaderStageCreateInfo> StageCreateInfo = VkShaderReflectionData->StageCreateInfos;
 
     	VkComputePipelineCreateInfo ComputePipelineCreateInfo = {};
     	ComputePipelineCreateInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
     	ComputePipelineCreateInfo.layout = PipelineLayout;
     	ComputePipelineCreateInfo.stage = StageCreateInfo[0];
 
-    	VK_CHECK(vkCreateComputePipelines(Device, VK_NULL_HANDLE, 1, &ComputePipelineCreateInfo, nullptr, &Pipeline));
+    	VK_CHECK(vkCreateComputePipelines(Device, nullptr, 1, &ComputePipelineCreateInfo, nullptr, &Pipeline));
 
-    	LOG_TRACE("Pipeline {0} created successfully", Specification.DebugName);	
     }
 }

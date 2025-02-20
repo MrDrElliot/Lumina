@@ -3,9 +3,6 @@
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "Memory/Memory.h"
-#include "Renderer/RenderContext.h"
-#include "Renderer/Renderer.h"
-#include "Renderer/Swapchain.h"
 #include "Scene/SceneManager.h"
 #include "Scene/SceneRenderer.h"
 #include "Scene/Entity/Systems/DebugCameraEntitySystem.h"
@@ -73,6 +70,8 @@ namespace Lumina
 
         SceneManager = nullptr;
         SceneEditorTool = nullptr;
+        ConsoleLogTool = nullptr;
+        RendererInfo = nullptr;
     }
 
     void FEditorUI::OnStartFrame(const FUpdateContext& UpdateContext)
@@ -491,10 +490,10 @@ namespace Lumina
                     FScene* Scene = Tool->GetScene();
                     Assert(Scene != nullptr);
                     
-                    FSceneRenderer* SceneRenderer = UpdateContext.GetSubsystem<FSceneRenderer>();
+                    FSceneRenderer* SceneRenderer = UpdateContext.GetSubsystem<FSceneManager>()->GetSceneRendererForScene(Scene);
                     Assert(SceneRenderer != nullptr);
                     
-                    TRefPtr<FImage> SceneRenderTarget = SceneRenderer->GetPrimaryRenderTarget();
+                    TRefCountPtr<FImage> SceneRenderTarget = SceneRenderer->GetPrimaryRenderTarget();
                     Assert(SceneRenderTarget != nullptr);
 
                     FVulkanImGuiRender* ImGuiRenderer = UpdateContext.GetSubsystem<FVulkanImGuiRender>();
@@ -510,7 +509,7 @@ namespace Lumina
                     {
                         Tool->bViewportFocused = ImGui::IsWindowFocused();
                         Tool->bViewportHovered = ImGui::IsWindowHovered();
-                        Tool->DrawViewport(UpdateContext, Image.ID);
+                        Tool->DrawViewport(UpdateContext, Image.ID, PrimitiveDrawManager);
                     }
                     
                     ImGui::End();

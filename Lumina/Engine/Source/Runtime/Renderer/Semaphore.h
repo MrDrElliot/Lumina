@@ -4,7 +4,7 @@
 
 namespace Lumina
 {
-    class FSemaphore : public FRenderResource
+    class FSemaphore : public IRenderResource
     {
 
     public:
@@ -12,7 +12,7 @@ namespace Lumina
         FSemaphore() = default;
         virtual ~FSemaphore() = default;
         
-        static TRefPtr<FSemaphore> Create();
+        static TRefCountPtr<FSemaphore> Create();
 
 
     private:

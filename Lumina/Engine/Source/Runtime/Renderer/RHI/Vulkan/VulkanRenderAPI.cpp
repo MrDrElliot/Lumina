@@ -1,22 +1,19 @@
 #include "VulkanRenderAPI.h"
-#include "imgui.h"
 #include "VulkanBuffer.h"
 #include "VulkanCommandBuffer.h"
 #include "VulkanSwapchain.h"
-#include "VulkanDescriptorSet.h"
 #include "VulkanImage.h"
 #include "VulkanMacros.h"
-#include "VulkanPipeline.h"
 #include "VulkanRenderContext.h"
-#include "Core/Application/Application.h"
+#include "Renderer/RHIIncl.h"
 #include "Core/Windows/Window.h"
-#include "Renderer/Material.h"
 #include "Log/Log.h"
+#include "Renderer/RenderPass.h"
 
 namespace Lumina
 {
 	
-    FVulkanRenderAPI::FVulkanRenderAPI(const FRenderConfig& InConfig)
+    FVulkanRenderAPI::FVulkanRenderAPI()
     {
     }
 
@@ -40,89 +37,113 @@ namespace Lumina
     	GetRenderContext()->GetSwapchain()->EndFrame();
     }
 
-    void FVulkanRenderAPI::BeginRender(const TVector<TRefPtr<FImage>>& Attachments, const glm::fvec4& ClearColor)
+    void FVulkanRenderAPI::BeginRender(const FRenderPassBeginInfo& Info)
     {
-	    FRenderer::Submit([&, Attachments, ClearColor]
+	    FRenderer::Submit([&, Info]
 	    {
-	    	TRefPtr<FVulkanCommandBuffer> VkCommandBuffer = GetRenderContext()->GetCommandBuffer<FVulkanCommandBuffer>();
+	    	TRefCountPtr<FVulkanCommandBuffer> VkCommandBuffer = GetRenderContext()->GetCommandBuffer<FVulkanCommandBuffer>();
 	    	
 			VkRenderingAttachmentInfo				DepthAttachment = {};
-			std::vector<VkRenderingAttachmentInfo>	ColorAttachments = {};
-	    	uint32 RenderHeight =	GetRenderContext()->GetSwapchain()->GetSpecs().Extent.y;
-			uint32 RenderWidth =	GetRenderContext()->GetSwapchain()->GetSpecs().Extent.x;
+			TVector<VkRenderingAttachmentInfo>		ColorAttachments = {};
 	    	
-			for (TRefPtr<FImage> attachment : Attachments)
+			for (FRHIImage attachment : Info.Attachments)
 			{
-				TRefPtr<FVulkanImage> VkTarget = RefPtrCast<FVulkanImage>(attachment);
-				FImageSpecification target_spec = VkTarget->GetSpecification();
+				TRefCountPtr<FVulkanImage> VkTarget = attachment.As<FVulkanImage>();
+				EImageUsage ImageUsage = VkTarget->GetSpecification().Usage;
 
-				if (target_spec.Usage == EImageUsage::RENDER_TARGET)
+				switch (ImageUsage)
 				{
-					VkImageMemoryBarrier TargetBarrier = {};
-					TargetBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-					TargetBarrier.image = VkTarget->GetImage();
-					TargetBarrier.oldLayout = (VkImageLayout)VkTarget->GetLayout();
-					TargetBarrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-					TargetBarrier.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT;
-					TargetBarrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-					TargetBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-					TargetBarrier.subresourceRange.baseArrayLayer = 0;
-					TargetBarrier.subresourceRange.baseMipLevel = 0;
-					TargetBarrier.subresourceRange.layerCount = 1;
-					TargetBarrier.subresourceRange.levelCount = 1;
+				case EImageUsage::TEXTURE: break;
+				case EImageUsage::RENDER_TARGET:
+					{
+						VkImageMemoryBarrier TargetBarrier = {};
+						TargetBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+						TargetBarrier.image = VkTarget->GetImage();
+						TargetBarrier.oldLayout = (VkImageLayout)VkTarget->GetLayout();
+						TargetBarrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+						TargetBarrier.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT;
+						TargetBarrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+						TargetBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+						TargetBarrier.subresourceRange.baseArrayLayer = 0;
+						TargetBarrier.subresourceRange.baseMipLevel = 0;
+						TargetBarrier.subresourceRange.layerCount = 1;
+						TargetBarrier.subresourceRange.levelCount = 1;
 
-					vkCmdPipelineBarrier(VkCommandBuffer->GetCommandBuffer(),
-						VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
-						VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-						0,
-						0,
-						nullptr,
-						0,
-						nullptr,
-						1, 
-						&TargetBarrier
-					);
+						vkCmdPipelineBarrier(VkCommandBuffer->GetCommandBuffer(),
+							VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
+							VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+							0,
+							0,
+							nullptr,
+							0,
+							nullptr,
+							1, 
+							&TargetBarrier
+						);
 
-					VkTarget->SetCurrentLayout(EImageLayout::COLOR_ATTACHMENT);
+						VkTarget->SetCurrentLayout(EImageLayout::COLOR_ATTACHMENT);
 
-					VkRenderingAttachmentInfo ColorAttachment = {};
-					ColorAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
-					ColorAttachment.imageView = VkTarget->GetImageView();
-					ColorAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-					ColorAttachment.loadOp = (ClearColor.a == 0.0f) ? VK_ATTACHMENT_LOAD_OP_LOAD : VK_ATTACHMENT_LOAD_OP_CLEAR;
-					ColorAttachment.clearValue = {{{ClearColor.r, ClearColor.g, ClearColor.b, ClearColor.a}}};
-					ColorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+						VkClearColorValue ClearColorValue = {};
+						ClearColorValue.float32[0] = Info.ClearColor.R;
+						ClearColorValue.float32[1] = Info.ClearColor.G;
+						ClearColorValue.float32[2] = Info.ClearColor.B;
+						ClearColorValue.float32[3] = Info.ClearColor.A;
 
-					ColorAttachments.push_back(ColorAttachment);
-				}
-				else if (target_spec.Usage == EImageUsage::DEPTH_BUFFER)
-				{
-					DepthAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
-					DepthAttachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
-					DepthAttachment.imageView = VkTarget->GetImageView();
-					DepthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-					DepthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-					DepthAttachment.clearValue.color = {{0,0,0,1}};
-					DepthAttachment.loadOp = (ClearColor.a == 0.0f) ? VK_ATTACHMENT_LOAD_OP_LOAD : VK_ATTACHMENT_LOAD_OP_CLEAR;
-					DepthAttachment.clearValue.depthStencil.depth = 0.0f;
+						VkClearValue ClearValue = {};
+						ClearValue.color = ClearColorValue;
+						
+						VkRenderingAttachmentInfo ColorAttachment = {};
+						ColorAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+						ColorAttachment.imageView = VkTarget->GetImageView();
+						ColorAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+						ColorAttachment.loadOp = (Info.bClearValue) ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
+						ColorAttachment.clearValue = ClearValue;
+						ColorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+
+						ColorAttachments.push_back(ColorAttachment);
+					}
+					break;
+				case EImageUsage::DEPTH_BUFFER:
+					{
+						DepthAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+						DepthAttachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+						DepthAttachment.imageView = VkTarget->GetImageView();
+						DepthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+						DepthAttachment.clearValue.color = {{0,0,0,1}};
+						DepthAttachment.loadOp = (Info.bClearValue) ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
+						DepthAttachment.clearValue.depthStencil.depth = 0.0f;
+					}
+					break;
+				case EImageUsage::RESOLVE: break;
 				}
 			}
+
+	    	VkRect2D RenderArea;
+	    	RenderArea.offset.x = Info.RenderAreaOffset.X;
+	    	RenderArea.offset.y = Info.RenderAreaOffset.Y;
+	    	RenderArea.extent.width = Info.RenderAreaExtent.X;
+			RenderArea.extent.height = Info.RenderAreaExtent.Y;
 	    	
 			VkRenderingInfo RenderingInfo = {};
 			RenderingInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
-			RenderingInfo.renderArea = { { 0, 0 }, { RenderWidth, RenderHeight } };
+			RenderingInfo.renderArea = RenderArea;
 			RenderingInfo.layerCount = 1;
-			RenderingInfo.colorAttachmentCount = (uint32_t)ColorAttachments.size();
 			RenderingInfo.pColorAttachments = ColorAttachments.data();
+			RenderingInfo.colorAttachmentCount = (uint32_t)ColorAttachments.size();
 			RenderingInfo.pDepthAttachment = DepthAttachment.imageView ? &DepthAttachment : nullptr;
 			RenderingInfo.pStencilAttachment = nullptr;
 
-
-
-			VkRect2D scissor = { {0,0}, {RenderWidth, RenderHeight} };
-			VkViewport viewport = { 0, (float)RenderHeight, (float)RenderWidth, -(float)RenderHeight, 0.0f, 1.0f};
-			vkCmdSetScissor(VkCommandBuffer->GetCommandBuffer(), 0, 1, &scissor);
-			vkCmdSetViewport(VkCommandBuffer->GetCommandBuffer(), 0, 1, &viewport);
+	    	
+			VkViewport Viewport;
+	    	Viewport.x = 0;
+	    	Viewport.y = Info.RenderAreaExtent.Y;
+			Viewport.width = Info.RenderAreaExtent.X;
+			Viewport.height = -Info.RenderAreaExtent.Y;
+	    	Viewport.maxDepth = 0.0f;
+	    	Viewport.minDepth = 1.0f;
+	    	
+			vkCmdSetScissor(VkCommandBuffer->GetCommandBuffer(), 0, 1, &RenderArea);
+			vkCmdSetViewport(VkCommandBuffer->GetCommandBuffer(), 0, 1, &Viewport);
 			vkCmdBeginRendering(VkCommandBuffer->GetCommandBuffer(), &RenderingInfo);
 
 	    	
@@ -133,7 +154,7 @@ namespace Lumina
     {
     	FRenderer::Submit([this]
     	{
-    		TRefPtr<FVulkanCommandBuffer> VkCommandBuffer = GetRenderContext()->GetCommandBuffer<FVulkanCommandBuffer>();
+    		TRefCountPtr<FVulkanCommandBuffer> VkCommandBuffer = GetRenderContext()->GetCommandBuffer<FVulkanCommandBuffer>();
 			vkCmdEndRendering(VkCommandBuffer->GetCommandBuffer());
 		});
     }
@@ -148,12 +169,11 @@ namespace Lumina
 	    return ERHIInterfaceType::Vulkan;
     }
 
-    void FVulkanRenderAPI::Initialize(const FRenderConfig& InConfig)
+    void FVulkanRenderAPI::Initialize()
     {
     	LOG_TRACE("Vulkan Render API: Initializing");
 
-    	Config = InConfig;
-    	RenderContext = new FVulkanRenderContext(InConfig);
+    	RenderContext = new FVulkanRenderContext();
     	RenderContext->Initialize();
     }
 
@@ -162,7 +182,7 @@ namespace Lumina
     		FRenderer::Submit([&, BarrierInfo]
     		{
 
-    			TRefPtr<FVulkanCommandBuffer> VkCommandBuffer = GetRenderContext()->GetCommandBuffer<FVulkanCommandBuffer>();
+    			TRefCountPtr<FVulkanCommandBuffer> VkCommandBuffer = GetRenderContext()->GetCommandBuffer<FVulkanCommandBuffer>();
 
 				std::vector<VkMemoryBarrier2> MemoryBarriers;
 				std::vector<VkImageMemoryBarrier2> ImageBarriers;
@@ -185,8 +205,8 @@ namespace Lumina
 				
 				for (auto& image_barrier : BarrierInfo.ImageBarriers)
 				{
-					TRefPtr<FImage> image = image_barrier.first;
-					TRefPtr<FVulkanImage> vk_image = RefPtrCast<FVulkanImage>(image);
+					FRHIImage image = image_barrier.first;
+					TRefCountPtr<FVulkanImage> vk_image = image.As<FVulkanImage>();
 				
 					VkImageMemoryBarrier2 VkBarrier = {};
 					VkBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
@@ -220,42 +240,37 @@ namespace Lumina
 		});
     }
 
-    void FVulkanRenderAPI::BindSet(const TRefPtr<FDescriptorSet>& Set, const TRefPtr<FPipeline>& Pipeline, uint8 SetIndex, const TVector<uint32>& DynamicOffsets)
+    void FVulkanRenderAPI::BindSet(const TRefCountPtr<FDescriptorSet>& Set, const FRHIPipeline& Pipeline, uint8 SetIndex, const TVector<uint32>& DynamicOffsets)
     {
     	FRenderer::Submit([&, Set, Pipeline, SetIndex]
     	{
 
-    		TRefPtr<FVulkanCommandBuffer> VkCommandBuffer = GetRenderContext()->GetCommandBuffer<FVulkanCommandBuffer>();
+    		TRefCountPtr<FVulkanCommandBuffer> VkCommandBuffer = GetRenderContext()->GetCommandBuffer<FVulkanCommandBuffer>();
 
-			TRefPtr<FVulkanPipeline> vk_pipeline = RefPtrCast<FVulkanPipeline>(Pipeline);
-			TRefPtr<FVulkanDescriptorSet> vk_set = RefPtrCast<FVulkanDescriptorSet>(Set);
-			VkDescriptorSet RawSet = vk_set->GetSet();
+    		VkPipelineLayout VulkanPipelineLayout = (VkPipelineLayout)Pipeline->GetPlatformPipelineLayout();
+    		VkDescriptorSet VulanDescriptorSet = (VkDescriptorSet)Set->GetPlatformDescriptorSet();
 			
 			VkPipelineBindPoint BindPoint = {};
 			
-			switch (Pipeline->GetSpecification().type)
+			switch (Pipeline->GetSpecification().GetPipelineType())
 			{
 				case EPipelineType::GRAPHICS:			BindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;		break;
 				case EPipelineType::COMPUTE:			BindPoint = VK_PIPELINE_BIND_POINT_COMPUTE;			break;
 				case EPipelineType::RAY_TRACING:		BindPoint = VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR;	break;
 			}
-
-    		/*// Check if there are any dynamic descriptors
-  			uint32 dynamicOffsetCount = 0;//(uint32)DynamicOffsets.size();
-  			const uint32* pDynamicOffsets = dynamicOffsetCount > 0 ? DynamicOffsets.data() : nullptr;*/
-			
-			vkCmdBindDescriptorSets(VkCommandBuffer->GetCommandBuffer(), BindPoint, vk_pipeline->GetPipelineLayout(), SetIndex, 1, &RawSet, 0, nullptr);
+    		
+			vkCmdBindDescriptorSets(VkCommandBuffer->GetCommandBuffer(), BindPoint, VulkanPipelineLayout, SetIndex, 1, &VulanDescriptorSet, 0, nullptr);
 		});
     }
 
-    void FVulkanRenderAPI::CopyToSwapchain(TRefPtr<FImage> ImageToCopy)
+    void FVulkanRenderAPI::CopyToSwapchain(FRHIImage ImageToCopy)
     {
     	FRenderer::Submit([&, ImageToCopy]
     	{
-    		TRefPtr<FVulkanCommandBuffer> VkCommandBuffer = GetRenderContext()->GetCommandBuffer<FVulkanCommandBuffer>();
+    		TRefCountPtr<FVulkanCommandBuffer> VkCommandBuffer = GetRenderContext()->GetCommandBuffer<FVulkanCommandBuffer>();
 
-    		TRefPtr<FVulkanImage> vk_image = ImageToCopy.As<FVulkanImage>();
-			TRefPtr<FImage> swapchain_image = GetRenderContext()->GetSwapchain<FVulkanSwapchain>()->GetCurrentImage();
+    		TRefCountPtr<FVulkanImage> vk_image = ImageToCopy.As<FVulkanImage>();
+			FRHIImage swapchain_image = GetRenderContext()->GetSwapchain<FVulkanSwapchain>()->GetCurrentImage();
 			glm::uvec3 swapchain_resolution = swapchain_image->GetSpecification().Extent;
 			glm::uvec3 src_image_resolution = ImageToCopy->GetSpecification().Extent;
 						
@@ -278,7 +293,7 @@ namespace Lumina
 				VkCommandBuffer->GetCommandBuffer(),
 				vk_image->GetImage(),
 				(VkImageLayout)vk_image->GetLayout(),
-				RefPtrCast<FVulkanImage>(swapchain_image)->GetImage(),
+				swapchain_image.As<FVulkanImage>()->GetImage(),
 				(VkImageLayout)VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 				1,
 				&ImageBlit,
@@ -288,31 +303,32 @@ namespace Lumina
     	});
     }
 
-    void FVulkanRenderAPI::BindPipeline(TRefPtr<FPipeline> Pipeline)
+    void FVulkanRenderAPI::BindPipeline(FRHIPipeline Pipeline)
     {
     	FRenderer::Submit([&, Pipeline]
     	{
-    		TRefPtr<FVulkanCommandBuffer> VkCommandBuffer = GetRenderContext()->GetCommandBuffer<FVulkanCommandBuffer>();
-    		TRefPtr<FVulkanPipeline> VkPipeline = Pipeline.As<FVulkanPipeline>();
-    		vkCmdBindPipeline(VkCommandBuffer->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, VkPipeline->GetPipeline());
+    		TRefCountPtr<FVulkanCommandBuffer> VkCommandBuffer = GetRenderContext()->GetCommandBuffer<FVulkanCommandBuffer>();
+    		VkPipeline VulkanPipeline = (VkPipeline)Pipeline->GetPlatformPipeline();
+    		
+    		vkCmdBindPipeline(VkCommandBuffer->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, VulkanPipeline);
     	});
     }
 
-    void FVulkanRenderAPI::ClearColor(const TRefPtr<FImage>& Image, const glm::fvec4& Value)
+    void FVulkanRenderAPI::ClearColor(const FRHIImage& Image, const glm::fvec4& Value)
     {
         FRenderer::Submit([&, Image]
         {
-        	TRefPtr<FVulkanCommandBuffer> VkCommandBuffer = GetRenderContext()->GetCommandBuffer<FVulkanCommandBuffer>();
+        	FRHICommandBuffer CommandBuffer = GetRenderContext()->GetCommandBuffer();
 		
             Image->SetLayout
         	(
-        		VkCommandBuffer,
+        		CommandBuffer,
         		EImageLayout::TRANSFER_DST,
         		EPipelineStage::TOP_OF_PIPE,
                 EPipelineStage::TRANSFER
             );
             
-            TRefPtr<FVulkanImage> VkImage = RefPtrCast<FVulkanImage>(Image);
+            TRefCountPtr<FVulkanImage> VkImage = Image.As<FVulkanImage>();
             
             VkClearColorValue ClearColorValue = {};
             ClearColorValue.float32[0] = Value.r;
@@ -327,9 +343,11 @@ namespace Lumina
             Range.baseArrayLayer = 0;
             Range.layerCount = 1;
 
+        	TRefCountPtr<FVulkanCommandBuffer> VkCommandBuffer = CommandBuffer.As<FVulkanCommandBuffer>();
+
             vkCmdClearColorImage(VkCommandBuffer->GetCommandBuffer(),  VkImage->GetImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &ClearColorValue, 1, &Range);
 
-            Image->SetLayout(VkCommandBuffer,
+            Image->SetLayout(CommandBuffer,
                 EImageLayout::PRESENT_SRC,
                 EPipelineStage::TRANSFER,
                 EPipelineStage::BOTTOM_OF_PIPE
@@ -337,23 +355,12 @@ namespace Lumina
         });
     }
 
-    void FVulkanRenderAPI::DrawIndexed(TRefPtr<FBuffer> VertexBuffer, TRefPtr<FBuffer> IndexBuffer)
+    void FVulkanRenderAPI::DrawIndexed(uint32 IndexCount, uint32 Instances, uint32 FirstVertex, uint32 FirstInstance)
     {
-		FRenderer::Submit([&, VertexBuffer, IndexBuffer]
+		FRenderer::Submit([&]
 		{
-			TRefPtr<FVulkanCommandBuffer> VkCommandBuffer = GetRenderContext()->GetCommandBuffer<FVulkanCommandBuffer>();
-			
-			TRefPtr<FVulkanBuffer> VkVertexBuffer = VertexBuffer.As<FVulkanBuffer>();
-			TRefPtr<FVulkanBuffer> VkIndexBuffer = IndexBuffer.As<FVulkanBuffer>();
-			
-			VkDeviceSize Offsets[] = {0};
-			
-			vkCmdBindVertexBuffers(VkCommandBuffer->GetCommandBuffer(), 0, 1, &VkVertexBuffer->GetBuffer(), Offsets);
-			vkCmdBindIndexBuffer(VkCommandBuffer->GetCommandBuffer(), VkIndexBuffer->GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
-
-			uint32 IndexCount = VkIndexBuffer->GetSpecification().Size / sizeof(uint32);
-
-			vkCmdDrawIndexed(VkCommandBuffer->GetCommandBuffer(), IndexCount, 1, 0, 0, 0);
+			TRefCountPtr<FVulkanCommandBuffer> VkCommandBuffer = GetRenderContext()->GetCommandBuffer<FVulkanCommandBuffer>();
+			vkCmdDrawIndexed(VkCommandBuffer->GetCommandBuffer(), IndexCount, Instances, FirstVertex, 0, FirstInstance);
 		});
     }
 
@@ -361,12 +368,12 @@ namespace Lumina
     {
     	FRenderer::Submit([this, Vertices, Instances, FirstVertex, FirstInstance]
     	{
-    		TRefPtr<FVulkanCommandBuffer> VkCommandBuffer = GetRenderContext()->GetCommandBuffer<FVulkanCommandBuffer>();
+    		TRefCountPtr<FVulkanCommandBuffer> VkCommandBuffer = GetRenderContext()->GetCommandBuffer<FVulkanCommandBuffer>();
     		vkCmdDraw(VkCommandBuffer->GetCommandBuffer(), Vertices, Instances, FirstVertex, FirstInstance);
     	});
     }
 	
-	void FVulkanRenderAPI::PushConstants(TRefPtr<FPipeline> Pipeline, EShaderStage ShaderStage, uint16 Offset, uint32 Size, const void* Data)
+	void FVulkanRenderAPI::PushConstants(FRHIPipeline Pipeline, EShaderStage ShaderStage, uint16 Offset, uint32 Size, const void* Data)
     {
     	AssertMsg(Data, "Attempted to push a constant with invalid data");
 
@@ -379,14 +386,40 @@ namespace Lumina
 				VK_SHADER_STAGE_ALL
 			};
 
-    		TRefPtr<FVulkanCommandBuffer> VkCommandBuffer = GetRenderContext()->GetCommandBuffer<FVulkanCommandBuffer>();
-    		TRefPtr<FVulkanPipeline> VkPipeline = Pipeline.As<FVulkanPipeline>();
+    		VkPipelineLayout VulkanPipelineLayout = (VkPipelineLayout)Pipeline->GetPlatformPipelineLayout();
+    		
+    		TRefCountPtr<FVulkanCommandBuffer> VkCommandBuffer = GetRenderContext()->GetCommandBuffer<FVulkanCommandBuffer>();
 			VkShaderStageFlags StageFlags = ShaderStageMap[static_cast<int>(ShaderStage)];
-			vkCmdPushConstants(VkCommandBuffer->GetCommandBuffer(), VkPipeline->GetPipelineLayout(), StageFlags, Offset, Size, DataCopy.data());
+    		
+			vkCmdPushConstants(VkCommandBuffer->GetCommandBuffer(), VulkanPipelineLayout, StageFlags, Offset, Size, DataCopy.data());
 		});
     }
-	
-    void FVulkanRenderAPI::BeginCommandRecord()
+
+	void FVulkanRenderAPI::BindVertexBuffer(FRHIBuffer VertexBuffer)
+	{
+    	FRenderer::Submit([&, VertexBuffer]
+    	{
+    		TRefCountPtr<FVulkanCommandBuffer> VkCommandBuffer = GetRenderContext()->GetCommandBuffer<FVulkanCommandBuffer>();
+			TRefCountPtr<FVulkanBuffer> VkVertexBuffer = VertexBuffer.As<FVulkanBuffer>();
+			VkDeviceSize Offsets[] = {0};
+						
+			vkCmdBindVertexBuffers(VkCommandBuffer->GetCommandBuffer(), 0, 1, &VkVertexBuffer->GetBuffer(), Offsets);
+    	});
+	}
+
+	void FVulkanRenderAPI::BindIndexBuffer(FRHIBuffer IndexBuffer)
+	{
+    	FRenderer::Submit([&, IndexBuffer]
+		{
+    		TRefCountPtr<FVulkanCommandBuffer> VkCommandBuffer = GetRenderContext()->GetCommandBuffer<FVulkanCommandBuffer>();
+			
+			TRefCountPtr<FVulkanBuffer> VkIndexBuffer = IndexBuffer.As<FVulkanBuffer>();
+						
+			vkCmdBindIndexBuffer(VkCommandBuffer->GetCommandBuffer(), VkIndexBuffer->GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
+		});
+	}
+
+	void FVulkanRenderAPI::BeginCommandRecord()
     {
         FRenderer::Submit([]
         {
@@ -409,8 +442,7 @@ namespace Lumina
         {
             VkPipelineStageFlags StageMasks[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 
-            TRefPtr<FVulkanCommandBuffer> VkCmdBuffer = GetRenderContext()->GetCommandBuffer().As<FVulkanCommandBuffer>();
-        	uint32 Test = GetRenderContext()->GetSwapchain()->GetCurrentFrameIndex();
+            TRefCountPtr<FVulkanCommandBuffer> VkCmdBuffer = GetRenderContext()->GetCommandBuffer().As<FVulkanCommandBuffer>();
             VkSemaphore AquireSemaphore = GetRenderContext()->GetSwapchain<FVulkanSwapchain>()->GetAquireSemaphore();
             VkSemaphore PresentSemaphore = GetRenderContext()->GetSwapchain<FVulkanSwapchain>()->GetPresentSemaphore();
 
@@ -424,7 +456,7 @@ namespace Lumina
             SubmitInfo.pWaitSemaphores = &AquireSemaphore;
             SubmitInfo.pWaitDstStageMask = StageMasks;
 
-        	TRefPtr<FVulkanSwapchain> VkSwapchain = GetRenderContext()->GetSwapchain<FVulkanSwapchain>();
+        	TRefCountPtr<FVulkanSwapchain> VkSwapchain = GetRenderContext()->GetSwapchain<FVulkanSwapchain>();
             VK_CHECK(vkQueueSubmit(GetRenderContext<FVulkanRenderContext>()->GetGeneralQueue(), 1, &SubmitInfo, VkSwapchain->GetCurrentFence()));
             
         });

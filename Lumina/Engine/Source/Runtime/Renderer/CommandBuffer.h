@@ -1,7 +1,7 @@
 #pragma once
 
 #include "RenderResource.h"
-#include "Memory/RefCounted.h"
+#include "RHIFwd.h"
 
 
 namespace Lumina
@@ -30,12 +30,12 @@ namespace Lumina
     };
 
     
-    class FCommandBuffer : public FRenderResource
+    class FCommandBuffer : public IRenderResource
     {
     public:
         virtual ~FCommandBuffer() = default;
 
-        static TRefPtr<FCommandBuffer> Create(ECommandBufferLevel InLevel, ECommandBufferType InBufferType, ECommandType InCmdType);
+        static FRHICommandBuffer Create(ECommandBufferLevel InLevel, ECommandBufferType InBufferType, ECommandType InCmdType);
         
         FCommandBuffer(ECommandBufferLevel InLevel, ECommandBufferType InBufferType, ECommandType InCmdType)
             : Level(InLevel)

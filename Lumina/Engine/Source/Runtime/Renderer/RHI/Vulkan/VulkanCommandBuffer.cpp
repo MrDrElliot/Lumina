@@ -1,6 +1,9 @@
 
 #include "VulkanCommandBuffer.h"
-#include "Renderer/Pipeline.h"
+
+#include "VulkanMacros.h"
+#include "Renderer/RHIIncl.h"
+
 #include "VulkanSwapchain.h"
 #include "VulkanRenderContext.h"
 
@@ -29,7 +32,7 @@ namespace Lumina
         BufferInfo.commandPool = RenderContext->GetCommandPool();
         BufferInfo.commandBufferCount = 1;
         BufferInfo.level = Level == ECommandBufferLevel::PRIMARY ?  VK_COMMAND_BUFFER_LEVEL_PRIMARY : VK_COMMAND_BUFFER_LEVEL_SECONDARY;
-        vkAllocateCommandBuffers(Device, &BufferInfo, &CommandBuffer);
+        VK_CHECK(vkAllocateCommandBuffers(Device, &BufferInfo, &CommandBuffer));
         
     }
 
@@ -62,17 +65,17 @@ namespace Lumina
         Info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
         Info.flags = BufferType == ECommandBufferType::TRANSIENT ? VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT : 0;
 
-        vkBeginCommandBuffer(CommandBuffer, &Info);
+        VK_CHECK(vkBeginCommandBuffer(CommandBuffer, &Info));
     }
 
     void FVulkanCommandBuffer::End()
     {
-        vkEndCommandBuffer(CommandBuffer);
+        VK_CHECK(vkEndCommandBuffer(CommandBuffer));
     }
 
     void FVulkanCommandBuffer::Reset()
     {
-        vkResetCommandBuffer(CommandBuffer, 0);
+        VK_CHECK(vkResetCommandBuffer(CommandBuffer, 0));
     }
 
     void FVulkanCommandBuffer::Execute(bool bWait)
@@ -92,16 +95,14 @@ namespace Lumina
             VkFenceCreateInfo FenceInfo = {};
             FenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 
-            vkCreateFence(Device, &FenceInfo, nullptr, &Fence);
+            VK_CHECK(vkCreateFence(Device, &FenceInfo, nullptr, &Fence));
         }
         
-        SubmissionMutex.lock();
-        vkQueueSubmit(Queue, 1, &SubmitInfo, Fence);
-        SubmissionMutex.unlock();
+        VK_CHECK(vkQueueSubmit(Queue, 1, &SubmitInfo, Fence));
 
         if(bWait)
         {
-            vkWaitForFences(Device, 1, &Fence, VK_TRUE, UINT64_MAX);
+            VK_CHECK(vkWaitForFences(Device, 1, &Fence, VK_TRUE, UINT64_MAX));
             vkDestroyFence(Device, Fence, nullptr);
         }
     }

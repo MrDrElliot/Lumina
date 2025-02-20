@@ -1,6 +1,6 @@
 ﻿#include "RendererInfoEditorTool.h"
 
-#include "Renderer/Renderer.h"
+#include "Renderer/RHIIncl.h"
 #include "Renderer/RHI/Vulkan/VulkanRenderContext.h"
 
 namespace Lumina

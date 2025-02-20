@@ -1,229 +1,270 @@
 #pragma once
 
+#include "Core/Templates/Forward.h"
 #include <atomic>
-
 #include "Memory.h"
 #include "Core/Assertions/Assert.h"
 #include "Log/Log.h"
 
-enum class ERefCountedCastType
+/** A virtual interface for ref counted objects to implement. */
+class IRefCountedObject
 {
-    None,
-    AssertNull,
-    LogNull,
+public:
+	virtual ~IRefCountedObject() { }
+	virtual uint32 AddRef() const = 0;
+	virtual uint32 Release() const = 0;
+	virtual uint32 GetRefCount() const = 0;
 };
 
-    /** Intrusive Smart Pointer Implementation */
-    class FRefCounted
+/** Intrusive Smart Pointer Implementation */
+class FRefCounted
+{
+public:
+
+    FRefCounted() :RefCount(0) {}
+    virtual ~FRefCounted() { Assert(RefCount == 0); }
+    FRefCounted(const FRefCounted&) = delete;
+    FRefCounted& operator = (const FRefCounted&) = delete;
+
+    FORCEINLINE void AddRef() const
     {
-    public:
-
-        FRefCounted() {}
-
-        FORCEINLINE void AddRef() const
-        {
-            /** Add 1 to the reference count */
-            RefCount.fetch_add(1, std::memory_order_relaxed);
-        }
-
-        FORCEINLINE void Release() const
-        {
-            /** Returns the previous value (if previous value is 1, our new value is 0). */
-            if(RefCount.fetch_sub(1, std::memory_order_acq_rel) == 1)
-            {
-                std::atomic_thread_fence(std::memory_order_acquire);
-                delete this;
-            }
-        }
-
-        FORCEINLINE uint32 GetRefCount() const { return RefCount; }
-
-    protected:
-
-        virtual ~FRefCounted() = default;
-
-    private:
-
-        /** Atomic for safety across threads */
-        mutable std::atomic<int> RefCount = 0;
-    
-    };
-
-    template<typename T>
-    class TRefPtr
-    {
-    public:
-        
-        TRefPtr() : Ptr(nullptr) {}
-    
-        // Destructor
-        ~TRefPtr()
-        {
-            Release();
-        }
-        
-        // Constructor from raw pointer
-        TRefPtr(T* p): Ptr(p)
-        {
-            if(Ptr)
-            {
-                AddRef();
-            }
-        }
-        
-        // Copy constructor
-        TRefPtr(const TRefPtr& other) : Ptr(other.Ptr)
-        {
-            AddRef();
-        }
-        
-        // Move constructor
-        TRefPtr(TRefPtr&& other) noexcept : Ptr(other.Ptr)
-        {
-            // Properly take ownership of the pointer and nullify the other
-            other.Ptr = nullptr;  // Now `other` won't call Release() on the original pointer
-        }
-    
-        // Templated conversion constructor for derived types (lvalue reference)
-        template<typename U, typename = std::enable_if_t<std::is_base_of<T, U>::value || std::is_base_of<U, T>::value>>
-        TRefPtr(const TRefPtr<U>& other) : Ptr(other.Get())
-        {
-            static_assert(std::is_base_of<FRefCounted, U>::value, "U does not inherit from RefCounted");
-            static_assert(!std::is_same<T, U>::value, "Cannot convert TRefPtr of the same type.");
-            AddRef();
-        }
-    
-        // Templated conversion constructor for derived types (rvalue reference)
-        template<typename U, typename = std::enable_if_t<std::is_base_of<T, U>::value || std::is_base_of<U, T>::value>>
-        TRefPtr(TRefPtr<U>&& other) noexcept : Ptr(eastl::move(std::exchange(other.Ptr, nullptr)))
-        {
-            static_assert(std::is_base_of<FRefCounted, U>::value, "U does not inherit from RefCounted");
-            static_assert(!std::is_same<T, U>::value, "Cannot convert TRefPtr of the same type.");
-        }
-
-        template<typename U>
-        TRefPtr<U> As()
-        {
-            return TRefPtr<U>(static_cast<U*>(Ptr));
-        }
-
-        template<typename U>
-        TRefPtr<U> As() const
-        {
-            return TRefPtr<U>(static_cast<U*>(Ptr));
-        }
-
-    
-        bool operator == (const TRefPtr& other) const noexcept
-        {
-            return Ptr == other.Ptr;
-        }
-    
-        TRefPtr& operator = (const TRefPtr& other)
-        {
-            if (this != &other)
-            {
-                Release();
-                Ptr = other.Ptr;
-                AddRef();
-            }
-            return *this;
-        }
-    
-        TRefPtr& operator = (TRefPtr&& other) noexcept
-        {
-            if (this != &other)
-            {
-                Release();
-                Ptr = other.Ptr;
-                other.Ptr = nullptr;
-            }
-            return *this;
-        }
-    
-        T* operator ->() const { Assert(Ptr != nullptr); return Get(); }
-        T& operator *() const { return *Get(); }
-        explicit operator bool() const { return Ptr != nullptr; }
-    
-        T* Get() const { return Ptr; }
-    
-    public:
-        
-        
-        FORCEINLINE void AddRef()
-        {
-            if (Ptr) Ptr->AddRef();
-        }
-    
-        FORCEINLINE bool IsValid()
-        {
-            return Ptr != nullptr;
-        }
-        
-        FORCEINLINE void Release()
-        {
-            if (Ptr)
-            {
-                Ptr->Release();
-            }
-        }
-    
-        T* Ptr = nullptr;
-    };
-
-
-    template<typename T, typename... Args>
-    TRefPtr<T> MakeRefPtr(Args&&... args)
-    requires (std::is_constructible_v<T, Args...>)
-    {
-        return TRefPtr<T>(new T(std::forward<Args>(args)...));
+        /** Add 1 to the reference count */
+        RefCount.fetch_add(1, eastl::memory_order_relaxed);
     }
 
-
-    template<typename T, typename U>
-    TRefPtr<T> RefPtrCast(const TRefPtr<U>& other, ERefCountedCastType Type = ERefCountedCastType::None)
+    FORCEINLINE void Release() const
     {
-        static_assert(std::is_base_of_v<U, T> || std::is_base_of_v<T, U> || std::is_same_v<T, U>, "RefPtrCast: Invalid cast between unrelated types.");
-    
-        if (!other.Get())
+        /** Returns the previous value (if previous value is 1, our new value is 0). */
+        if(RefCount.fetch_sub(1, eastl::memory_order_acq_rel) == 1)
         {
-            // Handle null pointer cases
-            switch (Type)
-            {
-            case ERefCountedCastType::AssertNull:
-                AssertMsg(0, "Failed Cast Due to nullptr");
-                break;
-            case ERefCountedCastType::LogNull:
-                LOG_WARN("RefCounted: Casting to a nullptr!");
-                break;
-            default:
-                break;
-            }
-            return TRefPtr<T>();
-        }
-    
-        // Use dynamic_cast for polymorphic types
-        if constexpr (std::is_polymorphic_v<U> && std::is_polymorphic_v<T>)
-        {
-            if (auto casted = dynamic_cast<T*>(other.Get()))
-            {
-                return TRefPtr<T>(casted);
-            }
-            else
-            {
-                if (Type == ERefCountedCastType::LogNull)
-                {
-                    LOG_WARN("RefCounted: Failed dynamic_cast between polymorphic types.");
-                }
-                return TRefPtr<T>();
-            }
-        }
-        else
-        {
-            // Use static_cast for non-polymorphic types or trivial casts
-            return TRefPtr<T>(static_cast<T*>(other.Get()));
+            eastl::atomic_thread_fence(eastl::memory_order_acquire);
+            delete this;
         }
     }
 
+    FORCEINLINE uint32 GetRefCount() const { return RefCount; }
+
+private:
+
+    /** Atomic for safety across threads */
+    mutable eastl::atomic<int> RefCount = 0;
+
+};
+
+/**
+ * A smart pointer to an object which implements AddRef/Release.
+ */
+template<typename ReferencedType>
+class TRefCountPtr
+{
+	typedef ReferencedType* ReferenceType;
+
+public:
+
+	FORCEINLINE TRefCountPtr():
+		Reference(nullptr)
+	{ }
+
+	TRefCountPtr(ReferencedType* InReference, bool bAddRef = true)
+	{
+		Reference = InReference;
+		if(Reference && bAddRef)
+		{
+			Reference->AddRef();
+		}
+	}
+
+	TRefCountPtr(const TRefCountPtr& Copy)
+	{
+		Reference = Copy.Reference;
+		if(Reference)
+		{
+			Reference->AddRef();
+		}
+	}
+
+	template<typename CopyReferencedType>
+	explicit TRefCountPtr(const TRefCountPtr<CopyReferencedType>& Copy)
+	{
+		Reference = static_cast<ReferencedType*>(Copy.GetReference());
+		if (Reference)
+		{
+			Reference->AddRef();
+		}
+	}
+
+	FORCEINLINE TRefCountPtr(TRefCountPtr&& Move) noexcept
+	{
+		Reference = Move.Reference;
+		Move.Reference = nullptr;
+	}
+
+	template<typename MoveReferencedType>
+	explicit TRefCountPtr(TRefCountPtr<MoveReferencedType>&& Move)
+	{
+		Reference = static_cast<ReferencedType*>(Move.GetReference());
+		Move.Reference = nullptr;
+	}
+
+	~TRefCountPtr()
+	{
+		if(Reference)
+		{
+			Reference->Release();
+		}
+	}
+
+	TRefCountPtr& operator=(ReferencedType* InReference)
+	{
+		if (Reference != InReference)
+		{
+			// Call AddRef before Release, in case the new reference is the same as the old reference.
+			ReferencedType* OldReference = Reference;
+			Reference = InReference;
+			if (Reference)
+			{
+				Reference->AddRef();
+			}
+			if (OldReference)
+			{
+				OldReference->Release();
+			}
+		}
+		return *this;
+	}
+
+	template<typename T>
+	TRefCountPtr<T> As()
+	{
+		Assert(GetRefCount() > 0);
+		return TRefCountPtr<T>(dynamic_cast<T*>(Reference));
+	}
+
+	template<typename T>
+	const TRefCountPtr<T> As() const
+	{
+		Assert(GetRefCount() > 0);
+		return TRefCountPtr<T>(dynamic_cast<T*>(Reference));
+	}
+	
+	FORCEINLINE TRefCountPtr& operator=(const TRefCountPtr& InPtr)
+	{
+		return *this = InPtr.Reference;
+	}
+
+	template<typename CopyReferencedType>
+	FORCEINLINE TRefCountPtr& operator=(const TRefCountPtr<CopyReferencedType>& InPtr)
+	{
+		return *this = InPtr.GetReference();
+	}
+
+	TRefCountPtr& operator=(TRefCountPtr&& InPtr) noexcept
+	{
+		if (this != &InPtr)
+		{
+			ReferencedType* OldReference = Reference;
+			Reference = InPtr.Reference;
+			InPtr.Reference = nullptr;
+			if(OldReference)
+			{
+				OldReference->Release();
+			}
+		}
+		return *this;
+	}
+
+	template<typename MoveReferencedType>
+	TRefCountPtr& operator=(TRefCountPtr<MoveReferencedType>&& InPtr)
+	{
+		// InPtr is a different type (or we would have called the other operator), so we need not test &InPtr != this
+		ReferencedType* OldReference = Reference;
+		Reference = InPtr.Reference;
+		InPtr.Reference = nullptr;
+		if (OldReference)
+		{
+			OldReference->Release();
+		}
+		return *this;
+	}
+
+	FORCEINLINE ReferencedType* operator->() const
+	{
+		return Reference;
+	}
+
+	FORCEINLINE operator ReferenceType() const
+	{
+		return Reference;
+	}
+
+	FORCEINLINE ReferencedType** GetInitReference()
+	{
+		*this = nullptr;
+		return &Reference;
+	}
+
+	FORCEINLINE ReferencedType* GetReference() const
+	{
+		return Reference;
+	}
+
+	FORCEINLINE friend bool IsValidRef(const TRefCountPtr& InReference)
+	{
+		return InReference.Reference != nullptr;
+	}
+
+	FORCEINLINE bool IsValid() const
+	{
+		return Reference != nullptr;
+	}
+
+	FORCEINLINE void SafeRelease()
+	{
+		*this = nullptr;
+	}
+
+	uint32 GetRefCount() const
+	{
+		uint32 Result = 0;
+		if (Reference)
+		{
+			Result = Reference->GetRefCount();
+			Assert(Result > 0); // you should never have a zero ref count if there is a live ref counted pointer (*this is live)
+		}
+		return Result;
+	}
+
+	FORCEINLINE void Swap(TRefCountPtr& InPtr) // this does not change the reference count, and so is faster
+	{
+		ReferencedType* OldReference = Reference;
+		Reference = InPtr.Reference;
+		InPtr.Reference = OldReference;
+	}
+
+private:
+
+	ReferencedType* Reference;
+
+	template <typename OtherType>
+	friend class TRefCountPtr;
+
+public:
+	FORCEINLINE bool operator==(const TRefCountPtr& B) const
+	{
+		return GetReference() == B.GetReference();
+	}
+
+	FORCEINLINE bool operator==(ReferencedType* B) const
+	{
+		return GetReference() == B;
+	}
+};
+
+template<typename T, typename... TArgs>
+requires(!eastl::is_array_v<T>)
+FORCEINLINE TRefCountPtr<T> MakeRefCount(TArgs&&... Args)
+{
+	return TRefCountPtr<T>(FMemory::New<T>(TForward<TArgs>(Args)...));
+}
 
 

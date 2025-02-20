@@ -1,10 +1,7 @@
 #pragma once
 
-#include <filesystem>
+#include "Lumina.h"
 #include <shared_mutex>
-#include <unordered_map>
-#include <EASTL/unordered_map.h>
-
 #include "Shader.h"
 #include "Core/Singleton/Singleton.h"
 
@@ -21,19 +18,23 @@ namespace Lumina
 
         void Shutdown();
 
-        bool Load(std::filesystem::path Vertex, std::filesystem::path Fragment, const FString& Tag);
+        void LoadShadersInDirectory(const FString& Directory);
         
-        bool Unload(FString Name);
-        bool Reload(std::filesystem::path Name);
-        bool Has(FString Key);
+        bool Load(const FString& Vertex, const FString& Fragment, FName Tag);
         
-        static TRefPtr<FShader> GetShader(const FString& Key);
-        const eastl::unordered_map<FString, TRefPtr<FShader>>* GetShaders() const { return &Library; }
+        bool Unload(FName Key);
+        bool Reload(FName Key);
+        bool Has(FName Key);
+        
+        static TRefCountPtr<FShader> GetShader(FName Key);
+        const THashMap<FName, TRefCountPtr<FShader>>& GetShaders() const { return Library; }
         EShaderStage EvaluateStage(std::filesystem::path File) const;
 
+        
+        
     private:
 
-        eastl::unordered_map<FString, TRefPtr<FShader>> Library;
+        THashMap<FName, TRefCountPtr<FShader>> Library;
         std::shared_mutex Mutex;
         
     };

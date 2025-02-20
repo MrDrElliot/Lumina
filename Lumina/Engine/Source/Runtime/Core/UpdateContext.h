@@ -17,7 +17,7 @@ namespace Lumina
         
         FORCEINLINE void MarkFrameStart()
         {
-            UpdateStage = EUpdateStage::FrameStart;
+            
         }
         
         FORCEINLINE void MarkFrameEnd(double Time)
@@ -25,7 +25,6 @@ namespace Lumina
             DeltaTime = Time - LastFrameTime;
             LastFrameTime = Time;
             Frame++;
-            UpdateStage = EUpdateStage::FrameEnd;
         }
 
         FORCEINLINE void UpdateDeltaTime(double InDelta) { DeltaTime = InDelta; }

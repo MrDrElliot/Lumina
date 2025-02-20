@@ -21,11 +21,11 @@ namespace Lumina
         void Serialize(FArchive& Ar) override;
         void PostLoad() override;
         
-        TRefPtr<FImage> GetImage() { return Image; }
+        FRHIImage GetImage() { return Image; }
     
     private:
         
         FImageSpecification     ImageSpec = {};
-        TRefPtr<FImage>         Image;
+        FRHIImage         Image;
     };
 }

@@ -1,4 +1,5 @@
 ﻿#include "ViewVolume.h"
+#include "Renderer/RHIIncl.h"
 
 namespace Lumina
 {

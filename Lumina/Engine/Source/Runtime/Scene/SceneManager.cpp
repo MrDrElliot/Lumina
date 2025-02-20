@@ -1,7 +1,7 @@
 ﻿#include "SceneManager.h"
 #include "Scene/SceneRenderer.h"
 #include "Scene.h"
-#include "Core/UpdateContext.h"
+#include "Renderer/PrimitiveDrawManager.h"
 
 namespace Lumina
 {
@@ -11,10 +11,13 @@ namespace Lumina
 
     void FSceneManager::Deinitialize()
     {
-        for (FScene* Scene : Scenes)
+        for (FManagedScene& Scene : Scenes)
         {
-            Scene->Shutdown();
-            FMemory::Delete(Scene);
+            Scene.Scene->Shutdown();
+            Scene.SceneRenderer->Deinitialize();
+
+            FMemory::Delete(Scene.Scene);
+            FMemory::Delete(Scene.SceneRenderer);
         }
         
         Scenes.clear();
@@ -22,36 +25,30 @@ namespace Lumina
 
     void FSceneManager::StartFrame()
     {
-        for (FScene* Scene : Scenes)
+        for (FManagedScene& Scene : Scenes)
         {
-            Scene->StartFrame();       
+            Scene.SceneRenderer->StartScene(Scene.Scene);
+            Scene.Scene->GetPrimitiveDrawManager()->StartDraw();
+            Scene.Scene->StartFrame();       
         }
     }
 
     void FSceneManager::UpdateScenes(const FUpdateContext& UpdateContext)
     {
-        for (FScene* Scene : Scenes)
+        for (const FManagedScene& Scene : Scenes)
         {
-            Scene->Update(UpdateContext);       
+            Scene.Scene->Update(UpdateContext);       
         }
     }
-
-    void FSceneManager::RenderScenes(const FUpdateContext& UpdateContext)
-    {
-        FSceneRenderer* SceneRenderer = UpdateContext.GetSubsystem<FSceneRenderer>();
-        Assert(SceneRenderer != nullptr);
-        
-        for (FScene* Scene : Scenes)
-        {
-            SceneRenderer->RenderScene(Scene);  
-        }
-    }
+    
 
     void FSceneManager::EndFrame()
     {
-        for (FScene* Scene : Scenes)
+        for (const FManagedScene& Scene : Scenes)
         {
-            Scene->EndFrame();       
+            Scene.Scene->EndFrame();
+            Scene.Scene->GetPrimitiveDrawManager()->EndDraw();
+            Scene.SceneRenderer->EndScene(Scene.Scene);
         }
     }
 
@@ -63,8 +60,10 @@ namespace Lumina
         }
 
         FScene* NewScene = FMemory::New<FScene>(InType);
-        Scenes.push_back(NewScene);
+        FSceneRenderer* SceneRenderer = FMemory::New<FSceneRenderer>();
+        SceneRenderer->Initialize();
 
+        Scenes.emplace_back(NewScene, SceneRenderer);
         return NewScene;
     }
 
@@ -72,24 +71,36 @@ namespace Lumina
     {
         Assert(SceneToRemove != nullptr);
         
-        auto Itr = eastl::find(Scenes.begin(), Scenes.end(), SceneToRemove);
+        auto Itr = eastl::find_if(Scenes.begin(), Scenes.end(), [SceneToRemove] (const FManagedScene& Scene) 
+        {
+            return Scene.Scene == SceneToRemove;
+        });
         AssertMsg(Itr != Scenes.end(), "Scene was not found in manager!");
-        Scenes.erase(Itr);
-        SceneToRemove->Shutdown();
 
+        FScene* Scene = Itr->Scene;
+        FSceneRenderer* SceneRenderer = Itr->SceneRenderer;
+        Scene->Shutdown();
+        SceneRenderer->Deinitialize();        
+        
         if (SceneToRemove == GameScene)
         {
             GameScene = nullptr;
         }
 
-        FMemory::Delete(SceneToRemove);
         
+        FMemory::Delete(Scene);
+        FMemory::Delete(SceneRenderer);
+        
+        Scenes.erase(Itr);
     }
 
-    void FSceneManager::GetAllScenes(TVector<FScene*>& OutScenes) const
+    FSceneRenderer* FSceneManager::GetSceneRendererForScene(const FScene* Scene)
     {
-        OutScenes = Scenes;
+        auto Itr = eastl::find_if(Scenes.begin(), Scenes.end(), [Scene] (const FManagedScene& ItrScene) 
+        {
+            return ItrScene.Scene == Scene;
+        });
+        
+        return Itr != Scenes.end() ? Itr->SceneRenderer : nullptr;
     }
-
-
 }

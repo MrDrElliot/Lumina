@@ -15,6 +15,11 @@ namespace Lumina::Hash
     //-------------------------------------------------------------------------
     // This is the default hashing algorithm for the engine
 
+    FORCEINLINE void HashCombine(size_t& seed, size_t value)
+    {
+        seed ^= value + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+    }
+    
     namespace XXHash
     {
         uint32 GetHash32( void const* pData, size_t size );

@@ -1,13 +1,13 @@
 #include "Pipeline.h"
 
+#include "Renderer/RHIIncl.h"
 #include "RHI/Vulkan/VulkanPipeline.h"
 
 namespace Lumina
 {
-    TRefPtr<FPipeline> FPipeline::Create(const FPipelineSpecification& InSpec)
+    FRHIPipeline FPipeline::Create(const FPipelineSpec& PipelineSpec)
     {
-        TRefPtr<FVulkanPipeline> NewPipeline = MakeRefPtr<FVulkanPipeline>(InSpec);
-        return NewPipeline;
+        return FRHIPipeline(MakeRefCount<FVulkanPipeline>(PipelineSpec));
     }
     
 }

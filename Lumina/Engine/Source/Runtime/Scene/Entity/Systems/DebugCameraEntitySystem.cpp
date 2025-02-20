@@ -1,9 +1,8 @@
 ﻿#include "DebugCameraEntitySystem.h"
-
+#include "Lumina.h"
 #include "Events/MouseCodes.h"
 #include "Input/Input.h"
 #include "Input/InputSubsystem.h"
-#include "Log/Log.h"
 #include "Scene/SceneUpdateContext.h"
 #include "Scene/Entity/Entity.h"
 #include "Scene/Entity/Components/CameraComponent.h"
@@ -79,7 +78,7 @@ namespace Lumina
             if (Input::IsMouseButtonPressed(Mouse::ButtonRight))
             {
                 //@TODO Fixme, better interface for the application window without needing to access the application itself.
-                glfwSetInputMode(FApplication::Get().GetWindow()->GetWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+                glfwSetInputMode(FApplication::Get().GetMainWindow()->GetWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
                 float MousePitchDelta = UpdateContext.GetSubsystem<FInputSubsystem>()->GetMouseDeltaPitch();
                 float MouseYawDelta = UpdateContext.GetSubsystem<FInputSubsystem>()->GetMouseDeltaYaw();
@@ -88,7 +87,7 @@ namespace Lumina
                 constexpr float Sensitivity = 0.1f;
                 float YawDelta   = -MouseYawDelta * Sensitivity;
                 float PitchDelta = -MousePitchDelta * Sensitivity;
-
+                
                 glm::quat yawQuat = glm::angleAxis(glm::radians(YawDelta), glm::vec3(0.0f, 1.0f, 0.0f));
 
                 glm::vec3 RightAxis = TransformComponent.Transform.Rotation * glm::vec3(1.0f, 0.0f, 0.0f);
@@ -98,7 +97,7 @@ namespace Lumina
             }
             else
             {
-                glfwSetInputMode(FApplication::Get().GetWindow()->GetWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+                glfwSetInputMode(FApplication::Get().GetMainWindow()->GetWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
             }
             
             glm::vec3 updatedForward = TransformComponent.Transform.Rotation * glm::vec3(0.0f, 0.0f, -1.0f);

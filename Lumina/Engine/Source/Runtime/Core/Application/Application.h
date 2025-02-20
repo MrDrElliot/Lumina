@@ -1,25 +1,11 @@
 #pragma once
 
-#include <memory>
 #include "Events/Event.h"
-#include "Subsystems/Subsystem.h"
-#include "Core/Delegates/Delegate.h"
 #include "Core/Engine/Engine.h"
 
 
 namespace Lumina
 {
-	class FLayer;
-	class WindowSubsystem;
-	class FAssetManager;
-	class FBuffer;
-	class FDescriptorSet;
-	class FImage;
-	class FScene;
-	struct FWindowSpecs;
-	class FWindow;
-	class FRenderContext;
-
 	enum class EApplicationFlags : uint32
 	{
 		DevelopmentTools =		1 << 0,
@@ -56,7 +42,7 @@ namespace Lumina
 		virtual void OnEvent(FEvent& Event) { }
 
 		bool HasAnyFlags(EApplicationFlags Flags);
-		FWindow* GetWindow();
+		FWindow* GetMainWindow();
 		
 		
 

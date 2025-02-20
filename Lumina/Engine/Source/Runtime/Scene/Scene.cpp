@@ -1,6 +1,7 @@
 
 
 #include "Scene.h"
+#include "Renderer/PrimitiveDrawManager.h"
 #include "SceneRenderer.h"
 #include "SceneUpdateContext.h"
 #include "Containers/Name.h"
@@ -15,6 +16,7 @@ namespace Lumina
     FScene::FScene(ESceneType InType)
         : SceneType(InType)
     {
+        PrimitiveDrawManager = FMemory::New<FPrimitiveDrawManager>();
     }
 
     FScene::~FScene()
@@ -31,7 +33,8 @@ namespace Lumina
 
     void FScene::Shutdown()
     {
-
+        FMemory::Delete(PrimitiveDrawManager);
+        PrimitiveDrawManager = nullptr;
         
         SystemManager = nullptr;
     }
@@ -42,8 +45,9 @@ namespace Lumina
     
     void FScene::Update(const FUpdateContext& UpdateContext)
     {
-        FSceneUpdateContext SceneContext(UpdateContext, this);
+        DeltaTime = UpdateContext.GetDeltaTime();
         
+        FSceneUpdateContext SceneContext(UpdateContext, this);
         for (FEntitySystem* System : SystemUpdateList[(uint32)UpdateContext.GetUpdateStage()])
         {
             System->Update(EntityRegistry, SceneContext);
@@ -108,7 +112,7 @@ namespace Lumina
         FInlineString finalName = desiredName;
         FName finalNameID(finalName.c_str());
 
-        uint32_t counter = 1;
+        uint32 counter = 1;
         bool isUniqueName = false;
 
         while (!isUniqueName)

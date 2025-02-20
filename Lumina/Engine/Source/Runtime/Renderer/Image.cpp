@@ -1,16 +1,16 @@
 #include "Image.h"
-#include "Swapchain.h"
+#include "Renderer/RHIIncl.h"
 #include "RHI/Vulkan/VulkanImage.h"
 
 namespace Lumina
 {
-    TRefPtr<FImage> FImage::Create(const FImageSpecification& Spec)
+    FRHIImage FImage::Create(const FImageSpecification& Spec)
     {
-        return MakeRefPtr<FVulkanImage>(Spec);
+        return FRHIImage(MakeRefCount<FVulkanImage>(Spec));
     }
 
-    TRefPtr<FImageSampler> FImageSampler::Create(const FImageSamplerSpecification& Spec)
+    FRHIImageSampler FImageSampler::Create(const FImageSamplerSpecification& Spec)
     {
-        return MakeRefPtr<FVulkanImageSampler>(Spec);
+        return FRHIImageSampler(MakeRefCount<FVulkanImageSampler>(Spec));
     }
 }

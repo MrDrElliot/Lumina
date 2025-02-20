@@ -2,20 +2,13 @@
 
 #include "SceneTypes.h"
 #include "Assets/Asset.h"
-#include "glm/glm.hpp"
 #include <entt/entt.hpp>
-
-#include "Containers/Name.h"
+#include "Lumina.h"
 #include "Core/UpdateContext.h"
 #include "Core/Functional/Function.h"
 #include "Entity/Registry/EntityRegistry.h"
 #include "Subsystems/Subsystem.h"
 
-
-namespace Lumina
-{
-    class FEntitySystem;
-}
 
 namespace Lumina
 {
@@ -26,26 +19,19 @@ namespace Lumina
     class Entity;
     class Material;
     class AStaticMesh;
+    class FPrimitiveDrawManager;
+    class FEntitySystem;
+}
 
-    struct FSceneSettings
-    {
-        FSceneSettings()
-        {
-            BackgroundColor = {0.0f, 0.0f, 0.0f};
-            bShowGrid = true;
-        }
-
-        glm::vec3 BackgroundColor;
-        bool bShowGrid;
-    };
+namespace Lumina
+{
     
-    
-    class FScene : public FRefCounted
+    class FScene
     {
     public:
         
         FScene(ESceneType InType);
-        ~FScene();
+        virtual ~FScene();
         
 
         void Initialize(const FUpdateContext& UpdateContext);
@@ -63,11 +49,10 @@ namespace Lumina
         FEntityRegistry& GetMutableEntityRegistry() { return EntityRegistry; }
         const FEntityRegistry& GetConstEntityRegistry() const { return EntityRegistry; }
         
-        FSceneSettings& GetSceneSettings() { return Settings; }
-
         FORCEINLINE FSubsystemManager* GetSceneSubsystemManager() const { return SceneSubsystemManager; }
         FCameraManager* GetSceneCameraManager() const;
-        
+
+        FORCEINLINE double GetSceneDeltaTime() const { return DeltaTime; }
 
         template<typename T>
         T* GetSceneSubsystem() const;
@@ -76,13 +61,18 @@ namespace Lumina
         template <typename T>
         void ForEachComponent(const TFunction<void(uint32& CurrentIndex, entt::entity& OutEntity, T& OutComponent)>&& Functor);
 
+        #if WITH_DEVELOPMENT_TOOLS
+        FPrimitiveDrawManager* GetPrimitiveDrawManager() const { return PrimitiveDrawManager; }
+        #endif
     
-
-        
     private:
+
+        #if WITH_DEVELOPMENT_TOOLS
+        FPrimitiveDrawManager*          PrimitiveDrawManager = nullptr;
+        #endif
         
-        FSceneSettings                  Settings;
         ESceneType                      SceneType;
+        double                          DeltaTime = 0.0;
 
         const FSubsystemManager*        SystemManager = nullptr;
         

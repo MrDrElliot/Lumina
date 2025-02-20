@@ -61,4 +61,21 @@ namespace Lumina
         inFile.close();
         return true;
     }
+
+    bool FFileHelper::LoadFileIntoString(FString& OutString, const FString& Path, uint32 ReadFlags)
+    {
+        std::ifstream file(Path.c_str(), std::ios::in);
+        if (!file.is_open())
+        {
+            LOG_ERROR("Failed to open shader file: {0}", Path.c_str());
+            return false;
+        }
+
+        std::stringstream buffer;
+        buffer << file.rdbuf();
+        std::string String = buffer.str();
+        OutString.assign(String.c_str());
+        
+        return OutString.size();
+    }
 }

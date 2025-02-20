@@ -1,39 +1,40 @@
 #pragma once
 
-#include "Renderer/Shader.h"
 #include <vulkan/vulkan.h>
-
-#include "Containers/Array.h"
-#include "Containers/String.h"
+#include "Lumina.h"
+#include "Renderer/Shader.h"
 
 namespace Lumina
 {
+
+    struct FVulkanShaderReflctionData
+    {
+        TVector<VkPipelineShaderStageCreateInfo>        StageCreateInfos;
+        TVector<VkDescriptorSetLayout>                  SetLayouts;
+        TVector<VkPushConstantRange>                    Ranges;
+    };
+    
     class FVulkanShader : public FShader
     {
     public:
 
-        FVulkanShader(const TVector<FShaderData>& InData, const FString& Tag);
-        ~FVulkanShader() override;
+        FVulkanShader()
+            : VkReflectionData()
+        {}
 
-        TVector<VkPipelineShaderStageCreateInfo>& GetCreateInfos() { return StageCreateInfos; }
-        TVector<VkDescriptorSetLayout>& GetLayouts() { return SetLayouts; }
-        TVector<VkPushConstantRange>& GetRanges() { return Ranges; }
+        ~FVulkanShader() override;
+        
+        const void* GetPlatformReflectionData() const override { return &VkReflectionData; }
+
+        void CreateStage(const FShaderStage& StageData) override;
+
+        void GeneratePlatformShaderStageReflectionData(const FShaderReflectionData& ReflectionData) override;
 
         virtual void SetFriendlyName(const FString& InString) override;
-        
-        void RestoreShaderModule(std::filesystem::path path) override;
-        
-        bool IsDirty() const override { return bDirty; }
-        void SetDirty(bool NewDirty) override { bDirty = NewDirty; }
-
+    
     private:
         
-        TVector<VkPipelineShaderStageCreateInfo> StageCreateInfos;
-        TVector<VkDescriptorSetLayout> SetLayouts;
-        TVector<VkPushConstantRange> Ranges;
-        std::filesystem::path Path;
-        bool bDirty = false;
+        FVulkanShaderReflctionData VkReflectionData;
         
-    
     };
 }

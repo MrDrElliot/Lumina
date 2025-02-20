@@ -5,6 +5,6 @@ namespace Lumina
     
     ELoadResult FMaterialFactory::CreateNew(FAssetRecord* InRecord)
     {
-        return {};
+        return ELoadResult::Failed;
     }
 }

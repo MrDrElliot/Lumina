@@ -38,7 +38,7 @@ namespace Lumina
         return ELoadResult::Succeeded;
     }
 
-    TRefPtr<FImage> FTextureFactory::ImportFromSource(std::filesystem::path Path)
+    FRHIImage FTextureFactory::ImportFromSource(std::filesystem::path Path)
     {
         PROFILE_SCOPE_LOG(FTextureFactory::ImportFromSource)
 
@@ -64,7 +64,7 @@ namespace Lumina
 
         stbi_image_free(data);
         
-        TRefPtr<FImage> Image = FImage::Create(ImageSpec);
+        FRHIImage Image = FImage::Create(ImageSpec);
 
         return Image;
     }

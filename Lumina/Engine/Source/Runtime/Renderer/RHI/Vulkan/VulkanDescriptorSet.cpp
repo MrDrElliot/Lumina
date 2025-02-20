@@ -1,11 +1,10 @@
 #include "VulkanDescriptorSet.h"
-#include "Renderer/Swapchain.h"
 #include "VulkanBuffer.h"
 #include "VulkanImage.h"
 #include "VulkanRenderAPI.h"
 #include "VulkanRenderContext.h"
-#include "Renderer/Shader.h"
-#include "Renderer/Buffer.h"
+#include "Renderer/RHIIncl.h"
+#include "VulkanMacros.h"
 
 namespace Lumina
 {
@@ -36,45 +35,46 @@ namespace Lumina
         }
     }
 
-    const VkShaderStageFlags GetShaderStageFlags(EShaderStage stage)
+    const VkShaderStageFlags GetShaderStageFlags(uint32 stage)
     {
         VkShaderStageFlags flags = 0;
 
-        if ((stage & EShaderStage::VERTEX) != EShaderStage::NONE)
+        if (stage & (uint32)EShaderStage::VERTEX)
         {
             flags |= VK_SHADER_STAGE_VERTEX_BIT;
         }
-        if ((stage & EShaderStage::FRAGMENT) != EShaderStage::NONE)
+        if (stage & (uint32)EShaderStage::FRAGMENT)
         {
             flags |= VK_SHADER_STAGE_FRAGMENT_BIT;
         }
-        if ((stage & EShaderStage::COMPUTE) != EShaderStage::NONE)
+        if (stage & (uint32)EShaderStage::COMPUTE)
         {
             flags |= VK_SHADER_STAGE_COMPUTE_BIT;
         }
-        if ((stage & EShaderStage::GEOMETRY) != EShaderStage::NONE)
+        if (stage & (uint32)EShaderStage::GEOMETRY)
         {
             flags |= VK_SHADER_STAGE_GEOMETRY_BIT;
         }
-        if ((stage & EShaderStage::TESSELLATION_CONTROL) != EShaderStage::NONE)
+        if (stage & (uint32)EShaderStage::TESSELLATION_CONTROL)
         {
             flags |= VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
         }
-        if ((stage & EShaderStage::TESSELLATION_EVALUATION) != EShaderStage::NONE)
+        if (stage & (uint32)EShaderStage::TESSELLATION_EVALUATION)
         {
             flags |= VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
         }
-        if ((stage & EShaderStage::ALL_GRAPHICS) != EShaderStage::NONE)
+        if (stage & (uint32)EShaderStage::ALL_GRAPHICS)
         {
             flags |= VK_SHADER_STAGE_ALL_GRAPHICS;
         }
-        if ((stage & EShaderStage::ALL) != EShaderStage::NONE)
+        if (stage & (uint32)EShaderStage::ALL)
         {
             flags |= VK_SHADER_STAGE_ALL;
         }
 
         return flags;
     }
+
     
     constexpr VkDescriptorBindingFlags extractFlags(const uint64& Mask)
     {
@@ -89,8 +89,10 @@ namespace Lumina
     }
     
     FVulkanDescriptorSet::FVulkanDescriptorSet(const FDescriptorSetSpecification& InSpec)
-    : DescriptorSet(VK_NULL_HANDLE), Layout(VK_NULL_HANDLE)
+        : DescriptorSet(VK_NULL_HANDLE)
+        , Layout(VK_NULL_HANDLE)
     {
+        
         FVulkanRenderContext* RenderContext = FRenderer::GetRenderContext<FVulkanRenderContext>();		
 
         auto Device = RenderContext->GetDevice();
@@ -98,10 +100,10 @@ namespace Lumina
         TVector<VkDescriptorSetLayoutBinding> SetBindings;
         TVector<VkDescriptorBindingFlags> BindingFlags;
 
-        for (auto& binding : InSpec.Bindings)
+        for (const FDescriptorBinding& binding : InSpec.Bindings)
         {
             VkDescriptorSetLayoutBinding VkBinding = {};
-            VkBinding.stageFlags = GetShaderStageFlags(binding.ShaderStage);
+            VkBinding.stageFlags = GetShaderStageFlags(binding.StageFlags);
             VkBinding.pImmutableSamplers = nullptr;
             VkBinding.descriptorCount = binding.ArrayCount;
             VkBinding.descriptorType = convert(binding.Type);
@@ -123,7 +125,7 @@ namespace Lumina
         LayoutCreateInfo.pBindings = SetBindings.data();
         LayoutCreateInfo.flags = 0;
 
-        vkCreateDescriptorSetLayout(Device, &LayoutCreateInfo, nullptr, &Layout);
+        VK_CHECK(vkCreateDescriptorSetLayout(Device, &LayoutCreateInfo, nullptr, &Layout));
 
         TVector<VkDescriptorSet> set = FRenderer::GetRenderContext<FVulkanRenderContext>()->AllocateDescriptorSets(Layout, 1);
         DescriptorSet = set[0];
@@ -143,12 +145,12 @@ namespace Lumina
         FRenderer::GetRenderContext<FVulkanRenderContext>()->FreeDescriptorSets({ DescriptorSet });
     }
 
-    void FVulkanDescriptorSet::Write(uint16 Binding, uint16 ArrayElement, TRefPtr<FBuffer> Buffer, uint64 Size, uint64 Offset)
+    void FVulkanDescriptorSet::Write(uint16 Binding, uint16 ArrayElement, FRHIBuffer Buffer, uint64 Size, uint64 Offset)
     {
         FVulkanRenderContext* RenderContext = FRenderer::GetRenderContext<FVulkanRenderContext>();
         VkDevice Device = RenderContext->GetDevice();
         
-        TRefPtr<FVulkanBuffer> vkBuffer = RefPtrCast<FVulkanBuffer>(Buffer);
+        TRefCountPtr<FVulkanBuffer> vkBuffer = Buffer.As<FVulkanBuffer>();
 
         VkDescriptorBufferInfo DescriptorBufferInfo = {};
         DescriptorBufferInfo.buffer = vkBuffer->GetBuffer();
@@ -164,17 +166,16 @@ namespace Lumina
         WriteDescriptorSet.descriptorCount = 1;
         WriteDescriptorSet.pBufferInfo = &DescriptorBufferInfo;
         
-
         vkUpdateDescriptorSets(Device, 1, &WriteDescriptorSet, 0, nullptr);
     }
 
-    void FVulkanDescriptorSet::Write(uint16 Binding, uint16 ArrayElement, TRefPtr<FImage> Image, TRefPtr<FImageSampler> Sampler)
+    void FVulkanDescriptorSet::Write(uint16 Binding, uint16 ArrayElement, FRHIImage Image, FRHIImageSampler Sampler)
     {
         FVulkanRenderContext* RenderContext = FRenderer::GetRenderContext<FVulkanRenderContext>();
         VkDevice Device = RenderContext->GetDevice();
         
-        TRefPtr<FVulkanImage> vkImage = RefPtrCast<FVulkanImage>(Image);
-        TRefPtr<FVulkanImageSampler> vk_sampler = RefPtrCast<FVulkanImageSampler>(Sampler);
+        TRefCountPtr<FVulkanImage> vkImage = Image.As<FVulkanImage>();
+        TRefCountPtr<FVulkanImageSampler> vk_sampler = Sampler.As<FVulkanImageSampler>();
 
         VkDescriptorImageInfo DescriptorImageInfo = {};
         DescriptorImageInfo.imageView = vkImage->GetImageView();
@@ -193,7 +194,7 @@ namespace Lumina
         vkUpdateDescriptorSets(Device, 1, &WriteDescriptorSet, 0, nullptr);
     }
 
-    void FVulkanDescriptorSet::Write(uint16 Binding, uint16 ArrayElement, TVector<TRefPtr<FImage>> Images, TRefPtr<FImageSampler> Sampler)
+    void FVulkanDescriptorSet::Write(uint16 Binding, uint16 ArrayElement, TVector<FRHIImage> Images, FRHIImageSampler Sampler)
     {
         FVulkanRenderContext* RenderContext = FRenderer::GetRenderContext<FVulkanRenderContext>();
         VkDevice Device = RenderContext->GetDevice();
@@ -202,8 +203,8 @@ namespace Lumina
 
         for (size_t i = 0; i < Images.size(); ++i)
         {
-            TRefPtr<FVulkanImage> vkImage = RefPtrCast<FVulkanImage>(Images[i]);
-            TRefPtr<FVulkanImageSampler> vkSampler = RefPtrCast<FVulkanImageSampler>(Sampler);
+            TRefCountPtr<FVulkanImage> vkImage = Images[i].As<FVulkanImage>();
+            TRefCountPtr<FVulkanImageSampler> vkSampler = Sampler.As<FVulkanImageSampler>();
 
             DescriptorImageInfos[i].imageView = vkImage->GetImageView();
             DescriptorImageInfos[i].sampler = vkSampler->GetSampler();

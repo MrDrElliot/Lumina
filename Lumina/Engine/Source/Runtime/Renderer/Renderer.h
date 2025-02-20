@@ -2,33 +2,30 @@
 
 #include <functional>
 #include <glm/glm.hpp>
-#include "CommandBuffer.h"
-#include "PipelineBarrier.h"
 #include "Core/Functional/Function.h"
-#include "Memory/RefCounted.h"
+#include "Core/Templates/Forward.h"
+#include "RenderResource.h"
+#include "RHIFwd.h"
+#include "Containers/Array.h"
+#include "Core/Math/Color.h"
 #include "Platform/GenericPlatform.h"
+
 
 namespace Lumina
 {
-    class IRenderContext;
-    class FMaterial;
-    class FImageSampler;
+    struct FRenderPassBeginInfo;
+    struct FPipelineBarrierInfo;
     enum class EShaderStage : uint8;
+    class IRenderContext;
+    class FImageSampler;
     class Material;
     class AStaticMesh;
     class IRenderAPI;
     class FSwapchain;
-    class FDescriptorSet;
     class FBuffer;
     class FPipeline;
     class FImage;
     class FWindow;
-
-    struct FRenderConfig
-    {
-        uint8 FramesInFlight;
-        FWindow* Window;
-    };
     
     class FRenderer
     {
@@ -41,9 +38,9 @@ namespace Lumina
             uint32 NumDrawCalls = 0;
             uint32 NumVertices = 0;
             
-            TQueue<RenderFunction>           RenderFunctionList;
-            TRefPtr<FImageSampler>           LinearSampler;
-            TRefPtr<FImageSampler>           NearestSampler;
+            TQueue<RenderFunction>     RenderFunctionList;
+            FRHIImageSampler           LinearSampler;
+            FRHIImageSampler           NearestSampler;
 
             RendererInternalData(const RendererInternalData&) = delete;
             RendererInternalData& operator=(const RendererInternalData&) = delete;
@@ -53,30 +50,33 @@ namespace Lumina
             
         } static sInternalData;
         
-        static void Init(const FRenderConfig& InConfig);
+        static void Init();
         static void Shutdown();
 
-        static void Submit(RenderFunction&& Functor);
+        template<typename LAMBDA>
+        static void Submit(LAMBDA&& Lambda)
+        {
+            sInternalData.RenderFunctionList.push(TForward<LAMBDA>(Lambda));
+        }
         
         static void BeginFrame();
         static void EndFrame();
-        static void BeginRender(const TVector<TRefPtr<FImage>>& Attachments, const glm::fvec4& ClearColor);
+        static void BeginRender(const FRenderPassBeginInfo& Info);
         static void EndRender();
         static void Render();
         static void ProcessRenderQueue();
 
-        static FRenderConfig GetConfig();
         static uint32 GetCurrentFrameIndex();
 
         static void WaitIdle();
         static void LoadShaderPack();
 
-        static TRefPtr<FImageSampler> GetLinearSampler();
-        static TRefPtr<FImageSampler> GetNearestSampler();
+        static FRHIImageSampler GetLinearSampler();
+        static FRHIImageSampler GetNearestSampler();
         
         static void InsertBarrier(const FPipelineBarrierInfo& BarrierInfo);
-        static void BindSet(const TRefPtr<FDescriptorSet>& Set, const TRefPtr<FPipeline>& Pipeline, uint8 SetIndex, const TVector<uint32>& DynamicOffsets);
-        static void BindPipeline(TRefPtr<FPipeline> Pipeline);
+        static void BindSet(const FRHIDescriptorSet& Set, const FRHIPipeline& Pipeline, uint8 SetIndex, const TVector<uint32>& DynamicOffsets);
+        static void BindPipeline(FRHIPipeline Pipeline);
 
         static IRenderContext* GetRenderContext();
 
@@ -88,22 +88,27 @@ namespace Lumina
         template<typename T>
         static T* GetRenderAPI();
         
-        static void CopyToSwapchain(TRefPtr<FImage> ImageToCopy);
-        static void ClearColor(const TRefPtr<FImage>& Image, const glm::fvec4& Value);
+        static void CopyToSwapchain(FRHIImage ImageToCopy);
+        static void ClearColor(const FRHIImage& Image, const glm::fvec4& Value);
 
+        static void BindVertexBuffer(FRHIBuffer VertexBuffer);
+        static void BindIndexBuffer(FRHIBuffer IndexBuffer);
         
-        static void PushConstants(TRefPtr<FPipeline> Pipeline, EShaderStage ShaderStage, uint16 Offset, uint32 Size, const void* Data);
-        static void DrawIndexed(TRefPtr<FBuffer> VertexBuffer, TRefPtr<FBuffer> IndexBuffer);
+        static void PushConstants(FRHIPipeline Pipeline, EShaderStage ShaderStage, uint16 Offset, uint32 Size, const void* Data);
+        static void DrawIndexed(uint32 IndexCount, uint32 Instances = 1, uint32 FirstVertex = 0, uint32 FirstInstance = 0);
         static void DrawVertices(uint32 Vertices, uint32 Instances = 1, uint32 FirstVertex = 0, uint32 FirstInstance = 0);
 
         
-        static TRefPtr<FCommandBuffer> GetCommandBuffer();
+        static FRHICommandBuffer GetCommandBuffer();
         
     private:
 
         static IRenderAPI* RenderAPI;
     };
 
+    
+    //-------------------------------------------------------------------------------
+    // Templates
 
     template <typename T>
     T* FRenderer::GetRenderContext()

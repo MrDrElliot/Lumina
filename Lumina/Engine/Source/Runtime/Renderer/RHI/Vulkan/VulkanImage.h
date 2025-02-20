@@ -1,6 +1,8 @@
 #pragma once
+
+#include <vulkan/vulkan.hpp>
+#include "VulkanMemoryAllocator.h"
 #include "Renderer/Image.h"
-#include "vulkanmemoryallocator/src/VmaUsage.h"
 
 
 namespace Lumina
@@ -125,7 +127,7 @@ namespace Lumina
 		EImageLayout GetLayout() { return CurrentLayout; }
 		
         void SetCurrentLayout(EImageLayout Layout) { CurrentLayout = Layout; }
-        void SetLayout(TRefPtr<FCommandBuffer> CmdBuffer, EImageLayout NewLayout, EPipelineStage SrcStage, EPipelineStage DstStage, EPipelineAccess SrcAccess, EPipelineAccess DstAccess) override;
+        void SetLayout(TRefCountPtr<FCommandBuffer> CmdBuffer, EImageLayout NewLayout, EPipelineStage SrcStage, EPipelineStage DstStage, EPipelineAccess SrcAccess, EPipelineAccess DstAccess) override;
 
         void SetFriendlyName(const FString& InName) override;
         

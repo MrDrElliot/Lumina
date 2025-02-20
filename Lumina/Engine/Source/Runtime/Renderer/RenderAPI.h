@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Assets/AssetHandle.h"
-#include "Image.h"
 #include "PipelineBarrier.h"
 #include "RenderContext.h"
 #include "Renderer.h"
@@ -15,7 +13,6 @@ namespace Lumina
     class Material;
     class AStaticMesh;
     class FSwapchain;
-    class FDescriptorSet;
     class FBuffer;
     class FPipeline;
     class FCommandBuffer;
@@ -34,34 +31,36 @@ namespace Lumina
         
         virtual ~IRenderAPI() = default;
 
-        static IRenderAPI* Create(const FRenderConfig& InConfig);
+        static IRenderAPI* Create();
 
         FORCEINLINE IRenderContext* GetRenderContext() const { return RenderContext; }
 
-        virtual void Initialize(const FRenderConfig& InConfig) = 0;
+        virtual void Initialize() = 0;
         
         template<typename T>
         T* GetRenderContext();
     
         virtual void BeginFrame() = 0;
         virtual void EndFrame() = 0;
-        virtual void BeginRender(const TVector<TRefPtr<FImage>>& Attachments, const glm::fvec4& ClearColor) = 0;
+        virtual void BeginRender(const FRenderPassBeginInfo& Info) = 0;
         virtual void EndRender() = 0;
         virtual void WaitDevice() = 0;
 
-        virtual FRenderConfig GetConfig() { return Config; }
         virtual ERHIInterfaceType GetRHIInterfaceType() = 0;
 
-        virtual void BindSet(const TRefPtr<FDescriptorSet>& Set, const TRefPtr<FPipeline>& Pipeline, uint8 SetIndex, const TVector<uint32>& DynamicOffsets) = 0;
-        virtual void BindPipeline(TRefPtr<FPipeline> Pipeline) = 0;
+        virtual void BindSet(const FRHIDescriptorSet& Set, const FRHIPipeline& Pipeline, uint8 SetIndex, const TVector<uint32>& DynamicOffsets) = 0;
+        virtual void BindPipeline(FRHIPipeline Pipeline) = 0;
 
         virtual void InsertBarrier(const FPipelineBarrierInfo& BarrierInfo) = 0;
-        virtual void ClearColor(const TRefPtr<FImage>& Image, const glm::fvec4& Value) = 0;
-        virtual void CopyToSwapchain(TRefPtr<FImage> ImageToCopy) = 0;
+        virtual void ClearColor(const FRHIImage& Image, const glm::fvec4& Value) = 0;
+        virtual void CopyToSwapchain(FRHIImage ImageToCopy) = 0;
 
-        virtual void PushConstants(TRefPtr<FPipeline> Pipeline, EShaderStage ShaderStage, uint16 Offset, uint32 Size, const void* Data) = 0;
+        virtual void PushConstants(FRHIPipeline Pipeline, EShaderStage ShaderStage, uint16 Offset, uint32 Size, const void* Data) = 0;
+
+        virtual void BindVertexBuffer(FRHIBuffer VertexBuffer) = 0;
+        virtual void BindIndexBuffer(FRHIBuffer IndexBuffer) = 0;
         
-        virtual void DrawIndexed(TRefPtr<FBuffer> VertexBuffer, TRefPtr<FBuffer> IndexBuffer) = 0;
+        virtual void DrawIndexed(uint32 IndexCount, uint32 Instances = 1, uint32 FirstVertex = 0, uint32 FirstInstance = 0) = 0;
         virtual void DrawVertices(uint32 Vertices, uint32 Instances = 1, uint32 FirstVertex = 0, uint32 FirstInstance = 0) = 0;
 
         virtual void BeginCommandRecord() = 0;
@@ -71,7 +70,6 @@ namespace Lumina
     protected:
 
         IRenderContext*                         RenderContext = nullptr;
-        FRenderConfig                           Config = {};
 
     };
 

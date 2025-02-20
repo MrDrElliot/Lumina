@@ -1,7 +1,10 @@
 #pragma once
+
+#include <EASTL/type_traits.h>
+#include <rpmalloc.h>
+
 #include "Core/Assertions/Assert.h"
 #include "Platform/WindowsPlatform.h"
-#include "rpmalloc.h"
 
 static bool GIsMemorySystemInitialized = false;
 static rpmalloc_config_t GrpmallocConfig;
@@ -19,15 +22,35 @@ class FMemory
 {
 public:
 
-    FORCEINLINE static void MemsetZero( void* ptr, size_t size )
+    template <typename T>
+    static constexpr typename eastl::remove_reference<T>::type&& Move(T&& x) noexcept
     {
-        memset( ptr, 0, size );
+        return static_cast<typename eastl::remove_reference<T>::type&&>(x);
+    }
+
+    template <typename T>
+    static constexpr typename eastl::enable_if<std::is_move_constructible_v<T> && !eastl::is_trivially_copyable_v<T>, eastl::remove_reference_t<T>&&>::type
+    MoveIfAble(T&& x) noexcept
+    {
+        return static_cast<typename eastl::remove_reference<T>::type&&>(x);
+    }
+
+    template <typename T>
+    static constexpr eastl::enable_if_t<!std::is_move_constructible_v<T> || eastl::is_trivially_copyable_v<T>, T&>
+    MoveIfAble(T& x) noexcept
+    {
+        return x;
+    }
+
+    FORCEINLINE static void MemsetZero(void* ptr, size_t size)
+    {
+        memset(ptr, 0, size);
     }
     
     template <typename T>
-    FORCEINLINE static void MemsetZero( T* ptr )
+    FORCEINLINE static void MemsetZero(T* ptr)
     {
-        memset( ptr, 0, sizeof( T ) );
+        memset(ptr, 0, sizeof(T));
     }
 
     FORCEINLINE static bool IsAligned(void const* p, size_t n)
@@ -43,7 +66,7 @@ public:
     
     static void CustomAssert( char const* pMessage )
     {
-        LOG_CRITICAL("Memory Error!: {0}", pMessage);
+        std::cout << pMessage;
     }
 
     static void Initialize()
@@ -60,6 +83,7 @@ public:
 
     static void Shutdown()
     {
+        std::cout << "Program Terminated with: " << GetTotalRequestedMemory() << " Bytes remaining \n";
         GIsMemorySystemInitialized = false;
         rpmalloc_finalize();
     }
@@ -77,14 +101,14 @@ public:
         rpmalloc_thread_finalize(1);
     }
 
-    static size_t GetTotalRequestedMemory()
+    NODISCARD static size_t GetTotalRequestedMemory()
     {
         rpmalloc_global_statistics_t stats;
         rpmalloc_global_statistics(&stats);
         return stats.mapped;
     }
 
-    static size_t GetTotalAllocatedMemory()
+    NODISCARD static size_t GetTotalAllocatedMemory()
     {
         rpmalloc_global_statistics_t stats;
         rpmalloc_global_statistics(&stats);
@@ -92,7 +116,7 @@ public:
     }
 
 
-    [[nodiscard]] static void* Malloc(size_t size, size_t alignment = DEFAULT_ALIGNMENT)
+    NODISCARD static void* Malloc(size_t size, size_t alignment = DEFAULT_ALIGNMENT)
     {
         if (size == 0) return nullptr;
         void* pMemory = nullptr;
@@ -102,7 +126,7 @@ public:
         return pMemory;
     }
 
-    [[nodiscard]] static void* Realloc( void* pMemory, size_t newSize, size_t originalAlignment = DEFAULT_ALIGNMENT)
+    NODISCARD static void* Realloc( void* pMemory, size_t newSize, size_t originalAlignment = DEFAULT_ALIGNMENT)
     {
         void* pReallocatedMemory = nullptr;
 
@@ -120,14 +144,14 @@ public:
     }
 
     template< typename T, typename ... ConstructorParams >
-    [[nodiscard]] static FORCEINLINE T* New(ConstructorParams&&... params)
+    NODISCARD static FORCEINLINE T* New(ConstructorParams&&... params)
     {
-        void* pMemory = Malloc( sizeof( T ), alignof( T ) );
+        void* pMemory = Malloc(sizeof(T), alignof(T));
         Assert(pMemory != nullptr);
-        return new(pMemory) T( std::forward<ConstructorParams>(params )...);
+        return new(pMemory) T(eastl::forward<ConstructorParams>(params)...);
     }
 
-    template< typename T >
+    template<typename T>
     static FORCEINLINE void Delete(T*& pType)
     {
         if ( pType != nullptr )

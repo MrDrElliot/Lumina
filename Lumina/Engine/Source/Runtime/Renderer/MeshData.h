@@ -26,8 +26,8 @@ namespace Lumina
         FMeshResource& operator=(const FMeshResource&) = delete;
 
         
-        FORCEINLINE const TRefPtr<FBuffer>& GetVertexBuffer()   { return VBO; }
-        FORCEINLINE const TRefPtr<FBuffer>& GetIndexBuffer()    { return IBO; }
+        FORCEINLINE const FRHIBuffer& GetVertexBuffer()   { return VBO; }
+        FORCEINLINE const FRHIBuffer& GetIndexBuffer()    { return IBO; }
         
         friend FArchive& operator << (FArchive& Ar, FMeshResource& Data)
         {
@@ -44,8 +44,8 @@ namespace Lumina
 
         // -------- Transient Data --------
         
-        TRefPtr<FBuffer>          VBO;
-        TRefPtr<FBuffer>          IBO;
+        FRHIBuffer          VBO;
+        FRHIBuffer          IBO;
         
     };
 }

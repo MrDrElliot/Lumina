@@ -13,6 +13,14 @@ namespace Lumina
     void FTreeListView::Draw(FTreeListViewContext Context)
     {
 
+        if (bDirty)
+        {
+            RebuildTree(Context);
+            return;
+        }
+        
+        bCurrentlyDrawing = true;
+        
         ImGuiTableFlags TableFlags = ImGuiTableFlags_Resizable | ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_ScrollY;
         TableFlags |= ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuterH | ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_BordersV;
 
@@ -40,6 +48,8 @@ namespace Lumina
         
         ImGui::PopStyleVar();
         ImGui::PopID();
+
+        bCurrentlyDrawing = false;
     }
 
     void FTreeListView::ClearTree()
@@ -48,7 +58,21 @@ namespace Lumina
         {
             FMemory::Delete(Item);
         }
+        
         ListItems.clear();
+    }
+
+    void FTreeListView::RebuildTree(FTreeListViewContext Context)
+    {
+        Assert(bCurrentlyDrawing == false);
+        Assert(bDirty);
+
+        ClearSelection();
+        ClearTree();
+        
+        Context.RebuildTreeFunction(this);
+
+        bDirty = false;
     }
 
     void FTreeListView::DrawListItem(FTreeListViewItem* ItemToDraw, FTreeListViewContext Context)
@@ -111,9 +135,15 @@ namespace Lumina
 
     void FTreeListView::SetSelection(FTreeListViewItem* Item)
     {
+        bool bWasSelected = Item->bSelected;
+        
         ClearSelection();
-        Selections.push_back(Item);
-        Item->bSelected = true;
+        
+        if (!bWasSelected)
+        {
+            Selections.push_back(Item);
+            Item->bSelected = true;
+        }
         
         Item->OnSelectionStateChanged();
     }
@@ -122,6 +152,8 @@ namespace Lumina
     {
         for (FTreeListViewItem* Item : Selections)
         {
+            Assert(Item->bSelected);
+            
             Item->bSelected = false;
             Item->OnSelectionStateChanged();    
         }

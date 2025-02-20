@@ -1,11 +1,11 @@
 #include "RenderAPI.h"
-#include "Swapchain.h"
+#include "Renderer/RHIIncl.h"
 #include "RHI/Vulkan/VulkanRenderAPI.h"
 
 namespace Lumina
 {
-    IRenderAPI* IRenderAPI::Create(const FRenderConfig& InConfig)
+    IRenderAPI* IRenderAPI::Create()
     {
-        return new FVulkanRenderAPI(InConfig);
+        return new FVulkanRenderAPI();
     }
 }

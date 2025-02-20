@@ -1,10 +1,14 @@
 #include "ShaderLibrary.h"
-
-#include <fstream>
+#include "Containers/String.h"
+#include "Platform/Filesystem/FileHelper.h"
+#include <shaderc/shaderc.hpp>
+#include <filesystem>
+#include "Renderer/RHIIncl.h"
 #include "Source/Runtime/Log/Log.h"
 
 namespace Lumina
 {
+    
     
     FShaderLibrary::FShaderLibrary()
     {
@@ -17,59 +21,82 @@ namespace Lumina
 
     void FShaderLibrary::Shutdown()
     {
-        for (auto& [Key, Shader] : Library)
-        {
-            LOG_TRACE("Shader Library: Destroying Shader - {0}", Key);
-            Shader->Release();
-        }
-
         Library.clear();
     }
 
-    bool FShaderLibrary::Load(std::filesystem::path Vertex, std::filesystem::path Fragment, const FString& Tag)
+    void FShaderLibrary::LoadShadersInDirectory(const FString& Directory)
     {
-        TVector<FShaderData> Shaders;
-        
-        FShaderData VertData
+        for (const auto& Dir : std::filesystem::recursive_directory_iterator(Directory.c_str()))
         {
-            .Stage = EShaderStage::VERTEX,
-            .RawPath = Vertex
-        };
-
-        FShaderData FragData
-        {
-            .Stage = EShaderStage::FRAGMENT,
-            .RawPath = Fragment,
-        };
-        
-        Shaders.push_back(VertData);
-        Shaders.push_back(FragData);
-
-        for (FShaderData& Shader : Shaders)
-        {
-            std::ifstream File(Shader.RawPath, std::ios::ate | std::ios::binary);
-            if(!File.is_open())
+            if(Dir.is_directory())
             {
-                LOG_ERROR("Failed to open shader file: {0}", Shader.RawPath.string());
+                continue;
+            }
+
+            if(Dir.path().extension() == ".vert" || Dir.path().extension() == ".frag")
+            {
+                LOG_DEBUG("Loading Shader at: {0}", Dir.path().string().c_str());
+
+                
+                
+            }
+        }
+    }
+
+    bool FShaderLibrary::Load(const FString& Vertex, const FString& Fragment, FName Tag)
+    {
+        Assert(Library.find(Tag) == Library.end());
+
+        TRefCountPtr<FShader> NewShader = FShader::Create();
+        
+        TVector<FShaderStage> Stages =
+        {
+            { .Stage = EShaderStage::VERTEX,   .RawPath = Vertex },
+            { .Stage = EShaderStage::FRAGMENT, .RawPath = Fragment }
+        };
+
+        
+        for (FShaderStage& Stage : Stages)
+        {
+
+            FString ShaderSource;
+            if(!FFileHelper::LoadFileIntoString(ShaderSource, Stage.RawPath))
+            {
                 return false;
             }
-            
-            size_t Size = (size_t)File.tellg();
-            TVector<uint32> Buffer(Size / sizeof(uint32));
 
-            File.seekg(0);
-            File.read((char*)Buffer.data(), (uint64)Size);
-            File.close();
-            Shader.Binaries = Buffer;
+            if (FShaderCompiler::Get()->CompileShader(Stage.Binaries, ShaderSource, Tag.c_str()) != EShaderCompileResult::Success)
+            {
+                LOG_ERROR("Failed to compile shader! {0}", Tag.c_str());
+                return false;
+            }
+
+            SpvReflectShaderModule ReflectModule;
+            if (spvReflectCreateShaderModule((size_t)Stage.Binaries.size() * 4, Stage.Binaries.data(), &ReflectModule) != SPV_REFLECT_RESULT_SUCCESS)
+            {
+                LOG_ERROR("Failed to reflect shader {0}", Tag.c_str());
+                return false;
+            }
+
+            
+            NewShader->CreateStage(Stage);
+            NewShader->GenerateShaderStageReflectionData(Stage, &ReflectModule);
+
+            
+            spvReflectDestroyShaderModule(&ReflectModule);
         }
+
+        NewShader->GeneratePlatformShaderStageReflectionData(NewShader->GetShaderReflectionData());
         
         Mutex.lock();
-        Library.emplace(Tag, FShader::Create(Shaders, Tag));
+        Library.emplace(Tag, NewShader);
         Mutex.unlock();
+
         return true;
     }
 
-    bool FShaderLibrary::Unload(FString Name)
+
+    bool FShaderLibrary::Unload(FName Name)
     {
         if (Library.find(Name) == Library.end())
         {
@@ -81,18 +108,18 @@ namespace Lumina
         return true;
     }
 
-    bool FShaderLibrary::Reload(std::filesystem::path Name)
+    bool FShaderLibrary::Reload(FName Key)
     {
         return false;
     }
 
-    bool FShaderLibrary::Has(FString Key)
+    bool FShaderLibrary::Has(FName Key)
     {
         std::scoped_lock<std::shared_mutex> lock(Mutex);
         return Library.find(Key) != Library.end();
     }
 
-    TRefPtr<FShader> FShaderLibrary::GetShader(const FString& Key)
+    TRefCountPtr<FShader> FShaderLibrary::GetShader(FName Key)
     {
         if (Get()->Library.find(Key) != Get()->Library.end())
         {

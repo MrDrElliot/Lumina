@@ -16,7 +16,6 @@ namespace Lumina
 
         DECLARE_ASSET("Material Instance", MaterialInstance, 1)
         
-        FMaterialAttributes& GetMaterialAttributes() { return Attributes; }
         void Serialize(FArchive& Ar) override;
 
         TAssetHandle<ATexture> Albedo;
@@ -30,6 +29,5 @@ namespace Lumina
     
     private:
         
-        FMaterialAttributes Attributes;
     };
 }

@@ -2,9 +2,9 @@
 
 #include <iostream>
 #include <cstdlib>
+#include "Platform/Platform.h"
 #include <fstream>
 #include "Log/Log.h"
-#include "Platform/Platform.h"
 
 #ifdef _MSC_VER
 #include <intrin.h>    // for __debugbreak
@@ -88,37 +88,38 @@ inline LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS* exceptionInfo)
 
 // Macro for assertion, triggering a breakpoint if the condition fails
 #define Assert(condition)                               \
-    do {                                               \
-        if (!(condition)) {                            \
+    do {                                                \
+        if ((!(condition))) {                    \
             LOG_CRITICAL("Assertion failed: {0} in {1} at line {2}", \
-                #condition, __FILE__, __LINE__);       \
-            PrintCallStack();                          \
-            /* Platform-specific debugging */           \
-                __debugbreak();                        \
-            std::abort();                               \
-        }                                              \
+                #condition, __FILE__, __LINE__);        \
+            PrintCallStack();                           \
+            /* Platform-specific debugging */            \
+            __debugbreak();                             \
+            std::exit(1);                               \
+        }                                               \
     } while (false)
 
 // Macro for assertion with a custom message
-#define AssertMsg(condition, msg)                      \
-    do {                                               \
-        if (!(condition)) {                            \
+#define AssertMsg(condition, msg)                       \
+    do {                                                \
+        if ((!(condition))) {                    \
             LOG_ERROR("Assertion failed: {0} ({1}) in {2} at line {3}", \
-                msg, #condition, __FILE__, __LINE__);   \
-            PrintCallStack();                          \
-            /* Platform-specific debugging */           \
-                __debugbreak();                        \
-            std::abort();                               \
-        }                                              \
+                msg, #condition, __FILE__, __LINE__);    \
+            PrintCallStack();                           \
+            /* Platform-specific debugging */            \
+            __debugbreak();                             \
+            std::exit(1);                               \
+        }                                               \
     } while (false)
 
 // Ensure macro (will log and sleep for a while on failure)
-#define ensureMsg(condition, msg)                      \
-do {                                                   \
-    if (!(condition)) {                                \
+#define EnsureMsg(condition, msg)                       \
+do {                                                    \
+    if ((!(condition))) {                        \
         LOG_ERROR("Ensure failed: {0} ({1}) in {2} at line {3}", \
-        msg, #condition, __FILE__, __LINE__);           \
-        PrintCallStack();                               \
+        msg, #condition, __FILE__, __LINE__);            \
+        PrintCallStack();                                \
         std::this_thread::sleep_for(std::chrono::milliseconds(100)); \
-    }                                                  \
+    }                                                   \
 } while (false)
+

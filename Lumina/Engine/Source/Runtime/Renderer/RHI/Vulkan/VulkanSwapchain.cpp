@@ -2,13 +2,13 @@
 
 #include "vk-bootstrap/src/VkBootstrap.h"
 #include <glfw/glfw3.h>
-#include "Renderer/Pipeline.h"
 #include "VulkanImage.h"
 #include "VulkanMacros.h"
 #include "VulkanRenderContext.h"
 #include "Core/Application/Application.h"
 #include "Core/Windows/Window.h"
 #include "Platform/Platform.h"
+#include "Renderer/RHIIncl.h"
 #include "Source/Runtime/Log/Log.h"
 
 namespace Lumina
@@ -20,8 +20,9 @@ namespace Lumina
     {
 	    Specifications = InSpec;
 	    bWasResizedThisFrame = false;
-    	memset((void*)AquireSemaphores.data(), 0, AquireSemaphores.size() * sizeof(VkSemaphore));
-    	memset((void*)PresentSemaphores.data(), 0, PresentSemaphores.size() * sizeof(VkSemaphore));
+    	
+    	FMemory::MemsetZero(AquireSemaphores.data(), AquireSemaphores.size() * sizeof(VkSemaphore));
+    	FMemory::MemsetZero(PresentSemaphores.data(), PresentSemaphores.size() * sizeof(VkSemaphore));
     }
 
     void FVulkanSwapchain::CreateSurface(IRenderContext* Context, const FSwapchainSpec& InSpec)
@@ -39,7 +40,7 @@ namespace Lumina
     	FVulkanRenderContext* RenderContext = static_cast<FVulkanRenderContext*>(Context);
         VkDevice Device = RenderContext->GetDevice();
     	
-        Images.reserve(InSpec.FramesInFlight);
+        Images.reserve(FRAMES_IN_FLIGHT);
 
     	bool bBeingResized = false;
         if(LIKELY(Swapchain))
@@ -58,9 +59,9 @@ namespace Lumina
         vkb::Swapchain vkbSwapchain = swapchainBuilder
             .set_desired_format(SurfaceFormat)
             .set_desired_present_mode(VK_PRESENT_MODE_FIFO_KHR)
-            .set_desired_min_image_count(InSpec.FramesInFlight)
+            .set_desired_min_image_count(FRAMES_IN_FLIGHT)
             .set_image_array_layer_count(1)
-            .set_desired_extent(InSpec.Extent.x, InSpec.Extent.y)
+            .set_desired_extent(InSpec.Extent.X, InSpec.Extent.Y)
             .add_image_usage_flags(VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
             .build()
             .value();
@@ -96,12 +97,12 @@ namespace Lumina
 			VK_CHECK(vkCreateImageView(Device, &ImageViewCreateInfo, nullptr, &ImageView));
 
 			FImageSpecification SwapchainImageSpec = {};
-			SwapchainImageSpec.Extent = { (uint32)InSpec.Extent.x, (uint32)InSpec.Extent.y, 1 };
+			SwapchainImageSpec.Extent = { (uint32)InSpec.Extent.X, (uint32)InSpec.Extent.Y, 1 };
 			SwapchainImageSpec.Usage = EImageUsage::RENDER_TARGET;
 			SwapchainImageSpec.Type = EImageType::TYPE_2D;
 			SwapchainImageSpec.Format = convert(SurfaceFormat.format);
 
-			Images.push_back(MakeRefPtr<FVulkanImage>(SwapchainImageSpec, RawImage, ImageView));
+			Images.push_back(FRHIImage(MakeRefCount<FVulkanImage>(SwapchainImageSpec, RawImage, ImageView)));
 
 			VkImageMemoryBarrier ImageMemoryBarrier = {};
 			ImageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -139,7 +140,7 @@ namespace Lumina
     	{
     		for (size_t i = currentImageCount; i < PresentSemaphores.size(); i++)
     		{
-    			PresentSemaphores[i].Release();
+    			PresentSemaphores[i].SafeRelease();
     		}
 
     		// Now safely resize down
@@ -156,36 +157,34 @@ namespace Lumina
     	// Create new semaphores
     	for (size_t i = 0; i < currentImageCount; i++)
     	{
-    		PresentSemaphores[i] = MakeRefPtr<FVulkanSemaphore>();
+    		PresentSemaphores[i] = MakeRefCount<FVulkanSemaphore>();
     		PresentSemaphores[i]->SetFriendlyName("Present Semaphore: " + eastl::to_string(i));
     	}
 
     	// --------- AQUIRE SEMAPHORES MANAGEMENT --------- //
-
-    	uint8 currentFrameCount = InSpec.FramesInFlight;
-
+    	
     	// Destroy excess AquireSemaphores
-    	if (AquireSemaphores.size() > currentFrameCount)
+    	if (AquireSemaphores.size() > FRAMES_IN_FLIGHT)
     	{
-    		for (size_t i = currentFrameCount; i < AquireSemaphores.size(); i++)
+    		for (size_t i = FRAMES_IN_FLIGHT; i < AquireSemaphores.size(); i++)
     		{
-    			AquireSemaphores[i].Release();
+    			AquireSemaphores[i].SafeRelease();
     		}
     		
-    		AquireSemaphores.resize(currentFrameCount);
+    		AquireSemaphores.resize(FRAMES_IN_FLIGHT);
     	}
 
     	// Ensure AquireSemaphores has enough slots
-    	if (AquireSemaphores.size() < currentFrameCount)
+    	if (AquireSemaphores.size() < FRAMES_IN_FLIGHT)
     	{
     		AquireSemaphores.clear();
-    		AquireSemaphores.resize(currentFrameCount);
+    		AquireSemaphores.resize(FRAMES_IN_FLIGHT);
     	}
 
     	// Create new Aquire semaphores
-    	for (size_t i = 0; i < currentFrameCount; i++)
+    	for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
     	{
-    		AquireSemaphores[i] = MakeRefPtr<FVulkanSemaphore>();
+    		AquireSemaphores[i] = MakeRefCount<FVulkanSemaphore>();
     		AquireSemaphores[i]->SetFriendlyName("Aquire Semaphore: " + eastl::to_string(i));
     	}
 
@@ -199,8 +198,8 @@ namespace Lumina
         FenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
         FenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-        Fences.reserve(InSpec.FramesInFlight);
-        for (uint8 i = 0; i < InSpec.FramesInFlight; i++)
+        Fences.reserve(FRAMES_IN_FLIGHT);
+        for (uint8 i = 0; i < FRAMES_IN_FLIGHT; i++)
         {
             VkFence Fence;
             VK_CHECK(vkCreateFence(Device, &FenceCreateInfo, nullptr, &Fence));
@@ -247,9 +246,9 @@ namespace Lumina
     void FVulkanSwapchain::RecreateSwapchain()
     {
     	LOG_WARN("Re-sizing Swapchain");
-    	uint32 Height = FApplication::Get().GetWindow()->GetHeight();
-    	uint32 Width = FApplication::Get().GetWindow()->GetWidth();
-    	GetSpecs().Extent = {Width, Height};
+    	uint32 Height = FApplication::Get().GetMainWindow()->GetHeight();
+    	uint32 Width = FApplication::Get().GetMainWindow()->GetWidth();
+    	GetSpecs().Extent = FVector2D(Height, Width);
 
     	FRenderer::WaitIdle();
 		CreateSwapchain(FRenderer::GetRenderContext(), GetSpecs());
@@ -320,6 +319,6 @@ namespace Lumina
 	        VK_CHECK(Result);
         }
     	
-        CurrentFrameIndex = (CurrentFrameIndex + 1) % Specifications.FramesInFlight;
+        CurrentFrameIndex = (CurrentFrameIndex + 1) % FRAMES_IN_FLIGHT;
     }
 }

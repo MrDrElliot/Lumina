@@ -1,6 +1,7 @@
 #include "VulkanBuffer.h"
-#include "Renderer/Pipeline.h"
-#include "Renderer/Swapchain.h"
+
+#include "Renderer/RHIIncl.h"
+#include "VulkanCommon.h"
 #include "VulkanMemoryAllocator.h"
 #include "VulkanRenderContext.h"
 #include "glm/glm.hpp"
@@ -45,14 +46,14 @@ namespace Lumina
 		
 		
 		VkBufferCreateInfo BufferCreateInfo = {};
-		BufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+		ZeroVkStruct(BufferCreateInfo, VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO);
 		BufferCreateInfo.size = GetAlignedSizeForBuffer(Spec.Size, Spec.BufferUsage);
 		BufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 		BufferCreateInfo.usage = convert(Spec.BufferUsage);
+		BufferCreateInfo.flags = Spec.Flags;
 		BufferCreateInfo.pNext = nullptr;
-		BufferCreateInfo.flags = 0;
 
-		Allocation = Alloc->AllocateBuffer(&BufferCreateInfo, VmaFlags, &Buffer, Spec.DebugName);
+		Allocation = Alloc->AllocateBuffer(&BufferCreateInfo, VmaFlags, &Buffer, "");
 		
 	}
 
@@ -70,14 +71,14 @@ namespace Lumina
 		BufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 		BufferCreateInfo.usage = convert(Spec.BufferUsage);
 		BufferCreateInfo.pNext = nullptr;
-		BufferCreateInfo.flags = 0;
+		BufferCreateInfo.flags = Spec.Flags;
 
 		if (Specification.MemoryUsage == EDeviceBufferMemoryUsage::NO_HOST_ACCESS)
 		{
 			BufferCreateInfo.usage |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 		}
 
-		Allocation = Alloc->AllocateBuffer(&BufferCreateInfo, AllocationCreateFlags, &Buffer, Spec.DebugName);
+		Allocation = Alloc->AllocateBuffer(&BufferCreateInfo, AllocationCreateFlags, &Buffer, "");
 
 		FVulkanBuffer::UploadData(0, InData, DataSize);
 	}
@@ -123,9 +124,9 @@ namespace Lumina
 			StagingBufferSpec.Size = DataSize;
 			StagingBufferSpec.BufferUsage = EDeviceBufferUsage::STAGING_BUFFER;
 			StagingBufferSpec.MemoryUsage = EDeviceBufferMemoryUsage::COHERENT_WRITE;
-			StagingBufferSpec.DebugName = "Staging Buffer";
 		
-			TRefPtr<FVulkanBuffer> StagingBuffer = MakeRefPtr<FVulkanBuffer>(StagingBufferSpec, InData, DataSize);
+			TRefCountPtr<FVulkanBuffer> StagingBuffer = MakeRefCount<FVulkanBuffer>(StagingBufferSpec, InData, DataSize);
+			StagingBuffer->SetFriendlyName("Staging Buffer");
 		
 			VkBufferCopy BufferCopy = {};
 			BufferCopy.size = DataSize;

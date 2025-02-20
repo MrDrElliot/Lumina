@@ -10,14 +10,14 @@
 namespace Lumina
 {
 
-    TRefPtr<Project> Project::sCurrentProject;
+    TRefCountPtr<Project> Project::sCurrentProject;
     
-    TRefPtr<Project> Project::New(const char* Name, const std::filesystem::path& Path)
+    TRefCountPtr<Project> Project::New(const char* Name, const std::filesystem::path& Path)
     {
         std::filesystem::path ProjectFileName = std::filesystem::path(Name).concat(".lproject");
         std::filesystem::path FullProjectPath = Path / Name / ProjectFileName;
         
-        sCurrentProject = MakeRefPtr<Project>();
+        sCurrentProject = MakeRefCount<Project>();
         sCurrentProject->ProjectFile = FullProjectPath;
         sCurrentProject->ProjectDirectory = Path / Name;
         sCurrentProject->Config.Name = Name;
@@ -27,10 +27,10 @@ namespace Lumina
         return sCurrentProject;
     }
 
-    TRefPtr<Project> Project::Load(const std::filesystem::path& Path)
+    TRefCountPtr<Project> Project::Load(const std::filesystem::path& Path)
     {
         std::filesystem::path FullPath = Paths::ResolveFromEngine(Path);
-        sCurrentProject = MakeRefPtr<Project>();
+        sCurrentProject = MakeRefCount<Project>();
         sCurrentProject->ProjectFile = FullPath;
         sCurrentProject->ProjectDirectory = FullPath.parent_path();
         sCurrentProject->Deserialize(FullPath);

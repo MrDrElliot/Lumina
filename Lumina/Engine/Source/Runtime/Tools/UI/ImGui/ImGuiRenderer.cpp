@@ -4,9 +4,7 @@
 #include "ImGuiFonts.h"
 #include "Core/Windows/Window.h"
 #include "imgui/imgui_freetype.h"
-#include "Renderer/RenderContext.h"
-#include "Renderer/Renderer.h"
-#include "Renderer/Swapchain.h"
+#include "Renderer/RHIIncl.h"
 #include "Tools/UI/Fonts/FontData_Lexend.h"
 #include "Tools/UI/Fonts/FontData_MaterialDesign.h"
 #include "Tools/UI/Fonts/FontDecompressor.h"
@@ -171,8 +169,8 @@ namespace Lumina
     	OnEndFrame();
 
     	ImGuiIO& Io = ImGui::GetIO();
-    	Io.DisplaySize.x = (float)FRenderer::GetRenderContext()->GetSwapchain()->GetSpecs().Extent.x;
-    	Io.DisplaySize.y = (float)FRenderer::GetRenderContext()->GetSwapchain()->GetSpecs().Extent.y;
+    	Io.DisplaySize.x = (float)FRenderer::GetRenderContext()->GetSwapchain()->GetSpecs().Extent.X;
+    	Io.DisplaySize.y = (float)FRenderer::GetRenderContext()->GetSwapchain()->GetSpecs().Extent.Y;
     	
 		ImGui::Render();
 

@@ -1,6 +1,6 @@
 ﻿#include "Hash.h"
 
-#include "xxhash.h"
+#include "xxhash/xxhash.h"
 
 namespace Lumina::Hash
 {

@@ -1,10 +1,11 @@
 #include "VulkanMemoryAllocator.h"
-#include "Renderer/Swapchain.h"
-#include "Renderer/Pipeline.h"
-#include "VulkanBuffer.h"
+
+#define VMA_IMPLEMENTATION
+#include <vma/vk_mem_alloc.h>
+
 #include "VulkanMacros.h"
 #include "VulkanRenderContext.h"
-#include "Memory/Memory.h"
+#include "Renderer/RHIIncl.h"
 #include "Source/Runtime/Log/Log.h"
 
 namespace Lumina
@@ -81,7 +82,7 @@ namespace Lumina
         Info.usage = VMA_MEMORY_USAGE_AUTO;
         Info.flags = Flags;
 
-        VmaAllocation Allocation;
+        VmaAllocation Allocation = nullptr;
         VmaAllocationInfo AllocationInfo;
 
         VK_CHECK(vmaCreateBuffer(Allocator, CreateInfo, &Info, vkBuffer, &Allocation, &AllocationInfo));

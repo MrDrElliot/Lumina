@@ -13,6 +13,7 @@ namespace Lumina
         StaticMesh,
         SkeletalMesh,
         Texture,
+        Material,
         MaterialInstance,
         Prefab,
         Scene,

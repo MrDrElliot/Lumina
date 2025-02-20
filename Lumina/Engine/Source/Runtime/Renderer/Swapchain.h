@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Renderer.h"
+#include "Core/Math/Math.h"
 
 
 namespace Lumina
@@ -8,12 +9,11 @@ namespace Lumina
 
     struct FSwapchainSpec
     {
-        FWindow* Window = nullptr;
-        glm::ivec2 Extent;
-        uint8 FramesInFlight;
+        const FWindow* Window = nullptr;
+        FVector2D Extent;
     };
     
-    class FSwapchain : public FRenderResource
+    class FSwapchain : public IRenderResource
     {
     public:
 
@@ -23,7 +23,7 @@ namespace Lumina
             , bWasResizedThisFrame(false)
         {}
         
-        static TRefPtr<FSwapchain> Create(const FSwapchainSpec& InSpec);
+        static FRHISwapchain Create(const FSwapchainSpec& InSpec);
 
         virtual void CreateSurface(IRenderContext* Context, const FSwapchainSpec& InSpec) = 0;
         virtual void CreateSwapchain(IRenderContext* Context, const FSwapchainSpec& InSpec) = 0;
@@ -40,7 +40,7 @@ namespace Lumina
         inline bool IsSwapchainDirty() const { return bDirty; }
         inline void SetSwapchainDirty() { bDirty = true; }
 
-        TRefPtr<FImage>& GetCurrentImage() { return Images[CurrentImageIndex]; }
+        FRHIImage& GetCurrentImage() { return Images[CurrentImageIndex]; }
         
         uint32 GetCurrentFrameIndex() { return CurrentFrameIndex; }
         uint32 GetCurrentImageIndex() { return CurrentImageIndex; }
@@ -49,7 +49,7 @@ namespace Lumina
     protected:
         
         FSwapchainSpec Specifications;
-        TVector<TRefPtr<FImage>>  Images;
+        TVector<FRHIImage>  Images;
 
         uint8 bDirty:1;
         uint8 bWasResizedThisFrame:1;

@@ -1,7 +1,6 @@
 
 #include "VulkanImage.h"
-#include "Renderer/Swapchain.h"
-#include "Renderer/Pipeline.h"
+#include "Renderer/RHIIncl.h"
 #include "VulkanBuffer.h"
 #include "VulkanCommandBuffer.h"
 #include "VulkanMacros.h"
@@ -85,8 +84,7 @@ namespace Lumina
 
 		VK_CHECK(vkCreateImageView(Device, &ImageViewCreateInfo, nullptr, &ImageView));
 
-		TRefPtr<FCommandBuffer> TransientCmdBuffer = FCommandBuffer::Create(ECommandBufferLevel::PRIMARY,
-			ECommandBufferType::TRANSIENT, ECommandType::GENERAL);
+		TRefCountPtr<FCommandBuffer> TransientCmdBuffer = FCommandBuffer::Create(ECommandBufferLevel::PRIMARY, ECommandBufferType::TRANSIENT, ECommandType::GENERAL);
     	TransientCmdBuffer->SetFriendlyName("Transient Image Command Buffer");
 
 		TransientCmdBuffer->Begin();
@@ -102,7 +100,6 @@ namespace Lumina
     	
 		TransientCmdBuffer->End();
 		TransientCmdBuffer->Execute(true);
-		TransientCmdBuffer->Release();
     }
 
     void FVulkanImage::CreateTexture()
@@ -132,7 +129,7 @@ namespace Lumina
 		StagingBuffer_spec.MemoryUsage = EDeviceBufferMemoryUsage::COHERENT_WRITE;
 		StagingBuffer_spec.BufferUsage = EDeviceBufferUsage::STAGING_BUFFER;
 
-		TRefPtr<FVulkanBuffer> StagingBuffer = MakeRefPtr<FVulkanBuffer>(StagingBuffer_spec, Spec.Pixels.data(), Spec.Pixels.size());
+		TRefCountPtr<FVulkanBuffer> StagingBuffer = MakeRefCount<FVulkanBuffer>(StagingBuffer_spec, Spec.Pixels.data(), Spec.Pixels.size());
 
 		VkDevice device = RenderContext->GetDevice();
 		VkCommandBuffer cmd_buffer = RenderContext->AllocateTransientCommandBuffer();
@@ -233,7 +230,7 @@ namespace Lumina
 		ImageViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
 		ImageViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
 
-		vkCreateImageView(device, &ImageViewCreateInfo, nullptr, &ImageView);
+		VK_CHECK(vkCreateImageView(device, &ImageViewCreateInfo, nullptr, &ImageView));
     	
 	}
 
@@ -276,8 +273,7 @@ namespace Lumina
 
 		VK_CHECK(vkCreateImageView(Device, &ImageViewCreateInfo, nullptr, &ImageView));
 
-		TRefPtr<FCommandBuffer> TransientCmdBuffer = FCommandBuffer::Create(ECommandBufferLevel::PRIMARY,
-			ECommandBufferType::TRANSIENT, ECommandType::GENERAL);
+		FRHICommandBuffer TransientCmdBuffer = FCommandBuffer::Create(ECommandBufferLevel::PRIMARY, ECommandBufferType::TRANSIENT, ECommandType::GENERAL);
     	TransientCmdBuffer->SetFriendlyName("Transient Render Target Command Buffer");
 
 		TransientCmdBuffer->Begin();
@@ -289,7 +285,6 @@ namespace Lumina
     	
 		TransientCmdBuffer->End();
 		TransientCmdBuffer->Execute(true);
-		TransientCmdBuffer->Release();
     }
 
     void FVulkanImage::CreateDepthBuffer()
@@ -329,10 +324,9 @@ namespace Lumina
 		ImageViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
 		ImageViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
 
-		vkCreateImageView(Device, &ImageViewCreateInfo, nullptr, &ImageView);
+		VK_CHECK(vkCreateImageView(Device, &ImageViewCreateInfo, nullptr, &ImageView));
 
-    	TRefPtr<FCommandBuffer> TransientCmdBuffer = FCommandBuffer::Create(ECommandBufferLevel::PRIMARY,
-    		ECommandBufferType::TRANSIENT, ECommandType::GENERAL);
+    	FRHICommandBuffer TransientCmdBuffer = FCommandBuffer::Create(ECommandBufferLevel::PRIMARY, ECommandBufferType::TRANSIENT, ECommandType::GENERAL);
     	TransientCmdBuffer->SetFriendlyName("Transient Depth Buffer Command Buffer");
 
 		TransientCmdBuffer->Begin();
@@ -348,7 +342,6 @@ namespace Lumina
     	
 		TransientCmdBuffer->End();
 		TransientCmdBuffer->Execute(true);
-		TransientCmdBuffer->Release();
     }
 
     void FVulkanImage::CreateFromRaw(const FImageSpecification& InSpec, VkImage InImage, VkImageView InView)
@@ -358,10 +351,10 @@ namespace Lumina
     	Spec = InSpec;
     }
 	
-    void FVulkanImage::SetLayout(TRefPtr<FCommandBuffer> CmdBuffer, EImageLayout NewLayout,
-	    EPipelineStage SrcStage, EPipelineStage DstStage, EPipelineAccess SrcAccess, EPipelineAccess DstAccess)
+    void FVulkanImage::SetLayout(FRHICommandBuffer CmdBuffer, EImageLayout NewLayout, EPipelineStage SrcStage, EPipelineStage DstStage, EPipelineAccess SrcAccess, EPipelineAccess DstAccess)
     {
-    	TRefPtr<FVulkanCommandBuffer> CommandBuffer = RefPtrCast<FVulkanCommandBuffer>(CmdBuffer);
+    	TRefCountPtr<FVulkanCommandBuffer> CommandBuffer = CmdBuffer.As<FVulkanCommandBuffer>();
+    	Assert(CommandBuffer != nullptr);
 
     	VkImageMemoryBarrier ImageMemoryBarrier = {};
     	ImageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -378,6 +371,7 @@ namespace Lumina
     	ImageMemoryBarrier.subresourceRange.baseMipLevel = 0;
     	ImageMemoryBarrier.subresourceRange.levelCount = 1;
 
+    	
     	vkCmdPipelineBarrier(CommandBuffer->GetCommandBuffer(),
 			(VkPipelineStageFlags)SrcStage,
 			(VkPipelineStageFlags)DstStage,
@@ -442,7 +436,7 @@ namespace Lumina
     	SamplerCreateInfo.minLod = spec.MinLOD;
     	SamplerCreateInfo.maxLod = spec.MaxLOD;
 
-    	vkCreateSampler(Device, &SamplerCreateInfo, nullptr, &Sampler);
+    	VK_CHECK(vkCreateSampler(Device, &SamplerCreateInfo, nullptr, &Sampler));
     	
     }
 

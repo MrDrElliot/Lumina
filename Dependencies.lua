@@ -12,17 +12,14 @@ IncludeDir["fastgltf"] =                "%{LuminaEngineDirectory}/Lumina/Engine/
 IncludeDir["stb"] =                     "%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/stb/"
 IncludeDir["vulkan"] =                  "%{VULKAN_SDK}/Include/"
 IncludeDir["SPIRV_Reflect"] =           "%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/SPIRV-Reflect/"
-IncludeDir["shaderc"] =                 "%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/shaderc/libshaderc_util/include"
 IncludeDir["json"] =                    "%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/json/include/"
-IncludeDir["nvrhi"] =                   "%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/nvrhi-main/include/"
 IncludeDir["entt"] =					"%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/entt/single_include/"
-IncludeDir["vulkanmemoryallocator"] =   "%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/VulkanMemoryAllocator/include/"
 IncludeDir["yaml"] =                    "%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/yaml-cpp/include/"
 IncludeDir["ImGuizmo"] =                "%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/ImGuizmo/"
 IncludeDir["EASTL"] =                   "%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/EA/EASTL/include/"
 IncludeDir["EABase"] =                  "%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/EA/EABase/include/Common/"
 IncludeDir["rpmalloc"] =                "%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/rpmalloc/"
-IncludeDir["xxhash"] =                "%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/xxhash/"
+IncludeDir["xxhash"] =                  "%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/xxhash/"
 
 
 

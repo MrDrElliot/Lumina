@@ -1,8 +1,7 @@
 #pragma once
 #include <shared_mutex>
-
+#include "VulkanBuffer.h"
 #include "Source/Runtime/Renderer/CommandBuffer.h"
-#include "vulkanmemoryallocator/src/Common.h"
 
 namespace Lumina
 {
@@ -20,13 +19,11 @@ namespace Lumina
         void Reset() override;
         void Execute(bool bWait = false) override;
         
-        VkCommandBuffer& GetCommandBuffer() { return CommandBuffer; }
+        FORCEINLINE VkCommandBuffer& GetCommandBuffer() { Assert(CommandBuffer); return CommandBuffer; }
 
     private:
         
         VkCommandBuffer CommandBuffer;
-
-        inline static std::shared_mutex SubmissionMutex;
-    
+        
     };
 }

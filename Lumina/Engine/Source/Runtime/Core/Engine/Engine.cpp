@@ -18,16 +18,11 @@ namespace Lumina
         
         Application = App;
         
-        FRenderConfig Config;
-        Config.Window = App->GetWindow();
-        Config.FramesInFlight = 2;
-        
-        FRenderer::Init(Config);
+        FRenderer::Init();
         
         InputSubsystem = EngineSubsystems.AddSubsystem<FInputSubsystem>();
         AssetManagerSubystem = EngineSubsystems.AddSubsystem<FAssetManager>();
         SceneManager = EngineSubsystems.AddSubsystem<FSceneManager>();
-        SceneRenderer = EngineSubsystems.AddSubsystem<FSceneRenderer>();
         
         #if WITH_DEVELOPMENT_TOOLS
         ImGuiRenderer = EngineSubsystems.AddSubsystem<FVulkanImGuiRender>();
@@ -35,7 +30,8 @@ namespace Lumina
         
         UpdateContext.SubsystemManager = &EngineSubsystems;
 
-
+        LOG_DEBUG("Number of Threads: {0}", Threading::GetNumThreads());
+        
         #if WITH_DEVELOPMENT_TOOLS
         CreateDevelopmentTools();
         DeveloperToolUI->Initialize(UpdateContext);
@@ -54,6 +50,7 @@ namespace Lumina
         
         PreShutdown();
         
+
         #if WITH_DEVELOPMENT_TOOLS
         DeveloperToolUI->Deinitialize(UpdateContext);
         delete DeveloperToolUI;
@@ -169,9 +166,6 @@ namespace Lumina
                 SceneManager->UpdateScenes(UpdateContext);
 
                 SceneManager->EndFrame();
-                
-                SceneManager->RenderScenes(UpdateContext);
-
 
                 
                 #if WITH_DEVELOPMENT_TOOLS

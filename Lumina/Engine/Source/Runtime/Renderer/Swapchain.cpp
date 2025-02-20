@@ -1,11 +1,11 @@
 #include "Swapchain.h"
-#include "Image.h"
+#include "Renderer/RHIIncl.h"
 #include "RHI/Vulkan/VulkanSwapchain.h"
 
 namespace Lumina
 {
-    TRefPtr<FSwapchain> FSwapchain::Create(const FSwapchainSpec& InSpec)
+    FRHISwapchain FSwapchain::Create(const FSwapchainSpec& InSpec)
     {
-        return MakeRefPtr<FVulkanSwapchain>(InSpec);
+        return FRHISwapchain(MakeRefCount<FVulkanSwapchain>(InSpec));
     }
 }

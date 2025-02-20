@@ -47,9 +47,9 @@ namespace Lumina
         VkSurfaceFormatKHR              SurfaceFormat;
         VkPresentModeKHR                CurrentPresentMode;
         
-        TVector<TRefPtr<FVulkanSemaphore>>       PresentSemaphores;
-        TVector<TRefPtr<FVulkanSemaphore>>       AquireSemaphores;
-        TVector<VkFence>                         Fences;
+        TVector<TRefCountPtr<FVulkanSemaphore>>       PresentSemaphores;
+        TVector<TRefCountPtr<FVulkanSemaphore>>       AquireSemaphores;
+        TVector<VkFence>                              Fences;
         
     };
 }

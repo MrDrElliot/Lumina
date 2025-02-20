@@ -1,7 +1,8 @@
 #pragma once
 
 #include <vulkan/vulkan.h>
-#include <vk_mem_alloc.h>
+
+#include "VulkanMemoryAllocator.h"
 #include "Renderer/Buffer.h"
 
 namespace Lumina
@@ -19,7 +20,7 @@ namespace Lumina
     };
 
 
-    constexpr VkIndexType ExtractIndexType(glm::uint8 Flags)
+    constexpr VkIndexType ExtractIndexType(uint8 Flags)
     {
         if (Flags & (uint64)EDeviceBufferFlags::INDEX_TYPE_UINT8)		return VK_INDEX_TYPE_UINT8_EXT;
         if (Flags & (uint64)EDeviceBufferFlags::INDEX_TYPE_UINT16)	    return VK_INDEX_TYPE_UINT16;

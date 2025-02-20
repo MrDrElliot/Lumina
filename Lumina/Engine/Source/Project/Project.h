@@ -20,9 +20,9 @@ namespace Lumina
         };
     
         
-        static TRefPtr<Project> New(const char* Name, const std::filesystem::path& Path);
-        static TRefPtr<Project> Load(const std::filesystem::path& Path);
-        static TRefPtr<Project> GetCurrent() { return sCurrentProject; }
+        static TRefCountPtr<Project> New(const char* Name, const std::filesystem::path& Path);
+        static TRefCountPtr<Project> Load(const std::filesystem::path& Path);
+        static TRefCountPtr<Project> GetCurrent() { return sCurrentProject; }
 
         void GenerateProjectFromTemplate();
         
@@ -36,7 +36,7 @@ namespace Lumina
 
     private:
         
-        static TRefPtr<Project> sCurrentProject;
+        static TRefCountPtr<Project> sCurrentProject;
         std::filesystem::path ProjectFile;
         std::filesystem::path ProjectDirectory;
         FProjectConfig Config = {};

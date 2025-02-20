@@ -47,6 +47,11 @@ namespace Lumina
     {
     }
 
+    FString FName::ToString() const
+    {
+        return FString(c_str());
+    }
+
     const char* FName::c_str() const
     {
         if (ID == 0)

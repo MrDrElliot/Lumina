@@ -1,6 +1,7 @@
 #pragma once
 #include "Assets/Factories/Factory.h"
 #include "Memory/RefCounted.h"
+#include "Renderer/RHIFwd.h"
 
 
 namespace Lumina
@@ -12,7 +13,7 @@ namespace Lumina
     public:
 
         ELoadResult CreateNew(FAssetRecord* InRecord) override;
-        static TRefPtr<FImage> ImportFromSource(std::filesystem::path Path);
+        static FRHIImage ImportFromSource(std::filesystem::path Path);
 
     };
 }

@@ -1,9 +1,8 @@
 #pragma once
 
-#include "Pipeline.h"
+#include "PipelineState.h"
 #include "Renderer.h"
-#include "Image.h"
-#include "Swapchain.h"
+#include "RHIFwd.h"
 
 
 namespace Lumina
@@ -23,9 +22,8 @@ namespace Lumina
     {
     public:
 
-        IRenderContext(const FRenderConfig& InConfig)
-            : Config(InConfig)
-            , QueueFamilyIndex()
+        IRenderContext()
+            : QueueFamilyIndex()
         {}
 
         virtual ~IRenderContext() = default;
@@ -35,32 +33,34 @@ namespace Lumina
         FQueueFamilyIndex GetQueueFamilyIndex() { return QueueFamilyIndex; }
 
         void SetCommandBufferForFrame(uint32 FrameIndex) { CurrentCommandBuffer = CommandBuffers[FrameIndex]; }
-        TRefPtr<FCommandBuffer> GetCommandBuffer() { return CurrentCommandBuffer; }
-        
+        FRHICommandBuffer GetCommandBuffer() { return CurrentCommandBuffer; }
+
+        void SetCurrentPipeline(FRHIPipeline Pipeline);
+        FORCEINLINE const FPipelineState* GetPipelineState() const { return &PipelineState; }
 
         template<typename T>
-        TRefPtr<T> GetCommandBuffer()
+        TRefCountPtr<T> GetCommandBuffer()
         {
-            return RefPtrCast<T>(CurrentCommandBuffer);
+            return CurrentCommandBuffer.As<T>();
         }
 
-        TRefPtr<FSwapchain> GetSwapchain() const { return Swapchain; }
+        FRHISwapchain GetSwapchain() const { return Swapchain; }
 
         template<typename T>
-        TRefPtr<T> GetSwapchain()
+        TRefCountPtr<T> GetSwapchain()
         {
-            return RefPtrCast<T>(Swapchain);
+            return Swapchain.As<T>();
         }
     
     
     protected:
 
-        FRenderConfig                     Config;
-        TVector<TRefPtr<FCommandBuffer>>  CommandBuffers;
-        TRefPtr<FCommandBuffer>           CurrentCommandBuffer;
+        TVector<FRHICommandBuffer>        CommandBuffers;
+        FRHICommandBuffer                 CurrentCommandBuffer;
         FQueueFamilyIndex                 QueueFamilyIndex;
-        TRefPtr<FSwapchain>               Swapchain;
-        TRefPtr<FPipeline>                CurrentBoundPipeline;
+        FRHISwapchain                     Swapchain;
+        FPipelineState                    PipelineState;
+
         
     };
 }

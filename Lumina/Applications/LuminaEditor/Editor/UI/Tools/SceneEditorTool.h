@@ -22,7 +22,7 @@ namespace Lumina
                 , Entity(InEntity)
             {}
 
-            virtual ~FEntityListViewItem() = default;
+            virtual ~FEntityListViewItem() override { };
 
             const char* GetTooltipText() const override { return GetName().c_str(); }
             bool HasContextMenu() override { return true; }
@@ -31,7 +31,8 @@ namespace Lumina
             {
                 return Entity.GetConstComponent<FNameComponent>().GetName();
             }
-        
+
+            Entity GetEntity() const { return Entity; }
             
         private:
 
@@ -45,6 +46,8 @@ namespace Lumina
 
         void OnInitialize(const FUpdateContext& UpdateContext) override;
         void OnDeinitialize(const FUpdateContext& UpdateContext) override { }
+
+        void Update(const FUpdateContext& UpdateContext) override;
 
         void InitializeDockingLayout(ImGuiID InDockspaceID, const ImVec2& InDockspaceSize) const override;
         
@@ -63,5 +66,6 @@ namespace Lumina
 
         FTreeListView               OutlinerListView;
         FTreeListViewContext        OutlinerContext;
+        TQueue<Entity>              EntityDestroyRequests;
     };
 }

@@ -3,6 +3,7 @@
 #include "imgui_internal.h"
 #include "ToolFlags.h"
 #include "Core/Math/Hash/Hash.h"
+#include "Renderer/PrimitiveDrawManager.h"
 #include "Scene/SceneManager.h"
 #include "Scene/Entity/Components/CameraComponent.h"
 #include "Scene/Entity/Components/EditorComponent.h"
@@ -105,14 +106,23 @@ namespace Lumina
         }
     }
 
-    bool FEditorTool::DrawViewport(const FUpdateContext& UpdateContext, ImTextureID ViewportTexture)
+    bool FEditorTool::DrawViewport(const FUpdateContext& UpdateContext, ImTextureID ViewportTexture, FPrimitiveDrawManager* PDM)
     {
         const ImVec2 ViewportSize(eastl::max(ImGui::GetContentRegionAvail().x, 64.0f), eastl::max(ImGui::GetContentRegionAvail().y, 64.0f));
         const ImVec2 WindowPosition = ImGui::GetWindowPos();
         const ImVec2 WindowBottomRight = { WindowPosition.x + ViewportSize.x, WindowPosition.y + ViewportSize.y };
+        float AspectRatio = (ViewportSize.x / ViewportSize.y);
+        float t = (ViewportSize.x - 500) / (1200 - 500);
+        t = glm::clamp(t, 0.0f, 1.0f);
+        float NewFOV = glm::mix(120.0f, 50.0f, t);
 
+        EditorEntity.GetComponent<FCameraComponent>().SetAspectRatio(AspectRatio);
+        EditorEntity.GetComponent<FCameraComponent>().SetFOV(NewFOV);
+        
         /** Mostly for debug, so we can easily see if there's some transparency issue */
         ImGui::GetWindowDrawList()->AddRectFilled(WindowPosition, WindowBottomRight, IM_COL32(255, 0, 0, 255));
+
+        
         
         if (bViewportHovered)
         {
@@ -122,16 +132,6 @@ namespace Lumina
                 bViewportFocused = true;
             }
         }
-        
-        
-        float AspectRatio = (ViewportSize.x / ViewportSize.y);
-        float t = (ViewportSize.x - 500) / (1200 - 500);
-        t = glm::clamp(t, 0.0f, 1.0f);
-        float NewFOV = glm::mix(120.0f, 50.0f, t);
-
-        EditorEntity.GetComponent<FCameraComponent>().SetAspectRatio(AspectRatio);
-        EditorEntity.GetComponent<FCameraComponent>().SetFOV(NewFOV);
-
         
         ImGui::Image(ViewportTexture, ViewportSize);
         

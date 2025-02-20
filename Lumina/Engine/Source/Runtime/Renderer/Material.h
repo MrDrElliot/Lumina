@@ -5,33 +5,37 @@
 #include "Image.h"
 #include "Assets/Asset.h"
 #include "Platform/GenericPlatform.h"
+#include "DescriptorSet.h"
+#include <Containers/Name.h>
 
 
 namespace Lumina
 {
     class FBuffer;
+    class FShader;
     class FPipeline;
     
-    class FDescriptorSet;
-    
-    class FMaterial : public FRenderResource
+    class AMaterial : public IAsset
     {
     public:
 
-        FMaterial(const TRefPtr<FPipeline>& InPipeline);
-        ~FMaterial();
-
-        static TRefPtr<FMaterial> Create(const TRefPtr<FPipeline>& InPipeline);
+        DECLARE_ASSET("Material", Material, 1)
         
-        void Write(uint16 Binding, uint16 ArrayElement, TRefPtr<FImage> Image, TRefPtr<FImageSampler> Sampler);
-        void Write(uint16 Binding, uint16 ArrayElement, TRefPtr<FBuffer> Buffer, uint64 Size, uint64 Offset);
+        AMaterial();
+        ~AMaterial() override;
         
-        virtual void Bind(const TRefPtr<FPipeline>& Pipeline, uint32 Index = 0);
+        /** Binds this material to the renderer */
+        void Bind();
 
+    protected:
+
+        TRefCountPtr<FPipeline> QueryPipeline();
+        TRefCountPtr<FShader> QueryShader() const;
 
     private:
 
-        TRefPtr<FPipeline> Pipeline;
-        TVector<TRefPtr<FDescriptorSet>> DescriptorSets;
+        FRHIPipeline                                Pipeline;
+        
     };
+    
 }

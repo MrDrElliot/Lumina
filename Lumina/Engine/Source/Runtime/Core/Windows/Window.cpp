@@ -1,12 +1,12 @@
 #include "pch.h"
 
 #include "Window.h"
-#include "Renderer/Pipeline.h"
 #include "Core/Application/Application.h"
 #include "Events/ApplicationEvent.h"
 #include "Events/KeyEvent.h"
 #include "Events/MouseEvent.h"
 #include "Platform/Platform.h"
+#include "Renderer/RHIIncl.h"
 #include "Renderer/RenderContext.h"
 #include "Renderer/Renderer.h"
 #include "Renderer/Swapchain.h"
@@ -54,16 +54,10 @@ namespace Lumina
 
 		return bestMonitor;
 	}
-
-
-	FWindow::FWindow(const FWindowSpecs& InSpecs)
-	{
-		Specs = InSpecs;
-		Window = nullptr;
-	}
 	
 	FWindow::~FWindow()
 	{
+		Assert(Window == nullptr);
 	}
 
 	void FWindow::Init()
@@ -79,7 +73,7 @@ namespace Lumina
 
 			
 			// Create the window
-			Window = glfwCreateWindow(800, 900, Specs.Title.c_str(), nullptr, nullptr);
+			Window = glfwCreateWindow(800, 400, Specs.Title.c_str(), nullptr, nullptr);
 			if (GLFWmonitor* currentMonitor = GetCurrentMonitor(Window))
 			{
 				// Get monitor dimensions
@@ -110,6 +104,8 @@ namespace Lumina
 	void FWindow::Shutdown()
 	{
 		glfwDestroyWindow(Window);
+		Window = nullptr;
+		
 		glfwTerminate();
 	}
 
@@ -236,12 +232,26 @@ namespace Lumina
 			data.EventCallback(event);
 		});
 	}
-
+	
 	FWindow* FWindow::Create(const FWindowSpecs& InSpecs)
 	{
 		return new FWindow(InSpecs);
 	}
 
-	
+	namespace Windowing
+	{
+		const FWindow* PrimaryWindow = nullptr;
+		
+		const FWindow* GetPrimaryWindowHandle()
+		{
+			Assert(PrimaryWindow != nullptr);
+			return PrimaryWindow;
+		}
 
+		void SetPrimaryWindowHandle(const FWindow* InWindow)
+		{
+			Assert(PrimaryWindow == nullptr);
+			PrimaryWindow = InWindow;
+		}
+	}
 }

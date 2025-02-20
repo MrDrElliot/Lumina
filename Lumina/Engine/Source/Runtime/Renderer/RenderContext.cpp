@@ -1,10 +1,10 @@
 #include "RenderContext.h"
-#include "Swapchain.h"
-#include "RHI/Vulkan/VulkanRenderContext.h"
-#include "Renderer/Pipeline.h"
-
+#include "Renderer/RHIIncl.h"
 
 namespace Lumina
 {
-
+    void IRenderContext::SetCurrentPipeline(FRHIPipeline Pipeline)
+    {
+        PipelineState.SetPipeline(Pipeline);
+    }
 }

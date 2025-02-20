@@ -1,6 +1,8 @@
 #pragma once
 #include <mutex>
 
+#include "Platform/GenericPlatform.h"
+
 
 namespace Lumina
 {
@@ -17,7 +19,19 @@ namespace Lumina
     namespace Threading
     {
 
+        enum class ENamedThreads : uint8
+        {
+            MainThread,
+            RenderThread,
+        };
+        
+
         bool IsMainThread();
+        bool IsRenderThread();
+
+        uint32 GetNumThreads();
+
+        void SetRenderThread(std::thread::id ID);
         
         void Initialize(const char* MainThreadName);
         void Shutdown();

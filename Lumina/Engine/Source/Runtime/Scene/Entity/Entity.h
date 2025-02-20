@@ -1,7 +1,6 @@
 #pragma once
 
-#include "Containers/String.h"
-#include "Core/Assertions/Assert.h"
+#include "Lumina.h"
 #include <entt/entt.hpp>
 
 #include "Components/NameComponent.h"
@@ -17,7 +16,7 @@ namespace Lumina
         
         Entity() = default;
         Entity(const entt::entity& InHandle, FScene* InScene)
-            :   EntityHandle(InHandle)
+            : EntityHandle(InHandle)
             , Scene(InScene)
         {
             Assert(EntityHandle != entt::null);

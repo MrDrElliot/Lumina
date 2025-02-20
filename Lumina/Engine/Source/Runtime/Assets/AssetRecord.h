@@ -33,7 +33,7 @@ namespace Lumina
         FORCEINLINE void SetLoadingState(EAssetLoadState NewState) { LoadState = NewState; }
         FORCEINLINE void SetAssetPtr(IAsset* InPtr) { Assert(AssetPtr == nullptr); AssetPtr = InPtr; }
 
-        FORCEINLINE void SetDependencies(TVector<FAssetHandle>&& InDependences) { AssetDependencies = eastl::move(InDependences); }
+        FORCEINLINE void SetDependencies(TVector<FAssetHandle>&& InDependences) { AssetDependencies = FMemory::Move(InDependences); }
         
         FORCEINLINE EAssetLoadState GetLoadState() const    { return LoadState; }
         FORCEINLINE IAsset* GetAssetPtr() const             { return AssetPtr; }
@@ -65,7 +65,8 @@ namespace Lumina
         /** Reference count of this resource. */
         uint32                              ReferenceCount = 0;
 
-        FAssetManager*                      Manager;
+        /** Reference to asset manager which keeps this record, acess is circular and we need a better solution */
+        FAssetManager*                      Manager = nullptr;
     };
     
 }

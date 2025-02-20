@@ -1,9 +1,7 @@
 #pragma once
 
-#include <EASTL/unordered_map.h>
-#include "vk_mem_alloc.h"
-#include "VulkanBuffer.h"
-#include "VulkanImage.h"
+#include <vma/vk_mem_alloc.h>
+#include "Containers/Array.h"
 #include "Core/Singleton/Singleton.h"
 #include "Platform/GenericPlatform.h"
 
@@ -14,7 +12,6 @@ namespace Lumina
     class FVulkanRenderContext;
     class FVulkanImage;
     class FVulkanBuffer;
-
     
     class FVulkanMemoryAllocator : public TSingleton<FVulkanMemoryAllocator>
     {

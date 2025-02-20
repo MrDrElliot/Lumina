@@ -1,5 +1,8 @@
 #version 450 core
 
+#pragma shader_stage(fragment)
+
+
 layout(location = 0) in vec3 nearPoint;
 layout(location = 1) in vec3 farPoint;
 layout(location = 2) in mat4 fragView;

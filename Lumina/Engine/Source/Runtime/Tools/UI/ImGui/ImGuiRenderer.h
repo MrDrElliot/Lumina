@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Renderer/Renderer.h"
 #include "imgui.h"
 #include "ImGuiX.h"
 #include "Subsystems/Subsystem.h"
@@ -26,14 +27,14 @@ namespace Lumina
         virtual void OnStartFrame() = 0;
         virtual void OnEndFrame() = 0;
         
-        virtual void RenderImage(TRefPtr<FImage> Image, ImVec2 Size) = 0;
+        virtual void RenderImage(FRHIImage Image, ImVec2 Size) = 0;
         virtual void RenderImage(const ImGuiX::FImGuiImageInfo& ImageInfo) = 0;
         
-        virtual ImGuiX::FImGuiImageInfo CreateImGuiTexture(TRefPtr<FImage> Image, ImVec2 Size) = 0;
+        virtual ImGuiX::FImGuiImageInfo CreateImGuiTexture(FRHIImage Image, ImVec2 Size) = 0;
         virtual ImGuiX::FImGuiImageInfo CreateImGuiTexture(const FString& RawPath) = 0;
         
         virtual void DestroyImGuiTexture(const ImGuiX::FImGuiImageInfo& ImageInfo) = 0;
-        virtual void DestroyImGuiTexture(const TRefPtr<FImage>& Image) = 0;
+        virtual void DestroyImGuiTexture(const FRHIImage& Image) = 0;
 
     
     protected:

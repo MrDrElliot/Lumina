@@ -1,5 +1,7 @@
 #version 450
 
+#pragma shader_stage(vertex)
+
 layout(location = 0) in vec3 inPosition;            // Vertex position in object space
 layout(location = 1) in vec4 inColor;               // Vertex color (if any)
 layout(location = 2) in vec3 inNormal;              // Vertex normal in object space
@@ -22,7 +24,7 @@ layout(push_constant) uniform ModelIndex
     uint MaterialInstanceIndex;
 } modelIndex;
 
-layout(set = 1, binding = 0) uniform CameraUniforms
+layout(set = 1, binding = 0) readonly uniform CameraUniforms
 {
     vec4 CameraPosition;    // Camera Position
     mat4 CameraView;        // View matrix

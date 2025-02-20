@@ -13,6 +13,7 @@ namespace Lumina
     {
     public:
 
+        IAsset() :AssetPath(FAssetPath()) {}
         IAsset(const FAssetPath& InPath) :AssetPath(InPath) {}
         virtual ~IAsset() = default;
         
@@ -21,6 +22,7 @@ namespace Lumina
         virtual FString GetFriendlyName()   const = 0;
 
         FORCEINLINE const FAssetPath& GetAssetPath() const { return AssetPath; }
+        FORCEINLINE bool HasValidPath() const { return AssetPath.IsValid(); }
 
         /** Operates for reading and writing serialization, depending which mode the archiver is in. */
         virtual void Serialize(FArchive& Ar) { AssertMsg(0, "Unimplemented!"); }

@@ -1,11 +1,12 @@
 #include "CommandBuffer.h"
 
+#include "Renderer/RHIIncl.h"
 #include "RHI/Vulkan/VulkanCommandBuffer.h"
 
 namespace Lumina
 {
-    TRefPtr<FCommandBuffer> FCommandBuffer::Create(ECommandBufferLevel InLevel, ECommandBufferType InBufferType, ECommandType InCmdType)
+    FRHICommandBuffer FCommandBuffer::Create(ECommandBufferLevel InLevel, ECommandBufferType InBufferType, ECommandType InCmdType)
     {
-        return MakeRefPtr<FVulkanCommandBuffer>(InLevel, InBufferType, InCmdType);
+        return FRHICommandBuffer(MakeRefCount<FVulkanCommandBuffer>(InLevel, InBufferType, InCmdType));
     }
 }

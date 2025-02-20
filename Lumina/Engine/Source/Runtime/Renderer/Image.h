@@ -3,6 +3,8 @@
 #include <glm/glm.hpp>
 #include "PipelineStage.h"
 #include "RenderResource.h"
+#include "RenderTypes.h"
+#include "RHIFwd.h"
 #include "Containers/Array.h"
 #include "Containers/String.h"
 #include "GUID/GUID.h"
@@ -12,61 +14,7 @@ namespace Lumina
 {
     class FCommandBuffer;
 
-    enum class EImageLayout
-    {
-        UNDEFINED = 0,
-        GENERAL = 1,
-        COLOR_ATTACHMENT = 2,
-        DEPTH_STENCIL_ATTACHMENT = 3,
-        DEPTH_STENCIL_READ_ONLY = 4,
-        SHADER_READ_ONLY = 5,
-        TRANSFER_SRC = 6,
-        TRANSFER_DST = 7,
-        PRESENT_SRC = 1000001002
-    };
-
-    enum class EImageUsage : glm::uint8
-    {
-        TEXTURE,
-        RENDER_TARGET,
-        DEPTH_BUFFER,
-        RESOLVE,
-    };
-
-    enum class EImageFormat : glm::uint8
-    {
-        R8,
-        RB16,
-        RGB24,
-        RGBA32_SRGB,
-        RGBA32_UNORM,
-        BGRA32_SRGB,
-        BGRA32_UNORM,
-        RGB32_HDR,
-        RGBA64_HDR,
-        RGBA128_HDR,
-        D32,
-        BC1,
-        BC5,
-        BC6h,
-        BC7,
-        RGBA64_SFLOAT,
-        RGB24_UNORM
-    };
-
-    enum class EImageType : glm::uint8
-    {
-        TYPE_1D,
-        TYPE_2D,
-        TYPE_3D,
-    };
-
-    enum class EImageSampleCount : uint8
-    {
-        ONE,
-        FOUR,
-    };
-
+    
     struct FImageSpecification
     {
         FString DebugName;
@@ -113,12 +61,12 @@ namespace Lumina
     };
 
     
-    class FImage : public FRenderResource
+    class FImage : public IRenderResource
     {
     public:
         
 
-        static TRefPtr<FImage> Create(const FImageSpecification& Spec);
+        static FRHIImage Create(const FImageSpecification& Spec);
 
         virtual ~FImage() = default;
         virtual FImageSpecification GetSpecification() const = 0;
@@ -126,7 +74,7 @@ namespace Lumina
     
 
         virtual void SetLayout(
-            TRefPtr<FCommandBuffer> CmdBuffer,
+            FRHICommandBuffer CmdBuffer,
             EImageLayout NewLayout,
             EPipelineStage SrcStage,
             EPipelineStage DstStage,
@@ -135,9 +83,7 @@ namespace Lumina
          ) = 0;
 
     private:
-
-        FString DebugName;
-        
+    
     protected:
         
         FGuid Guid;
@@ -171,15 +117,14 @@ namespace Lumina
         uint8 AnisotropicFilteringLevel;
     };
 
-    class FImageSampler : public FRenderResource
+    class FImageSampler : public IRenderResource
     {
     public:
         
         virtual ~FImageSampler() = default;
 
-        static TRefPtr<FImageSampler> Create(const FImageSamplerSpecification& Spec);
+        static FRHIImageSampler Create(const FImageSamplerSpecification& Spec);
         
-
         virtual void Destroy() = 0;
     };
 }

@@ -1,11 +1,8 @@
 #include "Renderer.h"
 #include "Assets/AssetHandle.h"
-#include "Buffer.h"
-#include "Image.h"
-#include "ShaderLibrary.h"
-#include "Swapchain.h"
+#include "Renderer/RHIIncl.h"
 #include "Core/Performance/PerformanceTracker.h"
-#include "Memory/Memory.h"
+#include "Core/Threading/Thread.h"
 #include "Paths/Paths.h"
 #include "RHI/Vulkan/VulkanRenderAPI.h"
 #include "Source/Runtime/Log/Log.h"
@@ -15,11 +12,11 @@ namespace Lumina
     IRenderAPI* FRenderer::RenderAPI = nullptr;
     FRenderer::RendererInternalData FRenderer::sInternalData;
     
-    void FRenderer::Init(const FRenderConfig& InConfig)
+    void FRenderer::Init()
     {
         LOG_TRACE("Renderer: Initializing");
-        RenderAPI = IRenderAPI::Create(InConfig);
-        RenderAPI->Initialize(InConfig);
+        RenderAPI = IRenderAPI::Create();
+        RenderAPI->Initialize();
         
         // Nearest filtration sampler
         FImageSamplerSpecification ImageSpec = {};
@@ -65,20 +62,26 @@ namespace Lumina
 
     void FRenderer::LoadShaderPack()
     {
-        FShaderLibrary::Get()->Load(Paths::GetEngineDirectory() / "Resources/Shaders/CookTorrance.vert.spv",
-            Paths::GetEngineDirectory() / "Resources/Shaders/CookTorrance.frag.spv", "Mesh");
+        {
+            std::filesystem::path VertPath = Paths::GetEngineDirectory() / "Resources/Shaders/CookTorrance.vert";
+            std::filesystem::path FragPath = Paths::GetEngineDirectory() / "Resources/Shaders/CookTorrance.frag";
+            FShaderLibrary::Get()->Load(VertPath.string().c_str(), FragPath.string().c_str(), FName("Mesh"));
+        }
 
-        FShaderLibrary::Get()->Load(Paths::GetEngineDirectory() / "Resources/Shaders/InfiniteGrid.vert.spv",
-      Paths::GetEngineDirectory() / "Resources/Shaders/InfiniteGrid.frag.spv", "InfiniteGrid");
         
+        {
+            std::filesystem::path VertPath = Paths::GetEngineDirectory() / "Resources/Shaders/InfiniteGrid.vert";
+            std::filesystem::path FragPath = Paths::GetEngineDirectory() / "Resources/Shaders/InfiniteGrid.frag";
+            FShaderLibrary::Get()->Load(VertPath.string().c_str(), FragPath.string().c_str(), FName("InfiniteGrid"));
+        }
     }
 
-    TRefPtr<FImageSampler> FRenderer::GetLinearSampler()
+    FRHIImageSampler FRenderer::GetLinearSampler()
     {
         return sInternalData.LinearSampler;
     }
 
-    TRefPtr<FImageSampler> FRenderer::GetNearestSampler()
+    FRHIImageSampler FRenderer::GetNearestSampler()
     {
         return sInternalData.NearestSampler;
     }
@@ -88,14 +91,9 @@ namespace Lumina
         RenderAPI->InsertBarrier(BarrierInfo);
     }
 
-    void FRenderer::BindSet(const TRefPtr<FDescriptorSet>& Set, const TRefPtr<FPipeline>& Pipeline, uint8 SetIndex, const TVector<uint32>& DynamicOffsets)
+    void FRenderer::BindSet(const FRHIDescriptorSet& Set, const TRefCountPtr<FPipeline>& Pipeline, uint8 SetIndex, const TVector<uint32>& DynamicOffsets)
     {
         RenderAPI->BindSet(Set, Pipeline, SetIndex, DynamicOffsets);
-    }
-
-    void FRenderer::Submit(RenderFunction&& Functor)
-    {
-        sInternalData.RenderFunctionList.push(eastl::move(Functor));
     }
 
     void FRenderer::BeginFrame()
@@ -108,9 +106,9 @@ namespace Lumina
         RenderAPI->EndFrame();
     }
 
-    void FRenderer::BeginRender(const TVector<TRefPtr<FImage>>& Attachments, const glm::fvec4& ClearColor)
+    void FRenderer::BeginRender(const FRenderPassBeginInfo& Info)
     {
-        RenderAPI->BeginRender(Attachments, ClearColor);
+        RenderAPI->BeginRender(Info);
     }
 
     void FRenderer::EndRender()
@@ -118,14 +116,15 @@ namespace Lumina
         RenderAPI->EndRender();
     }
     
-    void FRenderer::CopyToSwapchain(TRefPtr<FImage> ImageToCopy)
+    void FRenderer::CopyToSwapchain(FRHIImage ImageToCopy)
     {
         RenderAPI->CopyToSwapchain(ImageToCopy);
     }
 
-    void FRenderer::BindPipeline(TRefPtr<FPipeline> Pipeline)
+    void FRenderer::BindPipeline(FRHIPipeline Pipeline)
     {
         RenderAPI->BindPipeline(Pipeline);
+        GetRenderContext()->SetCurrentPipeline(Pipeline);
     }
 
     IRenderContext* FRenderer::GetRenderContext()
@@ -133,10 +132,10 @@ namespace Lumina
         return RenderAPI->GetRenderContext();
     }
     
-    void FRenderer::DrawIndexed(TRefPtr<FBuffer> VertexBuffer, TRefPtr<FBuffer> IndexBuffer)
+    void FRenderer::DrawIndexed(uint32 IndexCount, uint32 Instances, uint32 FirstVertex, uint32 FirstInstance)
     {
         sInternalData.NumDrawCalls++;
-        RenderAPI->DrawIndexed(VertexBuffer, IndexBuffer);
+        RenderAPI->DrawIndexed(IndexCount, Instances, FirstVertex, FirstInstance);
     }
 
     void FRenderer::DrawVertices(uint32 Vertices, uint32 Instances, uint32 FirstVertex, uint32 FirstInstance)
@@ -153,15 +152,16 @@ namespace Lumina
 
         sInternalData.NumDrawCalls = 0;
         sInternalData.NumVertices = 0;
-        
+
         ProcessRenderQueue();
     }
 
     void FRenderer::ProcessRenderQueue()
     {
+        
         FRenderer::Submit([]
         {
-            TRefPtr<FImage> Image = GetRenderContext()->GetSwapchain()->GetCurrentImage();
+            FRHIImage Image = GetRenderContext()->GetSwapchain()->GetCurrentImage();
         
             Image->SetLayout(
                 FRenderer::GetCommandBuffer(),
@@ -174,19 +174,17 @@ namespace Lumina
 
         RenderAPI->EndCommandRecord();
         RenderAPI->ExecuteCurrentCommands();
+
+        TQueue<RenderFunction> Commands;
+        eastl::swap(Commands, sInternalData.RenderFunctionList);
         
-        while (!sInternalData.RenderFunctionList.empty())
+        while (!Commands.empty())
         {
-            auto& Func = sInternalData.RenderFunctionList.front();
+            auto& Func = Commands.front();
             Func();
 
-            sInternalData.RenderFunctionList.pop();
+            Commands.pop();
         }
-    }
-
-    FRenderConfig FRenderer::GetConfig()
-    {
-        return RenderAPI->GetConfig();
     }
 
     uint32 FRenderer::GetCurrentFrameIndex()
@@ -199,17 +197,27 @@ namespace Lumina
         RenderAPI->WaitDevice();
     }
 
-    void FRenderer::ClearColor(const TRefPtr<FImage>& Image, const glm::fvec4& Value)
+    void FRenderer::ClearColor(const FRHIImage& Image, const glm::fvec4& Value)
     {
         RenderAPI->ClearColor(Image, Value);
     }
 
-    void FRenderer::PushConstants(TRefPtr<FPipeline> Pipeline, EShaderStage ShaderStage, uint16 Offset, uint32 Size, const void* Data)
+    void FRenderer::BindVertexBuffer(FRHIBuffer VertexBuffer)
+    {
+        RenderAPI->BindVertexBuffer(VertexBuffer);
+    }
+
+    void FRenderer::BindIndexBuffer(FRHIBuffer IndexBuffer)
+    {
+        RenderAPI->BindIndexBuffer(IndexBuffer);
+    }
+
+    void FRenderer::PushConstants(FRHIPipeline Pipeline, EShaderStage ShaderStage, uint16 Offset, uint32 Size, const void* Data)
     {
         RenderAPI->PushConstants(Pipeline, ShaderStage, Offset, Size, Data);
     }
     
-    TRefPtr<FCommandBuffer> FRenderer::GetCommandBuffer()
+    FRHICommandBuffer FRenderer::GetCommandBuffer()
     {
         return GetRenderContext()->GetCommandBuffer();
     }

@@ -6,8 +6,11 @@
 
 namespace Lumina
 {
+
     FSceneEditorTool::FSceneEditorTool(const IEditorToolContext* Context, FScene* InScene)
-        : FEditorTool(Context, "Scene Editor", InScene), OutlinerContext()
+        : FEditorTool(Context, "Scene Editor", InScene)
+        , OutlinerListView()
+        , OutlinerContext()
     {
         Assert(Scene != nullptr);
     }
@@ -24,10 +27,48 @@ namespace Lumina
             DrawEntityEditor( Context, bisFocused );
         });
 
-        OutlinerContext.DrawItemContextMenuFunction = [](const TVector<FTreeListViewItem*> Items)
+        OutlinerContext.DrawItemContextMenuFunction = [this](const TVector<FTreeListViewItem*> Items)
         {
-            
+            for (FTreeListViewItem* Item : Items)
+            {
+                FEntityListViewItem* EntityListItem = static_cast<FEntityListViewItem*>(Item);
+                
+                if (ImGui::MenuItem("Rename"))
+                {
+                    
+                }
+
+                if (ImGui::MenuItem("Delete"))
+                {
+                    EntityDestroyRequests.push(EntityListItem->GetEntity());
+                }
+            }
         };
+
+        OutlinerContext.RebuildTreeFunction = [this](FTreeListView* Tree)
+        {
+            for (auto entity : Scene->GetConstEntityRegistry().view<FNameComponent>())
+            {
+                if (Scene->GetConstEntityRegistry().any_of<FEditorComponent>(entity))
+                {
+                    continue;
+                }
+                
+                Entity NewEntity(entity, Scene);
+                OutlinerListView.AddItemToTree<FEntityListViewItem>(nullptr, eastl::move(NewEntity));
+            }
+        };
+    }
+
+    void FSceneEditorTool::Update(const FUpdateContext& UpdateContext)
+    {
+        while (!EntityDestroyRequests.empty())
+        {
+            Scene->DestroyEntity(EntityDestroyRequests.back());
+            OutlinerListView.MarkTreeDirty();
+
+            EntityDestroyRequests.pop();
+        }
     }
 
     void FSceneEditorTool::InitializeDockingLayout(ImGuiID InDockspaceID, const ImVec2& InDockspaceSize) const
@@ -68,7 +109,7 @@ namespace Lumina
 
     void FSceneEditorTool::CreateEntity()
     {
-        Entity NewEntity = Scene->CreateEntity(FTransform(), FName("New Entity"));
-        OutlinerListView.AddItemToTree<FEntityListViewItem>(nullptr, eastl::move(NewEntity));
+        Scene->CreateEntity(FTransform(), FName("New Entity"));
+        OutlinerListView.MarkTreeDirty();
     }
 }

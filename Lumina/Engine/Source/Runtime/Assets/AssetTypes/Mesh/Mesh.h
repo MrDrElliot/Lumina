@@ -35,7 +35,7 @@ namespace Lumina
         FORCEINLINE const uint32 GetNumVertices() const { return (uint32)MeshResource.Indices.size(); }
         FORCEINLINE const TVector<TAssetHandle<AMaterialInstance>>& GetMaterials() const { return Materials; }
 
-        
+        void Bind();
 
         
     private:

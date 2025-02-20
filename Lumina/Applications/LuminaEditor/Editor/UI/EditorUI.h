@@ -7,6 +7,11 @@
 
 namespace Lumina
 {
+    class FPrimitiveDrawManager;
+}
+
+namespace Lumina
+{
     class FRendererInfoEditorTool;
 }
 
@@ -69,6 +74,7 @@ namespace Lumina
         FSceneManager*                                  SceneManager = nullptr;
         FEntitySceneEditorTool*                         SceneEditorTool = nullptr;
 
+        FPrimitiveDrawManager*                          PrimitiveDrawManager = nullptr;
         FRendererInfoEditorTool*                        RendererInfo = nullptr;
         FConsoleLogEditorTool*                          ConsoleLogTool = nullptr;
         TVector<FEditorTool*>                           EditorTools;

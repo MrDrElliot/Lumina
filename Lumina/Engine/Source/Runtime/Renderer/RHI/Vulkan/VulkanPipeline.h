@@ -5,15 +5,17 @@
 
 namespace Lumina
 {
+    
     class FVulkanPipeline : public FPipeline
     {
     public:
 
-        FVulkanPipeline(const FPipelineSpecification& InSpec);
+        
+        FVulkanPipeline(const FPipelineSpec& PipelineSpec);
         ~FVulkanPipeline() override;
 
-        VkPipeline GetPipeline() { return Pipeline; }
-        VkPipelineLayout GetPipelineLayout() { return PipelineLayout; }
+        void* GetPlatformPipeline() const override { return Pipeline; }
+        void* GetPlatformPipelineLayout() const override { return PipelineLayout; }
 
         void SetFriendlyName(const FString& InName) override;
 

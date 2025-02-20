@@ -1,5 +1,7 @@
 #version 450
 
+#pragma shader_stage(fragment)
+
 layout(location = 0) in vec3 fragNormal;                    // Original normal (from vertex)
 layout(location = 1) in vec3 fragWorldNormal;              // Input world normal for fragment shader
 layout(location = 2) in vec2 fragTexCoord;                  // Texture coordinates

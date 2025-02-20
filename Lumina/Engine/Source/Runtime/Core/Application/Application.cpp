@@ -2,7 +2,6 @@
 #include "Scene/SceneRenderer.h"
 #include "Assets/AssetManager/AssetManager.h"
 #include "Core/Performance/PerformanceTracker.h"
-#include "Renderer/Renderer.h"
 #include "Core/Windows/Window.h"
 #include "Core/Windows/WindowTypes.h"
 #include "Scene/Scene.h"
@@ -85,7 +84,7 @@ namespace Lumina
         return (ApplicationFlags & static_cast<uint32>(Flags)) != 0;
     }
     
-    FWindow* FApplication::GetWindow()
+    FWindow* FApplication::GetMainWindow()
     {
         return Get().Window;
     }
@@ -101,6 +100,8 @@ namespace Lumina
         
         Window->SetEventCallback(BIND_EVENT_FN(OnEvent));
 
+        Windowing::SetPrimaryWindowHandle(Window);
+        
         return true;
     }
 
