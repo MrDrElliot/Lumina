@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <string>
 #include <cmath>
+#include "Core/Serialization/Archiver.h"
 
 namespace Lumina
 {
@@ -11,6 +12,15 @@ namespace Lumina
     
         FColor() : R(0.0f), G(0.0f), B(0.0f), A(1.0f) {}
         FColor(float r, float g, float b, float a = 1.0f) : R(r), G(g), B(b), A(a) {}
+
+        friend FArchive& operator << (FArchive& Ar, FColor& data)
+        {
+            Ar << data.R;
+            Ar << data.G;
+            Ar << data.B;
+            Ar << data.A;
+            return Ar;
+        }
     
         float GetR() const { return R; }
         float GetG() const { return G; }
@@ -152,6 +162,15 @@ namespace Lumina
     
             return FColor((r + m), (g + m), (b + m), alpha);
         }
-    };
 
+        static const FColor Red;
+        static const FColor Green;
+        static const FColor Blue;
+        static const FColor Yellow;
+        static const FColor White;
+        static const FColor Black;
+        
+    };
+    
+    
 }

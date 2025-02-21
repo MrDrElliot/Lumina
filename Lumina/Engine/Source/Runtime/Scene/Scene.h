@@ -1,7 +1,6 @@
 #pragma once
 
 #include "SceneTypes.h"
-#include "Assets/Asset.h"
 #include <entt/entt.hpp>
 #include "Lumina.h"
 #include "Core/UpdateContext.h"
@@ -61,12 +60,15 @@ namespace Lumina
         template <typename T>
         void ForEachComponent(const TFunction<void(uint32& CurrentIndex, entt::entity& OutEntity, T& OutComponent)>&& Functor);
 
+        FORCEINLINE ESceneType GetSceneType() const { return SceneType; }
+        
         #if WITH_DEVELOPMENT_TOOLS
         FPrimitiveDrawManager* GetPrimitiveDrawManager() const { return PrimitiveDrawManager; }
         #endif
     
     private:
 
+        
         #if WITH_DEVELOPMENT_TOOLS
         FPrimitiveDrawManager*          PrimitiveDrawManager = nullptr;
         #endif

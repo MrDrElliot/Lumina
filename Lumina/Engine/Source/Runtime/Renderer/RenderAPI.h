@@ -41,7 +41,7 @@ namespace Lumina
         T* GetRenderContext();
     
         virtual void BeginFrame() = 0;
-        virtual void EndFrame() = 0;
+        virtual void Present() = 0;
         virtual void BeginRender(const FRenderPassBeginInfo& Info) = 0;
         virtual void EndRender() = 0;
         virtual void WaitDevice() = 0;
@@ -57,6 +57,8 @@ namespace Lumina
 
         virtual void PushConstants(FRHIPipeline Pipeline, EShaderStage ShaderStage, uint16 Offset, uint32 Size, const void* Data) = 0;
 
+        virtual void SetShaderParameter(const FName& ParameterName, void* Data, uint32 Size) = 0;
+        
         virtual void BindVertexBuffer(FRHIBuffer VertexBuffer) = 0;
         virtual void BindIndexBuffer(FRHIBuffer IndexBuffer) = 0;
         

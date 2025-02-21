@@ -1,7 +1,7 @@
 
 
 #include "Scene.h"
-#include "Renderer/PrimitiveDrawManager.h"
+#include "Renderer/RHIIncl.h"
 #include "SceneRenderer.h"
 #include "SceneUpdateContext.h"
 #include "Containers/Name.h"
@@ -17,6 +17,7 @@ namespace Lumina
         : SceneType(InType)
     {
         PrimitiveDrawManager = FMemory::New<FPrimitiveDrawManager>();
+        PrimitiveDrawManager->Initialize();
     }
 
     FScene::~FScene()

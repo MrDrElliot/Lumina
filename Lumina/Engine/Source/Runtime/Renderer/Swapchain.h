@@ -34,7 +34,7 @@ namespace Lumina
         virtual void RecreateSwapchain() = 0;
         
         virtual bool BeginFrame() = 0;
-        virtual void EndFrame() = 0;
+        virtual void Present() = 0;
         
         inline bool WasSwapchainResizedThisFrame() const { return bWasResizedThisFrame; }
         inline bool IsSwapchainDirty() const { return bDirty; }

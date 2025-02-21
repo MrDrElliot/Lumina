@@ -44,6 +44,7 @@ namespace Lumina
         FORCEINLINE const glm::mat4& GetViewMatrix() const { return ViewVolume.GetViewMatrix(); }
         FORCEINLINE const glm::mat4& GetProjectionMatrix() const { return ViewVolume.GetProjectionMatrix(); }
         FORCEINLINE const glm::mat4& GetViewProjectionMatrix() const { return ViewVolume.GetViewProjectionMatrix(); }
+        FORCEINLINE const FViewVolume& GetViewVolume() const { return ViewVolume; }
 
     private:
         

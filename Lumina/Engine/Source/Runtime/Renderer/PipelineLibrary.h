@@ -16,13 +16,13 @@ namespace Lumina
         
     public:
     
-        TRefCountPtr<FPipeline> GetOrCreatePipeline(const FPipelineSpec& PipelineSpec);
-        
-        
+        void Shutdown();    
 
+        FRHIPipeline GetOrCreatePipeline(const FPipelineSpec& PipelineSpec);
+        
     private:
 
-        THashMap<uint64, TRefCountPtr<FPipeline>> PipelineMap;
+        THashMap<uint64, FRHIPipeline> PipelineMap;
     
     };
 }

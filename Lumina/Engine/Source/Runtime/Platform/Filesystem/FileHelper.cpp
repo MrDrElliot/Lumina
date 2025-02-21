@@ -67,7 +67,7 @@ namespace Lumina
         std::ifstream file(Path.c_str(), std::ios::in);
         if (!file.is_open())
         {
-            LOG_ERROR("Failed to open shader file: {0}", Path.c_str());
+            LOG_ERROR("Failed to open file: {0}", Path.c_str());
             return false;
         }
 

@@ -1,7 +1,5 @@
 #pragma once
-#include "Memory.h"
 #include "Core/Singleton/Singleton.h"
-#include "Log/Log.h"
 #include "Platform/GenericPlatform.h"
 
 namespace Lumina::Memory
@@ -10,7 +8,7 @@ namespace Lumina::Memory
     {
     public:
 
-        void Shutdown() override {}
+        void Shutdown() {}
 
         static void PreFrame()
         {

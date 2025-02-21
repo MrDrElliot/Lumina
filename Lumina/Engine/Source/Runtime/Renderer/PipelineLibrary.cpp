@@ -4,7 +4,12 @@
 
 namespace Lumina
 {
-    TRefCountPtr<FPipeline> FPipelineLibrary::GetOrCreatePipeline(const FPipelineSpec& PipelineSpec)
+    void FPipelineLibrary::Shutdown()
+    {
+        PipelineMap.clear();
+    }
+
+    FRHIPipeline FPipelineLibrary::GetOrCreatePipeline(const FPipelineSpec& PipelineSpec)
     {
         uint64 Hash = PipelineSpec.GetHash();
 
@@ -13,7 +18,7 @@ namespace Lumina
             return PipelineMap[Hash];
         }
 
-        TRefCountPtr<FPipeline> NewPipeline =  FPipeline::Create(PipelineSpec);
+        FRHIPipeline NewPipeline =  FPipeline::Create(PipelineSpec);
         PipelineMap.emplace(Hash, NewPipeline);
 
         return NewPipeline;

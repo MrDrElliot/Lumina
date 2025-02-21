@@ -106,7 +106,7 @@ namespace Lumina
         }
     }
 
-    bool FEditorTool::DrawViewport(const FUpdateContext& UpdateContext, ImTextureID ViewportTexture, FPrimitiveDrawManager* PDM)
+    bool FEditorTool::DrawViewport(const FUpdateContext& UpdateContext, ImTextureID ViewportTexture)
     {
         const ImVec2 ViewportSize(eastl::max(ImGui::GetContentRegionAvail().x, 64.0f), eastl::max(ImGui::GetContentRegionAvail().y, 64.0f));
         const ImVec2 WindowPosition = ImGui::GetWindowPos();
@@ -122,7 +122,14 @@ namespace Lumina
         /** Mostly for debug, so we can easily see if there's some transparency issue */
         ImGui::GetWindowDrawList()->AddRectFilled(WindowPosition, WindowBottomRight, IM_COL32(255, 0, 0, 255));
 
+        /*Scene->GetPrimitiveDrawManager()->DrawPoint(FVector3D(-0.5f, -0.5f, 0.0f), FColor::Green);
+        Scene->GetPrimitiveDrawManager()->DrawPoint(FVector3D(0.5f, -0.5f, 0.0f), FColor::Green); 
         
+        Scene->GetPrimitiveDrawManager()->DrawPoint(FVector3D(-1.0f, -0.25f, 0.0f), FColor::Red);
+        Scene->GetPrimitiveDrawManager()->DrawPoint(FVector3D(1.0f, -0.25f, 0.0f), FColor::Red);
+        
+        Scene->GetPrimitiveDrawManager()->DrawPoint(FVector3D(-0.5f, 0.0f, 0.0f), FColor::Blue);
+        Scene->GetPrimitiveDrawManager()->DrawPoint(FVector3D(0.5f, 0.0f, 0.0f), FColor::Blue);*/
         
         if (bViewportHovered)
         {

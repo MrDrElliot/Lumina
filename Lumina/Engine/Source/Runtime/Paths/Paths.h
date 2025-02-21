@@ -21,6 +21,19 @@ namespace Lumina::Paths
         return std::filesystem::canonical(std::filesystem::current_path().parent_path().parent_path() / "Lumina" / "Engine");
     }
 
+    inline std::filesystem::path GetEngineResourceDirectory()
+    {
+        const char* luminaDirEnv = std::getenv("LUMINA_DIR");
+
+        if (luminaDirEnv && std::strlen(luminaDirEnv) > 0)
+        {
+            return std::filesystem::path(luminaDirEnv) / "Lumina" / "Engine" / "Resources";
+        }
+
+        // Fallback: Assume the engine is two levels up from the executable
+        return std::filesystem::canonical(std::filesystem::current_path().parent_path().parent_path() / "Lumina" / "Engine " / "Resources");
+    }
+    
     // Gets the directory where the Lumina engine is installed (one level up from the engine).
     inline std::filesystem::path GetEngineInstallDirectory()
     {

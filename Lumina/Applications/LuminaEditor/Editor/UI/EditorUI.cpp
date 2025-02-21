@@ -509,7 +509,7 @@ namespace Lumina
                     {
                         Tool->bViewportFocused = ImGui::IsWindowFocused();
                         Tool->bViewportHovered = ImGui::IsWindowHovered();
-                        Tool->DrawViewport(UpdateContext, Image.ID, PrimitiveDrawManager);
+                        Tool->DrawViewport(UpdateContext, Image.ID);
                     }
                     
                     ImGui::End();

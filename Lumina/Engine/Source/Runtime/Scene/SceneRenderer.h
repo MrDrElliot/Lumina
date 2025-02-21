@@ -7,6 +7,7 @@
 #include "Renderer/Renderer.h"
 #include "Renderer/Image.h"
 #include "Renderer/RenderTypes.h"
+#include "Renderer/Viewport.h"
 
 namespace Lumina
 {
@@ -55,27 +56,27 @@ namespace Lumina
     protected:
 
         void ForwardRenderPass(const FScene* Scene);
+        void FullScreenPass(const FScene* Scene);
 
         void DrawPrimitives(const FScene* Scene);
-        void RenderGrid(const FScene* Scene);
-        void RenderGeometry(const FScene* Scene);
-        void BuildSceneRenderData(FSceneRenderData* RenderData, const FScene* Scene);
 
         void InitPipelines();
         void InitBuffers();
         void InitDescriptorSets();
         void CreateImages();
-        void Shutdown();
         void OnSwapchainResized();
+
+        FORCEINLINE FSceneGlobalData* GetSceneGlobalData() { return &SceneGlobalData; }
 
         
     private:
-        
+
+        FViewport                           SceneViewport;
         TVector<FRHIDescriptorSet>          SceneGlobalDescriptorSets;
                                             
         TVector<FRHIImage>                  RenderTargets;
         TVector<FRHIImage>                  DepthAttachments;
-                                            
+
                                             
         FRHIBuffer                          SceneGlobalUBO;
         FRHIBuffer                          LightSSBO;
@@ -86,7 +87,6 @@ namespace Lumina
         FSceneLightData                     SceneLightData;
         TVector<FModelData>                 ModelData;
         TVector<FMaterialTexturesData>      TexturesData;
-        
     };
     
 }

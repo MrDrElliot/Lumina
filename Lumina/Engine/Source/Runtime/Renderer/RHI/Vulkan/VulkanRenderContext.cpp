@@ -42,6 +42,8 @@ namespace Lumina
     
     FVulkanRenderContext::~FVulkanRenderContext()
     {
+        PipelineState.ClearState();
+        
         LOG_TRACE("VulkanRenderContext: Shutting Down");
         
         Swapchain->DestroySwapchain();
@@ -85,24 +87,27 @@ namespace Lumina
         
         VkPhysicalDeviceVulkan13Features features = {};
         features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
-        features.dynamicRendering = true;
-        features.synchronization2 = true;
+        features.dynamicRendering = VK_TRUE;
+        features.synchronization2 = VK_TRUE;
 
         VkPhysicalDeviceVulkan12Features features12 = {};
         features12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
-        features12.bufferDeviceAddress = true;
-        features12.descriptorIndexing =  true;
-        features12.descriptorBindingPartiallyBound = true;
+        features12.bufferDeviceAddress = VK_TRUE;
+        features12.descriptorIndexing =  VK_TRUE;
+        features12.descriptorBindingPartiallyBound = VK_TRUE;
         
         VkPhysicalDeviceFeatures device_features = {};
         device_features.samplerAnisotropy = VK_TRUE;
         device_features.sampleRateShading = VK_TRUE;
+        device_features.fillModeNonSolid = VK_TRUE;
+        device_features.wideLines = VK_TRUE;
         
         vkb::PhysicalDeviceSelector selector{ InstBuilder.value() };
         vkb::PhysicalDevice physicalDevice = selector
             .set_minimum_version(1, 3)
-            .set_required_features_13(features)
+            .set_required_features(device_features)
             .set_required_features_12(features12)
+            .set_required_features_13(features)
             .require_separate_compute_queue()
             .defer_surface_initialization()
             .select()

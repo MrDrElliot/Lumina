@@ -18,7 +18,7 @@ namespace Lumina
         
         
         virtual void BeginFrame() override;
-        virtual void EndFrame() override;
+        virtual void Present() override;
         virtual void BeginRender(const FRenderPassBeginInfo& Info) override;
         virtual void EndRender() override;
         virtual void WaitDevice() override;
@@ -32,6 +32,8 @@ namespace Lumina
 
         void PushConstants(FRHIPipeline Pipeline, EShaderStage ShaderStage, uint16 Offset, uint32 Size, const void* Data) override;
 
+        void SetShaderParameter(const FName& ParameterName, void* Data, uint32 Size) override;
+        
         void BindVertexBuffer(FRHIBuffer VertexBuffer) override;
         void BindIndexBuffer(FRHIBuffer IndexBuffer) override;
 

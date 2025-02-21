@@ -116,7 +116,7 @@ namespace Lumina
         virtual void DrawViewportOverlayElements(const FUpdateContext& UpdateContext, ImTextureID ViewportTexture) { }
         
         /** Draw the optional viewport for this tool window, returns true if focused. */
-        virtual bool DrawViewport(const FUpdateContext& UpdateContext, ImTextureID ViewportTexture, FPrimitiveDrawManager* PDM);
+        virtual bool DrawViewport(const FUpdateContext& UpdateContext, ImTextureID ViewportTexture);
         
         /** Can there only ever be one of this tool? */
         virtual bool IsSingleton() const { return HasFlag(EEditorToolFlags::Tool_Singleton); }

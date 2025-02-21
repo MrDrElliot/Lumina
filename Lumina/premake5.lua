@@ -20,6 +20,9 @@ project "Lumina"
 		"Engine/ThirdParty/glm/glm/**.cpp",
 		"Engine/ThirdParty/glm/glm/**.inl",
 		
+		"Engine/ThirdParty/EnkiTS/src/**.cpp",
+		"Engine/ThirdParty/EnkiTS/src/**.h",
+		
 		"Engine/ThirdParty/vk-bootstrap/src/**.h",
 	    "Engine/ThirdParty/vk-bootstrap/src/**.cpp",
 	    
@@ -81,7 +84,7 @@ project "Lumina"
 	 {
 	    "GLFW",
 	  	"%{VULKAN_SDK}/lib/vulkan-1.lib",  	
-	    "%{VULKAN_SDK}/lib/shaderc_sharedd.lib",  	
+	    "%{VULKAN_SDK}/lib/shaderc_combinedd.lib",  	
 	 }
 
 	defines

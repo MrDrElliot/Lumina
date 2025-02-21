@@ -21,7 +21,7 @@ namespace Lumina
     {
     	LOG_TRACE("Vulkan Render API: Shutting Down");
     	
-    	delete RenderContext;
+    	FMemory::Delete(RenderContext);
     	
     }
 	
@@ -32,9 +32,9 @@ namespace Lumina
 		BeginCommandRecord();
     }
 
-    void FVulkanRenderAPI::EndFrame()
+    void FVulkanRenderAPI::Present()
     {
-    	GetRenderContext()->GetSwapchain()->EndFrame();
+    	GetRenderContext()->GetSwapchain()->Present();
     }
 
     void FVulkanRenderAPI::BeginRender(const FRenderPassBeginInfo& Info)
@@ -129,7 +129,7 @@ namespace Lumina
 			RenderingInfo.renderArea = RenderArea;
 			RenderingInfo.layerCount = 1;
 			RenderingInfo.pColorAttachments = ColorAttachments.data();
-			RenderingInfo.colorAttachmentCount = (uint32_t)ColorAttachments.size();
+			RenderingInfo.colorAttachmentCount = (uint32)ColorAttachments.size();
 			RenderingInfo.pDepthAttachment = DepthAttachment.imageView ? &DepthAttachment : nullptr;
 			RenderingInfo.pStencilAttachment = nullptr;
 
@@ -173,7 +173,7 @@ namespace Lumina
     {
     	LOG_TRACE("Vulkan Render API: Initializing");
 
-    	RenderContext = new FVulkanRenderContext();
+    	RenderContext = FMemory::New<FVulkanRenderContext>();
     	RenderContext->Initialize();
     }
 
@@ -271,8 +271,8 @@ namespace Lumina
 
     		TRefCountPtr<FVulkanImage> vk_image = ImageToCopy.As<FVulkanImage>();
 			FRHIImage swapchain_image = GetRenderContext()->GetSwapchain<FVulkanSwapchain>()->GetCurrentImage();
-			glm::uvec3 swapchain_resolution = swapchain_image->GetSpecification().Extent;
-			glm::uvec3 src_image_resolution = ImageToCopy->GetSpecification().Extent;
+			FVector3D swapchain_resolution = swapchain_image->GetSpecification().Extent;
+			FVector3D src_image_resolution = ImageToCopy->GetSpecification().Extent;
 						
 			VkImageBlit ImageBlit = {};
 			ImageBlit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -284,9 +284,9 @@ namespace Lumina
 			ImageBlit.dstSubresource.baseArrayLayer = 0;
 			ImageBlit.dstSubresource.layerCount = 1;
 			ImageBlit.srcOffsets[0] = { 0, 0, 0 };
-			ImageBlit.srcOffsets[1] = { (int32)src_image_resolution.x, (int32)src_image_resolution.y, 1 };
+			ImageBlit.srcOffsets[1] = { (int32)src_image_resolution.X, (int32)src_image_resolution.Y, 1 };
 			ImageBlit.dstOffsets[0] = { 0, 0, 0 };
-			ImageBlit.dstOffsets[1] = { (int32)swapchain_resolution.x, (int32)swapchain_resolution.y, 1 };
+			ImageBlit.dstOffsets[1] = { (int32)swapchain_resolution.X, (int32)swapchain_resolution.Y, 1 };
     		
 						
 			vkCmdBlitImage(
@@ -394,6 +394,25 @@ namespace Lumina
 			vkCmdPushConstants(VkCommandBuffer->GetCommandBuffer(), VulkanPipelineLayout, StageFlags, Offset, Size, DataCopy.data());
 		});
     }
+
+	void FVulkanRenderAPI::SetShaderParameter(const FName& ParameterName, void* Data, uint32 Size)
+	{
+    	if (Data && Size)
+    	{
+    		FPipelineState* PipelineState = GetRenderContext()->GetPipelineState();
+    		Assert(PipelineState);
+    	
+    		FPipelineState::FPipelineStateBuffer Buffer = PipelineState->GetBufferForDescriptor(ParameterName);
+    		FRHIDescriptorSet DescriptorSet = PipelineState->GetDescriptorSetForDescriptor(ParameterName);
+    		Assert(Buffer.Buffer);
+    		Assert(DescriptorSet);
+    		
+    		Buffer.Buffer->UploadData(0, Data, Size);
+			DescriptorSet->Write(Buffer.DescriptorSetIndex, 0, Buffer.Buffer, Buffer.Buffer->GetSpecification().Size, 0);
+    		FRenderer::BindSet(DescriptorSet, PipelineState->GetPipeline(), Buffer.DescriptorSetIndex, {});
+
+    	}
+	}
 
 	void FVulkanRenderAPI::BindVertexBuffer(FRHIBuffer VertexBuffer)
 	{

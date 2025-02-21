@@ -24,6 +24,7 @@ namespace Lumina
 
     FSceneRenderer::FSceneRenderer()
         : SceneGlobalData()
+        , SceneViewport(Windowing::GetPrimaryWindowHandle()->GetExtent())
     {
     }
 
@@ -35,13 +36,14 @@ namespace Lumina
     {
         CreateImages();
         InitPipelines();
+        
         //InitBuffers();
         //InitDescriptorSets();
     }
 
     void FSceneRenderer::Deinitialize()
     {
-
+        FRenderer::WaitIdle();
     }
 
     void FSceneRenderer::StartScene(const FScene* Scene)
@@ -51,8 +53,8 @@ namespace Lumina
         PassInfo.bClearValue = true;
         PassInfo.ClearColor = FColor(0.0f, 0.0f, 0.0f, 1.0f);
         PassInfo.RenderAreaOffset = FIntVector2D(0, 0);
-        PassInfo.RenderAreaExtent.Y = Windowing::GetPrimaryWindowHandle()->GetHeight();
-        PassInfo.RenderAreaExtent.X = Windowing::GetPrimaryWindowHandle()->GetWidth();
+        PassInfo.RenderAreaExtent.Y = SceneViewport.GetSize().Y;
+        PassInfo.RenderAreaExtent.X = SceneViewport.GetSize().X;
         
         FRenderer::BeginRender(PassInfo);
 
@@ -81,43 +83,55 @@ namespace Lumina
         SceneGlobalData.Time =                  glfwGetTime();
         SceneGlobalData.DeltaTime =             Scene->GetSceneDeltaTime();
 
+        SceneViewport.SetViewVolume(CameraComponent.GetViewVolume());
+        
         
         ForwardRenderPass(Scene);
+        
+        Scene->GetPrimitiveDrawManager()->Draw(SceneGlobalData);
 
+        FullScreenPass(Scene);
+        
         FRenderer::EndRender();
         
         
-        // Copy render target to the swapchain image
+        // Copy render target to the swapchain image if primary, and set layout.
         //-------------------------------------------------------------------
-        
+
+
         FRHICommandBuffer CommandBuffer = FRenderer::GetCommandBuffer();
         FRHIImage CurrentRenderTarget = GetPrimaryRenderTarget();
-        FRenderer::Submit([CurrentRenderTarget, CommandBuffer]
+
+        if (Scene->GetSceneType() == ESceneType::Game)
         {
-            CurrentRenderTarget->SetLayout
-            (
-                CommandBuffer,
-                EImageLayout::TRANSFER_SRC,
-                EPipelineStage::COLOR_ATTACHMENT_OUTPUT,
-                EPipelineStage::TRANSFER,
-                EPipelineAccess::COLOR_ATTACHMENT_WRITE,
-                EPipelineAccess::TRANSFER_READ
-            );
-
-            FRenderer::GetRenderContext()->GetSwapchain()->GetCurrentImage()->SetLayout
-            (
-                CommandBuffer,
-                EImageLayout::TRANSFER_DST,
-                EPipelineStage::TOP_OF_PIPE,
-                EPipelineStage::TRANSFER,
-                EPipelineAccess::NONE,
-                EPipelineAccess::TRANSFER_WRITE
-            );
-            
-        });
         
-        FRenderer::CopyToSwapchain(CurrentRenderTarget);
+            FRenderer::Submit([CurrentRenderTarget, CommandBuffer]
+            {
+                CurrentRenderTarget->SetLayout
+                (
+                    CommandBuffer,
+                    EImageLayout::TRANSFER_SRC,
+                    EPipelineStage::COLOR_ATTACHMENT_OUTPUT,
+                    EPipelineStage::TRANSFER,
+                    EPipelineAccess::COLOR_ATTACHMENT_WRITE,
+                    EPipelineAccess::TRANSFER_READ
+                );
 
+                FRenderer::GetRenderContext()->GetSwapchain()->GetCurrentImage()->SetLayout
+                (
+                    CommandBuffer,
+                    EImageLayout::TRANSFER_DST,
+                    EPipelineStage::TOP_OF_PIPE,
+                    EPipelineStage::TRANSFER,
+                    EPipelineAccess::NONE,
+                    EPipelineAccess::TRANSFER_WRITE
+                );
+            
+            });
+        
+            FRenderer::CopyToSwapchain(CurrentRenderTarget);
+        }
+        
         FRenderer::Submit([CurrentRenderTarget, CommandBuffer]
         {
             CurrentRenderTarget->SetLayout(CommandBuffer,
@@ -128,11 +142,6 @@ namespace Lumina
                 EPipelineAccess::COLOR_ATTACHMENT_WRITE);
             
         });
-    }
-
-    void FSceneRenderer::Shutdown()
-    {
-        FRenderer::WaitIdle();
     }
 
     void FSceneRenderer::OnSwapchainResized()
@@ -147,198 +156,33 @@ namespace Lumina
     void FSceneRenderer::ForwardRenderPass(const FScene* Scene)
     {
     }
-    
+
+    void FSceneRenderer::FullScreenPass(const FScene* Scene)
+    {
+        FPipelineSpec PipelineSpec = FPipelineSpec::Create()
+        .SetPrimitiveTopology(EPipelineTopology::TRIANGLES)
+        .SetPolygonFillMode(EPipelineFillMode::FILL)
+        .SetCullingMode(EPipelineCullingMode::NONE)
+        .SetEnableDepthTest(true)
+        .SetAlphaBlendSrcFactor(EPipelineBlending::BLEND_FACTOR_ZERO)
+        .SetAlphaBlendDstFactor(EPipelineBlending::BLEND_FACTOR_ONE)
+        .SetLineWidth(1.0f)
+        .SetShader("InfiniteGrid.glsl");
+        
+        FRHIPipeline Pipeline = FPipelineLibrary::Get()->GetOrCreatePipeline(PipelineSpec);
+        
+        FRenderer::BindPipeline(Pipeline);
+
+        FSceneGlobalData Data = SceneGlobalData;
+        FRenderer::SetShaderParameter("SceneUBO", &Data, sizeof(FSceneGlobalData));
+        
+        FRenderer::DrawVertices(6);
+    }
+
     void FSceneRenderer::DrawPrimitives(const FScene* Scene)
     {
         
     }
-    
-    void FSceneRenderer::RenderGrid(const FScene* Scene)
-    {
-        // Begin rendering with the target and depth attachments
-        FRHIImage CurrentRenderTarget = GetPrimaryRenderTarget();
-        FRHIImage CurrentDepthAttachment = GetDepthAttachment();
-        
-    }
-
-    void FSceneRenderer::RenderGeometry(const FScene* Scene)
-    {
-        FSceneRenderData RenderData;
-        BuildSceneRenderData(&RenderData, Scene);
-
-        uint32 CurrentFrameIndex = FRenderer::GetCurrentFrameIndex();
-        FRHIDescriptorSet CurrentDescriptorSet = SceneGlobalDescriptorSets[CurrentFrameIndex];
-        
-        for (auto& MeshAssetHandle : RenderData.VisibleStaticMeshes)
-        {
-            const FMeshResource& MeshResource = MeshAssetHandle->GetMeshResource();
-
-        } 
-    }
-
-    void FSceneRenderer::BuildSceneRenderData(FSceneRenderData* RenderData, const FScene* Scene)
-    {
-        Assert(RenderData != nullptr);
-        
-        auto RenderableView = Scene->GetConstEntityRegistry().view<FStaticMeshComponent>();
-
-        for (auto Entity : RenderableView)
-        {
-            const FStaticMeshComponent& StaticMeshComponent = Scene->GetConstEntityRegistry().get<FStaticMeshComponent>(Entity);
-
-            if (StaticMeshComponent.IsLoaded())
-            {
-                RenderData->VisibleStaticMeshes.push_back(StaticMeshComponent.StaticMesh);
-            }
-        }
-    }
-    
-    /*void FSceneRenderer::GeometryPass(const FSceneUpdateContext& SceneContext)
-    {
-        FRHIImage CurrentRenderTarget = GetPrimaryRenderTarget();
-        FRHIImage CurrentDepthTarget = GetDepthAttachment();
-        
-        TVector<FRHIImage> Attachments = {CurrentRenderTarget, CurrentDepthTarget, };
-
-        glm::vec4 ClearColor = glm::vec4(0.0f);
-        // Begin rendering with the target and depth attachments
-        if(CurrentScene->GetSceneSettings().bShowGrid)
-        {
-            FRenderer::BeginRender(Attachments, ClearColor);
-        }
-        else
-        {
-            FRenderer::BeginRender(Attachments, glm::vec4(CurrentScene->GetSceneSettings().BackgroundColor, 1.0f));
-        }
-        
-        uint32 CurrentFrameIndex = FRenderer::GetCurrentFrameIndex();
-        TRefCountPtr<FDescriptorSet> CurrentDescriptorSet = SceneDescriptorSets[CurrentFrameIndex];
-        
-        FRenderer::BindPipeline(GraphicsPipeline);
-        FRenderer::BindSet(CurrentDescriptorSet, GraphicsPipeline, 1, {});
-
-        CurrentDescriptorSet->Write(0, 0, CameraUBO, sizeof(FCameraData), 0);
-
-
-        uint32 NumLights = 0;
-        CurrentScene->ForEachComponent<FLightComponent>([&, this](uint32 Current, entt::entity& entity, FLightComponent& Component)
-        {
-            Entity Ent(entity, CurrentScene);
-            FTransformComponent& TransformComponent = Ent.GetComponent<FTransformComponent>();
-            SceneLightingData.Lights[Current].LightPosition = glm::vec4(TransformComponent.GetLocation(), 1.0f);
-            SceneLightingData.Lights[Current].LightColor = Component.LightColor;
-            NumLights++;
-        });
-
-        SceneLightingData.NumLights = NumLights;
-        SceneUBO->UploadData(0, &SceneLightingData, sizeof(FSceneLightData));
-        CurrentDescriptorSet->Write(1, 0, SceneUBO, sizeof(FSceneLightData), 0);    
-        
-        auto View = CurrentScene->GetEntityRegistry().view<FMeshComponent, FTransformComponent>();
-        uint64 ComponentTotal = View.size_hint();
-
-        bool bHasValidRender = false;
-        if(ComponentTotal)
-        {
-            ModelData.clear();
-            ModelData.reserve((int32)ComponentTotal);
-            eastl::unordered_map<TSharedPtr<AMaterialInstance>, std::vector<TSharedPtr<AStaticMesh>>> MeshInstanceMap;
-
-            CurrentScene->ForEachComponent<FMeshComponent>([&, this](uint32 Current, entt::entity& entity, FMeshComponent& Component)
-            {
-                if (Component.StaticMesh.IsLoaded())
-                {
-
-                    auto& Transform = View.get<FTransformComponent>(entity);
-
-                    glm::mat4 Matrix = Transform.GetTransform().GetMatrix();
-                    ModelData.emplace_back(std::move(Matrix));
-                    
-                    bHasValidRender = true;
-                }
-            });
-
-            if (!bHasValidRender)
-            {
-                return;
-            }
-            
-            ModelSBO->UploadData(0, ModelData.data(), ModelData.size() * sizeof(FModelData));
-            CurrentDescriptorSet->Write(2, 0, ModelSBO, ModelData.size() * sizeof(FModelData), 0);
-
-            TexturesData.clear();
-            TexturesData.reserve(MeshInstanceMap.size());
-
-            // A map to store each texture and its unique ID
-            eastl::unordered_map<TSharedPtr<ATexture>, int32> TextureHash;
-
-            // Unique texture counter
-            int32 CurrentTextureID = 0;
-            
-            for (const auto& [MaterialInstance, Meshes] : MeshInstanceMap)
-            {
-                if (MaterialInstance != nullptr && MaterialInstance != nullptr)
-                {
-                    TexturesData.push_back(MaterialInstance->MaterialTextureIDs);
-                }
-                else
-                {
-                    // Skip invalid material instances
-                    continue;
-                }
-
-                // Helper lambda to find or add a texture to the map
-                auto GetOrAddTextureID = [&TextureHash, &CurrentTextureID](const TSharedPtr<ATexture>& Texture) -> int32
-                {
-                    if (!Texture)
-                    {
-                        return -1; // Invalid texture, -1 represents no image.
-                    }
-        
-                    auto It = TextureHash.find(Texture);
-                    if (It == TextureHash.end())
-                    {
-                        TextureHash[Texture] = CurrentTextureID++;
-                        return TextureHash[Texture];
-                    }
-                    return It->second;
-                };
-            }
-            
-            // Write the texture IDs for the multiple textures found in TexturesData
-            for (size_t i = 0; i < TexturesData.size(); ++i)
-            {
-                TestMaterial->Write(1, i, BaseColor, FRenderer::GetLinearSampler());
-                TestMaterial->Write(1, i + 1, Normal, FRenderer::GetLinearSampler());
-                TestMaterial->Write(1, i + 2, Metallic, FRenderer::GetLinearSampler());
-                TestMaterial->Write(1, i + 3, Emissive, FRenderer::GetLinearSampler());
-                TestMaterial->Write(1, i + 4, AmbientOcclusion, FRenderer::GetLinearSampler());   
-            }
-
-            MaterialUBO->UploadData(0, TexturesData.data(), TexturesData.size() * sizeof(FMaterialTexturesData));
-            CurrentDescriptorSet->Write(3, 0, MaterialUBO, TexturesData.size() * sizeof(FMaterialTexturesData), 0);
-
-            uint32 testIndex = 0;
-            for (const auto& [MaterialInstance, Meshes] : MeshInstanceMap)
-            {
-                for (auto StaticMesh : Meshes)
-                {
-                    Data.ModelIndex = testIndex++;
-                    Data.MaterialIndex = 0;
-                    
-                    FRenderer::PushConstants(GraphicsPipeline, EShaderStage::VERTEX, 0, sizeof(FTransientData), &Data);
-                    FRenderer::PushConstants(GraphicsPipeline, EShaderStage::FRAGMENT, 16, sizeof(FMaterialAttributes), &Attributes);
-
-                    
-                    FRenderer::DrawIndexed(StaticMesh->GetVertexBuffer(), StaticMesh->GetIndexBuffer());
-                    
-                }
-            }
-        }
-        
-        // End the render
-        FRenderer::EndRender();
-    }*/
     
     void FSceneRenderer::InitPipelines()
     {
@@ -409,10 +253,9 @@ namespace Lumina
 
     void FSceneRenderer::CreateImages()
     {
-        glm::uvec3 SwapchainSize = FRenderer::GetRenderContext()->GetSwapchain()->GetCurrentImage()->GetSpecification().Extent;
         FImageSpecification ImageSpecs = FImageSpecification::Default();
-        ImageSpecs.Extent.x = SwapchainSize.x;
-        ImageSpecs.Extent.y = SwapchainSize.y;
+        ImageSpecs.Extent.X = SceneViewport.GetSize().X;
+        ImageSpecs.Extent.Y = SceneViewport.GetSize().Y;
         ImageSpecs.Usage = EImageUsage::RENDER_TARGET;
         ImageSpecs.Type = EImageType::TYPE_2D;
         ImageSpecs.Format = EImageFormat::RGBA32_SRGB;
@@ -428,8 +271,8 @@ namespace Lumina
         }
 
         FImageSpecification DepthImageSpecs = FImageSpecification::Default();
-        DepthImageSpecs.Extent.x = SwapchainSize.x;
-        DepthImageSpecs.Extent.y = SwapchainSize.y;
+        DepthImageSpecs.Extent.X = SceneViewport.GetSize().X;
+        DepthImageSpecs.Extent.Y = SceneViewport.GetSize().Y;
         DepthImageSpecs.Usage = EImageUsage::DEPTH_BUFFER;
         DepthImageSpecs.Type = EImageType::TYPE_2D;
         DepthImageSpecs.Format = EImageFormat::D32;

@@ -97,7 +97,7 @@ namespace Lumina
 			VK_CHECK(vkCreateImageView(Device, &ImageViewCreateInfo, nullptr, &ImageView));
 
 			FImageSpecification SwapchainImageSpec = {};
-			SwapchainImageSpec.Extent = { (uint32)InSpec.Extent.X, (uint32)InSpec.Extent.Y, 1 };
+			SwapchainImageSpec.Extent = FVector3D(InSpec.Extent.X, InSpec.Extent.Y, 1.0f);
 			SwapchainImageSpec.Usage = EImageUsage::RENDER_TARGET;
 			SwapchainImageSpec.Type = EImageType::TYPE_2D;
 			SwapchainImageSpec.Format = convert(SurfaceFormat.format);
@@ -287,7 +287,7 @@ namespace Lumina
         return true;
     }
 
-    void FVulkanSwapchain::EndFrame()
+    void FVulkanSwapchain::Present()
     {
         if(Swapchain == VK_NULL_HANDLE || bDirty)
         {

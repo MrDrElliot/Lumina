@@ -7,7 +7,8 @@
 #include "RenderResource.h"
 #include "RHIFwd.h"
 #include "Containers/Array.h"
-#include "Core/Math/Color.h"
+#include "Containers/Name.h"
+#include "Core/Threading/Thread.h"
 #include "Platform/GenericPlatform.h"
 
 
@@ -60,16 +61,15 @@ namespace Lumina
         }
         
         static void BeginFrame();
-        static void EndFrame();
+        static void Present();
+        static void ProcessCommands();
+        
         static void BeginRender(const FRenderPassBeginInfo& Info);
         static void EndRender();
-        static void Render();
-        static void ProcessRenderQueue();
-
+        
         static uint32 GetCurrentFrameIndex();
 
         static void WaitIdle();
-        static void LoadShaderPack();
 
         static FRHIImageSampler GetLinearSampler();
         static FRHIImageSampler GetNearestSampler();
@@ -93,6 +93,8 @@ namespace Lumina
 
         static void BindVertexBuffer(FRHIBuffer VertexBuffer);
         static void BindIndexBuffer(FRHIBuffer IndexBuffer);
+
+        static void SetShaderParameter(const FName& ParameterName, void* Data, uint32 Size);
         
         static void PushConstants(FRHIPipeline Pipeline, EShaderStage ShaderStage, uint16 Offset, uint32 Size, const void* Data);
         static void DrawIndexed(uint32 IndexCount, uint32 Instances = 1, uint32 FirstVertex = 0, uint32 FirstInstance = 0);

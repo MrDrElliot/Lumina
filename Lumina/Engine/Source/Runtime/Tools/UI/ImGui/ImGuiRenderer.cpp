@@ -2,7 +2,6 @@
 
 #include "ImGuiDesignIcons.h"
 #include "ImGuiFonts.h"
-#include "Core/Windows/Window.h"
 #include "imgui/imgui_freetype.h"
 #include "Renderer/RHIIncl.h"
 #include "Tools/UI/Fonts/FontData_Lexend.h"
@@ -19,8 +18,9 @@ namespace Lumina
         ImGuiIO& io = ImGui::GetIO();
 
     	TVector<uint8> FontData, BoldFontData;
+
     	Fonts::GetDecompressedFontData(Fonts::Lexend::Bold::GetData(), FontData);
-    	Fonts::GetDecompressedFontData(Fonts::Lexend::Bold::GetData(), BoldFontData);
+		Fonts::GetDecompressedFontData(Fonts::Lexend::Bold::GetData(), BoldFontData);	
 
 		constexpr ImWchar icons_ranges[] = { LE_ICONRANGE_MIN, LE_ICONRANGE_MAX, 0 };
     	TVector<uint8> iconFontData;
@@ -35,7 +35,7 @@ namespace Lumina
     	iconFontConfig.MergeMode = true;
     	iconFontConfig.PixelSnapH = true;
     	iconFontConfig.RasterizerMultiply = 1.5f;
-
+    	
     	auto CreateFont = [&] ( Blob& fontData, float fontSize, float iconFontSize, ImGuiX::Font::EFont fontID, char const* pName, ImVec2 const& glyphOffset )
     	{
     		ImFont* pFont = io.Fonts->AddFontFromMemoryTTF( fontData.data(), static_cast<int32_t>(fontData.size()), fontSize, &fontConfig );
@@ -52,7 +52,7 @@ namespace Lumina
     	float const size16 = std::floor( 16 * DPIScale );
     	float const size18 = std::floor( 18 * DPIScale );
     	float const size24 = std::floor( 24 * DPIScale );
-
+    	
     	CreateFont(FontData, size12, size14, ImGuiX::Font::EFont::Tiny, "Tiny", ImVec2( 0, 2 ) );
     	CreateFont(BoldFontData, size12, size14, ImGuiX::Font::EFont::TinyBold, "Tiny Bold", ImVec2( 0, 2 ) );
 

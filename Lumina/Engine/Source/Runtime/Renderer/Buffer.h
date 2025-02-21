@@ -46,8 +46,8 @@ namespace Lumina
 
     struct FDeviceBufferSpecification
     {
-        uint64 Size;
-        uint64 Flags;
+        uint64 Size = 0;
+        uint64 Flags = 0;
         EDeviceBufferUsage BufferUsage;
         EDeviceBufferMemoryUsage MemoryUsage;
         EDeviceBufferMemoryHeap Heap;

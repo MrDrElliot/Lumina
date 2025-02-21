@@ -17,8 +17,8 @@ namespace Lumina
         void* GetPlatformDescriptorSetLayout() const override { return Layout; }
         
         void Write(uint16 Binding, uint16 ArrayElement, FRHIBuffer Buffer, uint64 Size, uint64 Offset) override;
-        void Write(uint16 Binding, uint16 ArrayElement, FRHIImage Image, FRHIImageSampler Sampler) override;
-        void Write(uint16 Binding, uint16 ArrayElement, TVector<FRHIImage> Images, FRHIImageSampler Sampler) override;
+        void Write(uint16 Binding, uint16 ArrayElement, FRHIImage Image) override;
+        void Write(uint16 Binding, uint16 ArrayElement, TVector<FRHIImage> Images) override;
 
         void SetFriendlyName(const FString& InName) override;
 

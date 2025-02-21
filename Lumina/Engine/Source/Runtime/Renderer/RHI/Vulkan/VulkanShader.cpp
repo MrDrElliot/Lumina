@@ -96,19 +96,16 @@ namespace Lumina
 
 		for (VkPipelineShaderStageCreateInfo& Stage : VkReflectionData.StageCreateInfos)
 		{
-			if (Stage.module != VK_NULL_HANDLE)
-			{
-				vkDestroyShaderModule(Device, Stage.module, nullptr);
-			}
+			Assert(Stage.module != VK_NULL_HANDLE);
+			vkDestroyShaderModule(Device, Stage.module, nullptr);
 		}
 		
-		for (VkDescriptorSetLayout& layout : VkReflectionData.SetLayouts)
+		for (VkDescriptorSetLayout layout : VkReflectionData.SetLayouts)
 		{
+			Assert(layout != VK_NULL_HANDLE);
 			vkDestroyDescriptorSetLayout(Device, layout, nullptr);
 		}
-
-		VkReflectionData.StageCreateInfos.clear();
-		VkReflectionData.SetLayouts.clear();
+		
     }
 
     void FVulkanShader::CreateStage(const FShaderStage& StageData)

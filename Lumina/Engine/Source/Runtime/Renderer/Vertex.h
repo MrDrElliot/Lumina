@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Core/Math/Color.h"
 #include "Core/Math/Math.h"
 #include "Core/Templates/CanBulkSerialize.h"
 
@@ -10,7 +11,7 @@ namespace Lumina
     struct FVertex
     {
         FVector3D Position;
-        FVector4D Color;
+        FColor    Color;
         FVector3D Normal;
         FVector2D UV;
         
@@ -26,14 +27,15 @@ namespace Lumina
 
     struct FSimpleElementVertex
     {
-        FVector3D Position;
-        FVector3D Color;
+        FVector3D   Position;
+        FColor      Color;
     };
     
     
     template<>
     struct TCanBulkSerialize<FVertex> { enum { Value = true }; };
 
-    
+    template<>
+    struct TCanBulkSerialize<FSimpleElementVertex> { enum { Value = true }; };
     
 }

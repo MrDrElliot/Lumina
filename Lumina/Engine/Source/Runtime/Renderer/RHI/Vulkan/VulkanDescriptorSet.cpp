@@ -169,13 +169,13 @@ namespace Lumina
         vkUpdateDescriptorSets(Device, 1, &WriteDescriptorSet, 0, nullptr);
     }
 
-    void FVulkanDescriptorSet::Write(uint16 Binding, uint16 ArrayElement, FRHIImage Image, FRHIImageSampler Sampler)
+    void FVulkanDescriptorSet::Write(uint16 Binding, uint16 ArrayElement, FRHIImage Image)
     {
         FVulkanRenderContext* RenderContext = FRenderer::GetRenderContext<FVulkanRenderContext>();
         VkDevice Device = RenderContext->GetDevice();
         
         TRefCountPtr<FVulkanImage> vkImage = Image.As<FVulkanImage>();
-        TRefCountPtr<FVulkanImageSampler> vk_sampler = Sampler.As<FVulkanImageSampler>();
+        TRefCountPtr<FVulkanImageSampler> vk_sampler = FRenderer::GetLinearSampler().As<FVulkanImageSampler>();
 
         VkDescriptorImageInfo DescriptorImageInfo = {};
         DescriptorImageInfo.imageView = vkImage->GetImageView();
@@ -194,7 +194,7 @@ namespace Lumina
         vkUpdateDescriptorSets(Device, 1, &WriteDescriptorSet, 0, nullptr);
     }
 
-    void FVulkanDescriptorSet::Write(uint16 Binding, uint16 ArrayElement, TVector<FRHIImage> Images, FRHIImageSampler Sampler)
+    void FVulkanDescriptorSet::Write(uint16 Binding, uint16 ArrayElement, TVector<FRHIImage> Images)
     {
         FVulkanRenderContext* RenderContext = FRenderer::GetRenderContext<FVulkanRenderContext>();
         VkDevice Device = RenderContext->GetDevice();
@@ -204,7 +204,7 @@ namespace Lumina
         for (size_t i = 0; i < Images.size(); ++i)
         {
             TRefCountPtr<FVulkanImage> vkImage = Images[i].As<FVulkanImage>();
-            TRefCountPtr<FVulkanImageSampler> vkSampler = Sampler.As<FVulkanImageSampler>();
+            TRefCountPtr<FVulkanImageSampler> vkSampler = FRenderer::GetLinearSampler().As<FVulkanImageSampler>();
 
             DescriptorImageInfos[i].imageView = vkImage->GetImageView();
             DescriptorImageInfos[i].sampler = vkSampler->GetSampler();

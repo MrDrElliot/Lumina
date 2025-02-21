@@ -1,7 +1,15 @@
 ﻿#pragma once
+#include <fstream>
+#include <shaderc/shaderc.hpp>
+
 #include "Containers/Array.h"
 #include "Core/Singleton/Singleton.h"
 
+
+namespace Lumina
+{
+    struct FShaderStage;
+}
 
 namespace Lumina
 {
@@ -22,16 +30,17 @@ namespace Lumina
     {
     public:
 
-        EShaderCompileResult CompileShader(TVector<uint32>& OutBinaries, const FStringView& ShaderData, const FStringView& FileName);
+        EShaderCompileResult CompileShader(FShaderStage& InStage, const FStringView& ShaderData);
 
 
     protected:
 
-        
-
+    
     private:
 
         TQueue<FShaderCompileRequest> CompileRequests;
-    
+        
     };
+
+    
 }

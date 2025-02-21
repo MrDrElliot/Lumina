@@ -3,22 +3,19 @@
 #include "Platform/Filesystem/FileHelper.h"
 #include <shaderc/shaderc.hpp>
 #include <filesystem>
+
+#include "TaskScheduler.h"
+#include "Core/Performance/PerformanceTracker.h"
 #include "Renderer/RHIIncl.h"
 #include "Source/Runtime/Log/Log.h"
 
 namespace Lumina
 {
     
-    
     FShaderLibrary::FShaderLibrary()
     {
     }
-
-    FShaderLibrary::~FShaderLibrary()
-    {
-        Shutdown();
-    }
-
+    
     void FShaderLibrary::Shutdown()
     {
         Library.clear();
@@ -26,46 +23,46 @@ namespace Lumina
 
     void FShaderLibrary::LoadShadersInDirectory(const FString& Directory)
     {
-        for (const auto& Dir : std::filesystem::recursive_directory_iterator(Directory.c_str()))
+        for (const auto& Dir : std::filesystem::directory_iterator(Directory.c_str()))
         {
             if(Dir.is_directory())
             {
                 continue;
             }
 
-            if(Dir.path().extension() == ".vert" || Dir.path().extension() == ".frag")
+            if(Dir.path().extension() == ".glsl")
             {
-                LOG_DEBUG("Loading Shader at: {0}", Dir.path().string().c_str());
-
-                
-                
+                FShaderLoadRequest* Request = FMemory::New<FShaderLoadRequest>(Dir.path().string().c_str(), Dir.path().filename().string().c_str());
+                FTaskSystem::Get()->ScheduleTask(Request);
             }
         }
     }
 
-    bool FShaderLibrary::Load(const FString& Vertex, const FString& Fragment, FName Tag)
+    bool FShaderLibrary::Load(const FString& Shader, FName Tag)
     {
         Assert(Library.find(Tag) == Library.end());
 
+        LOG_DEBUG("Compiling Shader: {0}", Tag.c_str());
+        
         TRefCountPtr<FShader> NewShader = FShader::Create();
         
         TVector<FShaderStage> Stages =
         {
-            { .Stage = EShaderStage::VERTEX,   .RawPath = Vertex },
-            { .Stage = EShaderStage::FRAGMENT, .RawPath = Fragment }
+            { .Stage = EShaderStage::VERTEX,   .RawPath = Shader },
+            { .Stage = EShaderStage::FRAGMENT, .RawPath = Shader }
         };
 
+
+        FString ShaderSource;
+        if(!FFileHelper::LoadFileIntoString(ShaderSource, Shader))
+        {
+            LOG_ERROR("Failed to open shader file! {0}", Tag.c_str());
+            return false;
+        }
         
         for (FShaderStage& Stage : Stages)
         {
-
-            FString ShaderSource;
-            if(!FFileHelper::LoadFileIntoString(ShaderSource, Stage.RawPath))
-            {
-                return false;
-            }
-
-            if (FShaderCompiler::Get()->CompileShader(Stage.Binaries, ShaderSource, Tag.c_str()) != EShaderCompileResult::Success)
+            if (FShaderCompiler::Get()->CompileShader(Stage, ShaderSource) != EShaderCompileResult::Success)
             {
                 LOG_ERROR("Failed to compile shader! {0}", Tag.c_str());
                 return false;
@@ -119,11 +116,11 @@ namespace Lumina
         return Library.find(Key) != Library.end();
     }
 
-    TRefCountPtr<FShader> FShaderLibrary::GetShader(FName Key)
+    FRHIShader FShaderLibrary::GetShader(FName Key)
     {
-        if (Get()->Library.find(Key) != Get()->Library.end())
+        if (Library.find(Key) != Library.end())
         {
-            return Get()->Library[Key];
+            return Library[Key];
         }
         
         LOG_ERROR("Failed to load shader with key: {0}", Key);

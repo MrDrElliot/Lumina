@@ -18,7 +18,7 @@ namespace Lumina
     struct FImageSpecification
     {
         FString DebugName;
-        glm::uvec3 Extent;
+        FVector3D Extent;
         TVector<uint8> Pixels;
         uint32 MipLevels;
         int32 SourceChannels;
@@ -31,7 +31,7 @@ namespace Lumina
         friend FArchive& operator << (FArchive& Ar, FImageSpecification& data)
         {
             Ar << data.DebugName;
-            Ar << data.Extent.x << data.Extent.y << data.Extent.z;
+            Ar << data.Extent;
             Ar << data.Pixels;
             Ar << data.MipLevels;
             Ar << data.SourceChannels;

@@ -39,8 +39,8 @@ namespace Lumina
         static FRHIDescriptorSet Create(const FDescriptorSetSpecification& InSpec);
         
         virtual void Write(uint16 Binding, uint16 ArrayElement, FRHIBuffer Buffer, uint64 Size, uint64 Offset) = 0;
-        virtual void Write(uint16 Binding, uint16 ArrayElement, FRHIImage Image, FRHIImageSampler Sampler) = 0;
-        virtual void Write(uint16 Binding, uint16 ArrayElement, TVector<FRHIImage> Images, FRHIImageSampler Sampler) = 0;
+        virtual void Write(uint16 Binding, uint16 ArrayElement, FRHIImage Image) = 0;
+        virtual void Write(uint16 Binding, uint16 ArrayElement, TVector<FRHIImage> Images) = 0;
 
         FORCEINLINE bool ContainsBinding(const FName& BindingKey) { return DescriptorBindings.find(BindingKey) != DescriptorBindings.end(); }
         FORCEINLINE const FDescriptorBinding& GetDescriptorBinding(const FName& BindingKey) { Assert(ContainsBinding(BindingKey)); return DescriptorBindings[BindingKey]; }

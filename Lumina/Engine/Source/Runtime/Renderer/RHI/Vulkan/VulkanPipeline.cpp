@@ -124,7 +124,9 @@ namespace Lumina
     	FVulkanRenderContext* RenderContext = FRenderer::GetRenderContext<FVulkanRenderContext>();		
     	VkDevice Device = RenderContext->GetDevice();
 
-    	TRefCountPtr<FVulkanShader> VkShader = (FShaderLibrary::Get()->GetShader(Specification.GetShader()).As<FVulkanShader>());
+    	FRHIShader Shader = FShaderLibrary::Get()->GetShader(Specification.GetShader());
+
+    	TRefCountPtr<FVulkanShader> VkShader = Shader.As<FVulkanShader>();
     	const FVulkanShaderReflctionData* VkShaderReflectionData = ((const FVulkanShaderReflctionData*)VkShader->GetPlatformReflectionData());
     		
     	TVector<VkDescriptorSetLayout> DescriptorSetLayouts = VkShaderReflectionData->SetLayouts;
@@ -151,7 +153,7 @@ namespace Lumina
     	
     	VkPipelineVertexInputStateCreateInfo VertexInputStateInfo = {};
     	VertexInputStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    	VertexInputStateInfo.vertexBindingDescriptionCount = 1;
+    	VertexInputStateInfo.vertexBindingDescriptionCount = VertexAttributeDescriptions.size();
     	VertexInputStateInfo.pVertexBindingDescriptions = &VertexBindingDescription;
     	VertexInputStateInfo.vertexAttributeDescriptionCount = static_cast<uint32>(VertexAttributeDescriptions.size());
     	VertexInputStateInfo.pVertexAttributeDescriptions = VertexAttributeDescriptions.data();

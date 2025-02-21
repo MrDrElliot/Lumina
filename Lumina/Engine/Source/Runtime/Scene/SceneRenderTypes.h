@@ -30,9 +30,9 @@ namespace Lumina
 
     struct FSceneGlobalData
     {
-        FCameraData     CameraData;
-        double          Time;
-        double          DeltaTime;
+        FCameraData    CameraData;
+        float          Time;
+        float          DeltaTime;
     };
 
 

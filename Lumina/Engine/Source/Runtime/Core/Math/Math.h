@@ -23,6 +23,8 @@ namespace Lumina
         // Default constructor
         TVector2D() : X(0), Y(0) {}
 
+        TVector2D(T In) :X(In), Y(In) {}
+        
         // Constructor with values
         TVector2D(T InX, T InY) : X(InX), Y(InY) {}
 
@@ -43,25 +45,25 @@ namespace Lumina
         // Vector addition
         TVector2D operator+(const TVector2D& Other) const
         {
-            return FVector2D(X + Other.X, Y + Other.Y);
+            return TVector2D(X + Other.X, Y + Other.Y);
         }
 
         // Vector subtraction
         TVector2D operator-(const TVector2D& Other) const
         {
-            return FVector2D(X - Other.X, Y - Other.Y);
+            return TVector2D(X - Other.X, Y - Other.Y);
         }
 
         // Scalar multiplication
         TVector2D operator*(T Scalar) const
         {
-            return FVector2D(X * Scalar, Y * Scalar);
+            return TVector2D(X * Scalar, Y * Scalar);
         }
 
         // Scalar division
         TVector2D operator/(T Scalar) const
         {
-            return FVector2D(X / Scalar, Y / Scalar);
+            return TVector2D(X / Scalar, Y / Scalar);
         }
 
         // Dot product
@@ -99,6 +101,8 @@ namespace Lumina
         // Default constructor
         TVector3D() : X(0), Y(0), Z(0) {}
 
+        TVector3D(T In) : X(In), Y(In), Z(In) {}
+        
         // Constructor with values
         TVector3D(T InX, T InY, T InZ) : X(InX), Y(InY), Z(InZ) {}
 
@@ -120,25 +124,25 @@ namespace Lumina
         // Vector addition
         TVector3D operator+(const TVector3D& Other) const
         {
-            return FVector3D(X + Other.X, Y + Other.Y, Z + Other.Z);
+            return TVector3D(X + Other.X, Y + Other.Y, Z + Other.Z);
         }
 
         // Vector subtraction
         TVector3D operator-(const TVector3D& Other) const
         {
-            return FVector3D(X - Other.X, Y - Other.Y, Z - Other.Z);
+            return TVector3D(X - Other.X, Y - Other.Y, Z - Other.Z);
         }
 
         // Scalar multiplication
         TVector3D operator*(T Scalar) const
         {
-            return FVector3D(X * Scalar, Y * Scalar, Z * Scalar);
+            return TVector3D(X * Scalar, Y * Scalar, Z * Scalar);
         }
 
         // Scalar division
         TVector3D operator/(T Scalar) const
         {
-            return FVector3D(X / Scalar, Y / Scalar, Z / Scalar);
+            return TVector3D(X / Scalar, Y / Scalar, Z / Scalar);
         }
 
         // Dot product
@@ -150,7 +154,7 @@ namespace Lumina
         // Cross product
         TVector3D Cross(const TVector3D& Other) const
         {
-            return FVector3D(Y * Other.Z - Z * Other.Y,
+            return TVector3D(Y * Other.Z - Z * Other.Y,
                              Z * Other.X - X * Other.Z,
                              X * Other.Y - Y * Other.X);
         }
@@ -185,6 +189,9 @@ namespace Lumina
         // Default constructor
         TVector4D() : X(0), Y(0), Z(0), W(0) {}
 
+        TVector4D(T In) :X(In), Y(In), Z(In), W(In){ }
+
+
         // Constructor with values
         TVector4D(T InX, T InY, T InZ, T InW) : X(InX), Y(InY), Z(InZ), W(InW) {}
 
@@ -207,25 +214,25 @@ namespace Lumina
         // Vector addition
         TVector4D operator+(const TVector4D& Other) const
         {
-            return FVector4D(X + Other.X, Y + Other.Y, Z + Other.Z, W + Other.W);
+            return TVector4D(X + Other.X, Y + Other.Y, Z + Other.Z, W + Other.W);
         }
 
         // Vector subtraction
         TVector4D operator-(const TVector4D& Other) const
         {
-            return FVector4D(X - Other.X, Y - Other.Y, Z - Other.Z, W - Other.W);
+            return TVector4D(X - Other.X, Y - Other.Y, Z - Other.Z, W - Other.W);
         }
 
         // Scalar multiplication
         TVector4D operator*(T Scalar) const
         {
-            return FVector4D(X * Scalar, Y * Scalar, Z * Scalar, W * Scalar);
+            return TVector4D(X * Scalar, Y * Scalar, Z * Scalar, W * Scalar);
         }
 
         // Scalar division
         TVector4D operator/(T Scalar) const
         {
-            return FVector4D(X / Scalar, Y / Scalar, Z / Scalar, W / Scalar);
+            return TVector4D(X / Scalar, Y / Scalar, Z / Scalar, W / Scalar);
         }
 
         // Dot product

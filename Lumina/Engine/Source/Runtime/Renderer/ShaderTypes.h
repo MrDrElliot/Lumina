@@ -11,6 +11,7 @@ namespace Lumina
     {
         EShaderStage Stage;
         TVector<uint32> Binaries;
+        FString ShaderString;
         FString RawPath;
     };
 }

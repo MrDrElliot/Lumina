@@ -28,7 +28,7 @@ namespace Lumina
         void RecreateSwapchain() override;
 
         bool BeginFrame() override;
-        void EndFrame() override;
+        void Present() override;
 
         VkSemaphore             GetAquireSemaphore() { return AquireSemaphores[CurrentFrameIndex]->GetVkSemaphore(); }
         VkSemaphore             GetPresentSemaphore() { return PresentSemaphores[CurrentImageIndex]->GetVkSemaphore(); }

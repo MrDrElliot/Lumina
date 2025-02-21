@@ -36,7 +36,7 @@ namespace Lumina
         FRHICommandBuffer GetCommandBuffer() { return CurrentCommandBuffer; }
 
         void SetCurrentPipeline(FRHIPipeline Pipeline);
-        FORCEINLINE const FPipelineState* GetPipelineState() const { return &PipelineState; }
+        FORCEINLINE FPipelineState* GetPipelineState() { return &PipelineState; }
 
         template<typename T>
         TRefCountPtr<T> GetCommandBuffer()

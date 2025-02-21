@@ -8,46 +8,63 @@
 
 namespace Lumina
 {
+    FBatchedElements::FBatchedElements()
+    {
+    }
 
-    bool FBatchedElements::Draw(const FViewport& ViewVolume)
+    FBatchedElements::~FBatchedElements()
+    {
+    }
+
+    void FBatchedElements::Initialize()
+    {
+        FDeviceBufferSpecification BufferSpec;
+        BufferSpec.Heap = EDeviceBufferMemoryHeap::DEVICE;
+        BufferSpec.MemoryUsage = EDeviceBufferMemoryUsage::COHERENT_WRITE;
+        BufferSpec.BufferUsage = EDeviceBufferUsage::VERTEX_BUFFER;
+        BufferSpec.Size = sizeof(FSimpleElementVertex) * 1024;
+        VertexBuffer = FBuffer::Create(BufferSpec);        
+        VertexBuffer->SetFriendlyName("Lines");
+    }
+
+    void FBatchedElements::SubmitElement(const FSimpleElementVertex& Element)
+    {
+        LineVertices.push_back(Element);
+    }
+
+    bool FBatchedElements::Draw(const FSceneGlobalData& GlobalData)
     {
         if (LineVertices.empty())
         {
             return false;
         }
-
-        glm::mat4 ViewProjectionMatrix = ViewVolume.GetViewVolume().GetViewProjectionMatrix();
-        float ViewportSizeX = ViewVolume.GetSize().X;
-        float ViewportSizeY = ViewVolume.GetSize().Y;
-
+        
         uint32 MaxVertices = 0;
 
         size_t VertexCount = LineVertices.size();
         size_t BufferSize = sizeof(FSimpleElementVertex) * VertexCount;
 
-        FDeviceBufferSpecification BufferSpec;
-        BufferSpec.Heap = EDeviceBufferMemoryHeap::DEVICE;
-        BufferSpec.BufferUsage = EDeviceBufferUsage::VERTEX_BUFFER;
-        BufferSpec.Size = BufferSize;
-        FRHIBuffer Buffer = FBuffer::Create(BufferSpec);        
-        Buffer->SetFriendlyName("Lines");
-
-        Buffer->UploadData(0, LineVertices.data(), BufferSize);
-
+        VertexBuffer->UploadData(0, LineVertices.data(), BufferSize);
+        
         FPipelineSpec PipelineSpec = FPipelineSpec::Create()
-        .SetPrimitiveTopology(EPipelineTopology::LINES)
-        .SetPolygonFillMode(EPipelineFillMode::EDGE_ONLY)
-        .SetVertexBinding<FSimpleElementVertex>()
-        .SetShader("Primitive");
+        .SetPrimitiveTopology(EPipelineTopology::TRIANGLES)
+        .SetPolygonFillMode(EPipelineFillMode::FILL)
+        .SetLineWidth(1.0f)
+        .SetShader("Primitive.glsl");
         
         FRHIPipeline Pipeline = FPipelineLibrary::Get()->GetOrCreatePipeline(PipelineSpec);
         
         FRenderer::BindPipeline(Pipeline);
 
-        FRenderer::BindVertexBuffer(Buffer);
+        FSceneGlobalData Data = GlobalData;
+        FRenderer::SetShaderParameter("SceneUBO", &Data, sizeof(FSceneGlobalData));
+        
+        FRenderer::BindVertexBuffer(VertexBuffer);
     
-        FRenderer::DrawVertices(VertexCount);
+        FRenderer::DrawVertices(6);
 
+        LineVertices.clear();
+        
         return true;
     }
 

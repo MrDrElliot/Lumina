@@ -81,21 +81,21 @@ namespace Lumina
 				glfwGetMonitorWorkarea(currentMonitor, &monitorX, &monitorY, &monitorWidth, &monitorHeight);
 
 				// Check if Specs.Width or Specs.Height is 0 and set them to the monitor size - 1
-				if (Specs.Width == 0 || Specs.Width >= monitorWidth)
+				if (Specs.Extent.X == 0 || Specs.Extent.X >= monitorWidth)
 				{
-					Specs.Width = monitorWidth/1.15;
+					Specs.Extent.X = monitorWidth/1.15;
 				}
-				if (Specs.Height == 0 || Specs.Height >= monitorHeight)
+				if (Specs.Extent.Y == 0 || Specs.Extent.Y >= monitorHeight)
 				{
-					Specs.Height = monitorHeight/1.15;
+					Specs.Extent.Y = monitorHeight/1.15;
 				}
 				
 
 				// Log the window's initialization details
-				LOG_TRACE("Initializing Window: {0} (Width: {1}p Height: {2}p)", Specs.Title, Specs.Width, Specs.Height);
+				LOG_TRACE("Initializing Window: {0} (Width: {1}p Height: {2}p)", Specs.Title, Specs.Extent.X, Specs.Extent.Y);
 
 				// Update the window size after adjustment
-				glfwSetWindowSize(Window, Specs.Width, Specs.Height);
+				glfwSetWindowSize(Window, Specs.Extent.X, Specs.Extent.Y);
 				
 			}
 		}
@@ -125,8 +125,8 @@ namespace Lumina
 	void FWindow::WindowResizeCallback(GLFWwindow* window, int width, int height)
 	{
 		FWindowSpecs& data = *(FWindowSpecs*)glfwGetWindowUserPointer(window);
-		data.Width = width;
-		data.Height = height;
+		data.Extent.X = width;
+		data.Extent.Y = height;
 			
 		WindowResizeEvent event(width, height);
 		data.EventCallback(event);

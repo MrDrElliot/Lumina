@@ -59,11 +59,17 @@ namespace Lumina
                     {
                         FDescriptorBinding DescriptorBinding;
                         DescriptorBinding.Name = DescriptorBindingKey;
+                        DescriptorBinding.Count = ReflectBinding->count;;
                         DescriptorBinding.Set = ReflectBinding->set;
                         DescriptorBinding.Binding = ReflectBinding->binding;
                         DescriptorBinding.ArrayCount = ReflectBinding->count;
                         DescriptorBinding.Type = (EDescriptorBindingType)ReflectBinding->descriptor_type;
                         DescriptorBinding.Size = ReflectBinding->count * ReflectBinding->block.size;
+
+                        for (int i = 0; i < ReflectBinding->type_description->member_count; ++i)
+                        {
+                            
+                        }
 
                         SetDescriptorBindings.emplace(DescriptorBindingKey, DescriptorBinding);
                     }
@@ -76,7 +82,6 @@ namespace Lumina
                     }
 
                     ShaderReflectionData.DescriptorBindings.push_back(SetDescriptorBindings);
-
                 }
             }
         }

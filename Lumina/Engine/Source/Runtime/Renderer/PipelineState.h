@@ -11,8 +11,24 @@ namespace Lumina
     {
     public:
 
+        struct FPipelineStateBuffer
+        {
+            uint8 DescriptorSetIndex = 0;
+            uint8 DescriptorIndex = 0;
+            FRHIBuffer Buffer;
+        };
+        
         void SetPipeline(const FRHIPipeline& InPipeline);
 
+        FORCEINLINE FRHIPipeline GetPipeline() const { return Pipeline; }
+        
+        /** Mostly used for cleanup and to release resources */
+        void ClearState();
+
+        /** Get the buffer for a descriptor */
+        FPipelineStateBuffer GetBufferForDescriptor(const FName& Descriptor);
+        FRHIDescriptorSet GetDescriptorSetForDescriptor(const FName& Descriptor);
+        
     protected:
 
         void BuildPipelineResources();
@@ -25,10 +41,10 @@ namespace Lumina
         /** Shader resource that is bound to the pipeline */
         FRHIShader                                          Shader;
 
-        /** Descriptor Index to set */
+        /** DescriptorSet Index to set */
         THashMap<uint8, FRHIDescriptorSet>                  DescriptorSets;
 
-        /** Descriptor index to location and buffer */
-        THashMap<uint8, TPair<FName, FRHIBuffer>>           Buffers;
+        /** Descriptor key to descriptor index and buffer */
+        THashMap<FName, FPipelineStateBuffer>           Buffers;
     };
 }

@@ -45,7 +45,6 @@ namespace Lumina
         virtual void PostInitialize() { };
         virtual void PreShutdown() { };
 
-
     protected:
         
         FUpdateContext          UpdateContext;

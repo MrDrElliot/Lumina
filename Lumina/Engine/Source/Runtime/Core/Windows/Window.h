@@ -5,6 +5,7 @@
 #include <GLFW/glfw3.h>
 
 #include "WindowTypes.h"
+#include "Core/Math/Math.h"
 
 
 namespace Lumina
@@ -33,8 +34,9 @@ namespace Lumina
 		GLFWwindow* GetWindow() const { return Window; }
 		bool IsMinimized() const;
 
-		uint32 GetWidth() const { return Specs.Width; }
-		uint32 GetHeight() const { return Specs.Height; }
+		const FIntVector2D& GetExtent() const { return Specs.Extent; }
+		uint32 GetWidth() const { return Specs.Extent.X; }
+		uint32 GetHeight() const { return Specs.Extent.Y; }
 
 		static void WindowResizeCallback(GLFWwindow* window, int width, int height);
 		void SetEventCallback(const std::function<void(FEvent&)>& Callback);

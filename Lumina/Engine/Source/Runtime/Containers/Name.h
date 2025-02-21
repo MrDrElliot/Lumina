@@ -39,7 +39,7 @@ namespace Lumina
         FORCEINLINE bool operator!=(const FName& Other) const { return ID != Other.ID; }
         
     private:
-
+        FString     StringView;
         uint64      ID = 0;
     };
     

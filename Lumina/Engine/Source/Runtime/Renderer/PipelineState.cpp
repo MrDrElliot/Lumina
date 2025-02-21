@@ -7,12 +7,47 @@ namespace Lumina
 {
     void FPipelineState::SetPipeline(const FRHIPipeline& InPipeline)
     {
+        if (InPipeline == Pipeline)
+        {
+            return;
+        }
+        
         FName ShaderKey = InPipeline->GetSpecification().GetShader();
         
         Pipeline = InPipeline;
-        Shader = FShaderLibrary::GetShader(ShaderKey);
+        Shader = FShaderLibrary::Get()->GetShader(ShaderKey);
         
         BuildPipelineResources();
+        
+    }
+
+    void FPipelineState::ClearState()
+    {
+        Pipeline = nullptr;
+        Shader = nullptr;
+        DescriptorSets.clear();
+        Buffers.clear();
+    }
+
+    FPipelineState::FPipelineStateBuffer FPipelineState::GetBufferForDescriptor(const FName& Descriptor)
+    {
+        Assert(Pipeline);
+        
+        auto Itr = Buffers.find(Descriptor);
+        Assert(Itr != Buffers.end());
+        
+        return Itr->second;
+        
+    }
+
+    FRHIDescriptorSet FPipelineState::GetDescriptorSetForDescriptor(const FName& Descriptor)
+    {
+        Assert(Pipeline);
+        
+        auto Itr = Buffers.find(Descriptor);
+        Assert(Itr != Buffers.end());
+        
+        return DescriptorSets[Itr->second.DescriptorSetIndex];
         
     }
 
@@ -31,6 +66,7 @@ namespace Lumina
             FDescriptorSetSpecification DescriptorSetSpec = {};
             
             /** This iteration represents each descriptor binding within that set */
+
             for (const auto& KVP : DescriptorHashMaps)
             {
                 const FDescriptorBinding& Binding = KVP.second;
@@ -40,16 +76,19 @@ namespace Lumina
                 {
                     FDeviceBufferSpecification BufferSpec;
                     BufferSpec.BufferUsage = EDeviceBufferUsage::UNIFORM_BUFFER;
-                    BufferSpec.MemoryUsage = EDeviceBufferMemoryUsage::NO_HOST_ACCESS;
                     BufferSpec.Heap = EDeviceBufferMemoryHeap::DEVICE;
+                    BufferSpec.MemoryUsage = EDeviceBufferMemoryUsage::COHERENT_WRITE;
                     BufferSpec.Size = Binding.Size;
                     
                     FRHIBuffer UniformBuffer = FBuffer::Create(BufferSpec);
-                    TPair<FName, FRHIBuffer> Pair;
-                    Pair.first = Binding.Name;
-                    Pair.second = UniformBuffer;
+                    UniformBuffer->SetFriendlyName("Unifrom Buffer");
                     
-                    Buffers.emplace(i, Pair);
+                    FPipelineStateBuffer Pair;
+                    Pair.DescriptorSetIndex = i;
+                    Pair.DescriptorIndex = KVP.second.Binding;
+                    Pair.Buffer = UniformBuffer;
+                    
+                    Buffers.emplace(Binding.Name, Pair);
                 }
             }
 

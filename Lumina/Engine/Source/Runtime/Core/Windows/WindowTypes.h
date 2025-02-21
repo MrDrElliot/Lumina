@@ -1,6 +1,8 @@
 #pragma once
 
 #include <string>
+
+#include "Core/Math/Math.h"
 #include "Events/Event.h"
 
 namespace Lumina
@@ -8,9 +10,7 @@ namespace Lumina
     struct FWindowSpecs
     {
         FString Title = "Lumina";
-        uint32 Width =  0;
-        uint32 Height = 0;
-
+        FIntVector2D Extent;
         bool bFullscreen = false;
 
        std::function<void(FEvent&)> EventCallback;

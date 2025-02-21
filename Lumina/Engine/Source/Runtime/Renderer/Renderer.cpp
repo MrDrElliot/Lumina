@@ -1,8 +1,6 @@
 #include "Renderer.h"
 #include "Assets/AssetHandle.h"
 #include "Renderer/RHIIncl.h"
-#include "Core/Performance/PerformanceTracker.h"
-#include "Core/Threading/Thread.h"
 #include "Paths/Paths.h"
 #include "RHI/Vulkan/VulkanRenderAPI.h"
 #include "Source/Runtime/Log/Log.h"
@@ -44,36 +42,31 @@ namespace Lumina
 
         sInternalData.LinearSampler = FImageSampler::Create(ImageSpec);
         sInternalData.LinearSampler->SetFriendlyName("Linear Sampler");
+
+        std::filesystem::path Path = Paths::GetEngineResourceDirectory();
+        FString StringPath = Path.string().c_str();
+        StringPath.append("/Shaders/");
+        FShaderLibrary::Get()->LoadShadersInDirectory(StringPath);
         
-        LoadShaderPack();
     }
     
     void FRenderer::Shutdown()
     {
         LOG_TRACE("Renderer: Shutting Down");
         WaitIdle();
+
+        while (!sInternalData.RenderFunctionList.empty())
+        {
+            sInternalData.RenderFunctionList.pop();
+        }
         
         sInternalData.LinearSampler->Destroy();
         sInternalData.NearestSampler->Destroy();
 
         FShaderLibrary::Get()->Shutdown();
-        delete RenderAPI;
-    }
-
-    void FRenderer::LoadShaderPack()
-    {
-        {
-            std::filesystem::path VertPath = Paths::GetEngineDirectory() / "Resources/Shaders/CookTorrance.vert";
-            std::filesystem::path FragPath = Paths::GetEngineDirectory() / "Resources/Shaders/CookTorrance.frag";
-            FShaderLibrary::Get()->Load(VertPath.string().c_str(), FragPath.string().c_str(), FName("Mesh"));
-        }
-
+        FPipelineLibrary::Get()->Shutdown();
         
-        {
-            std::filesystem::path VertPath = Paths::GetEngineDirectory() / "Resources/Shaders/InfiniteGrid.vert";
-            std::filesystem::path FragPath = Paths::GetEngineDirectory() / "Resources/Shaders/InfiniteGrid.frag";
-            FShaderLibrary::Get()->Load(VertPath.string().c_str(), FragPath.string().c_str(), FName("InfiniteGrid"));
-        }
+        delete RenderAPI;
     }
 
     FRHIImageSampler FRenderer::GetLinearSampler()
@@ -100,12 +93,7 @@ namespace Lumina
     {
         RenderAPI->BeginFrame();
     }
-
-    void FRenderer::EndFrame()
-    {
-        RenderAPI->EndFrame();
-    }
-
+    
     void FRenderer::BeginRender(const FRenderPassBeginInfo& Info)
     {
         RenderAPI->BeginRender(Info);
@@ -114,6 +102,11 @@ namespace Lumina
     void FRenderer::EndRender()
     {
         RenderAPI->EndRender();
+    }
+
+    void FRenderer::Present()
+    {
+        RenderAPI->Present();
     }
     
     void FRenderer::CopyToSwapchain(FRHIImage ImageToCopy)
@@ -145,19 +138,10 @@ namespace Lumina
         RenderAPI->DrawVertices(Vertices, Instances, FirstVertex, FirstInstance);
     }
 
-
-    void FRenderer::Render()
+    void FRenderer::ProcessCommands()
     {
-        PROFILE_SCOPE(FRenderer_Render)
-
         sInternalData.NumDrawCalls = 0;
         sInternalData.NumVertices = 0;
-
-        ProcessRenderQueue();
-    }
-
-    void FRenderer::ProcessRenderQueue()
-    {
         
         FRenderer::Submit([]
         {
@@ -182,7 +166,6 @@ namespace Lumina
         {
             auto& Func = Commands.front();
             Func();
-
             Commands.pop();
         }
     }
@@ -210,6 +193,11 @@ namespace Lumina
     void FRenderer::BindIndexBuffer(FRHIBuffer IndexBuffer)
     {
         RenderAPI->BindIndexBuffer(IndexBuffer);
+    }
+
+    void FRenderer::SetShaderParameter(const FName& ParameterName, void* Data, uint32 Size)
+    {
+        RenderAPI->SetShaderParameter(ParameterName, Data, Size);
     }
 
     void FRenderer::PushConstants(FRHIPipeline Pipeline, EShaderStage ShaderStage, uint16 Offset, uint32 Size, const void* Data)

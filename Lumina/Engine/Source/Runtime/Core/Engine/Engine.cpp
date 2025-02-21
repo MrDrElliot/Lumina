@@ -5,6 +5,7 @@
 #include "Scene/Scene.h"
 #include "Scene/SceneManager.h"
 #include "Renderer/Renderer.h"
+#include "TaskSystem/TaskSystem.h"
 #include "Tools/UI/DevelopmentToolUI.h"
 #include "Tools/UI/ImGui/Vulkan/VulkanImGuiRender.h"
 
@@ -18,6 +19,8 @@ namespace Lumina
         
         Application = App;
         
+        FTaskSystem::Get()->Initialize();
+        
         FRenderer::Init();
         
         InputSubsystem = EngineSubsystems.AddSubsystem<FInputSubsystem>();
@@ -30,8 +33,6 @@ namespace Lumina
         
         UpdateContext.SubsystemManager = &EngineSubsystems;
 
-        LOG_DEBUG("Number of Threads: {0}", Threading::GetNumThreads());
-        
         #if WITH_DEVELOPMENT_TOOLS
         CreateDevelopmentTools();
         DeveloperToolUI->Initialize(UpdateContext);
@@ -62,6 +63,8 @@ namespace Lumina
         EngineSubsystems.RemoveSubsystem<FSceneManager>();
         
         FRenderer::Shutdown();
+
+        FTaskSystem::Get()->Shutdown();
         
         return false;
     }
@@ -174,8 +177,8 @@ namespace Lumina
                 #endif
                 
                 
-                FRenderer::Render();
-                FRenderer::EndFrame();
+                FRenderer::ProcessCommands();
+                FRenderer::Present();
             }
         }
         

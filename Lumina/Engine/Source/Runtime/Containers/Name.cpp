@@ -35,6 +35,8 @@ namespace Lumina
                 (*gNameCache)[ID] = FString(Char);
             }
         }
+
+        StringView = (*gNameCache)[ID];
     }
 
     FName::FName(const FString& Str)

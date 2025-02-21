@@ -53,7 +53,7 @@ namespace Lumina
 
 		VkImageCreateInfo RenderTargetCreateInfo = {};
 		RenderTargetCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-		RenderTargetCreateInfo.extent = { Spec.Extent.x, Spec.Extent.y, 1 };
+		RenderTargetCreateInfo.extent = VkExtent3D(Spec.Extent.X, Spec.Extent.Y, 1);
 		RenderTargetCreateInfo.imageType = VK_IMAGE_TYPE_2D;
 		RenderTargetCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		RenderTargetCreateInfo.mipLevels = 1;
@@ -119,7 +119,9 @@ namespace Lumina
 		texture_create_info.usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
 		texture_create_info.arrayLayers = 1;
 		texture_create_info.mipLevels = Spec.MipLevels;
-		texture_create_info.extent = { Spec.Extent.x, Spec.Extent.y, 1 };
+		texture_create_info.extent.width = Spec.Extent.X;
+    	texture_create_info.extent.height = Spec.Extent.Y;
+    	texture_create_info.extent.depth = 1;
 
 		auto allocator = FVulkanMemoryAllocator::Get();
 		Allocation = allocator->AllocateImage(&texture_create_info, 0, &Image, "Texture");
@@ -167,7 +169,7 @@ namespace Lumina
 
 		for (uint32 i = 0; i < copy_regions.size(); i++)
 		{
-			glm::uvec2 mip_size = { Spec.Extent.x / (uint32)(std::pow(2, i)), Spec.Extent.y / (uint32)(std::pow(2, i)) };
+			glm::uvec2 mip_size = { Spec.Extent.X / (uint32)(std::pow(2, i)), Spec.Extent.Y / (uint32)(std::pow(2, i)) };
 
 			VkBufferImageCopy& buffer_image_copy = copy_regions[i];
 			buffer_image_copy.imageExtent = { mip_size.x, mip_size.y, 1 };
@@ -242,7 +244,7 @@ namespace Lumina
 
 		VkImageCreateInfo RenderTargetCreateInfo = {};
 		RenderTargetCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-		RenderTargetCreateInfo.extent = { Spec.Extent.x, Spec.Extent.y, 1 };
+		RenderTargetCreateInfo.extent = VkExtent3D(Spec.Extent.X, Spec.Extent.Y, 1);
 		RenderTargetCreateInfo.imageType = VK_IMAGE_TYPE_2D;
 		RenderTargetCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		RenderTargetCreateInfo.mipLevels = 1;
@@ -295,7 +297,7 @@ namespace Lumina
 
 		VkImageCreateInfo DepthBufferCreateInfo = {};
 		DepthBufferCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-		DepthBufferCreateInfo.extent = { Spec.Extent.x, Spec.Extent.y, 1 };
+		DepthBufferCreateInfo.extent = VkExtent3D(Spec.Extent.X, Spec.Extent.Y, 1);
 		DepthBufferCreateInfo.imageType = VK_IMAGE_TYPE_2D;
 		DepthBufferCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		DepthBufferCreateInfo.mipLevels = 1;

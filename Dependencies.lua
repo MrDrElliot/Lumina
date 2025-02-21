@@ -11,6 +11,7 @@ IncludeDir["vkbootstrap"] =             "%{LuminaEngineDirectory}/Lumina/Engine/
 IncludeDir["fastgltf"] =                "%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/fastgltf/include"
 IncludeDir["stb"] =                     "%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/stb/"
 IncludeDir["vulkan"] =                  "%{VULKAN_SDK}/Include/"
+IncludeDir["EnkiTS"] =                  "%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/EnkiTS/src/"
 IncludeDir["SPIRV_Reflect"] =           "%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/SPIRV-Reflect/"
 IncludeDir["json"] =                    "%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/json/include/"
 IncludeDir["entt"] =					"%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/entt/single_include/"

@@ -134,6 +134,8 @@ namespace Lumina
     {
         if (Buffer && Allocation)
         {
+            FRenderer::WaitIdle();
+            
             VmaAllocationInfo AllocationInfo;
             vmaGetAllocationInfo(Allocator, Allocation, &AllocationInfo);
 
@@ -156,6 +158,8 @@ namespace Lumina
     {
         if (Image && Allocation)
         {
+            FRenderer::WaitIdle();
+
             VmaAllocationInfo AllocationInfo;
             vmaGetAllocationInfo(Allocator, Allocation, &AllocationInfo);
 

@@ -88,7 +88,7 @@ public:
         rpmalloc_finalize();
     }
     
-    void InitializeThreadHeap()
+    static void InitializeThreadHeap()
     {
         // Since our tasks are not bound to a specific thread and we may alloc on one and free on another. This prevents us from calling thread finalize when we shutdown a thread
         // as we can not guarantee that we have freed everything that may have been allocated from this thread.
@@ -96,7 +96,7 @@ public:
         rpmalloc_thread_initialize();
     }
 
-    void ShutdownThreadHeap()
+    static void ShutdownThreadHeap()
     {
         rpmalloc_thread_finalize(1);
     }

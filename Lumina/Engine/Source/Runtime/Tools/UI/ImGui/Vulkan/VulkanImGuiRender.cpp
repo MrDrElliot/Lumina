@@ -26,8 +26,6 @@ namespace Lumina
     {
 		IImGuiRenderer::Initialize(Manager);
 		
-	     LOG_TRACE("Vulkan ImGui Renderer: Init");
-        
         VkDescriptorPoolSize PoolSizes[] = { { VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
         { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
         { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
@@ -44,7 +42,7 @@ namespace Lumina
         PoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
         PoolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
         PoolInfo.maxSets = 1000;
-        PoolInfo.poolSizeCount = (uint32_t)std::size(PoolSizes);
+        PoolInfo.poolSizeCount = (uint32)std::size(PoolSizes);
         PoolInfo.pPoolSizes = PoolSizes;
 
     	FVulkanRenderContext* VkRenderContext = FRenderer::GetRenderContext<FVulkanRenderContext>();
@@ -57,7 +55,7 @@ namespace Lumina
     	NameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
     	NameInfo.pObjectName = "ImGui Descriptor Pool";
     	NameInfo.objectType = VK_OBJECT_TYPE_DESCRIPTOR_POOL;
-    	NameInfo.objectHandle = reinterpret_cast<uint64_t>(DescriptorPool);
+    	NameInfo.objectHandle = reinterpret_cast<uint64>(DescriptorPool);
     	
     	VkRenderContext->GetRenderContextFunctions().DebugUtilsObjectNameEXT(Device, &NameInfo);
 		
@@ -190,8 +188,8 @@ namespace Lumina
 
 		ImGuiX::FImGuiImageInfo NewInfo;
         NewInfo.Image = Image;
-		NewInfo.Size.x = (float)Image->GetSpecification().Extent.x;
-		NewInfo.Size.y = (float)Image->GetSpecification().Extent.y;
+		NewInfo.Size.x = (float)Image->GetSpecification().Extent.X;
+		NewInfo.Size.y = (float)Image->GetSpecification().Extent.Y;
 		NewInfo.ID = reinterpret_cast<ImTextureID>(ImGuiImageID);
 		ImageCache.emplace(Image->GetGuid(), NewInfo);
 

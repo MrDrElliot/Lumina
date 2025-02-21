@@ -57,8 +57,8 @@ namespace Lumina
             return nullptr;
         }
 
-        ImageSpec.Extent.x = x;
-        ImageSpec.Extent.y = y;
+        ImageSpec.Extent.X = x;
+        ImageSpec.Extent.Y = y;
         ImageSpec.SourceChannels = c;
         ImageSpec.Pixels.assign(data, data + (x * y * STBI_rgb_alpha));
 
