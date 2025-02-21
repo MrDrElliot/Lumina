@@ -170,9 +170,9 @@ namespace Lumina
         }
     }
 
-    uint32 FRenderer::GetCurrentFrameIndex()
+    uint32 FRenderer::GetFrameIndex()
     {
-        return RenderAPI->GetRenderContext()->GetSwapchain()->GetCurrentFrameIndex();
+        return RenderAPI->GetRenderContext()->GetSwapchain()->GetFrameIndex();
     }
 
     void FRenderer::WaitIdle()

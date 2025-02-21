@@ -139,7 +139,7 @@ namespace Lumina
         CmdPoolCreateInfo.queueFamilyIndex =    GetQueueFamilyIndex().Graphics;
         CmdPoolCreateInfo.flags =               VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
-        vkCreateCommandPool(Device, &CmdPoolCreateInfo, nullptr, &CommandPool);
+        VK_CHECK(vkCreateCommandPool(Device, &CmdPoolCreateInfo, nullptr, &CommandPool));
 
         const FWindow* PrimaryWindow = Windowing::GetPrimaryWindowHandle();
         
@@ -186,7 +186,7 @@ namespace Lumina
         PoolInfo.pPoolSizes = PoolSizes.data();
         PoolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 
-        vkCreateDescriptorPool(Device, &PoolInfo, nullptr, &DescriptorPool);
+        VK_CHECK(vkCreateDescriptorPool(Device, &PoolInfo, nullptr, &DescriptorPool));
     }
 
 

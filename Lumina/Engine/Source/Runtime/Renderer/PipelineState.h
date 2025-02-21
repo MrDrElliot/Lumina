@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include "RenderTypes.h"
 #include "RHIFwd.h"
 #include "Containers/Array.h"
 #include "Containers/Name.h"
@@ -11,6 +12,14 @@ namespace Lumina
     {
     public:
 
+        struct FPendingDescriptorWrite
+        {
+            FRHIDescriptorSet   DescriptorSet;
+            FRHIBuffer          Buffer;
+            uint8 DescriptorSetIndex = 0;
+        };
+
+        
         struct FPipelineStateBuffer
         {
             uint8 DescriptorSetIndex = 0;
@@ -21,6 +30,11 @@ namespace Lumina
         void SetPipeline(const FRHIPipeline& InPipeline);
 
         FORCEINLINE FRHIPipeline GetPipeline() const { return Pipeline; }
+
+        void BindDescriptors();
+        void FlushDescriptorWrites();
+
+        void AddPendingDescriptorWrite(FRHIDescriptorSet Set, FRHIBuffer Buffer, uint8 DescriptorSetIndex);
         
         /** Mostly used for cleanup and to release resources */
         void ClearState();
@@ -42,9 +56,11 @@ namespace Lumina
         FRHIShader                                          Shader;
 
         /** DescriptorSet Index to set */
-        THashMap<uint8, FRHIDescriptorSet>                  DescriptorSets;
+        THashMap<uint8, FRHIDescriptorSet>                  DescriptorSets[FRAMES_IN_FLIGHT];
 
         /** Descriptor key to descriptor index and buffer */
-        THashMap<FName, FPipelineStateBuffer>           Buffers;
+        THashMap<FName, FPipelineStateBuffer>               Buffers[FRAMES_IN_FLIGHT];
+
+        TQueue<FPendingDescriptorWrite>                     PendingDescriptorWrites;
     };
 }

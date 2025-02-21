@@ -42,7 +42,7 @@ namespace Lumina
 
         FRHIImage& GetCurrentImage() { return Images[CurrentImageIndex]; }
         
-        uint32 GetCurrentFrameIndex() { return CurrentFrameIndex; }
+        uint32 GetFrameIndex() { return CurrentFrameIndex; }
         uint32 GetCurrentImageIndex() { return CurrentImageIndex; }
         FSwapchainSpec& GetSpecs() { return Specifications; }
 

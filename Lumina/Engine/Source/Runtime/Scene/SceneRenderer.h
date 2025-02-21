@@ -50,8 +50,8 @@ namespace Lumina
         void StartScene(const FScene* Scene);
         void EndScene(const FScene* Scene);
         
-        FRHIImage GetPrimaryRenderTarget() { return RenderTargets[FRenderer::GetCurrentFrameIndex()]; }
-        FRHIImage GetDepthAttachment() { return DepthAttachments[FRenderer::GetCurrentFrameIndex()]; }
+        FRHIImage GetPrimaryRenderTarget() { return RenderTargets[FRenderer::GetFrameIndex()]; }
+        FRHIImage GetDepthAttachment() { return DepthAttachments[FRenderer::GetFrameIndex()]; }
 
     protected:
 

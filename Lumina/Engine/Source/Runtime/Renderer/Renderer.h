@@ -67,7 +67,7 @@ namespace Lumina
         static void BeginRender(const FRenderPassBeginInfo& Info);
         static void EndRender();
         
-        static uint32 GetCurrentFrameIndex();
+        static uint32 GetFrameIndex();
 
         static void WaitIdle();
 

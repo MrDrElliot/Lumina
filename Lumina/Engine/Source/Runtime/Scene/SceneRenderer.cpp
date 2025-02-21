@@ -166,7 +166,6 @@ namespace Lumina
         .SetEnableDepthTest(true)
         .SetAlphaBlendSrcFactor(EPipelineBlending::BLEND_FACTOR_ZERO)
         .SetAlphaBlendDstFactor(EPipelineBlending::BLEND_FACTOR_ONE)
-        .SetLineWidth(1.0f)
         .SetShader("InfiniteGrid.glsl");
         
         FRHIPipeline Pipeline = FPipelineLibrary::Get()->GetOrCreatePipeline(PipelineSpec);
@@ -174,9 +173,12 @@ namespace Lumina
         FRenderer::BindPipeline(Pipeline);
 
         FSceneGlobalData Data = SceneGlobalData;
+        
         FRenderer::SetShaderParameter("SceneUBO", &Data, sizeof(FSceneGlobalData));
+        FRenderer::GetRenderContext()->GetPipelineState()->BindDescriptors();
         
         FRenderer::DrawVertices(6);
+        
     }
 
     void FSceneRenderer::DrawPrimitives(const FScene* Scene)

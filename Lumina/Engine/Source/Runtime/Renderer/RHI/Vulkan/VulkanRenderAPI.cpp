@@ -28,7 +28,7 @@ namespace Lumina
     void FVulkanRenderAPI::BeginFrame()
     {
         GetRenderContext()->GetSwapchain()->BeginFrame();
-		GetRenderContext()->SetCommandBufferForFrame(GetRenderContext()->GetSwapchain()->GetCurrentFrameIndex());
+		GetRenderContext()->SetCommandBufferForFrame(GetRenderContext()->GetSwapchain()->GetFrameIndex());
 		BeginCommandRecord();
     }
 
@@ -397,21 +397,21 @@ namespace Lumina
 
 	void FVulkanRenderAPI::SetShaderParameter(const FName& ParameterName, void* Data, uint32 Size)
 	{
-    	if (Data && Size)
-    	{
-    		FPipelineState* PipelineState = GetRenderContext()->GetPipelineState();
-    		Assert(PipelineState);
+    	Assert(Data);
+    	Assert(Size);
     	
-    		FPipelineState::FPipelineStateBuffer Buffer = PipelineState->GetBufferForDescriptor(ParameterName);
-    		FRHIDescriptorSet DescriptorSet = PipelineState->GetDescriptorSetForDescriptor(ParameterName);
-    		Assert(Buffer.Buffer);
-    		Assert(DescriptorSet);
-    		
-    		Buffer.Buffer->UploadData(0, Data, Size);
-			DescriptorSet->Write(Buffer.DescriptorSetIndex, 0, Buffer.Buffer, Buffer.Buffer->GetSpecification().Size, 0);
-    		FRenderer::BindSet(DescriptorSet, PipelineState->GetPipeline(), Buffer.DescriptorSetIndex, {});
-
-    	}
+    	FPipelineState* PipelineState = GetRenderContext()->GetPipelineState();
+    	Assert(PipelineState);
+    	  	
+    	FPipelineState::FPipelineStateBuffer Buffer = PipelineState->GetBufferForDescriptor(ParameterName);
+    	Assert(Buffer.Buffer);
+    	
+    	FRHIDescriptorSet DescriptorSet = PipelineState->GetDescriptorSetForDescriptor(ParameterName);
+    	Assert(DescriptorSet);
+    	
+    	Buffer.Buffer->UploadData(0, Data, Size);
+		  	
+    	PipelineState->AddPendingDescriptorWrite(DescriptorSet, Buffer.Buffer, Buffer.DescriptorSetIndex);
 	}
 
 	void FVulkanRenderAPI::BindVertexBuffer(FRHIBuffer VertexBuffer)
