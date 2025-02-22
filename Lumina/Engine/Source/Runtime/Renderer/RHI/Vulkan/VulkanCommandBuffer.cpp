@@ -10,28 +10,18 @@
 namespace Lumina
 {
     FVulkanCommandBuffer::FVulkanCommandBuffer(ECommandBufferLevel InLevel, ECommandBufferType InBufferType, ECommandType InCmdType)
-    : CommandBuffer(VK_NULL_HANDLE), FCommandBuffer(InLevel, InBufferType, InCmdType)
-    {
-        //FQueueFamilyIndex Index = FRenderContext::GetQueueFamilyIndex();
+    : FCommandBuffer(InLevel, InBufferType, InCmdType), CommandBuffer(VK_NULL_HANDLE)
+{
 
         FVulkanRenderContext* RenderContext = FRenderer::GetRenderContext<FVulkanRenderContext>();		
-
-        
         VkDevice Device = RenderContext->GetDevice();
-        
-        /*
-        VkCommandPoolCreateInfo PoolInfo = {};
-        PoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-        PoolInfo.queueFamilyIndex = Index.Graphics;
-        PoolInfo.flags = InBufferType == ECommandBufferType::GENERAL ? VK_COMMAND_POOL_CREATE_TRANSIENT_BIT : 0;
-        vkCreateCommandPool(Device, &PoolInfo, nullptr, &CommandPool);
-        */
         
         VkCommandBufferAllocateInfo BufferInfo =  {};
         BufferInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
         BufferInfo.commandPool = RenderContext->GetCommandPool();
         BufferInfo.commandBufferCount = 1;
         BufferInfo.level = Level == ECommandBufferLevel::PRIMARY ?  VK_COMMAND_BUFFER_LEVEL_PRIMARY : VK_COMMAND_BUFFER_LEVEL_SECONDARY;
+        
         VK_CHECK(vkAllocateCommandBuffers(Device, &BufferInfo, &CommandBuffer));
         
     }
@@ -52,7 +42,7 @@ namespace Lumina
         NameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
         NameInfo.pObjectName = GetFriendlyName().c_str();
         NameInfo.objectType = VK_OBJECT_TYPE_COMMAND_BUFFER;
-        NameInfo.objectHandle = reinterpret_cast<uint64_t>(CommandBuffer);
+        NameInfo.objectHandle = reinterpret_cast<uint64>(CommandBuffer);
 
 
         RenderContext->GetRenderContextFunctions().DebugUtilsObjectNameEXT(Device, &NameInfo);

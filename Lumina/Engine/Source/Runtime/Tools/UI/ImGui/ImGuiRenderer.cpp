@@ -166,11 +166,10 @@ namespace Lumina
 
     void IImGuiRenderer::EndFrame()
     {
-    	OnEndFrame();
 
     	ImGuiIO& Io = ImGui::GetIO();
-    	Io.DisplaySize.x = (float)FRenderer::GetRenderContext()->GetSwapchain()->GetSpecs().Extent.X;
-    	Io.DisplaySize.y = (float)FRenderer::GetRenderContext()->GetSwapchain()->GetSpecs().Extent.Y;
+    	Io.DisplaySize.x = FRenderer::GetRenderContext()->GetSwapchain()->GetSpecs().Extent.X;
+    	Io.DisplaySize.y = FRenderer::GetRenderContext()->GetSwapchain()->GetSpecs().Extent.Y;
     	
 		ImGui::Render();
 
@@ -181,5 +180,6 @@ namespace Lumina
     		ImGui::RenderPlatformWindowsDefault();
     	}
     	
+    	OnEndFrame();
     }
 }

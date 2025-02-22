@@ -54,11 +54,6 @@ namespace Lumina
     {
         LOG_TRACE("Renderer: Shutting Down");
         WaitIdle();
-
-        while (!sInternalData.RenderFunctionList.empty())
-        {
-            sInternalData.RenderFunctionList.pop();
-        }
         
         sInternalData.LinearSampler->Destroy();
         sInternalData.NearestSampler->Destroy();
@@ -143,31 +138,19 @@ namespace Lumina
         sInternalData.NumDrawCalls = 0;
         sInternalData.NumVertices = 0;
         
-        FRenderer::Submit([]
-        {
-            FRHIImage Image = GetRenderContext()->GetSwapchain()->GetCurrentImage();
+        FRHIImage Image = GetRenderContext()->GetSwapchain()->GetCurrentImage();
         
-            Image->SetLayout(
-                FRenderer::GetCommandBuffer(),
-                EImageLayout::PRESENT_SRC,
-                EPipelineStage::TRANSFER,
-                EPipelineStage::BOTTOM_OF_PIPE,
-                EPipelineAccess::TRANSFER_WRITE
-            );
-        });
+        Image->SetLayout
+        (
+            FRenderer::GetCommandBuffer(),
+            EImageLayout::PRESENT_SRC,
+            EPipelineStage::TRANSFER,
+            EPipelineStage::BOTTOM_OF_PIPE,
+            EPipelineAccess::TRANSFER_WRITE
+        );
 
         RenderAPI->EndCommandRecord();
         RenderAPI->ExecuteCurrentCommands();
-
-        TQueue<RenderFunction> Commands;
-        eastl::swap(Commands, sInternalData.RenderFunctionList);
-        
-        while (!Commands.empty())
-        {
-            auto& Func = Commands.front();
-            Func();
-            Commands.pop();
-        }
     }
 
     uint32 FRenderer::GetFrameIndex()

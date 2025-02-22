@@ -32,14 +32,11 @@ namespace Lumina
     {
     public:
         
-        using RenderFunction = TMoveOnlyFunction<void()>;
-        
         struct RendererInternalData
         {
             uint32 NumDrawCalls = 0;
             uint32 NumVertices = 0;
             
-            TQueue<RenderFunction>     RenderFunctionList;
             FRHIImageSampler           LinearSampler;
             FRHIImageSampler           NearestSampler;
 
@@ -53,12 +50,6 @@ namespace Lumina
         
         static void Init();
         static void Shutdown();
-
-        template<typename LAMBDA>
-        static void Submit(LAMBDA&& Lambda)
-        {
-            sInternalData.RenderFunctionList.push(TForward<LAMBDA>(Lambda));
-        }
         
         static void BeginFrame();
         static void Present();

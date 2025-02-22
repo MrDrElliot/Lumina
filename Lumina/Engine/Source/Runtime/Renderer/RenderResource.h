@@ -24,10 +24,11 @@ namespace Lumina
         
         virtual void SetFriendlyName(const FString& InName) { FriendlyName = InName; }
         FORCEINLINE const FString& GetFriendlyName() const { return FriendlyName; }
+        virtual void* GetAPIResource() { return nullptr; }
 
 
         //--------------------------------------------------------------------------
-        // Reference counting. TODO: batch deletion on render thread.
+        // Reference counting. TODO: batch deletion on another thread.
         
         uint32 AddRef() const
         {
@@ -54,7 +55,6 @@ namespace Lumina
         
         uint32 GetRefCount() const { return RefCount.load(eastl::memory_order_relaxed); }
 
-        
         
     private:
 

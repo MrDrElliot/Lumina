@@ -104,9 +104,7 @@ namespace Lumina
 
         if (Scene->GetSceneType() == ESceneType::Game)
         {
-        
-            FRenderer::Submit([CurrentRenderTarget, CommandBuffer]
-            {
+            
                 CurrentRenderTarget->SetLayout
                 (
                     CommandBuffer,
@@ -127,13 +125,9 @@ namespace Lumina
                     EPipelineAccess::TRANSFER_WRITE
                 );
             
-            });
-        
             FRenderer::CopyToSwapchain(CurrentRenderTarget);
         }
         
-        FRenderer::Submit([CurrentRenderTarget, CommandBuffer]
-        {
             CurrentRenderTarget->SetLayout(CommandBuffer,
                 EImageLayout::SHADER_READ_ONLY,
                 EPipelineStage::TRANSFER,
@@ -141,7 +135,6 @@ namespace Lumina
                 EPipelineAccess::TRANSFER_READ,
                 EPipelineAccess::COLOR_ATTACHMENT_WRITE);
             
-        });
     }
 
     void FSceneRenderer::OnSwapchainResized()

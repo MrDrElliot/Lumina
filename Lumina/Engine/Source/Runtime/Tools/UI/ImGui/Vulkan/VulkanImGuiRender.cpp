@@ -226,37 +226,33 @@ namespace Lumina
 
     void FVulkanImGuiRender::OnEndFrame()
     {
-        FRenderer::Submit([&]
-        {
-			if(ImDrawData* DrawData = ImGui::GetDrawData())
-			{
-				TRefCountPtr<FVulkanCommandBuffer> Buffer = FRenderer::GetCommandBuffer().As<FVulkanCommandBuffer>();
-				VkCommandBuffer CmdBuffer = Buffer->GetCommandBuffer();
-            
-				VkRenderingAttachmentInfo colorAttachment = {};
-				colorAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
-				colorAttachment.imageView = FRenderer::GetRenderContext()->GetSwapchain()->GetCurrentImage().As<FVulkanImage>()->GetImageView();
-				colorAttachment.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-				colorAttachment.clearValue = {1, 1, 1, };
-				colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-				colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-            
-				VkRenderingInfo renderInfo = {};
-				renderInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
-				renderInfo.pColorAttachments = &colorAttachment;
-				renderInfo.colorAttachmentCount = 1;
-				renderInfo.renderArea.extent.height =	FRenderer::GetRenderContext()->GetSwapchain()->GetSpecs().Extent.Y;
-				renderInfo.renderArea.extent.width =	FRenderer::GetRenderContext()->GetSwapchain()->GetSpecs().Extent.X;
-				renderInfo.layerCount = 1;
-            
-				vkCmdBeginRendering(CmdBuffer, &renderInfo);
-            
-				ImGui_ImplVulkan_RenderDrawData(DrawData, CmdBuffer);
-            
-				vkCmdEndRendering(CmdBuffer);
-				
-			}
-        });
+		if(ImDrawData* DrawData = ImGui::GetDrawData())
+		{
+			TRefCountPtr<FVulkanCommandBuffer> Buffer = FRenderer::GetCommandBuffer().As<FVulkanCommandBuffer>();
+			VkCommandBuffer CmdBuffer = Buffer->GetCommandBuffer();
+           
+			VkRenderingAttachmentInfo colorAttachment = {};
+			colorAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+			colorAttachment.imageView = FRenderer::GetRenderContext()->GetSwapchain()->GetCurrentImage().As<FVulkanImage>()->GetImageView();
+			colorAttachment.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+			colorAttachment.clearValue = {1, 1, 1, };
+			colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+			colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+           
+			VkRenderingInfo renderInfo = {};
+			renderInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
+			renderInfo.pColorAttachments = &colorAttachment;
+			renderInfo.colorAttachmentCount = 1;
+			renderInfo.renderArea.extent.height =	FRenderer::GetRenderContext()->GetSwapchain()->GetSpecs().Extent.Y;
+			renderInfo.renderArea.extent.width =	FRenderer::GetRenderContext()->GetSwapchain()->GetSpecs().Extent.X;
+			renderInfo.layerCount = 1;
+           
+			vkCmdBeginRendering(CmdBuffer, &renderInfo);
+           
+			ImGui_ImplVulkan_RenderDrawData(DrawData, CmdBuffer);
+           
+			vkCmdEndRendering(CmdBuffer);
+			
+		}
     }
-
 }

@@ -82,8 +82,8 @@ namespace Lumina
         VulkanRenderContextFunctions.DebugUtilsObjectNameEXT = (PFN_vkSetDebugUtilsObjectNameEXT)(
         vkGetInstanceProcAddr(InstBuilder.value(), "vkSetDebugUtilsObjectNameEXT"));
 
-        
         VulkanInstance = InstBuilder.value();
+        
         
         VkPhysicalDeviceVulkan13Features features = {};
         features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
@@ -129,10 +129,15 @@ namespace Lumina
         LOG_INFO("Creating Vulkan Device: {0}", PhysicalDeviceProperties.deviceName);
         
         GeneralQueue = vkbDevice.get_queue(vkb::QueueType::graphics).value();
+        TransferQueue = vkbDevice.get_queue(vkb::QueueType::transfer).value();
+        GraphicsQueue = vkbDevice.get_queue(vkb::QueueType::graphics).value();
+        PresentQueue = vkbDevice.get_queue(vkb::QueueType::graphics).value();
+        ComputeQueue = vkbDevice.get_queue(vkb::QueueType::compute).value();
+        
         QueueFamilyIndex.Graphics =     vkbDevice.get_queue_index(vkb::QueueType::graphics).value();
         QueueFamilyIndex.Compute =      vkbDevice.get_queue_index(vkb::QueueType::compute).value();
         QueueFamilyIndex.Transfer =     vkbDevice.get_queue_index(vkb::QueueType::transfer).value();
-        QueueFamilyIndex.Present =      QueueFamilyIndex.Graphics;
+        QueueFamilyIndex.Present =      vkbDevice.get_queue_index(vkb::QueueType::graphics).value();
         
         VkCommandPoolCreateInfo CmdPoolCreateInfo = {};
         CmdPoolCreateInfo.sType =               VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -145,8 +150,8 @@ namespace Lumina
         
         FSwapchainSpec SwapchainSpec;
         SwapchainSpec.Window =          PrimaryWindow;
-        SwapchainSpec.Extent.X =        (int)PrimaryWindow->GetWidth();
-        SwapchainSpec.Extent.Y =        (int)PrimaryWindow->GetHeight();
+        SwapchainSpec.Extent.X =        PrimaryWindow->GetWidth();
+        SwapchainSpec.Extent.Y =        PrimaryWindow->GetHeight();
         
         Swapchain = MakeRefCount<FVulkanSwapchain>(SwapchainSpec);
         Swapchain->CreateSurface(this, SwapchainSpec);
@@ -164,19 +169,19 @@ namespace Lumina
 
         CurrentCommandBuffer = CommandBuffers[0];
         
-        uint32 Count = 100 * FRAMES_IN_FLIGHT;
+        uint32 Count = 1000 * FRAMES_IN_FLIGHT;
 
         TInlineVector<VkDescriptorPoolSize, 8> PoolSizes =
         {
             { VK_DESCRIPTOR_TYPE_SAMPLER,							Count }, 
             { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,			Count },
-            { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,					Count },
-            { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,					Count },
+            { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,					    Count },
+            { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,					    Count },
             { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,					Count },
             { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC,			Count },
             { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,					Count },
             { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC,			Count },
-            { VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,				Count }
+            { VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,				    Count }
         };
 
         VkDescriptorPoolCreateInfo PoolInfo = {};
@@ -207,7 +212,7 @@ namespace Lumina
 
     void FVulkanRenderContext::FreeDescriptorSets(const TVector<VkDescriptorSet>& InSets)
     {
-        vkFreeDescriptorSets(Device, DescriptorPool, (uint32)InSets.size(), InSets.data());
+        VK_CHECK(vkFreeDescriptorSets(Device, DescriptorPool, (uint32)InSets.size(), InSets.data()));
     }
 
     VkCommandBuffer FVulkanRenderContext::AllocateTransientCommandBuffer()
@@ -219,20 +224,20 @@ namespace Lumina
         AllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 
         VkCommandBuffer CmdBuffer;
-        vkAllocateCommandBuffers(Device, &AllocateInfo, &CmdBuffer);
+        VK_CHECK(vkAllocateCommandBuffers(Device, &AllocateInfo, &CmdBuffer));
 
         VkCommandBufferBeginInfo BeginInfo = {};
         BeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
         BeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-        vkBeginCommandBuffer(CmdBuffer, &BeginInfo);
+        VK_CHECK(vkBeginCommandBuffer(CmdBuffer, &BeginInfo));
 
         return CmdBuffer;
     }
 
     void FVulkanRenderContext::ExecuteTransientCommandBuffer(VkCommandBuffer CmdBuffer)
     {
-        vkEndCommandBuffer(CmdBuffer);
+        VK_CHECK(vkEndCommandBuffer(CmdBuffer));
 
         VkSubmitInfo SubmitInfo = {};
         SubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -243,14 +248,15 @@ namespace Lumina
         VkFenceCreateInfo FenceCreateInfo = {};
         FenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 
-        vkCreateFence(Device, &FenceCreateInfo, nullptr, &Fence);
+        VK_CHECK(vkCreateFence(Device, &FenceCreateInfo, nullptr, &Fence));
 
-        vkQueueSubmit(GeneralQueue, 1, &SubmitInfo, Fence);
-        vkWaitForFences(Device, 1, &Fence, VK_TRUE, UINT64_MAX);
+        VK_CHECK(vkQueueSubmit(GeneralQueue, 1, &SubmitInfo, Fence));
+        VK_CHECK(vkWaitForFences(Device, 1, &Fence, VK_TRUE, UINT64_MAX));
 
-        vkResetCommandPool(Device, CommandPool, 0);
+        VK_CHECK(vkResetCommandPool(Device, CommandPool, 0));
+
         vkFreeCommandBuffers(Device, CommandPool, 1, &CmdBuffer);
-
+        
         vkDestroyFence(Device, Fence, nullptr);
     }
 }

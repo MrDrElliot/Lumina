@@ -27,9 +27,9 @@ namespace Lumina
               VulkanRenderContextFunctions(),
               Device(VK_NULL_HANDLE),
               PhysicalDevice(VK_NULL_HANDLE)
-              , PhysicalDeviceFeatures(),
+              ,PhysicalDeviceFeatures(),
               PhysicalDeviceProperties()
-              , PhysicslDeviceMemoryProperties(),
+              ,PhysicslDeviceMemoryProperties(),
               CommandPool(VK_NULL_HANDLE),
               GeneralQueue(VK_NULL_HANDLE)
         {
@@ -63,16 +63,21 @@ namespace Lumina
 
     private:
 
-        VkDescriptorPool                        DescriptorPool;
         VkInstance                              VulkanInstance;
-        FVulkanRenderContextFunctions           VulkanRenderContextFunctions;
-        VkDevice                                Device;
         VkPhysicalDevice                        PhysicalDevice;
+        VkDevice                                Device;
+        VkDescriptorPool                        DescriptorPool;
+        FVulkanRenderContextFunctions           VulkanRenderContextFunctions;
         VkPhysicalDeviceFeatures                PhysicalDeviceFeatures;
         VkPhysicalDeviceProperties              PhysicalDeviceProperties;
         VkPhysicalDeviceMemoryProperties        PhysicslDeviceMemoryProperties;
         VkCommandPool                           CommandPool;
+        
         VkQueue                                 GeneralQueue;
+        VkQueue                                 TransferQueue;
+        VkQueue                                 PresentQueue;
+        VkQueue                                 GraphicsQueue;
+        VkQueue                                 ComputeQueue;
         
     };
 }
