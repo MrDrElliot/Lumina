@@ -131,7 +131,8 @@ namespace Lumina
 		StagingBuffer_spec.MemoryUsage = EDeviceBufferMemoryUsage::COHERENT_WRITE;
 		StagingBuffer_spec.BufferUsage = EDeviceBufferUsage::STAGING_BUFFER;
 
-		TRefCountPtr<FVulkanBuffer> StagingBuffer = MakeRefCount<FVulkanBuffer>(StagingBuffer_spec, Spec.Pixels.data(), Spec.Pixels.size());
+		TRefCountPtr<FVulkanBuffer> StagingBuffer = MakeRefCount<FVulkanBuffer>(StagingBuffer_spec);
+    	StagingBuffer->UploadData(0, Spec.Pixels.data(), Spec.Pixels.size());
 
 		VkDevice device = RenderContext->GetDevice();
 		VkCommandBuffer cmd_buffer = RenderContext->AllocateTransientCommandBuffer();

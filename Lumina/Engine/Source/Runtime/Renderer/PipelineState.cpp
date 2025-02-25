@@ -132,7 +132,7 @@ namespace Lumina
                         BufferSpec.MemoryUsage = EDeviceBufferMemoryUsage::COHERENT_WRITE;
                         BufferSpec.Size = Binding.Size;
                     
-                        FRHIBuffer UniformBuffer = FBuffer::Create(BufferSpec);
+                        FRHIBuffer UniformBuffer = FRenderer::GetRenderContext()->CreateBuffer(BufferSpec);
                         UniformBuffer->SetFriendlyName("Unifrom Buffer");
                     
                         FPipelineStateBuffer Pair;

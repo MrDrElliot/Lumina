@@ -28,7 +28,7 @@ namespace Lumina
         SECONDARY,
         MAX,
     };
-
+    
     
     class FCommandBuffer : public IRenderResource
     {

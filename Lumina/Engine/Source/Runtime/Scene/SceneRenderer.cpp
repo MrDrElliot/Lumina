@@ -23,8 +23,8 @@ namespace Lumina
     }
 
     FSceneRenderer::FSceneRenderer()
-        : SceneGlobalData()
-        , SceneViewport(Windowing::GetPrimaryWindowHandle()->GetExtent())
+        : SceneViewport(Windowing::GetPrimaryWindowHandle()->GetExtent())
+        , SceneGlobalData()
     {
     }
 
@@ -35,10 +35,6 @@ namespace Lumina
     void FSceneRenderer::Initialize()
     {
         CreateImages();
-        InitPipelines();
-        
-        //InitBuffers();
-        //InitDescriptorSets();
     }
 
     void FSceneRenderer::Deinitialize()
@@ -49,14 +45,26 @@ namespace Lumina
     void FSceneRenderer::StartScene(const FScene* Scene)
     {
         FRenderPassBeginInfo PassInfo;
-        PassInfo.Attachments = { GetPrimaryRenderTarget(), GetDepthAttachment() };
-        PassInfo.bClearValue = true;
-        PassInfo.ClearColor = FColor(0.0f, 0.0f, 0.0f, 1.0f);
-        PassInfo.RenderAreaOffset = FIntVector2D(0, 0);
-        PassInfo.RenderAreaExtent.Y = SceneViewport.GetSize().Y;
-        PassInfo.RenderAreaExtent.X = SceneViewport.GetSize().X;
+        PassInfo.AddAttachment(GetPrimaryRenderTarget())
+        .AddAttachment(GetDepthAttachment())
+        .SetClearValue(true)
+        .SetClearColor(FColor::Black)
+        .SetRenderAreaOffset(FIntVector2D(0))
+        .SetRenderAreaExtent(FIntVector2D(SceneViewport.GetSize().X, SceneViewport.GetSize().Y));
         
         FRenderer::BeginRender(PassInfo);
+
+        FCameraManager* CameraManager = Scene->GetSceneSubsystem<FCameraManager>();
+        FCameraComponent& CameraComponent = CameraManager->GetActiveCameraEntity().GetComponent<FCameraComponent>();
+        
+        SceneGlobalData.CameraData.Location =   glm::vec4(CameraComponent.GetPosition(), 1.0f);
+        SceneGlobalData.CameraData.View =       CameraComponent.GetViewMatrix();
+        SceneGlobalData.CameraData.Projection = CameraComponent.GetProjectionMatrix();
+        SceneGlobalData.Time =                  (float)glfwGetTime();
+        SceneGlobalData.DeltaTime =             (float)Scene->GetSceneDeltaTime();
+
+        SceneViewport.SetViewVolume(CameraComponent.GetViewVolume());
+        
 
     }
 
@@ -69,35 +77,20 @@ namespace Lumina
         {
             OnSwapchainResized();
         }
-
-
-        // Setup scene global render state.
-        //-------------------------------------------------------------------
-        
-        FCameraManager* CameraManager = Scene->GetSceneSubsystem<FCameraManager>();
-        FCameraComponent& CameraComponent = CameraManager->GetActiveCameraEntity().GetComponent<FCameraComponent>();
-        
-        SceneGlobalData.CameraData.Location =   glm::vec4(CameraComponent.GetPosition(), 1.0f);
-        SceneGlobalData.CameraData.View =       CameraComponent.GetViewMatrix();
-        SceneGlobalData.CameraData.Projection = CameraComponent.GetProjectionMatrix();
-        SceneGlobalData.Time =                  glfwGetTime();
-        SceneGlobalData.DeltaTime =             Scene->GetSceneDeltaTime();
-
-        SceneViewport.SetViewVolume(CameraComponent.GetViewVolume());
-        
         
         ForwardRenderPass(Scene);
         
-        Scene->GetPrimitiveDrawManager()->Draw(SceneGlobalData);
-
         FullScreenPass(Scene);
+        
+        Scene->GetPrimitiveDrawManager()->Draw(SceneGlobalData);
         
         FRenderer::EndRender();
         
+
+
         
         // Copy render target to the swapchain image if primary, and set layout.
         //-------------------------------------------------------------------
-
 
         FRHICommandBuffer CommandBuffer = FRenderer::GetCommandBuffer();
         FRHIImage CurrentRenderTarget = GetPrimaryRenderTarget();
@@ -164,10 +157,10 @@ namespace Lumina
         FRHIPipeline Pipeline = FPipelineLibrary::Get()->GetOrCreatePipeline(PipelineSpec);
         
         FRenderer::BindPipeline(Pipeline);
-
-        FSceneGlobalData Data = SceneGlobalData;
         
-        FRenderer::SetShaderParameter("SceneUBO", &Data, sizeof(FSceneGlobalData));
+        FSceneGlobalData* Data = &SceneGlobalData;
+        
+        FRenderer::SetShaderParameter("SceneUBO", Data, sizeof(FSceneGlobalData));
         FRenderer::GetRenderContext()->GetPipelineState()->BindDescriptors();
         
         FRenderer::DrawVertices(6);
@@ -179,24 +172,6 @@ namespace Lumina
         
     }
     
-    void FSceneRenderer::InitPipelines()
-    {
-        
-        /*FMaterialPipelineSpecification InfiniteGridPipelineSpecs = FMaterialPipelineSpecification::Default();
-        InfiniteGridPipelineSpecs
-        .SetShader("InfiniteGrid")
-        .SetPipelineType(EPipelineType::GRAPHICS)
-        .SetCullingMode(EPipelineCullingMode::NONE)
-        .SetEnableDepthTest(true)
-        .SetAlphaBlendSrcFactor(EPipelineBlending::BLEND_FACTOR_ZERO)
-        .SetAlphaBlendDstFactor(EPipelineBlending::BLEND_FACTOR_ONE)
-        .SetRenderTargetFormats({EImageFormat::RGBA32_SRGB});
-    
-        SceneGlobalsPipeline = FPipeline::Create(InfiniteGridPipelineSpecs);
-        SceneGlobalsPipeline->SetFriendlyName("Infinite Grid Pipeline");*/
-    }
-
-
     void FSceneRenderer::InitBuffers()
     {
         //---------------------------------------------------------------
@@ -207,8 +182,8 @@ namespace Lumina
         SceneGlobalDataSpec.BufferUsage = EDeviceBufferUsage::UNIFORM_BUFFER;
         SceneGlobalDataSpec.MemoryUsage = EDeviceBufferMemoryUsage::COHERENT_WRITE;
         SceneGlobalDataSpec.Size = sizeof(FSceneGlobalData);
-        
-        SceneGlobalUBO = FBuffer::Create(SceneGlobalDataSpec);
+
+        SceneGlobalUBO = FRenderer::GetRenderContext()->CreateBuffer(SceneGlobalDataSpec);
         SceneGlobalUBO->SetFriendlyName("Scene Global UBO");
 
         
@@ -220,8 +195,9 @@ namespace Lumina
         LightParamsSpec.BufferUsage = EDeviceBufferUsage::STORAGE_BUFFER;
         LightParamsSpec.MemoryUsage = EDeviceBufferMemoryUsage::COHERENT_WRITE;
         LightParamsSpec.Size = sizeof(FSceneLightData);
+
         
-        LightSSBO = FBuffer::Create(LightParamsSpec);
+        LightSSBO = FRenderer::GetRenderContext()->CreateBuffer(LightParamsSpec);
         LightSSBO->SetFriendlyName("Scene Light SSBO");
 
 
@@ -235,17 +211,11 @@ namespace Lumina
         ModelParamsSpec.MemoryUsage =   EDeviceBufferMemoryUsage::COHERENT_WRITE;
         ModelParamsSpec.Size = sizeof(FMeshModelData) * UINT16_MAX;
         
-        ModelSSBO = FBuffer::Create(ModelParamsSpec);
+        ModelSSBO = FRenderer::GetRenderContext()->CreateBuffer(ModelParamsSpec);
         ModelSSBO->SetFriendlyName("Model SSBO");
         
     }
-
     
-    void FSceneRenderer::InitDescriptorSets()
-    {
-        //GridMaterial = FMaterial::Create(InfiniteGridPipeline, FShaderLibrary::GetShader("Mesh"));
-    }
-
     void FSceneRenderer::CreateImages()
     {
         FImageSpecification ImageSpecs = FImageSpecification::Default();

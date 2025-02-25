@@ -1,7 +1,10 @@
 #pragma once
 
+#include "Buffer.h"
+#include "Image.h"
 #include "PipelineState.h"
 #include "Renderer.h"
+#include "RenderGraph.h"
 #include "RHIFwd.h"
 
 
@@ -32,6 +35,10 @@ namespace Lumina
         
         FQueueFamilyIndex GetQueueFamilyIndex() { return QueueFamilyIndex; }
 
+        virtual FRHIShader CreateShader(const FString& ShaderPath) = 0;
+        virtual FRHIBuffer CreateBuffer(const FDeviceBufferSpecification& Spec, void* Data = nullptr, uint64 DataSize = 0) = 0;
+        virtual FRHIImage CreateImage(const FImageSpecification& ImageSpec) = 0;
+
         void SetCommandBufferForFrame(uint32 FrameIndex) { CurrentCommandBuffer = CommandBuffers[FrameIndex]; }
         FRHICommandBuffer GetCommandBuffer() { return CurrentCommandBuffer; }
 
@@ -55,6 +62,7 @@ namespace Lumina
     
     protected:
 
+        FRenderGraph                      RenderGraph;
         TVector<FRHICommandBuffer>        CommandBuffers;
         FRHICommandBuffer                 CurrentCommandBuffer;
         FQueueFamilyIndex                 QueueFamilyIndex;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Containers/Array.h"
+#include "Core/Utils/NonCopyable.h"
 #include "EASTL/sort.h"
 #include "Log/Log.h"
 #include "Memory/Memory.h"
@@ -9,7 +10,7 @@ namespace Lumina
 {
     class FUpdateContext;
 
-    class ISubsystem
+    class ISubsystem : public INonCopyable
     {
     public:
 

@@ -22,13 +22,10 @@ namespace Lumina
         IRenderResource() = default;
         virtual ~IRenderResource() { }
         
-        virtual void SetFriendlyName(const FString& InName) { FriendlyName = InName; }
-        FORCEINLINE const FString& GetFriendlyName() const { return FriendlyName; }
-        virtual void* GetAPIResource() { return nullptr; }
-
+        
 
         //--------------------------------------------------------------------------
-        // Reference counting. TODO: batch deletion on another thread.
+        // Reference counting. TODO: batch deletion.
         
         uint32 AddRef() const
         {
@@ -57,9 +54,9 @@ namespace Lumina
 
         
     private:
-
+        
         mutable eastl::atomic<int> RefCount = 0;
         
-        FString FriendlyName = NAME_None;
+        
     };
 }

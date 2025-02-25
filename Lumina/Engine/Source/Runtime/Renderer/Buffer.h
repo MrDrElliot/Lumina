@@ -40,8 +40,8 @@ namespace Lumina
 
     enum class EDeviceBufferMemoryHeap
     {
-        DEVICE, // buffer is allocated in VRAM
-        HOST	// buffer is allocated in system RAM
+        DEVICE,
+        HOST
     };
 
     struct FDeviceBufferSpecification
@@ -60,14 +60,8 @@ namespace Lumina
         FBuffer() = default;
         virtual ~FBuffer() {}
         
-
-        static FRHIBuffer Create(const FDeviceBufferSpecification& Spec);
-        static FRHIBuffer Create(const FDeviceBufferSpecification& Spec, void* Data, uint64 DataSize);
-        
         virtual FDeviceBufferSpecification GetSpecification() const = 0;
-
         virtual void UploadData(uint64 Offset, void* Data, uint64 DataSize) = 0;
-        
         virtual void Resize() = 0;
 
     protected:

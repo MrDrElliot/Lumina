@@ -60,9 +60,7 @@ namespace Lumina
 
         void DrawPrimitives(const FScene* Scene);
 
-        void InitPipelines();
         void InitBuffers();
-        void InitDescriptorSets();
         void CreateImages();
         void OnSwapchainResized();
 

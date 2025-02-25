@@ -1,5 +1,7 @@
 #include "Mesh.h"
 
+#include "Renderer/RHIIncl.h"
+#include "Renderer/RenderContext.h"
 #include "Renderer/Renderer.h"
 #include "Renderer/RenderTypes.h"
 
@@ -16,7 +18,7 @@ namespace Lumina
         VBOSpec.Heap = EDeviceBufferMemoryHeap::DEVICE;
         VBOSpec.Size = sizeof(FVertex) * MeshResource.Vertices.size();
         
-        MeshResource.VBO = FBuffer::Create(VBOSpec, MeshResource.Vertices.data(), sizeof(FVertex) * MeshResource.Vertices.size());
+        MeshResource.VBO = FRenderer::GetRenderContext()->CreateBuffer(VBOSpec, MeshResource.Vertices.data(), sizeof(FVertex) * MeshResource.Vertices.size());
         MeshResource.VBO->SetFriendlyName("Vertex Buffer Object" + GetAssetPath().GetPathAsString());
 
 
@@ -26,7 +28,7 @@ namespace Lumina
         IBOSpec.Heap = EDeviceBufferMemoryHeap::DEVICE;
         IBOSpec.Size = sizeof(uint32) * MeshResource.Indices.size();
 
-        MeshResource.IBO = FBuffer::Create(IBOSpec, MeshResource.Indices.data(),sizeof(uint32) * MeshResource.Indices.size());
+        MeshResource.IBO = FRenderer::GetRenderContext()->CreateBuffer(IBOSpec, MeshResource.Indices.data(),sizeof(uint32) * MeshResource.Indices.size());
         MeshResource.IBO->SetFriendlyName("Index Buffer Object" + GetAssetPath().GetPathAsString());
     }
 

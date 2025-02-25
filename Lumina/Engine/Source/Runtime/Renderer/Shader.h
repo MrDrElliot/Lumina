@@ -94,7 +94,6 @@ namespace Lumina
     {
     public:
         
-        static TRefCountPtr<FShader> Create();
         virtual ~FShader() {}
 
         virtual void CreateStage(const FShaderStage& StageData) = 0;

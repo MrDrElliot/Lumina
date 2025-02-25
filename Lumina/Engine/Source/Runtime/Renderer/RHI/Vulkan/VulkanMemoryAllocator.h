@@ -13,7 +13,7 @@ namespace Lumina
     class FVulkanImage;
     class FVulkanBuffer;
     
-    class FVulkanMemoryAllocator : public TSingleton<FVulkanMemoryAllocator>
+    class FVulkanMemoryAllocator
     {
     public:
 

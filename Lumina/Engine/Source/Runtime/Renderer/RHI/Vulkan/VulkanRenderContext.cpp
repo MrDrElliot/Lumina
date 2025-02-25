@@ -1,8 +1,10 @@
 #include "VulkanRenderContext.h"
-
 #include "VulkanMacros.h"
 #include "vk-bootstrap/src/VkBootstrap.h"
 #include "VulkanMemoryAllocator.h"
+#include "VulkanShader.h"
+#include "VulkanBuffer.h"
+#include "VulkanImage.h"
 #include "VulkanSwapchain.h"
 #include "Core/Windows/Window.h"
 #include "Renderer/RHIIncl.h"
@@ -192,6 +194,28 @@ namespace Lumina
         PoolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 
         VK_CHECK(vkCreateDescriptorPool(Device, &PoolInfo, nullptr, &DescriptorPool));
+    }
+
+    FRHIShader FVulkanRenderContext::CreateShader(const FString& ShaderPath)
+    {
+        return FRHIShader(MakeRefCount<FVulkanShader>());
+    }
+
+    FRHIBuffer FVulkanRenderContext::CreateBuffer(const FDeviceBufferSpecification& Spec, void* Data, uint64 DataSize)
+    {
+        FRHIBuffer NewBuffer = FRHIBuffer(MakeRefCount<FVulkanBuffer>(Spec));
+        
+        if(Data != nullptr && DataSize > 0)
+        {
+            NewBuffer->UploadData(0, Data, DataSize);
+        }
+
+        return NewBuffer;
+    }
+
+    FRHIImage FVulkanRenderContext::CreateImage(const FImageSpecification& ImageSpec)
+    {
+        return FRHIImage(MakeRefCount<FVulkanImage>(ImageSpec));
     }
 
 

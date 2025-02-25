@@ -5,6 +5,10 @@
 #include "Subsystems/Subsystem.h"
 
 
+namespace Lumina
+{
+    class FRenderManager;
+}
 
 namespace Lumina
 {
@@ -59,6 +63,7 @@ namespace Lumina
         FInputSubsystem*        InputSubsystem =        nullptr;
         FAssetManager*          AssetManagerSubystem =  nullptr;
         FSceneManager*          SceneManager =          nullptr;
+        FRenderManager*         RenderManager =         nullptr;
 
     };
 }

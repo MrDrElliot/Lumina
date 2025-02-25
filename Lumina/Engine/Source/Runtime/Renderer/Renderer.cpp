@@ -148,7 +148,7 @@ namespace Lumina
             EPipelineStage::BOTTOM_OF_PIPE,
             EPipelineAccess::TRANSFER_WRITE
         );
-
+        
         RenderAPI->EndCommandRecord();
         RenderAPI->ExecuteCurrentCommands();
     }

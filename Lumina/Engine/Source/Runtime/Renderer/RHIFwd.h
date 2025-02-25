@@ -1,5 +1,6 @@
 #pragma once
 
+#include "RenderHandle.h"
 #include "Memory/RefCounted.h"
 
 
@@ -29,4 +30,11 @@ namespace Lumina
     using FRHIDescriptorSet     = TRefCountPtr<FDescriptorSet>;
     using FRHICommandBuffer     = TRefCountPtr<FCommandBuffer>;
     using FRHISemaphore         = TRefCountPtr<FSemaphore>;
+
+    //----------------------------------------------------------------------------
+
+    using FRHIImageHandle           = TRenderResourceHandle<ERenderHandleType::Image>;
+    using FRHIBufferHandle          = TRenderResourceHandle<ERenderHandleType::Buffer>;
+    using FRHIShaderHandle          = TRenderResourceHandle<ERenderHandleType::Shader>;
+    using FRHICommandBufferHandle   = TRenderResourceHandle<ERenderHandleType::CommandBuffer>;
 }

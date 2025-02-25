@@ -44,7 +44,7 @@ namespace Lumina
 
         LOG_DEBUG("Compiling Shader: {0}", Tag.c_str());
         
-        TRefCountPtr<FShader> NewShader = FShader::Create();
+        FRHIShader NewShader = FRenderer::GetRenderContext()->CreateShader(Shader);
         
         TVector<FShaderStage> Stages =
         {

@@ -92,6 +92,7 @@ project "Lumina"
 		 "GLM_FORCE_DEPTH_ZERO_TO_ONE",
 		 "GLFW_INCLUDE_NONE",
 		 "_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS",
+		 "LUMINA_RENDERER_VULKAN"
 	 }
 
 	filter "system:linux"

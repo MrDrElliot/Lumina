@@ -1,10 +1,10 @@
 ﻿#include "BatchedElements.h"
 
-#include "Buffer.h"
 #include "PipelineLibrary.h"
+#include "RenderContext.h"
 #include "Renderer.h"
 #include "RenderTypes.h"
-#include "RHIFwd.h"
+#include "RHIIncl.h"
 
 namespace Lumina
 {
@@ -23,7 +23,7 @@ namespace Lumina
         BufferSpec.MemoryUsage = EDeviceBufferMemoryUsage::COHERENT_WRITE;
         BufferSpec.BufferUsage = EDeviceBufferUsage::VERTEX_BUFFER;
         BufferSpec.Size = sizeof(FSimpleElementVertex) * 1024;
-        VertexBuffer = FBuffer::Create(BufferSpec);        
+        VertexBuffer = FRenderer::GetRenderContext()->CreateBuffer(BufferSpec);        
         VertexBuffer->SetFriendlyName("Lines");
     }
 

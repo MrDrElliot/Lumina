@@ -5,6 +5,7 @@
 #include "Scene/Scene.h"
 #include "Scene/SceneManager.h"
 #include "Renderer/Renderer.h"
+#include "Renderer/RenderManager.h"
 #include "TaskSystem/TaskSystem.h"
 #include "Tools/UI/DevelopmentToolUI.h"
 #include "Tools/UI/ImGui/Vulkan/VulkanImGuiRender.h"
@@ -21,8 +22,9 @@ namespace Lumina
         
         FTaskSystem::Get()->Initialize();
         
-        FRenderer::Init();
+        //FRenderer::Init();
         
+        RenderManager = EngineSubsystems.AddSubsystem<FRenderManager>();
         InputSubsystem = EngineSubsystems.AddSubsystem<FInputSubsystem>();
         AssetManagerSubystem = EngineSubsystems.AddSubsystem<FAssetManager>();
         SceneManager = EngineSubsystems.AddSubsystem<FSceneManager>();
@@ -61,6 +63,7 @@ namespace Lumina
         EngineSubsystems.RemoveSubsystem<FInputSubsystem>();
         EngineSubsystems.RemoveSubsystem<FAssetManager>();
         EngineSubsystems.RemoveSubsystem<FSceneManager>();
+        EngineSubsystems.RemoveSubsystem<FRenderManager>();
         
         FRenderer::Shutdown();
 
@@ -77,6 +80,7 @@ namespace Lumina
         
         UpdateContext.MarkFrameStart();
         FRenderer::BeginFrame();
+        RenderManager->FrameStart();
 
         bool bRunEngineUpdate = true;
 
@@ -176,9 +180,10 @@ namespace Lumina
                 ImGuiRenderer->EndFrame();
                 #endif
                 
+                RenderManager->FrameEnd();
                 
-                FRenderer::ProcessCommands();
-                FRenderer::Present();
+                //FRenderer::ProcessCommands();
+                //FRenderer::Present();
             }
         }
         

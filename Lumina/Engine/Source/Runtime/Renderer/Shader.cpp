@@ -6,11 +6,6 @@
 
 namespace Lumina
 {
-    FRHIShader FShader::Create()
-    {
-        return FRHIShader(MakeRefCount<FVulkanShader>());
-    }
-
     void FShader::GenerateShaderStageReflectionData(const FShaderStage& StageData, SpvReflectShaderModule* ReflectionModule)
     {
 

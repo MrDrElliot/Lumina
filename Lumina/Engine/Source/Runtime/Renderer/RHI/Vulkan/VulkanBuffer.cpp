@@ -56,33 +56,7 @@ namespace Lumina
 		Allocation = Alloc->AllocateBuffer(&BufferCreateInfo, VmaFlags, &Buffer, "");
 		
 	}
-
-	FVulkanBuffer::FVulkanBuffer(const FDeviceBufferSpecification& Spec, void* InData, uint64 DataSize)
-	: Buffer(VK_NULL_HANDLE)
-	{
-		Specification = Spec;
-		
-		FVulkanMemoryAllocator* Alloc = FVulkanMemoryAllocator::Get();
-		VmaAllocationCreateFlags AllocationCreateFlags = convert(Spec.MemoryUsage);
-
-		VkBufferCreateInfo BufferCreateInfo = {};
-		BufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		BufferCreateInfo.size = GetAlignedSizeForBuffer(Spec.Size, Spec.BufferUsage);
-		BufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-		BufferCreateInfo.usage = convert(Spec.BufferUsage);
-		BufferCreateInfo.pNext = nullptr;
-		BufferCreateInfo.flags = Spec.Flags;
-
-		if (Specification.MemoryUsage == EDeviceBufferMemoryUsage::NO_HOST_ACCESS)
-		{
-			BufferCreateInfo.usage |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-		}
-
-		Allocation = Alloc->AllocateBuffer(&BufferCreateInfo, AllocationCreateFlags, &Buffer, "");
-
-		FVulkanBuffer::UploadData(0, InData, DataSize);
-	}
-
+	
 	FVulkanBuffer::~FVulkanBuffer()
 	{
 		FVulkanMemoryAllocator* Alloc = FVulkanMemoryAllocator::Get();
@@ -118,14 +92,15 @@ namespace Lumina
 		if (Specification.MemoryUsage == EDeviceBufferMemoryUsage::NO_HOST_ACCESS) 
 		{
 			FVulkanRenderContext* RenderContext = FRenderer::GetRenderContext<FVulkanRenderContext>();		
-
-		
+			
 			FDeviceBufferSpecification StagingBufferSpec = {};
 			StagingBufferSpec.Size = DataSize;
 			StagingBufferSpec.BufferUsage = EDeviceBufferUsage::STAGING_BUFFER;
 			StagingBufferSpec.MemoryUsage = EDeviceBufferMemoryUsage::COHERENT_WRITE;
 		
-			TRefCountPtr<FVulkanBuffer> StagingBuffer = MakeRefCount<FVulkanBuffer>(StagingBufferSpec, InData, DataSize);
+			TRefCountPtr<FVulkanBuffer> StagingBuffer = MakeRefCount<FVulkanBuffer>(StagingBufferSpec);
+			StagingBuffer->UploadData(Offset, InData, DataSize);
+			
 			StagingBuffer->SetFriendlyName("Staging Buffer");
 		
 			VkBufferCopy BufferCopy = {};

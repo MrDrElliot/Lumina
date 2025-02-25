@@ -138,9 +138,7 @@ namespace Lumina
             
             VmaAllocationInfo AllocationInfo;
             vmaGetAllocationInfo(Allocator, Allocation, &AllocationInfo);
-
-            LOG_WARN("Destroying Buffer: {0}", AllocationInfo.pName);
-
+            
             Statistics.CurrentlyAllocated -= AllocationInfo.size;
             Statistics.CurrentlyAllocatedBuffers--;
 
@@ -162,9 +160,7 @@ namespace Lumina
 
             VmaAllocationInfo AllocationInfo;
             vmaGetAllocationInfo(Allocator, Allocation, &AllocationInfo);
-
-            LOG_DEBUG("Destroying Image: {0}", AllocationInfo.pName);
-
+            
             Statistics.CurrentlyAllocated -= AllocationInfo.size;
             Statistics.CurrentlyAllocatedImages--;
             

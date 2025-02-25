@@ -39,6 +39,12 @@ namespace Lumina
         ~FVulkanRenderContext() override;
 
         void Initialize() override;
+
+        FRHIShader CreateShader(const FString& ShaderPath) override;
+        FRHIBuffer CreateBuffer(const FDeviceBufferSpecification& Spec, void* Data = nullptr, uint64 DataSize = 0) override;
+        FRHIImage CreateImage(const FImageSpecification& ImageSpec) override;
+
+        
         FORCEINLINE VkInstance GetVulkanInstance() { return VulkanInstance; }
         FORCEINLINE VkDevice GetDevice() { return Device; }
         FORCEINLINE VkPhysicalDevice GetPhysicalDevice() { return PhysicalDevice; }
