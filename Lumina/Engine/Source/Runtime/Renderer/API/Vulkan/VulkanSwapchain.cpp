@@ -7,18 +7,12 @@
 #include "Core/Windows/Window.h"
 #include "Renderer/RenderTypes.h"
 #include "src/VkBootstrap.h"
-#include "VulkanRenderContext.h"
 
 #include "VulkanSwapchain.h"
 #include <glfw/glfw3.h>
 
 namespace Lumina
 {
-    FVulkanSwapchain::FVulkanSwapchain(VkInstance Instance, FVulkanRenderContext* Device, FWindow* Window, FVector2D Extent)
-    {
-        
-    }
-
     FVulkanSwapchain::~FVulkanSwapchain()
     {
         
@@ -57,6 +51,11 @@ namespace Lumina
         Swapchain = vkbSwapchain.swapchain;
     	
         std::vector<VkImage> RawImages = vkbSwapchain.get_images().value();
+
+        for (auto SwapchainImage : SwapchainImages)
+        {
+			Device->GetImagePool()->Free(SwapchainImage);    
+        }
     	
         SwapchainImages.clear();
 

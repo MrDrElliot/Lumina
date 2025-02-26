@@ -1,5 +1,7 @@
 
 
+#include "VulkanSwapchain.h"
+#include "Core/Windows/Window.h"
 #ifdef LUMINA_RENDERER_VULKAN
 
 #define VMA_IMPLEMENTATION
@@ -131,7 +133,7 @@ namespace Lumina
                 vmaDestroyBuffer(Allocator, kvp.first, kvp.second);
             }
         }
-        Statistics.AllocatedBuffers.clear(); // Ensure buffers map is empty after cleanup
+        Statistics.AllocatedBuffers.clear();
 
         // Cleanup allocated images
         for (auto& kvp : Statistics.AllocatedImages)
@@ -143,7 +145,7 @@ namespace Lumina
             }
         }
         
-        Statistics.AllocatedImages.clear(); // Ensure images map is empty after cleanup
+        Statistics.AllocatedImages.clear();
 
         // Destroy the Vulkan memory allocator
         LOG_INFO("Destroying Vulkan Memory Allocator...");
@@ -272,6 +274,8 @@ namespace Lumina
 
     //------------------------------------------------------------------------------------
 
+    
+
     // We create one command pool per thread.
     struct FCommandPools
     {
@@ -315,6 +319,7 @@ namespace Lumina
         CreateDevice(InstBuilder.value());
         
         Swapchain = FMemory::New<FVulkanSwapchain>();
+        Swapchain->CreateSwapchain(VulkanInstance, Device, Windowing::GetPrimaryWindowHandle(), Windowing::GetPrimaryWindowHandle()->GetExtent());
     }
 
     void FVulkanRenderContext::Deinitialize()
@@ -609,7 +614,7 @@ namespace Lumina
         AllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
         AllocInfo.commandPool = bTransient ? CommandPools.TransientCommandPools[0] : CommandPools.CommandPools[0];
         AllocInfo.level = bTransient ? VK_COMMAND_BUFFER_LEVEL_PRIMARY : VK_COMMAND_BUFFER_LEVEL_SECONDARY;
-        
+
         FVulkanCommandList* VulkanCommandList = FMemory::New<FVulkanCommandList>();
         
         VK_CHECK(vkAllocateCommandBuffers(Device, &AllocInfo, &VulkanCommandList->CommandBuffer));

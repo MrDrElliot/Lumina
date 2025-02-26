@@ -17,7 +17,6 @@ namespace Lumina
     {
     public:
 
-        FVulkanSwapchain(VkInstance Instance, FVulkanRenderContext* Device, FWindow* Window, FVector2D Extent);
         ~FVulkanSwapchain();
 
         void CreateSwapchain(VkInstance Instance, FVulkanRenderContext* Device, FWindow* Window, FVector2D Extent, bool bFromResize = false);

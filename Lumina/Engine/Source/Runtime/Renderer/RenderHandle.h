@@ -59,7 +59,7 @@ namespace Lumina
 
     //-----------------------------------------------------------------------------------------------------
 
-    template <ERenderHandleType THandleType, typename TResource>
+    template <typename T, typename TResource>
     class TRenderResourcePool
     {
     public:
@@ -67,14 +67,14 @@ namespace Lumina
         TRenderResourcePool(const TRenderResourcePool&) = delete;
         TRenderResourcePool& operator = (const TRenderResourcePool&) = delete;
         
-        using HandleType = TRenderResourceHandle<THandleType>;
+        using HandleType = TRenderResourceHandle<T::HandleType>;
 
         void SetFreeCallback(TFunction<void(TResource*)>&& Functor)
         {
             FreeCallback = FMemory::Move(Functor);
         }
 
-        HandleType Allocate()
+        T Allocate()
         {
             uint32 index;
             if (!FreeList.empty())
@@ -112,7 +112,7 @@ namespace Lumina
 
             FreeCallback(GetResource(Handle));
 
-            Generations[index]++;
+            ++Generations[index];
             FreeList.push_back(index);
         }
         
