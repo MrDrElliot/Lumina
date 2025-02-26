@@ -31,8 +31,8 @@ namespace Lumina
         static FRenderHandle InvalidHandle()
         {
             FRenderHandle Handle;
-            Handle.Handle = 0;
-            Handle.Generation = 0;
+            Handle.Handle = -1;
+            Handle.Generation = -1;
 
             return Handle;
             
@@ -48,8 +48,8 @@ namespace Lumina
         
     private:
         
-        uint32 Handle = 0;
-        uint32 Generation = 0;
+        uint32 Handle = -1;
+        uint32 Generation = -1;
     
     };
 
@@ -62,7 +62,7 @@ namespace Lumina
     public:
 
         TRenderResourceHandle()
-            :FRenderHandle(0, 0)
+            :FRenderHandle(-1, -1)
         {}
         
         TRenderResourceHandle(uint32 Index, uint32 Generation)
@@ -124,6 +124,17 @@ namespace Lumina
             {
                 return nullptr;
             }
+            return &Resources[index];
+        }
+
+        TResource* GetResourceChecked(const HandleType& Handle)
+        {
+            uint32 index = Handle.GetHandle();
+            if (index >= Resources.size() || Generations[index] != Handle.GetGeneration())
+            {
+                Assert(0);
+            }
+            
             return &Resources[index];
         }
 

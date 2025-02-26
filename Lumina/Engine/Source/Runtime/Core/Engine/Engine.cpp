@@ -9,8 +9,6 @@
 #include "TaskSystem/TaskSystem.h"
 #include "Tools/UI/DevelopmentToolUI.h"
 
-#include "Tools/UI/ImGui/Vulkan/VulkanImGuiRender.h"
-
 namespace Lumina
 {
     bool FEngine::Initialize(FApplication* App)
@@ -31,9 +29,6 @@ namespace Lumina
         AssetManagerSubystem = EngineSubsystems.AddSubsystem<FAssetManager>();
         SceneManager = EngineSubsystems.AddSubsystem<FSceneManager>();
         
-        #if WITH_DEVELOPMENT_TOOLS
-        ImGuiRenderer = EngineSubsystems.AddSubsystem<FVulkanImGuiRender>();
-        #endif
         
         UpdateContext.SubsystemManager = &EngineSubsystems;
 
@@ -59,7 +54,6 @@ namespace Lumina
         #if WITH_DEVELOPMENT_TOOLS
         DeveloperToolUI->Deinitialize(UpdateContext);
         delete DeveloperToolUI;
-        EngineSubsystems.RemoveSubsystem<FVulkanImGuiRender>();
         #endif
 
         EngineSubsystems.RemoveSubsystem<FInputSubsystem>();
@@ -101,7 +95,6 @@ namespace Lumina
                 InputSubsystem->Update(UpdateContext);
                 
                 #if WITH_DEVELOPMENT_TOOLS
-                ImGuiRenderer->StartFrame(RenderManager);
                 DeveloperToolUI->StartFrame(UpdateContext);
                 #endif
 
@@ -179,7 +172,6 @@ namespace Lumina
                 
                 #if WITH_DEVELOPMENT_TOOLS
                 DeveloperToolUI->EndFrame(UpdateContext);
-                ImGuiRenderer->EndFrame(RenderManager);
                 #endif
                 
                 RenderManager->FrameEnd(UpdateContext);
@@ -199,5 +191,10 @@ namespace Lumina
         {
             Application->RenderDeveloperTools(UpdateContext);
         }
+    }
+
+    void FEngine::SetEngineViewportSize(const FIntVector2D& InSize)
+    {
+        EngineViewport.SetSize(InSize);
     }
 }

@@ -1,8 +1,10 @@
 #pragma once
 #include "Subsystems/Subsystem.h"
+#include "Lumina.h"
 
 namespace Lumina
 {
+    class IImGuiRenderer;
     class IRenderContext;
 }
 
@@ -28,8 +30,12 @@ namespace Lumina
         
     private:
 
+        #if WITH_DEVELOPMENT_TOOLS
+        IImGuiRenderer*     ImGuiRenderer =         nullptr;
+        #endif
+        
         IRenderContext*     RenderContext = nullptr;
-        uint8               CurrentFrameIndex = 0;
+        uint8               CurrentFrameIndex = 1;
         
     };
 }

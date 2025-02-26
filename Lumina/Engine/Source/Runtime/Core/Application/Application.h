@@ -40,7 +40,8 @@ namespace Lumina
 
 		bool HasAnyFlags(EApplicationFlags Flags);
 		FWindow* GetMainWindow();
-		
+
+		void WindowResized(const FIntVector2D& Extent);
 		virtual void OnWindowResized(const FIntVector2D& Extent) { }
 
 

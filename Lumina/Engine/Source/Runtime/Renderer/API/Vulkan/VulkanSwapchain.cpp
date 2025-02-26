@@ -15,21 +15,53 @@ namespace Lumina
 {
     FVulkanSwapchain::~FVulkanSwapchain()
     {
-        
+	    for (FRHIImageHandle& Image : SwapchainImages)
+	    {
+	    	FVulkanImage* VulkanImage = Context->GetImagePool().GetResource(Image);
+		    vkDestroyImageView(Context->GetDevice(), VulkanImage->ImageView, nullptr);
+	    }
+
+    	vkDestroySwapchainKHR(Context->GetDevice(), Swapchain, nullptr);
+
+    	for (VkFence Fence : Fences)
+    	{
+    		vkDestroyFence(Context->GetDevice(), Fence, nullptr);
+    	}
+
+    	for (VkSemaphore Semaphore : AquireSemaphores)
+    	{
+    		vkDestroySemaphore(Context->GetDevice(), Semaphore, nullptr);    
+    	}
+
+    	for (VkSemaphore Semaphore : PresentSemaphores)
+    	{
+    		vkDestroySemaphore(Context->GetDevice(), Semaphore, nullptr);    
+    	}
+
+    	
+    	vkDestroySurfaceKHR(Context->GetVulkanInstance(), Surface, nullptr);
+    	
+    	Fences.clear();
+    	AquireSemaphores.clear();
+    	PresentSemaphores.clear();
+    	SwapchainImages.clear();
     }
 
     void FVulkanSwapchain::CreateSwapchain(VkInstance Instance, FVulkanRenderContext* Device, FWindow* Window, FIntVector2D Extent, bool bFromResize)
     {
-        VK_CHECK(glfwCreateWindowSurface(Instance, Window->GetWindow(), nullptr, &Surface));
+    	Context = Device;
+    	SwapchainExtent = Extent;
+
+    	if (bFromResize == false)
+    	{
+			VK_CHECK(glfwCreateWindowSurface(Instance, Window->GetWindow(), nullptr, &Surface));
+    	}
     	
         SwapchainImages.reserve(FRAMES_IN_FLIGHT);
 
-    	bool bBeingResized = false;
-        if(LIKELY(Swapchain))
+        if(bFromResize)
         {
-        	vkDeviceWaitIdle(Device->GetDevice());
             vkDestroySwapchainKHR(Device->GetDevice(), Swapchain, nullptr);
-        	bBeingResized = true;
         }
     	
         vkb::SwapchainBuilder swapchainBuilder { Device->GetPhysicalDevice(), Device->GetDevice(), Surface };
@@ -40,7 +72,7 @@ namespace Lumina
 
         vkb::Swapchain vkbSwapchain = swapchainBuilder
             .set_desired_format(SurfaceFormat)
-            .set_desired_present_mode(VK_PRESENT_MODE_FIFO_KHR)
+            .set_desired_present_mode(CurrentPresentMode)
             .set_desired_min_image_count(FRAMES_IN_FLIGHT)
             .set_image_array_layer_count(1)
             .set_desired_extent(Extent.X, Extent.Y)
@@ -51,7 +83,7 @@ namespace Lumina
         Swapchain = vkbSwapchain.swapchain;
     	
         std::vector<VkImage> RawImages = vkbSwapchain.get_images().value();
-
+    	
         for (auto SwapchainImage : SwapchainImages)
         {
 			Device->GetImagePool().Free(SwapchainImage);    
@@ -59,13 +91,12 @@ namespace Lumina
     	
         SwapchainImages.clear();
 
-    	FCommandList* CommandList = Device->BeginCommandList(ECommandQueue::Graphics, ECommandBufferUsage::Transient);
+    	FCommandList* CommandList = Device->BeginCommandList(ECommandBufferLevel::Primary, ECommandQueue::Graphics, ECommandBufferUsage::Transient);
     	
         for (VkImage RawImage : RawImages)
         {
-        	FRHIImageHandle ImageHandle = Device->CreateRenderTarget(Extent);
+        	FRHIImageHandle ImageHandle = Device->AllocateImage();
         	FVulkanImage* VulkanImage = Device->GetImagePool().GetResource(ImageHandle);
-
         	
         	VkImageView ImageView = VK_NULL_HANDLE;
         	
@@ -87,7 +118,7 @@ namespace Lumina
 			VK_CHECK(vkCreateImageView(Device->GetDevice(), &ImageViewCreateInfo, nullptr, &ImageView));
 			VulkanImage->ImageView = ImageView;
         	VulkanImage->Image = RawImage;
-        	VulkanImage->Layout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+        	VulkanImage->DefaultLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
         	SwapchainImages.push_back(ImageHandle);
 
         	FGPUBarrier Barriers[] =
@@ -99,7 +130,7 @@ namespace Lumina
         	
         }
 
-    	Device->EndCommandList(CommandList, true);
+    	Device->EndCommandList(CommandList);
 
     	size_t currentImageCount = RawImages.size();
 
@@ -122,6 +153,7 @@ namespace Lumina
 		    {
 		    	vkDestroySemaphore(Device->GetDevice(), Semaphore, nullptr);
 		    }
+    		
     		PresentSemaphores.clear();
     		PresentSemaphores.resize(currentImageCount);
     	}
@@ -131,8 +163,10 @@ namespace Lumina
     	{
     		VkSemaphoreCreateInfo CreateInfo = {};
     		CreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-    		
+
+    		vkDestroySemaphore(Device->GetDevice(), PresentSemaphores[i], nullptr);
     		VK_CHECK(vkCreateSemaphore(Device->GetDevice(),&CreateInfo,  nullptr, &PresentSemaphores[i]));
+    		Context->SetVulkanObjectName("Present Semaphore: " + eastl::to_string(i), VK_OBJECT_TYPE_SEMAPHORE, (uint64)PresentSemaphores[i]);
     	}
 
     	// --------- AQUIRE SEMAPHORES MANAGEMENT --------- //
@@ -155,6 +189,8 @@ namespace Lumina
     		{
     			vkDestroySemaphore(Device->GetDevice(), Semaphore, nullptr);
     		}
+    		
+    		AquireSemaphores.clear();
     		AquireSemaphores.resize(FRAMES_IN_FLIGHT);
     	}
 
@@ -163,32 +199,95 @@ namespace Lumina
     	{
     		VkSemaphoreCreateInfo CreateInfo = {};
     		CreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-    		
+
+    		vkDestroySemaphore(Device->GetDevice(), AquireSemaphores[i], nullptr);
     		VK_CHECK(vkCreateSemaphore(Device->GetDevice(),&CreateInfo,  nullptr, &AquireSemaphores[i]));
+    		Context->SetVulkanObjectName("Aquire Semaphore: " + eastl::to_string(i), VK_OBJECT_TYPE_SEMAPHORE, (uint64)PresentSemaphores[i]);
+
     	}
 
     	
-    	if(bBeingResized)
+    	if(bFromResize)
     	{
     		return;
     	}
     	
         VkFenceCreateInfo FenceCreateInfo = {};
         FenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-        FenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
         Fences.reserve(FRAMES_IN_FLIGHT);
         for (uint8 i = 0; i < FRAMES_IN_FLIGHT; i++)
         {
             VkFence Fence;
             VK_CHECK(vkCreateFence(Device->GetDevice(), &FenceCreateInfo, nullptr, &Fence));
+        	Context->SetVulkanObjectName("Fence: " + eastl::to_string(i), VK_OBJECT_TYPE_FENCE, (uint64)Fence);
+
             Fences.push_back(Fence);
         }
     }
 
+    void FVulkanSwapchain::RecreateSwapchain(const FIntVector2D& Extent)
+    {
+    	Context->WaitIdle();
+
+    	CreateSwapchain(Context->GetVulkanInstance(), Context, Windowing::GetPrimaryWindowHandle(), Extent, true);
+
+    	bNeedsResize = false;
+    }
+
+	void FVulkanSwapchain::SetPresentMode(VkPresentModeKHR NewMode)
+    {
+    	CurrentPresentMode = NewMode;
+    	bNeedsResize = true;
+    }
+
     FRHIImageHandle FVulkanSwapchain::GetCurrentImage() const
     {
-	    return {};
+	    return SwapchainImages[CurrentFrameIndex];
+    }
+
+    void FVulkanSwapchain::AquireNextImage(uint32 NewFrameIndex)
+    {
+    	CurrentFrameIndex = NewFrameIndex;
+
+    	VkFenceCreateInfo FenceInfo = {};
+    	FenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    	
+    	VkResult Result = vkAcquireNextImageKHR(Context->GetDevice(), Swapchain, VULKAN_TIMEOUT_ONE_SECOND, AquireSemaphores[CurrentFrameIndex], Fences[CurrentFrameIndex], &CurrentImageIndex);
+    	
+    	VK_CHECK(vkWaitForFences(Context->GetDevice(), 1, &Fences[CurrentFrameIndex], VK_TRUE, VULKAN_TIMEOUT_ONE_SECOND));
+    	VK_CHECK(vkResetFences(Context->GetDevice(), 1, &Fences[CurrentFrameIndex]));
+    	
+    	if (Result == VK_SUBOPTIMAL_KHR || Result == VK_ERROR_OUT_OF_DATE_KHR)
+    	{
+    		bNeedsResize = true;
+    	}
+    	
+    	VK_CHECK(Result);
+    	
+    }
+
+    void FVulkanSwapchain::Present()
+    {
+    	VkPresentInfoKHR PresentInfo = {};
+    	PresentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    	PresentInfo.pSwapchains = &Swapchain;
+    	PresentInfo.swapchainCount = 1;
+    	PresentInfo.pWaitSemaphores = &PresentSemaphores[CurrentImageIndex];
+    	PresentInfo.waitSemaphoreCount = 1;
+    	PresentInfo.pImageIndices = &CurrentImageIndex;
+
+    	VkResult Result = vkQueuePresentKHR(Context->GetCommandQueues().GraphicsQueue, &PresentInfo);
+
+    	if (Result == VK_SUBOPTIMAL_KHR || Result == VK_ERROR_OUT_OF_DATE_KHR || bNeedsResize)
+    	{
+    		RecreateSwapchain(Windowing::GetPrimaryWindowHandle()->GetExtent());
+    	}
+	    else
+	    {
+    		VK_CHECK(Result);
+	    }
+    	
     }
 }
 

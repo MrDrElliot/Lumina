@@ -92,19 +92,98 @@ namespace Lumina
     {
         Clear,      // Clear attachment to a specified color/depth
         Load,       // Load existing contents
+        Store,
         DontCare,   // Contents are undefined after render pass start
     };
+
     
-    struct FRenderPassBeginInfo
+struct FRenderPassBeginInfo
+{
+    TVector<FRHIImageHandle> ColorAttachments; // Color attachments
+    TVector<ERenderLoadOp> ColorLoadOps;       // One per color attachment
+    TVector<ERenderLoadOp> ColorStoreOps;      // How to handle color attachments at the end
+    TVector<FColor> ClearColorValues;          // Optional clear values for color attachments
+    
+    FRHIImageHandle DepthAttachment;           // Single depth attachment
+    ERenderLoadOp DepthLoadOp = ERenderLoadOp::Clear; // Default depth load operation
+    ERenderLoadOp DepthStoreOp = ERenderLoadOp::Store; // Default depth store operation
+    float ClearDepth = 1.0f;                   // Default depth clear value
+    uint32 ClearStencil = 0;                   // Default stencil clear value
+    
+    FIntVector2D RenderArea;                   // Defines the renderable area
+
+    // Fluent API for adding color attachments
+    FRenderPassBeginInfo& AddColorAttachment(const FRHIImageHandle& Attachment)
     {
-        TVector<FRHIImageHandle> Attachments; // Color/depth attachments
-        TVector<ERenderLoadOp> LoadOps;       // One per attachment
-        TVector<ERenderLoadOp> StoreOps;      // How to handle attachments at the end
-        FIntVector2D RenderArea;              // Defines the renderable area
-        TVector<FColor> ClearColors;          // Optional clear values for color attachments
-        float ClearDepth = 1.0f;              // Default depth clear
-        uint32 ClearStencil = 0;              // Default stencil clear
-    };
+        ColorAttachments.push_back(Attachment);
+        return *this;
+    }
+
+    // Set a LoadOp for the most recently added color attachment
+    FRenderPassBeginInfo& SetColorLoadOp(ERenderLoadOp LoadOp)
+    {
+        ColorLoadOps.push_back(LoadOp);
+        return *this;
+    }
+
+    // Set a StoreOp for the most recently added color attachment
+    FRenderPassBeginInfo& SetColorStoreOp(ERenderLoadOp StoreOp)
+    {
+        ColorStoreOps.push_back(StoreOp);
+        return *this;
+    }
+
+    // Set the clear color for the most recently added color attachment
+    FRenderPassBeginInfo& SetColorClearColor(const FColor& ClearColor)
+    {
+        ClearColorValues.push_back(ClearColor);
+        return *this;
+    }
+
+    // Fluent API for adding a depth attachment
+    FRenderPassBeginInfo& SetDepthAttachment(const FRHIImageHandle& Attachment)
+    {
+        DepthAttachment = Attachment;
+        return *this;
+    }
+
+    // Set a LoadOp for the depth attachment
+    FRenderPassBeginInfo& SetDepthLoadOp(ERenderLoadOp LoadOp)
+    {
+        DepthLoadOp = LoadOp;
+        return *this;
+    }
+
+    // Set a StoreOp for the depth attachment
+    FRenderPassBeginInfo& SetDepthStoreOp(ERenderLoadOp StoreOp)
+    {
+        DepthStoreOp = StoreOp;
+        return *this;
+    }
+
+    // Set clear depth value for the depth attachment
+    FRenderPassBeginInfo& SetDepthClearValue(float Depth)
+    {
+        ClearDepth = Depth;
+        return *this;
+    }
+
+    // Set clear stencil value for the depth attachment
+    FRenderPassBeginInfo& SetDepthClearStencil(uint32 Stencil)
+    {
+        ClearStencil = Stencil;
+        return *this;
+    }
+
+    // Set the render area
+    FRenderPassBeginInfo& SetRenderArea(const FIntVector2D& Area)
+    {
+        RenderArea = Area;
+        return *this;
+    }
+};
+
+
 
     
     struct FDescriptorBinding
@@ -134,36 +213,57 @@ namespace Lumina
         Default = 9, // Used for transfer ops to go to indicate a desire to transfer to a default layout.
     };
 
-    enum class EImageUsage : glm::uint8
+    enum class EImageUsage : uint8
     {
-        TEXTURE,
-        RENDER_TARGET,
-        DEPTH_BUFFER,
-        RESOLVE,
+        Texture,
+        RenderTarget,
+        DepthBuffer,
+        Resolve,
     };
 
-    enum class EImageFormat : glm::uint8
+    enum class EImageFormat : uint8
     {
-        R8,
-        RB16,
-        RGB24,
+        // Standard 8-bit formats
+        R8_UNORM,
+        R8_SNORM,
+
+        // 16-bit formats
+        RG16_UNORM,
+        RG16_SNORM,
+
+        // 24-bit formats
+        RGB24_UNORM,
+        RGB24_SNORM,
+
+        // 32-bit color formats
         RGBA32_SRGB,
         RGBA32_UNORM,
         BGRA32_SRGB,
         BGRA32_UNORM,
-        RGB32_HDR,
-        RGBA64_HDR,
-        RGBA128_HDR,
-        D32,
-        BC1,
-        BC5,
-        BC6h,
-        BC7,
+
+        // HDR and floating-point formats
+        RGB32_SFLOAT,  // HDR format
         RGBA64_SFLOAT,
-        RGB24_UNORM
+        RGBA128_SFLOAT,
+
+        // Depth formats
+        D32,
+
+        // Block compression formats (BCn / S3TC)
+        BC1_UNORM,  // DXT1
+        BC1_SRGB,
+        BC3_UNORM,  // DXT5 (often used for RGBA)
+        BC3_SRGB,
+        BC5_UNORM,  // ATI2 / 3Dc (used for normal maps)
+        BC5_SNORM,
+        BC6H_UFLOAT, // HDR format
+        BC6H_SFLOAT, // HDR format
+        BC7_UNORM,
+        BC7_SRGB
     };
+
     
-    enum class EImageType : glm::uint8
+    enum class EImageType : uint8
     {
         TYPE_1D,
         TYPE_2D,
@@ -192,6 +292,42 @@ namespace Lumina
         COMPUTE,
         RAY_TRACING
     };
+
+    enum class EPipelineStage : uint8
+    {
+        // Common pipeline stages
+        TopOfPipe,                  // No operation, beginning of the pipeline
+        BottomOfPipe,               // End of the pipeline
+
+        // Vertex Input stages
+        VertexInput,                // Vertex data is being read from buffers
+        VertexShader,               // Vertex shader execution
+
+        // Tessellation stages
+        TessellationControlShader,  // Tessellation control shader execution
+        TessellationEvaluationShader, // Tessellation evaluation shader execution
+
+        // Geometry stages
+        GeometryShader,             // Geometry shader execution
+
+        // Fragment stages
+        FragmentShader,             // Fragment shader execution
+        ColorAttachmentOutput,      // After the fragment shader and before blending
+
+        // Compute stages
+        ComputeShader,              // Compute shader execution
+        Transfer,                   // Data transfer (e.g., buffers or images)
+
+        // Post-processing stages
+        EarlyFragmentTests,         // Early fragment testing (e.g., depth/stencil testing)
+        LateFragmentTests,          // Late fragment testing (e.g., depth/stencil testing after blending)
+
+        // Special stages
+        Host,                       // Operations that occur on the host (CPU)
+        AllGraphics,                // All stages related to graphics pipeline
+        AllCommands                 // All stages (graphics, compute, etc.)
+    };
+
 
     enum class EPipelineCullingMode : uint8
     {

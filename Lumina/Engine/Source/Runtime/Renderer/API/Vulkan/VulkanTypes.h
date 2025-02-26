@@ -17,7 +17,8 @@ namespace Lumina
     struct FVulkanImage
     {
         VkImageUsageFlags UsageFlags;
-        VkImageLayout Layout;
+        VkImageLayout CurrentLayout;
+        VkImageLayout DefaultLayout;
         VkImage Image;
         VmaAllocation Allocation;
         VkImageView ImageView;

@@ -131,7 +131,7 @@ namespace Lumina
             }
         }
         
-        ImGui::Image(ViewportTexture, ViewportSize);
+        //ImGui::Image(ViewportTexture, ViewportSize);
         
         if (ImGuiDockNode* pDockNode = ImGui::GetWindowDockNode())
         {

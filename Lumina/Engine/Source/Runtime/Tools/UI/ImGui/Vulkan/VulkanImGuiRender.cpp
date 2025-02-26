@@ -14,9 +14,6 @@
 
 namespace Lumina
 {
-	FVulkanImGuiRender::FVulkanImGuiRender()
-	{
-	}
 
     void FVulkanImGuiRender::Initialize(FSubsystemManager& Manager)
     {
@@ -57,7 +54,7 @@ namespace Lumina
 		
         Assert(ImGui_ImplGlfw_InitForVulkan(Windowing::GetPrimaryWindowHandle()->GetWindow(), true));
 
-		VkFormat Format = VK_FORMAT_R8_SRGB;
+		VkFormat Format = VulkanBackend->GetSwapchain()->GetSwapchainFormat();
 		
         VkPipelineRenderingCreateInfo RenderPipeline = {};
         RenderPipeline.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
@@ -92,16 +89,14 @@ namespace Lumina
     	}*/
     	
     	ImGui_ImplVulkan_Shutdown();
-
-		//VulkanBackend->GetRenderDevice<FVulkanRenderDevice>()->GetDevice()
-		
-    	//vkDestroyDescriptorPool(Device, DescriptorPool, nullptr);
+    	
+    	vkDestroyDescriptorPool(VulkanRenderContext->GetDevice(), DescriptorPool, nullptr);
     	
     	ImGui_ImplGlfw_Shutdown();
     	ImGui::DestroyContext();
     }
 
-    void FVulkanImGuiRender::OnStartFrame(FRenderManager* RenderManager)
+    void FVulkanImGuiRender::OnStartFrame(const FUpdateContext& UpdateContext)
     {
         ImGui_ImplVulkan_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -110,43 +105,31 @@ namespace Lumina
 	
 
 
-    void FVulkanImGuiRender::OnEndFrame(FRenderManager* RenderManager)
+    void FVulkanImGuiRender::OnEndFrame(const FUpdateContext& UpdateContext)
     {
 		if(ImDrawData* DrawData = ImGui::GetDrawData())
 		{
+			VulkanRenderContext = UpdateContext.GetSubsystem<FRenderManager>()->GetRenderContext<FVulkanRenderContext>();
 			
-			IRenderContext* RenderContext = RenderManager->GetRenderContext();
-			FCommandList* CommandList = RenderContext->BeginCommandList();
+			FVulkanCommandList* VulkanCommandList = VulkanRenderContext->GetPrimaryCommandList();
 
-			FVulkanRenderContext* VulkanRenderContext = RenderManager->GetRenderContext<FVulkanRenderContext>();
-			//VulkanRenderContext->GetSwapchain()->Get
+			FRHIImageHandle Handle = VulkanRenderContext->GetSwapchain()->GetCurrentImage();
+			
+			FRenderPassBeginInfo RenderPass; RenderPass
+			.AddColorAttachment(Handle)
+			.SetColorLoadOp(ERenderLoadOp::Clear)
+			.SetColorStoreOp(ERenderLoadOp::Store)
+			.SetColorClearColor(FColor(1.0f))
+			.SetRenderArea(VulkanRenderContext->GetSwapchain()->GetSwapchainExtent());
 
-			FRenderPassBeginInfo RenderPassInfo;
-			//RenderPassInfo.Attachments.push_back()
-			//RenderContext->BeginRenderPass(CommandList, )
 			
-			VkRenderingAttachmentInfo colorAttachment = {};
-			colorAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
-			//colorAttachment.imageView = 
-			colorAttachment.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-			colorAttachment.clearValue = {1, 1, 1, };
-			colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-			colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-           
-			VkRenderingInfo renderInfo = {};
-			renderInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
-			renderInfo.pColorAttachments = &colorAttachment;
-			renderInfo.colorAttachmentCount = 1;
-			renderInfo.renderArea.extent.height = GEngine->GetEngineViewport().GetSize().X;
-			renderInfo.renderArea.extent.width = GEngine->GetEngineViewport().GetSize().Y;
-			renderInfo.layerCount = 1;
-           
-			//vkCmdBeginRendering(CmdBuffer, &renderInfo);
-           
-			//ImGui_ImplVulkan_RenderDrawData(DrawData, CmdBuffer);
-           
-			//vkCmdEndRendering(CmdBuffer);
+			VulkanRenderContext->BeginRenderPass(VulkanCommandList, RenderPass);
 			
+			ImGui_ImplVulkan_RenderDrawData(DrawData, VulkanCommandList->CommandBuffer);
+
+			VulkanRenderContext->EndRenderPass(VulkanCommandList);
+           
+
 		}
     }
 

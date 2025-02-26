@@ -11,25 +11,20 @@ namespace Lumina
 
 namespace Lumina
 {
-    class FLayer;
-    class FImageSampler;
-    class FImage;
-    
-    class IImGuiRenderer : public ISubsystem
+    class IImGuiRenderer
     {
     public:
         
-        IImGuiRenderer() = default;
-        virtual ~IImGuiRenderer() override = default;
+        virtual ~IImGuiRenderer() = default;
 
-        void Initialize(FSubsystemManager& Manager) override;
-        void Deinitialize() override { }
+        virtual void Initialize(FSubsystemManager& Manager);
+        virtual void Deinitialize() { }
         
-        void StartFrame(FRenderManager* RenderManager);
-        void EndFrame(FRenderManager* RenderManager);
+        void StartFrame(const FUpdateContext& UpdateContext);
+        void EndFrame(const FUpdateContext& UpdateContext);
         
-        virtual void OnStartFrame(FRenderManager* RenderManager) = 0;
-        virtual void OnEndFrame(FRenderManager* RenderManager) = 0;
+        virtual void OnStartFrame(const FUpdateContext& UpdateContext) = 0;
+        virtual void OnEndFrame(const FUpdateContext& UpdateContext) = 0;
     
     protected:
 

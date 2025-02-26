@@ -3,6 +3,8 @@
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "Memory/Memory.h"
+#include "Renderer/RenderContext.h"
+#include "Renderer/RenderManager.h"
 #include "Scene/SceneManager.h"
 #include "Scene/SceneRenderer.h"
 #include "Scene/Entity/Systems/DebugCameraEntitySystem.h"
@@ -12,7 +14,6 @@
 #include "Tools/UI/ImGui/ImGuiX.h"
 #include "Tools/EntitySceneEditorTool.h"
 #include "Tools/RendererInfoEditorTool.h"
-#include "Tools/UI/ImGui/Vulkan/VulkanImGuiRender.h"
 
 namespace Lumina
 {
@@ -493,9 +494,6 @@ namespace Lumina
                     FSceneRenderer* SceneRenderer = UpdateContext.GetSubsystem<FSceneManager>()->GetSceneRendererForScene(Scene);
                     Assert(SceneRenderer != nullptr);
                     
-
-                    FVulkanImGuiRender* ImGuiRenderer = UpdateContext.GetSubsystem<FVulkanImGuiRender>();
-
                     
                     ImGui::SetNextWindowSizeConstraints(ImVec2(128, 128), ImVec2(FLT_MAX, FLT_MAX));
                     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
@@ -565,6 +563,13 @@ namespace Lumina
         {
             ImGui::MenuItem( "ImGui Demo Window", nullptr, &bDearImGuiDemoWindowOpen, !bDearImGuiDemoWindowOpen);
 
+            IRenderContext* RenderContext = UpdateContext.GetSubsystem<FRenderManager>()->GetRenderContext();
+            
+            if (ImGui::MenuItem("Enable VSync", nullptr, RenderContext->IsVSyncEnabled()))
+            {
+                RenderContext->SetVSyncEnabled(!RenderContext->IsVSyncEnabled());
+            }
+            
             ImGui::EndMenu();
         }
 

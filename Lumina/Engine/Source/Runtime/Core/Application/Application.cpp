@@ -90,8 +90,15 @@ namespace Lumina
     {
         return Get().Window;
     }
-    
-    
+
+    void FApplication::WindowResized(const FIntVector2D& Extent)
+    {
+        Engine->SetEngineViewportSize(Extent);
+
+        OnWindowResized(Extent);
+    }
+
+
     bool FApplication::CreateApplicationWindow()
     {
         FWindowSpecs AppWindowSpecs;

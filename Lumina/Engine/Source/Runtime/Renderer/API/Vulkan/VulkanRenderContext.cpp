@@ -79,6 +79,110 @@ namespace Lumina
         
         return result;
     }
+    
+    constexpr VkPipelineStageFlagBits ToVkPipelineStage(EPipelineStage stage)
+    {
+        switch (stage)
+        {
+            case EPipelineStage::TopOfPipe: return VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+            case EPipelineStage::BottomOfPipe: return VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+            
+                // Vertex Input stages
+            case EPipelineStage::VertexInput: return VK_PIPELINE_STAGE_VERTEX_INPUT_BIT;
+            case EPipelineStage::VertexShader: return VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
+            
+                // Tessellation stages
+            case EPipelineStage::TessellationControlShader: return VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT;
+            case EPipelineStage::TessellationEvaluationShader: return VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT;
+            
+                // Geometry stages
+            case EPipelineStage::GeometryShader: return VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT;
+            
+                // Fragment stages
+            case EPipelineStage::FragmentShader: return VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+            case EPipelineStage::ColorAttachmentOutput: return VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+            
+                // Compute stages
+            case EPipelineStage::ComputeShader: return VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+            case EPipelineStage::Transfer: return VK_PIPELINE_STAGE_TRANSFER_BIT;
+            
+                // Post-processing stages
+            case EPipelineStage::EarlyFragmentTests: return VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+            case EPipelineStage::LateFragmentTests: return VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+            
+                // Special stages
+            case EPipelineStage::Host: return VK_PIPELINE_STAGE_HOST_BIT;
+            case EPipelineStage::AllGraphics: return VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT;
+            case EPipelineStage::AllCommands: return VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+            
+            default:
+                return VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+        }
+    }
+
+    VkAccessFlags GetImageAccessMask(EImageLayout layout)
+    {
+        switch (layout)
+        {
+            case EImageLayout::General:                 return VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
+            case EImageLayout::TransferDestination:     return VK_ACCESS_TRANSFER_WRITE_BIT;
+            case EImageLayout::TransferSource:          return VK_ACCESS_TRANSFER_READ_BIT;
+            case EImageLayout::ColorAttachment:         return VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+            case EImageLayout::DepthAttachment:         return VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+            case EImageLayout::PresentSource:           return VK_ACCESS_MEMORY_READ_BIT;
+            default:
+                return 0;
+        }
+    }
+
+    EImageLayout FromVkImageLayout(VkImageLayout Layout)
+    {
+        switch (Layout)
+        {
+            case VK_IMAGE_LAYOUT_GENERAL:                           return EImageLayout::General;
+            case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:              return EImageLayout::TransferDestination;
+            case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:              return EImageLayout::TransferSource;
+            case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:          return EImageLayout::ColorAttachment;
+            case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:  return EImageLayout::DepthAttachment;
+            case VK_IMAGE_LAYOUT_PRESENT_SRC_KHR:                   return EImageLayout::PresentSource;
+            default:                                                return EImageLayout::Default;
+        }
+    }
+
+    
+
+    VkPipelineStageFlags GetPipelineStageForAccess(VkAccessFlags access)
+    {
+        VkPipelineStageFlags stageMask = 0;
+
+        if (access & VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
+        {
+            stageMask |= VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        }
+        if (access & VK_ACCESS_TRANSFER_WRITE_BIT)
+        {
+            stageMask |= VK_PIPELINE_STAGE_TRANSFER_BIT;
+        }
+        if (access & VK_ACCESS_SHADER_READ_BIT)
+        {
+            stageMask |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+        }
+        if (access & VK_ACCESS_SHADER_WRITE_BIT)
+        {
+            stageMask |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+        }
+        if (access & VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT)
+        {
+            stageMask |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+        }
+        if (access & VK_ACCESS_MEMORY_READ_BIT)
+        {
+            stageMask |= VK_PIPELINE_STAGE_HOST_BIT;
+        }
+
+        return stageMask;
+    }
+
 
     constexpr VkImageLayout ToVkImageLayout(EImageLayout Layout)
     {
@@ -282,6 +386,7 @@ namespace Lumina
         TVector<VkCommandPool> CommandPools;
         TVector<VkCommandPool> TransientCommandPools;
     } CommandPools;
+
     
     FVulkanRenderContext::FVulkanRenderContext()
         : BufferPool()
@@ -311,7 +416,7 @@ namespace Lumina
         .request_validation_layers()
         .use_default_debug_messenger()
         .set_debug_callback(VkDebugCallback)
-        .enable_extension("VK_EXT_debug_utils")
+        .enable_extension(VK_EXT_DEBUG_UTILS_EXTENSION_NAME)
         .require_api_version(1, 3, 0)
         .build();
 
@@ -325,11 +430,12 @@ namespace Lumina
         CreateDevice(InstBuilder.value());
         
         MemoryAllocator = FMemory::New<FVulkanMemoryAllocator>(VulkanInstance, PhysicalDevice, Device);
+        FencePool.SetDevice(Device);
         
         Swapchain = FMemory::New<FVulkanSwapchain>();
         Swapchain->CreateSwapchain(VulkanInstance, this, Windowing::GetPrimaryWindowHandle(), Windowing::GetPrimaryWindowHandle()->GetExtent());
-
-        for (int i = 0; i < 100; ++i)
+        
+        /*for (int i = 0; i < 100; ++i)
         {
             VkBufferCreateInfo BufferCreateInfo = {};
             BufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -343,20 +449,98 @@ namespace Lumina
             VkBuffer VkBuffer;
             MemoryAllocator->AllocateBuffer(&BufferCreateInfo, VmaFlags, &VkBuffer, "Staging Buffer");
             StagingBufferPools.AvailableBuffers.push_back(VkBuffer);
-        }
+        }*/
     }
 
     void FVulkanRenderContext::Deinitialize()
     {
+        WaitIdle();
+        
+        FMemory::Delete(Swapchain);
+        
+        MemoryAllocator->ClearAllAllocations();
+        FMemory::Delete(MemoryAllocator);
+        
+        FencePool.Destroy();
+
+        LOG_INFO("Num Command Lists: {0}", CommandQueue.size());
+        while (!CommandQueue.empty())
+        {
+            FVulkanCommandList* CommandList = CommandQueue.back();
+
+            vkDestroyFence(Device, CommandList->Fence, nullptr);
+            FMemory::Delete(CommandList);
+            
+            CommandQueue.pop();
+        }
+        
+        for (VkCommandPool CommandPool : CommandPools.CommandPools)
+        {
+            vkDestroyCommandPool(Device, CommandPool, nullptr);
+        }
+
+        for (VkCommandPool CommandPool : CommandPools.TransientCommandPools)
+        {
+            vkDestroyCommandPool(Device, CommandPool, nullptr);
+        }
+
+        auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(VulkanInstance, "vkDestroyDebugUtilsMessengerEXT");
+        func(VulkanInstance, DebugUtils.DebugMessenger, nullptr);
+        
+        vkDestroyDevice(Device, nullptr);
+        vkDestroyInstance(VulkanInstance, nullptr);
+    }
+
+    void FVulkanRenderContext::SetVSyncEnabled(bool bEnable)
+    {
+        Swapchain->SetPresentMode(bEnable ? VK_PRESENT_MODE_FIFO_KHR : VK_PRESENT_MODE_IMMEDIATE_KHR);
+    }
+
+    bool FVulkanRenderContext::IsVSyncEnabled() const
+    {
+        return Swapchain->GetPresentMode() == VK_PRESENT_MODE_FIFO_KHR;
+    }
+
+    void FVulkanRenderContext::WaitIdle()
+    {
+        VK_CHECK(vkDeviceWaitIdle(Device));
+    }
+
+    void FVulkanRenderContext::FrameStart(const FUpdateContext& UpdateContext, uint8 InCurrentFrameIndex)
+    {
+        CurrentFrameIndex = InCurrentFrameIndex;
+        
+        // Begin primary command list.
+        PrimaryCommandList[CurrentFrameIndex] = (FVulkanCommandList*)(BeginCommandList(ECommandBufferLevel::Primary));
+        
+        Swapchain->AquireNextImage(CurrentFrameIndex);
+        
+        PrimaryCommandList[CurrentFrameIndex]->WaitSemaphores.push_back(Swapchain->GetAquireSemaphore());
+        PrimaryCommandList[CurrentFrameIndex]->SignalSemaphores.push_back(Swapchain->GetPresentSemaphore());
         
     }
 
-    void FVulkanRenderContext::FrameStart(const FUpdateContext& UpdateContext, uint8 CurrentFrameIndex)
+    void FVulkanRenderContext::FrameEnd(const FUpdateContext& UpdateContext, uint8 InCurrentFrameIndex)
     {
-    }
+        TVector<VkCommandBuffer> SecondaryCommandBuffers;
+        FVulkanCommandList* PrimaryList = PrimaryCommandList[CurrentFrameIndex];
 
-    void FVulkanRenderContext::FrameEnd(const FUpdateContext& UpdateContext, uint8 CurrentFrameIndex)
-    {
+        while (!CommandQueue.empty())
+        {
+            FVulkanCommandList* CommandList = CommandQueue.back();
+            EndCommandList(CommandList);
+            CommandQueue.pop();
+        }
+        
+        if (!SecondaryCommandBuffers.empty())
+        {
+            vkCmdExecuteCommands(PrimaryList->CommandBuffer, SecondaryCommandBuffers.size(), SecondaryCommandBuffers.data());
+        }
+
+        EndCommandList(PrimaryList);
+        
+        Swapchain->Present();
+        
     }
 
     void FVulkanRenderContext::CreateDevice(vkb::Instance Instance)
@@ -408,14 +592,15 @@ namespace Lumina
         PhysicalDevice = physicalDevice.physical_device;
 
 
-        BufferPool.SetFreeCallback([](FVulkanBuffer* Buffer)
+        BufferPool.SetFreeCallback([this](FVulkanBuffer* Buffer)
         {
-            
+            MemoryAllocator->DestroyBuffer(Buffer->Buffer, Buffer->Allocation);
         });
 
-        ImagePool.SetFreeCallback([](FVulkanImage* Image)
+        ImagePool.SetFreeCallback([this](FVulkanImage* Image)
         {
-            
+            MemoryAllocator->DestroyImage(Image->Image, Image->Allocation);
+            vkDestroyImageView(Device, Image->ImageView, nullptr);
         });
         
         vkGetPhysicalDeviceMemoryProperties(PhysicalDevice, &PhysicalDeviceMemoryProperties);
@@ -462,17 +647,86 @@ namespace Lumina
         return Math::GetAligned(Size, MinAlignment);
     }
 
-    FRHIImageHandle FVulkanRenderContext::CreateTexture(FIntVector2D Extent)
+    FRHIImageHandle FVulkanRenderContext::AllocateImage()
     {
-        return {};
+        return ImagePool.Allocate();
     }
 
-    FRHIImageHandle FVulkanRenderContext::CreateRenderTarget(FIntVector2D Extent)
+    FRHIImageHandle FVulkanRenderContext::CreateTexture(const FImageSpecification& ImageSpec)
     {
-        return {};
+        VkImageCreateFlags ImageFlags = VK_NO_FLAGS;
+        
+        VkImageCreateInfo ImageCreateInfo = {};
+        ImageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+        ImageCreateInfo.extent = VkExtent3D(ImageSpec.Extent.X, ImageSpec.Extent.Y, 1);
+        ImageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+        ImageCreateInfo.flags = ImageFlags;
+        ImageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
+        ImageCreateInfo.mipLevels = 1;
+        ImageCreateInfo.arrayLayers = 1;
+        ImageCreateInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
+        ImageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+        ImageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        ImageCreateInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+        ImageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+        FRHIImageHandle Handle = ImagePool.Allocate();
+        FVulkanImage* VulkanImage =ImagePool.GetResource(Handle);
+
+        VmaAllocationCreateFlags AllocationFlags = VK_NO_FLAGS;
+        
+        MemoryAllocator->AllocateImage(&ImageCreateInfo, AllocationFlags, &VulkanImage->Image, "");
+
+        return Handle;
     }
 
-    FRHIImageHandle FVulkanRenderContext::CreateDepthImage(FIntVector2D Extent)
+    FRHIImageHandle FVulkanRenderContext::CreateRenderTarget(const FIntVector2D& Extent)
+    {
+        VkImageCreateFlags ImageFlags = VK_NO_FLAGS;
+        
+        VkImageCreateInfo ImageCreateInfo = {};
+        ImageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+        ImageCreateInfo.extent = VkExtent3D(Extent.X, Extent.Y, 1);
+        ImageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+        ImageCreateInfo.flags = ImageFlags;
+        ImageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
+        ImageCreateInfo.mipLevels = 1;
+        ImageCreateInfo.arrayLayers = 1;
+        ImageCreateInfo.format = VK_FORMAT_B8G8R8A8_UNORM;
+        ImageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+        ImageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        ImageCreateInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+        ImageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+        FRHIImageHandle Handle = ImagePool.Allocate();
+        FVulkanImage* VulkanImage =ImagePool.GetResource(Handle);
+
+        VmaAllocationCreateFlags AllocationFlags = VK_NO_FLAGS;
+        
+        VulkanImage->Allocation = MemoryAllocator->AllocateImage(&ImageCreateInfo, AllocationFlags, &VulkanImage->Image, "");
+
+        // Create Image View
+        VkImageViewCreateInfo ImageViewCreateInfo = {};
+        ImageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+        ImageViewCreateInfo.image = VulkanImage->Image;
+        ImageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+        ImageViewCreateInfo.format = VK_FORMAT_B8G8R8A8_UNORM;
+        ImageViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+        ImageViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+        ImageViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+        ImageViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+        ImageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        ImageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
+        ImageViewCreateInfo.subresourceRange.layerCount = 1;
+        ImageViewCreateInfo.subresourceRange.baseMipLevel = 0;
+        ImageViewCreateInfo.subresourceRange.levelCount = 1;
+
+        VK_CHECK(vkCreateImageView(Device, &ImageViewCreateInfo, nullptr, &VulkanImage->ImageView));
+
+        return Handle;
+    }
+
+    FRHIImageHandle FVulkanRenderContext::CreateDepthImage(const FImageSpecification& ImageSpec)
     {
         return {};
     }
@@ -480,12 +734,16 @@ namespace Lumina
     void FVulkanRenderContext::Barrier(FGPUBarrier* Barriers, uint32 BarrierNum, FCommandList* CommandList)
     {
         Assert(Barriers != nullptr);
-        
+    
         FVulkanCommandList* VulkanCommandList = (FVulkanCommandList*)CommandList;
         VkCommandBuffer CommandBuffer = VulkanCommandList->CommandBuffer;
-        
+    
         VkImageMemoryBarrier imageBarriers[16];
         uint32 numImageBarriers = 0;
+    
+        // Pipeline stage flags for synchronization
+        VkPipelineStageFlags srcStageMask = 0;
+        VkPipelineStageFlags dstStageMask = 0;
     
         for (uint32 i = 0; i < BarrierNum; ++i)
         {
@@ -495,37 +753,48 @@ namespace Lumina
             {
             case FGPUBarrier::EType::Image:
             {
-
                 FVulkanImage* VulkanImage = ImagePool.GetResource(Barrier->RHIImage);
-                    
+    
                 VkImageMemoryBarrier& imageMemBarrier = imageBarriers[numImageBarriers++];
                 imageMemBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
                 imageMemBarrier.pNext = nullptr;
-                imageMemBarrier.srcAccessMask = 0;
-                imageMemBarrier.dstAccessMask = 0;
-                imageMemBarrier.oldLayout = ToVkImageLayout(Barriers->FromLayout);
-                imageMemBarrier.newLayout = (Barrier->ToLayout == EImageLayout::Default) ? VulkanImage->Layout : ToVkImageLayout(Barrier->ToLayout);
+    
+                // Set the access masks based on image layouts
+                imageMemBarrier.srcAccessMask = GetImageAccessMask(Barrier->FromLayout);
+                imageMemBarrier.dstAccessMask = (Barrier->ToLayout == EImageLayout::Default) ? GetImageAccessMask(FromVkImageLayout(VulkanImage->DefaultLayout)) : GetImageAccessMask(Barrier->ToLayout);
+    
+                imageMemBarrier.oldLayout = ToVkImageLayout(Barrier->FromLayout);
+                imageMemBarrier.newLayout = (Barrier->ToLayout == EImageLayout::Default) ? VulkanImage->DefaultLayout : ToVkImageLayout(Barrier->ToLayout);
+
+                VulkanImage->CurrentLayout = imageMemBarrier.newLayout;
+                    
                 imageMemBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
                 imageMemBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
                 imageMemBarrier.image = VulkanImage->Image;
-                imageMemBarrier.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 }; 
+                imageMemBarrier.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+    
+                // Set pipeline stage masks based on the operation
+                srcStageMask |= GetPipelineStageForAccess(imageMemBarrier.srcAccessMask);
+                dstStageMask |= GetPipelineStageForAccess(imageMemBarrier.dstAccessMask);
     
                 break;
             }
     
             case FGPUBarrier::EType::Memory:
             {
+                // Memory barriers would be handled here (if applicable).
                 break;
             }
             }
         }
     
+        // Execute the pipeline barrier
         if (numImageBarriers > 0)
         {
             vkCmdPipelineBarrier(
                 CommandBuffer,
-                VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-                VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+                srcStageMask,  // Source stage mask
+                dstStageMask,  // Destination stage mask
                 0,
                 0, nullptr,
                 0, nullptr,
@@ -534,7 +803,10 @@ namespace Lumina
         }
     }
 
-    
+    FVulkanCommandList* FVulkanRenderContext::GetPrimaryCommandList() const
+    {
+        return PrimaryCommandList[CurrentFrameIndex];
+    }
 
     FRHIBufferHandle FVulkanRenderContext::CreateBuffer(TBitFlags<ERenderDeviceBufferUsage> UsageFlags, TBitFlags<ERenderDeviceBufferMemoryUsage> MemoryUsage, uint32 Size)
     {
@@ -555,7 +827,7 @@ namespace Lumina
 
         Buffer->Allocation = Allocation;
         Buffer->Buffer = VkBuffer;
-
+        
         return BufferHandle;
     }
 
@@ -583,9 +855,8 @@ namespace Lumina
         VulkanStagingBuffer->Allocation = Allocation;
         VulkanStagingBuffer->Buffer = VkStagingBuffer;
         VulkanStagingBuffer->Size = Size;
-        
-        FVulkanBuffer* VulkanBuffer = BufferPool.GetResource(Buffer);
 
+        
         CopyBuffer(Buffer, StagingBufferHandle);
         
     }
@@ -620,9 +891,8 @@ namespace Lumina
         VK_CHECK(vkEndCommandBuffer(commandBuffer));
 
     }
-
     
-    FCommandList* FVulkanRenderContext::BeginCommandList(ECommandQueue CommandType, ECommandBufferUsage Usage)
+    FCommandList* FVulkanRenderContext::BeginCommandList(ECommandBufferLevel Level, ECommandQueue CommandType, ECommandBufferUsage Usage)
     {
 
         bool bTransient = (Usage == ECommandBufferUsage::Transient);
@@ -630,73 +900,115 @@ namespace Lumina
         VkCommandBufferAllocateInfo AllocInfo = {};
         AllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
         AllocInfo.commandPool = bTransient ? CommandPools.TransientCommandPools[0] : CommandPools.CommandPools[0];
-        AllocInfo.level = bTransient ? VK_COMMAND_BUFFER_LEVEL_PRIMARY : VK_COMMAND_BUFFER_LEVEL_SECONDARY;
+        AllocInfo.level = (Level == ECommandBufferLevel::Primary) ? VK_COMMAND_BUFFER_LEVEL_PRIMARY : VK_COMMAND_BUFFER_LEVEL_SECONDARY;
         AllocInfo.commandBufferCount = 1;
 
+        
         FVulkanCommandList* VulkanCommandList = FMemory::New<FVulkanCommandList>();
-        CommandList.push_back(VulkanCommandList);
+        VulkanCommandList->CommandQueue = CommandType;
+        VulkanCommandList->Type = Usage;
+
+        /** Primary command buffer is managed seperately */
+        if (Level == ECommandBufferLevel::Secondary)
+        {
+            CommandQueue.push(VulkanCommandList);
+        }
         
         VK_CHECK(vkAllocateCommandBuffers(Device, &AllocInfo, &VulkanCommandList->CommandBuffer));
         
-
+        VulkanCommandList->Fence = FencePool.Aquire();
+        
         VkCommandBufferBeginInfo BeginInfo = {};
         BeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
         BeginInfo.flags = bTransient ? VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT : VK_NO_FLAGS;
+        BeginInfo.pInheritanceInfo = nullptr;
         
         VK_CHECK(vkBeginCommandBuffer(VulkanCommandList->CommandBuffer, &BeginInfo));
 
         return VulkanCommandList;
     }
 
-    void FVulkanRenderContext::EndCommandList(FCommandList* CommandList, bool bDestroy)
+    void FVulkanRenderContext::EndCommandList(FCommandList* CommandList)
     {
         FVulkanCommandList* VulkanCommandList = (FVulkanCommandList*)CommandList;
 
         VK_CHECK(vkEndCommandBuffer(VulkanCommandList->CommandBuffer));
+        
+        
+        VkSubmitInfo SubmitInfo = {};
+        SubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        SubmitInfo.commandBufferCount = 1;
+        SubmitInfo.pCommandBuffers = &VulkanCommandList->CommandBuffer;
+        SubmitInfo.pWaitSemaphores = VulkanCommandList->WaitSemaphores.data();
+        SubmitInfo.waitSemaphoreCount = VulkanCommandList->WaitSemaphores.size();
+        SubmitInfo.pSignalSemaphores = VulkanCommandList->SignalSemaphores.data();
+        SubmitInfo.signalSemaphoreCount = VulkanCommandList->SignalSemaphores.size();
 
-        if (bDestroy)
+        if (!VulkanCommandList->WaitSemaphores.empty())
         {
-            VkCommandPool Pool = CommandList->Type == ECommandBufferUsage::Transient ? CommandPools.TransientCommandPools[0] : CommandPools.CommandPools[0];
-            vkFreeCommandBuffers(Device, Pool, 1, &VulkanCommandList->CommandBuffer);
-            
-            FMemory::Delete(CommandList);
+            VkPipelineStageFlags WaitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+            SubmitInfo.pWaitDstStageMask = WaitStages;
         }
-    }
 
+        
+        VK_CHECK(vkQueueSubmit(CommandQueues.GraphicsQueue, 1, &SubmitInfo, VulkanCommandList->Fence));
+        VK_CHECK(vkWaitForFences(Device, 1, &VulkanCommandList->Fence, VK_TRUE, UINT64_MAX));
+
+        VulkanCommandList->SignalSemaphores.clear();
+        VulkanCommandList->WaitSemaphores.clear();
+        
+        VkCommandPool Pool = (CommandList->Type == ECommandBufferUsage::Transient) ? CommandPools.TransientCommandPools[0] : CommandPools.CommandPools[0];
+        vkFreeCommandBuffers(Device, Pool, 1, &VulkanCommandList->CommandBuffer);
+        
+        FencePool.Release(VulkanCommandList->Fence);
+        
+    }
+    
     void FVulkanRenderContext::BeginRenderPass(FCommandList* CommandList, const FRenderPassBeginInfo& PassInfo)
     {
         TVector<VkRenderingAttachmentInfo> ColorAttachments;
         VkRenderingAttachmentInfo DepthAttachment = {};
 
-        for (int i = 0; i < PassInfo.Attachments.size(); ++i)
+        for (int i = 0; i < PassInfo.ColorAttachments.size(); ++i)
         {
-            const FRHIImageHandle& ImageHandle = PassInfo.Attachments[i];
+            const FRHIImageHandle& ImageHandle = PassInfo.ColorAttachments[i];
 
             FVulkanImage* Image = ImagePool.GetResource(ImageHandle);
+            Assert(Image);
             
             VkRenderingAttachmentInfo Attachment = {};
             Attachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
             Attachment.imageView = Image->ImageView;
             Attachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL; 
-            Attachment.loadOp = (PassInfo.LoadOps[i] == ERenderLoadOp::Clear) ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
-            Attachment.storeOp =VK_ATTACHMENT_STORE_OP_STORE;
+            Attachment.loadOp = (PassInfo.ColorLoadOps[i] == ERenderLoadOp::Clear) ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
+            Attachment.storeOp = PassInfo.ColorStoreOps[i] == ERenderLoadOp::DontCare ? VK_ATTACHMENT_STORE_OP_DONT_CARE : VK_ATTACHMENT_STORE_OP_STORE; 
     
-            if (Image->UsageFlags & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
-            {
-                Attachment.clearValue.color.float32[0] = 1.0f;
-                Attachment.clearValue.color.float32[1] = 1.0f;
-                Attachment.clearValue.color.float32[2] = 1.0f;
-                Attachment.clearValue.color.float32[3] = 1.0f;
+            Attachment.clearValue.color.float32[0] = PassInfo.ClearColorValues[i].R;
+            Attachment.clearValue.color.float32[1] = PassInfo.ClearColorValues[i].G;
+            Attachment.clearValue.color.float32[2] = PassInfo.ClearColorValues[i].B;
+            Attachment.clearValue.color.float32[3] = PassInfo.ClearColorValues[i].A;
     
-                ColorAttachments.push_back(Attachment);
-            }
-            else if (Image->UsageFlags & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
-            {
-                DepthAttachment = Attachment;
-                DepthAttachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-                DepthAttachment.clearValue.depthStencil.depth = 1.0f;
-                DepthAttachment.clearValue.depthStencil.stencil = 0;
-            }
+            ColorAttachments.push_back(Attachment);
+        }
+        
+        const FRHIImageHandle& ImageHandle = PassInfo.DepthAttachment;
+        if (ImageHandle != FRenderHandle::InvalidHandle())
+        {
+            FVulkanImage* Image = ImagePool.GetResource(ImageHandle);
+            Assert(Image);
+            
+            VkRenderingAttachmentInfo Attachment = {};
+            Attachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+            Attachment.imageView = Image->ImageView;
+            Attachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL; 
+            Attachment.loadOp = (PassInfo.DepthLoadOp == ERenderLoadOp::Clear) ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
+            Attachment.storeOp = PassInfo.DepthStoreOp == ERenderLoadOp::DontCare ? VK_ATTACHMENT_STORE_OP_DONT_CARE : VK_ATTACHMENT_STORE_OP_STORE;
+            
+            DepthAttachment = Attachment;
+            DepthAttachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+            DepthAttachment.clearValue.depthStencil.depth = 1.0f;
+            DepthAttachment.clearValue.depthStencil.stencil = 0;
+            
         }
         
         VkRenderingInfo RenderInfo = {};
@@ -704,8 +1016,8 @@ namespace Lumina
         RenderInfo.colorAttachmentCount = (uint32)ColorAttachments.size();
         RenderInfo.pColorAttachments = ColorAttachments.data();
         RenderInfo.pDepthAttachment = (DepthAttachment.imageView != VK_NULL_HANDLE) ? &DepthAttachment : nullptr;
-        RenderInfo.renderArea.extent.width = GEngine->GetEngineViewport().GetSize().X;
-        RenderInfo.renderArea.extent.height = GEngine->GetEngineViewport().GetSize().Y;
+        RenderInfo.renderArea.extent.width = PassInfo.RenderArea.X;
+        RenderInfo.renderArea.extent.height = PassInfo.RenderArea.Y;
         RenderInfo.layerCount = 1;
 
         FVulkanCommandList* VulkanCommandList = (FVulkanCommandList*)CommandList;
@@ -720,6 +1032,64 @@ namespace Lumina
         vkCmdEndRendering(VulkanCommandList->CommandBuffer);
         
     }
+
+    void FVulkanRenderContext::ClearColor(FCommandList* CommandList, const FColor& Color)
+    {
+        FVulkanCommandList* VulkanCommandList = (FVulkanCommandList*)CommandList;
+
+        FRHIImageHandle ImageHandle = Swapchain->GetCurrentImage();
+        FVulkanImage* VulkanImage = ImagePool.GetResourceChecked(ImageHandle);
+
+        VkClearColorValue ClearColorValue;
+        ClearColorValue.float32[0] = Color.R; // Red
+        ClearColorValue.float32[1] = Color.G; // Green
+        ClearColorValue.float32[2] = Color.B; // Blue
+        ClearColorValue.float32[3] = Color.A; // Alpha
+
+        VkImageSubresourceRange SubresourceRange = {};
+        SubresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        SubresourceRange.baseMipLevel = 0;
+        SubresourceRange.levelCount = VK_REMAINING_MIP_LEVELS;
+        SubresourceRange.baseArrayLayer = 0;
+        SubresourceRange.layerCount = VK_REMAINING_ARRAY_LAYERS;
+
+        /** Transfer the image from presentation (swapchain image) to a layout suitable for transfer operations */
+        {
+            FGPUBarrier Barriers[] =
+            {
+                FGPUBarrier::Image(ImageHandle, EImageLayout::PresentSource, EImageLayout::TransferDestination)
+            };
+
+            Barrier(Barriers, std::size(Barriers), CommandList);
+        }
+        
+        vkCmdClearColorImage(VulkanCommandList->CommandBuffer, VulkanImage->Image, VulkanImage->CurrentLayout, &ClearColorValue, 1, &SubresourceRange);
+
+
+        /** Transfer back to it's desired default layout */
+        {
+            FGPUBarrier Barriers[] =
+            {
+                FGPUBarrier::Image(ImageHandle, EImageLayout::TransferDestination)
+            };
+
+            Barrier(Barriers, std::size(Barriers), CommandList);
+        }
+        
+    }
+
+
+    void FVulkanRenderContext::SetVulkanObjectName(FString Name, VkObjectType ObjectType, uint64 Handle)
+    {
+        VkDebugUtilsObjectNameInfoEXT NameInfo = {};
+        NameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+        NameInfo.objectType = ObjectType;
+        NameInfo.objectHandle = Handle;
+        NameInfo.pObjectName = Name.c_str();
+
+        DebugUtils.DebugUtilsObjectNameEXT(Device, &NameInfo);
+    }
+    
 }
 
 

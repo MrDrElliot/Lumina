@@ -6,6 +6,10 @@ void FSandbox::CreateEngine()
 {
 	Engine = FMemory::New<FSandboxEngine>();
 	Engine->Initialize(this);
+	Engine->SetUpdateCallback([this]
+	{
+		
+	});
 }
 
 bool FSandbox::ApplicationLoop()

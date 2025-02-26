@@ -10,7 +10,7 @@
 
 
 #if !LE_SHIP
-#define WITH_DEVELOPMENT_TOOLS 1
+#define WITH_DEVELOPMENT_TOOLS 0
 #endif
 
-#define INDEX_NONE -1
+enum { INDEX_NONE = -1 };

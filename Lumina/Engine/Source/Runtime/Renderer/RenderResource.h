@@ -59,5 +59,4 @@ namespace Lumina
         
     };
 
-    template<ERende>
 }

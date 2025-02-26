@@ -52,6 +52,8 @@ namespace Lumina
         const FViewport& GetEngineViewport() const { return EngineViewport; }
 
         void SetUpdateCallback(TFunction<void()> Callback) { UpdateCallback = Callback; }
+
+        void SetEngineViewportSize(const FIntVector2D& InSize);
         
     protected:
 
@@ -67,7 +69,6 @@ namespace Lumina
 
         #if WITH_DEVELOPMENT_TOOLS
         IDevelopmentToolUI*     DeveloperToolUI =       nullptr;
-        IImGuiRenderer*         ImGuiRenderer =         nullptr;
         #endif
 
         FSubsystemManager       EngineSubsystems;

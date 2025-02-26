@@ -7,20 +7,18 @@
 
 namespace Lumina
 {
+    class FVulkanRenderContext;
     class FUpdateContext;
 
     class FVulkanImGuiRender: public IImGuiRenderer
     {
     public:
-
-        FVulkanImGuiRender();
-        ~FVulkanImGuiRender() override = default;
-
+        
         void Initialize(FSubsystemManager& Manager) override;
         void Deinitialize() override;
         
-        void OnStartFrame(FRenderManager* RenderManager) override;
-        void OnEndFrame(FRenderManager* RenderManager) override;
+        void OnStartFrame(const FUpdateContext& UpdateContext) override;
+        void OnEndFrame(const FUpdateContext& UpdateContext) override;
     
 
     private:
@@ -29,7 +27,7 @@ namespace Lumina
         void RegisterNewImage(FGuid Guid, ImTextureID NewImage, const FString& DebugName);
         
         VkDescriptorPool DescriptorPool = VK_NULL_HANDLE;
-        
+        FVulkanRenderContext* VulkanRenderContext = nullptr;
     };
     
 }

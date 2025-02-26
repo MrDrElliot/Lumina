@@ -41,6 +41,8 @@ namespace Lumina
         FRHIImageHandle RHIImage;
         EImageLayout FromLayout;
         EImageLayout ToLayout;
+        EPipelineStage SourcePipelineStage = EPipelineStage::TopOfPipe;
+        EPipelineStage DestinationPipelineStage = EPipelineStage::BottomOfPipe;
     };
 
 

@@ -42,6 +42,7 @@ namespace Lumina
     void LuminaEditor::CreateEngine()
     {
         Engine = new FEditorEngine();
+        Engine->SetUpdateCallback([] { });
         Engine->Initialize(this);
     }
 

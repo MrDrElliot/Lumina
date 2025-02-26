@@ -1,8 +1,10 @@
 #pragma once
-#include "VulkanTypes.h"
 
 #ifdef LUMINA_RENDERER_VULKAN
 
+#include "VulkanMacros.h"
+#include "VulkanTypes.h"
+#include "Memory/Allocators/Allocator.h"
 #include "Types/BitFlags.h"
 #include "src/VkBootstrap.h"
 #include "Renderer/RenderHandle.h"
@@ -19,7 +21,53 @@ namespace Lumina
 
 namespace Lumina
 {
+    class FFencePool
+    {
+    public:
+        FFencePool() = default;
 
+        void SetDevice(VkDevice InDevice)
+        {
+            Device = InDevice;
+        }
+            
+        VkFence Aquire()
+        {
+            if (!Fences.empty())
+            {
+                VkFence Fence = Fences.back();
+                Fences.pop_back();
+                return Fence;
+            }
+
+            VkFence Fence;
+            VkFenceCreateInfo FenceCreateInfo = {};
+            FenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+            VK_CHECK(vkCreateFence(Device, &FenceCreateInfo, nullptr, &Fence));
+            return Fence;
+        }
+
+        void Release(VkFence Fence)
+        {
+            vkResetFences(Device, 1, &Fence);
+            Fences.push_back(Fence);
+        }
+
+        void Destroy()
+        {
+            for (VkFence Fence : Fences)
+            {
+                vkDestroyFence(Device, Fence, nullptr);
+            }
+        }
+
+    private:
+        
+        TVector<VkFence> Fences;
+        VkDevice         Device;
+    };
+    
+    
     class FVulkanMemoryAllocator
     {
     public:
@@ -57,10 +105,14 @@ namespace Lumina
 
     };
 
-    struct FVulkanCommandList : public FCommandList
+    struct FVulkanCommandList : FCommandList
     {
         
         VkCommandBuffer CommandBuffer;
+        VkFence Fence;
+        
+        TVector<VkSemaphore> WaitSemaphores;
+        TVector<VkSemaphore> SignalSemaphores;
         
     };
     
@@ -89,8 +141,13 @@ namespace Lumina
         void Initialize() override;
         void Deinitialize() override;
 
-        void FrameStart(const FUpdateContext& UpdateContext, uint8 CurrentFrameIndex) override;
-        void FrameEnd(const FUpdateContext& UpdateContext, uint8 CurrentFrameIndex) override;
+        void SetVSyncEnabled(bool bEnable) override;
+        bool IsVSyncEnabled() const override;
+
+        void WaitIdle() override;
+        
+        void FrameStart(const FUpdateContext& UpdateContext, uint8 InCurrentFrameIndex) override;
+        void FrameEnd(const FUpdateContext& UpdateContext, uint8 InCurrentFrameIndex) override;
         
 
         void CreateDevice(vkb::Instance Instance);
@@ -113,23 +170,42 @@ namespace Lumina
         void CopyBuffer(FRHIBufferHandle Source, FRHIBufferHandle Destination) override;
         uint64 GetAlignedSizeForBuffer(uint64 Size, TBitFlags<ERenderDeviceBufferUsage> Usage) override;
 
-        FRHIImageHandle CreateTexture(FIntVector2D Extent) override;
-        FRHIImageHandle CreateRenderTarget(FIntVector2D Extent) override;
-        FRHIImageHandle CreateDepthImage(FIntVector2D Extent) override;
+        FRHIImageHandle AllocateImage() override;
+        FRHIImageHandle CreateTexture(const FImageSpecification& ImageSpec) override;
+        FRHIImageHandle CreateRenderTarget(const FIntVector2D& Extent) override;
+        FRHIImageHandle CreateDepthImage(const FImageSpecification& ImageSpec) override;
 
         void Barrier(FGPUBarrier* Barriers, uint32 BarrierNum, FCommandList* CommandList) override;
         
         //-------------------------------------------------------------------------------------
 
-        FCommandList* BeginCommandList(ECommandQueue CommandType, ECommandBufferUsage Usage) override;
-        void EndCommandList(FCommandList* CommandList, bool bDestroy) override;
+        FVulkanCommandList* GetPrimaryCommandList() const;
+        FCommandList* BeginCommandList(ECommandBufferLevel Level = ECommandBufferLevel::Secondary, ECommandQueue CommandType = ECommandQueue::Graphics, ECommandBufferUsage Usage = ECommandBufferUsage::General) override;
+        void EndCommandList(FCommandList* CommandList) override;
+
+        
+        //-------------------------------------------------------------------------------------
+
         
         void BeginRenderPass(FCommandList* CommandList, const FRenderPassBeginInfo& PassInfo) override;
         void EndRenderPass(FCommandList* CommandList) override;
-        
-    private:
 
-        TVector<FVulkanCommandList*>            CommandList;
+        void ClearColor(FCommandList* CommandList, const FColor& Color) override;
+        
+
+        //-------------------------------------------------------------------------------------
+
+        
+        
+        void SetVulkanObjectName(FString Name, VkObjectType ObjectType, uint64 Handle);
+
+    
+    private:
+        
+        uint8                                   CurrentFrameIndex;
+        FVulkanCommandList*                     PrimaryCommandList[FRAMES_IN_FLIGHT];
+        TQueue<FVulkanCommandList*>             CommandQueue;
+        
         FBufferPool                             BufferPool;
         FImagePool                              ImagePool;
 
@@ -137,11 +213,19 @@ namespace Lumina
         VkInstance                              VulkanInstance;
         
         FVulkanCommandQueues                    CommandQueues;
+
+        
         VkDevice                                Device;
         VkPhysicalDevice                        PhysicalDevice;
         VkPhysicalDeviceProperties              PhysicalDeviceProperties;
         VkPhysicalDeviceMemoryProperties        PhysicalDeviceMemoryProperties;
+
+        
         FVulkanMemoryAllocator*                 MemoryAllocator = nullptr;
+        FFencePool                              FencePool;
+        
+        
     };
+    
 }
 #endif

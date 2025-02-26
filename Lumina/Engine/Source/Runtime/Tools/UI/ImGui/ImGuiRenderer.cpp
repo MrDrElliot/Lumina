@@ -3,8 +3,10 @@
 #include "ImGuiDesignIcons.h"
 #include "ImGuiFonts.h"
 #include "Core/Engine/Engine.h"
+#include "Core/Performance/PerformanceTracker.h"
 #include "imgui/imgui_freetype.h"
 #include "Renderer/RHIIncl.h"
+#include "TaskSystem/TaskSystem.h"
 #include "Tools/UI/Fonts/FontData_Lexend.h"
 #include "Tools/UI/Fonts/FontData_MaterialDesign.h"
 #include "Tools/UI/Fonts/FontDecompressor.h"
@@ -14,6 +16,7 @@ namespace Lumina
 	
     void IImGuiRenderer::Initialize(FSubsystemManager& Manager)
     {
+
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
         ImGuiIO& io = ImGui::GetIO();
@@ -36,6 +39,7 @@ namespace Lumina
     	iconFontConfig.MergeMode = true;
     	iconFontConfig.PixelSnapH = true;
     	iconFontConfig.RasterizerMultiply = 1.5f;
+
     	
     	auto CreateFont = [&] ( Blob& fontData, float fontSize, float iconFontSize, ImGuiX::Font::EFont fontID, char const* pName, ImVec2 const& glyphOffset )
     	{
@@ -69,9 +73,9 @@ namespace Lumina
     	io.Fonts->TexDesiredWidth = 4096;
     	io.Fonts->Build();
 
-    	io.FontDefault = ImGuiX::Font::FSystemFonts::s_fonts[static_cast<uint8_t>(ImGuiX::Font::EFont::Small)];
+    	io.FontDefault = ImGuiX::Font::FSystemFonts::s_fonts[static_cast<uint8_t>(ImGuiX::Font::EFont::Medium)];
     	
-    	
+
     	io.ConfigWindowsMoveFromTitleBarOnly = true;
     	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
@@ -160,12 +164,12 @@ namespace Lumina
     	style.CellPadding = ImVec2( 4, 6 );
     }
 
-    void IImGuiRenderer::StartFrame(FRenderManager* RenderManager)
+    void IImGuiRenderer::StartFrame(const FUpdateContext& UpdateContext)
     {
-    	OnStartFrame(RenderManager);
+    	OnStartFrame(UpdateContext);
     }
 
-    void IImGuiRenderer::EndFrame(FRenderManager* RenderManager)
+    void IImGuiRenderer::EndFrame(const FUpdateContext& UpdateContext)
     {
 
     	ImGuiIO& Io = ImGui::GetIO();
@@ -181,6 +185,6 @@ namespace Lumina
     		ImGui::RenderPlatformWindowsDefault();
     	}
     	
-    	OnEndFrame(RenderManager);
+    	OnEndFrame(UpdateContext);
     }
 }
