@@ -133,8 +133,12 @@ namespace Lumina
     {
     public:
 
-        using FBufferPool = TRenderResourcePool<FRHIBufferHandle, FVulkanBuffer>;
-        using FImagePool = TRenderResourcePool<FRHIImageHandle, FVulkanImage>;
+        using FBufferPool               = TRenderResourcePool<FRHIBufferHandle, FVulkanBuffer>;
+        using FImagePool                = TRenderResourcePool<FRHIImageHandle, FVulkanImage>;
+        using FShaderPool               = TRenderResourcePool<FRHIShaderHandle, FVulkanShader>;
+        using FGraphicsPipelinePool     = TRenderResourcePool<FRHIGraphicsPipelineHandle, FVulkanGraphicsPipeline>;
+        using FComputePipelinePool      = TRenderResourcePool<FRHIComputePipelineHandle, FVulkanComputePipeline>;
+
         
         FVulkanRenderContext();
         
@@ -159,8 +163,8 @@ namespace Lumina
 
         FORCEINLINE const FVulkanCommandQueues& GetCommandQueues() const { return CommandQueues; }
 
-        FORCEINLINE FBufferPool& GetBufferPool() { return BufferPool; }
-        FORCEINLINE FImagePool& GetImagePool() { return ImagePool; }
+        NODISCARD FORCEINLINE FBufferPool& GetBufferPool() { return BufferPool; }
+        NODISCARD FORCEINLINE FImagePool& GetImagePool() { return ImagePool; }
         
         //----------------------------------------------------
 
@@ -170,17 +174,31 @@ namespace Lumina
         void CopyBuffer(FRHIBufferHandle Source, FRHIBufferHandle Destination) override;
         uint64 GetAlignedSizeForBuffer(uint64 Size, TBitFlags<ERenderDeviceBufferUsage> Usage) override;
 
-        FRHIImageHandle AllocateImage() override;
-        FRHIImageHandle CreateTexture(const FImageSpecification& ImageSpec) override;
-        FRHIImageHandle CreateRenderTarget(const FIntVector2D& Extent) override;
-        FRHIImageHandle CreateDepthImage(const FImageSpecification& ImageSpec) override;
+        
+        //-------------------------------------------------------------------------------------
+
+
+        void BindGraphicsPipeline(FCommandList* CommandList, FRHIGraphicsPipelineHandle Handle) override;
+        void BindComputePipeline(FCommandList* CommandList, FRHIComputePipelineHandle Handle) override;
+        
+        FRHIGraphicsPipelineHandle CreateGraphicsPipeline(const FGraphicsPipelineSpec& PipelineSpec) override;
+        FRHIComputePipelineHandle CreateComputePipeline(const FComputePipelineSpec& PipelineSpec) override;
+        
+
+        //-------------------------------------------------------------------------------------
+
+
+        NODISCARD FRHIImageHandle AllocateImage() override;
+        NODISCARD FRHIImageHandle CreateTexture(const FImageSpecification& ImageSpec) override;
+        NODISCARD FRHIImageHandle CreateRenderTarget(const FIntVector2D& Extent) override;
+        NODISCARD FRHIImageHandle CreateDepthImage(const FImageSpecification& ImageSpec) override;
 
         void Barrier(FGPUBarrier* Barriers, uint32 BarrierNum, FCommandList* CommandList) override;
         
         //-------------------------------------------------------------------------------------
 
-        FVulkanCommandList* GetPrimaryCommandList() const;
-        FCommandList* BeginCommandList(ECommandBufferLevel Level = ECommandBufferLevel::Secondary, ECommandQueue CommandType = ECommandQueue::Graphics, ECommandBufferUsage Usage = ECommandBufferUsage::General) override;
+        NODISCARD FVulkanCommandList* GetPrimaryCommandList() const;
+        NODISCARD FCommandList* BeginCommandList(ECommandBufferLevel Level = ECommandBufferLevel::Secondary, ECommandQueue CommandType = ECommandQueue::Graphics, ECommandBufferUsage Usage = ECommandBufferUsage::General) override;
         void EndCommandList(FCommandList* CommandList) override;
 
         
@@ -191,7 +209,10 @@ namespace Lumina
         void EndRenderPass(FCommandList* CommandList) override;
 
         void ClearColor(FCommandList* CommandList, const FColor& Color) override;
-        
+
+        void Draw(FCommandList* CommandList, uint32 VertexCount, uint32 InstanceCount, uint32 FirstVertex, uint32 FirstInstance) override;
+        void DrawIndexed(FCommandList* CommandList, uint32 IndexCount, uint32 InstanceCount, uint32 FirstIndex, int32 VertexOffset, uint32 FirstInstance) override;
+        void Dispatch(FCommandList* CommandList, uint32 GroupCountX, uint32 GroupCountY, uint32 GroupCountZ) override;
 
         //-------------------------------------------------------------------------------------
 
@@ -208,7 +229,10 @@ namespace Lumina
         
         FBufferPool                             BufferPool;
         FImagePool                              ImagePool;
-
+        FShaderPool                             ShaderPool;
+        FGraphicsPipelinePool                   GraphicsPipelinePool;
+        FComputePipelinePool                    ComputePipelinePool;
+        
         FVulkanSwapchain*                       Swapchain;
         VkInstance                              VulkanInstance;
         

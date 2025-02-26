@@ -7,6 +7,11 @@
 
 namespace Lumina
 {
+    enum class EShaderDataType : uint8;
+}
+
+namespace Lumina
+{
     struct FVulkanBuffer
     {
         uint64 Size;
@@ -22,6 +27,23 @@ namespace Lumina
         VkImage Image;
         VmaAllocation Allocation;
         VkImageView ImageView;
+    };
+
+    struct FVulkanGraphicsPipeline
+    {
+        VkPipeline Pipeline;
+    };
+
+    struct FVulkanComputePipeline
+    {
+        VkPipeline Pipeline;
+    };
+
+    struct FVulkanShader
+    {
+        TVector<uint32> ShaderBinaries;
+        VkShaderStageFlags StageFlags;
+        VkShaderModule Module;
     };
     
 }

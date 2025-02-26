@@ -647,6 +647,56 @@ namespace Lumina
         return Math::GetAligned(Size, MinAlignment);
     }
 
+    void FVulkanRenderContext::BindGraphicsPipeline(FCommandList* CommandList, FRHIGraphicsPipelineHandle Handle)
+    {
+        FVulkanCommandList* VulkanCommandList = (FVulkanCommandList*)CommandList;
+        
+        FVulkanGraphicsPipeline* ComputePipeline = GraphicsPipelinePool.GetResource(Handle);
+        
+        vkCmdBindPipeline(VulkanCommandList->CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, ComputePipeline->Pipeline);
+    }
+
+    void FVulkanRenderContext::BindComputePipeline(FCommandList* CommandList, FRHIComputePipelineHandle Handle)
+    {
+        FVulkanCommandList* VulkanCommandList = (FVulkanCommandList*)CommandList;
+        
+        FVulkanComputePipeline* ComputePipeline = ComputePipelinePool.GetResource(Handle);
+        
+        vkCmdBindPipeline(VulkanCommandList->CommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, ComputePipeline->Pipeline);
+    }
+
+    FRHIGraphicsPipelineHandle FVulkanRenderContext::CreateGraphicsPipeline(const FGraphicsPipelineSpec& PipelineSpec)
+    {
+
+        FRHIGraphicsPipelineHandle Handle = GraphicsPipelinePool.Allocate();
+
+        return Handle;
+    }
+
+    FRHIComputePipelineHandle FVulkanRenderContext::CreateComputePipeline(const FComputePipelineSpec& PipelineSpec)
+    {
+
+        FVulkanShader* VulkanShader = ShaderPool.GetResource(PipelineSpec.Shader);
+        
+        VkComputePipelineCreateInfo PipelineCreateInfo = {};
+        PipelineCreateInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+        PipelineCreateInfo.pNext = nullptr;
+        PipelineCreateInfo.flags = 0;
+    
+        VkPipelineShaderStageCreateInfo ShaderStage = {};
+        ShaderStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        ShaderStage.module = VulkanShader->Module;
+        
+        PipelineCreateInfo.stage = ShaderStage;
+    
+        VkPipeline Pipeline;
+        VK_CHECK(vkCreateComputePipelines(Device, nullptr, 1, &PipelineCreateInfo, nullptr, &Pipeline));
+
+        FRHIComputePipelineHandle Handle = ComputePipelinePool.Allocate();
+
+        return Handle;
+    }
+
     FRHIImageHandle FVulkanRenderContext::AllocateImage()
     {
         return ImagePool.Allocate();
@@ -1076,6 +1126,27 @@ namespace Lumina
             Barrier(Barriers, std::size(Barriers), CommandList);
         }
         
+    }
+
+    void FVulkanRenderContext::Draw(FCommandList* CommandList, uint32 VertexCount, uint32 InstanceCount, uint32 FirstVertex, uint32 FirstInstance)
+    {
+        FVulkanCommandList* VulknanCommandList = (FVulkanCommandList*)CommandList;
+
+        vkCmdDraw(VulknanCommandList->CommandBuffer, VertexCount, InstanceCount, FirstVertex, FirstInstance);
+    }
+
+    void FVulkanRenderContext::DrawIndexed(FCommandList* CommandList, uint32 IndexCount, uint32 InstanceCount, uint32 FirstIndex, int32 VertexOffset, uint32 FirstInstance)
+    {
+        FVulkanCommandList* VulknanCommandList = (FVulkanCommandList*)CommandList;
+
+        vkCmdDrawIndexed(VulknanCommandList->CommandBuffer, IndexCount, InstanceCount, FirstIndex, VertexOffset, FirstInstance);
+    }
+
+    void FVulkanRenderContext::Dispatch(FCommandList* CommandList, uint32 GroupCountX, uint32 GroupCountY, uint32 GroupCountZ)
+    {
+        FVulkanCommandList* VulknanCommandList = (FVulkanCommandList*)CommandList;
+
+        vkCmdDispatch(VulknanCommandList->CommandBuffer, GroupCountX, GroupCountY, GroupCountZ);
     }
 
 

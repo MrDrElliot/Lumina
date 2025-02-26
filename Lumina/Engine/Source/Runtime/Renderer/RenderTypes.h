@@ -288,9 +288,9 @@ struct FRenderPassBeginInfo
 
     enum class EPipelineType : uint8
     {
-        GRAPHICS,
-        COMPUTE,
-        RAY_TRACING
+        Graphics,
+        Compute,
+        RayTracing
     };
 
     enum class EPipelineStage : uint8
@@ -399,15 +399,66 @@ struct FRenderPassBeginInfo
             default:                             std::unreachable();
         }
     }
+
+
+    struct FComputePipelineSpec
+    {
+        static FComputePipelineSpec Create() { return FComputePipelineSpec(); }
+
+        FRHIShaderHandle Shader;
+
+        bool EnableAsyncCompute = false;
+        bool EnablePipelineStatistics = false;
+
+        bool operator==(const FComputePipelineSpec& other) const
+        {
+            return Shader == other.Shader &&
+                   EnableAsyncCompute == other.EnableAsyncCompute &&
+                   EnablePipelineStatistics == other.EnablePipelineStatistics;
+        }
+
+        size_t GetHash() const
+        {
+            size_t hash = 0;
+            Hash::HashCombine(hash, eastl::hash<uint32>{}(Shader.GetGeneration()));
+            Hash::HashCombine(hash, eastl::hash<uint32>{}(Shader.GetHandle()));
+            Hash::HashCombine(hash, std::hash<bool>{}(EnableAsyncCompute));
+            Hash::HashCombine(hash, std::hash<bool>{}(EnablePipelineStatistics));
+            return hash;
+        }
+
+        FComputePipelineSpec& SetShader(FName InShader)
+        {
+            Shader = InShader;
+            return *this;
+        }
+
+        FComputePipelineSpec& SetEnableAsyncCompute(bool enable)
+        {
+            EnableAsyncCompute = enable;
+            return *this;
+        }
+
+        FComputePipelineSpec& SetEnablePipelineStatistics(bool enable)
+        {
+            EnablePipelineStatistics = enable;
+            return *this;
+        }
+
+        FName GetShader() const { return Shader; }
+        bool GetEnableAsyncCompute() const { return EnableAsyncCompute; }
+        bool GetEnablePipelineStatistics() const { return EnablePipelineStatistics; }
+    };
+
     
     template <typename T>
     struct FVertexTypeTraits;
     
 
-    struct FPipelineSpec
+    struct FGraphicsPipelineSpec
     {
 
-        static FPipelineSpec Create() { return FPipelineSpec(); }
+        static FGraphicsPipelineSpec Create() { return FGraphicsPipelineSpec(); }
         
         struct FVertexBinding
         {
@@ -427,7 +478,7 @@ struct FRenderPassBeginInfo
         // General pipeline properties
         FName                       Shader =                    FName();
         float                       LineWidth =                 1.0f;
-        EPipelineType               PipelineType =              EPipelineType::GRAPHICS;
+        EPipelineType               PipelineType =              EPipelineType::Graphics;
         EPipelineCullingMode        CullingMode =               EPipelineCullingMode::BACK;
         EPipelineBlending           AlphaBlendSrcFactor =       EPipelineBlending::BLEND_FACTOR_ONE;
         EPipelineBlending           AlphaBlendDstFactor =       EPipelineBlending::BLEND_FACTOR_ZERO;
@@ -449,7 +500,7 @@ struct FRenderPassBeginInfo
         bool                        bEmissive =                            false;
         bool                        bTransparent =                         false;
         
-        bool operator==(const FPipelineSpec& other) const
+        bool operator==(const FGraphicsPipelineSpec& other) const
         {
             bool result = true;
             result &= Shader == other.Shader;
@@ -488,7 +539,7 @@ struct FRenderPassBeginInfo
         }
 
         template <typename T>
-        FPipelineSpec& SetVertexBinding()
+        FGraphicsPipelineSpec& SetVertexBinding()
         {
             VertexBinding.Binding = 0;
             VertexBinding.Stride = FVertexTypeTraits<T>::Stride;
@@ -497,109 +548,109 @@ struct FRenderPassBeginInfo
             return *this;
         }
         
-        FPipelineSpec& SetShader(FName InShader)
+        FGraphicsPipelineSpec& SetShader(FName InShader)
         {
             Shader = InShader;
             return *this;
         }
     
-        FPipelineSpec& SetLineWidth(float width)
+        FGraphicsPipelineSpec& SetLineWidth(float width)
         {
             LineWidth = width;
             return *this;
         }
     
-        FPipelineSpec& SetPipelineType(EPipelineType pipelineType)
+        FGraphicsPipelineSpec& SetPipelineType(EPipelineType pipelineType)
         {
             PipelineType = pipelineType;
             return *this;
         }
     
-        FPipelineSpec& SetCullingMode(EPipelineCullingMode mode)
+        FGraphicsPipelineSpec& SetCullingMode(EPipelineCullingMode mode)
         {
             CullingMode = mode;
             return *this;
         }
     
-        FPipelineSpec& SetAlphaBlendSrcFactor(EPipelineBlending factor)
+        FGraphicsPipelineSpec& SetAlphaBlendSrcFactor(EPipelineBlending factor)
         {
             AlphaBlendSrcFactor = factor;
             return *this;
         }
     
-        FPipelineSpec& SetAlphaBlendDstFactor(EPipelineBlending factor)
+        FGraphicsPipelineSpec& SetAlphaBlendDstFactor(EPipelineBlending factor)
         {
             AlphaBlendDstFactor = factor;
             return *this;
         }
     
-        FPipelineSpec& SetFaceOrientation(EPipelineFrontFace face)
+        FGraphicsPipelineSpec& SetFaceOrientation(EPipelineFrontFace face)
         {
             FaceOrientation = face;
             return *this;
         }
     
-        FPipelineSpec& SetPrimitiveTopology(EPipelineTopology topology)
+        FGraphicsPipelineSpec& SetPrimitiveTopology(EPipelineTopology topology)
         {
             PrimitiveTopology = topology;
             return *this;
         }
     
-        FPipelineSpec& SetPolygonFillMode(EPipelineFillMode mode)
+        FGraphicsPipelineSpec& SetPolygonFillMode(EPipelineFillMode mode)
         {
             PolygonFillMode = mode;
             return *this;
         }
     
-        FPipelineSpec& SetRenderTargetFormats(const TVector<EImageFormat>& formats)
+        FGraphicsPipelineSpec& SetRenderTargetFormats(const TVector<EImageFormat>& formats)
         {
             RenderTargetFormats = formats;
             return *this;
         }
     
-        FPipelineSpec& SetEnablePrimitiveRestart(bool enable)
+        FGraphicsPipelineSpec& SetEnablePrimitiveRestart(bool enable)
         {
             EnablePrimitiveRestart = enable;
             return *this;
         }
     
-        FPipelineSpec& SetEnableAlphaBlending(bool enable)
+        FGraphicsPipelineSpec& SetEnableAlphaBlending(bool enable)
         {
             EnableAlphaBlending = enable;
             return *this;
         }
     
-        FPipelineSpec& SetEnableDepthTest(bool enable)
+        FGraphicsPipelineSpec& SetEnableDepthTest(bool enable)
         {
             EnableDepthTest = enable;
             return *this;
         }
     
-        FPipelineSpec& SetEnableMultisampling(bool enable)
+        FGraphicsPipelineSpec& SetEnableMultisampling(bool enable)
         {
             EnableMultisampling = enable;
             return *this;
         }
     
-        FPipelineSpec& SetUseConservativeRasterization(bool enable)
+        FGraphicsPipelineSpec& SetUseConservativeRasterization(bool enable)
         {
             UseConservativeRasterization = enable;
             return *this;
         }
     
-        FPipelineSpec& SetSampleCount(uint8 count)
+        FGraphicsPipelineSpec& SetSampleCount(uint8 count)
         {
             SampleCount = count;
             return *this;
         }
         
-        FPipelineSpec& SetIsEmissive(bool emissive)
+        FGraphicsPipelineSpec& SetIsEmissive(bool emissive)
         {
             bEmissive = emissive;
             return *this;
         }
     
-        FPipelineSpec& SetIsTransparent(bool transparent)
+        FGraphicsPipelineSpec& SetIsTransparent(bool transparent)
         {
             bTransparent = transparent;
             return *this;
@@ -634,9 +685,9 @@ struct FRenderPassBeginInfo
         static constexpr uint32 Stride = sizeof(FVertex);
         static constexpr uint32 Binding = 0;
 
-        static void GetVertexAttributes(TVector<FPipelineSpec::FVertexAttribute>& OutAttributes)
+        static void GetVertexAttributes(TVector<FGraphicsPipelineSpec::FVertexAttribute>& OutAttributes)
         {
-            FPipelineSpec::FVertexAttribute Attribute;
+            FGraphicsPipelineSpec::FVertexAttribute Attribute;
             Attribute.Location = 0;
             Attribute.Binding = Binding;
             Attribute.Format = EShaderDataType::FLOAT3;
@@ -674,9 +725,9 @@ struct FRenderPassBeginInfo
         static constexpr uint32 Stride = sizeof(FSimpleElementVertex);
         static constexpr uint32 Binding = 0;
 
-        static void GetVertexAttributes(TVector<FPipelineSpec::FVertexAttribute>& OutAttributes)
+        static void GetVertexAttributes(TVector<FGraphicsPipelineSpec::FVertexAttribute>& OutAttributes)
         {
-            FPipelineSpec::FVertexAttribute Attribute;
+            FGraphicsPipelineSpec::FVertexAttribute Attribute;
             Attribute.Location = 0;
             Attribute.Binding = Binding;
             Attribute.Format = EShaderDataType::FLOAT3;

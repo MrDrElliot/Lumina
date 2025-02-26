@@ -14,6 +14,8 @@ namespace Lumina
         Image,
         Shader,
         CommandBuffer,
+        GraphicsPipeline,
+        ComputePipeline,
     };
 
     
