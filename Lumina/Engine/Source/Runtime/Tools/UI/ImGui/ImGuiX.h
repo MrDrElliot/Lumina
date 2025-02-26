@@ -1,7 +1,8 @@
 #pragma once
 #include "imgui.h"
 #include "Core/Functional/Function.h"
-#include "Renderer/Image.h"
+#include "glm/glm.hpp"
+#include "Platform/WindowsPlatform.h"
 
 namespace Lumina::ImGuiX
 {
@@ -9,7 +10,6 @@ namespace Lumina::ImGuiX
     {
         FORCEINLINE bool IsValid() const { return ID != 0; }
         
-        FRHIImage       Image;
         ImTextureID     ID = 0;
         ImVec2          Size = ImVec2(0, 0);
     };

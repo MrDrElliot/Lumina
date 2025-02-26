@@ -17,7 +17,7 @@ namespace Lumina
         friend class FSubsystemManager;
         
         virtual ~ISubsystem() = default;
-        virtual void Initialize(const FSubsystemManager& Manager) = 0;
+        virtual void Initialize(FSubsystemManager& Manager) = 0;
         virtual void Deinitialize() = 0;
 
     private:

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Events/Event.h"
 #include "Core/Engine/Engine.h"
 
 
@@ -34,17 +33,15 @@ namespace Lumina
 		int32 Run();
 
 		virtual bool ApplicationLoop() = 0;
-		
 		virtual bool Initialize() = 0;
 		virtual void Shutdown() = 0;
 
 		virtual void RenderDeveloperTools(const FUpdateContext& UpdateContext) { }
-		virtual void OnEvent(FEvent& Event) { }
 
 		bool HasAnyFlags(EApplicationFlags Flags);
 		FWindow* GetMainWindow();
 		
-		
+		virtual void OnWindowResized(const FIntVector2D& Extent) { }
 
 
 	protected:

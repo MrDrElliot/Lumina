@@ -16,21 +16,12 @@ namespace Lumina
         FVulkanImGuiRender();
         ~FVulkanImGuiRender() override = default;
 
-        void Initialize(const FSubsystemManager& Manager) override;
+        void Initialize(FSubsystemManager& Manager) override;
         void Deinitialize() override;
         
-        void OnStartFrame() override;
-        void OnEndFrame() override;
-
-        void RenderImage(FRHIImage Image, ImVec2 Size) override;
-        void RenderImage(const ImGuiX::FImGuiImageInfo& ImageInfo) override;
-        
-
-        ImGuiX::FImGuiImageInfo CreateImGuiTexture(FRHIImage Image, ImVec2 Size) override;
-        ImGuiX::FImGuiImageInfo CreateImGuiTexture(const FString& RawPath) override;
-        
-        void DestroyImGuiTexture(const ImGuiX::FImGuiImageInfo& ImageInfo) override;
-        void DestroyImGuiTexture(const FRHIImage& Image) override;
+        void OnStartFrame(FRenderManager* RenderManager) override;
+        void OnEndFrame(FRenderManager* RenderManager) override;
+    
 
     private:
 

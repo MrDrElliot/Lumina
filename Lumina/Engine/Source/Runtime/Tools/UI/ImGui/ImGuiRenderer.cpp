@@ -2,6 +2,7 @@
 
 #include "ImGuiDesignIcons.h"
 #include "ImGuiFonts.h"
+#include "Core/Engine/Engine.h"
 #include "imgui/imgui_freetype.h"
 #include "Renderer/RHIIncl.h"
 #include "Tools/UI/Fonts/FontData_Lexend.h"
@@ -11,7 +12,7 @@
 namespace Lumina
 {
 	
-    void IImGuiRenderer::Initialize(const FSubsystemManager& Manager)
+    void IImGuiRenderer::Initialize(FSubsystemManager& Manager)
     {
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
@@ -159,17 +160,17 @@ namespace Lumina
     	style.CellPadding = ImVec2( 4, 6 );
     }
 
-    void IImGuiRenderer::StartFrame()
+    void IImGuiRenderer::StartFrame(FRenderManager* RenderManager)
     {
-    	OnStartFrame();
+    	OnStartFrame(RenderManager);
     }
 
-    void IImGuiRenderer::EndFrame()
+    void IImGuiRenderer::EndFrame(FRenderManager* RenderManager)
     {
 
     	ImGuiIO& Io = ImGui::GetIO();
-    	Io.DisplaySize.x = FRenderer::GetRenderContext()->GetSwapchain()->GetSpecs().Extent.X;
-    	Io.DisplaySize.y = FRenderer::GetRenderContext()->GetSwapchain()->GetSpecs().Extent.Y;
+    	Io.DisplaySize.x = (int)GEngine->GetEngineViewport().GetSize().X;
+    	Io.DisplaySize.y = (int)GEngine->GetEngineViewport().GetSize().Y;
     	
 		ImGui::Render();
 
@@ -180,6 +181,6 @@ namespace Lumina
     		ImGui::RenderPlatformWindowsDefault();
     	}
     	
-    	OnEndFrame();
+    	OnEndFrame(RenderManager);
     }
 }

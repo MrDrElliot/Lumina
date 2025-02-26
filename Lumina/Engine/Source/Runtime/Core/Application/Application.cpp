@@ -43,7 +43,8 @@ namespace Lumina
             Shutdown();
             return 1;
         }
-        
+
+        FCoreDelegates::OnEngineInit.Broadcast();
         
         //---------------------------------------------------------------
         // Core application loop.
@@ -53,9 +54,8 @@ namespace Lumina
         bool bExitRequested = false;
         while(!ShouldExit() && !bExitRequested)
         {
-            PROFILE_SCOPE(ApplicationFrame)
-            
             Engine->Update();
+            
             bExitRequested = !ApplicationLoop();
             
             Window->ProcessMessages();
@@ -67,6 +67,8 @@ namespace Lumina
         //--------------------------------------------------------------
 
         LOG_TRACE("Shutting down application: {0}", ApplicationName.c_str());
+
+        FCoreDelegates::PreEngineShutdown.Broadcast();
         
         Shutdown();
         
@@ -94,12 +96,15 @@ namespace Lumina
     {
         FWindowSpecs AppWindowSpecs;
         AppWindowSpecs.Title = ApplicationName.c_str();
+        
+        AppWindowSpecs.Context.ResizeCallback = [this] (const FIntVector2D& Extent)
+        {
+            OnWindowResized(Extent);
+        };
 
         Window = FWindow::Create(AppWindowSpecs);
         Window->Init();
         
-        Window->SetEventCallback(BIND_EVENT_FN(OnEvent));
-
         Windowing::SetPrimaryWindowHandle(Window);
         
         return true;

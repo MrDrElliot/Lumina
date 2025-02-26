@@ -3,12 +3,7 @@
 
 namespace Lumina
 {
-    class IRenderDevice;
-}
-
-namespace Lumina
-{
-    class IRenderBackend;
+    class IRenderContext;
 }
 
 namespace Lumina
@@ -17,15 +12,25 @@ namespace Lumina
     {
     public:
 
-        void Initialize(const FSubsystemManager& Manager) override;
+        void Initialize(FSubsystemManager& Manager) override;
         void Deinitialize() override;
 
-        void FrameStart();
-        void FrameEnd();
+        void FrameStart(const FUpdateContext& UpdateContext);
+        void FrameEnd(const FUpdateContext& UpdateContext);
 
+        template<typename T>
+        requires(eastl::is_base_of_v<IRenderContext, T>, "T must derrive from IRenderContext")
+        T* GetRenderContext() const
+        {
+            return static_cast<T*>(RenderContext);
+        }
+        
+        FORCEINLINE IRenderContext* GetRenderContext() const { return RenderContext; }
+        
     private:
 
-        IRenderBackend*     RenderBackend = nullptr;
-    
+        IRenderContext*     RenderContext = nullptr;
+        uint8               CurrentFrameIndex = 0;
+        
     };
 }

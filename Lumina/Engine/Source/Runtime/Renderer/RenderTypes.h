@@ -1,7 +1,9 @@
-#pragma once
+﻿#pragma once
 
 #include "Lumina.h"
 #include <glm/glm.hpp>
+
+#include "RHIFwd.h"
 #include "Core/Math/Color.h"
 #include "Vertex.h"
 #include "Core/Math/Hash/Hash.h"
@@ -32,6 +34,27 @@ namespace Lumina
         glm::mat4               ModelMatrix;
         FMaterialTexturesData   MaterialTextureData;
     };
+
+    enum class ECommandQueue : uint8
+    {
+        Graphics = 1 << 0,
+        Compute = 1 << 1,
+        Transfer = 1 << 2,
+        
+        All = Graphics | Compute | Transfer,
+    };
+
+    enum class ECommandBufferUsage : uint8
+    {
+        General,
+        Transient,
+    };
+
+    enum class ECommandBufferLevel : uint8
+    {
+        Primary,
+        Secondary
+    };
     
     enum class EDescriptorBindingType : uint32
     {
@@ -46,7 +69,41 @@ namespace Lumina
         UNIFORM_BUFFER_DYNAMIC        = 8,
         STORAGE_BUFFER_DYNAMIC        = 9,
         INPUT_ATTACHMENT              = 10,
-        ACCELERATION_STRUCTURE_KHR    = 1000150000
+    };
+
+    enum class ERenderDeviceBufferUsage : uint8
+    {
+        UniformBuffer = 1 << 0,
+        StorageBuffer = 1 << 1,
+        VertexBuffer = 1 << 2,
+        IndexBuffer = 1 << 3,
+    };
+
+    enum class ERenderDeviceBufferMemoryUsage : uint8
+    {
+        None              = 0,
+        GPUOnly           = 1 << 0,  // (Fast GPU memory, not CPU accessible)
+        CPUToGPU          = 1 << 1,  // (Staging, mapped)
+        GPUToCPU          = 1 << 2,  // (Readable from GPU)
+        Transient         = 1 << 3,  // (For transient resources)
+    };
+
+    enum class ERenderLoadOp : uint8
+    {
+        Clear,      // Clear attachment to a specified color/depth
+        Load,       // Load existing contents
+        DontCare,   // Contents are undefined after render pass start
+    };
+    
+    struct FRenderPassBeginInfo
+    {
+        TVector<FRHIImageHandle> Attachments; // Color/depth attachments
+        TVector<ERenderLoadOp> LoadOps;       // One per attachment
+        TVector<ERenderLoadOp> StoreOps;      // How to handle attachments at the end
+        FIntVector2D RenderArea;              // Defines the renderable area
+        TVector<FColor> ClearColors;          // Optional clear values for color attachments
+        float ClearDepth = 1.0f;              // Default depth clear
+        uint32 ClearStencil = 0;              // Default stencil clear
     };
 
     
@@ -65,15 +122,16 @@ namespace Lumina
 
     enum class EImageLayout
     {
-        UNDEFINED = 0,
-        GENERAL = 1,
-        COLOR_ATTACHMENT = 2,
-        DEPTH_STENCIL_ATTACHMENT = 3,
-        DEPTH_STENCIL_READ_ONLY = 4,
-        SHADER_READ_ONLY = 5,
-        TRANSFER_SRC = 6,
-        TRANSFER_DST = 7,
-        PRESENT_SRC = 1000001002
+        Undefined = 0,
+        General = 1,
+        ColorAttachment = 2,
+        DepthAttachment = 3,
+        DepthReadOnly = 4,
+        ShaderReadOnly = 5,
+        TransferSource = 6,
+        TransferDestination = 7,
+        PresentSource = 8,
+        Default = 9, // Used for transfer ops to go to indicate a desire to transfer to a default layout.
     };
 
     enum class EImageUsage : glm::uint8
@@ -195,55 +253,7 @@ namespace Lumina
             default:                             std::unreachable();
         }
     }
-
-    struct DeviceBufferLayoutElement
-    {
-        DeviceBufferLayoutElement(EShaderDataType InFormat)
-            : Format(InFormat)
-        {}
-        
-        bool operator==(const DeviceBufferLayoutElement& other) const
-        {
-            bool result = true;
-            result &= Format == other.Format;
-            result &= Size == other.Size;
-            result &= Offset == other.Offset;
-
-            return result;
-        }
-
-        EShaderDataType Format = EShaderDataType::FLOAT4;
-        uint32 Size = 0;
-        uint32 Offset = 0;
-    };
-
-    class FDeviceBufferLayout
-    {
-    public:
-        FDeviceBufferLayout() {}
-        FDeviceBufferLayout(TVector<DeviceBufferLayoutElement> list)
-            : Elements(eastl::move(list))
-        {
-            for (auto& element : Elements)
-            {
-                uint32 datasize = DeviceDataTypeSize(element.Format);
-                element.Offset = Stride;
-                element.Size = datasize;
-                Stride += datasize;
-            }
-        }
-        
-        uint32 GetStride() const { return Stride; }
-        const TVector<DeviceBufferLayoutElement>& GetElements() const { return Elements; }
-        const TVector<DeviceBufferLayoutElement>::iterator begin() { return Elements.begin(); }
-        const TVector<DeviceBufferLayoutElement>::iterator end() { return Elements.end(); }
-
-    private:
-
-        TVector<DeviceBufferLayoutElement> Elements;
-        uint32 Stride = 0;
-    };
-
+    
     template <typename T>
     struct FVertexTypeTraits;
     

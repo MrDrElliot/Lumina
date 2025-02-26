@@ -5,6 +5,7 @@
 #include <GLFW/glfw3.h>
 
 #include "WindowTypes.h"
+#include "Core/Functional/Function.h"
 #include "Core/Math/Math.h"
 
 
@@ -39,7 +40,6 @@ namespace Lumina
 		uint32 GetHeight() const { return Specs.Extent.Y; }
 
 		static void WindowResizeCallback(GLFWwindow* window, int width, int height);
-		void SetEventCallback(const std::function<void(FEvent&)>& Callback);
 
 	
 	private:

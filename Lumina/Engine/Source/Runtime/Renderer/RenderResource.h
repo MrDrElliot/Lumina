@@ -1,7 +1,6 @@
-#pragma once
+﻿#pragma once
 
 #include "Containers/String.h"
-#include "Core/LuminaMacros.h"
 #include "Memory/RefCounted.h"
 
 namespace Lumina
@@ -59,4 +58,6 @@ namespace Lumina
         
         
     };
+
+    template<ERende>
 }

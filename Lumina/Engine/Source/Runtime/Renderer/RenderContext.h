@@ -1,74 +1,62 @@
 #pragma once
-
-#include "Buffer.h"
-#include "Image.h"
-#include "PipelineState.h"
-#include "Renderer.h"
-#include "RenderGraph.h"
+#include "RenderTypes.h"
 #include "RHIFwd.h"
-
+#include "Core/Math/Math.h"
+#include "Types/BitFlags.h"
 
 namespace Lumina
 {
-    class FWindow;
-    class FApplication;
+    struct FGPUBarrier;
+}
+
+namespace Lumina
+{
     
-    struct FQueueFamilyIndex 
+    struct FCommandList
     {
-        uint32 Graphics;
-        uint32 Transfer;
-        uint32 Compute;
-        uint32 Present;
+        ECommandQueue CommandQueue;
+        ECommandBufferUsage Type;
     };
-    
+
     class IRenderContext
     {
     public:
-
-        IRenderContext()
-            : QueueFamilyIndex()
-        {}
-
         virtual ~IRenderContext() = default;
 
         virtual void Initialize() = 0;
+        virtual void Deinitialize() = 0;
+
+        virtual void FrameStart(const FUpdateContext& UpdateContext, uint8 CurrentFrameIndex) = 0;
+        virtual void FrameEnd(const FUpdateContext& UpdateContext, uint8 CurrentFrameIndex) = 0;
         
-        FQueueFamilyIndex GetQueueFamilyIndex() { return QueueFamilyIndex; }
+        /**
+         * 
+         * @param CommandQueue Queue this command list uses.
+         * @param Type Either a transient list or a general list.
+         * @return A new, already recording command list.
+         */
+        virtual FCommandList* BeginCommandList(ECommandQueue CommandQueue = ECommandQueue::Graphics, ECommandBufferUsage Type = ECommandBufferUsage::General) = 0;
+        virtual void EndCommandList(FCommandList* CommandList, bool bDestroy = false) = 0;
+        
+        virtual FRHIBufferHandle CreateBuffer(TBitFlags<ERenderDeviceBufferUsage> UsageFlags, TBitFlags<ERenderDeviceBufferMemoryUsage> MemoryUsage, uint32 Size) = 0;
+        virtual void UpdateBuffer(FRHIBufferHandle Buffer, void* Data, uint32 Size, uint32 Offset = 0) = 0;
+        virtual void CopyBuffer(FRHIBufferHandle Source, FRHIBufferHandle Destination) = 0;
+        virtual uint64 GetAlignedSizeForBuffer(uint64 Size, TBitFlags<ERenderDeviceBufferUsage> Usage) = 0;
 
-        virtual FRHIShader CreateShader(const FString& ShaderPath) = 0;
-        virtual FRHIBuffer CreateBuffer(const FDeviceBufferSpecification& Spec, void* Data = nullptr, uint64 DataSize = 0) = 0;
-        virtual FRHIImage CreateImage(const FImageSpecification& ImageSpec) = 0;
+        virtual FRHIImageHandle CreateTexture(FVector2D Extent) = 0;
+        virtual FRHIImageHandle CreateRenderTarget(FVector2D Extent) = 0;
+        virtual FRHIImageHandle CreateDepthImage(FVector2D Extent) = 0;
 
-        void SetCommandBufferForFrame(uint32 FrameIndex) { CurrentCommandBuffer = CommandBuffers[FrameIndex]; }
-        FRHICommandBuffer GetCommandBuffer() { return CurrentCommandBuffer; }
+        virtual void Barrier(FGPUBarrier* Barriers, uint32 BarrierNum, FCommandList* CommandList) = 0;
 
-        void SetCurrentPipeline(FRHIPipeline Pipeline);
-        FORCEINLINE FPipelineState* GetPipelineState() { return &PipelineState; }
 
-        template<typename T>
-        TRefCountPtr<T> GetCommandBuffer()
-        {
-            return CurrentCommandBuffer.As<T>();
-        }
+        //-------------------------------------------------------------------------------------
 
-        FRHISwapchain GetSwapchain() const { return Swapchain; }
-
-        template<typename T>
-        TRefCountPtr<T> GetSwapchain()
-        {
-            return Swapchain.As<T>();
-        }
+        
+        virtual void BeginRenderPass(FCommandList* CommandList, const FRenderPassBeginInfo& PassInfo) = 0;
+        virtual void EndRenderPass(FCommandList* CommandList) = 0;
     
-    
-    protected:
-
-        FRenderGraph                      RenderGraph;
-        TVector<FRHICommandBuffer>        CommandBuffers;
-        FRHICommandBuffer                 CurrentCommandBuffer;
-        FQueueFamilyIndex                 QueueFamilyIndex;
-        FRHISwapchain                     Swapchain;
-        FPipelineState                    PipelineState;
-
+    private:
         
     };
 }

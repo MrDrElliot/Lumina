@@ -1,13 +1,14 @@
 ﻿#include "Engine.h"
 #include "Assets/AssetManager/AssetManager.h"
+#include "Core/Windows/Window.h"
 #include "glfw/glfw3.h"
 #include "Input/InputSubsystem.h"
 #include "Scene/Scene.h"
 #include "Scene/SceneManager.h"
-#include "Renderer/Renderer.h"
 #include "Renderer/RenderManager.h"
 #include "TaskSystem/TaskSystem.h"
 #include "Tools/UI/DevelopmentToolUI.h"
+
 #include "Tools/UI/ImGui/Vulkan/VulkanImGuiRender.h"
 
 namespace Lumina
@@ -18,11 +19,12 @@ namespace Lumina
         // Initialize core engine state.
         //-------------------------------------------------------------------------
         
+        GEngine = this;
         Application = App;
+
+        EngineViewport.SetSize(App->GetMainWindow()->GetExtent());
         
         FTaskSystem::Get()->Initialize();
-        
-        //FRenderer::Init();
         
         RenderManager = EngineSubsystems.AddSubsystem<FRenderManager>();
         InputSubsystem = EngineSubsystems.AddSubsystem<FInputSubsystem>();
@@ -65,7 +67,6 @@ namespace Lumina
         EngineSubsystems.RemoveSubsystem<FSceneManager>();
         EngineSubsystems.RemoveSubsystem<FRenderManager>();
         
-        FRenderer::Shutdown();
 
         FTaskSystem::Get()->Shutdown();
         
@@ -79,8 +80,7 @@ namespace Lumina
         //-------------------------------------------------------------------------
         
         UpdateContext.MarkFrameStart();
-        FRenderer::BeginFrame();
-        RenderManager->FrameStart();
+        RenderManager->FrameStart(UpdateContext);
 
         bool bRunEngineUpdate = true;
 
@@ -94,12 +94,14 @@ namespace Lumina
             // Frame Start
             //-------------------------------------------------------------------
             {
+                UpdateCallback();
+                
                 SceneManager->StartFrame();
 
                 InputSubsystem->Update(UpdateContext);
                 
                 #if WITH_DEVELOPMENT_TOOLS
-                ImGuiRenderer->StartFrame();
+                ImGuiRenderer->StartFrame(RenderManager);
                 DeveloperToolUI->StartFrame(UpdateContext);
                 #endif
 
@@ -177,13 +179,11 @@ namespace Lumina
                 
                 #if WITH_DEVELOPMENT_TOOLS
                 DeveloperToolUI->EndFrame(UpdateContext);
-                ImGuiRenderer->EndFrame();
+                ImGuiRenderer->EndFrame(RenderManager);
                 #endif
                 
-                RenderManager->FrameEnd();
+                RenderManager->FrameEnd(UpdateContext);
                 
-                //FRenderer::ProcessCommands();
-                //FRenderer::Present();
             }
         }
         

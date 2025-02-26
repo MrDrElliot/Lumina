@@ -1,7 +1,6 @@
-#pragma once
+﻿#pragma once
 
 #include "Platform/Platform.h"
-#include <string>
 #include "Log/Log.h"
 
 
@@ -44,6 +43,8 @@ namespace Lumina::Vulkan
     }
 }
 
+
+#define VK_NO_FLAGS 0
 
 // Macro to check Vulkan function results and log errors if necessary
 #ifdef _DEBUG

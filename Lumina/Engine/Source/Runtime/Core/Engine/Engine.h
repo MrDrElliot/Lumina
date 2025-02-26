@@ -2,6 +2,7 @@
 #include "Lumina.h"
 #include "Core/UpdateContext.h"
 #include "Core/Delegates/Delegate.h"
+#include "Renderer/Viewport.h"
 #include "Subsystems/Subsystem.h"
 
 
@@ -24,6 +25,9 @@ namespace Lumina
 
 namespace Lumina
 {
+
+    inline FEngine* GEngine = nullptr;
+    
     struct FCoreDelegates
     {
         static TMulticastDelegate<void>		OnEngineInit;
@@ -43,13 +47,19 @@ namespace Lumina
 
         virtual void CreateDevelopmentTools() = 0;
         virtual void DrawDevelopmentTools();
-    
+
+        const FViewport& GetEngineViewport() const { return EngineViewport; }
+
+        void SetUpdateCallback(TFunction<void()> Callback) { UpdateCallback = Callback; }
+        
     protected:
 
-        virtual void PostInitialize() { };
-        virtual void PreShutdown() { };
+        virtual void PostInitialize() { }
+        virtual void PreShutdown() { }
 
     protected:
+
+        TFunction<void()>       UpdateCallback;
         
         FUpdateContext          UpdateContext;
         FApplication*           Application =           nullptr;
@@ -65,5 +75,6 @@ namespace Lumina
         FSceneManager*          SceneManager =          nullptr;
         FRenderManager*         RenderManager =         nullptr;
 
+        FViewport               EngineViewport;
     };
 }

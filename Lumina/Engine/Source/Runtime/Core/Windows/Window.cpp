@@ -3,13 +3,9 @@
 #include "Window.h"
 #include "Core/Application/Application.h"
 #include "Events/ApplicationEvent.h"
-#include "Events/KeyEvent.h"
-#include "Events/MouseEvent.h"
 #include "Platform/Platform.h"
 #include "Renderer/RHIIncl.h"
-#include "Renderer/RenderContext.h"
-#include "Renderer/Renderer.h"
-#include "Renderer/Swapchain.h"
+
 
 
 namespace
@@ -96,8 +92,10 @@ namespace Lumina
 
 				// Update the window size after adjustment
 				glfwSetWindowSize(Window, Specs.Extent.X, Specs.Extent.Y);
-				
 			}
+			
+			glfwSetWindowUserPointer(Window, &Specs);
+			glfwSetWindowSizeCallback(Window, WindowResizeCallback);
 		}
 	}
 	
@@ -127,110 +125,9 @@ namespace Lumina
 		FWindowSpecs& data = *(FWindowSpecs*)glfwGetWindowUserPointer(window);
 		data.Extent.X = width;
 		data.Extent.Y = height;
-			
-		WindowResizeEvent event(width, height);
-		data.EventCallback(event);
 
-		FRenderer::GetRenderContext()->GetSwapchain()->SetSwapchainDirty();
-	}
-
-	void FWindow::SetEventCallback(const std::function<void(FEvent&)>& Callback)
-	{
-		Specs.EventCallback = Callback;
-
-		glfwSetWindowUserPointer(Window, &Specs);
-			
-		glfwSetWindowSizeCallback(Window, WindowResizeCallback);
+		data.Context.ResizeCallback(data.Extent);
 		
-		glfwSetWindowCloseCallback(Window, [](GLFWwindow* window)
-		{
-			FWindowSpecs& data = *(FWindowSpecs*)glfwGetWindowUserPointer(window);
-			WindowCloseEvent event;
-			data.EventCallback(event);
-		});
-
-		glfwSetDropCallback(Window, [](GLFWwindow* window, int path_count, const char* paths[])
-		{
-			FWindowSpecs& Data = *(FWindowSpecs*)glfwGetWindowUserPointer(window);
-			WindowDropEvent event(path_count, paths);
-			Data.EventCallback(event);
-		});
-		
-		glfwSetKeyCallback(Window, [](GLFWwindow* window, int key, int scancode, int action, int mods)
-		{
-			FWindowSpecs& data = *(FWindowSpecs*)glfwGetWindowUserPointer(window);
-
-			KeyCode KeyCode = (uint16)key;
-			
-			switch (action)
-			{
-				case GLFW_PRESS:
-				{
-					KeyPressedEvent event(KeyCode, 0);
-					data.EventCallback(event);
-					break;
-				}
-				case GLFW_RELEASE:
-				{
-					KeyReleasedEvent event(KeyCode);
-					data.EventCallback(event);
-					break;
-				}
-				case GLFW_REPEAT:
-				{
-					KeyPressedEvent event(KeyCode, true);
-					data.EventCallback(event);
-					break;
-				}
-			default: ;
-			}
-		});
-		
-		glfwSetCharCallback(Window, [](GLFWwindow* window, unsigned int keycode)
-		{
-			FWindowSpecs& data = *(FWindowSpecs*)glfwGetWindowUserPointer(window);
-		
-			KeyTypedEvent event((uint16)keycode);
-			data.EventCallback(event);
-		});
-		
-		glfwSetMouseButtonCallback(Window, [](GLFWwindow* window, int button, int action, int mods)
-		{
-			FWindowSpecs& data = *(FWindowSpecs*)glfwGetWindowUserPointer(window);
-		
-			switch (action)
-			{
-				case GLFW_PRESS:
-				{
-					MouseButtonPressedEvent event((uint16)button);
-					data.EventCallback(event);
-					break;
-				}
-				case GLFW_RELEASE:
-				{
-					MouseButtonReleasedEvent event((uint16)button);
-					data.EventCallback(event);
-					break;
-				}
-			default: ;
-			}
-		});
-		
-		glfwSetScrollCallback(Window, [](GLFWwindow* window, double xOffset, double yOffset)
-		{
-			FWindowSpecs& data = *(FWindowSpecs*)glfwGetWindowUserPointer(window);
-		
-			MouseScrolledEvent event((float)xOffset, (float)yOffset);
-			data.EventCallback(event);
-		});
-		
-		glfwSetCursorPosCallback(Window, [](GLFWwindow* window, double xPos, double yPos)
-		{
-			FWindowSpecs& data = *(FWindowSpecs*)glfwGetWindowUserPointer(window);
-		
-			MouseMovedEvent event((float)xPos, (float)yPos);
-			data.EventCallback(event);
-		});
 	}
 	
 	FWindow* FWindow::Create(const FWindowSpecs& InSpecs)

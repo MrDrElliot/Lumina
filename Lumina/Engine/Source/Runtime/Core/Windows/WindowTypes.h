@@ -13,6 +13,10 @@ namespace Lumina
         FIntVector2D Extent;
         bool bFullscreen = false;
 
-       std::function<void(FEvent&)> EventCallback;
+        struct FContext
+        {
+            TFunction<void(const FIntVector2D&)> ResizeCallback;
+        } Context;
+       
     };
 }

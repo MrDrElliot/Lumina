@@ -126,6 +126,13 @@ public:
         return pMemory;
     }
 
+    NODISCARD static void MemCopy(void* Destination, void* Source, uint64 SrcSize)
+    {
+        memcpy(Destination, Source, SrcSize);
+        Assert(Destination != nullptr);
+    }
+    
+
     NODISCARD static void* Realloc( void* pMemory, size_t newSize, size_t originalAlignment = DEFAULT_ALIGNMENT)
     {
         void* pReallocatedMemory = nullptr;
