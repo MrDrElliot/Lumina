@@ -29,7 +29,7 @@ namespace Lumina
             }
         };
 
-        void Initialize(const FSubsystemManager& Manager) override;
+        void Initialize(FSubsystemManager& Manager) override;
         void Deinitialize() override;
 
         void StartFrame();

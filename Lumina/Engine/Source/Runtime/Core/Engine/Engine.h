@@ -39,6 +39,7 @@ namespace Lumina
     {
     public:
         
+        FEngine() = default;
         virtual ~FEngine() = default;
 
         bool Initialize(FApplication* App);

@@ -13,7 +13,7 @@ namespace Lumina
     public:
 
         ELoadResult CreateNew(FAssetRecord* InRecord) override;
-        static FRHIImage ImportFromSource(std::filesystem::path Path);
+        //static FRHIImageHandle ImportFromSource(std::filesystem::path Path);
 
     };
 }

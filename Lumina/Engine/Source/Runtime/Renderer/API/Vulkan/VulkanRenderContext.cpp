@@ -277,26 +277,32 @@ namespace Lumina
     
 
     // We create one command pool per thread.
-    struct FCommandPools
+    static struct FCommandPools
     {
         TVector<VkCommandPool> CommandPools;
         TVector<VkCommandPool> TransientCommandPools;
     } CommandPools;
     
     FVulkanRenderContext::FVulkanRenderContext()
+        : BufferPool()
+        , ImagePool()
+        , Swapchain(nullptr)
+        , VulkanInstance(nullptr)
+        , CommandQueues()
+        , PhysicalDeviceProperties()
+        , PhysicalDeviceMemoryProperties()
     {
         Device = VK_NULL_HANDLE;
         PhysicalDevice = VK_NULL_HANDLE;
     }
 
-    struct FStagingBufferPool
+    static struct FStagingBufferPool
     {
         TVector<VkBuffer> AvailableBuffers;
     } StagingBufferPools;
 
     void FVulkanRenderContext::Initialize()
     {
-        MemoryAllocator = FMemory::New<FVulkanMemoryAllocator>();
 
         AssertMsg(glfwVulkanSupported(), "Vulkan Is Not Supported!");
 
@@ -318,13 +324,39 @@ namespace Lumina
         
         CreateDevice(InstBuilder.value());
         
+        MemoryAllocator = FMemory::New<FVulkanMemoryAllocator>(VulkanInstance, PhysicalDevice, Device);
+        
         Swapchain = FMemory::New<FVulkanSwapchain>();
-        Swapchain->CreateSwapchain(VulkanInstance, Device, Windowing::GetPrimaryWindowHandle(), Windowing::GetPrimaryWindowHandle()->GetExtent());
+        Swapchain->CreateSwapchain(VulkanInstance, this, Windowing::GetPrimaryWindowHandle(), Windowing::GetPrimaryWindowHandle()->GetExtent());
+
+        for (int i = 0; i < 100; ++i)
+        {
+            VkBufferCreateInfo BufferCreateInfo = {};
+            BufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+            BufferCreateInfo.size = 0;
+            BufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+            BufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+            BufferCreateInfo.flags = 0;
+
+            VmaAllocationCreateFlags VmaFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+            
+            VkBuffer VkBuffer;
+            MemoryAllocator->AllocateBuffer(&BufferCreateInfo, VmaFlags, &VkBuffer, "Staging Buffer");
+            StagingBufferPools.AvailableBuffers.push_back(VkBuffer);
+        }
     }
 
     void FVulkanRenderContext::Deinitialize()
     {
         
+    }
+
+    void FVulkanRenderContext::FrameStart(const FUpdateContext& UpdateContext, uint8 CurrentFrameIndex)
+    {
+    }
+
+    void FVulkanRenderContext::FrameEnd(const FUpdateContext& UpdateContext, uint8 CurrentFrameIndex)
+    {
     }
 
     void FVulkanRenderContext::CreateDevice(vkb::Instance Instance)
@@ -385,29 +417,13 @@ namespace Lumina
         {
             
         });
-
-        for (int i = 0; i < 100; ++i)
-        {
-            VkBufferCreateInfo BufferCreateInfo = {};
-            BufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-            BufferCreateInfo.size = 0;
-            BufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-            BufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-            BufferCreateInfo.flags = 0;
-
-            VmaAllocationCreateFlags VmaFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-            
-            VkBuffer VkBuffer;
-            MemoryAllocator->AllocateBuffer(&BufferCreateInfo, VmaFlags, &VkBuffer, "Staging Buffer");
-            StagingBufferPools.AvailableBuffers.push_back(VkBuffer);
-        }
         
         vkGetPhysicalDeviceMemoryProperties(PhysicalDevice, &PhysicalDeviceMemoryProperties);
         vkGetPhysicalDeviceProperties(PhysicalDevice, &PhysicalDeviceProperties);
 
         for(uint32 i = 0; i < std::thread::hardware_concurrency(); ++i)
         {
-            VkCommandPoolCreateFlags Flags;
+            VkCommandPoolCreateFlags Flags = 0;
             
             VkCommandPoolCreateInfo CreateInfo = {};
             CreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -446,17 +462,17 @@ namespace Lumina
         return Math::GetAligned(Size, MinAlignment);
     }
 
-    FRHIImageHandle FVulkanRenderContext::CreateTexture(FVector2D Extent)
+    FRHIImageHandle FVulkanRenderContext::CreateTexture(FIntVector2D Extent)
     {
         return {};
     }
 
-    FRHIImageHandle FVulkanRenderContext::CreateRenderTarget(FVector2D Extent)
+    FRHIImageHandle FVulkanRenderContext::CreateRenderTarget(FIntVector2D Extent)
     {
         return {};
     }
 
-    FRHIImageHandle FVulkanRenderContext::CreateDepthImage(FVector2D Extent)
+    FRHIImageHandle FVulkanRenderContext::CreateDepthImage(FIntVector2D Extent)
     {
         return {};
     }
@@ -488,7 +504,7 @@ namespace Lumina
                 imageMemBarrier.srcAccessMask = 0;
                 imageMemBarrier.dstAccessMask = 0;
                 imageMemBarrier.oldLayout = ToVkImageLayout(Barriers->FromLayout);
-                imageMemBarrier.newLayout = (Barrier->ToLayout == EImageLayout::Default) ? ToVkImageLayout(VulkanImage->Usage) : ToVkImageLayout(Barrier->ToLayout);
+                imageMemBarrier.newLayout = (Barrier->ToLayout == EImageLayout::Default) ? VulkanImage->Layout : ToVkImageLayout(Barrier->ToLayout);
                 imageMemBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
                 imageMemBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
                 imageMemBarrier.image = VulkanImage->Image;
@@ -556,20 +572,21 @@ namespace Lumina
         
         VkBuffer VkStagingBuffer;
         VmaAllocation Allocation = MemoryAllocator->AllocateBuffer(&BufferCreateInfo, VmaFlags, &VkStagingBuffer, "Staging Buffer");
+
+        FRHIBufferHandle StagingBufferHandle = BufferPool.Allocate();
+        FVulkanBuffer* VulkanStagingBuffer = BufferPool.GetResource(StagingBufferHandle);
         
         void* Memory = MemoryAllocator->MapMemory(Allocation);
         FMemory::MemCopy((char*)Memory + Offset, Data, Size);
         MemoryAllocator->UnmapMemory(Allocation);
-        
-        FRHIBufferHandle StagingBufferHandle = BufferPool.Allocate();
-        FVulkanBuffer* StagingBuffer = BufferPool.GetResource(StagingBufferHandle);
-        StagingBuffer->Allocation = Allocation;
-        StagingBuffer->Buffer = VkStagingBuffer;
-        StagingBuffer->Size = Size;
+
+        VulkanStagingBuffer->Allocation = Allocation;
+        VulkanStagingBuffer->Buffer = VkStagingBuffer;
+        VulkanStagingBuffer->Size = Size;
         
         FVulkanBuffer* VulkanBuffer = BufferPool.GetResource(Buffer);
 
-        CopyBuffer(VulkanBuffer, StagingBuffer);
+        CopyBuffer(Buffer, StagingBufferHandle);
         
     }
 
@@ -614,12 +631,13 @@ namespace Lumina
         AllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
         AllocInfo.commandPool = bTransient ? CommandPools.TransientCommandPools[0] : CommandPools.CommandPools[0];
         AllocInfo.level = bTransient ? VK_COMMAND_BUFFER_LEVEL_PRIMARY : VK_COMMAND_BUFFER_LEVEL_SECONDARY;
+        AllocInfo.commandBufferCount = 1;
 
         FVulkanCommandList* VulkanCommandList = FMemory::New<FVulkanCommandList>();
+        CommandList.push_back(VulkanCommandList);
         
         VK_CHECK(vkAllocateCommandBuffers(Device, &AllocInfo, &VulkanCommandList->CommandBuffer));
         
-        CommandList.push_back(VulkanCommandList);
 
         VkCommandBufferBeginInfo BeginInfo = {};
         BeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -641,7 +659,7 @@ namespace Lumina
             VkCommandPool Pool = CommandList->Type == ECommandBufferUsage::Transient ? CommandPools.TransientCommandPools[0] : CommandPools.CommandPools[0];
             vkFreeCommandBuffers(Device, Pool, 1, &VulkanCommandList->CommandBuffer);
             
-            FMemory::Free(CommandList);
+            FMemory::Delete(CommandList);
         }
     }
 
@@ -663,7 +681,7 @@ namespace Lumina
             Attachment.loadOp = (PassInfo.LoadOps[i] == ERenderLoadOp::Clear) ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
             Attachment.storeOp =VK_ATTACHMENT_STORE_OP_STORE;
     
-            if (Image->Usage & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
+            if (Image->UsageFlags & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
             {
                 Attachment.clearValue.color.float32[0] = 1.0f;
                 Attachment.clearValue.color.float32[1] = 1.0f;
@@ -672,7 +690,7 @@ namespace Lumina
     
                 ColorAttachments.push_back(Attachment);
             }
-            else if (Image->Usage & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
+            else if (Image->UsageFlags & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
             {
                 DepthAttachment = Attachment;
                 DepthAttachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;

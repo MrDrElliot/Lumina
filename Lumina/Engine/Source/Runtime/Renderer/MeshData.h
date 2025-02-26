@@ -24,10 +24,7 @@ namespace Lumina
         /** This data is much to large to accept copying. */
         FMeshResource(const FMeshResource&) = delete;
         FMeshResource& operator=(const FMeshResource&) = delete;
-
         
-        FORCEINLINE const FRHIBuffer& GetVertexBuffer()   { return VBO; }
-        FORCEINLINE const FRHIBuffer& GetIndexBuffer()    { return IBO; }
         
         friend FArchive& operator << (FArchive& Ar, FMeshResource& Data)
         {
@@ -43,9 +40,6 @@ namespace Lumina
         TVector<uint32>           Indices;
 
         // -------- Transient Data --------
-        
-        FRHIBuffer          VBO;
-        FRHIBuffer          IBO;
         
     };
 }

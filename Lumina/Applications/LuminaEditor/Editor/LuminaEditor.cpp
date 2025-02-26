@@ -68,9 +68,4 @@ namespace Lumina
     {
         
     }
-
-    void LuminaEditor::OnEvent(FEvent& Event)
-    {
-        FApplication::OnEvent(Event);
-    }
 }

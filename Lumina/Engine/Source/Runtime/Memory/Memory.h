@@ -169,7 +169,7 @@ public:
     }
 
     template< typename T >
-    FORCEINLINE void Free( T*& pType )
+    static FORCEINLINE void Free( T*& pType )
     {
         Free( (void*&) pType );
     }

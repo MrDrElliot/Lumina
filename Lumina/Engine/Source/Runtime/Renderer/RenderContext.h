@@ -3,6 +3,7 @@
 #include "RHIFwd.h"
 #include "Core/Math/Math.h"
 #include "Types/BitFlags.h"
+#include "Core/UpdateContext.h"
 
 namespace Lumina
 {
@@ -43,9 +44,9 @@ namespace Lumina
         virtual void CopyBuffer(FRHIBufferHandle Source, FRHIBufferHandle Destination) = 0;
         virtual uint64 GetAlignedSizeForBuffer(uint64 Size, TBitFlags<ERenderDeviceBufferUsage> Usage) = 0;
 
-        virtual FRHIImageHandle CreateTexture(FVector2D Extent) = 0;
-        virtual FRHIImageHandle CreateRenderTarget(FVector2D Extent) = 0;
-        virtual FRHIImageHandle CreateDepthImage(FVector2D Extent) = 0;
+        virtual FRHIImageHandle CreateTexture(FIntVector2D Extent) = 0;
+        virtual FRHIImageHandle CreateRenderTarget(FIntVector2D Extent) = 0;
+        virtual FRHIImageHandle CreateDepthImage(FIntVector2D Extent) = 0;
 
         virtual void Barrier(FGPUBarrier* Barriers, uint32 BarrierNum, FCommandList* CommandList) = 0;
 

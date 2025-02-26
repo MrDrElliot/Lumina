@@ -14,7 +14,7 @@ namespace Lumina
     {
     }
 
-    void FAssetManager::Initialize(const FSubsystemManager& Manager)
+    void FAssetManager::Initialize(FSubsystemManager& Manager)
     {
         //AssetRequestThread = std::thread(&FAssetManager::ProcessAssetRequests, this);
     }

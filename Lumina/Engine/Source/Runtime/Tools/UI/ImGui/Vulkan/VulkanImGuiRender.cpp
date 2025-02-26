@@ -8,7 +8,6 @@
 #include "Renderer/RenderManager.h"
 #include "Renderer/RHIIncl.h"
 #include "Renderer/API/Vulkan/VulkanMacros.h"
-#include "Renderer/API/Vulkan/VulkanRenderBackend.h"
 #include "Renderer/API/Vulkan/VulkanRenderContext.h"
 #include "Renderer/API/Vulkan/VulkanSwapchain.h"
 #include "Scene/Scene.h"
@@ -44,9 +43,9 @@ namespace Lumina
 		
 		FRenderManager* RenderManager = Manager.GetSubsystem<FRenderManager>();
 
-		FVulkanRenderBackend* VulkanBackend = (FVulkanRenderBackend*)RenderManager->GetRenderBackend();
+		FVulkanRenderContext* VulkanBackend = RenderManager->GetRenderContext<FVulkanRenderContext>();
 		
-        VK_CHECK(vkCreateDescriptorPool(VulkanBackend->GetRenderDevice<FVulkanRenderContext>()->GetDevice(), &PoolInfo, nullptr, &DescriptorPool));
+        VK_CHECK(vkCreateDescriptorPool(VulkanBackend->GetDevice(), &PoolInfo, nullptr, &DescriptorPool));
 
         
     	VkDebugUtilsObjectNameInfoEXT NameInfo = {};
@@ -58,7 +57,7 @@ namespace Lumina
 		
         Assert(ImGui_ImplGlfw_InitForVulkan(Windowing::GetPrimaryWindowHandle()->GetWindow(), true));
 
-		VkFormat Format = VulkanBackend->GetVulkanSwapchain()->GetSwapchainFormat();
+		VkFormat Format = VK_FORMAT_R8_SRGB;
 		
         VkPipelineRenderingCreateInfo RenderPipeline = {};
         RenderPipeline.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
@@ -69,9 +68,9 @@ namespace Lumina
         ImGui_ImplVulkan_InitInfo InitInfo = {};
         InitInfo.PipelineRenderingCreateInfo = RenderPipeline;
         InitInfo.Instance = VulkanBackend->GetVulkanInstance();
-        InitInfo.PhysicalDevice = VulkanBackend->GetRenderDevice<FVulkanRenderContext>()->GetPhysicalDevice();
-        InitInfo.Device = VulkanBackend->GetRenderDevice<FVulkanRenderContext>()->GetDevice();
-        InitInfo.Queue = VulkanBackend->GetRenderDevice<FVulkanRenderContext>()->GetCommandQueues().GraphicsQueue;
+        InitInfo.PhysicalDevice = VulkanBackend->GetPhysicalDevice();
+        InitInfo.Device = VulkanBackend->GetDevice();
+        InitInfo.Queue = VulkanBackend->GetCommandQueues().GraphicsQueue;
         InitInfo.DescriptorPool = DescriptorPool;
         InitInfo.MinImageCount = 2;
         InitInfo.ImageCount = 2;
@@ -120,15 +119,15 @@ namespace Lumina
 			FCommandList* CommandList = RenderContext->BeginCommandList();
 
 			FVulkanRenderContext* VulkanRenderContext = RenderManager->GetRenderContext<FVulkanRenderContext>();
-			VulkanRenderContext->GetSwapchain()->Get
+			//VulkanRenderContext->GetSwapchain()->Get
 
 			FRenderPassBeginInfo RenderPassInfo;
-			RenderPassInfo.Attachments.push_back()
-			RenderContext->BeginRenderPass(CommandList, )
+			//RenderPassInfo.Attachments.push_back()
+			//RenderContext->BeginRenderPass(CommandList, )
 			
 			VkRenderingAttachmentInfo colorAttachment = {};
 			colorAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
-			colorAttachment.imageView = 
+			//colorAttachment.imageView = 
 			colorAttachment.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 			colorAttachment.clearValue = {1, 1, 1, };
 			colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -142,11 +141,11 @@ namespace Lumina
 			renderInfo.renderArea.extent.width = GEngine->GetEngineViewport().GetSize().Y;
 			renderInfo.layerCount = 1;
            
-			vkCmdBeginRendering(CmdBuffer, &renderInfo);
+			//vkCmdBeginRendering(CmdBuffer, &renderInfo);
            
-			ImGui_ImplVulkan_RenderDrawData(DrawData, CmdBuffer);
+			//ImGui_ImplVulkan_RenderDrawData(DrawData, CmdBuffer);
            
-			vkCmdEndRendering(CmdBuffer);
+			//vkCmdEndRendering(CmdBuffer);
 			
 		}
     }

@@ -12,6 +12,9 @@ namespace Lumina
 
     struct FGPUBarrier
     {
+
+        FGPUBarrier() = default;
+        
         enum class EType : uint8
         {
             Memory,

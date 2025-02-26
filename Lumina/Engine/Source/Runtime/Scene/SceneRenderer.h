@@ -1,11 +1,8 @@
 #pragma once
 
 #include "Scene.h"
-#include "Memory/RefCounted.h"
 #include "ScenePrimitives.h"
 #include "SceneRenderTypes.h"
-#include "Renderer/Renderer.h"
-#include "Renderer/Image.h"
 #include "Renderer/RenderTypes.h"
 #include "Renderer/Viewport.h"
 
@@ -49,10 +46,7 @@ namespace Lumina
         
         void StartScene(const FScene* Scene);
         void EndScene(const FScene* Scene);
-        
-        FRHIImage GetPrimaryRenderTarget() { return RenderTargets[FRenderer::GetFrameIndex()]; }
-        FRHIImage GetDepthAttachment() { return DepthAttachments[FRenderer::GetFrameIndex()]; }
-
+    
     protected:
 
         void ForwardRenderPass(const FScene* Scene);
@@ -70,16 +64,6 @@ namespace Lumina
     private:
 
         FViewport                           SceneViewport;
-        TVector<FRHIDescriptorSet>          SceneGlobalDescriptorSets;
-                                            
-        TVector<FRHIImage>                  RenderTargets;
-        TVector<FRHIImage>                  DepthAttachments;
-
-                                            
-        FRHIBuffer                          SceneGlobalUBO;
-        FRHIBuffer                          LightSSBO;
-        FRHIBuffer                          ModelSSBO;
-
 
         FSceneGlobalData                    SceneGlobalData;
         FSceneLightData                     SceneLightData;

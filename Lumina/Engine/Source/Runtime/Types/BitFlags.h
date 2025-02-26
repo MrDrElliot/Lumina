@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Base/Esoterica.h"
-#include "Base/Serialization/BinarySerialization.h"
 #include <type_traits>
 
 #include "Core/Assertions/Assert.h"
@@ -24,8 +22,8 @@ namespace Lumina
 
     public:
 
-        inline BitFlags() = default;
-        inline explicit BitFlags( uint32_t flags ) : m_flags( flags ) {}
+        inline FBitFlags() = default;
+        inline explicit FBitFlags( uint32_t flags ) : m_flags( flags ) {}
 
         //-------------------------------------------------------------------------
 
@@ -167,7 +165,7 @@ namespace Lumina
 
     public:
 
-        using FBitFlags::BitFlags;
+        using FBitFlags::FBitFlags;
 
         inline explicit TBitFlags( T value ) 
             : FBitFlags( GetFlagMask( (uint8_t) value ) )

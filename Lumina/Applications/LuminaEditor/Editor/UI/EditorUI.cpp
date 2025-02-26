@@ -493,12 +493,9 @@ namespace Lumina
                     FSceneRenderer* SceneRenderer = UpdateContext.GetSubsystem<FSceneManager>()->GetSceneRendererForScene(Scene);
                     Assert(SceneRenderer != nullptr);
                     
-                    TRefCountPtr<FImage> SceneRenderTarget = SceneRenderer->GetPrimaryRenderTarget();
-                    Assert(SceneRenderTarget != nullptr);
 
                     FVulkanImGuiRender* ImGuiRenderer = UpdateContext.GetSubsystem<FVulkanImGuiRender>();
 
-                    ImGuiX::FImGuiImageInfo Image = ImGuiRenderer->CreateImGuiTexture(SceneRenderTarget, ImVec2(100, 100));
                     
                     ImGui::SetNextWindowSizeConstraints(ImVec2(128, 128), ImVec2(FLT_MAX, FLT_MAX));
                     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
@@ -509,7 +506,7 @@ namespace Lumina
                     {
                         Tool->bViewportFocused = ImGui::IsWindowFocused();
                         Tool->bViewportHovered = ImGui::IsWindowHovered();
-                        Tool->DrawViewport(UpdateContext, Image.ID);
+                        Tool->DrawViewport(UpdateContext, nullptr);
                     }
                     
                     ImGui::End();

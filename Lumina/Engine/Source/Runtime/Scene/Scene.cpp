@@ -16,8 +16,6 @@ namespace Lumina
     FScene::FScene(ESceneType InType)
         : SceneType(InType)
     {
-        PrimitiveDrawManager = FMemory::New<FPrimitiveDrawManager>();
-        PrimitiveDrawManager->Initialize();
     }
 
     FScene::~FScene()
@@ -34,8 +32,6 @@ namespace Lumina
 
     void FScene::Shutdown()
     {
-        FMemory::Delete(PrimitiveDrawManager);
-        PrimitiveDrawManager = nullptr;
         
         SystemManager = nullptr;
     }

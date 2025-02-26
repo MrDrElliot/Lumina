@@ -3,6 +3,8 @@
 #ifdef LUMINA_RENDERER_VULKAN
 #include "Containers/Array.h"
 #include <vulkan/vulkan_core.h>
+#include "Core/Math/Math.h"
+#include "Renderer/RHIFwd.h"
 
 namespace Lumina
 {
@@ -19,7 +21,7 @@ namespace Lumina
 
         ~FVulkanSwapchain();
 
-        void CreateSwapchain(VkInstance Instance, FVulkanRenderContext* Device, FWindow* Window, FVector2D Extent, bool bFromResize = false);
+        void CreateSwapchain(VkInstance Instance, FVulkanRenderContext* Device, FWindow* Window, FIntVector2D Extent, bool bFromResize = false);
 
         FORCEINLINE VkFormat GetSwapchainFormat() const { return Format; }
         

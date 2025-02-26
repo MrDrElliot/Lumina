@@ -1,11 +1,10 @@
 ﻿#include "SceneManager.h"
 #include "Scene/SceneRenderer.h"
 #include "Scene.h"
-#include "Renderer/PrimitiveDrawManager.h"
 
 namespace Lumina
 {
-    void FSceneManager::Initialize(const FSubsystemManager& Manager)
+    void FSceneManager::Initialize(FSubsystemManager& Manager)
     {
     }
 
@@ -47,7 +46,6 @@ namespace Lumina
         for (const FManagedScene& Scene : Scenes)
         {
             Scene.Scene->EndFrame();
-            Scene.Scene->GetPrimitiveDrawManager()->EndDraw();
             Scene.SceneRenderer->EndScene(Scene.Scene);
         }
     }

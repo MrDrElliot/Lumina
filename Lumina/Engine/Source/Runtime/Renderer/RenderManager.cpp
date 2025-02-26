@@ -7,10 +7,12 @@ namespace Lumina
     void FRenderManager::Initialize(FSubsystemManager& Manager)
     {
         RenderContext = FMemory::New<FVulkanRenderContext>();
+        RenderContext->Initialize();
     }
 
     void FRenderManager::Deinitialize()
     {
+        RenderContext->Deinitialize();
         FMemory::Delete(RenderContext);
     }
 
@@ -18,11 +20,11 @@ namespace Lumina
     {
         CurrentFrameIndex = (CurrentFrameIndex + 1) % FRAMES_IN_FLIGHT;
         
-        RenderContext->FrameStart(UpdateContext);
+        RenderContext->FrameStart(UpdateContext, CurrentFrameIndex);
     }
 
     void FRenderManager::FrameEnd(const FUpdateContext& UpdateContext)
     {
-        RenderContext->FrameEnd(UpdateContext);
+        RenderContext->FrameEnd(UpdateContext, CurrentFrameIndex);
     }
 }

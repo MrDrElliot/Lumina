@@ -19,7 +19,6 @@ namespace Lumina
         void FrameEnd(const FUpdateContext& UpdateContext);
 
         template<typename T>
-        requires(eastl::is_base_of_v<IRenderContext, T>, "T must derrive from IRenderContext")
         T* GetRenderContext() const
         {
             return static_cast<T*>(RenderContext);

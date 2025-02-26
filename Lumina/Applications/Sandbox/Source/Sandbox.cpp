@@ -2,6 +2,12 @@
 #include "Sandbox.h"
 #include "EntryPoint.h"
 
+void FSandbox::CreateEngine()
+{
+	Engine = FMemory::New<FSandboxEngine>();
+	Engine->Initialize(this);
+}
+
 bool FSandbox::ApplicationLoop()
 {
 	return true;

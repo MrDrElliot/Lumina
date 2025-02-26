@@ -37,7 +37,6 @@ namespace Lumina
         void RenderDeveloperTools(const FUpdateContext& UpdateContext) override;
         
         void Shutdown() override;
-        void OnEvent(FEvent& Event) override;
     
     private:
         

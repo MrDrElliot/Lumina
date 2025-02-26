@@ -8,6 +8,10 @@ namespace Lumina
     {
     public:
 
+        FViewport()
+            :Size(FIntVector2D(0))
+        {}
+
         FViewport(const FIntVector2D& InSize)
             :Size(InSize)
         {}

@@ -3,7 +3,6 @@
 #include "imgui_internal.h"
 #include "ToolFlags.h"
 #include "Core/Math/Hash/Hash.h"
-#include "Renderer/PrimitiveDrawManager.h"
 #include "Scene/SceneManager.h"
 #include "Scene/Entity/Components/CameraComponent.h"
 #include "Scene/Entity/Components/EditorComponent.h"
@@ -121,15 +120,7 @@ namespace Lumina
         
         /** Mostly for debug, so we can easily see if there's some transparency issue */
         ImGui::GetWindowDrawList()->AddRectFilled(WindowPosition, WindowBottomRight, IM_COL32(255, 0, 0, 255));
-
-        /*Scene->GetPrimitiveDrawManager()->DrawPoint(FVector3D(-0.5f, -0.5f, 0.0f), FColor::Green);
-        Scene->GetPrimitiveDrawManager()->DrawPoint(FVector3D(0.5f, -0.5f, 0.0f), FColor::Green); 
         
-        Scene->GetPrimitiveDrawManager()->DrawPoint(FVector3D(-1.0f, -0.25f, 0.0f), FColor::Red);
-        Scene->GetPrimitiveDrawManager()->DrawPoint(FVector3D(1.0f, -0.25f, 0.0f), FColor::Red);
-        
-        Scene->GetPrimitiveDrawManager()->DrawPoint(FVector3D(-0.5f, 0.0f, 0.0f), FColor::Blue);
-        Scene->GetPrimitiveDrawManager()->DrawPoint(FVector3D(0.5f, 0.0f, 0.0f), FColor::Blue);*/
         
         if (bViewportHovered)
         {

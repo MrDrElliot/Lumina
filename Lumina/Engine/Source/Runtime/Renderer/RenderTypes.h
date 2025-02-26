@@ -176,6 +176,16 @@ namespace Lumina
         FOUR,
     };
 
+    struct FImageSpecification
+    {
+        EImageType Type;
+        EImageUsage Usage;
+        EImageLayout Layout;
+        EImageFormat Format;
+        uint16 MipLevels;
+        FIntVector2D Extent;
+    };
+
     enum class EPipelineType : uint8
     {
         GRAPHICS,

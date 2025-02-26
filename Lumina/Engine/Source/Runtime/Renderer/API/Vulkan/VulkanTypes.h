@@ -2,6 +2,8 @@
 
 #ifdef LUMINA_RENDERER_VULKAN
 
+#include <vulkan/vulkan.hpp>
+#include <vma/vk_mem_alloc.h>
 
 namespace Lumina
 {
@@ -14,7 +16,8 @@ namespace Lumina
 
     struct FVulkanImage
     {
-        VkImageUsageFlags Usage;
+        VkImageUsageFlags UsageFlags;
+        VkImageLayout Layout;
         VkImage Image;
         VmaAllocation Allocation;
         VkImageView ImageView;

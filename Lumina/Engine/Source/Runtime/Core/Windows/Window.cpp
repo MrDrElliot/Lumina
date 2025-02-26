@@ -137,15 +137,15 @@ namespace Lumina
 
 	namespace Windowing
 	{
-		const FWindow* PrimaryWindow = nullptr;
+		FWindow* PrimaryWindow = nullptr;
 		
-		const FWindow* GetPrimaryWindowHandle()
+		FWindow* GetPrimaryWindowHandle()
 		{
 			Assert(PrimaryWindow != nullptr);
 			return PrimaryWindow;
 		}
 
-		void SetPrimaryWindowHandle(const FWindow* InWindow)
+		void SetPrimaryWindowHandle(FWindow* InWindow)
 		{
 			Assert(PrimaryWindow == nullptr);
 			PrimaryWindow = InWindow;

@@ -7,6 +7,9 @@
 #include "Core/Performance/PerformanceTracker.h"
 #include "Core/Serialization/MemoryArchiver.h"
 #include "Platform/Filesystem/FileHelper.h"
+#include "Renderer/RenderContext.h"
+#include "Renderer/RenderManager.h"
+#include "Renderer/RenderTypes.h"
 
 namespace Lumina
 {
@@ -38,11 +41,11 @@ namespace Lumina
         return ELoadResult::Succeeded;
     }
 
-    FRHIImage FTextureFactory::ImportFromSource(std::filesystem::path Path)
+    /*ATexture FTextureFactory::ImportFromSource(std::filesystem::path Path)
     {
         PROFILE_SCOPE_LOG(FTextureFactory::ImportFromSource)
 
-        FImageSpecification ImageSpec = FImageSpecification::Default();
+        FImageSpecification ImageSpec;
         ImageSpec.Usage = EImageUsage::TEXTURE;
         ImageSpec.Format = EImageFormat::RGBA32_UNORM;
         ImageSpec.MipLevels = 1;
@@ -54,18 +57,21 @@ namespace Lumina
         if (data == nullptr)
         {
             LOG_WARN("Failed to import texture from source path: {0}", Path.string());
-            return nullptr;
+            return FRHIImageHandle();
         }
 
-        ImageSpec.Extent.X = x;
-        ImageSpec.Extent.Y = y;
+        FIntVector2D Extent;
+        Extent.X = x;
+        Extent.Y = y;
+        
+        FRHIImageHandle ImageHandle = Manager->GetRenderContext()->CreateTexture(Extent);
+
+        ImageSpec.Extent = Extent;
         ImageSpec.SourceChannels = c;
-        ImageSpec.Pixels.assign(data, data + (x * y * STBI_rgb_alpha));
+        ImageSpec..assign(data, data + (x * y * STBI_rgb_alpha));
 
         stbi_image_free(data);
-        
-        FRHIImage Image = FImage::Create(ImageSpec);
 
-        return Image;
-    }
+        return ImageHandle;
+    }*/
 }

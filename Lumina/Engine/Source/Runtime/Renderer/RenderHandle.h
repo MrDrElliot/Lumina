@@ -20,8 +20,23 @@ namespace Lumina
     class FRenderHandle
     {
     public:
-
+        
         FRenderHandle() = default;
+
+        FRenderHandle(uint32 Index, uint32 Generation)
+            : Handle(Index)
+            , Generation(Generation)
+        {}
+
+        static FRenderHandle InvalidHandle()
+        {
+            FRenderHandle Handle;
+            Handle.Handle = 0;
+            Handle.Generation = 0;
+
+            return Handle;
+            
+        }
         
         FORCEINLINE uint32 GetHandle() const { return Handle; }
         FORCEINLINE uint32 GetGeneration() const { return Generation; }
@@ -45,6 +60,14 @@ namespace Lumina
     class TRenderResourceHandle : public FRenderHandle
     {
     public:
+
+        TRenderResourceHandle()
+            :FRenderHandle(0, 0)
+        {}
+        
+        TRenderResourceHandle(uint32 Index, uint32 Generation)
+            :FRenderHandle(Index, Generation)
+        {}
         
         static constexpr ERenderHandleType HandleType = Type;
         constexpr ERenderHandleType GetHandleType() { return HandleType; }
@@ -63,6 +86,8 @@ namespace Lumina
     class TRenderResourcePool
     {
     public:
+
+        TRenderResourcePool() = default;
 
         TRenderResourcePool(const TRenderResourcePool&) = delete;
         TRenderResourcePool& operator = (const TRenderResourcePool&) = delete;

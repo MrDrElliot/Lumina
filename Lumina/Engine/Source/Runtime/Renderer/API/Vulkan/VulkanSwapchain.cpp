@@ -18,7 +18,7 @@ namespace Lumina
         
     }
 
-    void FVulkanSwapchain::CreateSwapchain(VkInstance Instance, FVulkanRenderContext* Device, FWindow* Window, FVector2D Extent, bool bFromResize)
+    void FVulkanSwapchain::CreateSwapchain(VkInstance Instance, FVulkanRenderContext* Device, FWindow* Window, FIntVector2D Extent, bool bFromResize)
     {
         VK_CHECK(glfwCreateWindowSurface(Instance, Window->GetWindow(), nullptr, &Surface));
     	
@@ -54,7 +54,7 @@ namespace Lumina
 
         for (auto SwapchainImage : SwapchainImages)
         {
-			Device->GetImagePool()->Free(SwapchainImage);    
+			Device->GetImagePool().Free(SwapchainImage);    
         }
     	
         SwapchainImages.clear();
@@ -87,7 +87,7 @@ namespace Lumina
 			VK_CHECK(vkCreateImageView(Device->GetDevice(), &ImageViewCreateInfo, nullptr, &ImageView));
 			VulkanImage->ImageView = ImageView;
         	VulkanImage->Image = RawImage;
-        	VulkanImage->Usage = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+        	VulkanImage->Layout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
         	SwapchainImages.push_back(ImageHandle);
 
         	FGPUBarrier Barriers[] =

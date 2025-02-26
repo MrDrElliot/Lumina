@@ -51,8 +51,8 @@ namespace Lumina
 
 	namespace Windowing
 	{
-		const FWindow* GetPrimaryWindowHandle();
-		void SetPrimaryWindowHandle(const FWindow* InWindow);
+		FWindow* GetPrimaryWindowHandle();
+		void SetPrimaryWindowHandle(FWindow* InWindow);
 	}
 	
 }

@@ -85,19 +85,25 @@ namespace Lumina
         using FImagePool = TRenderResourcePool<FRHIImageHandle, FVulkanImage>;
         
         FVulkanRenderContext();
+        
         void Initialize() override;
         void Deinitialize() override;
 
+        void FrameStart(const FUpdateContext& UpdateContext, uint8 CurrentFrameIndex) override;
+        void FrameEnd(const FUpdateContext& UpdateContext, uint8 CurrentFrameIndex) override;
+        
+
         void CreateDevice(vkb::Instance Instance);
 
+        VkInstance GetVulkanInstance() const { return VulkanInstance; }
         VkDevice GetDevice() const { return Device; }
         VkPhysicalDevice GetPhysicalDevice() const { return PhysicalDevice; }
         FORCEINLINE FVulkanSwapchain* GetSwapchain() const { return Swapchain; }
 
         FORCEINLINE const FVulkanCommandQueues& GetCommandQueues() const { return CommandQueues; }
 
-        FORCEINLINE const FBufferPool& GetBufferPool() const { return BufferPool; }
-        FORCEINLINE const FImagePool& GetImagePool() const { return ImagePool; }
+        FORCEINLINE FBufferPool& GetBufferPool() { return BufferPool; }
+        FORCEINLINE FImagePool& GetImagePool() { return ImagePool; }
         
         //----------------------------------------------------
 
@@ -107,9 +113,9 @@ namespace Lumina
         void CopyBuffer(FRHIBufferHandle Source, FRHIBufferHandle Destination) override;
         uint64 GetAlignedSizeForBuffer(uint64 Size, TBitFlags<ERenderDeviceBufferUsage> Usage) override;
 
-        FRHIImageHandle CreateTexture(FVector2D Extent) override;
-        FRHIImageHandle CreateRenderTarget(FVector2D Extent) override;
-        FRHIImageHandle CreateDepthImage(FVector2D Extent) override;
+        FRHIImageHandle CreateTexture(FIntVector2D Extent) override;
+        FRHIImageHandle CreateRenderTarget(FIntVector2D Extent) override;
+        FRHIImageHandle CreateDepthImage(FIntVector2D Extent) override;
 
         void Barrier(FGPUBarrier* Barriers, uint32 BarrierNum, FCommandList* CommandList) override;
         

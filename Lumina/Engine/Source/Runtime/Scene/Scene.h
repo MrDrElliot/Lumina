@@ -18,7 +18,6 @@ namespace Lumina
     class Entity;
     class Material;
     class AStaticMesh;
-    class FPrimitiveDrawManager;
     class FEntitySystem;
 }
 
@@ -61,17 +60,9 @@ namespace Lumina
         void ForEachComponent(const TFunction<void(uint32& CurrentIndex, entt::entity& OutEntity, T& OutComponent)>&& Functor);
 
         FORCEINLINE ESceneType GetSceneType() const { return SceneType; }
-        
-        #if WITH_DEVELOPMENT_TOOLS
-        FPrimitiveDrawManager* GetPrimitiveDrawManager() const { return PrimitiveDrawManager; }
-        #endif
     
     private:
-
         
-        #if WITH_DEVELOPMENT_TOOLS
-        FPrimitiveDrawManager*          PrimitiveDrawManager = nullptr;
-        #endif
         
         ESceneType                      SceneType;
         double                          DeltaTime = 0.0;
