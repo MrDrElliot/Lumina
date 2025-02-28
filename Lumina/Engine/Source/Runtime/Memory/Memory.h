@@ -151,6 +151,7 @@ public:
     }
 
     template< typename T, typename ... ConstructorParams >
+    requires std::is_constructible_v<T, ConstructorParams...> && (!eastl::is_array_v<T>)
     NODISCARD static FORCEINLINE T* New(ConstructorParams&&... params)
     {
         void* pMemory = Malloc(sizeof(T), alignof(T));

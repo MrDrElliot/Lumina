@@ -3,9 +3,8 @@
 #include <random>
 #include <fastgltf/core.hpp>
 #include <fastgltf/tools.hpp>
-
+#include "Renderer/RHIIncl.h"
 #include "Log/Log.h"
-#include "Renderer/RenderTypes.h"
 #include "Assets/AssetTypes/Mesh/StaticMesh/StaticMesh.h"
 #include "Core/Serialization/MemoryArchiver.h"
 #include "Platform/Filesystem/FileHelper.h"

@@ -1,7 +1,5 @@
 #include "LuminaEditor.h"
-#include "Project/Project.h"
 #include "EntryPoint.h"
-#include "Assets/AssetRegistry/AssetRegistry.h"
 #include "Core/Threading/Thread.h"
 #include "Scene/Scene.h"
 #include "Settings/EditorSettings.h"

@@ -84,6 +84,7 @@ public:
 	}
 
 	template<typename CopyReferencedType>
+	requires std::is_base_of_v<ReferencedType, CopyReferencedType>
 	explicit TRefCountPtr(const TRefCountPtr<CopyReferencedType>& Copy)
 	{
 		Reference = static_cast<ReferencedType*>(Copy.GetReference());
@@ -100,11 +101,13 @@ public:
 	}
 
 	template<typename MoveReferencedType>
-	explicit TRefCountPtr(TRefCountPtr<MoveReferencedType>&& Move)
+	requires std::is_base_of_v<ReferencedType, MoveReferencedType>
+	TRefCountPtr(TRefCountPtr<MoveReferencedType>&& Move)
 	{
 		Reference = static_cast<ReferencedType*>(Move.GetReference());
 		Move.Reference = nullptr;
 	}
+
 
 	~TRefCountPtr()
 	{
@@ -137,14 +140,14 @@ public:
 	TRefCountPtr<T> As()
 	{
 		Assert(GetRefCount() > 0);
-		return TRefCountPtr<T>(dynamic_cast<T*>(Reference));
+		return TRefCountPtr<T>(static_cast<T*>(Reference));
 	}
 
 	template<typename T>
 	const TRefCountPtr<T> As() const
 	{
 		Assert(GetRefCount() > 0);
-		return TRefCountPtr<T>(dynamic_cast<T*>(Reference));
+		return TRefCountPtr<T>(static_cast<T*>(Reference));
 	}
 	
 	FORCEINLINE TRefCountPtr& operator=(const TRefCountPtr& InPtr)
@@ -261,7 +264,7 @@ public:
 };
 
 template<typename T, typename... TArgs>
-requires(!eastl::is_array_v<T>)
+requires std::is_constructible_v<T, TArgs...> && (!eastl::is_array_v<T>)
 FORCEINLINE TRefCountPtr<T> MakeRefCount(TArgs&&... Args)
 {
 	return TRefCountPtr<T>(FMemory::New<T>(TForward<TArgs>(Args)...));

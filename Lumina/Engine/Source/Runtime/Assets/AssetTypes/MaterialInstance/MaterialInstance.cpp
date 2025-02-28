@@ -1,5 +1,5 @@
 #include "MaterialInstance.h"
-
+#include "Renderer/RHIIncl.h"
 
 namespace Lumina
 {

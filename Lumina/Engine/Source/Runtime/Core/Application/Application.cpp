@@ -1,10 +1,8 @@
+
 #include "Application.h"
-#include "Scene/SceneRenderer.h"
 #include "Assets/AssetManager/AssetManager.h"
-#include "Core/Performance/PerformanceTracker.h"
 #include "Core/Windows/Window.h"
 #include "Core/Windows/WindowTypes.h"
-#include "Scene/Scene.h"
 
 namespace Lumina
 {

@@ -1,0 +1,110 @@
+﻿#pragma once
+
+#include <vma/vk_mem_alloc.h>
+#include <vulkan/vulkan_core.h>
+
+#include "Containers/Array.h"
+#include "Memory/Memory.h"
+#include "Platform/GenericPlatform.h"
+
+namespace Lumina
+{
+    class FVulkanRenderContext;
+}
+
+namespace Lumina
+{
+
+    class FVulkanMemoryAllocator
+    {
+    public:
+
+        FVulkanMemoryAllocator(VkInstance Instance, VkPhysicalDevice PhysicalDevice, VkDevice Device);
+        ~FVulkanMemoryAllocator();
+
+        void ClearAllAllocations();
+        
+        VmaAllocation AllocateBuffer(const VkBufferCreateInfo* CreateInfo, VmaAllocationCreateFlags Flags, VkBuffer* vkBuffer, const char* AllocationName);
+        VmaAllocation AllocateImage(VkImageCreateInfo* CreateInfo, VmaAllocationCreateFlags Flags, VkImage* vkImage, const char* AllocationName);
+
+        VmaAllocation GetAllocation(VkBuffer Buffer);
+        VmaAllocation GetAllocation(VkImage Image);
+        
+
+        void DestroyBuffer(VkBuffer Buffer);
+        void DestroyImage(VkImage Image);
+
+        void* MapMemory(VmaAllocation Allocation);
+        void UnmapMemory(VmaAllocation Allocation);
+
+    
+    private:
+        
+        VmaAllocator Allocator = nullptr;
+        THashMap<VkBuffer, VmaAllocation> AllocatedBuffers;
+        THashMap<VkImage, VmaAllocation> AllocatedImages;
+        
+        struct FAllocatorStatistics 
+        {
+            uint64 Allocated = 0;
+            uint64 Freed = 0;
+            uint64 CurrentlyAllocated = 0;
+            uint64 CurrentlyAllocatedBuffers = 0;
+            uint64 CurrentlyAllocatedImages = 0;
+        } Statistics;
+
+    };
+    
+    class FVulkanDevice
+    {
+    public:
+
+        FVulkanDevice(VkInstance Instance, VkPhysicalDevice InPhysicalDevice, VkDevice InDevice)
+            : PhysicalDevice(InPhysicalDevice)
+            , Device(InDevice)
+        {
+            vkGetPhysicalDeviceMemoryProperties(PhysicalDevice, &PhysicalDeviceMemoryProperties);
+            vkGetPhysicalDeviceProperties(PhysicalDevice, &PhysicalDeviceProperties);
+
+            Allocator = FMemory::New<FVulkanMemoryAllocator>(Instance, PhysicalDevice, Device);
+        }
+
+        ~FVulkanDevice()
+        {
+            FMemory::Delete(Allocator);
+            vkDestroyDevice(Device, nullptr);
+        }
+
+        
+
+        FORCEINLINE FVulkanMemoryAllocator* GetAllocator() const { return Allocator; }
+        FORCEINLINE VkPhysicalDevice GetPhysicalDevice() const { return PhysicalDevice; }
+        FORCEINLINE VkDevice GetDevice() const { return Device; }
+
+        FORCEINLINE VkPhysicalDeviceProperties GetPhysicalDeviceProperties() const { return PhysicalDeviceProperties; }
+        FORCEINLINE VkPhysicalDeviceMemoryProperties GetPhysicalDeviceMemoryProperties() const { return PhysicalDeviceMemoryProperties; }
+    
+    private:
+        
+        FVulkanMemoryAllocator* Allocator = nullptr;
+        VkPhysicalDevice        PhysicalDevice;
+        VkDevice                Device;
+
+        VkPhysicalDeviceProperties              PhysicalDeviceProperties;
+        VkPhysicalDeviceMemoryProperties        PhysicalDeviceMemoryProperties;
+    };
+
+    class IDeviceChild
+    {
+    public:
+
+        IDeviceChild(FVulkanDevice* InDevice)
+            :Device(InDevice)
+        {}
+
+        
+        FVulkanDevice* Device = nullptr;
+        
+    };
+    
+}

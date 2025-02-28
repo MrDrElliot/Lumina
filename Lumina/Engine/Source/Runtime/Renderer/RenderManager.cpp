@@ -46,6 +46,6 @@ namespace Lumina
         ImGuiRenderer->EndFrame(UpdateContext);
         #endif
         
-        RenderContext->FrameEnd(UpdateContext, CurrentFrameIndex);
+        RenderContext->FrameEnd(UpdateContext);
     }
 }

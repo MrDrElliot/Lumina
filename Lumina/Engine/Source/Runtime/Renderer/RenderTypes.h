@@ -35,6 +35,54 @@ namespace Lumina
         FMaterialTexturesData   MaterialTextureData;
     };
 
+    enum class ERHIAccess : uint32
+    {
+        None = 0,                            // No access
+        
+        // General Access Types
+        Read = 1 << 0,                       // General read access
+        Write = 1 << 1,                      // General write access
+        
+        // Transfer Access Types
+        TransferRead = 1 << 2,               // Read access in a transfer operation (e.g., copying)
+        TransferWrite = 1 << 3,              // Write access in a transfer operation (e.g., copying)
+        
+        // Shader Access Types
+        ShaderRead = 1 << 4,                 // Read access in a shader (e.g., from a texture or buffer)
+        ShaderWrite = 1 << 5,                // Write access in a shader (e.g., to a texture or buffer)
+        
+        // Color Attachment Access Types
+        ColorAttachmentWrite = 1 << 6,       // Write access to a color attachment (e.g., during rendering)
+        
+        // Depth/Stencil Attachment Access Types
+        DepthStencilAttachmentWrite = 1 << 7, // Write access to a depth/stencil attachment (e.g., during rendering)
+        
+        // Present Access Types
+        PresentRead = 1 << 8,                // Read access for presenting an image (e.g., to the screen)
+        
+        // Miscellaneous Access Types
+        HostRead = 1 << 9,                   // Read access for CPU (host-side access to resources)
+        HostWrite = 1 << 10,                  // Write access for CPU (host-side access to resources)
+        
+        // Compute Access Types
+        ComputeRead = 1 << 11,               // Read access in compute shaders
+        ComputeWrite = 1 << 12,              // Write access in compute shaders
+        
+        // Combined Access Flags
+        All = Read | Write | TransferRead | TransferWrite | ShaderRead | ShaderWrite | ColorAttachmentWrite |
+          DepthStencilAttachmentWrite | PresentRead | HostRead | HostWrite | ComputeRead | ComputeWrite
+    };
+
+    enum class ERHIPipeline : uint8
+    {
+        Graphics = 1 << 0,
+        AsyncCompute = 1 << 1,
+
+        None = 0,
+        All = Graphics | AsyncCompute,
+        Num = 2
+    };
+
     enum class ECommandQueue : uint8
     {
         Graphics = 1 << 0,
@@ -71,13 +119,32 @@ namespace Lumina
         INPUT_ATTACHMENT              = 10,
     };
 
-    enum class ERenderDeviceBufferUsage : uint8
+    enum class EBufferUsageFlags : uint32
     {
-        UniformBuffer = 1 << 0,
-        StorageBuffer = 1 << 1,
-        VertexBuffer = 1 << 2,
-        IndexBuffer = 1 << 3,
+        None = 0,
+
+        NullResource        = 1 << 0,
+
+        /** The buffer will be written to occassionally. */
+        Dynamic             =   1 << 1,
+
+        /** Buffer will be used as the source for a copy */
+        SourceCopy          = 1 << 2,
+
+        VertexBuffer        = 1 << 3,
+        IndexBuffer         = 1 << 4,
+        UniformBuffer       = 1 << 5,
+
+        StagingBuffer       = 1 << 6,
+        
     };
+
+    #define BUF_NullResource    EBufferUsageFlags::NullResource
+    #define BUF_Dynamic         EBufferUsageFlags::Dynamic
+    #define BUF_SourceCopy      EBufferUsageFlags::SourceCopy
+    #define BUF_VetexBuffer     EBufferUsageFlags::VertexBuffer
+    #define BUF_IndexBuffer     EBufferUsageFlags::IndexBuffer
+    #define BUF_UniformBuffer   EBufferUsageFlags::UniformBuffer
 
     enum class ERenderDeviceBufferMemoryUsage : uint8
     {
@@ -97,94 +164,91 @@ namespace Lumina
     };
 
     
-struct FRenderPassBeginInfo
-{
-    TVector<FRHIImageHandle> ColorAttachments; // Color attachments
-    TVector<ERenderLoadOp> ColorLoadOps;       // One per color attachment
-    TVector<ERenderLoadOp> ColorStoreOps;      // How to handle color attachments at the end
-    TVector<FColor> ClearColorValues;          // Optional clear values for color attachments
+    struct FRenderPassBeginInfo
+    {
+        TVector<FRHIImageRef> ColorAttachments; // Color attachments
+        TVector<ERenderLoadOp> ColorLoadOps;       // One per color attachment
+        TVector<ERenderLoadOp> ColorStoreOps;      // How to handle color attachments at the end
+        TVector<FColor> ClearColorValues;          // Optional clear values for color attachments
+        
+        FRHIImageRef DepthAttachment;           // Single depth attachment
+        ERenderLoadOp DepthLoadOp = ERenderLoadOp::Clear; // Default depth load operation
+        ERenderLoadOp DepthStoreOp = ERenderLoadOp::Store; // Default depth store operation
+        float ClearDepth = 1.0f;                   // Default depth clear value
+        uint32 ClearStencil = 0;                   // Default stencil clear value
+        
+        FIntVector2D RenderArea;                   // Defines the renderable area
     
-    FRHIImageHandle DepthAttachment;           // Single depth attachment
-    ERenderLoadOp DepthLoadOp = ERenderLoadOp::Clear; // Default depth load operation
-    ERenderLoadOp DepthStoreOp = ERenderLoadOp::Store; // Default depth store operation
-    float ClearDepth = 1.0f;                   // Default depth clear value
-    uint32 ClearStencil = 0;                   // Default stencil clear value
+        // Fluent API for adding color attachments
+        FRenderPassBeginInfo& AddColorAttachment(const FRHIImageRef& Attachment)
+        {
+            ColorAttachments.push_back(Attachment);
+            return *this;
+        }
     
-    FIntVector2D RenderArea;                   // Defines the renderable area
-
-    // Fluent API for adding color attachments
-    FRenderPassBeginInfo& AddColorAttachment(const FRHIImageHandle& Attachment)
-    {
-        ColorAttachments.push_back(Attachment);
-        return *this;
-    }
-
-    // Set a LoadOp for the most recently added color attachment
-    FRenderPassBeginInfo& SetColorLoadOp(ERenderLoadOp LoadOp)
-    {
-        ColorLoadOps.push_back(LoadOp);
-        return *this;
-    }
-
-    // Set a StoreOp for the most recently added color attachment
-    FRenderPassBeginInfo& SetColorStoreOp(ERenderLoadOp StoreOp)
-    {
-        ColorStoreOps.push_back(StoreOp);
-        return *this;
-    }
-
-    // Set the clear color for the most recently added color attachment
-    FRenderPassBeginInfo& SetColorClearColor(const FColor& ClearColor)
-    {
-        ClearColorValues.push_back(ClearColor);
-        return *this;
-    }
-
-    // Fluent API for adding a depth attachment
-    FRenderPassBeginInfo& SetDepthAttachment(const FRHIImageHandle& Attachment)
-    {
-        DepthAttachment = Attachment;
-        return *this;
-    }
-
-    // Set a LoadOp for the depth attachment
-    FRenderPassBeginInfo& SetDepthLoadOp(ERenderLoadOp LoadOp)
-    {
-        DepthLoadOp = LoadOp;
-        return *this;
-    }
-
-    // Set a StoreOp for the depth attachment
-    FRenderPassBeginInfo& SetDepthStoreOp(ERenderLoadOp StoreOp)
-    {
-        DepthStoreOp = StoreOp;
-        return *this;
-    }
-
-    // Set clear depth value for the depth attachment
-    FRenderPassBeginInfo& SetDepthClearValue(float Depth)
-    {
-        ClearDepth = Depth;
-        return *this;
-    }
-
-    // Set clear stencil value for the depth attachment
-    FRenderPassBeginInfo& SetDepthClearStencil(uint32 Stencil)
-    {
-        ClearStencil = Stencil;
-        return *this;
-    }
-
-    // Set the render area
-    FRenderPassBeginInfo& SetRenderArea(const FIntVector2D& Area)
-    {
-        RenderArea = Area;
-        return *this;
-    }
-};
-
-
-
+        // Set a LoadOp for the most recently added color attachment
+        FRenderPassBeginInfo& SetColorLoadOp(ERenderLoadOp LoadOp)
+        {
+            ColorLoadOps.push_back(LoadOp);
+            return *this;
+        }
+    
+        // Set a StoreOp for the most recently added color attachment
+        FRenderPassBeginInfo& SetColorStoreOp(ERenderLoadOp StoreOp)
+        {
+            ColorStoreOps.push_back(StoreOp);
+            return *this;
+        }
+    
+        // Set the clear color for the most recently added color attachment
+        FRenderPassBeginInfo& SetColorClearColor(const FColor& ClearColor)
+        {
+            ClearColorValues.push_back(ClearColor);
+            return *this;
+        }
+    
+        // Fluent API for adding a depth attachment
+        FRenderPassBeginInfo& SetDepthAttachment(const FRHIImageRef& Attachment)
+        {
+            DepthAttachment = Attachment;
+            return *this;
+        }
+    
+        // Set a LoadOp for the depth attachment
+        FRenderPassBeginInfo& SetDepthLoadOp(ERenderLoadOp LoadOp)
+        {
+            DepthLoadOp = LoadOp;
+            return *this;
+        }
+    
+        // Set a StoreOp for the depth attachment
+        FRenderPassBeginInfo& SetDepthStoreOp(ERenderLoadOp StoreOp)
+        {
+            DepthStoreOp = StoreOp;
+            return *this;
+        }
+    
+        // Set clear depth value for the depth attachment
+        FRenderPassBeginInfo& SetDepthClearValue(float Depth)
+        {
+            ClearDepth = Depth;
+            return *this;
+        }
+    
+        // Set clear stencil value for the depth attachment
+        FRenderPassBeginInfo& SetDepthClearStencil(uint32 Stencil)
+        {
+            ClearStencil = Stencil;
+            return *this;
+        }
+    
+        // Set the render area
+        FRenderPassBeginInfo& SetRenderArea(const FIntVector2D& Area)
+        {
+            RenderArea = Area;
+            return *this;
+        }
+    };
     
     struct FDescriptorBinding
     {
@@ -199,30 +263,61 @@ struct FRenderPassBeginInfo
         uint32 StageFlags;            // Shader stage this binding applies to (VERTEX, FRAGMENT, etc.)
     };
 
-    enum class EImageLayout
+    
+
+    /** Describes the dimension of a texture. */
+    enum class EImageDimension : uint8
     {
-        Undefined = 0,
-        General = 1,
-        ColorAttachment = 2,
-        DepthAttachment = 3,
-        DepthReadOnly = 4,
-        ShaderReadOnly = 5,
-        TransferSource = 6,
-        TransferDestination = 7,
-        PresentSource = 8,
-        Default = 9, // Used for transfer ops to go to indicate a desire to transfer to a default layout.
+        Texture2D,
+        Texture2DArray,
+        Texture3D,
+        TextureCube,
+        TextureCubeArray
     };
 
-    enum class EImageUsage : uint8
+    enum class EImageCreateFlags : uint32
     {
-        Texture,
-        RenderTarget,
-        DepthBuffer,
-        Resolve,
-    };
+        /** No special flags */
+        None = 0,
 
+        /** Texture can be presented to the screen (e.g., used as a swapchain image) */
+        Presentable = 1 << 0,
+
+        /** Texture can be used as a render target (color or depth attachment) */
+        RenderTarget = 1 << 1,
+
+        /** Texture can be used as a shader resource (sampled in shaders) */
+        ShaderResource = 1 << 2,
+
+        /** Texture can be used as a storage image (read/write access in compute shaders) */
+        Storage = 1 << 3,
+
+        /** Texture supports input attachments (used in Vulkan subpasses) */
+        InputAttachment = 1 << 4,
+
+        /** Texture can be used as a depth/stencil buffer */
+        DepthStencil = 1 << 5,
+
+        /** Texture allows unordered access (DirectX-style UAV equivalent) */
+        UnorderedAccess = 1 << 6,
+
+        /** Texture supports mipmap generation */
+        GenerateMipMaps = 1 << 7,
+
+        /** Texture can be used as a cube map */
+        CubeCompatible = 1 << 8,
+
+        /** Texture supports aliasing (can be used with sparse memory allocation) */
+        Aliasable = 1 << 9,
+
+        /** Texture can be used with multi-sampling (MSAA) */
+        MultiSampled = 1 << 10
+    };
+    
     enum class EImageFormat : uint8
     {
+        None = 0,
+        
         // Standard 8-bit formats
         R8_UNORM,
         R8_SNORM,
@@ -275,17 +370,7 @@ struct FRenderPassBeginInfo
         ONE,
         FOUR,
     };
-
-    struct FImageSpecification
-    {
-        EImageType Type;
-        EImageUsage Usage;
-        EImageLayout Layout;
-        EImageFormat Format;
-        uint16 MipLevels;
-        FIntVector2D Extent;
-    };
-
+    
     enum class EPipelineType : uint8
     {
         Graphics,
@@ -399,57 +484,6 @@ struct FRenderPassBeginInfo
             default:                             std::unreachable();
         }
     }
-
-
-    struct FComputePipelineSpec
-    {
-        static FComputePipelineSpec Create() { return FComputePipelineSpec(); }
-
-        FRHIShaderHandle Shader;
-
-        bool EnableAsyncCompute = false;
-        bool EnablePipelineStatistics = false;
-
-        bool operator==(const FComputePipelineSpec& other) const
-        {
-            return Shader == other.Shader &&
-                   EnableAsyncCompute == other.EnableAsyncCompute &&
-                   EnablePipelineStatistics == other.EnablePipelineStatistics;
-        }
-
-        size_t GetHash() const
-        {
-            size_t hash = 0;
-            Hash::HashCombine(hash, eastl::hash<uint32>{}(Shader.GetGeneration()));
-            Hash::HashCombine(hash, eastl::hash<uint32>{}(Shader.GetHandle()));
-            Hash::HashCombine(hash, std::hash<bool>{}(EnableAsyncCompute));
-            Hash::HashCombine(hash, std::hash<bool>{}(EnablePipelineStatistics));
-            return hash;
-        }
-
-        FComputePipelineSpec& SetShader(FName InShader)
-        {
-            Shader = InShader;
-            return *this;
-        }
-
-        FComputePipelineSpec& SetEnableAsyncCompute(bool enable)
-        {
-            EnableAsyncCompute = enable;
-            return *this;
-        }
-
-        FComputePipelineSpec& SetEnablePipelineStatistics(bool enable)
-        {
-            EnablePipelineStatistics = enable;
-            return *this;
-        }
-
-        FName GetShader() const { return Shader; }
-        bool GetEnableAsyncCompute() const { return EnableAsyncCompute; }
-        bool GetEnablePipelineStatistics() const { return EnablePipelineStatistics; }
-    };
-
     
     template <typename T>
     struct FVertexTypeTraits;

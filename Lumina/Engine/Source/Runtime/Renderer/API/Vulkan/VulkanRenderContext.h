@@ -2,20 +2,19 @@
 
 #ifdef LUMINA_RENDERER_VULKAN
 
+#include <vulkan/vulkan.hpp>
 #include "VulkanMacros.h"
-#include "VulkanTypes.h"
-#include "Memory/Allocators/Allocator.h"
 #include "Types/BitFlags.h"
 #include "src/VkBootstrap.h"
-#include "Renderer/RenderHandle.h"
 #include "Renderer/RenderContext.h"
-#include <vulkan/vulkan.hpp>
 #include <vma/vk_mem_alloc.h>
 
 
 namespace Lumina
 {
+    class FVulkanCommandList;
     class FVulkanSwapchain;
+    class FVulkanDevice;
     enum class ECommandQueue : uint8;
 }
 
@@ -31,7 +30,7 @@ namespace Lumina
             Device = InDevice;
         }
             
-        VkFence Aquire()
+        NODISCARD VkFence Aquire()
         {
             if (!Fences.empty())
             {
@@ -68,54 +67,6 @@ namespace Lumina
     };
     
     
-    class FVulkanMemoryAllocator
-    {
-    public:
-
-        FVulkanMemoryAllocator(VkInstance Instance, VkPhysicalDevice PhysicalDevice, VkDevice Device);
-        ~FVulkanMemoryAllocator();
-
-        void ClearAllAllocations();
-        
-        VmaAllocation AllocateBuffer(VkBufferCreateInfo* CreateInfo, VmaAllocationCreateFlags Flags, VkBuffer* vkBuffer, const char* AllocationName);
-        VmaAllocation AllocateImage(VkImageCreateInfo* CreateInfo, VmaAllocationCreateFlags Flags, VkImage* vkImage, const char* AllocationName);
-
-        void DestroyBuffer(VkBuffer Buffer, VmaAllocation Allocation);
-        void DestroyImage(VkImage Image, VmaAllocation Allocation);
-
-        void* MapMemory(VmaAllocation Allocation);
-        void UnmapMemory(VmaAllocation Allocation);
-
-    
-    private:
-        
-        VmaAllocator Allocator = nullptr;
-
-        struct FAllocatorStatistics 
-        {
-            TVector<VmaAllocation> Allocations;
-            THashMap<VkBuffer, VmaAllocation> AllocatedBuffers;
-            THashMap<VkImage, VmaAllocation> AllocatedImages;
-            uint64 Allocated = 0;
-            uint64 Freed = 0;
-            uint64 CurrentlyAllocated = 0;
-            uint64 CurrentlyAllocatedBuffers = 0;
-            uint64 CurrentlyAllocatedImages = 0;
-        } Statistics;
-
-    };
-
-    struct FVulkanCommandList : FCommandList
-    {
-        
-        VkCommandBuffer CommandBuffer;
-        VkFence Fence;
-        
-        TVector<VkSemaphore> WaitSemaphores;
-        TVector<VkSemaphore> SignalSemaphores;
-        
-    };
-    
     struct FVulkanCommandQueues
     {
         VkQueue     GraphicsQueue;
@@ -132,13 +83,6 @@ namespace Lumina
     class FVulkanRenderContext : public IRenderContext
     {
     public:
-
-        using FBufferPool               = TRenderResourcePool<FRHIBufferHandle, FVulkanBuffer>;
-        using FImagePool                = TRenderResourcePool<FRHIImageHandle, FVulkanImage>;
-        using FShaderPool               = TRenderResourcePool<FRHIShaderHandle, FVulkanShader>;
-        using FGraphicsPipelinePool     = TRenderResourcePool<FRHIGraphicsPipelineHandle, FVulkanGraphicsPipeline>;
-        using FComputePipelinePool      = TRenderResourcePool<FRHIComputePipelineHandle, FVulkanComputePipeline>;
-
         
         FVulkanRenderContext();
         
@@ -151,71 +95,60 @@ namespace Lumina
         void WaitIdle() override;
         
         void FrameStart(const FUpdateContext& UpdateContext, uint8 InCurrentFrameIndex) override;
-        void FrameEnd(const FUpdateContext& UpdateContext, uint8 InCurrentFrameIndex) override;
+        void FrameEnd(const FUpdateContext& UpdateContext) override;
         
 
         void CreateDevice(vkb::Instance Instance);
 
         VkInstance GetVulkanInstance() const { return VulkanInstance; }
-        VkDevice GetDevice() const { return Device; }
-        VkPhysicalDevice GetPhysicalDevice() const { return PhysicalDevice; }
+        FVulkanDevice* GetDevice() const { return VulkanDevice; }
         FORCEINLINE FVulkanSwapchain* GetSwapchain() const { return Swapchain; }
 
         FORCEINLINE const FVulkanCommandQueues& GetCommandQueues() const { return CommandQueues; }
-
-        NODISCARD FORCEINLINE FBufferPool& GetBufferPool() { return BufferPool; }
-        NODISCARD FORCEINLINE FImagePool& GetImagePool() { return ImagePool; }
         
         //----------------------------------------------------
 
-        
-        FRHIBufferHandle CreateBuffer(TBitFlags<ERenderDeviceBufferUsage> UsageFlags, TBitFlags<ERenderDeviceBufferMemoryUsage> MemoryUsage, uint32 Size) override;
-        void UpdateBuffer(FRHIBufferHandle Buffer, void* Data, uint32 Size, uint32 Offset) override;
-        void CopyBuffer(FRHIBufferHandle Source, FRHIBufferHandle Destination) override;
-        uint64 GetAlignedSizeForBuffer(uint64 Size, TBitFlags<ERenderDeviceBufferUsage> Usage) override;
+
+        FRHIBufferRef CreateBuffer(const FRHIBufferDesc& Description) override;
+        void UploadToBuffer(ICommandList* CommandList, FRHIBuffer* Buffer, void* Data, uint32 Offset, uint32 Size) override;
+        void CopyBuffer(ICommandList* CommandList, FRHIBuffer* Source, FRHIBuffer* Destination) override;
+        uint64 GetAlignedSizeForBuffer(uint64 Size, TBitFlags<EBufferUsageFlags> Usage) override;
 
         
         //-------------------------------------------------------------------------------------
-
-
-        void BindGraphicsPipeline(FCommandList* CommandList, FRHIGraphicsPipelineHandle Handle) override;
-        void BindComputePipeline(FCommandList* CommandList, FRHIComputePipelineHandle Handle) override;
-        
-        FRHIGraphicsPipelineHandle CreateGraphicsPipeline(const FGraphicsPipelineSpec& PipelineSpec) override;
-        FRHIComputePipelineHandle CreateComputePipeline(const FComputePipelineSpec& PipelineSpec) override;
         
 
-        //-------------------------------------------------------------------------------------
+        
 
-
-        NODISCARD FRHIImageHandle AllocateImage() override;
-        NODISCARD FRHIImageHandle CreateTexture(const FImageSpecification& ImageSpec) override;
-        NODISCARD FRHIImageHandle CreateRenderTarget(const FIntVector2D& Extent) override;
-        NODISCARD FRHIImageHandle CreateDepthImage(const FImageSpecification& ImageSpec) override;
-
-        void Barrier(FGPUBarrier* Barriers, uint32 BarrierNum, FCommandList* CommandList) override;
+        FRHIImageRef CreateImage(const FRHIImageDesc& ImageSpec) override;
+        
         
         //-------------------------------------------------------------------------------------
+
+        
 
         NODISCARD FVulkanCommandList* GetPrimaryCommandList() const;
-        NODISCARD FCommandList* BeginCommandList(ECommandBufferLevel Level = ECommandBufferLevel::Secondary, ECommandQueue CommandType = ECommandQueue::Graphics, ECommandBufferUsage Usage = ECommandBufferUsage::General) override;
-        void EndCommandList(FCommandList* CommandList) override;
+        NODISCARD ICommandList* AllocateCommandList(ECommandBufferLevel Level = ECommandBufferLevel::Secondary, ECommandQueue CommandType = ECommandQueue::Graphics, ECommandBufferUsage Usage = ECommandBufferUsage::General) override;
 
         
         //-------------------------------------------------------------------------------------
 
         
-        void BeginRenderPass(FCommandList* CommandList, const FRenderPassBeginInfo& PassInfo) override;
-        void EndRenderPass(FCommandList* CommandList) override;
+        void BeginRenderPass(ICommandList* CommandList, const FRenderPassBeginInfo& PassInfo) override;
+        void EndRenderPass(ICommandList* CommandList) override;
 
-        void ClearColor(FCommandList* CommandList, const FColor& Color) override;
+        void ClearColor(ICommandList* CommandList, const FColor& Color) override;
 
-        void Draw(FCommandList* CommandList, uint32 VertexCount, uint32 InstanceCount, uint32 FirstVertex, uint32 FirstInstance) override;
-        void DrawIndexed(FCommandList* CommandList, uint32 IndexCount, uint32 InstanceCount, uint32 FirstIndex, int32 VertexOffset, uint32 FirstInstance) override;
-        void Dispatch(FCommandList* CommandList, uint32 GroupCountX, uint32 GroupCountY, uint32 GroupCountZ) override;
+        void Draw(ICommandList* CommandList, uint32 VertexCount, uint32 InstanceCount, uint32 FirstVertex, uint32 FirstInstance) override;
+        void DrawIndexed(ICommandList* CommandList, uint32 IndexCount, uint32 InstanceCount, uint32 FirstIndex, int32 VertexOffset, uint32 FirstInstance) override;
+        void Dispatch(ICommandList* CommandList, uint32 GroupCountX, uint32 GroupCountY, uint32 GroupCountZ) override;
 
         //-------------------------------------------------------------------------------------
 
+        void FlushPendingDeletes() override;
+        
+        FFencePool* GetFencePool() { return &FencePool; }
+        FVulkanCommandQueues& GetCommandQueues() { return CommandQueues; }
         
         
         void SetVulkanObjectName(FString Name, VkObjectType ObjectType, uint64 Handle);
@@ -227,27 +160,14 @@ namespace Lumina
         FVulkanCommandList*                     PrimaryCommandList[FRAMES_IN_FLIGHT];
         TQueue<FVulkanCommandList*>             CommandQueue;
         
-        FBufferPool                             BufferPool;
-        FImagePool                              ImagePool;
-        FShaderPool                             ShaderPool;
-        FGraphicsPipelinePool                   GraphicsPipelinePool;
-        FComputePipelinePool                    ComputePipelinePool;
-        
         FVulkanSwapchain*                       Swapchain;
         VkInstance                              VulkanInstance;
         
         FVulkanCommandQueues                    CommandQueues;
-
         
-        VkDevice                                Device;
-        VkPhysicalDevice                        PhysicalDevice;
-        VkPhysicalDeviceProperties              PhysicalDeviceProperties;
-        VkPhysicalDeviceMemoryProperties        PhysicalDeviceMemoryProperties;
-
+        FVulkanDevice*                          VulkanDevice;
         
-        FVulkanMemoryAllocator*                 MemoryAllocator = nullptr;
         FFencePool                              FencePool;
-        
         
     };
     

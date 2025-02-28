@@ -1,6 +1,7 @@
 ﻿#include "SceneManager.h"
 #include "Scene/SceneRenderer.h"
 #include "Scene.h"
+#include "Renderer/RHIIncl.h"
 
 namespace Lumina
 {

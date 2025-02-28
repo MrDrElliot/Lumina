@@ -1,4 +1,7 @@
 ﻿
+#include "VulkanBarriers.h"
+#include "VulkanDevice.h"
+#include "Renderer/CommandList.h"
 #include "Renderer/GPUBarrier.h"
 #ifdef LUMINA_RENDERER_VULKAN
 
@@ -15,27 +18,24 @@ namespace Lumina
 {
     FVulkanSwapchain::~FVulkanSwapchain()
     {
-	    for (FRHIImageHandle& Image : SwapchainImages)
-	    {
-	    	FVulkanImage* VulkanImage = Context->GetImagePool().GetResource(Image);
-		    vkDestroyImageView(Context->GetDevice(), VulkanImage->ImageView, nullptr);
-	    }
+    	
+    	vkDestroySwapchainKHR(Context->GetDevice()->GetDevice(), Swapchain, nullptr);
 
-    	vkDestroySwapchainKHR(Context->GetDevice(), Swapchain, nullptr);
-
+    	SwapchainImages.clear();
+    	
     	for (VkFence Fence : Fences)
     	{
-    		vkDestroyFence(Context->GetDevice(), Fence, nullptr);
+    		vkDestroyFence(Context->GetDevice()->GetDevice(), Fence, nullptr);
     	}
 
     	for (VkSemaphore Semaphore : AquireSemaphores)
     	{
-    		vkDestroySemaphore(Context->GetDevice(), Semaphore, nullptr);    
+    		vkDestroySemaphore(Context->GetDevice()->GetDevice(), Semaphore, nullptr);    
     	}
 
     	for (VkSemaphore Semaphore : PresentSemaphores)
     	{
-    		vkDestroySemaphore(Context->GetDevice(), Semaphore, nullptr);    
+    		vkDestroySemaphore(Context->GetDevice()->GetDevice(), Semaphore, nullptr);    
     	}
 
     	
@@ -44,12 +44,11 @@ namespace Lumina
     	Fences.clear();
     	AquireSemaphores.clear();
     	PresentSemaphores.clear();
-    	SwapchainImages.clear();
     }
 
-    void FVulkanSwapchain::CreateSwapchain(VkInstance Instance, FVulkanRenderContext* Device, FWindow* Window, FIntVector2D Extent, bool bFromResize)
+    void FVulkanSwapchain::CreateSwapchain(VkInstance Instance, FVulkanRenderContext* InContext, FWindow* Window, FIntVector2D Extent, bool bFromResize)
     {
-    	Context = Device;
+    	Context = InContext;
     	SwapchainExtent = Extent;
 
     	if (bFromResize == false)
@@ -58,13 +57,9 @@ namespace Lumina
     	}
     	
         SwapchainImages.reserve(FRAMES_IN_FLIGHT);
-
-        if(bFromResize)
-        {
-            vkDestroySwapchainKHR(Device->GetDevice(), Swapchain, nullptr);
-        }
     	
-        vkb::SwapchainBuilder swapchainBuilder { Device->GetPhysicalDevice(), Device->GetDevice(), Surface };
+    	
+        vkb::SwapchainBuilder swapchainBuilder { Context->GetDevice()->GetPhysicalDevice(), Context->GetDevice()->GetDevice(), Surface };
 
     	Format = VK_FORMAT_B8G8R8A8_UNORM;
         SurfaceFormat.format = VK_FORMAT_B8G8R8A8_UNORM;
@@ -74,30 +69,32 @@ namespace Lumina
             .set_desired_format(SurfaceFormat)
             .set_desired_present_mode(CurrentPresentMode)
             .set_desired_min_image_count(FRAMES_IN_FLIGHT)
+    		.set_old_swapchain(Swapchain)
             .set_image_array_layer_count(1)
             .set_desired_extent(Extent.X, Extent.Y)
             .add_image_usage_flags(VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
             .build()
             .value();
 
+    	if(bFromResize)
+    	{
+    		vkDestroySwapchainKHR(Context->GetDevice()->GetDevice(), Swapchain, nullptr);
+    	}
+
         Swapchain = vkbSwapchain.swapchain;
     	
         std::vector<VkImage> RawImages = vkbSwapchain.get_images().value();
     	
-        for (auto SwapchainImage : SwapchainImages)
-        {
-			Device->GetImagePool().Free(SwapchainImage);    
-        }
+		SwapchainImages.clear();
     	
-        SwapchainImages.clear();
-
-    	FCommandList* CommandList = Device->BeginCommandList(ECommandBufferLevel::Primary, ECommandQueue::Graphics, ECommandBufferUsage::Transient);
+    	
+    	ICommandList* CommandList = Context->AllocateCommandList(ECommandBufferLevel::Primary, ECommandQueue::Graphics, ECommandBufferUsage::Transient);
+    	CommandList->Begin();
+    	
+    	FVulkanCommandList* VulkanCommandList = (FVulkanCommandList*)CommandList;
     	
         for (VkImage RawImage : RawImages)
         {
-        	FRHIImageHandle ImageHandle = Device->AllocateImage();
-        	FVulkanImage* VulkanImage = Device->GetImagePool().GetResource(ImageHandle);
-        	
         	VkImageView ImageView = VK_NULL_HANDLE;
         	
             VkImageViewCreateInfo ImageViewCreateInfo = {};
@@ -114,23 +111,29 @@ namespace Lumina
 			ImageViewCreateInfo.subresourceRange.layerCount = 1;
 			ImageViewCreateInfo.subresourceRange.baseMipLevel = 0;
 			ImageViewCreateInfo.subresourceRange.levelCount = 1;
-        	
-			VK_CHECK(vkCreateImageView(Device->GetDevice(), &ImageViewCreateInfo, nullptr, &ImageView));
-			VulkanImage->ImageView = ImageView;
-        	VulkanImage->Image = RawImage;
-        	VulkanImage->DefaultLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-        	SwapchainImages.push_back(ImageHandle);
 
-        	FGPUBarrier Barriers[] =
-        	{
-        		FGPUBarrier::Image(ImageHandle, EImageLayout::Undefined)
-        	};
+			VK_CHECK(vkCreateImageView(Context->GetDevice()->GetDevice(), &ImageViewCreateInfo, nullptr, &ImageView));
+
+        	FRHIImageDesc ImageDescription;
+        	ImageDescription.Extent = Extent;
+        	ImageDescription.Format = EImageFormat::R8_UNORM;
+        	ImageDescription.NumMips = 1;
+        	ImageDescription.NumSamples = 1;
+
+        	TRefCountPtr<FVulkanImage> Image = MakeRefCount<FVulkanImage>(Context->GetDevice(), ImageDescription, RawImage, ImageView);
+        	Image->SetDefaultLayout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+			SwapchainImages.push_back(Image);
         	
-        	Device->Barrier(Barriers, std::size(Barriers), CommandList);
+        	FVulkanPipelineBarrier PipelineBarrier;
+        	PipelineBarrier.AddFullImageLayoutTransition(*Image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+        	PipelineBarrier.Execute(VulkanCommandList);
         	
         }
 
-    	Device->EndCommandList(CommandList);
+    	CommandList->FlushCommandList();
+    	CommandList->SubmitCommandList();
+    	CommandList->Destroy();
+    	CommandList = nullptr;
 
     	size_t currentImageCount = RawImages.size();
 
@@ -139,7 +142,7 @@ namespace Lumina
     	{
     		for (size_t i = currentImageCount; i < PresentSemaphores.size(); i++)
     		{
-    			vkDestroySemaphore(Device->GetDevice(), PresentSemaphores[i], nullptr);
+    			vkDestroySemaphore(Context->GetDevice()->GetDevice(), PresentSemaphores[i], nullptr);
     		}
 
     		// Now safely resize down
@@ -151,7 +154,7 @@ namespace Lumina
     	{
 		    for (auto Semaphore : PresentSemaphores)
 		    {
-		    	vkDestroySemaphore(Device->GetDevice(), Semaphore, nullptr);
+		    	vkDestroySemaphore(Context->GetDevice()->GetDevice(), Semaphore, nullptr);
 		    }
     		
     		PresentSemaphores.clear();
@@ -164,8 +167,8 @@ namespace Lumina
     		VkSemaphoreCreateInfo CreateInfo = {};
     		CreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
-    		vkDestroySemaphore(Device->GetDevice(), PresentSemaphores[i], nullptr);
-    		VK_CHECK(vkCreateSemaphore(Device->GetDevice(),&CreateInfo,  nullptr, &PresentSemaphores[i]));
+    		vkDestroySemaphore(Context->GetDevice()->GetDevice(), PresentSemaphores[i], nullptr);
+    		VK_CHECK(vkCreateSemaphore(Context->GetDevice()->GetDevice(),&CreateInfo,  nullptr, &PresentSemaphores[i]));
     		Context->SetVulkanObjectName("Present Semaphore: " + eastl::to_string(i), VK_OBJECT_TYPE_SEMAPHORE, (uint64)PresentSemaphores[i]);
     	}
 
@@ -176,7 +179,7 @@ namespace Lumina
     	{
     		for (size_t i = FRAMES_IN_FLIGHT; i < AquireSemaphores.size(); i++)
     		{
-    			vkDestroySemaphore(Device->GetDevice(), AquireSemaphores[i], nullptr);
+    			vkDestroySemaphore(Context->GetDevice()->GetDevice(), AquireSemaphores[i], nullptr);
     		}
     		
     		AquireSemaphores.resize(FRAMES_IN_FLIGHT);
@@ -187,7 +190,7 @@ namespace Lumina
     	{
     		for (auto Semaphore : AquireSemaphores)
     		{
-    			vkDestroySemaphore(Device->GetDevice(), Semaphore, nullptr);
+    			vkDestroySemaphore(Context->GetDevice()->GetDevice(), Semaphore, nullptr);
     		}
     		
     		AquireSemaphores.clear();
@@ -200,8 +203,8 @@ namespace Lumina
     		VkSemaphoreCreateInfo CreateInfo = {};
     		CreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
-    		vkDestroySemaphore(Device->GetDevice(), AquireSemaphores[i], nullptr);
-    		VK_CHECK(vkCreateSemaphore(Device->GetDevice(),&CreateInfo,  nullptr, &AquireSemaphores[i]));
+    		vkDestroySemaphore(Context->GetDevice()->GetDevice(), AquireSemaphores[i], nullptr);
+    		VK_CHECK(vkCreateSemaphore(Context->GetDevice()->GetDevice(),&CreateInfo,  nullptr, &AquireSemaphores[i]));
     		Context->SetVulkanObjectName("Aquire Semaphore: " + eastl::to_string(i), VK_OBJECT_TYPE_SEMAPHORE, (uint64)PresentSemaphores[i]);
 
     	}
@@ -219,7 +222,7 @@ namespace Lumina
         for (uint8 i = 0; i < FRAMES_IN_FLIGHT; i++)
         {
             VkFence Fence;
-            VK_CHECK(vkCreateFence(Device->GetDevice(), &FenceCreateInfo, nullptr, &Fence));
+            VK_CHECK(vkCreateFence(Context->GetDevice()->GetDevice(), &FenceCreateInfo, nullptr, &Fence));
         	Context->SetVulkanObjectName("Fence: " + eastl::to_string(i), VK_OBJECT_TYPE_FENCE, (uint64)Fence);
 
             Fences.push_back(Fence);
@@ -241,7 +244,7 @@ namespace Lumina
     	bNeedsResize = true;
     }
 
-    FRHIImageHandle FVulkanSwapchain::GetCurrentImage() const
+    TRefCountPtr<FVulkanImage> FVulkanSwapchain::GetCurrentImage() const
     {
 	    return SwapchainImages[CurrentFrameIndex];
     }
@@ -253,10 +256,10 @@ namespace Lumina
     	VkFenceCreateInfo FenceInfo = {};
     	FenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
     	
-    	VkResult Result = vkAcquireNextImageKHR(Context->GetDevice(), Swapchain, VULKAN_TIMEOUT_ONE_SECOND, AquireSemaphores[CurrentFrameIndex], Fences[CurrentFrameIndex], &CurrentImageIndex);
+    	VkResult Result = vkAcquireNextImageKHR(Context->GetDevice()->GetDevice(), Swapchain, VULKAN_TIMEOUT_ONE_SECOND, AquireSemaphores[CurrentFrameIndex], Fences[CurrentFrameIndex], &CurrentImageIndex);
     	
-    	VK_CHECK(vkWaitForFences(Context->GetDevice(), 1, &Fences[CurrentFrameIndex], VK_TRUE, VULKAN_TIMEOUT_ONE_SECOND));
-    	VK_CHECK(vkResetFences(Context->GetDevice(), 1, &Fences[CurrentFrameIndex]));
+    	VK_CHECK(vkWaitForFences(Context->GetDevice()->GetDevice(), 1, &Fences[CurrentFrameIndex], VK_TRUE, VULKAN_TIMEOUT_ONE_SECOND));
+    	VK_CHECK(vkResetFences(Context->GetDevice()->GetDevice(), 1, &Fences[CurrentFrameIndex]));
     	
     	if (Result == VK_SUBOPTIMAL_KHR || Result == VK_ERROR_OUT_OF_DATE_KHR)
     	{

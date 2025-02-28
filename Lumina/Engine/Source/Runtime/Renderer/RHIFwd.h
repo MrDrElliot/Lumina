@@ -1,18 +1,18 @@
 ﻿#pragma once
 
-#include "RenderHandle.h"
+#include "RHIFwd.h"
 #include "Memory/RefCounted.h"
 
 
 namespace Lumina
 {
+    class FRHIBuffer;
+    class FRHIImage;
     
     //----------------------------------------------------------------------------
 
-    using FRHIImageHandle                   = TRenderResourceHandle<ERenderHandleType::Image>;
-    using FRHIBufferHandle                  = TRenderResourceHandle<ERenderHandleType::Buffer>;
-    using FRHIShaderHandle                  = TRenderResourceHandle<ERenderHandleType::Shader>;
-    using FRHIGraphicsPipelineHandle        = TRenderResourceHandle<ERenderHandleType::GraphicsPipeline>;
-    using FRHIComputePipelineHandle        = TRenderResourceHandle<ERenderHandleType::ComputePipeline>;
+    using FRHIBufferRef             = TRefCountPtr<FRHIBuffer>;
+    using FRHIImageRef              = TRefCountPtr<FRHIImage>;
+    
 
 }

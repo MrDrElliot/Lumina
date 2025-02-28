@@ -7,6 +7,7 @@
 #include "Core/Windows/Window.h"
 #include "Renderer/RenderManager.h"
 #include "Renderer/RHIIncl.h"
+#include "Renderer/API/Vulkan/VulkanCommandList.h"
 #include "Renderer/API/Vulkan/VulkanMacros.h"
 #include "Renderer/API/Vulkan/VulkanRenderContext.h"
 #include "Renderer/API/Vulkan/VulkanSwapchain.h"
@@ -42,7 +43,7 @@ namespace Lumina
 
 		FVulkanRenderContext* VulkanBackend = RenderManager->GetRenderContext<FVulkanRenderContext>();
 		
-        VK_CHECK(vkCreateDescriptorPool(VulkanBackend->GetDevice(), &PoolInfo, nullptr, &DescriptorPool));
+        VK_CHECK(vkCreateDescriptorPool(VulkanBackend->GetDevice()->GetDevice(), &PoolInfo, nullptr, &DescriptorPool));
 
         
     	VkDebugUtilsObjectNameInfoEXT NameInfo = {};
@@ -65,8 +66,8 @@ namespace Lumina
         ImGui_ImplVulkan_InitInfo InitInfo = {};
         InitInfo.PipelineRenderingCreateInfo = RenderPipeline;
         InitInfo.Instance = VulkanBackend->GetVulkanInstance();
-        InitInfo.PhysicalDevice = VulkanBackend->GetPhysicalDevice();
-        InitInfo.Device = VulkanBackend->GetDevice();
+        InitInfo.PhysicalDevice = VulkanBackend->GetDevice()->GetPhysicalDevice();
+        InitInfo.Device = VulkanBackend->GetDevice()->GetDevice();
         InitInfo.Queue = VulkanBackend->GetCommandQueues().GraphicsQueue;
         InitInfo.DescriptorPool = DescriptorPool;
         InitInfo.MinImageCount = 2;
@@ -90,7 +91,7 @@ namespace Lumina
     	
     	ImGui_ImplVulkan_Shutdown();
     	
-    	vkDestroyDescriptorPool(VulkanRenderContext->GetDevice(), DescriptorPool, nullptr);
+    	vkDestroyDescriptorPool(VulkanRenderContext->GetDevice()->GetDevice(), DescriptorPool, nullptr);
     	
     	ImGui_ImplGlfw_Shutdown();
     	ImGui::DestroyContext();
@@ -113,7 +114,7 @@ namespace Lumina
 			
 			FVulkanCommandList* VulkanCommandList = VulkanRenderContext->GetPrimaryCommandList();
 
-			FRHIImageHandle Handle = VulkanRenderContext->GetSwapchain()->GetCurrentImage();
+			FRHIImageRef Handle = VulkanRenderContext->GetSwapchain()->GetCurrentImage();
 			
 			FRenderPassBeginInfo RenderPass; RenderPass
 			.AddColorAttachment(Handle)

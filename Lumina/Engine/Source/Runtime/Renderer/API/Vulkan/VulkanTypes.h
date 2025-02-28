@@ -1,9 +1,8 @@
 ﻿#pragma once
 
 #ifdef LUMINA_RENDERER_VULKAN
-
-#include <vulkan/vulkan.hpp>
 #include <vma/vk_mem_alloc.h>
+#include <vulkan/vulkan.hpp>
 
 namespace Lumina
 {
@@ -12,23 +11,7 @@ namespace Lumina
 
 namespace Lumina
 {
-    struct FVulkanBuffer
-    {
-        uint64 Size;
-        VkBuffer Buffer;
-        VmaAllocation Allocation;
-    };
-
-    struct FVulkanImage
-    {
-        VkImageUsageFlags UsageFlags;
-        VkImageLayout CurrentLayout;
-        VkImageLayout DefaultLayout;
-        VkImage Image;
-        VmaAllocation Allocation;
-        VkImageView ImageView;
-    };
-
+    
     struct FVulkanGraphicsPipeline
     {
         VkPipeline Pipeline;
