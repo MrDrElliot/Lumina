@@ -216,7 +216,7 @@ namespace Lumina
 			depInfo.pMemoryBarriers = MemoryBarriers.data();
 
 			// Submit the memory barriers to the command buffer (assumes pipeline barrier is needed).
-			vkCmdPipelineBarrier2(CmdBuffer->CommandBuffer, &depInfo);
+			vkCmdPipelineBarrier2(CmdBuffer->CurrentCommandBuffer->CommandBuffer, &depInfo);
 		}
 
 		// If we have image barriers, execute them.
@@ -228,7 +228,7 @@ namespace Lumina
 			depInfo.pImageMemoryBarriers = ImageBarriers.data();
 
 			// Submit the image barriers to the command buffer.
-			vkCmdPipelineBarrier2(CmdBuffer->CommandBuffer, &depInfo);
+			vkCmdPipelineBarrier2(CmdBuffer->CurrentCommandBuffer->CommandBuffer, &depInfo);
 		}
 
 		// If we have buffer barriers, execute them.
@@ -240,7 +240,7 @@ namespace Lumina
 			depInfo.pBufferMemoryBarriers = BufferBarriers.data();
 
 			// Submit the buffer barriers to the command buffer.
-			vkCmdPipelineBarrier2(CmdBuffer->CommandBuffer, &depInfo);
+			vkCmdPipelineBarrier2(CmdBuffer->CurrentCommandBuffer->CommandBuffer, &depInfo);
 		}
 
 		// Optionally handle the semaphore, if it's present (not shown here but can be added as needed).

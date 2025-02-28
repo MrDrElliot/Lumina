@@ -1,5 +1,6 @@
 ﻿
 #include "VulkanBarriers.h"
+#include "VulkanCommandList.h"
 #include "VulkanDevice.h"
 #include "Renderer/CommandList.h"
 #include "Renderer/GPUBarrier.h"
@@ -87,11 +88,9 @@ namespace Lumina
     	
 		SwapchainImages.clear();
     	
-    	
-    	ICommandList* CommandList = Context->AllocateCommandList(ECommandBufferLevel::Primary, ECommandQueue::Graphics, ECommandBufferUsage::Transient);
-    	CommandList->Begin();
-    	
-    	FVulkanCommandList* VulkanCommandList = (FVulkanCommandList*)CommandList;
+
+    	FRHICommandListRef CommandList = Context->GetCommandList(ECommandQueue::Graphics);
+    	CommandList->Open();
     	
         for (VkImage RawImage : RawImages)
         {
@@ -126,14 +125,12 @@ namespace Lumina
         	
         	FVulkanPipelineBarrier PipelineBarrier;
         	PipelineBarrier.AddFullImageLayoutTransition(*Image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
-        	PipelineBarrier.Execute(VulkanCommandList);
+        	PipelineBarrier.Execute(CommandList.As<FVulkanCommandList>());
         	
         }
 
-    	CommandList->FlushCommandList();
-    	CommandList->SubmitCommandList();
-    	CommandList->Destroy();
-    	CommandList = nullptr;
+    	CommandList->Close();
+    	Context->ExecuteCommandList(CommandList, 1, ECommandQueue::Graphics);
 
     	size_t currentImageCount = RawImages.size();
 
@@ -272,6 +269,7 @@ namespace Lumina
 
     void FVulkanSwapchain::Present()
     {
+    	
     	VkPresentInfoKHR PresentInfo = {};
     	PresentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
     	PresentInfo.pSwapchains = &Swapchain;
@@ -280,7 +278,7 @@ namespace Lumina
     	PresentInfo.waitSemaphoreCount = 1;
     	PresentInfo.pImageIndices = &CurrentImageIndex;
 
-    	VkResult Result = vkQueuePresentKHR(Context->GetCommandQueues().GraphicsQueue, &PresentInfo);
+    	VkResult Result = vkQueuePresentKHR(Context->GetQueue(ECommandQueue::Graphics)->Queue, &PresentInfo);
 
     	if (Result == VK_SUBOPTIMAL_KHR || Result == VK_ERROR_OUT_OF_DATE_KHR || bNeedsResize)
     	{
@@ -290,7 +288,6 @@ namespace Lumina
 	    {
     		VK_CHECK(Result);
 	    }
-    	
     }
 }
 

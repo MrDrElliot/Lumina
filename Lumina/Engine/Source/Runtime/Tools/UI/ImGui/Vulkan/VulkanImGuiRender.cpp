@@ -3,11 +3,8 @@
 #include "Assets/Factories/TextureFactory/TextureFactory.h"
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_vulkan.h"
-#include "Core/Application/Application.h"
 #include "Core/Windows/Window.h"
 #include "Renderer/RenderManager.h"
-#include "Renderer/RHIIncl.h"
-#include "Renderer/API/Vulkan/VulkanCommandList.h"
 #include "Renderer/API/Vulkan/VulkanMacros.h"
 #include "Renderer/API/Vulkan/VulkanRenderContext.h"
 #include "Renderer/API/Vulkan/VulkanSwapchain.h"
@@ -68,7 +65,7 @@ namespace Lumina
         InitInfo.Instance = VulkanBackend->GetVulkanInstance();
         InitInfo.PhysicalDevice = VulkanBackend->GetDevice()->GetPhysicalDevice();
         InitInfo.Device = VulkanBackend->GetDevice()->GetDevice();
-        InitInfo.Queue = VulkanBackend->GetCommandQueues().GraphicsQueue;
+        InitInfo.Queue = VulkanBackend->GetQueue(ECommandQueue::Graphics)->Queue;
         InitInfo.DescriptorPool = DescriptorPool;
         InitInfo.MinImageCount = 2;
         InitInfo.ImageCount = 2;
@@ -112,7 +109,7 @@ namespace Lumina
 		{
 			VulkanRenderContext = UpdateContext.GetSubsystem<FRenderManager>()->GetRenderContext<FVulkanRenderContext>();
 			
-			FVulkanCommandList* VulkanCommandList = VulkanRenderContext->GetPrimaryCommandList();
+			FRHICommandListRef CommandList = VulkanRenderContext->GetCommandList(ECommandQueue::Graphics);
 
 			FRHIImageRef Handle = VulkanRenderContext->GetSwapchain()->GetCurrentImage();
 			
@@ -124,11 +121,11 @@ namespace Lumina
 			.SetRenderArea(VulkanRenderContext->GetSwapchain()->GetSwapchainExtent());
 
 			
-			VulkanRenderContext->BeginRenderPass(VulkanCommandList, RenderPass);
+			CommandList->BeginRenderPass(RenderPass);
 			
-			ImGui_ImplVulkan_RenderDrawData(DrawData, VulkanCommandList->CommandBuffer);
+			ImGui_ImplVulkan_RenderDrawData(DrawData, CommandList->GetAPIResource<VkCommandBuffer>());
 
-			VulkanRenderContext->EndRenderPass(VulkanCommandList);
+			CommandList->EndRenderPass();
            
 
 		}

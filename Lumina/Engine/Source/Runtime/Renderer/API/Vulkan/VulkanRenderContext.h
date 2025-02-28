@@ -1,4 +1,6 @@
 #pragma once
+#include "TrackedCommandBuffer.h"
+#include "Core/Threading/Thread.h"
 
 #ifdef LUMINA_RENDERER_VULKAN
 
@@ -20,16 +22,23 @@ namespace Lumina
 
 namespace Lumina
 {
-    class FFencePool
+    class FFencePool : public IDeviceChild
     {
     public:
-        FFencePool() = default;
-
-        void SetDevice(VkDevice InDevice)
+        
+        FFencePool(FVulkanDevice* InDevice)
+            : IDeviceChild(InDevice)
         {
-            Device = InDevice;
         }
-            
+
+        ~FFencePool()
+        {
+            for (VkFence Fence : Fences)
+            {
+                vkDestroyFence(Device->GetDevice(), Fence, nullptr);
+            }
+        }
+
         NODISCARD VkFence Aquire()
         {
             if (!Fences.empty())
@@ -42,42 +51,55 @@ namespace Lumina
             VkFence Fence;
             VkFenceCreateInfo FenceCreateInfo = {};
             FenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-            VK_CHECK(vkCreateFence(Device, &FenceCreateInfo, nullptr, &Fence));
+            VK_CHECK(vkCreateFence(Device->GetDevice(), &FenceCreateInfo, nullptr, &Fence));
             return Fence;
         }
 
         void Release(VkFence Fence)
         {
-            vkResetFences(Device, 1, &Fence);
+            vkResetFences(Device->GetDevice(), 1, &Fence);
             Fences.push_back(Fence);
         }
 
-        void Destroy()
-        {
-            for (VkFence Fence : Fences)
-            {
-                vkDestroyFence(Device, Fence, nullptr);
-            }
-        }
-
     private:
-        
+
         TVector<VkFence> Fences;
-        VkDevice         Device;
     };
     
-    
-    struct FVulkanCommandQueues
+    class FQueue : public IDeviceChild
     {
-        VkQueue     GraphicsQueue;
-        uint32      GraphicsQueueIndex;
+    public:
+
+        FQueue(FVulkanDevice* InDevice, VkQueue InQueue, uint32 InQueueFamilyIndex)
+            : IDeviceChild(InDevice)
+            , CommandPool(nullptr)
+            , Queue(InQueue)
+            , QueueFamilyIndex(InQueueFamilyIndex)
+            , FencePool(InDevice)
+        {}
+
+
+        TRefCountPtr<FTrackedCommandBufer> GetOrCreateCommandBuffer();
+
+        void RetireCommandBuffers();
         
-        VkQueue     TransferQueue;
-        uint32      TransferQueueIndex;
+        void Submit(ICommandList* CommandLists, uint32 NumCommandLists);
         
-        VkQueue     ComputeQueue;
-        uint32      ComputeQueueIndex;
         
+        void AddSignalSemaphore(VkSemaphore Semaphore);
+        void AddWaitSemaphore(VkSemaphore Semaphore);
+
+        
+        FMutex                      Mutex;
+        VkCommandPool               CommandPool;
+        VkQueue                     Queue;
+        uint32                      QueueFamilyIndex;
+        TVector<VkSemaphore>        WaitSemaphores;
+        TVector<VkSemaphore>        SignalSemaphores;
+        FFencePool                  FencePool;
+        
+        TVector<TRefCountPtr<FTrackedCommandBufer>> CommandBuffersInFlight;
+        TStack<TRefCountPtr<FTrackedCommandBufer>>  CommandBufferPool;
     };
     
     class FVulkanRenderContext : public IRenderContext
@@ -96,24 +118,25 @@ namespace Lumina
         
         void FrameStart(const FUpdateContext& UpdateContext, uint8 InCurrentFrameIndex) override;
         void FrameEnd(const FUpdateContext& UpdateContext) override;
-        
 
+        FORCEINLINE FQueue* GetQueue(ECommandQueue Type) const { return Queues[(uint32)Type]; }
+
+        FRHICommandListRef CreateCommandList(const FCommandListInfo& Info) override;
+        void ExecuteCommandList(ICommandList* CommandLists, uint32 NumCommandLists, ECommandQueue QueueType) override;
+        FRHICommandListRef GetCommandList(ECommandQueue Queue) override;
+        
         void CreateDevice(vkb::Instance Instance);
 
         FORCEINLINE VkInstance GetVulkanInstance() const { return VulkanInstance; }
         FORCEINLINE FVulkanDevice* GetDevice() const { return VulkanDevice; }
         FORCEINLINE FVulkanSwapchain* GetSwapchain() const { return Swapchain; }
-        FORCEINLINE const FVulkanCommandQueues& GetCommandQueues() const { return CommandQueues; }
         
         //----------------------------------------------------
 
 
         NODISCARD FRHIBufferRef CreateBuffer(const FRHIBufferDesc& Description) override;
-        void UploadToBuffer(ICommandList* CommandList, FRHIBuffer* Buffer, void* Data, uint32 Offset, uint32 Size) override;
-        void CopyBuffer(ICommandList* CommandList, FRHIBuffer* Source, FRHIBuffer* Destination) override;
         uint64 GetAlignedSizeForBuffer(uint64 Size, TBitFlags<EBufferUsageFlags> Usage) override;
 
-        
         
         //-------------------------------------------------------------------------------------
         
@@ -125,38 +148,16 @@ namespace Lumina
         //-------------------------------------------------------------------------------------
 
 
-        NODISCARD FRHIVertexShaderRef CreateVertexShader(const TVector<const uint32>& ByteCode) override;
-        NODISCARD FRHIPixelShaderRef CreatePixelShader(const TVector<const uint32>& ByteCode) override;
-        NODISCARD FRHIComputeShaderRef CreateComputeShader(const TVector<const uint32>& ByteCode) override;
+        NODISCARD FRHIVertexShaderRef CreateVertexShader(const TVector<uint32>& ByteCode) override;
+        NODISCARD FRHIPixelShaderRef CreatePixelShader(const TVector<uint32>& ByteCode) override;
+        NODISCARD FRHIComputeShaderRef CreateComputeShader(const TVector<uint32>& ByteCode) override;
 
 
         //-------------------------------------------------------------------------------------
-
-
         
 
-        NODISCARD FVulkanCommandList* GetPrimaryCommandList() const;
-        NODISCARD ICommandList* AllocateCommandList(ECommandBufferLevel Level = ECommandBufferLevel::Secondary, ECommandQueue CommandType = ECommandQueue::Graphics, ECommandBufferUsage Usage = ECommandBufferUsage::General) override;
-
-        
-        //-------------------------------------------------------------------------------------
-
-        
-        void BeginRenderPass(ICommandList* CommandList, const FRenderPassBeginInfo& PassInfo) override;
-        void EndRenderPass(ICommandList* CommandList) override;
-
-        void ClearColor(ICommandList* CommandList, const FColor& Color) override;
-
-        void Draw(ICommandList* CommandList, uint32 VertexCount, uint32 InstanceCount, uint32 FirstVertex, uint32 FirstInstance) override;
-        void DrawIndexed(ICommandList* CommandList, uint32 IndexCount, uint32 InstanceCount, uint32 FirstIndex, int32 VertexOffset, uint32 FirstInstance) override;
-        void Dispatch(ICommandList* CommandList, uint32 GroupCountX, uint32 GroupCountY, uint32 GroupCountZ) override;
-
-        //-------------------------------------------------------------------------------------
 
         void FlushPendingDeletes() override;
-        
-        NODISCARD FFencePool* GetFencePool() { return &FencePool; }
-        NODISCARD FVulkanCommandQueues& GetCommandQueues() { return CommandQueues; }
         
         
         void SetVulkanObjectName(FString Name, VkObjectType ObjectType, uint64 Handle);
@@ -164,18 +165,14 @@ namespace Lumina
     
     private:
         
-        uint8                                   CurrentFrameIndex;
-        FVulkanCommandList*                     PrimaryCommandList[FRAMES_IN_FLIGHT];
-        TQueue<FVulkanCommandList*>             CommandQueue;
+        uint8                                           CurrentFrameIndex;
+        TArray<FQueue*, (uint32)ECommandQueue::Num>     Queues;
+        FRHICommandListRef                              CommandList = nullptr;
+         
+        VkInstance                                      VulkanInstance;
         
-        VkInstance                              VulkanInstance;
-        
-        FVulkanCommandQueues                    CommandQueues;
-        
-        FVulkanSwapchain*                       Swapchain = nullptr;
-        FVulkanDevice*                          VulkanDevice = nullptr;
-        
-        FFencePool                              FencePool;
+        FVulkanSwapchain*                               Swapchain = nullptr;
+        FVulkanDevice*                                  VulkanDevice = nullptr;
         
     };
     

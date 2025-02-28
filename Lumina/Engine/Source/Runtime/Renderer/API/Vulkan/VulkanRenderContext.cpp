@@ -132,27 +132,106 @@ namespace Lumina
     
     //------------------------------------------------------------------------------------
 
-    
 
-    // We create one command pool per thread.
-    namespace
+    TRefCountPtr<FTrackedCommandBufer> FQueue::GetOrCreateCommandBuffer()
     {
-        struct FCommandPools
+        FScopeLock Lock(Mutex);
+
+        TRefCountPtr<FTrackedCommandBufer> Buf;
+        
+        if (CommandBufferPool.empty())
         {
-            TVector<VkCommandPool> CommandPools;
-            TVector<VkCommandPool> TransientCommandPools;
-        } CommandPools;
+            VkCommandPoolCreateFlags Flags = 0;
+            Flags |= VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+        
+            VkCommandPoolCreateInfo PoolInfo = {};
+            PoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+            PoolInfo.queueFamilyIndex = QueueFamilyIndex;
+            PoolInfo.flags = Flags;
+        
+            VK_CHECK(vkCreateCommandPool(Device->GetDevice(), &PoolInfo, nullptr, &CommandPool));
+
+            VkCommandBufferAllocateInfo BufferInfo = {};
+            BufferInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+            BufferInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+            BufferInfo.commandBufferCount = 1;
+            BufferInfo.commandPool = CommandPool;
+
+            VkCommandBuffer Buffer;
+            VK_CHECK(vkAllocateCommandBuffers(Device->GetDevice(), &BufferInfo, &Buffer));
+            
+            Buf = MakeRefCount<FTrackedCommandBufer>(Device, Buffer, CommandPool);    
+        }
+        else
+        {
+            Buf = CommandBufferPool.top();
+            CommandBufferPool.pop();
+        }
+
+        return Buf;
     }
-    
+
+    void FQueue::RetireCommandBuffers()
+    {
+        TVector<TRefCountPtr<FTrackedCommandBufer>> Submissions = FMemory::Move(CommandBuffersInFlight);
+
+        for (auto& Submission : Submissions)
+        {
+            Submission->ReferencedResources.clear();
+            CommandBufferPool.push(Submission);
+        }
+    }
+
+    void FQueue::Submit(ICommandList* CommandLists, uint32 NumCommandLists)
+    {
+        TVector<VkCommandBuffer> CommandBuffers(NumCommandLists);
+        
+        for (int i = 0; i < NumCommandLists; ++i)
+        {
+            /** Static cast in this case if fine because CommandLists will only ever contain one type. */
+            FVulkanCommandList* VulkanCommandList = static_cast<FVulkanCommandList*>(&CommandLists[i]);
+
+            auto& TrackedBuffer = VulkanCommandList->CurrentCommandBuffer;
+            CommandBuffers[i] = TrackedBuffer->CommandBuffer;
+            CommandBuffersInFlight.push_back(TrackedBuffer);
+        }
+
+        VkPipelineStageFlags WaitStages = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+
+        VkSubmitInfo SubmitInfo = {};
+        SubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        SubmitInfo.pWaitDstStageMask = &WaitStages;
+        SubmitInfo.pCommandBuffers = CommandBuffers.data();
+        SubmitInfo.commandBufferCount = NumCommandLists;
+        SubmitInfo.pWaitSemaphores = WaitSemaphores.data();
+        SubmitInfo.waitSemaphoreCount = WaitSemaphores.size();
+        SubmitInfo.pSignalSemaphores = SignalSemaphores.data();
+        SubmitInfo.signalSemaphoreCount = SignalSemaphores.size();
+
+        VkFence Fence = FencePool.Aquire();
+        VK_CHECK(vkQueueSubmit(Queue, NumCommandLists, &SubmitInfo, Fence));
+        VK_CHECK(vkWaitForFences(Device->GetDevice(), 1, &Fence, VK_TRUE, VULKAN_TIMEOUT_ONE_SECOND));
+        FencePool.Release(Fence);
+
+        
+        WaitSemaphores.clear();
+        SignalSemaphores.clear();
+    }
+
+    void FQueue::AddSignalSemaphore(VkSemaphore Semaphore)
+    {
+        SignalSemaphores.push_back(Semaphore);
+    }
+
+    void FQueue::AddWaitSemaphore(VkSemaphore Semaphore)
+    {
+        WaitSemaphores.push_back(Semaphore);
+    }
 
     FVulkanRenderContext::FVulkanRenderContext()
         : CurrentFrameIndex(0)
-        , PrimaryCommandList{}
-        , Swapchain(nullptr)
+        , Queues{}
         , VulkanInstance(nullptr)
-        , CommandQueues()
-        , VulkanDevice(nullptr)
-        , FencePool()
     {
     }
 
@@ -178,16 +257,14 @@ namespace Lumina
         
         
         CreateDevice(InstBuilder.value());
-        
-        FencePool.SetDevice(VulkanDevice->GetDevice());
+
+        CommandList = CreateCommandList({ECommandQueue::Graphics});
         
         Swapchain = FMemory::New<FVulkanSwapchain>();
         Swapchain->CreateSwapchain(VulkanInstance, this, Windowing::GetPrimaryWindowHandle(), Windowing::GetPrimaryWindowHandle()->GetExtent());
         
-        for (size_t i = 0; i < std::size(PrimaryCommandList); ++i)
-        {
-            PrimaryCommandList[i] = (FVulkanCommandList*)AllocateCommandList(ECommandBufferLevel::Primary);
-        }
+        WaitIdle();
+        FlushPendingDeletes();
     }
 
     void FVulkanRenderContext::Deinitialize()
@@ -196,40 +273,20 @@ namespace Lumina
         
         FMemory::Delete(Swapchain);
         
-        FencePool.Destroy();
+        CommandList.SafeRelease();
 
-        while (!CommandQueue.empty())
+        for (FQueue* Queue : Queues)
         {
-            FVulkanCommandList* CommandList = CommandQueue.back();
-
-            vkDestroyFence(VulkanDevice->GetDevice(), CommandList->Fence, nullptr);
-            FMemory::Delete(CommandList);
-            
-            CommandQueue.pop();
-        }
-
-        FlushPendingDeletes();
-
-        for (FVulkanCommandList* List : PrimaryCommandList)
-        {
-            FMemory::Delete(List);
+            FMemory::Delete(Queue);
         }
         
-        for (VkCommandPool CommandPool : CommandPools.CommandPools)
-        {
-            vkDestroyCommandPool(VulkanDevice->GetDevice(), CommandPool, nullptr);
-        }
-
-        for (VkCommandPool CommandPool : CommandPools.TransientCommandPools)
-        {
-            vkDestroyCommandPool(VulkanDevice->GetDevice(), CommandPool, nullptr);
-        }
-
+        
         auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(VulkanInstance, "vkDestroyDebugUtilsMessengerEXT");
         func(VulkanInstance, DebugUtils.DebugMessenger, nullptr);
 
-        FMemory::Delete(VulkanDevice);
         
+        FlushPendingDeletes();
+        FMemory::Delete(VulkanDevice);
         vkDestroyInstance(VulkanInstance, nullptr);
     }
 
@@ -252,28 +309,49 @@ namespace Lumina
     {
         CurrentFrameIndex = InCurrentFrameIndex;
         Swapchain->AquireNextImage(CurrentFrameIndex);
-
         
-        // Begin primary command list.
-        GetPrimaryCommandList()->Begin();
-        GetPrimaryCommandList()->WaitSemaphores.push_back(Swapchain->GetAquireSemaphore());
-        GetPrimaryCommandList()->SignalSemaphores.push_back(Swapchain->GetPresentSemaphore());
+        CommandList->Open();
+        
+        GetQueue(ECommandQueue::Graphics)->AddWaitSemaphore(Swapchain->GetAquireSemaphore());
+        GetQueue(ECommandQueue::Graphics)->AddSignalSemaphore(Swapchain->GetPresentSemaphore());
         
     }
 
     void FVulkanRenderContext::FrameEnd(const FUpdateContext& UpdateContext)
     {
-        TVector<VkCommandBuffer> SecondaryCommandBuffers;
-        FVulkanCommandList* PrimaryList = GetPrimaryCommandList();
-        
-        PrimaryList->FlushCommandList();
-        PrimaryList->SubmitCommandList();
-        PrimaryList->Reset();
-        
+        CommandList->Close();
+        ExecuteCommandList(CommandList, 1, ECommandQueue::Graphics);
         Swapchain->Present();
-
-        FlushPendingDeletes();
         
+        FlushPendingDeletes();
+    }
+
+    FRHICommandListRef FVulkanRenderContext::CreateCommandList(const FCommandListInfo& Info)
+    {
+        if (Queues[uint32(Info.CommandQueue)] == nullptr)
+        {
+            return nullptr;
+        }
+
+        return MakeRefCount<FVulkanCommandList>(this, Info);
+    }
+    
+    void FVulkanRenderContext::ExecuteCommandList(ICommandList* CommandLists, uint32 NumCommandLists, ECommandQueue QueueType)
+    {
+        FQueue* Queue = Queues[uint32(QueueType)];
+
+        Queue->Submit(CommandLists, NumCommandLists);
+
+        for (int i = 0; i < NumCommandLists; ++i)
+        {
+            /** Static cast in this case if fine because CommandLists will only ever contain one type. */
+            static_cast<FVulkanCommandList*>(&CommandLists[i])->Executed(Queue);
+        }
+    }
+
+    FRHICommandListRef FVulkanRenderContext::GetCommandList(ECommandQueue Queue)
+    {
+        return CommandList;
     }
 
     void FVulkanRenderContext::CreateDevice(vkb::Instance Instance)
@@ -312,43 +390,31 @@ namespace Lumina
 
         vkb::DeviceBuilder deviceBuilder(physicalDevice);
         vkb::Device vkbDevice = deviceBuilder.build().value();
-        
-        CommandQueues.GraphicsQueue = vkbDevice.get_queue(vkb::QueueType::graphics).value();
-        CommandQueues.TransferQueue = vkbDevice.get_queue(vkb::QueueType::transfer).value();
-        CommandQueues.ComputeQueue = vkbDevice.get_queue(vkb::QueueType::compute).value();
-        
-        CommandQueues.GraphicsQueueIndex =     vkbDevice.get_queue_index(vkb::QueueType::graphics).value();
-        CommandQueues.ComputeQueueIndex =      vkbDevice.get_queue_index(vkb::QueueType::compute).value();
-        CommandQueues.TransferQueueIndex =     vkbDevice.get_queue_index(vkb::QueueType::transfer).value();
+
         
         VkDevice Device = vkbDevice.device;
         VkPhysicalDevice PhysicalDevice = physicalDevice.physical_device;
-
         VulkanDevice = FMemory::New<FVulkanDevice>(VulkanInstance, PhysicalDevice, Device);
 
-        for(uint32 i = 0; i < std::thread::hardware_concurrency(); ++i)
+        if (vkbDevice.get_queue(vkb::QueueType::graphics).has_value())
         {
-            VkCommandPoolCreateFlags Flags = 0;
-            Flags |= VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-            
-            VkCommandPoolCreateInfo CreateInfo = {};
-            CreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-            CreateInfo.flags = Flags;
+            VkQueue Queue = vkbDevice.get_queue(vkb::QueueType::graphics).value();
+            uint32 Index = vkbDevice.get_queue_index(vkb::QueueType::graphics).value();
+            Queues[(uint32)ECommandQueue::Graphics] = FMemory::New<FQueue>(VulkanDevice, Queue, Index);
+        }
 
-            {
-                VkCommandPool Pool;
-                VK_CHECK(vkCreateCommandPool(Device, &CreateInfo, nullptr, &Pool));
-                CommandPools.CommandPools.push_back(Pool);
-            }
+        if (vkbDevice.get_queue(vkb::QueueType::compute).has_value())
+        {
+            VkQueue Queue = vkbDevice.get_queue(vkb::QueueType::compute).value();
+            uint32 Index = vkbDevice.get_queue_index(vkb::QueueType::compute).value();
+            Queues[(uint32)ECommandQueue::Compute] = FMemory::New<FQueue>(VulkanDevice, Queue, Index);
+        }
 
-            
-            {
-                Flags |= VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
-                
-                VkCommandPool Pool;
-                VK_CHECK(vkCreateCommandPool(Device, &CreateInfo, nullptr, &Pool));
-                CommandPools.TransientCommandPools.push_back(Pool);
-            }
+        if (vkbDevice.get_queue(vkb::QueueType::transfer).has_value())
+        {
+            VkQueue Queue = vkbDevice.get_queue(vkb::QueueType::transfer).value();
+            uint32 Index = vkbDevice.get_queue_index(vkb::QueueType::transfer).value();
+            Queues[(uint32)ECommandQueue::Transfer] = FMemory::New<FQueue>(VulkanDevice, Queue, Index);
         }
     }
 
@@ -369,17 +435,17 @@ namespace Lumina
         return MakeRefCount<FVulkanImage>(VulkanDevice, ImageSpec);
     }
 
-    FRHIVertexShaderRef FVulkanRenderContext::CreateVertexShader(const TVector<const uint32>& ByteCode)
+    FRHIVertexShaderRef FVulkanRenderContext::CreateVertexShader(const TVector<uint32>& ByteCode)
     {
         return MakeRefCount<FRHIVulkanVertexShader>(VulkanDevice, ByteCode);
     }
 
-    FRHIPixelShaderRef FVulkanRenderContext::CreatePixelShader(const TVector<const uint32>& ByteCode)
+    FRHIPixelShaderRef FVulkanRenderContext::CreatePixelShader(const TVector<uint32>& ByteCode)
     {
         return MakeRefCount<FRHIVulkanPixelShader>(VulkanDevice, ByteCode);
     }
 
-    FRHIComputeShaderRef FVulkanRenderContext::CreateComputeShader(const TVector<const uint32>& ByteCode)
+    FRHIComputeShaderRef FVulkanRenderContext::CreateComputeShader(const TVector<uint32>& ByteCode)
     {
         return MakeRefCount<FRHIVulkanComputeShader>(VulkanDevice, ByteCode);
     }
@@ -388,216 +454,17 @@ namespace Lumina
     {
         return MakeRefCount<FVulkanBuffer>(VulkanDevice, Description);
     }
-
-    void FVulkanRenderContext::UploadToBuffer(ICommandList* CommandList, FRHIBuffer* Buffer, void* Data, uint32 Offset, uint32 Size)
-    {
-        VmaAllocationCreateFlags VmaFlags = 0;
-        
-        VkBufferCreateInfo BufferCreateInfo = {};
-        BufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-        BufferCreateInfo.size = Size;
-        BufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-        BufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-        BufferCreateInfo.flags = 0;
-
-
-        TBitFlags<EBufferUsageFlags> BufferUsage;
-        BufferUsage.SetFlag(EBufferUsageFlags::StagingBuffer);
-        
-        FRHIBufferDesc Description;
-        Description.Size = Size;
-        Description.Stride = Size;
-        Description.Usage = BufferUsage;
-
-        FRHIBufferRef StagingBuffer = CreateBuffer(Description);
-        VmaAllocation Allocation = VulkanDevice->GetAllocator()->GetAllocation(StagingBuffer.As<FVulkanBuffer>()->GetBuffer());
-        
-        void* Memory = VulkanDevice->GetAllocator()->MapMemory(Allocation);
-        FMemory::MemCopy((char*)Memory + Offset, Data, Size);
-        VulkanDevice->GetAllocator()->UnmapMemory(Allocation);
-
-        CopyBuffer(CommandList, StagingBuffer, Buffer);
-        
-    }
-
-    void FVulkanRenderContext::CopyBuffer(ICommandList* CommandList, FRHIBuffer* Source, FRHIBuffer* Destination)
-    {
-        VkCommandBufferAllocateInfo allocInfo{};
-        allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-        allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        allocInfo.commandPool = CommandPools.TransientCommandPools[0];
-        allocInfo.commandBufferCount = 1;
-
-        VkCommandBuffer commandBuffer;
-        VK_CHECK(vkAllocateCommandBuffers(VulkanDevice->GetDevice(), &allocInfo, &commandBuffer));
-
-        VkCommandBufferBeginInfo beginInfo{};
-        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-        VK_CHECK(vkBeginCommandBuffer(commandBuffer, &beginInfo));
-
-        VkBufferCopy copyRegion = {};
-        copyRegion.srcOffset = 0;
-        copyRegion.dstOffset = 0;
-        copyRegion.size = Source->GetSize();
-
-        FVulkanBuffer* VkSource = static_cast<FVulkanBuffer*>(Source);
-        FVulkanBuffer* VkDestination = static_cast<FVulkanBuffer*>(Destination);
-        
-        vkCmdCopyBuffer(commandBuffer, VkSource->GetBuffer(), VkDestination->GetBuffer(), 1, &copyRegion);
-
-        VK_CHECK(vkEndCommandBuffer(commandBuffer));
-
-    }
-
-    FVulkanCommandList* FVulkanRenderContext::GetPrimaryCommandList() const
-    {
-        return PrimaryCommandList[CurrentFrameIndex];
-    }
     
-    ICommandList* FVulkanRenderContext::AllocateCommandList(ECommandBufferLevel Level, ECommandQueue CommandType, ECommandBufferUsage Usage)
-    {
-        bool bTransient = (Usage == ECommandBufferUsage::Transient);
-        
-        VkCommandBufferAllocateInfo AllocInfo = {};
-        AllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-        AllocInfo.commandPool = bTransient ? CommandPools.TransientCommandPools[0] : CommandPools.CommandPools[0];
-        AllocInfo.level = (Level == ECommandBufferLevel::Primary) ? VK_COMMAND_BUFFER_LEVEL_PRIMARY : VK_COMMAND_BUFFER_LEVEL_SECONDARY;
-        AllocInfo.commandBufferCount = 1;
-
-
-        VkQueue Queue = VK_NULL_HANDLE;
-        switch (CommandType)
-        {
-        case ECommandQueue::Graphics:
-            Queue = CommandQueues.GraphicsQueue;
-            break;
-        case ECommandQueue::Compute:
-            Queue = CommandQueues.ComputeQueue;
-            break;
-        case ECommandQueue::Transfer:
-            Queue = CommandQueues.TransferQueue;
-            break;
-        case ECommandQueue::All:
-            Queue = CommandQueues.GraphicsQueue;
-            break;
-        }
-        
-        FVulkanCommandList* VulkanCommandList = FMemory::New<FVulkanCommandList>();
-        VulkanCommandList->CommandQueue = CommandType;
-        VulkanCommandList->Queue = Queue;
-        VulkanCommandList->Type = Usage;
-        VulkanCommandList->Pool = AllocInfo.commandPool;
-        VulkanCommandList->RenderContext = this;
-
-        /** Primary command buffer is managed seperately */
-        if (Level == ECommandBufferLevel::Secondary && Usage != ECommandBufferUsage::Transient)
-        {
-            CommandQueue.push(VulkanCommandList);
-        }
-        
-        VK_CHECK(vkAllocateCommandBuffers(GetDevice()->GetDevice(), &AllocInfo, &VulkanCommandList->CommandBuffer));
-
-        return VulkanCommandList;
-    }
-    
-    void FVulkanRenderContext::BeginRenderPass(ICommandList* CommandList, const FRenderPassBeginInfo& PassInfo)
-    {
-        TVector<VkRenderingAttachmentInfo> ColorAttachments;
-        VkRenderingAttachmentInfo DepthAttachment = {};
-
-        for (int i = 0; i < PassInfo.ColorAttachments.size(); ++i)
-        {
-            FRHIImageRef Image = PassInfo.ColorAttachments[i];
-
-            TRefCountPtr<FVulkanImage> VulkanImage = Image.As<FVulkanImage>();
-            
-            VkRenderingAttachmentInfo Attachment = {};
-            Attachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
-            Attachment.imageView = VulkanImage->GetImageView();
-            Attachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL; 
-            Attachment.loadOp = (PassInfo.ColorLoadOps[i] == ERenderLoadOp::Clear) ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
-            Attachment.storeOp = PassInfo.ColorStoreOps[i] == ERenderLoadOp::DontCare ? VK_ATTACHMENT_STORE_OP_DONT_CARE : VK_ATTACHMENT_STORE_OP_STORE; 
-    
-            Attachment.clearValue.color.float32[0] = PassInfo.ClearColorValues[i].R;
-            Attachment.clearValue.color.float32[1] = PassInfo.ClearColorValues[i].G;
-            Attachment.clearValue.color.float32[2] = PassInfo.ClearColorValues[i].B;
-            Attachment.clearValue.color.float32[3] = PassInfo.ClearColorValues[i].A;
-    
-            ColorAttachments.push_back(Attachment);
-        }
-        
-        const FRHIImageRef& ImageHandle = PassInfo.DepthAttachment;
-        if (ImageHandle.IsValid())
-        {
-            TRefCountPtr<FVulkanImage> VulkanImage = PassInfo.DepthAttachment.As<FVulkanImage>();
-            
-            VkRenderingAttachmentInfo Attachment = {};
-            Attachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
-            Attachment.imageView = VulkanImage->GetImageView();
-            Attachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL; 
-            Attachment.loadOp = (PassInfo.DepthLoadOp == ERenderLoadOp::Clear) ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
-            Attachment.storeOp = PassInfo.DepthStoreOp == ERenderLoadOp::DontCare ? VK_ATTACHMENT_STORE_OP_DONT_CARE : VK_ATTACHMENT_STORE_OP_STORE;
-            
-            DepthAttachment = Attachment;
-            DepthAttachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-            DepthAttachment.clearValue.depthStencil.depth = 1.0f;
-            DepthAttachment.clearValue.depthStencil.stencil = 0;
-            
-        }
-        
-        VkRenderingInfo RenderInfo = {};
-        RenderInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
-        RenderInfo.colorAttachmentCount = (uint32)ColorAttachments.size();
-        RenderInfo.pColorAttachments = ColorAttachments.data();
-        RenderInfo.pDepthAttachment = (DepthAttachment.imageView != VK_NULL_HANDLE) ? &DepthAttachment : nullptr;
-        RenderInfo.renderArea.extent.width = PassInfo.RenderArea.X;
-        RenderInfo.renderArea.extent.height = PassInfo.RenderArea.Y;
-        RenderInfo.layerCount = 1;
-
-        FVulkanCommandList* VulkanCommandList = (FVulkanCommandList*)CommandList;
-        
-        vkCmdBeginRendering(VulkanCommandList->CommandBuffer, &RenderInfo);
-    }
-
-    void FVulkanRenderContext::EndRenderPass(ICommandList* CommandList)
-    {
-        FVulkanCommandList* VulkanCommandList = (FVulkanCommandList*)CommandList;
-
-        vkCmdEndRendering(VulkanCommandList->CommandBuffer);
-        
-    }
-
-    void FVulkanRenderContext::ClearColor(ICommandList* CommandList, const FColor& Color)
-    {
-        FVulkanCommandList* VulkanCommandList = (FVulkanCommandList*)CommandList;
-        
-    }
-
-    void FVulkanRenderContext::Draw(ICommandList* CommandList, uint32 VertexCount, uint32 InstanceCount, uint32 FirstVertex, uint32 FirstInstance)
-    {
-        FVulkanCommandList* VulknanCommandList = (FVulkanCommandList*)CommandList;
-
-        vkCmdDraw(VulknanCommandList->CommandBuffer, VertexCount, InstanceCount, FirstVertex, FirstInstance);
-    }
-
-    void FVulkanRenderContext::DrawIndexed(ICommandList* CommandList, uint32 IndexCount, uint32 InstanceCount, uint32 FirstIndex, int32 VertexOffset, uint32 FirstInstance)
-    {
-        FVulkanCommandList* VulknanCommandList = (FVulkanCommandList*)CommandList;
-
-        vkCmdDrawIndexed(VulknanCommandList->CommandBuffer, IndexCount, InstanceCount, FirstIndex, VertexOffset, FirstInstance);
-    }
-
-    void FVulkanRenderContext::Dispatch(ICommandList* CommandList, uint32 GroupCountX, uint32 GroupCountY, uint32 GroupCountZ)
-    {
-        FVulkanCommandList* VulknanCommandList = (FVulkanCommandList*)CommandList;
-
-        vkCmdDispatch(VulknanCommandList->CommandBuffer, GroupCountX, GroupCountY, GroupCountZ);
-    }
-
     void FVulkanRenderContext::FlushPendingDeletes()
     {
+        for (FQueue* Queue : Queues)
+        {
+            if (Queue)
+            {
+                Queue->RetireCommandBuffers();
+            }
+        }
+        
         while (!PendingDeletes.empty())
         {
             IRHIResource* Resource = PendingDeletes.top();

@@ -20,7 +20,6 @@ namespace Lumina
 
         VK_CHECK(vmaCreateAllocator(&Info, &Allocator));
 
-        Statistics = {};
     }
     
     
@@ -31,7 +30,6 @@ namespace Lumina
 
     void FVulkanMemoryAllocator::ClearAllAllocations()
     {
-        // Cleanup allocated buffers
         for (auto& kvp : AllocatedBuffers)
         {
             if (kvp.first != VK_NULL_HANDLE)
@@ -43,7 +41,6 @@ namespace Lumina
         
         AllocatedBuffers.clear();
 
-        // Cleanup allocated images
         for (auto& kvp : AllocatedImages)
         {
             if (kvp.first != VK_NULL_HANDLE)
@@ -54,22 +51,9 @@ namespace Lumina
         }
         
         AllocatedImages.clear();
-
-        // Destroy the Vulkan memory allocator
-        LOG_INFO("Destroying Vulkan Memory Allocator...");
+        
         vmaDestroyAllocator(Allocator);
         Allocator = VK_NULL_HANDLE;
-
-        // Reset statistics
-        Statistics.CurrentlyAllocatedBuffers = 0;
-        Statistics.CurrentlyAllocatedImages = 0;
-        Statistics.CurrentlyAllocated = 0;
-
-        // Log final state
-        LOG_INFO("Allocator Shutdown Complete. Final Statistics:");
-        LOG_INFO("Allocated Buffers: {}", Statistics.CurrentlyAllocatedBuffers);
-        LOG_INFO("Allocated Images: {}", Statistics.CurrentlyAllocatedImages);
-        LOG_INFO("Currently Allocated Memory: {} bytes", Statistics.CurrentlyAllocated);
     }
 
     VmaAllocation FVulkanMemoryAllocator::AllocateBuffer(const VkBufferCreateInfo* CreateInfo, VmaAllocationCreateFlags Flags, VkBuffer* vkBuffer, const char* AllocationName)
@@ -87,9 +71,6 @@ namespace Lumina
         vmaSetAllocationName(Allocator, Allocation, AllocationName);
 
         AllocatedBuffers[*vkBuffer]= Allocation;
-        Statistics.Allocated += AllocationInfo.size;
-        Statistics.CurrentlyAllocated += AllocationInfo.size;
-        Statistics.CurrentlyAllocatedBuffers++;
         
         return Allocation;
     }
@@ -116,8 +97,6 @@ namespace Lumina
         vmaSetAllocationName(Allocator, Allocation, AllocationName);
 
         AllocatedImages[*vkImage] = Allocation;
-        Statistics.CurrentlyAllocated += AllocationInfo.size;
-        Statistics.CurrentlyAllocatedImages++;
         
         return Allocation;
     }
@@ -140,9 +119,6 @@ namespace Lumina
         VmaAllocationInfo AllocationInfo;
         vmaGetAllocationInfo(Allocator, AllocatedBuffers[Buffer], &AllocationInfo);
         
-        Statistics.CurrentlyAllocated -= AllocationInfo.size;
-        Statistics.CurrentlyAllocatedBuffers--;
-        
         vmaDestroyBuffer(Allocator, Buffer, AllocatedBuffers[Buffer]);
         
         AllocatedBuffers.erase(Buffer);
@@ -156,9 +132,6 @@ namespace Lumina
         
         VmaAllocationInfo AllocationInfo;
         vmaGetAllocationInfo(Allocator, AllocatedImages[Image], &AllocationInfo);
-        
-        Statistics.CurrentlyAllocated -= AllocationInfo.size;
-        Statistics.CurrentlyAllocatedImages--;
         
         vmaDestroyImage(Allocator, Image, AllocatedImages[Image]);
         

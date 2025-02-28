@@ -5,7 +5,6 @@
 
 #include "Containers/Array.h"
 #include "Memory/Memory.h"
-#include "Platform/GenericPlatform.h"
 
 namespace Lumina
 {
@@ -43,15 +42,6 @@ namespace Lumina
         VmaAllocator Allocator = nullptr;
         THashMap<VkBuffer, VmaAllocation> AllocatedBuffers;
         THashMap<VkImage, VmaAllocation> AllocatedImages;
-        
-        struct FAllocatorStatistics 
-        {
-            uint64 Allocated = 0;
-            uint64 Freed = 0;
-            uint64 CurrentlyAllocated = 0;
-            uint64 CurrentlyAllocatedBuffers = 0;
-            uint64 CurrentlyAllocatedImages = 0;
-        } Statistics;
 
     };
     

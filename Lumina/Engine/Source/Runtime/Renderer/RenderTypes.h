@@ -85,23 +85,17 @@ namespace Lumina
 
     enum class ECommandQueue : uint8
     {
-        Graphics = 1 << 0,
-        Compute = 1 << 1,
-        Transfer = 1 << 2,
+        Graphics    = 0,
+        Compute     = 1,
+        Transfer    = 2,
         
-        All = Graphics | Compute | Transfer,
+        Num = 3,
     };
 
     enum class ECommandBufferUsage : uint8
     {
         General,
         Transient,
-    };
-
-    enum class ECommandBufferLevel : uint8
-    {
-        Primary,
-        Secondary
     };
     
     enum class EDescriptorBindingType : uint32

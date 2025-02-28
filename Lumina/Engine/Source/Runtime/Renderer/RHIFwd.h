@@ -6,6 +6,11 @@
 
 namespace Lumina
 {
+    class ICommandList;
+}
+
+namespace Lumina
+{
     class FRHIComputeShader;
     class FRHIPixelShader;
     class FRHIVertexShader;
@@ -19,5 +24,6 @@ namespace Lumina
     using FRHIVertexShaderRef       = TRefCountPtr<FRHIVertexShader>;
     using FRHIPixelShaderRef        = TRefCountPtr<FRHIPixelShader>;
     using FRHIComputeShaderRef      = TRefCountPtr<FRHIComputeShader>;
+    using FRHICommandListRef        = TRefCountPtr<ICommandList>;
 
 }

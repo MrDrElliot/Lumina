@@ -35,9 +35,19 @@ enum ERHIResourceType : uint8
 	RRT_GPUFence,
 	RRT_Viewport,
 	RRT_StagingBuffer,
+	RRT_CommandList,
 
 
 	RRT_Num
+};
+
+enum class EAPIResourceType : uint8
+{
+	Default,
+	Image,
+	ImageView,
+
+	CommandBuffer,
 };
 
 #define RENDER_RESOURCE(TypeValue) \
@@ -60,6 +70,17 @@ namespace Lumina
         IRHIResource() = default;
         virtual ~IRHIResource() = default;
 
+    	template<typename T>
+		T GetAPIResource(EAPIResourceType Type = EAPIResourceType::Default)
+    	{
+    		void* Resource = GetAPIResourceImpl(Type);
+    		return static_cast<T>(Resource);
+    	}
+
+    	
+    protected:
+
+    	virtual void* GetAPIResourceImpl(EAPIResourceType Type) { return nullptr; };
 
     private:
 
@@ -84,6 +105,7 @@ namespace Lumina
     		{
     			Destroy();
     		}
+    		
     		Assert(NewValue >= 0);
     		return uint32(NewValue);
     	}
@@ -334,7 +356,7 @@ namespace Lumina
 	
 	private:
 
-		FName Key = NAME_None;
+		FName Key;
 	};
 
 	class FRHIVertexShader : public FRHIShader

@@ -1,13 +1,14 @@
 #pragma once
+#include "CommandList.h"
 #include "RenderResource.h"
 #include "RenderTypes.h"
 #include "RHIFwd.h"
-#include "Core/Math/Math.h"
 #include "Types/BitFlags.h"
 #include "Core/UpdateContext.h"
 
 namespace Lumina
 {
+    struct FCommandListInfo;
     class ICommandList;
     struct FGPUBarrier;
 }
@@ -38,53 +39,40 @@ namespace Lumina
 
         //-------------------------------------------------------------------------------------
 
-        
-        NODISCARD virtual ICommandList* AllocateCommandList(ECommandBufferLevel Level = ECommandBufferLevel::Secondary, ECommandQueue CommandType = ECommandQueue::Graphics, ECommandBufferUsage Usage = ECommandBufferUsage::General) = 0;
+        virtual FRHICommandListRef CreateCommandList(const FCommandListInfo& Info = FCommandListInfo()) = 0;
+        virtual void ExecuteCommandList(ICommandList* CommandLists, uint32 NumCommandLists, ECommandQueue QueueType) = 0;
+        NODISCARD virtual FRHICommandListRef GetCommandList(ECommandQueue Queue = ECommandQueue::Graphics) = 0;
 
-        
+
         //-------------------------------------------------------------------------------------
-        
+
         
         NODISCARD virtual FRHIBufferRef CreateBuffer(const FRHIBufferDesc& Description) = 0;
-        NODISCARD virtual void UploadToBuffer(ICommandList* CommandList, FRHIBuffer* Buffer, void* Data, uint32 Offset, uint32 Size) = 0;
-        virtual void CopyBuffer(ICommandList* CommandList, FRHIBuffer* Source, FRHIBuffer* Destination) = 0;
         virtual uint64 GetAlignedSizeForBuffer(uint64 Size, TBitFlags<EBufferUsageFlags> Usage) = 0;
+
 
         
         //-------------------------------------------------------------------------------------
         
 
-        NODISCARD virtual FRHIVertexShaderRef CreateVertexShader(const TVector<const uint32>& ByteCode) = 0;
-        NODISCARD virtual FRHIPixelShaderRef CreatePixelShader(const TVector<const uint32>& ByteCode) = 0;
-        NODISCARD virtual FRHIComputeShaderRef CreateComputeShader(const TVector<const uint32>& ByteCode) = 0;
+        NODISCARD virtual FRHIVertexShaderRef CreateVertexShader(const TVector<uint32>& ByteCode) = 0;
+        NODISCARD virtual FRHIPixelShaderRef CreatePixelShader(const TVector<uint32>& ByteCode) = 0;
+        NODISCARD virtual FRHIComputeShaderRef CreateComputeShader(const TVector<uint32>& ByteCode) = 0;
         
         //-------------------------------------------------------------------------------------
 
 
         
         NODISCARD virtual FRHIImageRef CreateImage(const FRHIImageDesc& ImageSpec) = 0;
-
         
 
         //-------------------------------------------------------------------------------------
 
         
-        virtual void BeginRenderPass(ICommandList* CommandList, const FRenderPassBeginInfo& PassInfo) = 0;
-        virtual void EndRenderPass(ICommandList* CommandList) = 0;
-
-        virtual void ClearColor(ICommandList* CommandList, const FColor& Color) = 0;
-
-        
-        //-------------------------------------------------------------------------------------
-
-
-        virtual void Draw(ICommandList* CommandList, uint32 VertexCount, uint32 InstanceCount, uint32 FirstVertex, uint32 FirstInstance) = 0;
-        virtual void DrawIndexed(ICommandList* CommandList, uint32 IndexCount, uint32 InstanceCount = 1, uint32 FirstIndex = 1, int32 VertexOffset = 0, uint32 FirstInstance = 0) = 0;
-        virtual void Dispatch(ICommandList* CommandList, uint32 GroupCountX, uint32 GroupCountY, uint32 GroupCountZ) = 0;
-
         virtual void FlushPendingDeletes() = 0;
+        
     
-    private:
+    protected:
         
     };
 }

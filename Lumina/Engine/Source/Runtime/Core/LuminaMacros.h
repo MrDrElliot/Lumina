@@ -2,4 +2,4 @@
 
 #include "Containers/Name.h"
 
-const Lumina::FName NAME_None = "None";
+#define NAME_None None

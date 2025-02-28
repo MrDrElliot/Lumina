@@ -38,7 +38,8 @@ public:
         if(RefCount.fetch_sub(1, eastl::memory_order_acq_rel) == 1)
         {
             eastl::atomic_thread_fence(eastl::memory_order_acquire);
-            delete this;
+        	FRefCounted* MutableThis = const_cast<FRefCounted*>(this);
+        	FMemory::Delete(MutableThis);
         }
     }
 
@@ -85,7 +86,7 @@ public:
 
 	template<typename CopyReferencedType>
 	requires std::is_base_of_v<ReferencedType, CopyReferencedType>
-	explicit TRefCountPtr(const TRefCountPtr<CopyReferencedType>& Copy)
+	TRefCountPtr(const TRefCountPtr<CopyReferencedType>& Copy)
 	{
 		Reference = static_cast<ReferencedType*>(Copy.GetReference());
 		if (Reference)
