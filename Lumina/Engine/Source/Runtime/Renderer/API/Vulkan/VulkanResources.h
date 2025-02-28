@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "VulkanDevice.h"
+#include "VulkanMacros.h"
 #include "Renderer/RenderResource.h"
 
 namespace Lumina
@@ -50,6 +51,70 @@ namespace Lumina
         VkImage                     Image =             VK_NULL_HANDLE;
         VkImageView                 ImageView =         VK_NULL_HANDLE;
     };
+
+
     
+    
+    class IVulkanShader : public IDeviceChild
+    {
+    public:
+
+        IVulkanShader(FVulkanDevice* InDevice, const TVector<const uint32>& ByteCode, ERHIResourceType Type)
+            :IDeviceChild(InDevice)
+        {
+            SpirV.ByteCode = ByteCode;
+
+            VkShaderModuleCreateFlags Flags = 0;
+            VkShaderModuleCreateInfo CreateInfo = {};
+            CreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+            CreateInfo.codeSize = ByteCode.size();
+            CreateInfo.pCode = ByteCode.data();
+            CreateInfo.pNext = nullptr;
+
+            VK_CHECK(vkCreateShaderModule(Device->GetDevice(), &CreateInfo, nullptr, &ShaderModule));
+        }
+        
+        ~IVulkanShader()
+        {
+            vkDestroyShaderModule(Device->GetDevice(), ShaderModule, nullptr);
+        }
+        
+        struct FSpirvCode
+        {
+            TVector<const uint32> ByteCode;
+        } SpirV;
+        
+
+        VkShaderModule  ShaderModule = VK_NULL_HANDLE;
+    };
+
+    
+    
+    class FRHIVulkanVertexShader : public FRHIVertexShader, public IVulkanShader
+    {
+        RENDER_RESOURCE(RRT_VertexShader)
+
+        FRHIVulkanVertexShader(FVulkanDevice* InDevice, const TVector<const uint32>& ByteCode)
+            :IVulkanShader(InDevice, ByteCode, ERHIResourceType::RRT_VertexShader)
+        {}
+    };
+
+    class FRHIVulkanPixelShader : public FRHIPixelShader, public IVulkanShader
+    {
+        RENDER_RESOURCE(RRT_PixelShader)
+
+        FRHIVulkanPixelShader(FVulkanDevice* InDevice, const TVector<const uint32>& ByteCode)
+            :IVulkanShader(InDevice, ByteCode, ERHIResourceType::RRT_PixelShader)
+        {}
+    };
+
+    class FRHIVulkanComputeShader : public FRHIComputeShader, public IVulkanShader
+    {
+        RENDER_RESOURCE(RRT_ComputeShader)
+
+        FRHIVulkanComputeShader(FVulkanDevice* InDevice, const TVector<const uint32>& ByteCode)
+            :IVulkanShader(InDevice, ByteCode, ERHIResourceType::RRT_ComputeShader)
+        {}
+    };
     
 }

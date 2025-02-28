@@ -2,12 +2,12 @@
 
 #ifdef LUMINA_RENDERER_VULKAN
 
-#include <vulkan/vulkan.hpp>
 #include "VulkanMacros.h"
 #include "Types/BitFlags.h"
 #include "src/VkBootstrap.h"
 #include "Renderer/RenderContext.h"
 #include <vma/vk_mem_alloc.h>
+#include <vulkan/vulkan.hpp>
 
 
 namespace Lumina
@@ -100,30 +100,38 @@ namespace Lumina
 
         void CreateDevice(vkb::Instance Instance);
 
-        VkInstance GetVulkanInstance() const { return VulkanInstance; }
-        FVulkanDevice* GetDevice() const { return VulkanDevice; }
+        FORCEINLINE VkInstance GetVulkanInstance() const { return VulkanInstance; }
+        FORCEINLINE FVulkanDevice* GetDevice() const { return VulkanDevice; }
         FORCEINLINE FVulkanSwapchain* GetSwapchain() const { return Swapchain; }
-
         FORCEINLINE const FVulkanCommandQueues& GetCommandQueues() const { return CommandQueues; }
         
         //----------------------------------------------------
 
 
-        FRHIBufferRef CreateBuffer(const FRHIBufferDesc& Description) override;
+        NODISCARD FRHIBufferRef CreateBuffer(const FRHIBufferDesc& Description) override;
         void UploadToBuffer(ICommandList* CommandList, FRHIBuffer* Buffer, void* Data, uint32 Offset, uint32 Size) override;
         void CopyBuffer(ICommandList* CommandList, FRHIBuffer* Source, FRHIBuffer* Destination) override;
         uint64 GetAlignedSizeForBuffer(uint64 Size, TBitFlags<EBufferUsageFlags> Usage) override;
 
         
-        //-------------------------------------------------------------------------------------
-        
-
-        
-
-        FRHIImageRef CreateImage(const FRHIImageDesc& ImageSpec) override;
-        
         
         //-------------------------------------------------------------------------------------
+        
+        
+
+        NODISCARD FRHIImageRef CreateImage(const FRHIImageDesc& ImageSpec) override;
+        
+        
+        //-------------------------------------------------------------------------------------
+
+
+        NODISCARD FRHIVertexShaderRef CreateVertexShader(const TVector<const uint32>& ByteCode) override;
+        NODISCARD FRHIPixelShaderRef CreatePixelShader(const TVector<const uint32>& ByteCode) override;
+        NODISCARD FRHIComputeShaderRef CreateComputeShader(const TVector<const uint32>& ByteCode) override;
+
+
+        //-------------------------------------------------------------------------------------
+
 
         
 
@@ -147,8 +155,8 @@ namespace Lumina
 
         void FlushPendingDeletes() override;
         
-        FFencePool* GetFencePool() { return &FencePool; }
-        FVulkanCommandQueues& GetCommandQueues() { return CommandQueues; }
+        NODISCARD FFencePool* GetFencePool() { return &FencePool; }
+        NODISCARD FVulkanCommandQueues& GetCommandQueues() { return CommandQueues; }
         
         
         void SetVulkanObjectName(FString Name, VkObjectType ObjectType, uint64 Handle);
@@ -160,12 +168,12 @@ namespace Lumina
         FVulkanCommandList*                     PrimaryCommandList[FRAMES_IN_FLIGHT];
         TQueue<FVulkanCommandList*>             CommandQueue;
         
-        FVulkanSwapchain*                       Swapchain;
         VkInstance                              VulkanInstance;
         
         FVulkanCommandQueues                    CommandQueues;
         
-        FVulkanDevice*                          VulkanDevice;
+        FVulkanSwapchain*                       Swapchain = nullptr;
+        FVulkanDevice*                          VulkanDevice = nullptr;
         
         FFencePool                              FencePool;
         

@@ -2,6 +2,7 @@
 
 #include "RenderTypes.h"
 #include "Containers/String.h"
+#include "Core/LuminaMacros.h"
 #include "Memory/RefCounted.h"
 #include "Types/BitFlags.h"
 
@@ -237,7 +238,7 @@ namespace Lumina
 	{
 	public:
 
-		RENDER_RESOURCE(RRT_Buffer);
+		RENDER_RESOURCE(RRT_Buffer)
 
 		FRHIBuffer(const FRHIBufferDesc& InDesc)
 			:Description(InDesc)
@@ -328,12 +329,12 @@ namespace Lumina
 	{
 	public:
 
-		FORCEINLINE uint32 GetHash() const { return Hash; }
-		void SetHash(uint32 InHash) { Hash = InHash; }
+		FORCEINLINE FName GetKey() const { return Key; }
+		void SetHash(FName InKey) { Key = InKey; }
 	
 	private:
 
-		uint32 Hash = 0;
+		FName Key = NAME_None;
 	};
 
 	class FRHIVertexShader : public FRHIShader

@@ -54,8 +54,9 @@ namespace Lumina
         //-------------------------------------------------------------------------------------
         
 
-        NODISCARD virtual CreateVertexShader(const TVector<const uint32>& ByteCode);
-        
+        NODISCARD virtual FRHIVertexShaderRef CreateVertexShader(const TVector<const uint32>& ByteCode) = 0;
+        NODISCARD virtual FRHIPixelShaderRef CreatePixelShader(const TVector<const uint32>& ByteCode) = 0;
+        NODISCARD virtual FRHIComputeShaderRef CreateComputeShader(const TVector<const uint32>& ByteCode) = 0;
         
         //-------------------------------------------------------------------------------------
 

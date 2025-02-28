@@ -11,24 +11,6 @@ namespace Lumina
 
 namespace Lumina
 {
-    
-    struct FVulkanGraphicsPipeline
-    {
-        VkPipeline Pipeline;
-    };
-
-    struct FVulkanComputePipeline
-    {
-        VkPipeline Pipeline;
-    };
-
-    struct FVulkanShader
-    {
-        TVector<uint32> ShaderBinaries;
-        VkShaderStageFlags StageFlags;
-        VkShaderModule Module;
-    };
-    
 }
 
 #endif

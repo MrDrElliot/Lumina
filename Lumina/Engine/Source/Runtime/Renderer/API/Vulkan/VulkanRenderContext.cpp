@@ -183,7 +183,7 @@ namespace Lumina
         
         Swapchain = FMemory::New<FVulkanSwapchain>();
         Swapchain->CreateSwapchain(VulkanInstance, this, Windowing::GetPrimaryWindowHandle(), Windowing::GetPrimaryWindowHandle()->GetExtent());
-
+        
         for (size_t i = 0; i < std::size(PrimaryCommandList); ++i)
         {
             PrimaryCommandList[i] = (FVulkanCommandList*)AllocateCommandList(ECommandBufferLevel::Primary);
@@ -367,6 +367,21 @@ namespace Lumina
     FRHIImageRef FVulkanRenderContext::CreateImage(const FRHIImageDesc& ImageSpec)
     {
         return MakeRefCount<FVulkanImage>(VulkanDevice, ImageSpec);
+    }
+
+    FRHIVertexShaderRef FVulkanRenderContext::CreateVertexShader(const TVector<const uint32>& ByteCode)
+    {
+        return MakeRefCount<FRHIVulkanVertexShader>(VulkanDevice, ByteCode);
+    }
+
+    FRHIPixelShaderRef FVulkanRenderContext::CreatePixelShader(const TVector<const uint32>& ByteCode)
+    {
+        return MakeRefCount<FRHIVulkanPixelShader>(VulkanDevice, ByteCode);
+    }
+
+    FRHIComputeShaderRef FVulkanRenderContext::CreateComputeShader(const TVector<const uint32>& ByteCode)
+    {
+        return MakeRefCount<FRHIVulkanComputeShader>(VulkanDevice, ByteCode);
     }
 
     FRHIBufferRef FVulkanRenderContext::CreateBuffer(const FRHIBufferDesc& Description)

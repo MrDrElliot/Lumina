@@ -1,4 +1,5 @@
 #pragma once
 
+#include "Containers/Name.h"
 
-const Lumina::FString NAME_None = "None";
+const Lumina::FName NAME_None = "None";
