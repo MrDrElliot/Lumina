@@ -34,6 +34,8 @@ namespace Lumina
         FVulkanImage(FVulkanDevice* InDevice, const FRHIImageDesc& InDescription, VkImage RawImage, VkImageView RawView);
         ~FVulkanImage() override;
 
+        void* GetAPIResourceImpl(EAPIResourceType Type) override;
+
         VkImage GetImage() const { return Image; }
         VkImageView GetImageView() const { return ImageView; }
         

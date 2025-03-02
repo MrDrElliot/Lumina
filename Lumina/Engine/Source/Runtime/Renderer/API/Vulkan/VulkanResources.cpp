@@ -1,5 +1,6 @@
 ﻿#include "VulkanResources.h"
 
+#include "VulkanCommandList.h"
 #include "VulkanMacros.h"
 
 namespace Lumina
@@ -11,17 +12,17 @@ namespace Lumina
 
         if (Usage.IsFlagSet(EBufferUsageFlags::VertexBuffer))
         {
-            result |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+            result |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
         }
     
         if (Usage.IsFlagSet(EBufferUsageFlags::IndexBuffer))
         {
-            result |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+            result |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
         }
     
         if (Usage.IsFlagSet(EBufferUsageFlags::UniformBuffer))
         {
-            result |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+            result |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
         }
 
         if (Usage.IsFlagSet(EBufferUsageFlags::SourceCopy))
@@ -77,6 +78,7 @@ namespace Lumina
         
         VkImageCreateFlags ImageFlags = VK_NO_FLAGS;
         
+        
         VkImageCreateInfo ImageCreateInfo = {};
         ImageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
         ImageCreateInfo.extent = VkExtent3D(GetExtent().X, GetExtent().Y, 1);
@@ -88,7 +90,7 @@ namespace Lumina
         ImageCreateInfo.format = VK_FORMAT_B8G8R8A8_UNORM;
         ImageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
         ImageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        ImageCreateInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+        ImageCreateInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
         ImageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
         FullAspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -135,5 +137,16 @@ namespace Lumina
     FVulkanImage::~FVulkanImage()
     {
         vkDestroyImageView(Device->GetDevice(), ImageView, nullptr);
+    }
+
+    void* FVulkanImage::GetAPIResourceImpl(EAPIResourceType Type)
+    {
+        switch (Type)
+        {
+            case EAPIResourceType::Image: return Image;
+            case EAPIResourceType::ImageView: return ImageView;
+        }
+
+        return nullptr;
     }
 }

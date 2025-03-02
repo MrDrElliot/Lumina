@@ -87,7 +87,9 @@ namespace Lumina
         std::vector<VkImage> RawImages = vkbSwapchain.get_images().value();
     	
 		SwapchainImages.clear();
-    	
+
+    	ICommandList* CommandList = Context->GetCommandList();
+    	CommandList->Open();
     	
         for (VkImage RawImage : RawImages)
         {
@@ -120,10 +122,15 @@ namespace Lumina
         	TRefCountPtr<FVulkanImage> Image = MakeRefCount<FVulkanImage>(Context->GetDevice(), ImageDescription, RawImage, ImageView);
         	Image->SetInitialAccess(ERHIAccess::None);
         	Image->SetDefaultAccess(ERHIAccess::PresentRead);
+			CommandList->SetRequiredImageAccess(Image, ERHIAccess::PresentRead);
         	
         	
 			SwapchainImages.push_back(Image);
         }
+
+    	CommandList->CommitBarriers();
+    	CommandList->Close();
+    	Context->ExecuteCommandList(CommandList);
 
     	size_t currentImageCount = RawImages.size();
 

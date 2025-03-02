@@ -9,6 +9,8 @@
 namespace Lumina
 {
 
+    VkImageLayout ConvertRHIAccessToVkImageLayout(ERHIAccess Access);
+    
     class FVulkanPendingGraphicsState : public FPendingGraphicsState
     {
     public:
@@ -19,6 +21,7 @@ namespace Lumina
     {
     public:
         
+        
         FVulkanCommandList(FVulkanRenderContext* InContext, const FCommandListInfo& InInfo)
             : RenderContext(InContext)
             , Info(InInfo)
@@ -28,7 +31,10 @@ namespace Lumina
         void Close() override;
         void Executed(FQueue* Queue) override;
 
-        void CopyBuffer(FRHIBuffer* Source, FRHIBuffer* Destination) override;
+        void CopyImage(FRHIImage* Src, FRHIImage* Dst) override;
+        void WriteToImage(FRHIImage* Dst, uint32 ArraySlice, uint32 MipLevel, const void* Data, size_t RowPitch, size_t DepthPitch) override;
+
+        void CopyBuffer(FRHIBuffer* Source, uint64 SrcOffset, FRHIBuffer* Destination, uint64 DstOffset, uint64 CopySize) override;
         void UploadToBuffer(FRHIBuffer* Buffer, void* Data, uint32 Offset, uint32 Size) override;
 
         void SetRequiredImageAccess(FRHIImageRef Image, ERHIAccess Access) override;

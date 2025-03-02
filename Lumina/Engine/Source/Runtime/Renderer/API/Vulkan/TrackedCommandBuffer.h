@@ -22,6 +22,11 @@ namespace Lumina
             vkDestroyCommandPool(Device->GetDevice(), CommandPool, nullptr);
         }
 
+        void AddReferencedResource(TRefCountPtr<IRHIResource> InResource)
+        {
+            ReferencedResources.push_back(InResource);
+        }
+
         VkCommandBuffer CommandBuffer;
         VkCommandPool   CommandPool;
         

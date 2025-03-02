@@ -58,11 +58,12 @@ namespace Lumina
 
     void FVulkanCommandList::Close()
     {
+        // Reset any images or buffers to their default desired layouts.
         CommandListTracker.ResetBufferDefaultStates();
         CommandListTracker.ResetImageDefaultStates();
         CommitBarriers();
         
-        
+        // Clear the recording state and end the command buffer. 
         PendingState.ClearPendingState(EPendingGraphicsState::Recording);
         VK_CHECK(vkEndCommandBuffer(CurrentCommandBuffer->CommandBuffer));
     }
@@ -72,42 +73,131 @@ namespace Lumina
         CommandListTracker.CommandListExecuted(this);
     }
 
-    void FVulkanCommandList::CopyBuffer(FRHIBuffer* Source, FRHIBuffer* Destination)
+    void FVulkanCommandList::CopyImage(FRHIImage* Src, FRHIImage* Dst)
     {
-        VkCommandBufferAllocateInfo allocInfo{};
-        allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-        allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        allocInfo.commandPool = CurrentCommandBuffer->CommandPool;
-        allocInfo.commandBufferCount = 1;
+        Assert(Src != nullptr && Dst != nullptr);
 
-        VkCommandBuffer commandBuffer;
-       // VK_CHECK(vkAllocateCommandBuffers(, &allocInfo, &commandBuffer));
+        CurrentCommandBuffer->AddReferencedResource(Src);
+        CurrentCommandBuffer->AddReferencedResource(Dst);
+        FVulkanImage* VulkanImageSrc = (FVulkanImage*)Src;
+        FVulkanImage* VulkanImageDst = (FVulkanImage*)Dst;
+        
+        VkBlitImageInfo2 BlitInfo = {};
+        BlitInfo.sType = VK_STRUCTURE_TYPE_BLIT_IMAGE_INFO_2;
+        BlitInfo.srcImage = Src->GetAPIResource<VkImage>(EAPIResourceType::Image);
+        BlitInfo.srcImageLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+        BlitInfo.dstImage = Dst->GetAPIResource<VkImage>(EAPIResourceType::Image);
+        BlitInfo.dstImageLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        BlitInfo.filter = VK_FILTER_LINEAR;
 
-        VkCommandBufferBeginInfo beginInfo{};
-        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+        VkImageBlit2 BlitRegion = {};
+        BlitRegion.sType = VK_STRUCTURE_TYPE_IMAGE_BLIT_2;
+    
+        // Source Image
+        BlitRegion.srcSubresource.aspectMask = VulkanImageSrc->GetFullAspectMask();
+        BlitRegion.srcSubresource.mipLevel = 0;
+        BlitRegion.srcSubresource.baseArrayLayer = 0;
+        BlitRegion.srcSubresource.layerCount = 1;
+        BlitRegion.srcOffsets[0] = { 0, 0, 0 };
+        BlitRegion.srcOffsets[1] = { (int32)Src->GetSizeX(), (int32)Src->GetSizeY(), 1 };
 
-        VK_CHECK(vkBeginCommandBuffer(commandBuffer, &beginInfo));
+        // Destination Image
+        BlitRegion.dstSubresource.aspectMask = VulkanImageDst->GetFullAspectMask();
+        BlitRegion.dstSubresource.mipLevel = 0;
+        BlitRegion.dstSubresource.baseArrayLayer = 0;
+        BlitRegion.dstSubresource.layerCount = 1;
+        BlitRegion.dstOffsets[0] = { 0, 0, 0 };
+        BlitRegion.dstOffsets[1] = { (int32)Dst->GetSizeX(), (int32)Dst->GetSizeY(), 1 };
 
+        BlitInfo.regionCount = 1;
+        BlitInfo.pRegions = &BlitRegion;
+
+        SetRequiredImageAccess(Src, ERHIAccess::TransferRead);
+        SetRequiredImageAccess(Dst, ERHIAccess::TransferWrite);
+        CommitBarriers();
+
+        vkCmdBlitImage2(CurrentCommandBuffer->CommandBuffer, &BlitInfo);
+
+    }
+
+    void FVulkanCommandList::WriteToImage(FRHIImage* Dst, uint32 ArraySlice, uint32 MipLevel, const void* Data, size_t RowPitch, size_t DepthPitch)
+    {
+        Assert(Dst != nullptr && Data != nullptr);
+
+        CurrentCommandBuffer->AddReferencedResource(Dst);
+        
+        SetRequiredImageAccess(Dst, ERHIAccess::TransferWrite);
+        CommitBarriers();
+    
+        TRefCountPtr<FVulkanBuffer> StagingBuffer = nullptr;
+        RenderContext->GetStagingManager().GetStagingBuffer(StagingBuffer);
+    
+        Assert(StagingBuffer != nullptr);
+    
+        FVulkanMemoryAllocator* MemoryAllocator = RenderContext->GetDevice()->GetAllocator();
+        VmaAllocation Allocation = MemoryAllocator->GetAllocation(StagingBuffer->GetBuffer());
+        
+        void* StagingData = MemoryAllocator->MapMemory(Allocation);
+    
+        size_t DataOffset = 0;
+        for (uint32 y = 0; y < Dst->GetSizeY(); ++y)
+        {
+            memcpy((uint8*)StagingData + DataOffset, (const uint8*)Data + y * RowPitch, RowPitch);
+            DataOffset += RowPitch;
+        }
+    
+        MemoryAllocator->UnmapMemory(Allocation);
+
+        FVulkanImage* VulkanImage = (FVulkanImage*)Dst;
+        
+        VkBufferImageCopy CopyRegion = {};
+        CopyRegion.bufferOffset = 0;
+        CopyRegion.bufferRowLength = 0;
+        CopyRegion.bufferImageHeight = 0;
+        CopyRegion.imageSubresource.aspectMask = VulkanImage->GetFullAspectMask();
+        CopyRegion.imageSubresource.mipLevel = MipLevel;
+        CopyRegion.imageSubresource.baseArrayLayer = ArraySlice;
+        CopyRegion.imageSubresource.layerCount = 1;
+        CopyRegion.imageOffset = { 0, 0, 0 };
+        CopyRegion.imageExtent = { Dst->GetSizeX(), Dst->GetSizeY(), 1 };
+    
+        vkCmdCopyBufferToImage(
+            CurrentCommandBuffer->CommandBuffer,
+            StagingBuffer->GetBuffer(),
+            Dst->GetAPIResource<VkImage>(EAPIResourceType::Image),
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            1, &CopyRegion
+        );
+    
+        RenderContext->GetStagingManager().FreeStagingBuffer(StagingBuffer);
+    }
+
+
+    void FVulkanCommandList::CopyBuffer(FRHIBuffer* Source, uint64 SrcOffset, FRHIBuffer* Destination, uint64 DstOffset, uint64 CopySize)
+    {
+        Assert(PendingState.IsRecording());
+        Assert(Source != nullptr);
+        Assert(Destination != nullptr);
+        Assert(CopySize > 0);
+        
         VkBufferCopy copyRegion = {};
-        copyRegion.srcOffset = 0;
-        copyRegion.dstOffset = 0;
-        copyRegion.size = Source->GetSize();
+        copyRegion.srcOffset = SrcOffset;
+        copyRegion.dstOffset = DstOffset;
+        copyRegion.size = CopySize;
 
         FVulkanBuffer* VkSource = static_cast<FVulkanBuffer*>(Source);
         FVulkanBuffer* VkDestination = static_cast<FVulkanBuffer*>(Destination);
         
-        vkCmdCopyBuffer(commandBuffer, VkSource->GetBuffer(), VkDestination->GetBuffer(), 1, &copyRegion);
+        vkCmdCopyBuffer(CurrentCommandBuffer->CommandBuffer, VkSource->GetBuffer(), VkDestination->GetBuffer(), 1, &copyRegion);
 
-        VK_CHECK(vkEndCommandBuffer(commandBuffer));
     }
 
     void FVulkanCommandList::UploadToBuffer(FRHIBuffer* Buffer, void* Data, uint32 Offset, uint32 Size)
     {
-        Assert(Size <= Buffer->GetSize());
+        Assert(Size > 0 && Size <= Buffer->GetSize());
         Assert(PendingState.IsRecording());
         
-        CurrentCommandBuffer->ReferencedResources.push_back(Buffer);
+        CurrentCommandBuffer->AddReferencedResource(Buffer);
         
         if(Buffer->GetDescription().Usage.IsFlagCleared(EBufferUsageFlags::CPUWritable))
         {
@@ -120,6 +210,8 @@ namespace Lumina
             void* StagingData = MemoryAllocator->MapMemory(Allocation);
             FMemory::MemCopy(StagingData, Data, Size);
             MemoryAllocator->UnmapMemory(Allocation);
+
+            CopyBuffer(StagingBuffer, 0, Buffer, 0, Size);
 
             RenderContext->GetStagingManager().FreeStagingBuffer(StagingBuffer);
             

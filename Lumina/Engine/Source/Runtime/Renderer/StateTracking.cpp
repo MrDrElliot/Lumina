@@ -16,7 +16,7 @@ namespace Lumina
 
         if(ImageState->State == ERHIAccess::None)
         {
-            LOG_WARN("Image being treated as undefined due to having no initial RHI access!");
+            //LOG_WARN("Image being treated as undefined due to having no initial RHI access!");
         }
 
         if(ImageState->State != Access)

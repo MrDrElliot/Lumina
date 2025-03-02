@@ -1,5 +1,7 @@
 
 
+#include <random>
+
 #include "VulkanCommandList.h"
 #include "VulkanDevice.h"
 #include "Renderer/CommandList.h"
@@ -244,9 +246,17 @@ namespace Lumina
         BufferPool.push(InBuffer);
     }
 
+    void FVulkanStagingManager::FreeAllBuffers()
+    {
+        while(!BufferPool.empty())
+        {
+            BufferPool.pop();
+        }
+    }
+
     bool FVulkanStagingManager::CreateNewStagingBuffer(TRefCountPtr<FVulkanBuffer>& OutBuffer)
     {
-        const size_t vkCmdUpdateBufferLimit = 65536;
+        const uint32 vkCmdUpdateBufferLimit = Context->GetDevice()->GetPhysicalDeviceProperties().limits.maxUniformBufferRange;
 
         FRHIBufferDesc Desc;
         Desc.Size = vkCmdUpdateBufferLimit;
@@ -307,6 +317,8 @@ namespace Lumina
     void FVulkanRenderContext::Deinitialize()
     {
         WaitIdle();
+
+        StagingManager.FreeAllBuffers();
         
         FMemory::Delete(Swapchain);
         
@@ -356,23 +368,62 @@ namespace Lumina
 
     void FVulkanRenderContext::FrameEnd(const FUpdateContext& UpdateContext)
     {
+        FRHIImageDesc Desc;
+        Desc.Dimension = EImageDimension::Texture2D;
+        Desc.Extent = Swapchain->GetSwapchainExtent();
+        Desc.Format = EImageFormat::R8_UNORM;
+        FRHIImageRef Image = CreateImage(Desc);
 
-        FRHIBufferDesc Desc;
-        Desc.Size = 1024;
-        Desc.Stride = 0;
-        Desc.Usage.SetFlag(EBufferUsageFlags::UniformBuffer);
-        FRHIBufferRef Buffer = CreateBuffer(Desc);
+        size_t TotalSize = Swapchain->GetSwapchainExtent().X * Swapchain->GetSwapchainExtent().Y * sizeof(uint8) * 4; // 4 bytes per pixel for RGBA
 
-        struct FTestData
+        // Create a buffer to hold the pixel data
+        std::vector<uint8> SolidColor(TotalSize);
+
+        // Random number generator for pixel data (RGBA values)
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_int_distribution<int> dis(0, 255); // Random values between 0 and 255 for each color channel
+
+        size_t DataOffset = 0;
+
+        // Generate random pixel data for each pixel
+        for (uint32 y = 0; y < Swapchain->GetSwapchainExtent().Y; ++y)
         {
-            uint32 Test;
-        } Test;
-        
-        CommandList->UploadToBuffer(Buffer, &Test, 0, sizeof(FTestData));
+            for (uint32 x = 0; x < Swapchain->GetSwapchainExtent().X; ++x)
+            {
+                // Generate random color values for RGBA (each value between 0 and 255)
+                uint8 R = static_cast<uint8>(dis(gen));
+                uint8 G = static_cast<uint8>(dis(gen));
+                uint8 B = static_cast<uint8>(dis(gen));
+                uint8 A = 255;  // Full opacity
+
+                // Pack the color values into the SolidColor array (RGBA format)
+                SolidColor[DataOffset] = R;
+                SolidColor[DataOffset + 1] = G;
+                SolidColor[DataOffset + 2] = B;
+                SolidColor[DataOffset + 3] = A;
+
+                DataOffset += 4; // Move to the next pixel (4 bytes per pixel)
+            }
+        }
+
+        // Now write the random color data to the image
+        CommandList->WriteToImage(
+            Image, 
+            0,  // ArraySlice (for 2D textures, this is 0)
+            0,  // MipLevel (typically 0 for base level)
+            SolidColor.data(),  // Pointer to the pixel data
+            Swapchain->GetSwapchainExtent().X * sizeof(uint8) * 4,  // Row pitch (width * bytes per pixel)
+            0   // Depth pitch (0 for 2D textures)
+        );
+
+
+        CommandList->CopyImage(Image, Swapchain->GetCurrentImage());
         
         CommandList->SetRequiredImageAccess(Swapchain->GetCurrentImage(), ERHIAccess::PresentRead);
         CommandList->Close();
-        ExecuteCommandList(CommandList, 1, ECommandQueue::Graphics);
+        ExecuteCommandList(CommandList);
+        
         Swapchain->Present();
         
         FlushPendingDeletes();
@@ -394,7 +445,7 @@ namespace Lumina
 
         Queue->Submit(CommandLists, NumCommandLists);
 
-        for (int i = 0; i < NumCommandLists; ++i)
+        for (uint32 i = 0; i < NumCommandLists; ++i)
         {
             /** Static cast in this case if fine because CommandLists will only ever contain one type. */
             static_cast<FVulkanCommandList*>(&CommandLists[i])->Executed(Queue);

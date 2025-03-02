@@ -123,7 +123,7 @@ namespace Lumina
         bool GetStagingBuffer(TRefCountPtr<FVulkanBuffer>& OutBuffer);
         void FreeStagingBuffer(TRefCountPtr<FVulkanBuffer> InBuffer);
 
-
+        void FreeAllBuffers();
     private:
 
         bool CreateNewStagingBuffer(TRefCountPtr<FVulkanBuffer>& OutBuffer);
@@ -154,8 +154,8 @@ namespace Lumina
         FORCEINLINE FQueue* GetQueue(ECommandQueue Type) const { return Queues[(uint32)Type]; }
 
         FRHICommandListRef CreateCommandList(const FCommandListInfo& Info) override;
-        void ExecuteCommandList(ICommandList* CommandLists, uint32 NumCommandLists, ECommandQueue QueueType) override;
-        FRHICommandListRef GetCommandList(ECommandQueue Queue) override;
+        void ExecuteCommandList(ICommandList* CommandLists, uint32 NumCommandLists = 1, ECommandQueue QueueType = ECommandQueue::Graphics) override;
+        FRHICommandListRef GetCommandList(ECommandQueue Queue = ECommandQueue::Graphics) override;
         
         void CreateDevice(vkb::Instance Instance);
 

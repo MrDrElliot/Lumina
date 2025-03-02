@@ -18,8 +18,6 @@ void FSandbox::CreateEngine()
 
 void FSandbox::EngineLoopCallback(const Lumina::FUpdateContext& UpdateContext)
 {
-	Lumina::IRenderContext* RenderContext = UpdateContext.GetSubsystem<Lumina::FRenderManager>()->GetRenderContext();
-	RenderContext->GetCommandList()->ClearColor(Lumina::FColor::Red);
 }
 
 bool FSandbox::ApplicationLoop()
