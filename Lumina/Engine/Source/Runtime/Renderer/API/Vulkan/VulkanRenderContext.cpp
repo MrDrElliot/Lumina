@@ -222,11 +222,48 @@ namespace Lumina
         WaitSemaphores.push_back(Semaphore);
     }
 
+    bool FVulkanStagingManager::GetStagingBuffer(TRefCountPtr<FVulkanBuffer>& OutBuffer)
+    {
+        if(!BufferPool.empty())
+        {
+            OutBuffer = BufferPool.top();
+            BufferPool.pop();
+            return true;
+        }
+
+        return CreateNewStagingBuffer(OutBuffer);
+    }
+
+    void FVulkanStagingManager::FreeStagingBuffer(TRefCountPtr<FVulkanBuffer> InBuffer)
+    {
+        VmaAllocation Allocation = Context->GetDevice()->GetAllocator()->GetAllocation(InBuffer->GetBuffer());
+        void* Memory = Context->GetDevice()->GetAllocator()->MapMemory(Allocation);
+        memset(Memory, 0, InBuffer->GetSize());
+        Context->GetDevice()->GetAllocator()->UnmapMemory(Allocation);
+
+        BufferPool.push(InBuffer);
+    }
+
+    bool FVulkanStagingManager::CreateNewStagingBuffer(TRefCountPtr<FVulkanBuffer>& OutBuffer)
+    {
+        const size_t vkCmdUpdateBufferLimit = 65536;
+
+        FRHIBufferDesc Desc;
+        Desc.Size = vkCmdUpdateBufferLimit;
+        Desc.Stride = 0;
+        Desc.Usage.SetMultipleFlags(EBufferUsageFlags::StagingBuffer, EBufferUsageFlags::CPUWritable);
+        FRHIBufferRef Buffer = Context->CreateBuffer(Desc);
+        OutBuffer = Buffer.As<FVulkanBuffer>();
+
+        return true;
+    }
+
     FVulkanRenderContext::FVulkanRenderContext()
         : CurrentFrameIndex(0)
-        , Queues{}
-        , VulkanInstance(nullptr)
-        , DebugUtils()
+          , Queues{}
+          , VulkanInstance(nullptr)
+          , StagingManager(this)
+          , DebugUtils()
     {
     }
 
@@ -264,6 +301,7 @@ namespace Lumina
         
         WaitIdle();
         FlushPendingDeletes();
+        
     }
 
     void FVulkanRenderContext::Deinitialize()
@@ -318,6 +356,20 @@ namespace Lumina
 
     void FVulkanRenderContext::FrameEnd(const FUpdateContext& UpdateContext)
     {
+
+        FRHIBufferDesc Desc;
+        Desc.Size = 1024;
+        Desc.Stride = 0;
+        Desc.Usage.SetFlag(EBufferUsageFlags::UniformBuffer);
+        FRHIBufferRef Buffer = CreateBuffer(Desc);
+
+        struct FTestData
+        {
+            uint32 Test;
+        } Test;
+        
+        CommandList->UploadToBuffer(Buffer, &Test, 0, sizeof(FTestData));
+        
         CommandList->SetRequiredImageAccess(Swapchain->GetCurrentImage(), ERHIAccess::PresentRead);
         CommandList->Close();
         ExecuteCommandList(CommandList, 1, ECommandQueue::Graphics);

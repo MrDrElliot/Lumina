@@ -229,7 +229,7 @@ namespace Lumina
 	{
 		uint32 Size = 0;
 		uint32 Stride = 0;
-		TBitFlags<EBufferUsageFlags> Usage = 0;
+		TBitFlags<EBufferUsageFlags> Usage;
 
 		FRHIBufferDesc() = default;
 		FRHIBufferDesc(uint32 InSize, uint32 InStride, EBufferUsageFlags InUsage)

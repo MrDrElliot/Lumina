@@ -6,6 +6,7 @@
 #include "RHIFwd.h"
 #include "Core/Math/Color.h"
 #include "Vertex.h"
+#include "Core/LuminaMacros.h"
 #include "Core/Math/Hash/Hash.h"
 #include "Core/Serialization/Archiver.h"
 #include "Core/Templates/CanBulkSerialize.h"
@@ -117,21 +118,25 @@ namespace Lumina
     {
         None = 0,
 
-        NullResource        = 1 << 0,
+        NullResource        = 1,
 
         /** The buffer will be written to occassionally. */
-        Dynamic             =   1 << 1,
+        Dynamic             = 2,
 
         /** Buffer will be used as the source for a copy */
-        SourceCopy          = 1 << 2,
+        SourceCopy          = 3,
 
-        VertexBuffer        = 1 << 3,
-        IndexBuffer         = 1 << 4,
-        UniformBuffer       = 1 << 5,
+        VertexBuffer        = 4,
+        IndexBuffer         = 5,
+        UniformBuffer       = 6,
 
-        StagingBuffer       = 1 << 6,
+        StagingBuffer       = 7,
+
+        CPUWritable         = 8,
         
     };
+    
+    ENUM_BITSET(EBufferUsageFlags);
 
     #define BUF_NullResource    EBufferUsageFlags::NullResource
     #define BUF_Dynamic         EBufferUsageFlags::Dynamic

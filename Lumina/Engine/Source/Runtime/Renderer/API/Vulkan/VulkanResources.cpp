@@ -23,6 +23,21 @@ namespace Lumina
         {
             result |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
         }
+
+        if (Usage.IsFlagSet(EBufferUsageFlags::SourceCopy))
+        {
+            result |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+        }
+
+        if (Usage.IsFlagSet(EBufferUsageFlags::StagingBuffer))
+        {
+            result |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+        }
+
+        if (Usage.IsFlagSet(EBufferUsageFlags::CPUWritable))
+        {
+            result |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+        }
         
         return result;
     }
@@ -32,6 +47,12 @@ namespace Lumina
         , IDeviceChild(InDevice)
     {
         VmaAllocationCreateFlags VmaFlags = 0;
+
+        if(GetDescription().Usage.IsFlagSet(EBufferUsageFlags::CPUWritable))
+        {
+            VmaFlags |= VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
+        }
+        
         
         VkBufferCreateInfo BufferCreateInfo = {};
         BufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;

@@ -104,24 +104,30 @@ namespace Lumina
 
     void FVulkanCommandList::UploadToBuffer(FRHIBuffer* Buffer, void* Data, uint32 Offset, uint32 Size)
     {
-        VmaAllocationCreateFlags VmaFlags = 0;
+        Assert(Size <= Buffer->GetSize());
+        Assert(PendingState.IsRecording());
         
-        VkBufferCreateInfo BufferCreateInfo = {};
-        BufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-        BufferCreateInfo.size = Size;
-        BufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-        BufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-        BufferCreateInfo.flags = 0;
+        CurrentCommandBuffer->ReferencedResources.push_back(Buffer);
+        
+        if(Buffer->GetDescription().Usage.IsFlagCleared(EBufferUsageFlags::CPUWritable))
+        {
+            TRefCountPtr<FVulkanBuffer> StagingBuffer;
+            RenderContext->GetStagingManager().GetStagingBuffer(StagingBuffer);
+            Assert(StagingBuffer != nullptr);
 
+            FVulkanMemoryAllocator* MemoryAllocator = RenderContext->GetDevice()->GetAllocator();
+            VmaAllocation Allocation = MemoryAllocator->GetAllocation(StagingBuffer->GetBuffer());
+            void* StagingData = MemoryAllocator->MapMemory(Allocation);
+            FMemory::MemCopy(StagingData, Data, Size);
+            MemoryAllocator->UnmapMemory(Allocation);
 
-        TBitFlags<EBufferUsageFlags> BufferUsage;
-        BufferUsage.SetFlag(EBufferUsageFlags::StagingBuffer);
-        
-        FRHIBufferDesc Description;
-        Description.Size = Size;
-        Description.Stride = Size;
-        Description.Usage = BufferUsage;
-        
+            RenderContext->GetStagingManager().FreeStagingBuffer(StagingBuffer);
+            
+        }
+        else
+        {
+            LOG_ERROR("Using UploadToBuffer on a mappable buffer is invalid.");
+        }
     }
 
     void FVulkanCommandList::SetRequiredImageAccess(FRHIImageRef Image, ERHIAccess Access)

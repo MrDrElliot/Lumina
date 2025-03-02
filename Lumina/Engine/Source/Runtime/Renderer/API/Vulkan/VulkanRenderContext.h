@@ -5,11 +5,11 @@
 #ifdef LUMINA_RENDERER_VULKAN
 
 #include "VulkanMacros.h"
+#include "VulkanResources.h"
 #include "Types/BitFlags.h"
 #include "src/VkBootstrap.h"
 #include "Renderer/RenderContext.h"
 #include <vma/vk_mem_alloc.h>
-#include <vulkan/vulkan.hpp>
 
 
 namespace Lumina
@@ -111,6 +111,28 @@ namespace Lumina
         TVector<TRefCountPtr<FTrackedCommandBufer>> CommandBuffersInFlight;
         TStack<TRefCountPtr<FTrackedCommandBufer>>  CommandBufferPool;
     };
+
+    class FVulkanStagingManager
+    {
+    public:
+
+        FVulkanStagingManager(FVulkanRenderContext* InContext)
+            :Context(InContext)
+        {}
+
+        bool GetStagingBuffer(TRefCountPtr<FVulkanBuffer>& OutBuffer);
+        void FreeStagingBuffer(TRefCountPtr<FVulkanBuffer> InBuffer);
+
+
+    private:
+
+        bool CreateNewStagingBuffer(TRefCountPtr<FVulkanBuffer>& OutBuffer);
+
+    private:
+
+        FVulkanRenderContext* Context = nullptr;
+        TStack<TRefCountPtr<FVulkanBuffer>> BufferPool;
+    };
     
     class FVulkanRenderContext : public IRenderContext
     {
@@ -166,6 +188,8 @@ namespace Lumina
         //-------------------------------------------------------------------------------------
         
 
+        FORCEINLINE FVulkanStagingManager& GetStagingManager() { return StagingManager; }
+        
 
         void FlushPendingDeletes() override;
         
@@ -184,7 +208,7 @@ namespace Lumina
         
         FVulkanSwapchain*                               Swapchain = nullptr;
         FVulkanDevice*                                  VulkanDevice = nullptr;
-
+        FVulkanStagingManager                           StagingManager;
         FVulkanRenderContextFunctions                   DebugUtils;
         
     };
