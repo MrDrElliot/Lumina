@@ -1,12 +1,47 @@
 ﻿#include "VulkanCommandList.h"
 
+#include "VulkanBarriers.h"
 #include "VulkanMacros.h"
 #include "VulkanRenderContext.h"
 #include "VulkanResources.h"
+#include "VulkanSwapchain.h"
 #include "Renderer/RenderContext.h"
 
 namespace Lumina
 {
+    
+    VkImageLayout ConvertRHIAccessToVkImageLayout(ERHIAccess Access)
+    {
+        switch (Access)
+        {
+        case ERHIAccess::TransferRead: return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+            
+        case ERHIAccess::TransferWrite: return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+            
+        case ERHIAccess::ShaderWrite: return VK_IMAGE_LAYOUT_GENERAL;
+            
+        case ERHIAccess::ShaderRead: return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            
+        case ERHIAccess::ColorAttachmentWrite: return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+            
+        case ERHIAccess::DepthStencilAttachmentWrite: return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+            
+        case ERHIAccess::PresentRead: return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+            
+        case ERHIAccess::ComputeWrite: return VK_IMAGE_LAYOUT_GENERAL;
+            
+        case ERHIAccess::ComputeRead: return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            
+        case ERHIAccess::HostRead: return VK_IMAGE_LAYOUT_GENERAL;
+        case ERHIAccess::HostWrite: return VK_IMAGE_LAYOUT_GENERAL;
+        case ERHIAccess::All: return VK_IMAGE_LAYOUT_GENERAL;
+    
+        default: return VK_IMAGE_LAYOUT_UNDEFINED;
+        }
+    }
+
+
+
     void FVulkanCommandList::Open()
     {
         CurrentCommandBuffer = RenderContext->GetQueue(Info.CommandQueue)->GetOrCreateCommandBuffer();
@@ -18,19 +53,23 @@ namespace Lumina
         
         VK_CHECK(vkBeginCommandBuffer(CurrentCommandBuffer->CommandBuffer, &BeginInfo));
 
-        bRecording = true;
+        PendingState.AddPendingState(EPendingGraphicsState::Recording);
     }
 
     void FVulkanCommandList::Close()
     {
-        bRecording = false;
+        CommandListTracker.ResetBufferDefaultStates();
+        CommandListTracker.ResetImageDefaultStates();
+        CommitBarriers();
         
+        
+        PendingState.ClearPendingState(EPendingGraphicsState::Recording);
         VK_CHECK(vkEndCommandBuffer(CurrentCommandBuffer->CommandBuffer));
     }
 
     void FVulkanCommandList::Executed(FQueue* Queue)
     {
-        
+        CommandListTracker.CommandListExecuted(this);
     }
 
     void FVulkanCommandList::CopyBuffer(FRHIBuffer* Source, FRHIBuffer* Destination)
@@ -82,20 +121,54 @@ namespace Lumina
         Description.Size = Size;
         Description.Stride = Size;
         Description.Usage = BufferUsage;
-
-        /*FRHIBufferRef StagingBuffer = CreateBuffer(Description);
-        VmaAllocation Allocation = VulkanDevice->GetAllocator()->GetAllocation(StagingBuffer.As<FVulkanBuffer>()->GetBuffer());
         
-        void* Memory = VulkanDevice->GetAllocator()->MapMemory(Allocation);
-        FMemory::MemCopy((char*)Memory + Offset, Data, Size);
-        VulkanDevice->GetAllocator()->UnmapMemory(Allocation);
+    }
 
-        CopyBuffer(CommandList, StagingBuffer, Buffer);*/
+    void FVulkanCommandList::SetRequiredImageAccess(FRHIImageRef Image, ERHIAccess Access)
+    {
+        CommandListTracker.RequireImageAccess(Image, Access);
+    }
+
+    void FVulkanCommandList::CommitBarriers()
+    {
+        FVulkanPipelineBarrier Barrier;
+
+        for (const FImageBarrier& ImageBarrier : CommandListTracker.GetImageBarriers())
+        {
+            Barrier.AddFullImageLayoutTransition(*ImageBarrier.Image.As<FVulkanImage>(),
+                ConvertRHIAccessToVkImageLayout(ImageBarrier.AccessBefore),
+                ConvertRHIAccessToVkImageLayout(ImageBarrier.AccessAfter));            
+        }
+        
+        Barrier.Execute(this);
+
+        CommandListTracker.ClearBarriers();
+    }
+
+    void FVulkanCommandList::AddMarker(const char* Name)
+    {
+        if (PendingState.IsRecording())
+            {
+            VkDebugMarkerMarkerInfoEXT markerInfo = {};
+            markerInfo.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_MARKER_INFO_EXT;
+            markerInfo.pMarkerName = Name;
+
+            RenderContext->GetDebugUtils().vkCmdDebugMarkerBeginEXT(CurrentCommandBuffer->CommandBuffer, &markerInfo);
+        }
+    }
+
+    void FVulkanCommandList::PopMarker()
+    {
+        if(PendingState.IsRecording())
+        {
+            RenderContext->GetDebugUtils().vkCmdDebugMarkerEndEXT(CurrentCommandBuffer->CommandBuffer);
+        }
     }
 
     void FVulkanCommandList::BeginRenderPass(const FRenderPassBeginInfo& PassInfo)
     {
-        Assert(bRecording);
+        PendingState.AddPendingState(EPendingGraphicsState::RenderPass);
+
         
         TVector<VkRenderingAttachmentInfo> ColorAttachments;
         VkRenderingAttachmentInfo DepthAttachment = {};
@@ -155,10 +228,32 @@ namespace Lumina
     void FVulkanCommandList::EndRenderPass()
     {
         vkCmdEndRendering(CurrentCommandBuffer->CommandBuffer);
+        PendingState.ClearPendingState(EPendingGraphicsState::RenderPass);
+
     }
 
     void FVulkanCommandList::ClearColor(const FColor& Color)
     {
+        TRefCountPtr<FVulkanImage> Image = RenderContext->GetSwapchain()->GetCurrentImage();
+
+        SetRequiredImageAccess(Image, ERHIAccess::HostWrite);
+        CommitBarriers();
+        
+        VkClearColorValue Value;
+        Value.float32[0] = Color.R;
+        Value.float32[1] = Color.G;
+        Value.float32[2] = Color.B;
+        Value.float32[3] = Color.A;
+
+        VkImageSubresourceRange Range;
+        Range.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT; // Clearing the color aspect of the image
+        Range.baseMipLevel   = 0; // First mip level
+        Range.levelCount     = 1; // Only clearing one mip level
+        Range.baseArrayLayer = 0; // First layer in the image
+        Range.layerCount     = 1; // Only clearing one layer
+        
+        vkCmdClearColorImage(CurrentCommandBuffer->CommandBuffer, Image->GetImage(), VK_IMAGE_LAYOUT_GENERAL, &Value, 1, &Range);
+        
     }
 
     void FVulkanCommandList::Draw(uint32 VertexCount, uint32 InstanceCount, uint32 FirstVertex, uint32 FirstInstance)

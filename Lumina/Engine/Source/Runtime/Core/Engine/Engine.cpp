@@ -88,7 +88,7 @@ namespace Lumina
             // Frame Start
             //-------------------------------------------------------------------
             {
-                UpdateCallback();
+                UpdateCallback(UpdateContext);
                 
                 SceneManager->StartFrame();
 

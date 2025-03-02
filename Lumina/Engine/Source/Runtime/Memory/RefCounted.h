@@ -264,6 +264,19 @@ public:
 	}
 };
 
+namespace eastl
+{
+	template <typename T>
+	struct hash<TRefCountPtr<T>>
+	{
+		std::size_t operator()(const TRefCountPtr<T>& handle) const noexcept
+		{
+			return eastl::hash<T*>()(handle.GetReference());
+		}
+	};
+}
+
+
 template<typename T, typename... TArgs>
 requires std::is_constructible_v<T, TArgs...> && (!eastl::is_array_v<T>)
 FORCEINLINE TRefCountPtr<T> MakeRefCount(TArgs&&... Args)

@@ -3,7 +3,7 @@
 #include "VulkanCommandList.h"
 #include "VulkanDevice.h"
 #include "Renderer/CommandList.h"
-#include "Renderer/GPUBarrier.h"
+#include "..\..\StateTracking.h"
 #ifdef LUMINA_RENDERER_VULKAN
 
 #include "VulkanMacros.h"
@@ -88,9 +88,6 @@ namespace Lumina
     	
 		SwapchainImages.clear();
     	
-
-    	FRHICommandListRef CommandList = Context->GetCommandList(ECommandQueue::Graphics);
-    	CommandList->Open();
     	
         for (VkImage RawImage : RawImages)
         {
@@ -119,18 +116,14 @@ namespace Lumina
         	ImageDescription.NumMips = 1;
         	ImageDescription.NumSamples = 1;
 
-        	TRefCountPtr<FVulkanImage> Image = MakeRefCount<FVulkanImage>(Context->GetDevice(), ImageDescription, RawImage, ImageView);
-        	Image->SetDefaultLayout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
-			SwapchainImages.push_back(Image);
-        	
-        	FVulkanPipelineBarrier PipelineBarrier;
-        	PipelineBarrier.AddFullImageLayoutTransition(*Image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
-        	PipelineBarrier.Execute(CommandList.As<FVulkanCommandList>());
-        	
-        }
 
-    	CommandList->Close();
-    	Context->ExecuteCommandList(CommandList, 1, ECommandQueue::Graphics);
+        	TRefCountPtr<FVulkanImage> Image = MakeRefCount<FVulkanImage>(Context->GetDevice(), ImageDescription, RawImage, ImageView);
+        	Image->SetInitialAccess(ERHIAccess::None);
+        	Image->SetDefaultAccess(ERHIAccess::PresentRead);
+        	
+        	
+			SwapchainImages.push_back(Image);
+        }
 
     	size_t currentImageCount = RawImages.size();
 
@@ -269,7 +262,6 @@ namespace Lumina
 
     void FVulkanSwapchain::Present()
     {
-    	
     	VkPresentInfoKHR PresentInfo = {};
     	PresentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
     	PresentInfo.pSwapchains = &Swapchain;

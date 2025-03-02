@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "RenderResource.h"
+#include "API/PendingState.h"
 #include "Core/Math/Color.h"
 #include "Platform/GenericPlatform.h"
 
@@ -17,8 +18,8 @@ namespace Lumina
 
 namespace Lumina
 {
-    enum class ECommandQueue : uint8;
 
+    enum class ECommandQueue : uint8;
 
     struct FCommandListInfo
     {
@@ -43,6 +44,12 @@ namespace Lumina
         
         NODISCARD virtual void UploadToBuffer(FRHIBuffer* Buffer, void* Data, uint32 Offset, uint32 Size) = 0;
         virtual void CopyBuffer(FRHIBuffer* Source, FRHIBuffer* Destination) = 0;
+
+        virtual void SetRequiredImageAccess(FRHIImageRef Image, ERHIAccess Access) = 0;
+        virtual void CommitBarriers() = 0;
+        
+        virtual void AddMarker(const char* Name) = 0;
+        virtual void PopMarker() = 0;
         
         virtual void BeginRenderPass(const FRenderPassBeginInfo& PassInfo) = 0;
         virtual void EndRenderPass() = 0;
@@ -51,9 +58,9 @@ namespace Lumina
         virtual void DrawIndexed(uint32 IndexCount, uint32 InstanceCount = 1, uint32 FirstIndex = 1, int32 VertexOffset = 0, uint32 FirstInstance = 0) = 0;
         virtual void Dispatch(uint32 GroupCountX, uint32 GroupCountY, uint32 GroupCountZ) = 0;
 
-        virtual const FCommandListInfo& GetCommandListInfo() const = 0;
-        
-        
+        NODISCARD virtual const FCommandListInfo& GetCommandListInfo() const = 0;
+        NODISCARD virtual FPendingGraphicsState& GetPendingGraphicsState() = 0;
+    
     protected:
         
     };

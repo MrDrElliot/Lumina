@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "RenderTypes.h"
+#include "StateTracking.h"
 #include "Containers/String.h"
 #include "Core/LuminaMacros.h"
 #include "Memory/RefCounted.h"
@@ -256,16 +257,16 @@ namespace Lumina
 	};
 
 	
-	class FRHIBuffer : public IRHIResource
+	class FRHIBuffer : public IRHIResource, public IAccessableRHIResource
 	{
 	public:
 
 		RENDER_RESOURCE(RRT_Buffer)
 
 		FRHIBuffer(const FRHIBufferDesc& InDesc)
-			:Description(InDesc)
+			: Description(InDesc)
 		{}
-
+		
 		FORCEINLINE const FRHIBufferDesc& GetDescription() const { return Description; }
 
 		FORCEINLINE uint32 GetSize() const { return Description.Size; }
@@ -317,29 +318,29 @@ namespace Lumina
 
 		/** The format of the image (e.g., RGBA8, BC7 compressed, etc.). */
 		EImageFormat Format = EImageFormat::None;
+		
 	};
 
 	
-	class FRHIImage : public IRHIResource
+	class FRHIImage : public IRHIResource, public IAccessableRHIResource
 	{
 	public:
 
 		RENDER_RESOURCE(RRT_Image)
 
-		FRHIImage(const FRHIImageDesc& InDesc);
-
-
+		FRHIImage(const FRHIImageDesc& InDesc)
+			: Description(InDesc)
+		{}
+		
 		FORCEINLINE const FRHIImageDesc& GetDescription() const { return Description; }
-
-
+		
 		FORCEINLINE const FIntVector2D& GetExtent() const { return Description.Extent; }
 		FORCEINLINE uint32 GetSizeX() const { return Description.Extent.X; }
 		FORCEINLINE uint32 GetSizeY() const { return Description.Extent.Y; }
 		FORCEINLINE EImageFormat GetFormat() const { return Description.Format; }
 		FORCEINLINE TBitFlags<EImageCreateFlags> GetFlags() const { return Description.Flags; }
 		
-		
-		
+	
 	private:
 
 		FRHIImageDesc Description;

@@ -12,9 +12,6 @@
 namespace Lumina
 {
 	
-
-	class FRendererContext;
-	
 	class FWindow
 	{
 	public:

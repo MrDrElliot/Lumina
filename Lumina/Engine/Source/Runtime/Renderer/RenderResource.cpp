@@ -15,9 +15,4 @@ namespace Lumina
             PendingDeletes.push(const_cast<IRHIResource*>(this));
         }
     }
-
-    FRHIImage::FRHIImage(const FRHIImageDesc& InDesc)
-        :Description(InDesc)
-    {
-    }
 }

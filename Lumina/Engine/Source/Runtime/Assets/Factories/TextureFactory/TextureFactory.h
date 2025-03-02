@@ -6,8 +6,6 @@
 
 namespace Lumina
 {
-    class FImage;
-
     class FTextureFactory : public FFactory
     {
     public:

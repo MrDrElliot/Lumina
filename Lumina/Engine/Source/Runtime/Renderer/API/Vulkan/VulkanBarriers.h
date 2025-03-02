@@ -4,7 +4,6 @@
 
 #include "VulkanResources.h"
 #include "Containers/Array.h"
-#include "Core/Assertions/Assert.h"
 
 namespace Lumina
 {
@@ -38,7 +37,7 @@ namespace Lumina
 		struct ImageBarrierExtraData
 		{
 			FVulkanImage* BaseTexture = nullptr;
-			bool IsAliasingBarrier = false;
+			bool IsAliasingBarrier = false;				
 		};
 		
 		TVector<ImageBarrierExtraData> ImageBarrierExtras;

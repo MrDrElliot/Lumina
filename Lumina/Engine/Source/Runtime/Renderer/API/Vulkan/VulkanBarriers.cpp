@@ -207,7 +207,6 @@ namespace Lumina
 
 	void FVulkanPipelineBarrier::Execute(FVulkanCommandList* CmdBuffer)
 	{
-		// If we have memory barriers, execute them first.
 		if (!MemoryBarriers.empty())
 		{
 			VkDependencyInfo depInfo = {};
@@ -215,11 +214,9 @@ namespace Lumina
 			depInfo.memoryBarrierCount = static_cast<uint32>(MemoryBarriers.size());
 			depInfo.pMemoryBarriers = MemoryBarriers.data();
 
-			// Submit the memory barriers to the command buffer (assumes pipeline barrier is needed).
 			vkCmdPipelineBarrier2(CmdBuffer->CurrentCommandBuffer->CommandBuffer, &depInfo);
 		}
 
-		// If we have image barriers, execute them.
 		if (!ImageBarriers.empty())
 		{
 			VkDependencyInfo depInfo = {};
@@ -227,11 +224,9 @@ namespace Lumina
 			depInfo.imageMemoryBarrierCount = static_cast<uint32>(ImageBarriers.size());
 			depInfo.pImageMemoryBarriers = ImageBarriers.data();
 
-			// Submit the image barriers to the command buffer.
 			vkCmdPipelineBarrier2(CmdBuffer->CurrentCommandBuffer->CommandBuffer, &depInfo);
 		}
 
-		// If we have buffer barriers, execute them.
 		if (!BufferBarriers.empty())
 		{
 			VkDependencyInfo depInfo = {};
@@ -239,11 +234,12 @@ namespace Lumina
 			depInfo.bufferMemoryBarrierCount = static_cast<uint32>(BufferBarriers.size());
 			depInfo.pBufferMemoryBarriers = BufferBarriers.data();
 
-			// Submit the buffer barriers to the command buffer.
 			vkCmdPipelineBarrier2(CmdBuffer->CurrentCommandBuffer->CommandBuffer, &depInfo);
 		}
 
-		// Optionally handle the semaphore, if it's present (not shown here but can be added as needed).
+		MemoryBarriers.clear();
+		ImageBarriers.clear();
+		BufferBarriers.clear();
 	}
 
 

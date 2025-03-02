@@ -51,7 +51,7 @@ namespace Lumina
 
         const FViewport& GetEngineViewport() const { return EngineViewport; }
 
-        void SetUpdateCallback(TFunction<void()> Callback) { UpdateCallback = Callback; }
+        void SetUpdateCallback(TFunction<void(const FUpdateContext&)> Callback) { UpdateCallback = Callback; }
 
         void SetEngineViewportSize(const FIntVector2D& InSize);
         
@@ -62,7 +62,7 @@ namespace Lumina
 
     protected:
 
-        TFunction<void()>       UpdateCallback;
+        TFunction<void(const FUpdateContext&)>       UpdateCallback;
         
         FUpdateContext          UpdateContext;
         FApplication*           Application =           nullptr;

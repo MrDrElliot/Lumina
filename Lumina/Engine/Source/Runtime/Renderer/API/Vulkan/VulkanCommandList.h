@@ -1,12 +1,20 @@
 ﻿#pragma once
 
 #include "TrackedCommandBuffer.h"
+#include "VulkanBarriers.h"
 #include "Renderer/CommandList.h"
 
 
 
 namespace Lumina
 {
+
+    class FVulkanPendingGraphicsState : public FPendingGraphicsState
+    {
+    public:
+        
+    };
+    
     class FVulkanCommandList : public ICommandList
     {
     public:
@@ -23,6 +31,11 @@ namespace Lumina
         void CopyBuffer(FRHIBuffer* Source, FRHIBuffer* Destination) override;
         void UploadToBuffer(FRHIBuffer* Buffer, void* Data, uint32 Offset, uint32 Size) override;
 
+        void SetRequiredImageAccess(FRHIImageRef Image, ERHIAccess Access) override;
+        void CommitBarriers() override;
+
+        void AddMarker(const char* Name) override;
+        void PopMarker() override;
 
         void BeginRenderPass(const FRenderPassBeginInfo& PassInfo) override;
         void EndRenderPass() override;
@@ -34,12 +47,15 @@ namespace Lumina
         void* GetAPIResourceImpl(EAPIResourceType Type) override;
         const FCommandListInfo& GetCommandListInfo() const override { return Info; }
 
+        FPendingGraphicsState& GetPendingGraphicsState() override { return PendingState; }
+
         TRefCountPtr<FTrackedCommandBufer>  CurrentCommandBuffer;
 
     private:
 
-        bool                    bRecording = false;
-        FVulkanRenderContext*   RenderContext = nullptr;
-        FCommandListInfo        Info;
+        FCommandListStateTracker        CommandListTracker;
+        FVulkanPendingGraphicsState     PendingState;
+        FVulkanRenderContext*           RenderContext = nullptr;
+        FCommandListInfo                Info;
     };
 }

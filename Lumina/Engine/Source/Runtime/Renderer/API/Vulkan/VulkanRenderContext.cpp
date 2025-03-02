@@ -8,7 +8,7 @@
 #include "VulkanResources.h"
 #include "VulkanSwapchain.h"
 #include "Core/Windows/Window.h"
-#include "Renderer/GPUBarrier.h"
+#include "..\..\StateTracking.h"
 
 
 #define VMA_IMPLEMENTATION
@@ -50,12 +50,6 @@ namespace Lumina
 
         return VK_FALSE;
     }
-
-    struct FVulkanRenderContextFunctions
-    {
-        VkDebugUtilsMessengerEXT DebugMessenger;
-        PFN_vkSetDebugUtilsObjectNameEXT DebugUtilsObjectNameEXT;
-    } DebugUtils;
     
     constexpr VkPipelineStageFlagBits ToVkPipelineStage(EPipelineStage stage)
     {
@@ -232,6 +226,7 @@ namespace Lumina
         : CurrentFrameIndex(0)
         , Queues{}
         , VulkanInstance(nullptr)
+        , DebugUtils()
     {
     }
 
@@ -254,9 +249,13 @@ namespace Lumina
         DebugUtils.DebugMessenger = InstBuilder->debug_messenger;
         DebugUtils.DebugUtilsObjectNameEXT = (PFN_vkSetDebugUtilsObjectNameEXT)(vkGetInstanceProcAddr(
             VulkanInstance, "vkSetDebugUtilsObjectNameEXT"));
+
         
         
         CreateDevice(InstBuilder.value());
+        
+        DebugUtils.vkCmdDebugMarkerBeginEXT = (PFN_vkCmdDebugMarkerBeginEXT)vkGetDeviceProcAddr(GetDevice()->GetDevice(), "vkCmdDebugMarkerBeginEXT");
+        DebugUtils.vkCmdDebugMarkerEndEXT = (PFN_vkCmdDebugMarkerEndEXT)vkGetDeviceProcAddr(GetDevice()->GetDevice(), "vkCmdDebugMarkerEndEXT");
 
         CommandList = CreateCommandList({ECommandQueue::Graphics});
         
@@ -319,6 +318,7 @@ namespace Lumina
 
     void FVulkanRenderContext::FrameEnd(const FUpdateContext& UpdateContext)
     {
+        CommandList->SetRequiredImageAccess(Swapchain->GetCurrentImage(), ERHIAccess::PresentRead);
         CommandList->Close();
         ExecuteCommandList(CommandList, 1, ECommandQueue::Graphics);
         Swapchain->Present();
@@ -385,6 +385,7 @@ namespace Lumina
             .value();
         
 
+        physicalDevice.enable_extension_if_present(VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
         physicalDevice.enable_extension_if_present(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
         physicalDevice.enable_extension_if_present("VK_EXT_conservative_rasterization");
 
@@ -487,7 +488,11 @@ namespace Lumina
 
         DebugUtils.DebugUtilsObjectNameEXT(VulkanDevice->GetDevice(), &NameInfo);
     }
-    
+
+    FVulkanRenderContextFunctions& FVulkanRenderContext::GetDebugUtils()
+    {
+        return DebugUtils;
+    }
 }
 
 

@@ -36,16 +36,12 @@ namespace Lumina
 
         VkImage GetImage() const { return Image; }
         VkImageView GetImageView() const { return ImageView; }
-
-        FORCEINLINE void SetDefaultLayout(VkImageLayout InDefault) { DefaultLayout = InDefault; }
-        FORCEINLINE VkImageLayout GetDefaultLayout() const { return DefaultLayout; }
-
+        
         FORCEINLINE VkImageAspectFlags GetFullAspectMask() const { return FullAspectMask; }
         FORCEINLINE VkImageAspectFlags GetPartialAspectMask() const { return PartialAspectMask; }
 
     private:
         
-        VkImageLayout               DefaultLayout =     VK_IMAGE_LAYOUT_UNDEFINED;
         VkImageAspectFlags          FullAspectMask =    VK_IMAGE_ASPECT_NONE;
         VkImageAspectFlags          PartialAspectMask = VK_IMAGE_ASPECT_NONE;
         VkImage                     Image =             VK_NULL_HANDLE;

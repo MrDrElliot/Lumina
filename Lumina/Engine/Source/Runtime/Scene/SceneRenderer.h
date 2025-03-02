@@ -19,7 +19,6 @@ namespace Lumina
     class FImageSampler;
     class AStaticMesh;
     class FBuffer;
-    class FImage;
     class FCamera;
     
     struct FModelData

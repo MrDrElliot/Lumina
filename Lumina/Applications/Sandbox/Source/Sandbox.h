@@ -20,6 +20,7 @@ public:
 
 	FSandbox() :FApplication("Sandbox") {}
 
+	void EngineLoopCallback(const Lumina::FUpdateContext& UpdateContext);
 	void CreateEngine() override;
 	bool ApplicationLoop() override;
 	bool Initialize() override;

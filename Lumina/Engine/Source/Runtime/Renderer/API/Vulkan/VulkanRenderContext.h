@@ -20,8 +20,18 @@ namespace Lumina
     enum class ECommandQueue : uint8;
 }
 
+
 namespace Lumina
 {
+
+    struct FVulkanRenderContextFunctions
+    {
+        VkDebugUtilsMessengerEXT DebugMessenger;
+        PFN_vkSetDebugUtilsObjectNameEXT DebugUtilsObjectNameEXT;
+        PFN_vkCmdDebugMarkerBeginEXT vkCmdDebugMarkerBeginEXT;
+        PFN_vkCmdDebugMarkerEndEXT vkCmdDebugMarkerEndEXT;
+    };
+    
     class FFencePool : public IDeviceChild
     {
     public:
@@ -88,7 +98,7 @@ namespace Lumina
         
         void AddSignalSemaphore(VkSemaphore Semaphore);
         void AddWaitSemaphore(VkSemaphore Semaphore);
-
+        
         
         FMutex                      Mutex;
         VkCommandPool               CommandPool;
@@ -161,6 +171,7 @@ namespace Lumina
         
         
         void SetVulkanObjectName(FString Name, VkObjectType ObjectType, uint64 Handle);
+        FVulkanRenderContextFunctions& GetDebugUtils();
 
     
     private:
@@ -173,6 +184,8 @@ namespace Lumina
         
         FVulkanSwapchain*                               Swapchain = nullptr;
         FVulkanDevice*                                  VulkanDevice = nullptr;
+
+        FVulkanRenderContextFunctions                   DebugUtils;
         
     };
     
