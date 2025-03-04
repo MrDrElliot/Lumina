@@ -2,20 +2,16 @@
 
 #include "TrackedCommandBuffer.h"
 #include "VulkanBarriers.h"
+#include "VulkanPendingState.h"
 #include "Renderer/CommandList.h"
-
 
 
 namespace Lumina
 {
 
     VkImageLayout ConvertRHIAccessToVkImageLayout(ERHIAccess Access);
-    
-    class FVulkanPendingGraphicsState : public FPendingGraphicsState
-    {
-    public:
-        
-    };
+
+
     
     class FVulkanCommandList : public ICommandList
     {
@@ -45,7 +41,7 @@ namespace Lumina
 
         void BeginRenderPass(const FRenderPassBeginInfo& PassInfo) override;
         void EndRenderPass() override;
-        void ClearColor(const FColor& Color) override;
+        void ClearImageColor(FRHIImage* Image, const FColor& Color) override;
         void Draw(uint32 VertexCount, uint32 InstanceCount, uint32 FirstVertex, uint32 FirstInstance) override;
         void DrawIndexed(uint32 IndexCount, uint32 InstanceCount, uint32 FirstIndex, int32 VertexOffset, uint32 FirstInstance) override;
         void Dispatch(uint32 GroupCountX, uint32 GroupCountY, uint32 GroupCountZ) override;
@@ -53,14 +49,17 @@ namespace Lumina
         void* GetAPIResourceImpl(EAPIResourceType Type) override;
         const FCommandListInfo& GetCommandListInfo() const override { return Info; }
 
-        FPendingGraphicsState& GetPendingGraphicsState() override { return PendingState; }
+        FPendingCommandState& GetPendingCommandState() override { return PendingState; }
 
         TRefCountPtr<FTrackedCommandBufer>  CurrentCommandBuffer;
 
     private:
 
+        FVulkanPendingComputeState      PendingComputeState;
+        FVulkanPendingGraphicsState     PendingGraphicsState;
+
         FCommandListStateTracker        CommandListTracker;
-        FVulkanPendingGraphicsState     PendingState;
+        FPendingCommandState            PendingState;
         FVulkanRenderContext*           RenderContext = nullptr;
         FCommandListInfo                Info;
     };

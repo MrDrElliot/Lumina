@@ -3,9 +3,11 @@
 #include "Core/Windows/Window.h"
 #include "glfw/glfw3.h"
 #include "Input/InputSubsystem.h"
+#include "Renderer/RenderContext.h"
 #include "Scene/Scene.h"
 #include "Scene/SceneManager.h"
 #include "Renderer/RenderManager.h"
+#include "Renderer/RenderResource.h"
 #include "TaskSystem/TaskSystem.h"
 #include "Tools/UI/DevelopmentToolUI.h"
 
@@ -19,16 +21,16 @@ namespace Lumina
         
         GEngine = this;
         Application = App;
-
-        EngineViewport.SetSize(App->GetMainWindow()->GetExtent());
+        
         
         FTaskSystem::Get()->Initialize();
         
         RenderManager = EngineSubsystems.AddSubsystem<FRenderManager>();
+        EngineViewport = RenderManager->GetRenderContext()->CreateViewport(Windowing::GetPrimaryWindowHandle()->GetExtent());
+        
         InputSubsystem = EngineSubsystems.AddSubsystem<FInputSubsystem>();
         AssetManagerSubystem = EngineSubsystems.AddSubsystem<FAssetManager>();
         SceneManager = EngineSubsystems.AddSubsystem<FSceneManager>();
-        
         
         UpdateContext.SubsystemManager = &EngineSubsystems;
 
@@ -59,6 +61,8 @@ namespace Lumina
         EngineSubsystems.RemoveSubsystem<FInputSubsystem>();
         EngineSubsystems.RemoveSubsystem<FAssetManager>();
         EngineSubsystems.RemoveSubsystem<FSceneManager>();
+
+        EngineViewport.SafeRelease();
         EngineSubsystems.RemoveSubsystem<FRenderManager>();
         
 
@@ -195,6 +199,6 @@ namespace Lumina
 
     void FEngine::SetEngineViewportSize(const FIntVector2D& InSize)
     {
-        EngineViewport.SetSize(InSize);
+        EngineViewport->SetSize(InSize);
     }
 }

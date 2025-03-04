@@ -1,6 +1,7 @@
 #include "LuminaEditor.h"
 #include "EntryPoint.h"
 #include "Core/Threading/Thread.h"
+#include "Renderer/RenderResource.h"
 #include "Scene/Scene.h"
 #include "Settings/EditorSettings.h"
 #include "UI/EditorUI.h"

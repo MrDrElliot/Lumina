@@ -280,37 +280,37 @@ namespace Lumina
         None = 0,
 
         /** Texture can be presented to the screen (e.g., used as a swapchain image) */
-        Presentable = 1 << 0,
+        Presentable = 1,
 
         /** Texture can be used as a render target (color or depth attachment) */
-        RenderTarget = 1 << 1,
+        RenderTarget = 2,
 
         /** Texture can be used as a shader resource (sampled in shaders) */
-        ShaderResource = 1 << 2,
+        ShaderResource = 3,
 
         /** Texture can be used as a storage image (read/write access in compute shaders) */
-        Storage = 1 << 3,
+        Storage = 4,
 
         /** Texture supports input attachments (used in Vulkan subpasses) */
-        InputAttachment = 1 << 4,
+        InputAttachment = 5,
 
         /** Texture can be used as a depth/stencil buffer */
-        DepthStencil = 1 << 5,
+        DepthStencil = 6,
 
         /** Texture allows unordered access (DirectX-style UAV equivalent) */
-        UnorderedAccess = 1 << 6,
+        UnorderedAccess = 7,
 
         /** Texture supports mipmap generation */
-        GenerateMipMaps = 1 << 7,
+        GenerateMipMaps = 8,
 
         /** Texture can be used as a cube map */
-        CubeCompatible = 1 << 8,
+        CubeCompatible = 9,
 
         /** Texture supports aliasing (can be used with sparse memory allocation) */
-        Aliasable = 1 << 9,
+        Aliasable = 10,
 
         /** Texture can be used with multi-sampling (MSAA) */
-        MultiSampled = 1 << 10
+        MultiSampled = 11
     };
     
     enum class EImageFormat : uint8

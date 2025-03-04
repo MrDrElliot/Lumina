@@ -1,7 +1,7 @@
 ﻿#pragma once
 
+#include "PendingState.h"
 #include "RenderResource.h"
-#include "API/PendingState.h"
 #include "Core/Math/Color.h"
 #include "Platform/GenericPlatform.h"
 
@@ -56,13 +56,13 @@ namespace Lumina
         
         virtual void BeginRenderPass(const FRenderPassBeginInfo& PassInfo) = 0;
         virtual void EndRenderPass() = 0;
-        virtual void ClearColor(const FColor& Color) = 0;
+        virtual void ClearImageColor(FRHIImage* Image, const FColor& Color) = 0;
         virtual void Draw(uint32 VertexCount, uint32 InstanceCount, uint32 FirstVertex, uint32 FirstInstance) = 0;
         virtual void DrawIndexed(uint32 IndexCount, uint32 InstanceCount = 1, uint32 FirstIndex = 1, int32 VertexOffset = 0, uint32 FirstInstance = 0) = 0;
         virtual void Dispatch(uint32 GroupCountX, uint32 GroupCountY, uint32 GroupCountZ) = 0;
 
         NODISCARD virtual const FCommandListInfo& GetCommandListInfo() const = 0;
-        NODISCARD virtual FPendingGraphicsState& GetPendingGraphicsState() = 0;
+        NODISCARD virtual FPendingCommandState& GetPendingCommandState() = 0;
     
     protected:
         

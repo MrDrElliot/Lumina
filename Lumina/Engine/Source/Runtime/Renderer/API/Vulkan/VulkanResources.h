@@ -6,6 +6,24 @@
 
 namespace Lumina
 {
+    class FVulkanSwapchain;
+
+    class FVulkanViewport : public FRHIViewport
+    {
+    public:
+        
+        friend class FVulkanRenderContext;
+        
+
+        FVulkanViewport(const FIntVector2D& InSize, IRenderContext* InContext)
+            : FRHIViewport(InSize, InContext)
+        {}
+
+    private:
+
+        FVulkanSwapchain* Swapchain = nullptr;
+        
+    };
 
     class FVulkanBuffer : public FRHIBuffer, public IDeviceChild
     {
@@ -43,11 +61,12 @@ namespace Lumina
         FORCEINLINE VkImageAspectFlags GetPartialAspectMask() const { return PartialAspectMask; }
 
     private:
-        
-        VkImageAspectFlags          FullAspectMask =    VK_IMAGE_ASPECT_NONE;
-        VkImageAspectFlags          PartialAspectMask = VK_IMAGE_ASPECT_NONE;
-        VkImage                     Image =             VK_NULL_HANDLE;
-        VkImageView                 ImageView =         VK_NULL_HANDLE;
+
+        bool                        bImageManagedExternal = false; // Mostly for swapchain.
+        VkImageAspectFlags          FullAspectMask =        VK_IMAGE_ASPECT_NONE;
+        VkImageAspectFlags          PartialAspectMask =     VK_IMAGE_ASPECT_NONE;
+        VkImage                     Image =                 VK_NULL_HANDLE;
+        VkImageView                 ImageView =             VK_NULL_HANDLE;
     };
 
 
@@ -78,6 +97,14 @@ namespace Lumina
         {
             vkDestroyShaderModule(Device->GetDevice(), ShaderModule, nullptr);
         }
+
+        void GetByteCodeImpl(const void** ByteCode, uint64* Size)
+        {
+            *ByteCode = SpirV.ByteCode.data();
+            *Size = SpirV.ByteCode.size() * sizeof(uint32);
+        }
+
+    protected:
         
         struct FSpirvCode
         {
@@ -90,35 +117,96 @@ namespace Lumina
 
     
     
-    class FRHIVulkanVertexShader : public FRHIVertexShader, public IVulkanShader
+    class FVulkanVertexShader : public FRHIVertexShader, public IVulkanShader
     {
     public:
         RENDER_RESOURCE(RRT_VertexShader)
 
-        FRHIVulkanVertexShader(FVulkanDevice* InDevice, const TVector<uint32>& ByteCode)
+        FVulkanVertexShader(FVulkanDevice* InDevice, const TVector<uint32>& ByteCode)
             :IVulkanShader(InDevice, ByteCode, RRT_VertexShader)
         {}
+
+        void* GetAPIResourceImpl(EAPIResourceType Type) override
+        {
+            return ShaderModule;
+        }
+        
+        void GetByteCode(const void** ByteCode, uint64* Size) override
+        {
+            GetByteCodeImpl(ByteCode, Size);
+        }
     };
 
-    class FRHIVulkanPixelShader : public FRHIPixelShader, public IVulkanShader
+    class FVulkanPixelShader : public FRHIPixelShader, public IVulkanShader
     {
     public:
 
         RENDER_RESOURCE(RRT_PixelShader)
 
-        FRHIVulkanPixelShader(FVulkanDevice* InDevice, const TVector<uint32>& ByteCode)
+        FVulkanPixelShader(FVulkanDevice* InDevice, const TVector<uint32>& ByteCode)
             :IVulkanShader(InDevice, ByteCode, RRT_PixelShader)
         {}
+
+        void* GetAPIResourceImpl(EAPIResourceType Type) override
+        {
+            return ShaderModule;
+        }
+        
+        void GetByteCode(const void** ByteCode, uint64* Size) override
+        {
+            GetByteCodeImpl(ByteCode, Size);
+        }
     };
 
-    class FRHIVulkanComputeShader : public FRHIComputeShader, public IVulkanShader
+    class FVulkanComputeShader : public FRHIComputeShader, public IVulkanShader
     {
     public:
         RENDER_RESOURCE(RRT_ComputeShader)
 
-        FRHIVulkanComputeShader(FVulkanDevice* InDevice, const TVector<uint32>& ByteCode)
+        FVulkanComputeShader(FVulkanDevice* InDevice, const TVector<uint32>& ByteCode)
             :IVulkanShader(InDevice, ByteCode, RRT_ComputeShader)
         {}
+
+        void* GetAPIResourceImpl(EAPIResourceType Type) override
+        {
+            return ShaderModule;
+        }
+        
+        void GetByteCode(const void** ByteCode, uint64* Size) override
+        {
+            GetByteCodeImpl(ByteCode, Size);
+        }
+    };
+
+    class FVulkanGraphicsPipeline : public FRHIGraphicsPipeline
+    {
+    public:
+
+        FVulkanGraphicsPipeline(const FGraphicsPipelineDesc& InDesc);
+        void* GetAPIResourceImpl(EAPIResourceType Type) override
+        {
+            return Pipeline;
+        }
+
+    private:
+
+        VkPipeline Pipeline;
+    };
+
+    class FVulkanComputePipeline : public FRHIComputePipeline
+    {
+    public:
+
+        FVulkanComputePipeline(const FComputePipelineDesc& InDesc);
+        void* GetAPIResourceImpl(EAPIResourceType Type) override
+        {
+            return Pipeline;
+        }
+
+    private:
+
+        VkPipeline Pipeline;
+        
     };
     
 }

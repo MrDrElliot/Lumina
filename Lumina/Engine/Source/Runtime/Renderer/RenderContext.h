@@ -53,11 +53,25 @@ namespace Lumina
 
         
         //-------------------------------------------------------------------------------------
+
+        NODISCARD virtual FRHIViewportRef CreateViewport(const FIntVector2D& Size) = 0;
+
+        
+        //-------------------------------------------------------------------------------------
         
 
         NODISCARD virtual FRHIVertexShaderRef CreateVertexShader(const TVector<uint32>& ByteCode) = 0;
         NODISCARD virtual FRHIPixelShaderRef CreatePixelShader(const TVector<uint32>& ByteCode) = 0;
         NODISCARD virtual FRHIComputeShaderRef CreateComputeShader(const TVector<uint32>& ByteCode) = 0;
+
+
+        
+        //-------------------------------------------------------------------------------------
+
+
+        NODISCARD virtual FRHIComputePipelineRef CreateComputePipeline(const FComputePipelineDesc& Desc) = 0;
+        NODISCARD virtual FRHIGraphicsPipelineRef CreateGraphicsPipeline(const FGraphicsPipelineDesc& Desc) = 0;
+        
         
         //-------------------------------------------------------------------------------------
 

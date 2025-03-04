@@ -4,7 +4,6 @@
 #include "ScenePrimitives.h"
 #include "SceneRenderTypes.h"
 #include "Renderer/RenderTypes.h"
-#include "Renderer/Viewport.h"
 
 namespace Lumina
 {
@@ -62,7 +61,7 @@ namespace Lumina
         
     private:
 
-        FViewport                           SceneViewport;
+        FRHIViewportRef                     SceneViewport;
 
         FSceneGlobalData                    SceneGlobalData;
         FSceneLightData                     SceneLightData;

@@ -151,17 +151,17 @@ namespace Lumina
         void FrameStart(const FUpdateContext& UpdateContext, uint8 InCurrentFrameIndex) override;
         void FrameEnd(const FUpdateContext& UpdateContext) override;
 
-        FORCEINLINE FQueue* GetQueue(ECommandQueue Type) const { return Queues[(uint32)Type]; }
+        FORCEINLINE FQueue* GetQueue(ECommandQueue Type = ECommandQueue::Graphics) const { return Queues[(uint32)Type]; }
 
-        FRHICommandListRef CreateCommandList(const FCommandListInfo& Info) override;
+        NODISCARD FRHICommandListRef CreateCommandList(const FCommandListInfo& Info) override;
         void ExecuteCommandList(ICommandList* CommandLists, uint32 NumCommandLists = 1, ECommandQueue QueueType = ECommandQueue::Graphics) override;
-        FRHICommandListRef GetCommandList(ECommandQueue Queue = ECommandQueue::Graphics) override;
+        NODISCARD FRHICommandListRef GetCommandList(ECommandQueue Queue = ECommandQueue::Graphics) override;
         
         void CreateDevice(vkb::Instance Instance);
 
-        FORCEINLINE VkInstance GetVulkanInstance() const { return VulkanInstance; }
-        FORCEINLINE FVulkanDevice* GetDevice() const { return VulkanDevice; }
-        FORCEINLINE FVulkanSwapchain* GetSwapchain() const { return Swapchain; }
+        FORCEINLINE NODISCARD VkInstance GetVulkanInstance() const { return VulkanInstance; }
+        FORCEINLINE NODISCARD FVulkanDevice* GetDevice() const { return VulkanDevice; }
+        FORCEINLINE NODISCARD FVulkanSwapchain* GetSwapchain() const { return Swapchain; }
         
         //----------------------------------------------------
 
@@ -171,7 +171,8 @@ namespace Lumina
 
         
         //-------------------------------------------------------------------------------------
-        
+
+        NODISCARD FRHIViewportRef CreateViewport(const FIntVector2D& Size) override;
         
 
         NODISCARD FRHIImageRef CreateImage(const FRHIImageDesc& ImageSpec) override;
@@ -184,6 +185,12 @@ namespace Lumina
         NODISCARD FRHIPixelShaderRef CreatePixelShader(const TVector<uint32>& ByteCode) override;
         NODISCARD FRHIComputeShaderRef CreateComputeShader(const TVector<uint32>& ByteCode) override;
 
+        
+        //-------------------------------------------------------------------------------------
+
+        NODISCARD FRHIComputePipelineRef CreateComputePipeline(const FComputePipelineDesc& Desc) override;
+        NODISCARD FRHIGraphicsPipelineRef CreateGraphicsPipeline(const FGraphicsPipelineDesc& Desc) override;
+        
 
         //-------------------------------------------------------------------------------------
         

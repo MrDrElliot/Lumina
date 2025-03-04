@@ -53,7 +53,7 @@ namespace Lumina
         
         VK_CHECK(vkBeginCommandBuffer(CurrentCommandBuffer->CommandBuffer, &BeginInfo));
 
-        PendingState.AddPendingState(EPendingGraphicsState::Recording);
+        PendingState.AddPendingState(EPendingCommandState::Recording);
     }
 
     void FVulkanCommandList::Close()
@@ -64,7 +64,7 @@ namespace Lumina
         CommitBarriers();
         
         // Clear the recording state and end the command buffer. 
-        PendingState.ClearPendingState(EPendingGraphicsState::Recording);
+        PendingState.ClearPendingState(EPendingCommandState::Recording);
         VK_CHECK(vkEndCommandBuffer(CurrentCommandBuffer->CommandBuffer));
     }
 
@@ -79,14 +79,15 @@ namespace Lumina
 
         CurrentCommandBuffer->AddReferencedResource(Src);
         CurrentCommandBuffer->AddReferencedResource(Dst);
+
         FVulkanImage* VulkanImageSrc = (FVulkanImage*)Src;
         FVulkanImage* VulkanImageDst = (FVulkanImage*)Dst;
         
         VkBlitImageInfo2 BlitInfo = {};
         BlitInfo.sType = VK_STRUCTURE_TYPE_BLIT_IMAGE_INFO_2;
-        BlitInfo.srcImage = Src->GetAPIResource<VkImage>(EAPIResourceType::Image);
+        BlitInfo.srcImage = Src->GetAPIResource<VkImage>();
         BlitInfo.srcImageLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-        BlitInfo.dstImage = Dst->GetAPIResource<VkImage>(EAPIResourceType::Image);
+        BlitInfo.dstImage = Dst->GetAPIResource<VkImage>();
         BlitInfo.dstImageLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
         BlitInfo.filter = VK_FILTER_LINEAR;
 
@@ -164,7 +165,7 @@ namespace Lumina
         vkCmdCopyBufferToImage(
             CurrentCommandBuffer->CommandBuffer,
             StagingBuffer->GetBuffer(),
-            Dst->GetAPIResource<VkImage>(EAPIResourceType::Image),
+            Dst->GetAPIResource<VkImage, EAPIResourceType::Image>(),
             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
             1, &CopyRegion
         );
@@ -179,6 +180,9 @@ namespace Lumina
         Assert(Source != nullptr);
         Assert(Destination != nullptr);
         Assert(CopySize > 0);
+
+        CurrentCommandBuffer->AddReferencedResource(Source);
+        CurrentCommandBuffer->AddReferencedResource(Destination);
         
         VkBufferCopy copyRegion = {};
         copyRegion.srcOffset = SrcOffset;
@@ -265,9 +269,6 @@ namespace Lumina
 
     void FVulkanCommandList::BeginRenderPass(const FRenderPassBeginInfo& PassInfo)
     {
-        PendingState.AddPendingState(EPendingGraphicsState::RenderPass);
-
-        
         TVector<VkRenderingAttachmentInfo> ColorAttachments;
         VkRenderingAttachmentInfo DepthAttachment = {};
 
@@ -326,14 +327,10 @@ namespace Lumina
     void FVulkanCommandList::EndRenderPass()
     {
         vkCmdEndRendering(CurrentCommandBuffer->CommandBuffer);
-        PendingState.ClearPendingState(EPendingGraphicsState::RenderPass);
-
     }
 
-    void FVulkanCommandList::ClearColor(const FColor& Color)
+    void FVulkanCommandList::ClearImageColor(FRHIImage* Image, const FColor& Color)
     {
-        TRefCountPtr<FVulkanImage> Image = RenderContext->GetSwapchain()->GetCurrentImage();
-
         SetRequiredImageAccess(Image, ERHIAccess::HostWrite);
         CommitBarriers();
         
@@ -350,8 +347,7 @@ namespace Lumina
         Range.baseArrayLayer = 0; // First layer in the image
         Range.layerCount     = 1; // Only clearing one layer
         
-        vkCmdClearColorImage(CurrentCommandBuffer->CommandBuffer, Image->GetImage(), VK_IMAGE_LAYOUT_GENERAL, &Value, 1, &Range);
-        
+        vkCmdClearColorImage(CurrentCommandBuffer->CommandBuffer, Image->GetAPIResource<VkImage, EAPIResourceType::Image>(), VK_IMAGE_LAYOUT_GENERAL, &Value, 1, &Range);
     }
 
     void FVulkanCommandList::Draw(uint32 VertexCount, uint32 InstanceCount, uint32 FirstVertex, uint32 FirstInstance)

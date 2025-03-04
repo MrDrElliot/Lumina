@@ -1,8 +1,9 @@
 ﻿#pragma once
+
 #include "Lumina.h"
 #include "Core/UpdateContext.h"
 #include "Core/Delegates/Delegate.h"
-#include "Renderer/Viewport.h"
+#include "Renderer/RHIFwd.h"
 #include "Subsystems/Subsystem.h"
 
 
@@ -49,7 +50,7 @@ namespace Lumina
         virtual void CreateDevelopmentTools() = 0;
         virtual void DrawDevelopmentTools();
 
-        const FViewport& GetEngineViewport() const { return EngineViewport; }
+        const FRHIViewportRef& GetEngineViewport() const { return EngineViewport; }
 
         void SetUpdateCallback(TFunction<void(const FUpdateContext&)> Callback) { UpdateCallback = Callback; }
 
@@ -77,6 +78,6 @@ namespace Lumina
         FSceneManager*          SceneManager =          nullptr;
         FRenderManager*         RenderManager =         nullptr;
 
-        FViewport               EngineViewport;
+        FRHIViewportRef         EngineViewport;
     };
 }

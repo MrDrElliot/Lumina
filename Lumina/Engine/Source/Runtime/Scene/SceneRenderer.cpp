@@ -20,8 +20,7 @@ namespace Lumina
     }
 
     FSceneRenderer::FSceneRenderer()
-        : SceneViewport(Windowing::GetPrimaryWindowHandle()->GetExtent())
-        , SceneGlobalData()
+        : SceneGlobalData()
     {
     }
 
@@ -51,7 +50,7 @@ namespace Lumina
         SceneGlobalData.Time =                  (float)glfwGetTime();
         SceneGlobalData.DeltaTime =             (float)Scene->GetSceneDeltaTime();
 
-        SceneViewport.SetViewVolume(CameraComponent.GetViewVolume());
+        SceneViewport->SetViewVolume(CameraComponent.GetViewVolume());
         
 
     }

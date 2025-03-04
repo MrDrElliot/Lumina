@@ -171,6 +171,7 @@ namespace Lumina
     {
         TVector<TRefCountPtr<FTrackedCommandBufer>> Submissions = FMemory::Move(CommandBuffersInFlight);
 
+        
         for (auto& Submission : Submissions)
         {
             Submission->ReferencedResources.clear();
@@ -283,7 +284,8 @@ namespace Lumina
         AssertMsg(glfwVulkanSupported(), "Vulkan Is Not Supported!");
 
         vkb::InstanceBuilder Builder;
-        auto InstBuilder = Builder.set_app_name("Lumina Engine")
+        auto InstBuilder = Builder
+        .set_app_name("Lumina Engine")
         .request_validation_layers()
         .use_default_debug_messenger()
         .set_debug_callback(VkDebugCallback)
@@ -317,24 +319,23 @@ namespace Lumina
     void FVulkanRenderContext::Deinitialize()
     {
         WaitIdle();
-
+        
         StagingManager.FreeAllBuffers();
+        CommandList.SafeRelease();
         
         FMemory::Delete(Swapchain);
         
-        CommandList.SafeRelease();
 
         for (FQueue* Queue : Queues)
         {
             FMemory::Delete(Queue);
         }
         
-        
         auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(VulkanInstance, "vkDestroyDebugUtilsMessengerEXT");
         func(VulkanInstance, DebugUtils.DebugMessenger, nullptr);
-
         
         FlushPendingDeletes();
+        
         FMemory::Delete(VulkanDevice);
         vkDestroyInstance(VulkanInstance, nullptr);
     }
@@ -361,65 +362,14 @@ namespace Lumina
         
         CommandList->Open();
         
-        GetQueue(ECommandQueue::Graphics)->AddWaitSemaphore(Swapchain->GetAquireSemaphore());
-        GetQueue(ECommandQueue::Graphics)->AddSignalSemaphore(Swapchain->GetPresentSemaphore());
-        
+        GetQueue()->AddWaitSemaphore(Swapchain->GetAquireSemaphore());
+        GetQueue()->AddSignalSemaphore(Swapchain->GetPresentSemaphore());
+         
     }
 
     void FVulkanRenderContext::FrameEnd(const FUpdateContext& UpdateContext)
     {
-        FRHIImageDesc Desc;
-        Desc.Dimension = EImageDimension::Texture2D;
-        Desc.Extent = Swapchain->GetSwapchainExtent();
-        Desc.Format = EImageFormat::R8_UNORM;
-        FRHIImageRef Image = CreateImage(Desc);
-
-        size_t TotalSize = Swapchain->GetSwapchainExtent().X * Swapchain->GetSwapchainExtent().Y * sizeof(uint8) * 4; // 4 bytes per pixel for RGBA
-
-        // Create a buffer to hold the pixel data
-        std::vector<uint8> SolidColor(TotalSize);
-
-        // Random number generator for pixel data (RGBA values)
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        std::uniform_int_distribution<int> dis(0, 255); // Random values between 0 and 255 for each color channel
-
-        size_t DataOffset = 0;
-
-        // Generate random pixel data for each pixel
-        for (uint32 y = 0; y < Swapchain->GetSwapchainExtent().Y; ++y)
-        {
-            for (uint32 x = 0; x < Swapchain->GetSwapchainExtent().X; ++x)
-            {
-                // Generate random color values for RGBA (each value between 0 and 255)
-                uint8 R = static_cast<uint8>(dis(gen));
-                uint8 G = static_cast<uint8>(dis(gen));
-                uint8 B = static_cast<uint8>(dis(gen));
-                uint8 A = 255;  // Full opacity
-
-                // Pack the color values into the SolidColor array (RGBA format)
-                SolidColor[DataOffset] = R;
-                SolidColor[DataOffset + 1] = G;
-                SolidColor[DataOffset + 2] = B;
-                SolidColor[DataOffset + 3] = A;
-
-                DataOffset += 4; // Move to the next pixel (4 bytes per pixel)
-            }
-        }
-
-        // Now write the random color data to the image
-        CommandList->WriteToImage(
-            Image, 
-            0,  // ArraySlice (for 2D textures, this is 0)
-            0,  // MipLevel (typically 0 for base level)
-            SolidColor.data(),  // Pointer to the pixel data
-            Swapchain->GetSwapchainExtent().X * sizeof(uint8) * 4,  // Row pitch (width * bytes per pixel)
-            0   // Depth pitch (0 for 2D textures)
-        );
-
-
-        CommandList->CopyImage(Image, Swapchain->GetCurrentImage());
-        
+        CommandList->CopyImage(GEngine->GetEngineViewport()->GetRenderTarget(), Swapchain->GetCurrentImage());
         CommandList->SetRequiredImageAccess(Swapchain->GetCurrentImage(), ERHIAccess::PresentRead);
         CommandList->Close();
         ExecuteCommandList(CommandList);
@@ -448,7 +398,7 @@ namespace Lumina
         for (uint32 i = 0; i < NumCommandLists; ++i)
         {
             /** Static cast in this case if fine because CommandLists will only ever contain one type. */
-            static_cast<FVulkanCommandList*>(&CommandLists[i])->Executed(Queue);
+            static_cast<FVulkanCommandList*>(&CommandLists[i])->Executed(Queue);  // NOLINT(bugprone-pointer-arithmetic-on-polymorphic-object)
         }
     }
 
@@ -459,29 +409,31 @@ namespace Lumina
 
     void FVulkanRenderContext::CreateDevice(vkb::Instance Instance)
     {
-        VkPhysicalDeviceVulkan13Features features = {};
-        features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
-        features.dynamicRendering = VK_TRUE;
-        features.synchronization2 = VK_TRUE;
-
-        VkPhysicalDeviceVulkan12Features features12 = {};
-        features12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
-        features12.bufferDeviceAddress = VK_TRUE;
-        features12.descriptorIndexing =  VK_TRUE;
-        features12.descriptorBindingPartiallyBound = VK_TRUE;
+        VkPhysicalDeviceFeatures DeviceFeatures = {};
+        DeviceFeatures.samplerAnisotropy = VK_TRUE;
+        DeviceFeatures.sampleRateShading = VK_TRUE;
+        DeviceFeatures.fillModeNonSolid = VK_TRUE;
+        DeviceFeatures.wideLines = VK_TRUE;
         
-        VkPhysicalDeviceFeatures device_features = {};
-        device_features.samplerAnisotropy = VK_TRUE;
-        device_features.sampleRateShading = VK_TRUE;
-        device_features.fillModeNonSolid = VK_TRUE;
-        device_features.wideLines = VK_TRUE;
+        
+        VkPhysicalDeviceVulkan12Features Features12 = {};
+        Features12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+        Features12.bufferDeviceAddress = VK_TRUE;
+        Features12.descriptorIndexing =  VK_TRUE;
+        Features12.descriptorBindingPartiallyBound = VK_TRUE;
+
+        VkPhysicalDeviceVulkan13Features Features13 = {};
+        Features13.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
+        Features13.dynamicRendering = VK_TRUE;
+        Features13.synchronization2 = VK_TRUE;
         
         vkb::PhysicalDeviceSelector selector(Instance);
         vkb::PhysicalDevice physicalDevice = selector
             .set_minimum_version(1, 3)
-            .set_required_features(device_features)
-            .set_required_features_12(features12)
-            .set_required_features_13(features)
+            .set_required_features(DeviceFeatures)
+            .set_required_features_12(Features12)
+            .set_required_features_13(Features13)
+            .require_separate_transfer_queue()
             .require_separate_compute_queue()
             .defer_surface_initialization()
             .select()
@@ -504,21 +456,21 @@ namespace Lumina
         {
             VkQueue Queue = vkbDevice.get_queue(vkb::QueueType::graphics).value();
             uint32 Index = vkbDevice.get_queue_index(vkb::QueueType::graphics).value();
-            Queues[(uint32)ECommandQueue::Graphics] = FMemory::New<FQueue>(VulkanDevice, Queue, Index);
+            Queues[uint32(ECommandQueue::Graphics)] = FMemory::New<FQueue>(VulkanDevice, Queue, Index);
         }
 
         if (vkbDevice.get_queue(vkb::QueueType::compute).has_value())
         {
             VkQueue Queue = vkbDevice.get_queue(vkb::QueueType::compute).value();
             uint32 Index = vkbDevice.get_queue_index(vkb::QueueType::compute).value();
-            Queues[(uint32)ECommandQueue::Compute] = FMemory::New<FQueue>(VulkanDevice, Queue, Index);
+            Queues[uint32(ECommandQueue::Compute)] = FMemory::New<FQueue>(VulkanDevice, Queue, Index);
         }
 
         if (vkbDevice.get_queue(vkb::QueueType::transfer).has_value())
         {
             VkQueue Queue = vkbDevice.get_queue(vkb::QueueType::transfer).value();
             uint32 Index = vkbDevice.get_queue_index(vkb::QueueType::transfer).value();
-            Queues[(uint32)ECommandQueue::Transfer] = FMemory::New<FQueue>(VulkanDevice, Queue, Index);
+            Queues[uint32(ECommandQueue::Transfer)] = FMemory::New<FQueue>(VulkanDevice, Queue, Index);
         }
     }
 
@@ -533,6 +485,11 @@ namespace Lumina
 
         return Math::GetAligned(Size, MinAlignment);
     }
+    
+    FRHIViewportRef FVulkanRenderContext::CreateViewport(const FIntVector2D& Size)
+    {
+        return MakeRefCount<FVulkanViewport>(Size, this);
+    }
 
     FRHIImageRef FVulkanRenderContext::CreateImage(const FRHIImageDesc& ImageSpec)
     {
@@ -541,17 +498,27 @@ namespace Lumina
 
     FRHIVertexShaderRef FVulkanRenderContext::CreateVertexShader(const TVector<uint32>& ByteCode)
     {
-        return MakeRefCount<FRHIVulkanVertexShader>(VulkanDevice, ByteCode);
+        return MakeRefCount<FVulkanVertexShader>(VulkanDevice, ByteCode);
     }
 
     FRHIPixelShaderRef FVulkanRenderContext::CreatePixelShader(const TVector<uint32>& ByteCode)
     {
-        return MakeRefCount<FRHIVulkanPixelShader>(VulkanDevice, ByteCode);
+        return MakeRefCount<FVulkanPixelShader>(VulkanDevice, ByteCode);
     }
 
     FRHIComputeShaderRef FVulkanRenderContext::CreateComputeShader(const TVector<uint32>& ByteCode)
     {
-        return MakeRefCount<FRHIVulkanComputeShader>(VulkanDevice, ByteCode);
+        return MakeRefCount<FVulkanComputeShader>(VulkanDevice, ByteCode);
+    }
+
+    FRHIComputePipelineRef FVulkanRenderContext::CreateComputePipeline(const FComputePipelineDesc& Desc)
+    {
+        return {};
+    }
+
+    FRHIGraphicsPipelineRef FVulkanRenderContext::CreateGraphicsPipeline(const FGraphicsPipelineDesc& Desc)
+    {
+        return {};
     }
 
     FRHIBufferRef FVulkanRenderContext::CreateBuffer(const FRHIBufferDesc& Description)
@@ -563,7 +530,7 @@ namespace Lumina
     {
         for (FQueue* Queue : Queues)
         {
-            if (Queue)
+            if (Queue != nullptr)
             {
                 Queue->RetireCommandBuffers();
             }
@@ -572,10 +539,10 @@ namespace Lumina
         while (!PendingDeletes.empty())
         {
             IRHIResource* Resource = PendingDeletes.top();
+            PendingDeletes.pop();
             if (Resource->Deleting())
             {
                 FMemory::Delete(Resource);
-                PendingDeletes.pop();
             }
         }
     }

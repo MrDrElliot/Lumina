@@ -48,6 +48,11 @@ namespace Lumina
             return TVector2D(X + Other.X, Y + Other.Y);
         }
 
+        bool operator==(const TVector2D& Other) const
+        {
+            return X == Other.X && Y == Other.Y;
+        }
+
         // Vector subtraction
         TVector2D operator-(const TVector2D& Other) const
         {
@@ -120,6 +125,12 @@ namespace Lumina
             }
             return *this;
         }
+
+        bool operator==(const TVector3D& Other) const
+        {
+            return X == Other.X && Y == Other.Y && Z == Other.Z;
+        }
+
 
         // Vector addition
         TVector3D operator+(const TVector3D& Other) const

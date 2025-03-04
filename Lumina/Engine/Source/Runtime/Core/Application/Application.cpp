@@ -104,7 +104,7 @@ namespace Lumina
         
         AppWindowSpecs.Context.ResizeCallback = [this] (const FIntVector2D& Extent)
         {
-            OnWindowResized(Extent);
+            WindowResized(Extent);
         };
 
         Window = FWindow::Create(AppWindowSpecs);

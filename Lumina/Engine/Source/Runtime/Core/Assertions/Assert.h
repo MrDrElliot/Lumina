@@ -28,12 +28,10 @@ inline void PrintCallStack()
     SymInitialize(process, NULL, TRUE);
     frames = CaptureStackBackTrace(0, 100, stack, NULL);
 
-    // Allocate symbol structure
     symbol = (SYMBOL_INFO*)malloc(sizeof(SYMBOL_INFO) + 256 * sizeof(char));
     symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
     symbol->MaxNameLen = 255;
 
-    // Struct to hold source file and line number info
     IMAGEHLP_LINE64 line;
     DWORD displacement;
     line.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
@@ -89,7 +87,7 @@ inline LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS* exceptionInfo)
 // Macro for assertion, triggering a breakpoint if the condition fails
 #define Assert(condition)                               \
     do {                                                \
-        if ((!(condition))) {                    \
+        if ((!(condition))) [[unlikely]] {              \
             LOG_CRITICAL("Assertion failed: {0} in {1} at line {2}", \
                 #condition, __FILE__, __LINE__);        \
             PrintCallStack();                           \
@@ -102,7 +100,7 @@ inline LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS* exceptionInfo)
 // Macro for assertion with a custom message
 #define AssertMsg(condition, msg)                       \
     do {                                                \
-        if ((!(condition))) {                    \
+        if ((!(condition))) [[unlikely]] {               \
             LOG_ERROR("Assertion failed: {0} ({1}) in {2} at line {3}", \
                 msg, #condition, __FILE__, __LINE__);    \
             PrintCallStack();                           \
@@ -115,7 +113,7 @@ inline LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS* exceptionInfo)
 // Ensure macro (will log and sleep for a while on failure)
 #define EnsureMsg(condition, msg)                       \
 do {                                                    \
-    if ((!(condition))) {                        \
+    if ((!(condition))) [[unlikely]] {                  \
         LOG_ERROR("Ensure failed: {0} ({1}) in {2} at line {3}", \
         msg, #condition, __FILE__, __LINE__);            \
         PrintCallStack();                                \

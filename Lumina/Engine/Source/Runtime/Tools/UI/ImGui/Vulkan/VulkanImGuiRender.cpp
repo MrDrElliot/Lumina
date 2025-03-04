@@ -111,14 +111,13 @@ namespace Lumina
 			
 			FRHICommandListRef CommandList = VulkanRenderContext->GetCommandList(ECommandQueue::Graphics);
 
-			FRHIImageRef Handle = VulkanRenderContext->GetSwapchain()->GetCurrentImage();
 			
 			FRenderPassBeginInfo RenderPass; RenderPass
-			.AddColorAttachment(Handle)
+			.AddColorAttachment(GEngine->GetEngineViewport()->GetRenderTarget())
 			.SetColorLoadOp(ERenderLoadOp::Clear)
 			.SetColorStoreOp(ERenderLoadOp::Store)
 			.SetColorClearColor(FColor(1.0f))
-			.SetRenderArea(VulkanRenderContext->GetSwapchain()->GetSwapchainExtent());
+			.SetRenderArea(GEngine->GetEngineViewport()->GetRenderTarget()->GetDescription().Extent);
 
 			
 			CommandList->BeginRenderPass(RenderPass);
