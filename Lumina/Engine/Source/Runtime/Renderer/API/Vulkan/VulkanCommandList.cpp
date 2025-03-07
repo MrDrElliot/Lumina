@@ -197,7 +197,7 @@ namespace Lumina
 
     }
 
-    void FVulkanCommandList::UploadToBuffer(FRHIBuffer* Buffer, void* Data, uint32 Offset, uint32 Size)
+    void FVulkanCommandList::UploadToBuffer(FRHIBuffer* Buffer, const void* Data, uint32 Offset, uint32 Size)
     {
         Assert(Size > 0 && Size <= Buffer->GetSize());
         Assert(PendingState.IsRecording());
@@ -212,8 +212,9 @@ namespace Lumina
 
             FVulkanMemoryAllocator* MemoryAllocator = RenderContext->GetDevice()->GetAllocator();
             VmaAllocation Allocation = MemoryAllocator->GetAllocation(StagingBuffer->GetBuffer());
+            void* SourceData = const_cast<void*>(Data);
             void* StagingData = MemoryAllocator->MapMemory(Allocation);
-            FMemory::Memcpy(StagingData, Data, Size);
+            FMemory::Memcpy(StagingData, SourceData, Size);
             MemoryAllocator->UnmapMemory(Allocation);
 
             CopyBuffer(StagingBuffer, 0, Buffer, 0, Size);
@@ -272,24 +273,24 @@ namespace Lumina
 
             switch (Item.Type)
             {
-            case ERHIBindingResourceType::Texture_SRV:
-                {
-                    FVulkanImage* VulkanImage = static_cast<FVulkanImage*>(Item.ResourceHandle);
-                    SetRequiredImageAccess(VulkanImage, ERHIAccess::ShaderRead);
-                }
-                break;
-            case ERHIBindingResourceType::Texture_UAV:
-                {
-                    FVulkanImage* VulkanImage = static_cast<FVulkanImage*>(Item.ResourceHandle);
-                    SetRequiredImageAccess(VulkanImage, ERHIAccess::ShaderWrite);
-                }
-                break;
-            case ERHIBindingResourceType::Buffer_SRV:
-                break;
-            case ERHIBindingResourceType::Buffer_UAV:
-                break;
-            case ERHIBindingResourceType::Buffer_CBV:
-                break;
+                case ERHIBindingResourceType::Texture_SRV:
+                    {
+                        FVulkanImage* VulkanImage = static_cast<FVulkanImage*>(Item.ResourceHandle);
+                        SetRequiredImageAccess(VulkanImage, ERHIAccess::ShaderRead);
+                    }
+                    break;
+                case ERHIBindingResourceType::Texture_UAV:
+                    {
+                        FVulkanImage* VulkanImage = static_cast<FVulkanImage*>(Item.ResourceHandle);
+                        SetRequiredImageAccess(VulkanImage, ERHIAccess::ShaderWrite);
+                    }
+                    break;
+                case ERHIBindingResourceType::Buffer_SRV:
+                    break;
+                case ERHIBindingResourceType::Buffer_UAV:
+                    break;
+                case ERHIBindingResourceType::Buffer_CBV:
+                    break;
             }
         }
     }
@@ -465,7 +466,8 @@ namespace Lumina
     void FVulkanCommandList::Draw(uint32 VertexCount, uint32 InstanceCount, uint32 FirstVertex, uint32 FirstInstance)
     {
         Assert(GraphicsState.Pipeline != nullptr);
-        
+
+        GraphicsState.PrepareForDraw(CurrentCommandBuffer->CommandBuffer);
         vkCmdDraw(CurrentCommandBuffer->CommandBuffer, VertexCount, InstanceCount, FirstVertex, FirstInstance);
     }
 
@@ -477,7 +479,8 @@ namespace Lumina
 
         FVulkanBuffer* Buffer = static_cast<FVulkanBuffer*>(IndexBuffer);
         CurrentCommandBuffer->AddReferencedResource(Buffer);
-        
+
+        GraphicsState.PrepareForDraw(CurrentCommandBuffer->CommandBuffer);
         vkCmdBindIndexBuffer(CurrentCommandBuffer->CommandBuffer, Buffer->GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
         vkCmdDrawIndexed(CurrentCommandBuffer->CommandBuffer, IndexCount, InstanceCount, FirstIndex, VertexOffset, FirstInstance);
     }

@@ -39,9 +39,7 @@ namespace Lumina
         FVulkanComputeState() = default;
         
         FVulkanComputePipeline*     Pipeline;
-
-        // Stream of current buffers, used and cleared after each draw call.
-        FRHIBuffer*        VertexBuffers[17];
+        
     };
     
 }

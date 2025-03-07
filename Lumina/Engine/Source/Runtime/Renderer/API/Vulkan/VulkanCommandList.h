@@ -33,7 +33,7 @@ namespace Lumina
         void WriteToImage(FRHIImage* Dst, uint32 ArraySlice, uint32 MipLevel, const void* Data, SIZE_T RowPitch, SIZE_T DepthPitch) override;
 
         void CopyBuffer(FRHIBuffer* Source, uint64 SrcOffset, FRHIBuffer* Destination, uint64 DstOffset, uint64 CopySize) override;
-        void UploadToBuffer(FRHIBuffer* Buffer, void* Data, uint32 Offset, uint32 Size) override;
+        void UploadToBuffer(FRHIBuffer* Buffer, const void* Data, uint32 Offset, uint32 Size) override;
 
         void SetRequiredImageAccess(FRHIImage* Image, ERHIAccess Access) override;
         void SetRequiredBufferAccess(FRHIBuffer* Buffer, ERHIAccess Access) override;

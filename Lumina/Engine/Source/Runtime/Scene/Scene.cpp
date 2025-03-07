@@ -16,24 +16,17 @@ namespace Lumina
     FScene::FScene(ESceneType InType)
         : SceneType(InType)
     {
+        SceneSubsystemManager = FMemory::New<FSubsystemManager>();
+        SceneSubsystemManager->AddSubsystem<FCameraManager>();
     }
 
     FScene::~FScene()
     {
     }
-    
-    void FScene::Initialize(const FUpdateContext& UpdateContext)
-    {
-        SystemManager = UpdateContext.GetSubsystemManager();
-        
-        SceneSubsystemManager = FMemory::New<FSubsystemManager>();
-        SceneSubsystemManager->AddSubsystem<FCameraManager>();
-    }
 
     void FScene::Shutdown()
     {
         
-        SystemManager = nullptr;
     }
 
     void FScene::StartFrame()

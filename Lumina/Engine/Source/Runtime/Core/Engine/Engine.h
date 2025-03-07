@@ -55,6 +55,12 @@ namespace Lumina
         void SetUpdateCallback(TFunction<void(const FUpdateContext&)> Callback) { UpdateCallback = Callback; }
 
         void SetEngineViewportSize(const FIntVector2D& InSize);
+
+        template<typename T>
+        T* GetEngineSubsystem()
+        {
+            return EngineSubsystems.GetSubsystem<T>();
+        }
         
     protected:
 

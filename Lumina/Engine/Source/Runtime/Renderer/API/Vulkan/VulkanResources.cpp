@@ -697,6 +697,12 @@ namespace Lumina
         return DescriptorSet;
     }
 
+    FVulkanPipeline::~FVulkanPipeline()
+    {
+        vkDestroyPipeline(Device->GetDevice(), Pipeline, nullptr);
+        vkDestroyPipelineLayout(Device->GetDevice(), PipelineLayout, nullptr);
+    }
+
     void FVulkanPipeline::CreatePipelineLayout(TVector<FRHIBindingLayoutRef> BindingLayouts)
     {
         TVector<VkDescriptorSetLayout> Layouts;

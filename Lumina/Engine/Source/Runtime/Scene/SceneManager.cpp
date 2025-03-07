@@ -27,8 +27,7 @@ namespace Lumina
     {
         for (FManagedScene& Scene : Scenes)
         {
-            //Scene.SceneRenderer->StartScene(Scene.Scene);
-           // Scene.Scene->GetPrimitiveDrawManager()->StartDraw();
+            Scene.SceneRenderer->StartScene(Scene.Scene);
             Scene.Scene->StartFrame();       
         }
     }

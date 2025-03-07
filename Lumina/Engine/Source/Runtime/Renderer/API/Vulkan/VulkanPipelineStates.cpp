@@ -10,6 +10,24 @@ namespace Lumina
 
     void FVulkanGraphicsState::PrepareForDraw(VkCommandBuffer CmdBuffer)
     {
-        
+        VkBuffer Buffers[17];
+        VkDeviceSize Offsets[17];
+        uint32 NumBindings = 0;
+
+        for (uint32 i = 0; i < 17; ++i)
+        {
+            if (PendingStreams[i].Stream != VK_NULL_HANDLE)
+            {
+                Buffers[NumBindings] = PendingStreams[i].Stream;
+                Offsets[NumBindings] = PendingStreams[i].BufferOffset;
+                NumBindings++;
+            }
+        }
+
+        if (NumBindings > 0)
+        {
+            vkCmdBindVertexBuffers(CmdBuffer, 0, NumBindings, Buffers, Offsets);
+        }
     }
+
 }

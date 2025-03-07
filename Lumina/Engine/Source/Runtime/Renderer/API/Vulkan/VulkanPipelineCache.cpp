@@ -41,4 +41,10 @@ namespace Lumina
         GraphicsPipelines.clear();
         ComputePipelines.clear();
     }
+
+    void FVulkanPipelineCache::ReleasePipelines()
+    {
+        GraphicsPipelines.clear();
+        ComputePipelines.clear();
+    }
 }

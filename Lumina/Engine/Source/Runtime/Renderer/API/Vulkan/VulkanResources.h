@@ -243,7 +243,7 @@ namespace Lumina
     {
     public:
         
-        virtual ~FVulkanPipeline() = default;
+        ~FVulkanPipeline();
 
         FVulkanPipeline(FVulkanDevice* InDevice)
             :IDeviceChild(InDevice)

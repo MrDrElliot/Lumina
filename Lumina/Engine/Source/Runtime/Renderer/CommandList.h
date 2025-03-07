@@ -45,7 +45,7 @@ namespace Lumina
         virtual void CopyImage(FRHIImage* Src, FRHIImage* Dst) = 0;
         virtual void WriteToImage(FRHIImage* Dst, uint32 ArraySlice, uint32 MipLevel, const void* Data, SIZE_T RowPitch, SIZE_T DepthPitch) = 0;
         
-        NODISCARD virtual void UploadToBuffer(FRHIBuffer* Buffer, void* Data, uint32 Offset, uint32 Size) = 0;
+        NODISCARD virtual void UploadToBuffer(FRHIBuffer* Buffer, const void* Data, uint32 Offset, uint32 Size) = 0;
         virtual void CopyBuffer(FRHIBuffer* Source, uint64 SrcOffset, FRHIBuffer* Destination, uint64 DstOffset, uint64 CopySize) = 0;
 
         virtual void SetRequiredImageAccess(FRHIImage* Image, ERHIAccess Access) = 0;

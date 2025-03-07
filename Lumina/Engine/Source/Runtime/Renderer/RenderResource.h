@@ -429,7 +429,7 @@ namespace Lumina
 		FORCEINLINE const FIntVector2D& GetSize() const { return Size; }
 
 		FORCEINLINE void SetViewVolume(const FViewVolume& InVolume) { ViewVolume = InVolume;}
-		FORCEINLINE virtual FRHIImageRef GetRenderTarget() const { return RenderTarget; };
+		FORCEINLINE virtual FRHIImageRef GetRenderTarget() const { return RenderTarget; }
 
 	private:
 
@@ -1049,6 +1049,7 @@ namespace Lumina
 			return Result;
 		}
 
+		
 		static FBindingSetItem TextureSRV(uint32 Slot, FRHIImage* Image)
 		{
 			FBindingSetItem Result;

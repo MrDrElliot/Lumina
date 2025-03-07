@@ -31,8 +31,6 @@ namespace Lumina
         FScene(ESceneType InType);
         virtual ~FScene();
         
-
-        void Initialize(const FUpdateContext& UpdateContext);
         void Shutdown();
 
         void StartFrame();
@@ -66,8 +64,6 @@ namespace Lumina
         
         ESceneType                      SceneType;
         double                          DeltaTime = 0.0;
-
-        const FSubsystemManager*        SystemManager = nullptr;
         
         FSubsystemManager*              SceneSubsystemManager = nullptr;
 

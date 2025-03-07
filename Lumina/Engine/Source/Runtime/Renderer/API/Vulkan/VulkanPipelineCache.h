@@ -23,6 +23,7 @@ namespace Lumina
         FRHIComputePipelineRef GetOrCreateComputePipeline(FVulkanDevice* Device, const FComputePipelineDesc& InDesc);
 
         void PostShaderRecompiled(FName Shader);
+        void ReleasePipelines();
         
     private:
 

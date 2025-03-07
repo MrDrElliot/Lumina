@@ -64,7 +64,6 @@ namespace Lumina
         
         //-------------------------------------------------------------------------------------
         
-
         NODISCARD virtual FRHIVertexShaderRef CreateVertexShader(const TVector<uint32>& ByteCode) = 0;
         NODISCARD virtual FRHIPixelShaderRef CreatePixelShader(const TVector<uint32>& ByteCode) = 0;
         NODISCARD virtual FRHIComputeShaderRef CreateComputeShader(const TVector<uint32>& ByteCode) = 0;
@@ -77,6 +76,7 @@ namespace Lumina
         
         //-------------------------------------------------------------------------------------
 
+        NODISCARD virtual FRHIInputLayoutRef CreateInputLayout(const FVertexAttributeDesc* AttributeDesc, uint32 Count) = 0;
         NODISCARD virtual FRHIBindingLayoutRef CreateBindingLayout(const FBindingLayoutDesc& Desc) = 0;
         NODISCARD virtual FRHIBindingSetRef CreateBindingSet(const FBindingSetDesc& Desc, FRHIBindingLayout* InLayout) = 0;
         NODISCARD virtual FRHIComputePipelineRef CreateComputePipeline(const FComputePipelineDesc& Desc) = 0;

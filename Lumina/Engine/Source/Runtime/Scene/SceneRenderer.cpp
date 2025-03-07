@@ -10,6 +10,8 @@
 #include "glm/gtc/type_ptr.hpp"
 #include "Renderer/RHIIncl.h"
 #include "Scene.h"
+#include "Renderer/RenderContext.h"
+#include "Renderer/RenderManager.h"
 #include "Subsystems/FCameraManager.h"
 
 namespace Lumina
@@ -22,6 +24,7 @@ namespace Lumina
     FSceneRenderer::FSceneRenderer()
         : SceneGlobalData()
     {
+        SceneViewport = GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext()->CreateViewport(Windowing::GetPrimaryWindowHandle()->GetExtent());
     }
 
     FSceneRenderer::~FSceneRenderer()
@@ -53,6 +56,8 @@ namespace Lumina
         SceneViewport->SetViewVolume(CameraComponent.GetViewVolume());
         
 
+        
+        
     }
 
     void FSceneRenderer::EndScene(const FScene* Scene)

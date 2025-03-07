@@ -13,32 +13,29 @@ layout(local_size_x = 16, local_size_y = 16) in;
 void main()
 {
     ivec2 pixel = ivec2(gl_GlobalInvocationID.xy);
-    vec2 uv = vec2(pixel) / imageSize(img);
+    vec2 uv = vec2(pixel) / imageSize(img) * 2.0 - 1.0;
 
-    float speed = 2.0;
-    vec2 center = vec2(0.5);
-    vec2 rotatedUV = uv - center;
-    float angle = time * 0.2;
-    mat2 rotation = mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
-    rotatedUV = rotation * rotatedUV;
+    float aspect = float(imageSize(img).x) / float(imageSize(img).y);
+    uv.x *= aspect;
 
-    float frequencyX = 10.0;
-    float frequencyY = 10.0;
+    float dist = length(uv);
+    float angle = atan(uv.y, uv.x);
 
-    float waveX = sin((rotatedUV.x + time) * frequencyX);
-    float waveY = cos((rotatedUV.y + time) * frequencyY);
+    // Spiral effect
+    float swirl = time * 0.5 - dist * 3.0;
+    float spiralFactor = sin(angle * 8.0 + swirl) * 0.5 + 0.5;
 
-    float wave = waveX * waveY;
+    // Starfield noise
+    float starDensity = 200.0;
+    float stars = fract(sin(dot(uv, vec2(12.9898, 78.233))) * 43758.5453);
+    stars = smoothstep(0.95, 1.0, stars * spiralFactor * starDensity);
 
-    wave = (wave + 1.0) * 0.5;
+    // Galaxy colors
+    vec3 galaxyColor = vec3(0.2, 0.4, 1.0) * spiralFactor + vec3(1.0, 0.8, 0.3) * stars;
 
-    vec3 color = vec3(
-    0.5 + 0.5 * sin(time + wave * 6.0),
-    0.5 + 0.5 * cos(time + wave * 5.0),
-    0.5 + 0.5 * sin(time + wave * 8.0)
-    );
+    // Add a glowing effect at the center
+    float glow = exp(-dist * 4.0) * 0.8;
+    galaxyColor += glow;
 
-    color = mix(color, vec3(1.0, 1.0, 1.0), wave);
-
-    imageStore(img, pixel, vec4(color, 1.0));
+    imageStore(img, pixel, vec4(galaxyColor, 1.0));
 }

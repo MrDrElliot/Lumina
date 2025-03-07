@@ -3,6 +3,11 @@
 #include "Source/Runtime/Core/Application/Application.h"
 #include "Core/Engine/Engine.h"
 
+namespace Lumina
+{
+	class FScene;
+}
+
 class FSandboxEngine : public Lumina::FEngine
 {
 public:
@@ -13,6 +18,7 @@ public:
 private:
 	
 };
+using namespace Lumina;
 
 class FSandbox : public Lumina::FApplication
 {
@@ -27,6 +33,8 @@ public:
 	void Shutdown() override;
 
 
+	FScene* Scene;
+	
 private:
 	
 };

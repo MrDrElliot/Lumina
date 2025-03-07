@@ -346,6 +346,7 @@ namespace Lumina
         StagingManager.FreeAllBuffers();
         CommandList.SafeRelease();
         ShaderLibrary.SafeRelease();
+        PipelineCache.ReleasePipelines();
         
         FMemory::Delete(Swapchain);
         
@@ -393,69 +394,6 @@ namespace Lumina
 
     void FVulkanRenderContext::FrameEnd(const FUpdateContext& UpdateContext)
     {
-
-        FRHIImageDesc ImageDesc;
-        ImageDesc.Flags.SetMultipleFlags(EImageCreateFlags::ShaderResource, EImageCreateFlags::RenderTarget);
-        ImageDesc.Dimension = EImageDimension::Texture2D;
-        ImageDesc.Extent = Swapchain->GetSwapchainExtent();
-        ImageDesc.Format = EImageFormat::RGBA32_UNORM;
-        FRHIImageRef TestImage = CreateImage(ImageDesc);
-
-        FRHIBufferDesc BufferDesc;
-        BufferDesc.Size = sizeof(float);
-        BufferDesc.Usage.SetFlag(EBufferUsageFlags::UniformBuffer);
-        FRHIBufferRef Buffer = CreateBuffer(BufferDesc);
-
-        float Time = glfwGetTime();
-        CommandList->UploadToBuffer(Buffer, &Time, 0, sizeof(float));
-
-
-        FRenderPassBeginInfo BeginInfo; BeginInfo
-        .AddColorAttachment(TestImage)
-        .SetColorLoadOp(ERenderLoadOp::Clear)
-        .SetColorStoreOp(ERenderLoadOp::Clear)
-        .SetRenderArea(ImageDesc.Extent)
-        .SetColorClearColor(FColor::Black);
-        CommandList->BeginRenderPass(BeginInfo);
-
-        TRefCountPtr<FVulkanInputLayout> InputLayout = MakeRefCount<FVulkanInputLayout>(nullptr, 0);
-
-        FBindingLayoutItem Item;
-        Item.Size = sizeof(float);
-        Item.Slot = 0;
-        Item.Type = ERHIBindingResourceType::Buffer_CBV;
-        
-        FBindingLayoutDesc LayoutDesc;
-        LayoutDesc.Index = 0;
-        LayoutDesc.StageFlags.SetFlag(ERHIShaderType::Fragment);
-        LayoutDesc.AddItem(Item);
-        FRHIBindingLayoutRef Layout = CreateBindingLayout(LayoutDesc);
-
-        FBindingSetDesc SetDesc;
-        SetDesc.AddItem(FBindingSetItem::BufferSRV(0, Buffer));
-        FRHIBindingSetRef Set = CreateBindingSet(SetDesc, Layout);
-        
-        FGraphicsPipelineDesc Desc;
-        Desc.SetInputLayout(InputLayout);
-        Desc.AddBindingLayout(Layout);
-        Desc.SetVertexShader(ShaderLibrary->GetShader("Primitive.vert").As<FVulkanVertexShader>());
-        Desc.SetPixelShader(ShaderLibrary->GetShader("Primitive.frag").As<FVulkanPixelShader>());
-        Desc.SetPrimType(EPrimitiveType::TriangleList);
-
-        FRHIGraphicsPipelineRef Pipeline = CreateGraphicsPipeline(Desc);
-
-        CommandList->SetGraphicsPipeline(Pipeline);
-
-        CommandList->BindBindingSet(Set, ERHIBindingPoint::Graphics);
-
-        CommandList->SetViewport(0.0f, 0.0f, 0.0f, TestImage->GetSizeX(), TestImage->GetSizeY(), 1.0f);
-        CommandList->SetScissorRect(0.0f, 0.0f, TestImage->GetSizeX(), TestImage->GetSizeY());
-
-        CommandList->Draw(3, 1, 0, 0);
-
-        CommandList->EndRenderPass();
-
-        CommandList->CopyImage(TestImage, GEngine->GetEngineViewport()->GetRenderTarget());
         CommandList->CopyImage(GEngine->GetEngineViewport()->GetRenderTarget(), Swapchain->GetCurrentImage());
         
         CommandList->Close();
@@ -700,7 +638,12 @@ namespace Lumina
         
     }
 
-    
+    FRHIInputLayoutRef FVulkanRenderContext::CreateInputLayout(const FVertexAttributeDesc* AttributeDesc, uint32 Count)
+    {
+        return MakeRefCount<FVulkanInputLayout>(AttributeDesc, Count);
+    }
+
+
     void FVulkanRenderContext::SetVulkanObjectName(FString Name, VkObjectType ObjectType, uint64 Handle)
     {
         VkDebugUtilsObjectNameInfoEXT NameInfo = {};
