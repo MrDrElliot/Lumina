@@ -5,7 +5,7 @@ layout(set = 0, binding = 0, rgba8) uniform image2D img;
 
 layout(set = 0, binding = 1) uniform UBO
 {
-    float time;
+    vec4 Color;
 };
 
 layout(local_size_x = 16, local_size_y = 16) in;
@@ -13,29 +13,6 @@ layout(local_size_x = 16, local_size_y = 16) in;
 void main()
 {
     ivec2 pixel = ivec2(gl_GlobalInvocationID.xy);
-    vec2 uv = vec2(pixel) / imageSize(img) * 2.0 - 1.0;
 
-    float aspect = float(imageSize(img).x) / float(imageSize(img).y);
-    uv.x *= aspect;
-
-    float dist = length(uv);
-    float angle = atan(uv.y, uv.x);
-
-    // Spiral effect
-    float swirl = time * 0.5 - dist * 3.0;
-    float spiralFactor = sin(angle * 8.0 + swirl) * 0.5 + 0.5;
-
-    // Starfield noise
-    float starDensity = 200.0;
-    float stars = fract(sin(dot(uv, vec2(12.9898, 78.233))) * 43758.5453);
-    stars = smoothstep(0.95, 1.0, stars * spiralFactor * starDensity);
-
-    // Galaxy colors
-    vec3 galaxyColor = vec3(0.2, 0.4, 1.0) * spiralFactor + vec3(1.0, 0.8, 0.3) * stars;
-
-    // Add a glowing effect at the center
-    float glow = exp(-dist * 4.0) * 0.8;
-    galaxyColor += glow;
-
-    imageStore(img, pixel, vec4(galaxyColor, 1.0));
+    imageStore(img, pixel, vec4(Color.rgb, 1.0));
 }

@@ -78,6 +78,7 @@ namespace Lumina
     void FVulkanCommandList::CopyImage(FRHIImage* Src, FRHIImage* Dst)
     {
         Assert(Src != nullptr && Dst != nullptr);
+        
 
         CurrentCommandBuffer->AddReferencedResource(Src);
         CurrentCommandBuffer->AddReferencedResource(Dst);

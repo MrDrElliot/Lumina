@@ -14,6 +14,7 @@
 
 using namespace Lumina;
 
+
 void FSandbox::CreateEngine()
 {
 	Engine = FMemory::New<FSandboxEngine>();
@@ -30,15 +31,22 @@ void FSandbox::EngineLoopCallback(const FUpdateContext& UpdateContext)
 	IRenderContext* RenderContext = RenderManager->GetRenderContext();
 	ICommandList* CommandList = RenderContext->GetCommandList();
 
+	struct TestData
+	{
+		glm::vec4 Color;
+	};
+	
 	// Here we setup a buffer that is used as a constant view.
 	FRHIBufferDesc Buffer;
-	Buffer.Size = sizeof(float);
+	Buffer.Size = sizeof(TestData);
 	Buffer.Usage.SetFlag(BUF_UniformBuffer);
 	FRHIBufferRef BufferRef = RenderContext->CreateBuffer(Buffer);
+	
 
 	// Here we upload a float (time) to the buffer so it can be read from in the shader.
-	float Time = glfwGetTime();
-	CommandList->UploadToBuffer(BufferRef, &Time, 0, sizeof(float));
+	TestData Test;
+	Test.Color = glm::vec4(0.0f, 0.0f, 1.0f, glfwGetTime());
+	CommandList->UploadToBuffer(BufferRef, &Test, 0, sizeof(TestData));
 
 	// Here we setup a storage image, (Unordered Access View), the compute shader will write to this.
 	FRHIImageDesc Image;
