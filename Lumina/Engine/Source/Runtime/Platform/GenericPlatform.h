@@ -29,3 +29,5 @@ typedef signed int	 		int32;
 // 64-bit signed integer
 typedef signed long long	int64;
 
+using SIZE_T	=			size_t;
+

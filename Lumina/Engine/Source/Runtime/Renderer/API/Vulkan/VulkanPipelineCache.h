@@ -1,16 +1,33 @@
-#pragma once
+﻿#pragma once
+#include "Containers/Array.h"
+#include "Renderer/RHIFwd.h"
 
-#include <vulkan/vulkan.hpp>
 
 namespace Lumina
 {
+    class FName;
+    struct FComputePipelineDesc;
+    struct FGraphicsPipelineDesc;
+    class FVulkanDevice;
+}
+
+
+namespace Lumina
+{
+
     class FVulkanPipelineCache
     {
     public:
 
+        FRHIGraphicsPipelineRef GetOrCreateGraphicsPipeline(FVulkanDevice* Device, const FGraphicsPipelineDesc& InDesc);
+        FRHIComputePipelineRef GetOrCreateComputePipeline(FVulkanDevice* Device, const FComputePipelineDesc& InDesc);
+
+        void PostShaderRecompiled(FName Shader);
         
     private:
-        
+
+        THashMap<SIZE_T, FRHIGraphicsPipelineRef>   GraphicsPipelines;
+        THashMap<SIZE_T, FRHIComputePipelineRef>    ComputePipelines;
         
     };
 }

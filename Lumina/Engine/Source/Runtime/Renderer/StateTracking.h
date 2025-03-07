@@ -48,16 +48,14 @@ namespace Lumina
         ERHIAccess DefaultState = ERHIAccess::None;
     };
 
-    struct IBufferState : public FRefCounted
+    struct IBufferState
     {
         bool bInitialized = false;
         ERHIAccess State = ERHIAccess::None;
     };
 
-    struct IImageState : public FRefCounted
+    struct IImageState
     {
-        IImageState(ERHIAccess InAccess) : State(InAccess) { }
-
         bool bInitialized = false;
         ERHIAccess State = ERHIAccess::None;
     };
@@ -69,8 +67,10 @@ namespace Lumina
         void ClearBarriers();
 
         void RequireImageAccess(FRHIImageRef Image, ERHIAccess Access);
+        void RequireBufferAccess(FRHIBufferRef Buffer, ERHIAccess Access);
         
-        TRefCountPtr<IImageState> GetImageAccess(FRHIImageRef Image);
+        IImageState GetImageAccess(FRHIImageRef Image);
+        IBufferState GetBufferAccess(FRHIBufferRef Buffer);
 
         void CommandListExecuted(ICommandList* CommandList);
 
@@ -82,11 +82,11 @@ namespace Lumina
     
     private:
 
-        THashMap<FRHIImageRef, TRefCountPtr<IImageState>>   ImageStates;
-        THashMap<FRHIBufferRef, TRefCountPtr<IImageState>>  BufferStates;
+        THashMap<FRHIImageRef, IImageState>   ImageStates;
+        THashMap<FRHIBufferRef, IBufferState>  BufferStates;
 
         TVector<FImageBarrier>  ImageBarriers;
         TVector<FBufferBarrier> BufferBarriers;
     };
-
+    
 }

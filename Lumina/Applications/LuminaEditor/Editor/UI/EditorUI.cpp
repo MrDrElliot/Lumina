@@ -569,6 +569,11 @@ namespace Lumina
             {
                 RenderContext->SetVSyncEnabled(!RenderContext->IsVSyncEnabled());
             }
+
+            if (ImGui::MenuItem("Recompile Shaders"))
+            {
+                RenderContext->CompileEngineShaders();
+            }
             
             ImGui::EndMenu();
         }

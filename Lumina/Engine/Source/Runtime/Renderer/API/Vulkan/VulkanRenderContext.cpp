@@ -4,7 +4,10 @@
 
 #include "VulkanCommandList.h"
 #include "VulkanDevice.h"
+#include "Paths/Paths.h"
 #include "Renderer/CommandList.h"
+#include "Renderer/ShaderCompiler.h"
+#include "TaskSystem/TaskSystem.h"
 #ifdef LUMINA_RENDERER_VULKAN
 
 #include "VulkanResources.h"
@@ -26,7 +29,6 @@
 
 namespace Lumina
 {
-
     extern TStack<IRHIResource*> PendingDeletes;
 
     VkBool32 VKAPI_PTR VkDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
@@ -57,39 +59,39 @@ namespace Lumina
     {
         switch (stage)
         {
-            case EPipelineStage::TopOfPipe: return VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-            case EPipelineStage::BottomOfPipe: return VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+        case EPipelineStage::TopOfPipe: return VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+        case EPipelineStage::BottomOfPipe: return VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
             
-                // Vertex Input stages
-            case EPipelineStage::VertexInput: return VK_PIPELINE_STAGE_VERTEX_INPUT_BIT;
-            case EPipelineStage::VertexShader: return VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
+            // Vertex Input stages
+        case EPipelineStage::VertexInput: return VK_PIPELINE_STAGE_VERTEX_INPUT_BIT;
+        case EPipelineStage::VertexShader: return VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
             
-                // Tessellation stages
-            case EPipelineStage::TessellationControlShader: return VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT;
-            case EPipelineStage::TessellationEvaluationShader: return VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT;
+            // Tessellation stages
+        case EPipelineStage::TessellationControlShader: return VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT;
+        case EPipelineStage::TessellationEvaluationShader: return VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT;
             
-                // Geometry stages
-            case EPipelineStage::GeometryShader: return VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT;
+            // Geometry stages
+        case EPipelineStage::GeometryShader: return VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT;
             
-                // Fragment stages
-            case EPipelineStage::FragmentShader: return VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-            case EPipelineStage::ColorAttachmentOutput: return VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+            // Fragment stages
+        case EPipelineStage::FragmentShader: return VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+        case EPipelineStage::ColorAttachmentOutput: return VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
             
-                // Compute stages
-            case EPipelineStage::ComputeShader: return VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
-            case EPipelineStage::Transfer: return VK_PIPELINE_STAGE_TRANSFER_BIT;
+            // Compute stages
+        case EPipelineStage::ComputeShader: return VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+        case EPipelineStage::Transfer: return VK_PIPELINE_STAGE_TRANSFER_BIT;
             
-                // Post-processing stages
-            case EPipelineStage::EarlyFragmentTests: return VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-            case EPipelineStage::LateFragmentTests: return VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+            // Post-processing stages
+        case EPipelineStage::EarlyFragmentTests: return VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+        case EPipelineStage::LateFragmentTests: return VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
             
-                // Special stages
-            case EPipelineStage::Host: return VK_PIPELINE_STAGE_HOST_BIT;
-            case EPipelineStage::AllGraphics: return VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT;
-            case EPipelineStage::AllCommands: return VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+            // Special stages
+        case EPipelineStage::Host: return VK_PIPELINE_STAGE_HOST_BIT;
+        case EPipelineStage::AllGraphics: return VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT;
+        case EPipelineStage::AllCommands: return VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
             
-            default:
-                return VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+        default:
+            return VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
         }
     }
 
@@ -170,11 +172,10 @@ namespace Lumina
     void FQueue::RetireCommandBuffers()
     {
         TVector<TRefCountPtr<FTrackedCommandBufer>> Submissions = FMemory::Move(CommandBuffersInFlight);
-
         
         for (auto& Submission : Submissions)
         {
-            Submission->ReferencedResources.clear();
+            Submission->ClearReferencedResources();
             CommandBufferPool.push(Submission);
         }
     }
@@ -215,6 +216,11 @@ namespace Lumina
         SignalSemaphores.clear();
     }
 
+    void FQueue::WaitIdle()
+    {
+        VK_CHECK(vkQueueWaitIdle(Queue));
+    }
+
     void FQueue::AddSignalSemaphore(VkSemaphore Semaphore)
     {
         SignalSemaphores.push_back(Semaphore);
@@ -231,10 +237,13 @@ namespace Lumina
         {
             OutBuffer = BufferPool.top();
             BufferPool.pop();
+            InFlightBuffers.push_back(OutBuffer);
             return true;
         }
 
-        return CreateNewStagingBuffer(OutBuffer);
+        CreateNewStagingBuffer(OutBuffer);
+        InFlightBuffers.push_back(OutBuffer);
+        return true;
     }
 
     void FVulkanStagingManager::FreeStagingBuffer(TRefCountPtr<FVulkanBuffer> InBuffer)
@@ -245,6 +254,16 @@ namespace Lumina
         Context->GetDevice()->GetAllocator()->UnmapMemory(Allocation);
 
         BufferPool.push(InBuffer);
+    }
+
+    void FVulkanStagingManager::ReturnAllStagingBuffers()
+    {
+        for (auto& Buffer : InFlightBuffers)
+        {
+            FreeStagingBuffer(Buffer);
+        }
+
+        InFlightBuffers.clear();
     }
 
     void FVulkanStagingManager::FreeAllBuffers()
@@ -272,9 +291,9 @@ namespace Lumina
     FVulkanRenderContext::FVulkanRenderContext()
         : CurrentFrameIndex(0)
           , Queues{}
-          , VulkanInstance(nullptr)
-          , StagingManager(this)
-          , DebugUtils()
+    , VulkanInstance(nullptr)
+    , StagingManager(this)
+    , DebugUtils()
     {
     }
 
@@ -300,7 +319,6 @@ namespace Lumina
             VulkanInstance, "vkSetDebugUtilsObjectNameEXT"));
 
         
-        
         CreateDevice(InstBuilder.value());
         
         DebugUtils.vkCmdDebugMarkerBeginEXT = (PFN_vkCmdDebugMarkerBeginEXT)vkGetDeviceProcAddr(GetDevice()->GetDevice(), "vkCmdDebugMarkerBeginEXT");
@@ -310,6 +328,11 @@ namespace Lumina
         
         Swapchain = FMemory::New<FVulkanSwapchain>();
         Swapchain->CreateSwapchain(VulkanInstance, this, Windowing::GetPrimaryWindowHandle(), Windowing::GetPrimaryWindowHandle()->GetExtent());
+
+        ShaderLibrary = MakeRefCount<FShaderLibrary>();
+        ShaderCompiler = FMemory::New<FSpirVShaderCompiler>();
+
+        CompileEngineShaders();
         
         WaitIdle();
         FlushPendingDeletes();
@@ -322,6 +345,7 @@ namespace Lumina
         
         StagingManager.FreeAllBuffers();
         CommandList.SafeRelease();
+        ShaderLibrary.SafeRelease();
         
         FMemory::Delete(Swapchain);
         
@@ -364,18 +388,83 @@ namespace Lumina
         
         GetQueue()->AddWaitSemaphore(Swapchain->GetAquireSemaphore());
         GetQueue()->AddSignalSemaphore(Swapchain->GetPresentSemaphore());
-         
+        
     }
 
     void FVulkanRenderContext::FrameEnd(const FUpdateContext& UpdateContext)
     {
+
+        FRHIImageDesc ImageDesc;
+        ImageDesc.Flags.SetMultipleFlags(EImageCreateFlags::ShaderResource, EImageCreateFlags::RenderTarget);
+        ImageDesc.Dimension = EImageDimension::Texture2D;
+        ImageDesc.Extent = Swapchain->GetSwapchainExtent();
+        ImageDesc.Format = EImageFormat::RGBA32_UNORM;
+        FRHIImageRef TestImage = CreateImage(ImageDesc);
+
+        FRHIBufferDesc BufferDesc;
+        BufferDesc.Size = sizeof(float);
+        BufferDesc.Usage.SetFlag(EBufferUsageFlags::UniformBuffer);
+        FRHIBufferRef Buffer = CreateBuffer(BufferDesc);
+
+        float Time = glfwGetTime();
+        CommandList->UploadToBuffer(Buffer, &Time, 0, sizeof(float));
+
+
+        FRenderPassBeginInfo BeginInfo; BeginInfo
+        .AddColorAttachment(TestImage)
+        .SetColorLoadOp(ERenderLoadOp::Clear)
+        .SetColorStoreOp(ERenderLoadOp::Clear)
+        .SetRenderArea(ImageDesc.Extent)
+        .SetColorClearColor(FColor::Black);
+        CommandList->BeginRenderPass(BeginInfo);
+
+        TRefCountPtr<FVulkanInputLayout> InputLayout = MakeRefCount<FVulkanInputLayout>(nullptr, 0);
+
+        FBindingLayoutItem Item;
+        Item.Size = sizeof(float);
+        Item.Slot = 0;
+        Item.Type = ERHIBindingResourceType::Buffer_CBV;
+        
+        FBindingLayoutDesc LayoutDesc;
+        LayoutDesc.Index = 0;
+        LayoutDesc.StageFlags.SetFlag(ERHIShaderType::Fragment);
+        LayoutDesc.AddItem(Item);
+        FRHIBindingLayoutRef Layout = CreateBindingLayout(LayoutDesc);
+
+        FBindingSetDesc SetDesc;
+        SetDesc.AddItem(FBindingSetItem::BufferSRV(0, Buffer));
+        FRHIBindingSetRef Set = CreateBindingSet(SetDesc, Layout);
+        
+        FGraphicsPipelineDesc Desc;
+        Desc.SetInputLayout(InputLayout);
+        Desc.AddBindingLayout(Layout);
+        Desc.SetVertexShader(ShaderLibrary->GetShader("Primitive.vert").As<FVulkanVertexShader>());
+        Desc.SetPixelShader(ShaderLibrary->GetShader("Primitive.frag").As<FVulkanPixelShader>());
+        Desc.SetPrimType(EPrimitiveType::TriangleList);
+
+        FRHIGraphicsPipelineRef Pipeline = CreateGraphicsPipeline(Desc);
+
+        CommandList->SetGraphicsPipeline(Pipeline);
+
+        CommandList->BindBindingSet(Set, ERHIBindingPoint::Graphics);
+
+        CommandList->SetViewport(0.0f, 0.0f, 0.0f, TestImage->GetSizeX(), TestImage->GetSizeY(), 1.0f);
+        CommandList->SetScissorRect(0.0f, 0.0f, TestImage->GetSizeX(), TestImage->GetSizeY());
+
+        CommandList->Draw(3, 1, 0, 0);
+
+        CommandList->EndRenderPass();
+
+        CommandList->CopyImage(TestImage, GEngine->GetEngineViewport()->GetRenderTarget());
         CommandList->CopyImage(GEngine->GetEngineViewport()->GetRenderTarget(), Swapchain->GetCurrentImage());
-        CommandList->SetRequiredImageAccess(Swapchain->GetCurrentImage(), ERHIAccess::PresentRead);
+        
         CommandList->Close();
+        
         ExecuteCommandList(CommandList);
         
         Swapchain->Present();
         
+        GetStagingManager().ReturnAllStagingBuffers();
         FlushPendingDeletes();
     }
 
@@ -440,7 +529,7 @@ namespace Lumina
             .value();
         
 
-        physicalDevice.enable_extension_if_present(VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
+        physicalDevice.enable_extension_if_present(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
         physicalDevice.enable_extension_if_present(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
         physicalDevice.enable_extension_if_present("VK_EXT_conservative_rasterization");
 
@@ -511,14 +600,35 @@ namespace Lumina
         return MakeRefCount<FVulkanComputeShader>(VulkanDevice, ByteCode);
     }
 
+    IShaderCompiler* FVulkanRenderContext::GetShaderCompiler() const
+    {
+        return ShaderCompiler;
+    }
+
+    FRHIShaderLibraryRef FVulkanRenderContext::GetShaderLibrary() const
+    {
+        return ShaderLibrary;
+    }
+
+    FRHIBindingLayoutRef FVulkanRenderContext::CreateBindingLayout(const FBindingLayoutDesc& Desc)
+    {
+        return MakeRefCount<FVulkanBindingLayout>(VulkanDevice, Desc);
+    }
+
+    FRHIBindingSetRef FVulkanRenderContext::CreateBindingSet(const FBindingSetDesc& Desc, FRHIBindingLayout* InLayout)
+    {
+        FVulkanBindingLayout* VulkanLayout = static_cast<FVulkanBindingLayout*>(InLayout);
+        return MakeRefCount<FVulkanBindingSet>(VulkanDevice, Desc, VulkanLayout);
+    }
+
     FRHIComputePipelineRef FVulkanRenderContext::CreateComputePipeline(const FComputePipelineDesc& Desc)
     {
-        return {};
+        return PipelineCache.GetOrCreateComputePipeline(VulkanDevice, Desc);
     }
 
     FRHIGraphicsPipelineRef FVulkanRenderContext::CreateGraphicsPipeline(const FGraphicsPipelineDesc& Desc)
     {
-        return {};
+        return PipelineCache.GetOrCreateGraphicsPipeline(VulkanDevice, Desc);
     }
 
     FRHIBufferRef FVulkanRenderContext::CreateBuffer(const FRHIBufferDesc& Description)
@@ -535,7 +645,7 @@ namespace Lumina
                 Queue->RetireCommandBuffers();
             }
         }
-        
+
         while (!PendingDeletes.empty())
         {
             IRHIResource* Resource = PendingDeletes.top();
@@ -548,6 +658,49 @@ namespace Lumina
     }
 
 
+    void FVulkanRenderContext::CompileEngineShaders()
+    {
+        for (auto& Dir : std::filesystem::directory_iterator(Paths::GetEngineResourceDirectory() / "Shaders"))
+        {
+            if (!Dir.is_directory())
+            {
+                if (Dir.path().extension() == ".frag" || Dir.path().extension() == ".vert" || Dir.path().extension() == ".comp")
+                {
+                    FString StringPath = Dir.path().string().c_str();
+                    FString FileNameString = Dir.path().filename().string().c_str();
+                    TVector<uint32> Binaries;
+                    if (!ShaderCompiler->CompileShader(StringPath, {}, Binaries))
+                    {
+                        continue;
+                    }
+
+                    if (Dir.path().extension() == ".vert")
+                    {
+                        FRHIVertexShaderRef Shader = CreateVertexShader(Binaries);
+                        Shader->SetKey(FileNameString.c_str());
+                        ShaderLibrary->AddShader(Shader);
+                    }
+                    if (Dir.path().extension() == ".frag")
+                    {
+                        FRHIPixelShaderRef Shader = CreatePixelShader(Binaries);
+                        Shader->SetKey(FileNameString.c_str());
+                        ShaderLibrary->AddShader(Shader);
+                    }
+                    if (Dir.path().extension() == ".comp")
+                    {
+                        FRHIComputeShaderRef Shader = CreateComputeShader(Binaries);
+                        Shader->SetKey(FileNameString.c_str());
+                        ShaderLibrary->AddShader(Shader);
+                    }
+                }
+            }
+        }
+
+        PipelineCache.PostShaderRecompiled("");
+        
+    }
+
+    
     void FVulkanRenderContext::SetVulkanObjectName(FString Name, VkObjectType ObjectType, uint64 Handle)
     {
         VkDebugUtilsObjectNameInfoEXT NameInfo = {};

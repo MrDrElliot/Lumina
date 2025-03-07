@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#include <vulkan/vulkan_core.h>
+
 #include "RenderTypes.h"
 #include "StateTracking.h"
 #include "ViewVolume.h"
@@ -18,8 +20,114 @@ namespace Lumina
     static constexpr uint32 MaxRenderTargets = 8;
 	static constexpr uint32 MaxVertexAttributes = 16;
 	static constexpr uint32 MaxPushConstantSize = 128; // D3D12: root signature is 256 bytes max., Vulkan: 128 bytes of push constants guaranteed
-	static constexpr uint32 MaxBindingLayouts = 5;
+	static constexpr uint32 MaxBindingLayouts = 4;
 	static constexpr uint32 MaxBindingsPerLayout = 128;
+
+
+enum class EFormat : uint8
+{
+	UNKNOWN,
+
+	R8_UINT,
+	R8_SINT,
+	R8_UNORM,
+	R8_SNORM,
+	RG8_UINT,
+	RG8_SINT,
+	RG8_UNORM,
+	RG8_SNORM,
+	R16_UINT,
+	R16_SINT,
+	R16_UNORM,
+	R16_SNORM,
+	R16_FLOAT,
+	BGRA4_UNORM,
+	B5G6R5_UNORM,
+	B5G5R5A1_UNORM,
+	RGBA8_UINT,
+	RGBA8_SINT,
+	RGBA8_UNORM,
+	RGBA8_SNORM,
+	BGRA8_UNORM,
+	SRGBA8_UNORM,
+	SBGRA8_UNORM,
+	R10G10B10A2_UNORM,
+	R11G11B10_FLOAT,
+	RG16_UINT,
+	RG16_SINT,
+	RG16_UNORM,
+	RG16_SNORM,
+	RG16_FLOAT,
+	R32_UINT,
+	R32_SINT,
+	R32_FLOAT,
+	RGBA16_UINT,
+	RGBA16_SINT,
+	RGBA16_FLOAT,
+	RGBA16_UNORM,
+	RGBA16_SNORM,
+	RG32_UINT,
+	RG32_SINT,
+	RG32_FLOAT,
+	RGB32_UINT,
+	RGB32_SINT,
+	RGB32_FLOAT,
+	RGBA32_UINT,
+	RGBA32_SINT,
+	RGBA32_FLOAT,
+        
+	D16,
+	D24S8,
+	X24G8_UINT,
+	D32,
+	D32S8,
+	X32G8_UINT,
+
+	BC1_UNORM,
+	BC1_UNORM_SRGB,
+	BC2_UNORM,
+	BC2_UNORM_SRGB,
+	BC3_UNORM,
+	BC3_UNORM_SRGB,
+	BC4_UNORM,
+	BC4_SNORM,
+	BC5_UNORM,
+	BC5_SNORM,
+	BC6H_UFLOAT,
+	BC6H_SFLOAT,
+	BC7_UNORM,
+	BC7_UNORM_SRGB,
+
+	COUNT,
+};
+
+enum class EFormatKind : uint8
+{
+	Integer,
+	Normalized,
+	Float,
+	DepthStencil
+};
+
+struct FFormatInfo
+{
+	EFormat Format;
+	const char* Name;
+	uint8_t BytesPerBlock;
+	uint8_t BlockSize;
+	EFormatKind Kind;
+	uint8 bHasRed : 1;
+	uint8 bHasGreen : 1;
+	uint8 bHasBlue : 1;
+	uint8 bHasAlpha : 1;
+	uint8 bHasDepth : 1;
+	uint8 bHasStencil : 1;
+	uint8 bIsSigned : 1;
+	uint8 bIsSRGB : 1;
+};
+
+const FFormatInfo& GetFormatInfo(EFormat format);
+
 
 /** An enumeration of the different RHI reference types. */
 enum ERHIResourceType : uint8
@@ -27,12 +135,14 @@ enum ERHIResourceType : uint8
 	RRT_None,
 
 	RRT_SamplerState,
-	RRT_RasterizerState,
+	RRT_BindingLayout,
+	RRT_BindingSet,
 	RRT_DepthStencilState,
 	RRT_BlendState,
 	RRT_VertexShader,
 	RRT_PixelShader,
 	RRT_ComputeShader,
+	RRT_ShaderLibrary,
 	RRT_GraphicsPipeline,
 	RRT_ComputePipeline,
 	RRT_UniformBufferLayout,
@@ -47,6 +157,41 @@ enum ERHIResourceType : uint8
 
 	RRT_Num
 };
+
+enum class ERHIBindingResourceType : uint8
+{
+	// SRV (Shader Resource View) Types.
+	Texture_SRV,
+	Buffer_SRV,
+
+
+	// UAV (Unordered Access View) Types.
+	Texture_UAV,
+	Buffer_UAV,
+
+	// Constant Buffer (could be a uniform buffer)
+	Buffer_CBV,
+	Buffer_Uniform = Buffer_CBV,
+};
+
+enum class ERHIBindingPoint : uint8
+{
+	Graphics,
+	Compute,
+};
+
+ENUM_BITSET(ERHIResourceType)
+
+
+enum class ERHIShaderType : uint8
+{
+	None =		ERHIResourceType::RRT_None,
+	Vertex =	ERHIResourceType::RRT_VertexShader,
+	Fragment =	ERHIResourceType::RRT_PixelShader,
+	Compute =	ERHIResourceType::RRT_ComputeShader,
+};
+
+ENUM_BITSET(ERHIShaderType)
 
 enum class EAPIResourceType : uint8
 {
@@ -348,6 +493,12 @@ namespace Lumina
 		
 		FORCEINLINE const FRHIBufferDesc& GetDescription() const { return Description; }
 
+		FORCEINLINE bool IsStorageBuffer() const { return Description.Usage.IsFlagSet(EBufferUsageFlags::StorageBuffer); }
+		FORCEINLINE bool IsUniformBuffer() const { return Description.Usage.IsFlagSet(EBufferUsageFlags::UniformBuffer); }
+		FORCEINLINE bool IsVertexBuffer() const { return Description.Usage.IsFlagSet(EBufferUsageFlags::VertexBuffer); }
+		FORCEINLINE bool IsIndexBuffer() const { return Description.Usage.IsFlagSet(EBufferUsageFlags::IndexBuffer); }
+
+		
 		FORCEINLINE uint32 GetSize() const { return Description.Size; }
 		FORCEINLINE uint32 GetStride() const { return Description.Stride; }
 		FORCEINLINE TBitFlags<EBufferUsageFlags> GetUsage() const { return Description.Usage; }
@@ -438,7 +589,7 @@ namespace Lumina
 		virtual void GetByteCode(const void** ByteCode, uint64* Size) = 0;
 	
 	private:
-
+		
 		FName Key;
 	};
 
@@ -466,6 +617,28 @@ namespace Lumina
 		
 	};
 
+	class FShaderLibrary : public IRHIResource
+	{
+	public:
+
+		RENDER_RESOURCE(RRT_ShaderLibrary)
+
+		void AddShader(FRHIShader* Shader);
+		void RemoveShader(FName Key);
+
+		template<typename T>
+		T GetShader(FName Key)
+		{
+			return GetShader(Key).As<T>();
+		}
+
+		FRHIShaderRef GetShader(FName Key);
+
+	private:
+
+		THashMap<FName, FRHIShaderRef> Shaders;
+    
+	};
 	
 	//-------------------------------------------------------------------------------------------------------------------
 
@@ -539,21 +712,18 @@ namespace Lumina
 
 	struct FVertexAttributeDesc
 	{
-		FString Name;
-		EImageFormat Format = EImageFormat::None;
+		EFormat Format = EFormat::UNKNOWN;
 		uint32 ArraySize = 1;
 		uint32 BufferIndex = 0;
 		uint32 Offset = 0;
 		uint32 ElementStride = 0;
 		bool bInstanced = false;
-
-		FVertexAttributeDesc& SetName(const FString& value) { Name = value; return *this; }
-		constexpr FVertexAttributeDesc& setFormat(EImageFormat value) { Format = value; return *this; }
-		constexpr FVertexAttributeDesc& setArraySize(uint32 value) { ArraySize = value; return *this; }
-		constexpr FVertexAttributeDesc& setBufferIndex(uint32 value) { BufferIndex = value; return *this; }
-		constexpr FVertexAttributeDesc& setOffset(uint32 value) { Offset = value; return *this; }
-		constexpr FVertexAttributeDesc& setElementStride(uint32 value) { ElementStride = value; return *this; }
-		constexpr FVertexAttributeDesc& setIsInstanced(bool value) { bInstanced = value; return *this; }
+		
+		constexpr FVertexAttributeDesc& SetArraySize(uint32 value) { ArraySize = value; return *this; }
+		constexpr FVertexAttributeDesc& SetBufferIndex(uint32 value) { BufferIndex = value; return *this; }
+		constexpr FVertexAttributeDesc& SetOffset(uint32 value) { Offset = value; return *this; }
+		constexpr FVertexAttributeDesc& SetElementStride(uint32 value) { ElementStride = value; return *this; }
+		constexpr FVertexAttributeDesc& SetIsInstanced(bool value) { bInstanced = value; return *this; }
 	};
 
 	class IRHIInputLayout : public IRHIResource
@@ -568,7 +738,7 @@ namespace Lumina
     {
         struct RenderTarget
         {
-            bool			BlendEnable = false;
+            bool			bBlendEnable = false;
             EBlendFactor 	SrcBlend = EBlendFactor::One;
             EBlendFactor 	DestBlend = EBlendFactor::Zero;
             EBlendOp     	BlendOp = EBlendOp::Add;
@@ -577,9 +747,9 @@ namespace Lumina
             EBlendOp     	BlendOpAlpha = EBlendOp::Add;
             EColorMask   	ColorWriteMask = EColorMask::All;
 
-            constexpr RenderTarget& SetBlendEnable(bool enable) { BlendEnable = enable; return *this; }
-            constexpr RenderTarget& EnableBlend() { BlendEnable = true; return *this; }
-            constexpr RenderTarget& DisableBlend() { BlendEnable = false; return *this; }
+            constexpr RenderTarget& SetBlendEnable(bool enable) { bBlendEnable = enable; return *this; }
+            constexpr RenderTarget& EnableBlend() { bBlendEnable = true; return *this; }
+            constexpr RenderTarget& DisableBlend() { bBlendEnable = false; return *this; }
             constexpr RenderTarget& SetSrcBlend(EBlendFactor value) { SrcBlend = value; return *this; }
             constexpr RenderTarget& SetDestBlend(EBlendFactor value) { DestBlend = value; return *this; }
             constexpr RenderTarget& SetBlendOp(EBlendOp value) { BlendOp = value; return *this; }
@@ -590,7 +760,7 @@ namespace Lumina
         	
             constexpr bool operator ==(const RenderTarget& other) const
             {
-                return BlendEnable == other.BlendEnable
+                return bBlendEnable == other.bBlendEnable
                     && SrcBlend == other.SrcBlend
                     && DestBlend == other.DestBlend
                     && BlendOp == other.BlendOp
@@ -734,6 +904,16 @@ namespace Lumina
             constexpr StencilOpDesc& setDepthFailOp(EStencilOp value) { DepthFailOp = value; return *this; }
             constexpr StencilOpDesc& setPassOp(EStencilOp value) { PassOp = value; return *this; }
             constexpr StencilOpDesc& setStencilFunc(EComparisonFunc value) { StencilFunc = value; return *this; }
+
+			const size_t GetHash() const
+            {
+	            size_t hash = 0;
+            	Hash::HashCombine(hash, FailOp);
+            	Hash::HashCombine(hash, DepthFailOp);
+            	Hash::HashCombine(hash, PassOp);
+            	Hash::HashCombine(hash, StencilFunc);
+            	return hash;
+            }
         };
 
         bool            	DepthTestEnable = true;
@@ -747,22 +927,22 @@ namespace Lumina
         StencilOpDesc   	FrontFaceStencil;
         StencilOpDesc   	BackFaceStencil;
 
-        constexpr FDepthStencilState& setDepthTestEnable(bool value) { DepthTestEnable = value; return *this; }
-        constexpr FDepthStencilState& enableDepthTest() { DepthTestEnable = true; return *this; }
-        constexpr FDepthStencilState& disableDepthTest() { DepthTestEnable = false; return *this; }
-        constexpr FDepthStencilState& setDepthWriteEnable(bool value) { DepthWriteEnable = value; return *this; }
-        constexpr FDepthStencilState& enableDepthWrite() { DepthWriteEnable = true; return *this; }
-        constexpr FDepthStencilState& disableDepthWrite() { DepthWriteEnable = false; return *this; }
-        constexpr FDepthStencilState& setDepthFunc(EComparisonFunc value) { DepthFunc = value; return *this; }
-        constexpr FDepthStencilState& setStencilEnable(bool value) { StencilEnable = value; return *this; }
-        constexpr FDepthStencilState& enableStencil() { StencilEnable = true; return *this; }
-        constexpr FDepthStencilState& disableStencil() { StencilEnable = false; return *this; }
-        constexpr FDepthStencilState& setStencilReadMask(uint8 value) { StencilReadMask = value; return *this; }
-        constexpr FDepthStencilState& setStencilWriteMask(uint8 value) { StencilWriteMask = value; return *this; }
-        constexpr FDepthStencilState& setStencilRefValue(uint8 value) { StencilRefValue = value; return *this; }
-        constexpr FDepthStencilState& setFrontFaceStencil(const StencilOpDesc& value) { FrontFaceStencil = value; return *this; }
-        constexpr FDepthStencilState& setBackFaceStencil(const StencilOpDesc& value) { BackFaceStencil = value; return *this; }
-        constexpr FDepthStencilState& setDynamicStencilRef(bool value) { DynamicStencilRef = value; return *this; }
+        constexpr FDepthStencilState& SetDepthTestEnable(bool value) { DepthTestEnable = value; return *this; }
+        constexpr FDepthStencilState& EnableDepthTest() { DepthTestEnable = true; return *this; }
+        constexpr FDepthStencilState& DisableDepthTest() { DepthTestEnable = false; return *this; }
+        constexpr FDepthStencilState& SetDepthWriteEnable(bool value) { DepthWriteEnable = value; return *this; }
+        constexpr FDepthStencilState& EnableDepthWrite() { DepthWriteEnable = true; return *this; }
+        constexpr FDepthStencilState& DisableDepthWrite() { DepthWriteEnable = false; return *this; }
+        constexpr FDepthStencilState& SetDepthFunc(EComparisonFunc value) { DepthFunc = value; return *this; }
+        constexpr FDepthStencilState& SetStencilEnable(bool value) { StencilEnable = value; return *this; }
+        constexpr FDepthStencilState& EnableStencil() { StencilEnable = true; return *this; }
+        constexpr FDepthStencilState& DisableStencil() { StencilEnable = false; return *this; }
+        constexpr FDepthStencilState& SetStencilReadMask(uint8 value) { StencilReadMask = value; return *this; }
+        constexpr FDepthStencilState& SetStencilWriteMask(uint8 value) { StencilWriteMask = value; return *this; }
+        constexpr FDepthStencilState& SetStencilRefValue(uint8 value) { StencilRefValue = value; return *this; }
+        constexpr FDepthStencilState& SetFrontFaceStencil(const StencilOpDesc& value) { FrontFaceStencil = value; return *this; }
+        constexpr FDepthStencilState& SetBackFaceStencil(const StencilOpDesc& value) { BackFaceStencil = value; return *this; }
+        constexpr FDepthStencilState& SetDynamicStencilRef(bool value) { DynamicStencilRef = value; return *this; }
         
     };
 
@@ -799,29 +979,105 @@ namespace Lumina
 		constexpr FRenderState& SetSinglePassStereoState(const FSinglePassStereoState& value) { SinglePassStereo = value; return *this; }
 	};
 
+	struct FBindingLayoutItem
+	{
+		uint32 Slot;
+		
+		ERHIBindingResourceType Type	: 8;
+		uint16 Size						: 16;
+	};
+
+	struct FBindingLayoutDesc
+	{
+		TBitFlags<ERHIShaderType> StageFlags;
+		uint32 Index = 0;
+
+		TInlineVector<FBindingLayoutItem, MaxBindingsPerLayout> Bindings;
+
+		
+		FBindingLayoutDesc& SetVisibility(ERHIShaderType InType) { StageFlags.SetFlag(InType); return *this; }
+		FBindingLayoutDesc& SetBindingIndex(uint32 Value) { Index = Value; return *this; }
+		FBindingLayoutDesc& AddItem(const FBindingLayoutItem& Item) { Bindings.push_back(Item); return *this; }
+	};
+
 	struct FBindingSetItem
 	{
 		IRHIResource* ResourceHandle;
-
 		uint32 Slot;
-
-		ERHIResourceType Type		: 8;
-		EImageDimension Dimension	: 8; // valid for Texture_SRV, Texture_UAV
-		EImageFormat Format			: 8; // valid for Texture_SRV, Texture_UAV, Buffer_SRV, Buffer_UAV
-		uint8 bUnused				: 8;
+		
+		ERHIBindingResourceType Type	: 8;
+		uint8 bUnused					: 8;
 
 		union 
 		{
 			uint64		RawData[2];
 		};
 
-		bool operator ==(const FBindingSetItem& b) const
+		static FBindingSetItem BufferSRV(uint32 Slot, FRHIBuffer* Buffer)
+		{
+			FBindingSetItem Result;
+			Result.bUnused = false;
+			Result.Type = ERHIBindingResourceType::Buffer_SRV;
+			Result.Slot = Slot;
+			Result.ResourceHandle = Buffer;
+			memset(Result.RawData, 0, std::size(Result.RawData));
+			
+			return Result;
+		}
+
+		static FBindingSetItem BufferUAV(uint32 Slot, FRHIBuffer* Buffer)
+		{
+			FBindingSetItem Result;
+			Result.bUnused = false;
+			Result.Type = ERHIBindingResourceType::Buffer_UAV;
+			Result.Slot = Slot;
+			Result.ResourceHandle = Buffer;
+			memset(Result.RawData, 0, std::size(Result.RawData));
+			
+			return Result;
+		}
+		
+		static FBindingSetItem BufferCBV(uint32 Slot, FRHIBuffer* Buffer)
+		{
+			FBindingSetItem Result;
+			Result.bUnused = false;
+			Result.Type = ERHIBindingResourceType::Buffer_Uniform;
+			Result.Slot = Slot;
+			Result.ResourceHandle = Buffer;
+			memset(Result.RawData, 0, std::size(Result.RawData));
+			
+			return Result;
+		}
+
+		static FBindingSetItem TextureSRV(uint32 Slot, FRHIImage* Image)
+		{
+			FBindingSetItem Result;
+			Result.bUnused = false;
+			Result.Type = ERHIBindingResourceType::Texture_SRV;
+			Result.Slot = Slot;
+			Result.ResourceHandle = Image;
+			memset(Result.RawData, 0, std::size(Result.RawData));
+			
+			return Result;
+		}
+
+		static FBindingSetItem TextureUAV(uint32 Slot, FRHIImage* Image)
+		{
+			FBindingSetItem Result;
+			Result.bUnused = false;
+			Result.Type = ERHIBindingResourceType::Texture_UAV;
+			Result.Slot = Slot;
+			Result.ResourceHandle = Image;
+			memset(Result.RawData, 0, std::size(Result.RawData));
+			
+			return Result;
+		}
+
+		bool operator == (const FBindingSetItem& b) const
 		{
 			return ResourceHandle == b.ResourceHandle
 				&& Slot == b.Slot
 				&& Type == b.Type
-				&& Dimension == b.Dimension
-				&& Format == b.Format
 				&& RawData[0] == b.RawData[0]
 				&& RawData[1] == b.RawData[1];
 		}
@@ -832,8 +1088,6 @@ namespace Lumina
 	{
 		TInlineVector<FBindingSetItem, MaxBindingsPerLayout> Bindings;
 		
-		bool bTrackLiveness = true;
-
 		bool operator ==(const FBindingSetDesc& b) const
 		{
 			if (Bindings.size() != b.Bindings.size())
@@ -856,14 +1110,14 @@ namespace Lumina
 		}
 
 		FBindingSetDesc& AddItem(const FBindingSetItem& value) { Bindings.push_back(value); return *this; }
-		FBindingSetDesc& SetTrackLiveness(bool value) { bTrackLiveness = value; return *this; }
 	};
+
 	
 	class FRHIBindingLayout : public IRHIResource
 	{
 	public:
 		
-		NODISCARD virtual const FBindingSetDesc* GetDesc() const = 0;
+		NODISCARD virtual const FBindingLayoutDesc* GetDesc() const = 0;
 	};
 
 	class FRHIBindingSet : public IRHIResource
@@ -872,6 +1126,7 @@ namespace Lumina
 		
 		NODISCARD virtual const FBindingSetDesc* GetDesc() const = 0;
 		NODISCARD virtual FRHIBindingLayout* GetLayout() const = 0;
+		
 	};
 
 	enum class EVariableShadingRate : uint8
@@ -925,16 +1180,17 @@ namespace Lumina
         FRHIVertexShaderRef				VS;
         FRHIPixelShaderRef				PS;
         FRenderState					RenderState;
-        FVariableRateShadingState		shadingRateState;
+        FVariableRateShadingState		ShadingRateState;
         TVector<FRHIBindingLayoutRef>	BindingLayouts;
         
         FGraphicsPipelineDesc& SetPrimType(EPrimitiveType value) { PrimType = value; return *this; }
         FGraphicsPipelineDesc& SetPatchControlPoints(uint32 value) { PatchControlPoints = value; return *this; }
         FGraphicsPipelineDesc& SetInputLayout(IRHIInputLayout* value) { InputLayout = value; return *this; }
+    	FGraphicsPipelineDesc& SetVertexShader(FRHIVertexShader* value) { VS = value; return *this; }
         FGraphicsPipelineDesc& SetPixelShader(FRHIPixelShader* value) { PS = value; return *this; }
         FGraphicsPipelineDesc& SetFragmentShader(FRHIPixelShader* value) { PS = value; return *this; }
         FGraphicsPipelineDesc& SetRenderState(const FRenderState& value) { RenderState = value; return *this; }
-        FGraphicsPipelineDesc& SetVariableRateShadingState(const FVariableRateShadingState& value) { shadingRateState = value; return *this; }
+        FGraphicsPipelineDesc& SetVariableRateShadingState(const FVariableRateShadingState& value) { ShadingRateState = value; return *this; }
         FGraphicsPipelineDesc& AddBindingLayout(FRHIBindingLayout* layout) { BindingLayouts.push_back(layout); return *this; }
     };
 
@@ -944,6 +1200,8 @@ namespace Lumina
 	public:
 
 		RENDER_RESOURCE(RRT_GraphicsPipeline)
+
+		NODISCARD virtual const FGraphicsPipelineDesc& GetDesc() const = 0;
 		
 	};
 
@@ -970,7 +1228,187 @@ namespace Lumina
 		
 	};
 
+
+	struct FGraphicsState
+	{
+
+		FRHIGraphicsPipeline*	Pipeline;
+		FRHIViewport*			Viewport;
+
+		FGraphicsState& SetPipeline(FRHIGraphicsPipeline* InPipeline) { Pipeline = InPipeline; return *this; }
+		FGraphicsState& SetViewport(FRHIViewport* InViewport) { Viewport = InViewport; return *this; }
+		
+	};
+
+	struct FComputeState
+	{
+		FRHIComputePipeline*	Pipeline;
+
+		FComputeState& SetPipeline(FRHIComputePipeline* InPipeline) { Pipeline = InPipeline; return *this; }
+	};
+	
 	
 }
 
 
+namespace eastl
+{
+	using namespace Lumina;
+
+	template<>
+	struct hash<FBindingSetItem>
+	{
+		size_t operator()(const FBindingSetItem& Item) const
+		{
+			size_t hash = 0;
+			Hash::HashCombine(hash, Item.ResourceHandle);
+			Hash::HashCombine(hash, Item.bUnused);
+			Hash::HashCombine(hash, Item.Slot);
+			Hash::HashCombine(hash, Item.Type);
+		}
+	};
+
+	template<>
+	struct hash<FBlendState>
+	{
+		size_t operator()(const FBlendState& State) const
+		{
+			size_t hash = 0;
+			Hash::HashCombine(hash, State.AlphaToCoverageEnable);
+
+			for (uint32_t i = 0; i < MaxRenderTargets; ++i)
+			{
+				Hash::HashCombine(hash, State.Targets[i].bBlendEnable);
+				Hash::HashCombine(hash, (State.Targets[i].SrcBlend));
+				Hash::HashCombine(hash, (State.Targets[i].DestBlend));
+				Hash::HashCombine(hash, (State.Targets[i].BlendOp));
+				Hash::HashCombine(hash, (State.Targets[i].SrcBlendAlpha));
+				Hash::HashCombine(hash, (State.Targets[i].DestBlendAlpha));
+				Hash::HashCombine(hash, (State.Targets[i].BlendOpAlpha));
+				Hash::HashCombine(hash, (State.Targets[i].ColorWriteMask));
+			}
+
+			return hash;
+		}
+	};
+
+
+	template<>
+	struct hash<FSinglePassStereoState>
+	{
+		size_t operator()(const FSinglePassStereoState& State) const
+		{
+			size_t hash = 0;
+            
+			Hash::HashCombine(hash, State.bEnabled);
+			Hash::HashCombine(hash, State.bIndependentViewportMask);
+			Hash::HashCombine(hash, State.RenderTargetIndexOffset);
+
+			return hash;
+		}
+	};
+
+	
+	template<>
+	struct hash<FRasterState>
+	{
+		size_t operator()(const FRasterState& State) const
+		{
+			size_t hash = 0;
+            
+			Hash::HashCombine(hash, static_cast<uint32>(State.FillMode));
+			Hash::HashCombine(hash, static_cast<uint32>(State.CullMode));
+			Hash::HashCombine(hash, State.FrontCounterClockwise);
+			Hash::HashCombine(hash, State.DepthClipEnable);
+			Hash::HashCombine(hash, State.ScissorEnable);
+			Hash::HashCombine(hash, State.MultisampleEnable);
+			Hash::HashCombine(hash, State.AntialiasedLineEnable);
+			Hash::HashCombine(hash, State.DepthBias);
+			Hash::HashCombine(hash, State.DepthBiasClamp);
+			Hash::HashCombine(hash, State.SlopeScaledDepthBias);
+			Hash::HashCombine(hash, State.ForcedSampleCount);
+			Hash::HashCombine(hash, State.ProgrammableSamplePositionsEnable);
+			Hash::HashCombine(hash, State.ConservativeRasterEnable);
+			Hash::HashCombine(hash, State.QuadFillEnable);
+
+			for (size_t i = 0; i < 16; ++i)
+			{
+				Hash::HashCombine(hash, State.SamplePositionsX[i]);
+				Hash::HashCombine(hash, State.SamplePositionsY[i]);
+			}
+
+			return hash;
+		}
+	};
+	
+	template<>
+	struct hash<FRenderState>
+	{
+		size_t operator()(const FRenderState& State) const
+		{
+			size_t hash = 0;
+			Hash::HashCombine(hash, State.BlendState);
+			Hash::HashCombine(hash, State.DepthStencilState);
+			Hash::HashCombine(hash, State.RasterState);
+			Hash::HashCombine(hash, State.SinglePassStereo);
+			return hash;
+		}
+	};
+	
+	
+	template<>
+	struct hash<FVariableRateShadingState>
+	{
+		size_t operator()(const FVariableRateShadingState& State) const
+		{
+			size_t hash = 0;
+			Hash::HashCombine(hash, State.bEnabled);
+			Hash::HashCombine(hash, static_cast<uint32>(State.ShadingRate));
+			Hash::HashCombine(hash, static_cast<uint32>(State.PipelinePrimitiveCombiner));
+			Hash::HashCombine(hash, static_cast<uint32>(State.ImageCombiner));
+			return hash;
+		}
+	};
+
+	template<>
+	struct hash<FDepthStencilState>
+	{
+		size_t operator()(const FDepthStencilState& State) const
+		{
+			size_t hash = 0;
+			Hash::HashCombine(hash, (uint32)State.DepthFunc);
+			Hash::HashCombine(hash, State.StencilEnable);
+			Hash::HashCombine(hash, State.BackFaceStencil.GetHash());
+			Hash::HashCombine(hash, State.DepthTestEnable);
+			Hash::HashCombine(hash, State.DepthWriteEnable);
+			Hash::HashCombine(hash, State.StencilReadMask);
+			Hash::HashCombine(hash, State.StencilRefValue);
+			Hash::HashCombine(hash, State.StencilWriteMask);
+			return hash;
+		}
+	};
+
+	template<>
+	struct hash<FGraphicsPipelineDesc>
+	{
+		size_t operator()(const FGraphicsPipelineDesc& Desc) const
+		{
+			size_t hash = 0;
+			Hash::HashCombine(hash, Desc.VS->GetKey());
+			Hash::HashCombine(hash, Desc.PS->GetKey());
+			
+			return hash;
+		}
+	};
+
+	template<>
+	struct hash<FComputePipelineDesc>
+	{
+		size_t operator()(const FComputePipelineDesc& Desc) const
+		{
+			size_t hash = 0;
+			Hash::HashCombine(hash, Desc.CS->GetKey());
+			return hash;
+		}
+	};
+}

@@ -8,8 +8,6 @@
 #include "Vertex.h"
 #include "Core/LuminaMacros.h"
 #include "Core/Math/Hash/Hash.h"
-#include "Core/Serialization/Archiver.h"
-#include "Core/Templates/CanBulkSerialize.h"
 
 #define NO_TEXTURE (-1)
 #define FRAMES_IN_FLIGHT 2
@@ -18,7 +16,6 @@ namespace Lumina
 {
     struct FVertex;
     struct FVertexAttribute;
-    class FShader;
 
     struct FMaterialTexturesData final
     {
@@ -130,9 +127,11 @@ namespace Lumina
         IndexBuffer         = 5,
         UniformBuffer       = 6,
 
-        StagingBuffer       = 7,
+        StorageBuffer       = 7,
 
-        CPUWritable         = 8,
+        StagingBuffer       = 8,
+
+        CPUWritable         = 9,
         
     };
     
@@ -144,7 +143,8 @@ namespace Lumina
     #define BUF_VetexBuffer     EBufferUsageFlags::VertexBuffer
     #define BUF_IndexBuffer     EBufferUsageFlags::IndexBuffer
     #define BUF_UniformBuffer   EBufferUsageFlags::UniformBuffer
-
+    #define BUF_StorageBuffer   EBufferUsageFlags::StorageBuffer
+    
     enum class ERenderDeviceBufferMemoryUsage : uint8
     {
         None              = 0,

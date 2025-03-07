@@ -126,7 +126,7 @@ public:
         return pMemory;
     }
 
-    NODISCARD static void MemCopy(void* Destination, void* Source, uint64 SrcSize)
+    NODISCARD static void Memcpy(void* Destination, void* Source, uint64 SrcSize)
     {
         memcpy(Destination, Source, SrcSize);
         Assert(Destination != nullptr);

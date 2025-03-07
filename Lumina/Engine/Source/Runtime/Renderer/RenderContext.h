@@ -8,6 +8,11 @@
 
 namespace Lumina
 {
+    class IShaderCompiler;
+}
+
+namespace Lumina
+{
     struct FCommandListInfo;
     class ICommandList;
     struct FGPUBarrier;
@@ -64,11 +69,16 @@ namespace Lumina
         NODISCARD virtual FRHIPixelShaderRef CreatePixelShader(const TVector<uint32>& ByteCode) = 0;
         NODISCARD virtual FRHIComputeShaderRef CreateComputeShader(const TVector<uint32>& ByteCode) = 0;
 
+        NODISCARD virtual IShaderCompiler* GetShaderCompiler() const = 0;
+        NODISCARD virtual FRHIShaderLibraryRef GetShaderLibrary() const = 0;
+
+        virtual void CompileEngineShaders() = 0;
 
         
         //-------------------------------------------------------------------------------------
 
-
+        NODISCARD virtual FRHIBindingLayoutRef CreateBindingLayout(const FBindingLayoutDesc& Desc) = 0;
+        NODISCARD virtual FRHIBindingSetRef CreateBindingSet(const FBindingSetDesc& Desc, FRHIBindingLayout* InLayout) = 0;
         NODISCARD virtual FRHIComputePipelineRef CreateComputePipeline(const FComputePipelineDesc& Desc) = 0;
         NODISCARD virtual FRHIGraphicsPipelineRef CreateGraphicsPipeline(const FGraphicsPipelineDesc& Desc) = 0;
         

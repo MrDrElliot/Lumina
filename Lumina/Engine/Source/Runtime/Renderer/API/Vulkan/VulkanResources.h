@@ -30,6 +30,7 @@ namespace Lumina
     public:
 
         FVulkanBuffer(FVulkanDevice* InDevice, const FRHIBufferDesc& InDescription);
+        ~FVulkanBuffer() override;
 
 
         FORCEINLINE VkBuffer GetBuffer() const { return Buffer; }
@@ -79,15 +80,16 @@ namespace Lumina
         IVulkanShader(FVulkanDevice* InDevice, const TVector<uint32>& ByteCode, ERHIResourceType Type)
             :IDeviceChild(InDevice)
         {
+            Assert(!ByteCode.empty());
+            
             SpirV.ByteCode = ByteCode;
 
             VkShaderModuleCreateFlags Flags = 0;
             
             VkShaderModuleCreateInfo CreateInfo = {};
             CreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-            CreateInfo.codeSize = ByteCode.size();
+            CreateInfo.codeSize = ByteCode.size() * sizeof(uint32);
             CreateInfo.pCode = ByteCode.data();
-            CreateInfo.pNext = nullptr;
             CreateInfo.flags = Flags;
 
             VK_CHECK(vkCreateShaderModule(Device->GetDevice(), &CreateInfo, nullptr, &ShaderModule));
@@ -111,7 +113,7 @@ namespace Lumina
             TVector<uint32> ByteCode;
         } SpirV;
         
-
+        
         VkShaderModule  ShaderModule = VK_NULL_HANDLE;
     };
 
@@ -126,7 +128,7 @@ namespace Lumina
             :IVulkanShader(InDevice, ByteCode, RRT_VertexShader)
         {}
 
-        void* GetAPIResourceImpl(EAPIResourceType Type) override
+        void* GetAPIResourceImpl(EAPIResourceType ResourceType) override
         {
             return ShaderModule;
         }
@@ -147,7 +149,7 @@ namespace Lumina
             :IVulkanShader(InDevice, ByteCode, RRT_PixelShader)
         {}
 
-        void* GetAPIResourceImpl(EAPIResourceType Type) override
+        void* GetAPIResourceImpl(EAPIResourceType ResourceType) override
         {
             return ShaderModule;
         }
@@ -167,7 +169,7 @@ namespace Lumina
             :IVulkanShader(InDevice, ByteCode, RRT_ComputeShader)
         {}
 
-        void* GetAPIResourceImpl(EAPIResourceType Type) override
+        void* GetAPIResourceImpl(EAPIResourceType ResourceType) override
         {
             return ShaderModule;
         }
@@ -178,35 +180,125 @@ namespace Lumina
         }
     };
 
-    class FVulkanGraphicsPipeline : public FRHIGraphicsPipeline
+    class FVulkanInputLayout : public IRHIInputLayout
     {
     public:
+    
+        RENDER_RESOURCE(RRT_None);
 
-        FVulkanGraphicsPipeline(const FGraphicsPipelineDesc& InDesc);
-        void* GetAPIResourceImpl(EAPIResourceType Type) override
-        {
-            return Pipeline;
-        }
-
-    private:
-
-        VkPipeline Pipeline;
+        FVulkanInputLayout(const FVertexAttributeDesc* InAttributeDesc, uint32 AttributeCount);
+        void* GetAPIResourceImpl(EAPIResourceType Type) override;
+        
+        
+        TVector<FVertexAttributeDesc> InputDesc;
+        TVector<VkVertexInputBindingDescription> BindingDesc;
+        TVector<VkVertexInputAttributeDescription> AttributeDesc;
+        
+        uint32 GetNumAttributes() const override;
+        const FVertexAttributeDesc* GetAttributeDesc(uint32 index) const override;
     };
 
-    class FVulkanComputePipeline : public FRHIComputePipeline
+
+    class FVulkanBindingLayout : public FRHIBindingLayout, public IDeviceChild
     {
     public:
 
-        FVulkanComputePipeline(const FComputePipelineDesc& InDesc);
-        void* GetAPIResourceImpl(EAPIResourceType Type) override
+        RENDER_RESOURCE(RRT_BindingLayout)
+
+        FVulkanBindingLayout(FVulkanDevice* InDevice, const FBindingLayoutDesc& InDesc);
+        ~FVulkanBindingLayout() override;
+        
+        const FBindingLayoutDesc* GetDesc() const override { return &Desc; }
+        void* GetAPIResourceImpl(EAPIResourceType Type) override;
+        
+        FBindingLayoutDesc                      Desc;
+        VkDescriptorSetLayout                   DescriptorSetLayout;
+        TVector<VkDescriptorSetLayoutBinding>   Bindings;
+        TVector<VkDescriptorPoolSize>           PoolSizes;
+    };
+
+    class FVulkanBindingSet : public FRHIBindingSet, public IDeviceChild
+    {
+    public:
+
+        RENDER_RESOURCE(RRT_BindingSet)
+        
+        FVulkanBindingSet(FVulkanDevice* InDevice, const FBindingSetDesc& InDesc, FVulkanBindingLayout* InLayout);
+        ~FVulkanBindingSet() override;
+
+        const FBindingSetDesc* GetDesc() const override { return &Desc; }
+        FRHIBindingLayout* GetLayout() const override { return Layout; }
+        void* GetAPIResourceImpl(EAPIResourceType Type) override;
+
+        TVector<uint32>                     BindingsRequiringTransitions;
+        TVector<FRHIResourceRef>            Resources;
+        TRefCountPtr<FVulkanBindingLayout>  Layout;
+        FBindingSetDesc                     Desc;
+        VkDescriptorPool                    DescriptorPool;
+        VkDescriptorSet                     DescriptorSet;
+    };
+    
+
+    class FVulkanPipeline : public IDeviceChild
+    {
+    public:
+        
+        virtual ~FVulkanPipeline() = default;
+
+        FVulkanPipeline(FVulkanDevice* InDevice)
+            :IDeviceChild(InDevice)
+            , PipelineLayout(nullptr)
+            , Pipeline(nullptr)
+        {}
+
+        virtual void Bind(VkCommandBuffer CmdBuffer) = 0;
+
+        void CreatePipelineLayout(TVector<FRHIBindingLayoutRef> BindingLayouts);
+        
+        VkPipelineLayout PipelineLayout;
+        VkPipeline Pipeline;
+    };
+    
+    class FVulkanGraphicsPipeline : public FRHIGraphicsPipeline,  public FVulkanPipeline
+    {
+    public:
+
+        friend class FVulkanRenderContext;
+
+        FVulkanGraphicsPipeline(FVulkanDevice* InDevice, const FGraphicsPipelineDesc& InDesc);
+
+        const FGraphicsPipelineDesc& GetDesc() const override { return Desc; }
+        void* GetAPIResourceImpl(EAPIResourceType Type) override { return Pipeline; }
+
+        void Bind(VkCommandBuffer CmdBuffer) override
         {
-            return Pipeline;
+            vkCmdBindPipeline(CmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, Pipeline);
         }
 
     private:
 
-        VkPipeline Pipeline;
-        
+        FGraphicsPipelineDesc Desc;
+    };
+
+    class FVulkanComputePipeline : public FRHIComputePipeline,  public FVulkanPipeline
+    {
+    public:
+
+        friend class FVulkanRenderContext;
+
+        FVulkanComputePipeline(FVulkanDevice* InDevice, const FComputePipelineDesc& InDesc);
+
+        const FComputePipelineDesc& GetDesc() const override { return Desc; }
+        void* GetAPIResourceImpl(EAPIResourceType Type) override { return Pipeline; }
+
+        void Bind(VkCommandBuffer CmdBuffer) override
+        {
+            vkCmdBindPipeline(CmdBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, Pipeline);
+        }
+
+    private:
+
+        FComputePipelineDesc Desc;
     };
     
 }

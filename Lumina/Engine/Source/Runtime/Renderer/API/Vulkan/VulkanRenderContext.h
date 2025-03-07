@@ -1,5 +1,6 @@
 #pragma once
 #include "TrackedCommandBuffer.h"
+#include "VulkanPipelineCache.h"
 #include "Core/Threading/Thread.h"
 
 #ifdef LUMINA_RENDERER_VULKAN
@@ -11,6 +12,11 @@
 #include "Renderer/RenderContext.h"
 #include <vma/vk_mem_alloc.h>
 
+
+namespace Lumina
+{
+    class FSpirVShaderCompiler;
+}
 
 namespace Lumina
 {
@@ -94,7 +100,8 @@ namespace Lumina
         void RetireCommandBuffers();
         
         void Submit(ICommandList* CommandLists, uint32 NumCommandLists);
-        
+
+        void WaitIdle();
         
         void AddSignalSemaphore(VkSemaphore Semaphore);
         void AddWaitSemaphore(VkSemaphore Semaphore);
@@ -123,6 +130,8 @@ namespace Lumina
         bool GetStagingBuffer(TRefCountPtr<FVulkanBuffer>& OutBuffer);
         void FreeStagingBuffer(TRefCountPtr<FVulkanBuffer> InBuffer);
 
+        void ReturnAllStagingBuffers();
+
         void FreeAllBuffers();
     private:
 
@@ -132,6 +141,7 @@ namespace Lumina
 
         FVulkanRenderContext* Context = nullptr;
         TStack<TRefCountPtr<FVulkanBuffer>> BufferPool;
+        TVector<TRefCountPtr<FVulkanBuffer>> InFlightBuffers;
     };
     
     class FVulkanRenderContext : public IRenderContext
@@ -180,14 +190,19 @@ namespace Lumina
         
         //-------------------------------------------------------------------------------------
 
-
         NODISCARD FRHIVertexShaderRef CreateVertexShader(const TVector<uint32>& ByteCode) override;
         NODISCARD FRHIPixelShaderRef CreatePixelShader(const TVector<uint32>& ByteCode) override;
         NODISCARD FRHIComputeShaderRef CreateComputeShader(const TVector<uint32>& ByteCode) override;
 
+        IShaderCompiler* GetShaderCompiler() const override;
+        FRHIShaderLibraryRef GetShaderLibrary() const override;
+        void CompileEngineShaders() override;
+
         
         //-------------------------------------------------------------------------------------
 
+        NODISCARD FRHIBindingLayoutRef CreateBindingLayout(const FBindingLayoutDesc& Desc) override;
+        NODISCARD FRHIBindingSetRef CreateBindingSet(const FBindingSetDesc& Desc, FRHIBindingLayout* InLayout) override;
         NODISCARD FRHIComputePipelineRef CreateComputePipeline(const FComputePipelineDesc& Desc) override;
         NODISCARD FRHIGraphicsPipelineRef CreateGraphicsPipeline(const FGraphicsPipelineDesc& Desc) override;
         
@@ -200,13 +215,13 @@ namespace Lumina
 
         void FlushPendingDeletes() override;
         
-        
         void SetVulkanObjectName(FString Name, VkObjectType ObjectType, uint64 Handle);
         FVulkanRenderContextFunctions& GetDebugUtils();
 
     
     private:
-        
+
+        FVulkanPipelineCache                            PipelineCache;
         uint8                                           CurrentFrameIndex;
         TArray<FQueue*, (uint32)ECommandQueue::Num>     Queues;
         FRHICommandListRef                              CommandList = nullptr;
@@ -217,6 +232,10 @@ namespace Lumina
         FVulkanDevice*                                  VulkanDevice = nullptr;
         FVulkanStagingManager                           StagingManager;
         FVulkanRenderContextFunctions                   DebugUtils;
+
+        
+        FSpirVShaderCompiler*                           ShaderCompiler;
+        FRHIShaderLibraryRef                            ShaderLibrary;
         
     };
     

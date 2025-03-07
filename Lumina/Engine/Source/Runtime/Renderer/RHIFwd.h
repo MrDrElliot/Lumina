@@ -3,22 +3,16 @@
 #include "RHIFwd.h"
 #include "Memory/RefCounted.h"
 
-
 namespace Lumina
 {
+    class IRHIResource;
+    class FShaderLibrary;
+    class FRHIShader;
     class IRHIInputLayout;
     class FRHIBindingSet;
     class FRHIBindingLayout;
     class FRHIComputePipeline;
-}
-
-namespace Lumina
-{
     class FRHIGraphicsPipeline;
-}
-
-namespace Lumina
-{
     class FRHIViewport;
     class ICommandList;
     class FRHIComputeShader;
@@ -29,8 +23,10 @@ namespace Lumina
     
     //----------------------------------------------------------------------------
 
+    using FRHIResourceRef           = TRefCountPtr<IRHIResource>;
     using FRHIBufferRef             = TRefCountPtr<FRHIBuffer>;
     using FRHIImageRef              = TRefCountPtr<FRHIImage>;
+    using FRHIShaderRef             = TRefCountPtr<FRHIShader>;
     using FRHIVertexShaderRef       = TRefCountPtr<FRHIVertexShader>;
     using FRHIPixelShaderRef        = TRefCountPtr<FRHIPixelShader>;
     using FRHIComputeShaderRef      = TRefCountPtr<FRHIComputeShader>;
@@ -41,5 +37,6 @@ namespace Lumina
     using FRHIBindingLayoutRef      = TRefCountPtr<FRHIBindingLayout>;
     using FRHIBindingSetRef         = TRefCountPtr<FRHIBindingSet>;
     using FRHIInputLayoutRef        = TRefCountPtr<IRHIInputLayout>;
+    using FRHIShaderLibraryRef      = TRefCountPtr<FShaderLibrary>;
 
 }

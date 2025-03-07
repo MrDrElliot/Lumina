@@ -136,4 +136,18 @@ namespace Lumina::Hash
     {
         return XXHash::GetHash64( data.data(), data.size() );
     }
+
+    template <typename T>
+    requires requires { eastl::hash<T>(); }
+    SIZE_T GetHash(const T& value)
+    {
+        return eastl::hash<T>()(value);
+    }
+    
+    template <class T>
+    void HashCombine(SIZE_T& seed, const T& v)
+    {
+        eastl::hash<T> hasher;
+        seed ^= hasher(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+    }
 }

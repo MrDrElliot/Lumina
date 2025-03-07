@@ -1,0 +1,44 @@
+#version 450
+#pragma shader_stage(compute)
+
+layout(set = 0, binding = 0, rgba8) uniform image2D img;
+
+layout(set = 0, binding = 1) uniform UBO
+{
+    float time;
+};
+
+layout(local_size_x = 16, local_size_y = 16) in;
+
+void main()
+{
+    ivec2 pixel = ivec2(gl_GlobalInvocationID.xy);
+    vec2 uv = vec2(pixel) / imageSize(img);
+
+    float speed = 2.0;
+    vec2 center = vec2(0.5);
+    vec2 rotatedUV = uv - center;
+    float angle = time * 0.2;
+    mat2 rotation = mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
+    rotatedUV = rotation * rotatedUV;
+
+    float frequencyX = 10.0;
+    float frequencyY = 10.0;
+
+    float waveX = sin((rotatedUV.x + time) * frequencyX);
+    float waveY = cos((rotatedUV.y + time) * frequencyY);
+
+    float wave = waveX * waveY;
+
+    wave = (wave + 1.0) * 0.5;
+
+    vec3 color = vec3(
+    0.5 + 0.5 * sin(time + wave * 6.0),
+    0.5 + 0.5 * cos(time + wave * 5.0),
+    0.5 + 0.5 * sin(time + wave * 8.0)
+    );
+
+    color = mix(color, vec3(1.0, 1.0, 1.0), wave);
+
+    imageStore(img, pixel, vec4(color, 1.0));
+}

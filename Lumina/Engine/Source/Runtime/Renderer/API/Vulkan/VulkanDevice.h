@@ -75,7 +75,7 @@ namespace Lumina
         FORCEINLINE VkPhysicalDeviceMemoryProperties GetPhysicalDeviceMemoryProperties() const { return PhysicalDeviceMemoryProperties; }
     
     private:
-        
+
         FVulkanMemoryAllocator* Allocator = nullptr;
         VkPhysicalDevice        PhysicalDevice;
         VkDevice                Device;
@@ -86,8 +86,12 @@ namespace Lumina
 
     class IDeviceChild
     {
-    public:
+    protected:
+        
+        ~IDeviceChild() = default;
 
+    public:
+        
         IDeviceChild(FVulkanDevice* InDevice)
             :Device(InDevice)
         {}
