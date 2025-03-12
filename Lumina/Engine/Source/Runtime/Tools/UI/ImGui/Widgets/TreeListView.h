@@ -94,11 +94,9 @@ namespace Lumina
         FORCEINLINE bool IsDirty() const { return bDirty; }
         
         template<typename T, typename... Args>
+        requires (std::is_base_of_v<FTreeListViewItem, T> && std::is_constructible_v<T, Args...>)
         void AddItemToTree(Args&&... args)
         {
-            static_assert(std::is_base_of_v<FTreeListViewItem, T>, "T must inherit from FTreeListViewItem");
-            static_assert(std::is_constructible_v<T, Args...>, "T is not constructible using Args");
-
             T* New = FMemory::New<T>(eastl::forward<Args>(args)...);
             ListItems.push_back(New);
         }

@@ -9,7 +9,9 @@
 #include "Scene/SceneRenderer.h"
 #include "Scene/Entity/Systems/DebugCameraEntitySystem.h"
 #include "Tools/ConsoleLogEditorTool.h"
+#include "Tools/ContentBrowserEditorTool.h"
 #include "Tools/EditorTool.h"
+#include "Tools/EditorToolModal.h"
 #include "Tools/UI/ImGui/ImGuiDesignIcons.h"
 #include "Tools/UI/ImGui/ImGuiX.h"
 #include "Tools/EntitySceneEditorTool.h"
@@ -41,7 +43,6 @@ namespace Lumina
 
         
         FScene* NewScene = SceneManager->CreateScene(ESceneType::Tool);
-        NewScene->Initialize(UpdateContext);
         NewScene->RegisterSystem(FMemory::New<FDebugCameraEntitySystem>());
         
         
@@ -54,11 +55,9 @@ namespace Lumina
         ConsoleLogTool->Initialize(UpdateContext);
         EditorTools.emplace_back(ConsoleLogTool);
 
-        
-        RendererInfo = FMemory::New<FRendererInfoEditorTool>(this);
-        RendererInfo->Initialize(UpdateContext);
-        EditorTools.emplace_back(RendererInfo);
-
+        ContentBrowser = FMemory::New<FContentBrowserEditorTool>(this);
+        ContentBrowser->Initialize(UpdateContext);
+        EditorTools.emplace_back(ContentBrowser);
         
     }
 
@@ -72,7 +71,6 @@ namespace Lumina
         SceneManager = nullptr;
         SceneEditorTool = nullptr;
         ConsoleLogTool = nullptr;
-        RendererInfo = nullptr;
     }
 
     void FEditorUI::OnStartFrame(const FUpdateContext& UpdateContext)
@@ -128,7 +126,7 @@ namespace Lumina
                 // Dock windows into appropriate sections
                 ImGui::DockBuilderDockWindow(SceneEditorTool->GetToolName().c_str(), topDockID);
                 ImGui::DockBuilderDockWindow(ConsoleLogTool->GetToolName().c_str(), bottomLeftDockID);
-                ImGui::DockBuilderDockWindow(RendererInfo->GetToolName().c_str(), bottomRightDockID);
+                ImGui::DockBuilderDockWindow(ContentBrowser->GetToolName().c_str(), bottomRightDockID);
             }
 
             // Create the actual dock space
@@ -139,7 +137,6 @@ namespace Lumina
 
         
         ImGui::End();
-        
 
         if (!FocusTargetWindowName.empty())
         {
@@ -185,8 +182,11 @@ namespace Lumina
         {
             DrawToolContents(UpdateContext, Tool);
         }
-        
-        
+
+        if (ModalManager.HasModal())
+        {
+            ModalManager.DrawDialogue(UpdateContext);
+        }
     }
 
     void FEditorUI::OnUpdate(const FUpdateContext& UpdateContext)
@@ -215,6 +215,12 @@ namespace Lumina
         FMemory::Delete(Tool);
         EditorTools.erase(Itr);
     }
+
+    void FEditorUI::PushModal(const FString& Title, ImVec2 Size, TFunction<bool(const FUpdateContext&)> DrawFunction)
+    {
+        ModalManager.CreateModalDialogue(Title, Size, DrawFunction);
+    }
+
 
     void FEditorUI::EditorToolLayoutCopy(FEditorTool* SourceTool)
     {
@@ -555,34 +561,79 @@ namespace Lumina
     {
         ImGui::Text(LE_ICON_GAVEL);
         ImGui::SameLine();
-        ImGui::Text("Lumina");
 
-        ImGui::SameLine();
+        ImGui::PushStyleColor(ImGuiCol_PopupBg, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.8f, 0.8f, 0.8f, 1.0f));
+        ImGui::SetNextWindowSizeConstraints(ImVec2(175, 1), ImVec2(200, 1000));
 
+        
+        if (ImGui::BeginMenu("File"))
+        {
+            ImGui::MenuItem("Save", nullptr);
+            ImGui::EndMenu();
+        }
+
+        
+        if (ImGui::BeginMenu("Project"))
+        {
+            if (ImGui::MenuItem("Project Settings", nullptr))
+            {
+                ModalManager.CreateModalDialogue("Project Settings", ImVec2(800, 800), [this] (const FUpdateContext& Ctx) -> bool
+                {
+                    if (ImGui::Button("Close"))
+                    {
+                        return true;
+                    }
+
+                    return false;
+                    
+                });
+            }
+            
+            if (ImGui::MenuItem("Open Project", nullptr))
+            {
+                ModalManager.CreateModalDialogue("Open Project", ImVec2(800, 800), [this] (const FUpdateContext& Ctx) -> bool
+                {
+                    if (ImGui::Button("Close"))
+                    {
+                        return true;
+                    }
+                
+                    return false;
+                                    
+                });
+            }
+            
+            if (ImGui::MenuItem("New Project", nullptr))
+            {
+                ModalManager.CreateModalDialogue("New Project", ImVec2(800, 800), [this] (const FUpdateContext& Ctx) -> bool
+                {
+                    if (ImGui::Button("Close"))
+                    {
+                        return true;
+                    }
+                
+                    return false;
+                                    
+                });
+            }
+            
+            ImGui::EndMenu();
+        }
+        
         if (ImGui::BeginMenu("Editor"))
         {
-            ImGui::MenuItem( "ImGui Demo Window", nullptr, &bDearImGuiDemoWindowOpen, !bDearImGuiDemoWindowOpen);
-
-            IRenderContext* RenderContext = UpdateContext.GetSubsystem<FRenderManager>()->GetRenderContext();
-            
-            if (ImGui::MenuItem("Enable VSync", nullptr, RenderContext->IsVSyncEnabled()))
-            {
-                RenderContext->SetVSyncEnabled(!RenderContext->IsVSyncEnabled());
-            }
-
-            if (ImGui::MenuItem("Recompile Shaders"))
-            {
-                RenderContext->CompileEngineShaders();
-            }
-            
+            ImGui::MenuItem("ImGui Demo Window", nullptr, &bDearImGuiDemoWindowOpen, !bDearImGuiDemoWindowOpen);
             ImGui::EndMenu();
         }
-
-        if (ImGui::BeginMenu("System"))
+        
+        if (ImGui::BeginMenu("Help"))
         {
-            ImGui::MenuItem( "RHI Info", nullptr, &bRHIInfoOpen, !bRHIInfoOpen);
             ImGui::EndMenu();
         }
+
+        
+        ImGui::PopStyleColor(2);
     }
     
     void FEditorUI::DrawTitleBarInfoStats(const FUpdateContext& UpdateContext)

@@ -8,7 +8,6 @@
 namespace Lumina
 {
     class FPrimitiveDrawManager;
-    class AMaterial;
     struct FMaterialTexturesData;
     class FSceneUpdateContext;
     class AMaterialInstance;

@@ -3,7 +3,7 @@
 
 namespace Lumina
 {
-    FEntitySceneEditorTool::FEntitySceneEditorTool(const IEditorToolContext* Context, FScene* InScene)
+    FEntitySceneEditorTool::FEntitySceneEditorTool(IEditorToolContext* Context, FScene* InScene)
         :FSceneEditorTool(Context, InScene)
     {
     }

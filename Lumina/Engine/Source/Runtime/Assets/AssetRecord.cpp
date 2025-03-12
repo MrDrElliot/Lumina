@@ -8,15 +8,11 @@ namespace Lumina
 {
     void FAssetRecord::AddRef()
     {
-        Assert(Manager);
-        FAssetHandle AssetHandle(AssetPath, AssetType);
-        Manager->LoadAsset(AssetHandle);
+        ReferenceCount++;
     }
 
     void FAssetRecord::Release()
     {
-        Assert(Manager);
-        FAssetHandle AssetHandle(AssetPath, AssetType);
-        Manager->UnloadAsset(AssetHandle);
+        ReferenceCount--;
     }
 }

@@ -7,7 +7,7 @@
 namespace Lumina
 {
 
-    FSceneEditorTool::FSceneEditorTool(const IEditorToolContext* Context, FScene* InScene)
+    FSceneEditorTool::FSceneEditorTool(IEditorToolContext* Context, FScene* InScene)
         : FEditorTool(Context, "Scene Editor", InScene)
         , OutlinerListView()
         , OutlinerContext()

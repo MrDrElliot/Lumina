@@ -7,7 +7,7 @@ namespace Lumina
     {
     public:
         
-        FEntitySceneEditorTool(const IEditorToolContext* Context, FScene* InScene);
+        FEntitySceneEditorTool(IEditorToolContext* Context, FScene* InScene);
         
         const char* GetTitlebarIcon() const override { return LE_ICON_EARTH; }
     };

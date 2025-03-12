@@ -11,7 +11,7 @@
 
 namespace Lumina
 {
-    FEditorTool::FEditorTool(const IEditorToolContext* Context, const FString& DisplayName, FScene* InScene)
+    FEditorTool::FEditorTool(IEditorToolContext* Context, const FString& DisplayName, FScene* InScene)
         : ToolContext(Context)
         , ToolName(DisplayName)
         , ID(Hash::GetHash32(DisplayName))
@@ -145,7 +145,7 @@ namespace Lumina
 
     FEditorTool::FToolWindow* FEditorTool::CreateToolWindow(const FString& InName, const TFunction<void(const FUpdateContext&, bool)>& DrawFunction, const ImVec2& WindowPadding, bool DisableScrolling)
     {
-        for (FToolWindow* Window : ToolWindows )
+        for (FToolWindow* Window : ToolWindows)
         {
             Assert(Window->Name != InName);
         }

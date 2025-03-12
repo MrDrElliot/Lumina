@@ -61,7 +61,7 @@ namespace Lumina
 
     public:
 
-        FEditorTool(const IEditorToolContext* Context, const FString& DisplayName, FScene* Scene = nullptr);
+        FEditorTool(IEditorToolContext* Context, const FString& DisplayName, FScene* Scene = nullptr);
 
         virtual void Initialize(const FUpdateContext& UpdateContext);
         virtual void Deinitialize(const FUpdateContext& UpdateContext);
@@ -159,7 +159,7 @@ namespace Lumina
         ImGuiID                         PrevDockspaceID = 0;
         ImGuiWindowClass                ToolWindowsClass;       // All our tools windows will share the same WindowClass (based on ID) to avoid mixing tools from different top-level editor
 
-        const IEditorToolContext*       ToolContext = nullptr;
+        IEditorToolContext*             ToolContext = nullptr;
         FString                         ToolName;
         
         TVector<FToolWindow*>           ToolWindows;

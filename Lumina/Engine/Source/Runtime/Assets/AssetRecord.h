@@ -7,11 +7,11 @@
 namespace Lumina
 {
     class FAssetManager;
+    class FAssetHandle;
 }
 
 namespace Lumina
 {
-    class FAssetHandle;
 
     class FAssetRecord
     {
@@ -20,9 +20,8 @@ namespace Lumina
         friend class FAssetRequest;
         friend class FFactory;
 
-        FAssetRecord(FAssetManager* InManager, const FAssetPath& InPath, EAssetType InType)
-            : Manager(InManager)
-            , AssetPath(InPath)
+        FAssetRecord(const FAssetPath& InPath, EAssetType InType)
+            : AssetPath(InPath)
             , AssetType(InType)
         {}
 
@@ -64,9 +63,7 @@ namespace Lumina
 
         /** Reference count of this resource. */
         uint32                              ReferenceCount = 0;
-
-        /** Reference to asset manager which keeps this record, acess is circular and we need a better solution */
-        FAssetManager*                      Manager = nullptr;
+        
     };
     
 }

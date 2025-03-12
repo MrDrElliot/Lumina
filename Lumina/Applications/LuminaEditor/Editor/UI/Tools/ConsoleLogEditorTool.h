@@ -9,7 +9,7 @@ namespace Lumina
 
         LUMINA_SINGLETON_EDITOR_TOOL(FConsoleLogEditorTool)
     
-        FConsoleLogEditorTool(const IEditorToolContext* Context)
+        FConsoleLogEditorTool(IEditorToolContext* Context)
             : FEditorTool(Context, "Console", nullptr)
             , HistoryIndex(0)
         {}

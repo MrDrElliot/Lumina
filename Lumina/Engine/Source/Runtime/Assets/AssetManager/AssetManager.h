@@ -34,6 +34,7 @@ namespace Lumina
 	private:
 
 		FAssetRecord* FindOrCreateAssetRecord(const FAssetHandle& InAsset);
+		FAssetRecord* FindAssetRecord(const FAssetHandle& InHandle);
 		FAssetRequest* TryFindActiveRequest(FAssetRecord* Record);
 
 		void ProcessAssetRequests();

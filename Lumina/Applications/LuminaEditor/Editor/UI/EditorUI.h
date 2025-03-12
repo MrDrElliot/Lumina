@@ -2,8 +2,15 @@
 #include "Memory/RefCounted.h"
 #include "Scene/Scene.h"
 #include "Tools/EditorToolContext.h"
+#include "Tools/EditorToolModal.h"
 #include "Tools/UI/DevelopmentToolUI.h"
 #include "Tools/UI/ImGui/ImGuiX.h"
+
+namespace Lumina
+{
+    class FEditorToolModal;
+    class FContentBrowserEditorTool;
+}
 
 namespace Lumina
 {
@@ -46,7 +53,8 @@ namespace Lumina
 
         void DestroyTool(const FUpdateContext& UpdateContext, FEditorTool* Tool);
 
-    
+        void PushModal(const FString& Title, ImVec2 Size, TFunction<bool(const FUpdateContext&)> DrawFunction) override;
+        
     private:
 
         void EditorToolLayoutCopy(FEditorTool* SourceTool);
@@ -74,16 +82,14 @@ namespace Lumina
         FSceneManager*                                  SceneManager = nullptr;
         FEntitySceneEditorTool*                         SceneEditorTool = nullptr;
 
-        FRendererInfoEditorTool*                        RendererInfo = nullptr;
         FConsoleLogEditorTool*                          ConsoleLogTool = nullptr;
+        FContentBrowserEditorTool*                      ContentBrowser = nullptr;
         TVector<FEditorTool*>                           EditorTools;
         FEditorTool*                                    LastActiveTool = nullptr;
         FString                                         FocusTargetWindowName; // If this is set we need to switch focus to this window
 
-
-        
+        FEditorModalManager                             ModalManager; 
         bool                                            bDearImGuiDemoWindowOpen = false;
-        bool                                            bRHIInfoOpen = false;
 
     };
     

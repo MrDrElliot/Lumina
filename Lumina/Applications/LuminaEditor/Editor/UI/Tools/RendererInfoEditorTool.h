@@ -9,7 +9,7 @@ namespace Lumina
         LUMINA_SINGLETON_EDITOR_TOOL(FRendererInfoEditorTool)
         
     public:
-        FRendererInfoEditorTool(const IEditorToolContext* Context)
+        FRendererInfoEditorTool(IEditorToolContext* Context)
             : FEditorTool(Context, "RHI Info", nullptr)
         {
         }

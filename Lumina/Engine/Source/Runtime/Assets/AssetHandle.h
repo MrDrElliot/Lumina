@@ -16,9 +16,15 @@ namespace Lumina
     class FAssetHandle
     {
     public:
-        
+
         FAssetHandle() = default;
-        FAssetHandle(const FAssetPath& InPath, EAssetType InType) :AssetPath(InPath), AssetType(InType) {}
+        FAssetHandle(const FAssetPath& InPath, EAssetType InType)
+            : AssetPath(InPath)
+            , AssetType(InType)
+            , AssetRecord(nullptr)
+        {
+        }
+
         virtual ~FAssetHandle() = default;
         
 
@@ -69,8 +75,6 @@ namespace Lumina
     class TAssetHandle : public FAssetHandle
     {
     public:
-
-        //static_assert(std::is_base_of_v<IAsset, T>, "T must be derrived from IAsset");
         
         TAssetHandle() = default;
 

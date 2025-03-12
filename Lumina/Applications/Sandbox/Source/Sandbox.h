@@ -33,8 +33,6 @@ public:
 	void Shutdown() override;
 
 
-	FScene* Scene;
-	
 private:
 	
 };

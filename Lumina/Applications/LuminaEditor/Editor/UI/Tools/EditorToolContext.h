@@ -1,4 +1,5 @@
 #pragma once
+#include "imgui.h"
 #include "Platform/WindowsPlatform.h"
 
 namespace Lumina
@@ -13,9 +14,11 @@ namespace Lumina
     public:
 
         IEditorToolContext() = default;
+        virtual ~IEditorToolContext() = default;
 
         FORCEINLINE const FSubsystemManager* GetSubsystemManager() const { return SubsystemManager; }
-        
+
+        virtual void PushModal(const FString& Title, ImVec2 Size, TFunction<bool(const FUpdateContext&)> DrawFunction) = 0;
 
     public:
 

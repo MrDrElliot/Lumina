@@ -1,9 +1,7 @@
 #pragma once
 
-#include <string>
 #include <filesystem>
 #include <cstdlib>
-#include "Project/Project.h"
 
 namespace Lumina::Paths
 {
@@ -45,23 +43,7 @@ namespace Lumina::Paths
     {
         return GetEngineInstallDirectory() / relativePath;
     }
-
-    // Resolves a relative path from the current project directory.
-    inline std::filesystem::path ResolveFromProject(const std::filesystem::path& relativePath)
-    {
-        if (Project::GetCurrent())
-        {
-            return Project::GetCurrent()->GetProjectRootDirectory() / relativePath;
-        }
-        return std::filesystem::current_path() / relativePath; // Fallback
-    }
-
-    // Gets a path from the project's content directory.
-    inline std::filesystem::path FromContentDirectory(const std::filesystem::path& relativePath)
-    {
-        return Project::GetCurrent()->GetProjectContentDirectory() / relativePath;
-    }
-
+    
     // Sets an environment variable (cross-platform).
     inline bool SetEnvVariable(const FString& name, const FString& value)
     {

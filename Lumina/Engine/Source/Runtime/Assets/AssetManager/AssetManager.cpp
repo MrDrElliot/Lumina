@@ -16,7 +16,7 @@ namespace Lumina
 
     void FAssetManager::Initialize(FSubsystemManager& Manager)
     {
-        //AssetRequestThread = std::thread(&FAssetManager::ProcessAssetRequests, this);
+        AssetRequestThread = std::thread(&FAssetManager::ProcessAssetRequests, this);
     }
 
     void FAssetManager::Deinitialize()
@@ -51,8 +51,7 @@ namespace Lumina
 
     void FAssetManager::UnloadAsset(FAssetHandle& InAsset)
     {
-        FAssetRecord* FoundRecord = FindOrCreateAssetRecord(InAsset);
-        Assert(FoundRecord);
+        FAssetRecord* FoundRecord = FindAssetRecord(InAsset);
 
         if (FoundRecord->GetReferenceCount() > 0)
         {
@@ -81,7 +80,7 @@ namespace Lumina
         auto const Itr = AssetRecord.find(InAsset.GetAssetPath());
         if (Itr == AssetRecord.end())
         {
-            Record = new FAssetRecord(this, InAsset.GetAssetPath(), InAsset.GetAssetType());
+            Record = new FAssetRecord(InAsset.GetAssetPath(), InAsset.GetAssetType());
         }
         else
         {
@@ -91,7 +90,18 @@ namespace Lumina
         return Record;
         
     }
-    
+
+    FAssetRecord* FAssetManager::FindAssetRecord(const FAssetHandle& InHandle)
+    {
+        Assert(InHandle.IsSet());
+        FRecursiveScopeLock ScopeLock(RecursiveMutex);
+
+        auto const Itr = AssetRecord.find(InHandle.GetAssetPath());
+        Assert(Itr != AssetRecord.end());
+
+        return Itr->second;
+    }
+
     FAssetRequest* FAssetManager::TryFindActiveRequest(FAssetRecord* Record)
     {
         FAssetRequest* NewRequest = nullptr;
@@ -120,11 +130,8 @@ namespace Lumina
         {
             PROFILE_SCOPE(ProcessAssetRequests)
             
-            //FRecursiveScopeLock ScopeLock(RecursiveMutex);
-
             FAssetRequest::FRequestCallbackContext Context;
             Context.LoadAssetCallback = [this] (FAssetHandle& Handle) { LoadAsset(Handle); };
-
             
             while (!RequestQueue.empty())
             {
