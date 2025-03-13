@@ -2,7 +2,11 @@
 #include "imgui.h"
 #include "Core/Functional/Function.h"
 #include "glm/glm.hpp"
+#include "Platform/GenericPlatform.h"
 #include "Platform/WindowsPlatform.h"
+#include <filesystem>
+
+#include "Containers/Array.h"
 
 namespace Lumina::ImGuiX
 {
@@ -29,6 +33,7 @@ namespace Lumina::ImGuiX
         return ButtonEx( nullptr, pLabel, size, ImColor(0.0f), ImColor(0.0f), ImGui::ColorConvertFloat4ToU32( ImGui::GetStyle().Colors[ImGuiCol_Text] ) );
     }
 
+    TPair<bool, uint32> DirectoryTreeViewRecursive(const std::filesystem::path& Path, uint32* Count, int* SelectionMask);
 
     void SameLineSeparator( float width = 0, const ImColor& color = ImColor(0));
 

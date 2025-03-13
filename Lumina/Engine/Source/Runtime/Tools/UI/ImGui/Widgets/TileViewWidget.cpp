@@ -30,17 +30,13 @@ namespace Lumina
             ImGui::PushID(Item);
             ImGui::BeginGroup();
 
-            ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f);
-
-
-            if (ImGui::Button("", ImVec2(ButtonSize, ButtonSize)))
-            {
-                SetSelection(Item);
-            }
-
+            ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f);
+            
             ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[2]);
             float TextWidth = ImGui::CalcTextSize(DisplayName).x;
             float TextOffset = ((cellSize) - TextWidth) * 0.5f;
+
+            DrawItem(Item, Context);
     
             ImGui::SetCursorPosX(ImGui::GetCursorPosX() + TextOffset);
             ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ButtonSize);
@@ -55,6 +51,7 @@ namespace Lumina
     
             ++itemIndex;
         }
+        
     }
     
     void FTileViewWidget::ClearTree()
@@ -82,13 +79,62 @@ namespace Lumina
 
     void FTileViewWidget::DrawItem(FTileViewItem* ItemToDraw, FTileViewContext Context)
     {
+        if (ImGui::Button("", ImVec2(125.0f, 125.0f)))
+        {
+            SetSelection(ItemToDraw, Context);
+        }
+
+        if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Right))
+        {
+            SetSelection(ItemToDraw, Context);
+        }
+        
+        if (ItemToDraw->HasContextMenu())
+        {
+            if (ImGui::BeginPopupContextItem("ItemContextMenu"))
+            {
+                TVector<FTileViewItem*> SelectionsToDraw;
+                for (FTileViewItem* Selection : Selections)
+                {
+                    if (Selection->HasContextMenu())
+                    {
+                        SelectionsToDraw.push_back(Selection);
+                    }
+                }
+                
+                Context.DrawItemContextMenuFunction(SelectionsToDraw);
+                
+                ImGui::EndPopup();
+            }
+        }
     }
 
-    void FTileViewWidget::SetSelection(FTileViewItem* Item)
+    void FTileViewWidget::SetSelection(FTileViewItem* Item, FTileViewContext Context)
     {
+        bool bWasSelected = Item->bSelected;
+        
+        ClearSelection();
+        
+        if (!bWasSelected)
+        {
+            Selections.push_back(Item);
+            Item->bSelected = true;
+        }
+
+        Context.ItemSelectedFunction(Item);
+        Item->OnSelectionStateChanged();
     }
 
     void FTileViewWidget::ClearSelection()
     {
+        for (FTileViewItem* Item : Selections)
+        {
+            Assert(Item->bSelected);
+            
+            Item->bSelected = false;
+            Item->OnSelectionStateChanged();    
+        }
+
+        Selections.clear();
     }
 }

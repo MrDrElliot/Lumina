@@ -3,9 +3,11 @@
 #include "EditorToolContext.h"
 #include "Paths/Paths.h"
 #include "Project/Project.h"
+#include "Tools/UI/ImGui/ImGuiX.h"
 
 namespace Lumina
 {
+
     void FContentBrowserEditorTool::RefreshContentBrowser()
     {
         ContentBrowserTileView.MarkTreeDirty();
@@ -23,10 +25,69 @@ namespace Lumina
             ImGui::SameLine();
             DrawContentBrowser(Contxt, bIsFocused, ImVec2(Right, 0));
         });
+
         
-        ContentBrowserTileViewContext.DrawItemContextMenuFunction = [this] (const TVector<FTileViewItem*> Item)
+        std::filesystem::path Path = FProject::Get()->GetProjectSettings().ProjectPath.c_str();
+        Path = Path.parent_path() / "Game/Content";
+        SelectedPath = Path;
+        
+        ContentBrowserTileViewContext.ItemSelectedFunction = [this] (FTileViewItem* Item)
         {
             
+        };
+        
+        ContentBrowserTileViewContext.DrawItemContextMenuFunction = [this] (const TVector<FTileViewItem*> Items)
+        {
+            for (FTileViewItem* Item : Items)
+            {
+                FContentBrowserTileViewItem* ContentItem = static_cast<FContentBrowserTileViewItem*>(Item);
+                
+                if (ImGui::MenuItem("Rename"))
+                {
+                    ToolContext->PushModal("Rename", ImVec2(350.0f, 100.0f), [this, ContentItem](const FUpdateContext& Context) -> bool
+                    {
+                        static char Buf[256] = {};
+
+                        if (Buf[0] == '\0')
+                        {
+                            memset(Buf, 0, sizeof(Buf));
+                            strncpy(Buf, ContentItem->GetName().c_str(), sizeof(Buf) - 1);
+                            Buf[sizeof(Buf) - 1] = '\0';
+                        }
+
+                        ImGui::SetKeyboardFocusHere();
+                        bool bSubmitted = ImGui::InputText("New Name", Buf, sizeof(Buf),
+                            ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_EnterReturnsTrue);
+        
+                        if (bSubmitted)
+                        {
+                            std::filesystem::path OldPath = ContentItem->GetPath();
+                            std::filesystem::path NewPath = OldPath.parent_path() / Buf;
+            
+                            try
+                            {
+                                std::filesystem::rename(OldPath, NewPath);
+                                memset(Buf, 0, sizeof(Buf));
+                                RefreshContentBrowser();
+                                return true;
+                            }
+                            catch (const std::filesystem::filesystem_error& e)
+                            {
+                                LOG_ERROR("Failed to rename file: {}", e.what());
+                            }
+                            
+                        }
+
+                        return false;
+                    });
+                }
+
+
+                if (ImGui::MenuItem("Delete"))
+                {
+                    
+                }
+            }
         };
 
         ContentBrowserTileViewContext.RebuildTreeFunction = [this] (FTileViewWidget* Tree)
@@ -35,11 +96,6 @@ namespace Lumina
             {
                 for (auto& Directory : std::filesystem::directory_iterator(SelectedPath))
                 {
-                    if (Directory.is_directory())
-                    {
-                        continue;
-                    }
-
                     ContentBrowserTileView.AddItemToTree<FContentBrowserTileViewItem>(nullptr, Directory.path());
                 }
             }
@@ -58,11 +114,11 @@ namespace Lumina
         OutlinerContext.RebuildTreeFunction = [this](FTreeListView* Tree)
         {
             std::filesystem::path Path = FProject::Get()->GetProjectSettings().ProjectPath.c_str();
-            Path = Path.parent_path() / "Game/Content";
+            Path = Path.parent_path() / "Game/";
             
             if (std::filesystem::exists(Path))
             {
-                for (auto& Directory : std::filesystem::directory_iterator(Path))
+                for (auto& Directory : std::filesystem::recursive_directory_iterator(Path))
                 {
                     OutlinerListView.AddItemToTree<FContentBrowserListViewItem>(nullptr, Directory.path());
                 }
@@ -128,6 +184,13 @@ namespace Lumina
 
         if (ImGui::BeginPopup("ContentContextMenu"))
         {
+            if (ImGui::MenuItem("New Folder"))
+            {
+                std::filesystem::path NewPath = SelectedPath / "NewFolder";
+                std::filesystem::create_directory(NewPath);
+                RefreshContentBrowser();
+            }
+            
             if (ImGui::BeginMenu("New Asset"))
             {
                 if (ImGui::MenuItem("Material"))

@@ -97,13 +97,15 @@ namespace Lumina
         
         void DrawItem(FTileViewItem* ItemToDraw, FTileViewContext Context);
 
-        void SetSelection(FTileViewItem* Item);
+        void SetSelection(FTileViewItem* Item, FTileViewContext Context);
         void ClearSelection();
     
 
     private:
 
         TVector<FTileViewItem*>                 Selections;
+
+        /** Root nodes */
         TVector<FTileViewItem*>                 ListItems;
 
         uint8                                   bDirty:1;

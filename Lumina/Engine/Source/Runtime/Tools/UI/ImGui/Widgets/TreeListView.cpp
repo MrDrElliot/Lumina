@@ -12,7 +12,6 @@ namespace Lumina
 
     void FTreeListView::Draw(FTreeListViewContext Context)
     {
-
         if (bDirty)
         {
             RebuildTree(Context);
@@ -56,6 +55,11 @@ namespace Lumina
     {
         for (auto* Item : ListItems)
         {
+            for (auto* Child : Item->Children)
+            {
+                FMemory::Delete(Child);
+            }
+            
             FMemory::Delete(Item);
         }
         
@@ -85,7 +89,12 @@ namespace Lumina
         
         ImGui::TableSetColumnIndex(0);
 
-        ImGuiTreeNodeFlags Flags = ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_FramePadding | ImGuiTreeNodeFlags_Leaf;
+        ImGuiTreeNodeFlags Flags = ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_FramePadding;
+
+        if (!ItemToDraw->HasChildren())
+        {
+            Flags |= ImGuiTreeNodeFlags_Leaf;
+        }
 
         if (bSelectedItem)
         {

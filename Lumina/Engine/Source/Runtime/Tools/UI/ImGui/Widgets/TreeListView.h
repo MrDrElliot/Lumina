@@ -33,6 +33,8 @@ namespace Lumina
 
         virtual void OnSelectionStateChanged() { }
 
+        bool HasChildren() const { return !Children.empty(); }
+        
         virtual FInlineString GetDisplayName() const
         {
             return GetName().c_str();
@@ -98,10 +100,12 @@ namespace Lumina
         
         template<typename T, typename... Args>
         requires (std::is_base_of_v<FTreeListViewItem, T> && std::is_constructible_v<T, Args...>)
-        void AddItemToTree(Args&&... args)
+        T* AddItemToTree(Args&&... args)
         {
             T* New = FMemory::New<T>(eastl::forward<Args>(args)...);
             ListItems.push_back(New);
+
+            return New;
         }
         
     private:

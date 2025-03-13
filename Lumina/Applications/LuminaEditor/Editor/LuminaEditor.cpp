@@ -32,6 +32,8 @@ namespace Lumina
         FEditorSettings::Get()->LoadSettings();
         std::filesystem::path StartupProject = FEditorSettings::Get()->GetStartupProject().c_str();
         FProject::Get()->LoadProject(StartupProject.string().c_str());
+
+        Engine->Initialize(this);
         
         return true;
     }
@@ -40,7 +42,6 @@ namespace Lumina
     {
         Engine = new FEditorEngine();
         Engine->SetUpdateCallback([] (const FUpdateContext&) { });
-        Engine->Initialize(this);
     }
 
     bool LuminaEditor::ApplicationLoop()
