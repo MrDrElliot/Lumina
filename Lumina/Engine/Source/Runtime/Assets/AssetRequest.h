@@ -1,7 +1,7 @@
 ﻿#pragma once
 
+#include <EASTL/atomic.h>
 #include "AssetHandle.h"
-#include "EASTL/internal/atomic/atomic.h"
 #include "Platform/GenericPlatform.h"
 
 namespace Lumina

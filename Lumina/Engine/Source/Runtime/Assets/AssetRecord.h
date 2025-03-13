@@ -13,7 +13,7 @@ namespace Lumina
 namespace Lumina
 {
 
-    class FAssetRecord
+    class FAssetRecord : public IRefCountedObject
     {
     public:
 
@@ -25,8 +25,11 @@ namespace Lumina
             , AssetType(InType)
         {}
 
-        void AddRef();
-        void Release();
+        // IRefCountedObject Interface
+        uint32 GetRefCount() const override;
+        uint32 AddRef() const override;
+        uint32 Release() const override;
+        //~ IRefCountedObject Interface
 
         FORCEINLINE void FreeAssetMemory() { Assert(ReferenceCount == 0); delete AssetPtr; AssetPtr = nullptr; }
         FORCEINLINE void SetLoadingState(EAssetLoadState NewState) { LoadState = NewState; }
@@ -47,22 +50,22 @@ namespace Lumina
     private:
 
         /** Path this record refers to. */
-        FAssetPath                          AssetPath = {};
+        FAssetPath                                  AssetPath = {};
 
         /** Asset type for safety */
-        EAssetType                          AssetType = EAssetType::Max;
+        EAssetType                                  AssetType = EAssetType::Max;
         
         /** Raw asset pointer, access is *NOT* thread-safe. */
-        IAsset*                             AssetPtr = nullptr;
+        mutable IAsset*                             AssetPtr = nullptr;
 
         /** Assets that this asset may depend on */
-        TVector<FAssetHandle>               AssetDependencies;
+        TVector<FAssetHandle>                       AssetDependencies;
 
         /** State of this resource, thread-safe. If this is loaded, it's safe to assume the AssetPtr is valid memory. */
-        eastl::atomic<EAssetLoadState>      LoadState = EAssetLoadState::Unloaded;
+        mutable eastl::atomic<EAssetLoadState>      LoadState = EAssetLoadState::Unloaded;
 
         /** Reference count of this resource. */
-        uint32                              ReferenceCount = 0;
+        mutable uint32                              ReferenceCount = 0;
         
     };
     

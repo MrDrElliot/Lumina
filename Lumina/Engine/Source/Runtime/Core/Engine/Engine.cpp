@@ -2,6 +2,7 @@
 #include "Assets/AssetManager/AssetManager.h"
 #include "Core/Windows/Window.h"
 #include "glfw/glfw3.h"
+#include "Assets/AssetRegistry/AssetRegistry.h"
 #include "Input/InputSubsystem.h"
 #include "Renderer/RenderContext.h"
 #include "Scene/Scene.h"
@@ -29,7 +30,8 @@ namespace Lumina
         EngineViewport = RenderManager->GetRenderContext()->CreateViewport(Windowing::GetPrimaryWindowHandle()->GetExtent());
         
         InputSubsystem = EngineSubsystems.AddSubsystem<FInputSubsystem>();
-        AssetManagerSubystem = EngineSubsystems.AddSubsystem<FAssetManager>();
+        AssetRegistry = EngineSubsystems.AddSubsystem<FAssetRegistry>();
+        AssetManager = EngineSubsystems.AddSubsystem<FAssetManager>();
         SceneManager = EngineSubsystems.AddSubsystem<FSceneManager>();
         
         UpdateContext.SubsystemManager = &EngineSubsystems;
@@ -59,6 +61,7 @@ namespace Lumina
         #endif
 
         EngineSubsystems.RemoveSubsystem<FInputSubsystem>();
+        EngineSubsystems.RemoveSubsystem<FAssetRegistry>();
         EngineSubsystems.RemoveSubsystem<FAssetManager>();
         EngineSubsystems.RemoveSubsystem<FSceneManager>();
 
@@ -82,7 +85,7 @@ namespace Lumina
 
         bool bRunEngineUpdate = true;
 
-        AssetManagerSubystem->Update();
+        AssetManager->Update();
 
         
         if (bRunEngineUpdate)

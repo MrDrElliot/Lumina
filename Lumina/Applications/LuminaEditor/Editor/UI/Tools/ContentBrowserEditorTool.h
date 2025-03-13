@@ -22,6 +22,16 @@ namespace Lumina
 
             const char* GetTooltipText() const override { return Path.filename().string().c_str(); }
             bool HasContextMenu() override { return true; }
+            
+            FInlineString GetDisplayName() const override
+            {
+                //@TODO this is pretty gross.
+                FString IconString(LE_ICON_FOLDER);
+                FString NameString(GetName().c_str());
+                FString CombinedString(IconString + " " + NameString);
+
+                return FInlineString(CombinedString.c_str());
+            }
 
             const FName& GetName() const override
             {
@@ -44,12 +54,12 @@ namespace Lumina
                   Path(std::move(path))
             {}
 
-            const char* GetTooltipText() const override { return Path.filename().string().c_str(); }
+            const char* GetTooltipText() const override { return "Test"; }
             bool HasContextMenu() override { return true; }
 
-            const FName& GetName() const override
+            FName GetName() const override
             {
-                return Path.filename().string().c_str();
+                return Path.filename().stem().string().c_str();
             }
 
             std::filesystem::path GetPath() const { return Path; }
@@ -66,7 +76,8 @@ namespace Lumina
             , OutlinerListView()
             , OutlinerContext()
         {}
-        
+
+        void RefreshContentBrowser();
         bool IsSingleWindowTool() const override { return true; }
         const char* GetTitlebarIcon() const override { return LE_ICON_FORMAT_LIST_BULLETED_TYPE; }
         void OnInitialize(const FUpdateContext& UpdateContext) override;
@@ -87,6 +98,8 @@ namespace Lumina
 
         FTileViewWidget             ContentBrowserTileView;
         FTileViewContext            ContentBrowserTileViewContext;
+
+        std::filesystem::path       SelectedPath;
     
     };
 }

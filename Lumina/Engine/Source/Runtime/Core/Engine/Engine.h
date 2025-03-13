@@ -9,11 +9,8 @@
 
 namespace Lumina
 {
+    class FAssetRegistry;
     class FRenderManager;
-}
-
-namespace Lumina
-{
     class IImGuiRenderer;
     class IDevelopmentToolUI;
     class FSceneManager;
@@ -80,7 +77,8 @@ namespace Lumina
 
         FSubsystemManager       EngineSubsystems;
         FInputSubsystem*        InputSubsystem =        nullptr;
-        FAssetManager*          AssetManagerSubystem =  nullptr;
+        FAssetManager*          AssetManager =          nullptr;
+        FAssetRegistry*         AssetRegistry =         nullptr;
         FSceneManager*          SceneManager =          nullptr;
         FRenderManager*         RenderManager =         nullptr;
 

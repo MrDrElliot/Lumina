@@ -45,6 +45,24 @@ namespace Lumina
     //----------------------------------------------------------------------------------------------
 
 
+    class FVulkanSampler : public FRHISampler,  public IDeviceChild
+    {
+    public:
+
+        FVulkanSampler(FVulkanDevice* InDevice, const FSamplerDesc& InDesc);
+        ~FVulkanSampler() override;
+
+        const FSamplerDesc& GetDesc() const override { return Desc; }
+
+        void* GetAPIResourceImpl(EAPIResourceType Type) override { return Sampler; }
+
+        
+    private:
+
+        FSamplerDesc    Desc;
+        VkSampler       Sampler;
+    };
+    
     class FVulkanImage : public FRHIImage, public IDeviceChild
     {
     public:

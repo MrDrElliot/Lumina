@@ -23,13 +23,13 @@ namespace Lumina
             , bSelected(false)
         {}
 
-        virtual const FName& GetName() const;
+        virtual FName GetName() const { return {}; }
         
         virtual const char* GetTooltipText() const { return nullptr; }
 
         virtual bool HasContextMenu() { return false; }
 
-        virtual ImVec4 GetDisplayColor() const;
+        virtual ImVec4 GetDisplayColor() const { return {};  }
 
         virtual void OnSelectionStateChanged() { }
 
@@ -60,6 +60,9 @@ namespace Lumina
 
         /** Called when a rebuild of the widget tree is requested */
         TFunction<void(FTileViewWidget*)>                       RebuildTreeFunction;
+
+        /** Called when an item has been selected in the tree */
+        TFunction<void(FTileViewItem*)>                         ItemSelectedFunction;
     };
 
     class FTileViewWidget

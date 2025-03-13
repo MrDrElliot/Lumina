@@ -1,17 +1,9 @@
 ﻿#include "TileViewWidget.h"
 
+#include "Assets/AssetPath.h"
+
 namespace Lumina
 {
-    const FName& FTileViewItem::GetName() const
-    {
-        return {};
-    }
-
-    ImVec4 FTileViewItem::GetDisplayColor() const
-    {
-        return {};
-    }
-
     void FTileViewWidget::Draw(FTileViewContext Context)
     {
         if (bDirty)
@@ -19,43 +11,52 @@ namespace Lumina
             RebuildTree(Context);
             return;
         }
-        
-        const int columns_per_row = 4;
-        const float tile_size = 200.0f;
-        const float padding = 10.0f;
-
-        int column_index = 0;
     
+        float paneWidth = ImGui::GetContentRegionAvail().x;
+        constexpr float ButtonSize = 125.0f;
+        float cellSize = ButtonSize + ImGui::GetStyle().ItemSpacing.x;
+        int itemsPerRow = std::max(1, int(paneWidth / cellSize));
 
+
+        int itemIndex = 0;
         for (FTileViewItem* Item : ListItems)
         {
-            ImGui::PushID(Item); // Unique ID for each tile
+            const char* DisplayName = Item->GetDisplayName().c_str();
+            if (itemIndex % itemsPerRow != 0)
+            {
+                ImGui::SameLine(0.0f, 20.0f);
+            }
+        
+            ImGui::PushID(Item);
+            ImGui::BeginGroup();
 
-            // Draw the selectable tile button
-            bool bSelected = false;
-            if (ImGui::Selectable(Item->GetDisplayName().c_str(), &bSelected, 0, ImVec2(tile_size, tile_size)))
+            ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f);
+
+
+            if (ImGui::Button("", ImVec2(ButtonSize, ButtonSize)))
             {
                 SetSelection(Item);
             }
 
-            // Draw additional item details (if needed)
-            if (ImGui::IsItemHovered() && Item->GetTooltipText())
-            {
-                ImGui::SetTooltip("%s", Item->GetTooltipText());
-            }
-
+            ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[2]);
+            float TextWidth = ImGui::CalcTextSize(DisplayName).x;
+            float TextOffset = ((cellSize) - TextWidth) * 0.5f;
+    
+            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + TextOffset);
+            ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ButtonSize);
+            ImGui::TextWrapped("%s", DisplayName);
+            ImGui::PopTextWrapPos();
+            ImGui::PopFont();
+            
+            ImGui::PopStyleVar();
+            
+            ImGui::EndGroup();
             ImGui::PopID();
-
-            // Manage grid layout
-            column_index++;
-            if (column_index % columns_per_row != 0)
-            {
-                ImGui::SameLine();
-            }
+    
+            ++itemIndex;
         }
-
     }
-
+    
     void FTileViewWidget::ClearTree()
     {
         for (FTileViewItem* Item : ListItems)

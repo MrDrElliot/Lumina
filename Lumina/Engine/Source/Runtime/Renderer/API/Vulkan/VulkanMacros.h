@@ -52,8 +52,8 @@ namespace Lumina::Vulkan
 #define VK_CHECK(x)                                                       \
 do {                                                                  \
     VkResult result = (x);                                            \
-    if (UNLIKELY(result < 0))                                              \
-    {                                                            \
+    if (UNLIKELY(result < 0))                                          \
+    {                                                                 \
         LOG_WARN("===========================================");      \
         LOG_WARN("Vulkan Error Detected!");                           \
         LOG_WARN("Function Call: {0}", #x);                           \
@@ -61,6 +61,10 @@ do {                                                                  \
         LOG_WARN("Line: {0}", __LINE__);                              \
         LOG_WARN("Error Code: {0} ({1})", result, Vulkan::VkResultToString(result)); \
         LOG_WARN("===========================================");      \
+        if (result == VK_ERROR_DEVICE_LOST)                           \
+        {                                                             \
+            std::exit(uint32(result));                                 \
+        }                                                             \
     }                                                                 \
 } while (0)
 

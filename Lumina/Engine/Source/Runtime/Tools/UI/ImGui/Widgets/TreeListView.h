@@ -63,6 +63,9 @@ namespace Lumina
 
         /** Called when a rebuild of the widget tree is requested */
         TFunction<void(FTreeListView*)>                             RebuildTreeFunction;
+
+        /** Called when an item has been selected in the tree */
+        TFunction<void(FTreeListViewItem*)>                         ItemSelectedFunction;
     };
     
     
@@ -107,7 +110,7 @@ namespace Lumina
         
         void DrawListItem(FTreeListViewItem* ItemToDraw, FTreeListViewContext Context);
 
-        void SetSelection(FTreeListViewItem* Item);
+        void SetSelection(FTreeListViewItem* Item, FTreeListViewContext Context);
         void ClearSelection();
 
     private:

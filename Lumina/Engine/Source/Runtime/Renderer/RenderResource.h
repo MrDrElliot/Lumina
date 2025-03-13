@@ -551,6 +551,69 @@ namespace Lumina
 		
 	};
 
+	enum class ESamplerAddressMode : uint8
+	{
+		// D3D names
+		Clamp,
+		Wrap,
+		Border,
+		Mirror,
+		MirrorOnce,
+
+		// Vulkan names
+		ClampToEdge = Clamp,
+		Repeat = Wrap,
+		ClampToBorder = Border,
+		MirroredRepeat = Mirror,
+		MirrorClampToEdge = MirrorOnce
+	};
+
+	enum class ESamplerReductionType : uint8_t
+	{
+		Standard,
+		Comparison,
+		Minimum,
+		Max
+	};
+
+	struct FSamplerDesc
+	{
+		FColor BorderColor = 1.f;
+		float MaxAnisotropy = 1.f;
+		float MipBias = 0.f;
+
+		bool MinFilter = true;
+		bool MagFilter = true;
+		bool MipFilter = true;
+		ESamplerAddressMode AddressU = ESamplerAddressMode::Clamp;
+		ESamplerAddressMode AddressV = ESamplerAddressMode::Clamp;
+		ESamplerAddressMode AddressW = ESamplerAddressMode::Clamp;
+		ESamplerReductionType ReductionType = ESamplerReductionType::Standard;
+
+		FSamplerDesc& SetBorderColor(const FColor& color) { BorderColor = color; return *this; }
+		FSamplerDesc& SetMaxAnisotropy(float value) { MaxAnisotropy = value; return *this; }
+		FSamplerDesc& SetMipBias(float value) { MipBias = value; return *this; }
+		FSamplerDesc& SetMinFilter(bool enable) { MinFilter = enable; return *this; }
+		FSamplerDesc& SetMagFilter(bool enable) { MagFilter = enable; return *this; }
+		FSamplerDesc& SetMipFilter(bool enable) { MipFilter = enable; return *this; }
+		FSamplerDesc& SetAllFilters(bool enable) { MinFilter = MagFilter = MipFilter = enable; return *this; }
+		FSamplerDesc& SetAddressU(ESamplerAddressMode mode) { AddressU = mode; return *this; }
+		FSamplerDesc& SetAddressV(ESamplerAddressMode mode) { AddressV = mode; return *this; }
+		FSamplerDesc& SetAddressW(ESamplerAddressMode mode) { AddressW = mode; return *this; }
+		FSamplerDesc& SetAllAddressModes(ESamplerAddressMode mode) { AddressU = AddressV = AddressW = mode; return *this; }
+		FSamplerDesc& SetReductionType(ESamplerReductionType type) { ReductionType = type; return *this; }
+	};
+
+	class FRHISampler : public IRHIResource
+	{
+	public:
+
+		RENDER_RESOURCE(RRT_SamplerState)
+
+		NODISCARD virtual const FSamplerDesc& GetDesc() const = 0;
+
+		
+	};
 	
 	class FRHIImage : public IRHIResource, public IAccessableRHIResource
 	{

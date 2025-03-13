@@ -1,10 +1,11 @@
 ﻿#pragma once
 
-#include "RHIFwd.h"
 #include "Memory/RefCounted.h"
+
 
 namespace Lumina
 {
+    class FRHISampler;
     class IRHIResource;
     class FShaderLibrary;
     class FRHIShader;
@@ -26,6 +27,7 @@ namespace Lumina
     using FRHIResourceRef           = TRefCountPtr<IRHIResource>;
     using FRHIBufferRef             = TRefCountPtr<FRHIBuffer>;
     using FRHIImageRef              = TRefCountPtr<FRHIImage>;
+    using FRHISamplerRef            = TRefCountPtr<FRHISampler>;
     using FRHIShaderRef             = TRefCountPtr<FRHIShader>;
     using FRHIVertexShaderRef       = TRefCountPtr<FRHIVertexShader>;
     using FRHIPixelShaderRef        = TRefCountPtr<FRHIPixelShader>;

@@ -1,18 +1,41 @@
 #include "AssetRecord.h"
 
 #include "AssetManager/AssetManager.h"
-#include "Core/Application/Application.h"
 
 
 namespace Lumina
 {
-    void FAssetRecord::AddRef()
+    uint32 FAssetRecord::GetRefCount() const
     {
-        ReferenceCount++;
+        return ReferenceCount;
     }
 
-    void FAssetRecord::Release()
+    uint32 FAssetRecord::AddRef() const
+    {
+        ReferenceCount++;
+        return uint32(ReferenceCount);
+
+    }
+
+    uint32 FAssetRecord::Release() const
     {
         ReferenceCount--;
+
+        // A reference count of 1 means the asset manager is the only remaining reference to the asset, so we can safely delete it.
+        if (ReferenceCount == 1)
+        {
+            FMemory::Delete(AssetPtr);
+            LoadState = EAssetLoadState::Unloaded;
+            AssetPtr = nullptr;
+        }
+
+        // The asset record iself is officially done, so we can delete it here.
+        else if (ReferenceCount == 0)
+        {
+            FAssetRecord* MutableThis = const_cast<FAssetRecord*>(this);
+            FMemory::Delete(MutableThis);
+        }
+
+        return uint32(ReferenceCount);
     }
 }

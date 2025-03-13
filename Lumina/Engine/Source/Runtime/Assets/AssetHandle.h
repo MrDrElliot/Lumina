@@ -66,7 +66,7 @@ namespace Lumina
         EAssetType                      AssetType;
 
         /** Transient record containing information about this asset. */
-        const FAssetRecord*             AssetRecord;
+        TRefCountPtr<FAssetRecord>      AssetRecord;
         
     };
 

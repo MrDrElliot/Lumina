@@ -78,4 +78,43 @@ namespace Lumina
         
         return OutString.size();
     }
+
+    bool FFileHelper::SaveStringToFile(const FStringView& String, const FString& Path, uint32 WriteFlags)
+    {
+        std::ofstream file(Path.c_str(), std::ios::out | std::ios::trunc);
+        if (!file.is_open())
+        {
+            LOG_ERROR("Failed to open file for writing: {0}", Path.c_str());
+            return false;
+        }
+
+        file << String.data();
+        file.close();
+
+        return true;
+    }
+
+    bool FFileHelper::DoesFileExist(const FString& FilePath)
+    {
+        return std::filesystem::exists(FilePath.c_str());
+    }
+
+    bool FFileHelper::CreateNewFile(const FString& FilePath, bool bBinary, uint32 Flags)
+    {
+        std::ios::openmode Mode = std::ios::out | std::ios::trunc;
+        if (bBinary)
+        {
+            Mode |= std::ios::binary;
+        }
+
+        std::ofstream File(FilePath.c_str(), Mode);
+        if (!File.is_open())
+        {
+            LOG_ERROR("Failed to create file: {0}", FilePath.c_str());
+            return false;
+        }
+
+        File.close();
+        return true;
+    }
 }

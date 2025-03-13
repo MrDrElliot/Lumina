@@ -35,6 +35,8 @@ namespace Lumina
         InRecord->SetDependencies(eastl::move(Header.Dependencies));
         
         NewMesh->Serialize(Reader);
+
+        InRecord->SetAssetPtr(NewMesh);
         
         return ELoadResult::Succeeded;
     }

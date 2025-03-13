@@ -102,7 +102,7 @@ namespace Lumina
 
         if (ImGui::IsItemClicked(ImGuiMouseButton_Left))
         {
-            SetSelection(ItemToDraw);
+            SetSelection(ItemToDraw, Context);
         }
         
         const char* TooltipText = ItemToDraw->GetTooltipText();
@@ -133,7 +133,7 @@ namespace Lumina
         ImGui::PopID();
     }
 
-    void FTreeListView::SetSelection(FTreeListViewItem* Item)
+    void FTreeListView::SetSelection(FTreeListViewItem* Item, FTreeListViewContext Context)
     {
         bool bWasSelected = Item->bSelected;
         
@@ -144,7 +144,8 @@ namespace Lumina
             Selections.push_back(Item);
             Item->bSelected = true;
         }
-        
+
+        Context.ItemSelectedFunction(Item);
         Item->OnSelectionStateChanged();
     }
 

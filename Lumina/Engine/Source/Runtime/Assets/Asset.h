@@ -6,7 +6,6 @@
 #include "Core/Serialization/Archiver.h"
 #include "Memory/RefCounted.h"
 
-
 namespace Lumina
 {
     class IAsset
@@ -16,6 +15,7 @@ namespace Lumina
         IAsset() :AssetPath(FAssetPath()) {}
         IAsset(const FAssetPath& InPath) :AssetPath(InPath) {}
         virtual ~IAsset() = default;
+
         
         virtual EAssetType GetAssetType()   const = 0;
         virtual int32 GetAssetVersion()     const = 0;

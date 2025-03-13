@@ -14,7 +14,6 @@ namespace Lumina
     class FScene;
     class Material;
     class FRenderer;
-    class FImageSampler;
     class AStaticMesh;
     class FBuffer;
     class FCamera;

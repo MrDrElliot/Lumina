@@ -23,6 +23,8 @@ namespace Lumina
         {}
 
         FORCEINLINE FString GetPathAsString() const { return AssetPath; }
+        FORCEINLINE FString GetRawPathAsString() const { return RawPath; }
+
         
         FORCEINLINE bool IsValid() const
         {

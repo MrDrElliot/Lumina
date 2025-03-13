@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Assets/Asset.h"
 #include "Assets/AssetHandle.h"
 #include "Assets/AssetRequest.h"
 #include "Assets/Factories/FactoryRegistry.h"
@@ -42,16 +41,16 @@ namespace Lumina
 	private:
 
 		
-		std::thread									AssetRequestThread;
-		eastl::atomic<bool>							bAssetThreadRunning = true;
-		mutable FRecursiveMutex						RecursiveMutex;
-
-		FFactoryRegistry							FactoryRegistry;
+		std::thread												AssetRequestThread;
+		eastl::atomic<bool>										bAssetThreadRunning = true;
+		mutable FRecursiveMutex									RecursiveMutex;
+																
+		FFactoryRegistry										FactoryRegistry;
 		
-		THashMap<FAssetPath, FAssetRecord*>			AssetRecord;
+		THashMap<FAssetPath, TRefCountPtr<FAssetRecord>>		AssetRecord;
 
-		TQueue<FAssetRequest*>						RequestQueue;
-		TSet<FAssetRequest*>						ActiveRequests;
+		TQueue<FAssetRequest*>									RequestQueue;
+		TSet<FAssetRequest*>									ActiveRequests;
 
 	};
 	

@@ -268,6 +268,45 @@ namespace Lumina
         }
     }
 
+    constexpr VkSamplerAddressMode ToVkSamplerAddressMode(ESamplerAddressMode Mode)
+    {
+        switch (Mode)
+        {
+            case ESamplerAddressMode::ClampToEdge:          return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+            case ESamplerAddressMode::Repeat:               return VK_SAMPLER_ADDRESS_MODE_REPEAT;
+            case ESamplerAddressMode::ClampToBorder:        return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+            case ESamplerAddressMode::MirroredRepeat:       return VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+            case ESamplerAddressMode::MirrorClampToEdge:    return VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE;
+            default:                                        return VK_SAMPLER_ADDRESS_MODE_MAX_ENUM;
+        }
+    }
+
+    VkBorderColor PickSamplerBorderColor(const FSamplerDesc& d)
+    {
+        if (d.BorderColor.R == 0.f && d.BorderColor.G == 0.f && d.BorderColor.B == 0.f)
+        {
+            if (d.BorderColor.A == 0.f)
+            {
+                return VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
+            }
+
+            if (d.BorderColor.A== 1.f)
+            {
+                return VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
+            }
+        }
+
+        if (d.BorderColor.R == 1.f && d.BorderColor.G == 1.f && d.BorderColor.B == 1.f)
+        {
+            if (d.BorderColor.A == 1.f)
+            {
+                return VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+            }
+        }
+
+        return VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
+    }
+
 
     void ConvertStencilOps(const FDepthStencilState::StencilOpDesc& StencilState, VkPipelineDepthStencilStateCreateInfo& DepthStencilState)
     {
@@ -310,6 +349,41 @@ namespace Lumina
     FVulkanBuffer::~FVulkanBuffer()
     {
         Device->GetAllocator()->DestroyBuffer(Buffer);
+    }
+
+    FVulkanSampler::FVulkanSampler(FVulkanDevice* InDevice, const FSamplerDesc& InDesc)
+        : IDeviceChild(InDevice)
+    {
+        // Initialize VkSamplerCreateInfo with default values
+        VkSamplerCreateInfo Info = {};
+        Info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+
+        Info.borderColor = PickSamplerBorderColor(InDesc);
+
+        Info.magFilter = InDesc.MagFilter ? VK_FILTER_LINEAR : VK_FILTER_NEAREST;
+        Info.minFilter = InDesc.MinFilter ? VK_FILTER_LINEAR : VK_FILTER_NEAREST;
+        Info.mipmapMode = InDesc.MipFilter ? VK_SAMPLER_MIPMAP_MODE_LINEAR : VK_SAMPLER_MIPMAP_MODE_NEAREST;
+
+        Info.maxAnisotropy = InDesc.MaxAnisotropy;
+        Info.anisotropyEnable = (InDesc.MaxAnisotropy > 1.0f) ? VK_TRUE : VK_FALSE;
+
+        Info.addressModeU = ToVkSamplerAddressMode(InDesc.AddressU);
+        Info.addressModeV = ToVkSamplerAddressMode(InDesc.AddressV);
+        Info.addressModeW = ToVkSamplerAddressMode(InDesc.AddressW);
+        
+        Info.mipLodBias = InDesc.MipBias;
+
+        Info.compareEnable = VK_FALSE;
+        Info.compareOp = VK_COMPARE_OP_ALWAYS;
+        Info.minLod = 0.0f;
+        Info.maxLod = VK_LOD_CLAMP_NONE;
+
+        VK_CHECK(vkCreateSampler(Device->GetDevice(), &Info, nullptr, &Sampler));
+    }
+
+    FVulkanSampler::~FVulkanSampler()
+    {
+        vkDestroySampler(Device->GetDevice(), Sampler, nullptr);
     }
 
 

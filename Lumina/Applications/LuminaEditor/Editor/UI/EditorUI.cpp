@@ -3,6 +3,7 @@
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "Memory/Memory.h"
+#include "Project/Project.h"
 #include "Renderer/RenderContext.h"
 #include "Renderer/RenderManager.h"
 #include "Scene/SceneManager.h"
@@ -16,6 +17,7 @@
 #include "Tools/UI/ImGui/ImGuiX.h"
 #include "Tools/EntitySceneEditorTool.h"
 #include "Tools/RendererInfoEditorTool.h"
+#include "Tools/UI/ImGui/imfilebrowser.h"
 
 namespace Lumina
 {
@@ -183,6 +185,25 @@ namespace Lumina
             DrawToolContents(UpdateContext, Tool);
         }
 
+        if (!FProject::Get()->HasLoadedProject() && !FileBrowser.IsOpened())
+        {
+            FileBrowser = ImGui::FileBrowser(ImGuiFileBrowserFlags_CloseOnEsc | ImGuiFileBrowserFlags_CreateNewDir);
+            FileBrowser.SetTitle("Select Project to load.");
+            FileBrowser.SetTypeFilters({".lproject"});
+
+            FileBrowser.Open();
+        }
+        
+        FileBrowser.Display();
+        if (FileBrowser.HasSelected())
+        {
+            std::filesystem::path Path = FileBrowser.GetSelected();
+            FProject::Get()->LoadProject(Path.string().c_str());
+            FileBrowser.ClearSelected();
+            FileBrowser.Close();
+            ContentBrowser->RefreshContentBrowser();
+        }
+        
         if (ModalManager.HasModal())
         {
             ModalManager.DrawDialogue(UpdateContext);
@@ -220,8 +241,7 @@ namespace Lumina
     {
         ModalManager.CreateModalDialogue(Title, Size, DrawFunction);
     }
-
-
+    
     void FEditorUI::EditorToolLayoutCopy(FEditorTool* SourceTool)
     {
         ImGuiID sourceToolID = SourceTool->PrevDockspaceID;

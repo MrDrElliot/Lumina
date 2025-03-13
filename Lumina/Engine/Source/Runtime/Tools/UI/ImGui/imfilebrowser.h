@@ -56,7 +56,7 @@ namespace ImGui
         void SetWindowSize(int width, int height) noexcept;
 
         // set the window title text
-        void SetTitle(FString title);
+        void SetTitle(std::string title);
 
         // open the browsing window
         void Open();
@@ -106,7 +106,7 @@ namespace ImGui
 
         // (optional) set file type filters. eg. { ".h", ".cpp", ".hpp" }
         // ".*" matches any file types
-        void SetTypeFilters(const std::vector<FString> &typeFilters);
+        void SetTypeFilters(const std::vector<std::string> &typeFilters);
 
         // set currently applied type filter
         // default value is 0 (the first type filter)
@@ -114,7 +114,7 @@ namespace ImGui
 
         // when ImGuiFileBrowserFlags_EnterNewFilename is set
         // this function will pre-fill the input dialog with a filename.
-        void SetInputName(FString_view input);
+        void SetInputName(std::string_view input);
 
     private:
 
@@ -134,11 +134,11 @@ namespace ImGui
         {
             bool                  isDir = false;
             std::filesystem::path name;
-            FString           showName;
+            std::string           showName;
             std::filesystem::path extension;
         };
 
-        static FString ToLower(const FString &s);
+        static std::string ToLower(const std::string &s);
 
         void UpdateFileRecords();
 

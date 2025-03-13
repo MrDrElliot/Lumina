@@ -1,6 +1,7 @@
 #include "LuminaEditor.h"
 #include "EntryPoint.h"
 #include "Core/Threading/Thread.h"
+#include "Project/Project.h"
 #include "Renderer/RenderResource.h"
 #include "Scene/Scene.h"
 #include "Settings/EditorSettings.h"
@@ -27,14 +28,11 @@ namespace Lumina
     
     bool LuminaEditor::Initialize()
     {
-        //Update LUNINA_DIR (engine directory) every-time the editor is ran.
-        //Paths::SetEnvVariable("LUMINA_DIR", std::filesystem::current_path().parent_path().string());
-        LOG_DEBUG("LUMA_DIR Path: {0}", std::getenv("LUMINA_DIR"));
-        LOG_DEBUG("Current Working Path: {0}",  std::filesystem::current_path().string());
-        LOG_DEBUG("Current Engine Install Path: {0}", Paths::GetEngineInstallDirectory().string());
-        LOG_DEBUG("Current Engine Directory: {0}", Paths::GetEngineDirectory().string());
-        LOG_DEBUG("Number of Threads: {0}", Threading::GetNumThreads());
 
+        FEditorSettings::Get()->LoadSettings();
+        std::filesystem::path StartupProject = FEditorSettings::Get()->GetStartupProject().c_str();
+        FProject::Get()->LoadProject(StartupProject.string().c_str());
+        
         return true;
     }
 

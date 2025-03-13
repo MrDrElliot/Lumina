@@ -4,6 +4,7 @@
 #include "Tools/EditorToolContext.h"
 #include "Tools/EditorToolModal.h"
 #include "Tools/UI/DevelopmentToolUI.h"
+#include "Tools/UI/ImGui/imfilebrowser.h"
 #include "Tools/UI/ImGui/ImGuiX.h"
 
 namespace Lumina
@@ -76,6 +77,7 @@ namespace Lumina
 
     private:
 
+        ImGui::FileBrowser                              FileBrowser;
         ImGuiX::ApplicationTitleBar                     TitleBar;
         ImGuiWindowClass                                EditorWindowClass;
 

@@ -1,8 +1,7 @@
 #pragma once
 
 #include <filesystem>
-#include <unordered_map>
-#include <any>
+#include "Subsystems/Subsystem.h"
 #include "Assets/AssetHandle.h"
 #include "Core/Delegates/Delegate.h"
 #include "Core/Serialization/MemoryArchiver.h"
@@ -26,15 +25,15 @@ namespace Lumina
 		void Initialize(FSubsystemManager& Manager) override;
 		void Deinitialize() override;
 
-		void Serialize(FArchive& Ar);
-
+		void LoadRegistry(const FString& File);
+		void SaveRegistry();
+		
+		void CreateAssetHeader(const FAssetPath& InPath);
 		FAssetHeader FindAssetHeader(const FAssetPath& InPath);
-		
-		TVector<FAssetHeader>& GetAssets() { return Registry; }
-		
+	
 	private:
 		
-		TVector<FAssetHeader>						Registry;
+		THashMap<FAssetPath, FAssetHeader>			Registry;
 		FAssetRegistryUpdatedDelegate				OnAssetRegistryUpdated;
 	};
 }

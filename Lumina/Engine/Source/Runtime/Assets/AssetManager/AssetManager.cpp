@@ -26,6 +26,8 @@ namespace Lumina
         {
             AssetRequestThread.join();
         }
+
+        AssetRecord.clear();
     }
 
     void FAssetManager::Update()
@@ -37,11 +39,6 @@ namespace Lumina
         FAssetRecord* FoundRecord = FindOrCreateAssetRecord(InAsset);
         Assert(FoundRecord);
         InAsset.AssetRecord = FoundRecord;
-
-        if (FoundRecord->IsLoaded() && FoundRecord->GetAssetPtr() != nullptr && FoundRecord->GetReferenceCount() > 0)
-        {
-            FoundRecord->AddRef();
-        }
         
         FAssetRequest* ActiveRequest = TryFindActiveRequest(FoundRecord);
         Assert(ActiveRequest);
@@ -80,7 +77,7 @@ namespace Lumina
         auto const Itr = AssetRecord.find(InAsset.GetAssetPath());
         if (Itr == AssetRecord.end())
         {
-            Record = new FAssetRecord(InAsset.GetAssetPath(), InAsset.GetAssetType());
+            Record = FMemory::New<FAssetRecord>(InAsset.GetAssetPath(), InAsset.GetAssetType());
         }
         else
         {
