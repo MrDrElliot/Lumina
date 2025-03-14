@@ -13,6 +13,7 @@ namespace Lumina
 
         FAssetPath() = default;
 
+        
         FAssetPath(const FString& InAssetPath)
             : AssetPath(InAssetPath)
         {}
@@ -49,10 +50,10 @@ namespace Lumina
     private:
 
         /** Full path to an asset on disk. */
-        FString AssetPath;
+        FString AssetPath = {};
 
         /** May or may not be valid, looking to the original raw asset on disk.*/
-        FString RawPath;
+        FString RawPath = {};
     };
 }
 

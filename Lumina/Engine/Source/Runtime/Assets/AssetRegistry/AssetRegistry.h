@@ -32,7 +32,7 @@ namespace Lumina
 
 		void AssetCreated(const FAssetPath& InPath, const FAssetHeader& Header);
 		
-		FAssetHeader FindAssetHeader(const FAssetPath& InPath);
+		FAssetHeader FindAssetHeader(const FAssetPath& InPath, bool* bSuccess = nullptr);
 	
 	private:
 		

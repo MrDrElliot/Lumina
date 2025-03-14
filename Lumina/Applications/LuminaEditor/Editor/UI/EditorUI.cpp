@@ -2,6 +2,7 @@
 
 #include "imgui.h"
 #include "imnodes.h"
+#include "Assets/AssetRegistry/AssetRegistry.h"
 #include "Memory/Memory.h"
 #include "Project/Project.h"
 #include "Renderer/RenderContext.h"
@@ -14,6 +15,7 @@
 #include "Tools/UI/ImGui/ImGuiDesignIcons.h"
 #include "Tools/UI/ImGui/ImGuiX.h"
 #include "Tools/EntitySceneEditorTool.h"
+#include "Tools/AssetEditors/MaterialEditor/MaterialEditorTool.h"
 #include "Tools/UI/ImGui/imfilebrowser.h"
 
 namespace Lumina
@@ -38,26 +40,17 @@ namespace Lumina
 
 
         SubsystemManager = UpdateContext.GetSubsystemManager();
+        AssetRegistry = UpdateContext.GetSubsystem<FAssetRegistry>();
         SceneManager = UpdateContext.GetSubsystem<FSceneManager>();
 
         
         FScene* NewScene = SceneManager->CreateScene(ESceneType::Tool);
         NewScene->RegisterSystem(FMemory::New<FDebugCameraEntitySystem>());
         
-        
-        SceneEditorTool = FMemory::New<FEntitySceneEditorTool>(this, NewScene);
-        SceneEditorTool->Initialize(UpdateContext);
-        EditorTools.emplace_back(SceneEditorTool);
+        SceneEditorTool = CreateTool<FEntitySceneEditorTool>(this, NewScene);
+        ConsoleLogTool = CreateTool<FConsoleLogEditorTool>(this);
+        ContentBrowser = CreateTool<FContentBrowserEditorTool>(this);
 
-        
-        ConsoleLogTool = FMemory::New<FConsoleLogEditorTool>(this);
-        ConsoleLogTool->Initialize(UpdateContext);
-        EditorTools.emplace_back(ConsoleLogTool);
-
-        ContentBrowser = FMemory::New<FContentBrowserEditorTool>(this);
-        ContentBrowser->Initialize(UpdateContext);
-        EditorTools.emplace_back(ContentBrowser);
-        
     }
 
     void FEditorUI::Deinitialize(const FUpdateContext& UpdateContext)
@@ -237,6 +230,18 @@ namespace Lumina
     void FEditorUI::PushModal(const FString& Title, ImVec2 Size, TFunction<bool(const FUpdateContext&)> DrawFunction)
     {
         ModalManager.CreateModalDialogue(Title, Size, DrawFunction);
+    }
+
+    
+    void FEditorUI::OpenAssetPath(const FAssetPath& InPath)
+    {
+        bool bSuccess;
+        FAssetHeader Header = AssetRegistry->FindAssetHeader(InPath, &bSuccess);
+
+        if (bSuccess)
+        {
+            CreateTool<FMaterialEditorTool>(this, InPath);
+        }
     }
     
     void FEditorUI::EditorToolLayoutCopy(FEditorTool* SourceTool)

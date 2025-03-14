@@ -16,7 +16,7 @@ namespace Lumina
         }
     }
     
-    void FConsoleLogEditorTool::OnInitialize(const FUpdateContext& UpdateContext)
+    void FConsoleLogEditorTool::OnInitialize()
     {
         CreateToolWindow("Console", [this] (const FUpdateContext& UpdateContext, bool bIsFocused)
         {

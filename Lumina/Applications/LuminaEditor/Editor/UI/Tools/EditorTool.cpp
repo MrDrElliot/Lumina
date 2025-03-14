@@ -26,7 +26,7 @@ namespace Lumina
         ImGui::DockBuilderRemoveNodeChildNodes(InDockspaceID);
     }
 
-    void FEditorTool::Initialize(const FUpdateContext& UpdateContext)
+    void FEditorTool::Initialize()
     {
         SetDisplayName(ToolName);
         
@@ -47,7 +47,7 @@ namespace Lumina
             NewWindow->bViewport = true;
         }
 
-        OnInitialize(UpdateContext);
+        OnInitialize();
     }
 
     void FEditorTool::Deinitialize(const FUpdateContext& UpdateContext)

@@ -126,15 +126,24 @@ namespace Lumina
         Registry.insert_or_assign(InPath, Header);
     }
 
-    FAssetHeader FAssetRegistry::FindAssetHeader(const FAssetPath& InPath)
+    FAssetHeader FAssetRegistry::FindAssetHeader(const FAssetPath& InPath, bool* bSuccess)
     {
         auto Itr = Registry.find(InPath);
 
         if (Itr != Registry.end())
         {
+            if (bSuccess)
+            {
+                *bSuccess = true;
+            }
             return Itr->second;
         }
-
+        
+        if (bSuccess)
+        {
+            *bSuccess = false;
+        }
+        
         return {};
     }
 }

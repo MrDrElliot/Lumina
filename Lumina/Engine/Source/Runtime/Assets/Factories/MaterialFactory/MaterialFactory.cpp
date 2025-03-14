@@ -1,5 +1,6 @@
 #include "MaterialFactory.h"
 
+#include "Assets/AssetRegistry/AssetRegistry.h"
 #include "Renderer/RHIIncl.h"
 #include "Assets/AssetTypes/Material/Material.h"
 #include "Core/Serialization/MemoryArchiver.h"
@@ -13,7 +14,7 @@ namespace Lumina
         return {};
     }
 
-    IAsset* FMaterialFactory::CreateNew(const FString& Path)
+    FAssetPath FMaterialFactory::CreateNew(const FString& Path)
     {
         FAssetHeader Header;
         Header.Path = Path;
@@ -28,10 +29,15 @@ namespace Lumina
             Writer << Header;
             
             Assert(FFileHelper::SaveArrayToFile(Buffer, Path));
-            return FMemory::New<AMaterial>();
+
+            FAssetPath NewAsset(Path);
+
+            GEngine->GetEngineSubsystem<FAssetRegistry>()->AssetCreated(NewAsset, Header);
+            
+            return NewAsset;
         }
 
-        return nullptr;
+        return {};
         
     }
     

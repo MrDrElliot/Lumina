@@ -20,8 +20,13 @@ namespace Lumina
 
         virtual void PushModal(const FString& Title, ImVec2 Size, TFunction<bool(const FUpdateContext&)> DrawFunction) = 0;
 
+        virtual void OpenAssetPath(const FAssetPath& InPath) = 0;
+
+    protected:
+    
     public:
 
+        FAssetRegistry*               AssetRegistry = nullptr;
         const FSubsystemManager*      SubsystemManager = nullptr;
     };
 }

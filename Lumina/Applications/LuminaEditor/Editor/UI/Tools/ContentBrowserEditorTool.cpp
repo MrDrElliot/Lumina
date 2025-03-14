@@ -16,7 +16,7 @@ namespace Lumina
         OutlinerListView.MarkTreeDirty();
     }
 
-    void FContentBrowserEditorTool::OnInitialize(const FUpdateContext& UpdateContext)
+    void FContentBrowserEditorTool::OnInitialize()
     {
         CreateToolWindow("Content", [this] (const FUpdateContext& Contxt, bool bIsFocused)
         {
@@ -67,7 +67,7 @@ namespace Lumina
                             std::filesystem::path NewPath = OldPath.parent_path() / Buf;
 
                             
-                            if (!is_directory(OldPath))
+                            if (!std::filesystem::is_directory(OldPath))
                             {
                                 NewPath += OldPath.extension();
                             }
@@ -81,7 +81,7 @@ namespace Lumina
                             }
                             catch (const std::filesystem::filesystem_error& e)
                             {
-                                LOG_ERROR("Failed to rename file: {}", e.what());
+                                LOG_ERROR("Failed to rename file: {0}", e.what());
                             }
                             
                         }
@@ -93,8 +93,15 @@ namespace Lumina
 
                 if (ImGui::MenuItem("Delete"))
                 {
-                    std::filesystem::remove(ContentItem->GetPath().c_str());
-                    RefreshContentBrowser();
+                    try
+                    {
+                        std::filesystem::remove(ContentItem->GetPath().c_str());
+                        RefreshContentBrowser();
+                    }
+                    catch (const std::filesystem::filesystem_error& e)
+                    {
+                        LOG_ERROR("Failed to delete file: {0}", e.what());
+                    }
                 }
             }
         };
@@ -252,8 +259,9 @@ namespace Lumina
                         {
                             FString StringPath(SelectedPath.string().c_str());
                             FString NewFileName(StringPath + "/" + "NewMaterial.lasset");
-                            if (Factory->CreateNew(NewFileName) != nullptr)
+                            if (Factory->CreateNew(NewFileName) != FAssetPath())
                             {
+                                ToolContext->OpenAssetPath(NewFileName);
                                 RefreshContentBrowser();
                             }
                         }

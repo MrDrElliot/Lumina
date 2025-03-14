@@ -15,7 +15,7 @@ namespace Lumina
         Assert(Scene != nullptr);
     }
 
-    void FSceneEditorTool::OnInitialize(const FUpdateContext& UpdateContext)
+    void FSceneEditorTool::OnInitialize()
     {
         CreateToolWindow("Outliner", [this] (const FUpdateContext& Context, bool bisFocused)
         {

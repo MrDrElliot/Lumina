@@ -41,8 +41,8 @@ namespace Lumina
         return ELoadResult::Succeeded;
     }
 
-    IAsset* FStaticMeshFactory::CreateNew(const FString& Path)
+    FAssetPath FStaticMeshFactory::CreateNew(const FString& Path)
     {
-        return nullptr;
+        return {};
     }
 }

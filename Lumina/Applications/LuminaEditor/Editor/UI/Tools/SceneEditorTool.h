@@ -44,7 +44,7 @@ namespace Lumina
         
         FSceneEditorTool(IEditorToolContext* Context, FScene* InScene);
 
-        void OnInitialize(const FUpdateContext& UpdateContext) override;
+        void OnInitialize() override;
         void OnDeinitialize(const FUpdateContext& UpdateContext) override { }
 
         void Update(const FUpdateContext& UpdateContext) override;

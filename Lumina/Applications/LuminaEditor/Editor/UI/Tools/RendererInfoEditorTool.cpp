@@ -4,7 +4,7 @@
 
 namespace Lumina
 {
-void FRendererInfoEditorTool::OnInitialize(const FUpdateContext& UpdateContext)
+void FRendererInfoEditorTool::OnInitialize()
 {
         CreateToolWindow("Vulkan Device Info", [this](const FUpdateContext& Context, bool bFocused)
         {

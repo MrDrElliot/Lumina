@@ -74,8 +74,8 @@ namespace Lumina
         return ELoadResult::Succeeded;
     }
 
-    IAsset* FTextureFactory::CreateNew(const FString& Path)
+    FAssetPath FTextureFactory::CreateNew(const FString& Path)
     {
-        return nullptr;
+        return {};
     }
 }

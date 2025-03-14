@@ -63,7 +63,7 @@ namespace Lumina
 
         FEditorTool(IEditorToolContext* Context, const FString& DisplayName, FScene* Scene = nullptr);
 
-        virtual void Initialize(const FUpdateContext& UpdateContext);
+        virtual void Initialize();
         virtual void Deinitialize(const FUpdateContext& UpdateContext);
         
         FORCEINLINE const FString& GetToolName() const { return ToolName; }
@@ -89,7 +89,7 @@ namespace Lumina
 
         virtual void InitializeDockingLayout(ImGuiID InDockspaceID, const ImVec2& InDockspaceSize) const;
         
-        virtual void OnInitialize(const FUpdateContext& UpdateContext) = 0;
+        virtual void OnInitialize() = 0;
         virtual void OnDeinitialize(const FUpdateContext& UpdateContext) = 0;
 
         virtual bool IsSingleWindowTool() const { return false; }

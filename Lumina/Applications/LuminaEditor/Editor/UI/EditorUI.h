@@ -7,29 +7,16 @@
 #include "Tools/UI/ImGui/imfilebrowser.h"
 #include "Tools/UI/ImGui/ImGuiX.h"
 
+
+
 namespace Lumina
 {
     class FEditorToolModal;
     class FContentBrowserEditorTool;
-}
-
-namespace Lumina
-{
-    class FPrimitiveDrawManager;
-}
-
-namespace Lumina
-{
     class FRendererInfoEditorTool;
-}
-
-namespace Lumina
-{
+    class FRendererInfoEditorTool;
+    class FPrimitiveDrawManager;
     class FConsoleLogEditorTool;
-}
-
-namespace Lumina
-{
     class FEntitySceneEditorTool;
     class FSceneManager;
     class FEditorTool;
@@ -55,6 +42,18 @@ namespace Lumina
         void DestroyTool(const FUpdateContext& UpdateContext, FEditorTool* Tool);
 
         void PushModal(const FString& Title, ImVec2 Size, TFunction<bool(const FUpdateContext&)> DrawFunction) override;
+
+        void OpenAssetPath(const FAssetPath& InPath) override;
+        
+        template<typename T, typename... Args>
+        requires std::is_base_of_v<FEditorTool, T>
+        T* CreateTool(Args&&... args)
+        {
+            T* NewTool = FMemory::New<T>(TForward<Args>(args)...);
+            NewTool->Initialize();
+            EditorTools.emplace_back(NewTool);
+            return NewTool;
+        }
         
     private:
 
@@ -94,5 +93,5 @@ namespace Lumina
         bool                                            bDearImGuiDemoWindowOpen = false;
 
     };
-    
+
 }
