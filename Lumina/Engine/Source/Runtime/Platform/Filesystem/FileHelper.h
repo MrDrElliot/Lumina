@@ -15,6 +15,7 @@ namespace Lumina
         static bool SaveStringToFile(const FStringView& String, const FString& Path, uint32 WriteFlags = 0);
         static bool DoesFileExist(const FString& FilePath);
         static bool CreateNewFile(const FString& FilePath, bool bBinary = false, uint32 Flags = 0);
+        static uint64 GetFileSize(const FString& FilePath);
     
     };
 }

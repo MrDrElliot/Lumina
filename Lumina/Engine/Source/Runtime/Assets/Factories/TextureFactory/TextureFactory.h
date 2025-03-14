@@ -10,8 +10,10 @@ namespace Lumina
     {
     public:
 
-        ELoadResult CreateNew(FAssetRecord* InRecord) override;
+        ELoadResult LoadFromDisk(FAssetRecord* InRecord) override;
+        IAsset* CreateNew(const FString& Path) override;
         //static FRHIImageHandle ImportFromSource(std::filesystem::path Path);
 
+        const FString& GetAssetName() const override { return "Texture"; }
     };
 }

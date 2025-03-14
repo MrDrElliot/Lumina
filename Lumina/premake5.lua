@@ -32,6 +32,8 @@ project "Lumina"
 		"Engine/ThirdParty/ImGuizmo/**.h",
         "Engine/ThirdParty/ImGuizmo/**.cpp",
        
+       	"Engine/ThirdParty/imnodes/**.h",
+        "Engine/ThirdParty/imnodes/**.cpp",
 		
         "Engine/ThirdParty/yaml-cpp/include/**.h",
         "Engine/ThirdParty/yaml-cpp/src/**.h",

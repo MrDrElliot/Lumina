@@ -12,7 +12,7 @@
 
 namespace Lumina
 {
-    ELoadResult FStaticMeshFactory::CreateNew(FAssetRecord* InRecord)
+    ELoadResult FStaticMeshFactory::LoadFromDisk(FAssetRecord* InRecord)
     {
         AStaticMesh* NewMesh = new AStaticMesh(InRecord->GetAssetPath());
 
@@ -41,4 +41,8 @@ namespace Lumina
         return ELoadResult::Succeeded;
     }
 
+    IAsset* FStaticMeshFactory::CreateNew(const FString& Path)
+    {
+        return nullptr;
+    }
 }

@@ -2,6 +2,7 @@
 
 #include "ImGuiDesignIcons.h"
 #include "ImGuiFonts.h"
+#include "imnodes.h"
 #include "Core/Engine/Engine.h"
 #include "Core/Performance/PerformanceTracker.h"
 #include "imgui/imgui_freetype.h"
@@ -19,6 +20,8 @@ namespace Lumina
 
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
+    	ImNodes::CreateContext();
+
         ImGuiIO& io = ImGui::GetIO();
 
     	TVector<uint8> FontData, BoldFontData;
@@ -162,6 +165,12 @@ namespace Lumina
     	style.ScrollbarSize = 20.0f;
     	style.ScrollbarRounding = 0.0f;
     	style.CellPadding = ImVec2( 4, 6 );
+    }
+
+    void IImGuiRenderer::Deinitialize()
+    {
+    	ImNodes::DestroyContext();
+    	ImGui::DestroyContext();
     }
 
     void IImGuiRenderer::StartFrame(const FUpdateContext& UpdateContext)

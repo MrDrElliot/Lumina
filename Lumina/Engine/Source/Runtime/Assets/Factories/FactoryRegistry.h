@@ -18,7 +18,8 @@ namespace Lumina
         template<typename T, EAssetType AssetType, typename = std::enable_if_t<std::is_base_of_v<FFactory, T>>>
         void RegisterFactory()
         {
-            FactoryMap[AssetType] = new T();
+            FactoryMap[AssetType] = FMemory::New<T>();
+            Factories.push_back(FactoryMap[AssetType]);
         }
 
         FFactory* GetFactory(EAssetType AssetType)
@@ -27,8 +28,12 @@ namespace Lumina
             return it != FactoryMap.end() ? it->second : nullptr;
         }
 
+        const TVector<FFactory*>& GetFactories() const { return Factories; }
+        
+
     private:
         
-        THashMap<EAssetType, FFactory*> FactoryMap;
+        THashMap<EAssetType, FFactory*>     FactoryMap;
+        TVector<FFactory*>                  Factories;
     };
 }

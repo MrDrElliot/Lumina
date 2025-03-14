@@ -30,7 +30,7 @@ namespace Lumina
         virtual bool HasContextMenu() { return false; }
 
         virtual ImVec4 GetDisplayColor() const;
-
+        
         virtual void OnSelectionStateChanged() { }
 
         bool HasChildren() const { return !Children.empty(); }
@@ -38,6 +38,16 @@ namespace Lumina
         virtual FInlineString GetDisplayName() const
         {
             return GetName().c_str();
+        }
+
+        template<typename T, typename... Args>
+        requires (std::is_base_of_v<FTreeListViewItem, T> && std::is_constructible_v<T, Args...>)
+        T* AddChild(Args&&... args)
+        {
+            T* New = FMemory::New<T>(eastl::forward<Args>(args)...);
+            Children.push_back(New);
+
+            return New;
         }
 
     private:

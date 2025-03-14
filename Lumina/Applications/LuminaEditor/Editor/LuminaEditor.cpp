@@ -40,7 +40,8 @@ namespace Lumina
 
     void LuminaEditor::CreateEngine()
     {
-        Engine = new FEditorEngine();
+        GEditor = new FEditorEngine();
+        Engine = GEditor;
         Engine->SetUpdateCallback([] (const FUpdateContext&) { });
     }
 

@@ -1,13 +1,11 @@
 ﻿#include "EditorUI.h"
 
 #include "imgui.h"
-#include "imgui_internal.h"
+#include "imnodes.h"
 #include "Memory/Memory.h"
 #include "Project/Project.h"
 #include "Renderer/RenderContext.h"
-#include "Renderer/RenderManager.h"
 #include "Scene/SceneManager.h"
-#include "Scene/SceneRenderer.h"
 #include "Scene/Entity/Systems/DebugCameraEntitySystem.h"
 #include "Tools/ConsoleLogEditorTool.h"
 #include "Tools/ContentBrowserEditorTool.h"
@@ -16,7 +14,6 @@
 #include "Tools/UI/ImGui/ImGuiDesignIcons.h"
 #include "Tools/UI/ImGui/ImGuiX.h"
 #include "Tools/EntitySceneEditorTool.h"
-#include "Tools/RendererInfoEditorTool.h"
 #include "Tools/UI/ImGui/imfilebrowser.h"
 
 namespace Lumina

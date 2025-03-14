@@ -1,5 +1,6 @@
 #include "FactoryRegistry.h"
 
+#include "MaterialFactory/MaterialFactory.h"
 #include "MeshFactory/StaticMeshFactory.h"
 #include "TextureFactory/TextureFactory.h"
 
@@ -7,6 +8,7 @@ namespace Lumina
 {
     FFactoryRegistry::FFactoryRegistry()
     {
+        RegisterFactory<FMaterialFactory, EAssetType::Material>();
         RegisterFactory<FTextureFactory, EAssetType::Texture>();
         RegisterFactory<FStaticMeshFactory, EAssetType::StaticMesh>();
     }
@@ -15,9 +17,10 @@ namespace Lumina
     {
         for (auto KVP : FactoryMap)
         {
-            delete KVP.second;    
+            FMemory::Delete(KVP.second);
         }
 
         FactoryMap.clear();
+        Factories.clear();
     }
 }

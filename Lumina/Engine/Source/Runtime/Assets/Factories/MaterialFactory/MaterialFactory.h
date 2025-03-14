@@ -8,7 +8,9 @@ namespace Lumina
 	{
 	public:
 
-		ELoadResult CreateNew(FAssetRecord* InRecord) override;
+		ELoadResult LoadFromDisk(FAssetRecord* InRecord) override;
+		IAsset* CreateNew(const FString& Path) override;
+		const FString& GetAssetName() const override { return "Material"; }
 
 	};
 }

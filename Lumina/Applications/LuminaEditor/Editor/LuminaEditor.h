@@ -9,6 +9,8 @@ namespace Lumina
     class FEditorLayer;
     class FEditorPanel;
 
+
+    
     class FEditorEngine : public FEngine
     {
     public:
@@ -19,6 +21,7 @@ namespace Lumina
     private:
     };
     
+    inline FEditorEngine* GEditor = nullptr;
 
     class LuminaEditor : public FApplication
     {

@@ -18,7 +18,7 @@ namespace Lumina
         virtual ~IImGuiRenderer() = default;
 
         virtual void Initialize(FSubsystemManager& Manager);
-        virtual void Deinitialize() { }
+        virtual void Deinitialize();
         
         void StartFrame(const FUpdateContext& UpdateContext);
         void EndFrame(const FUpdateContext& UpdateContext);

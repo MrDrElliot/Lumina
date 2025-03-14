@@ -7,6 +7,7 @@ IncludeDir["spdlog"] = 	                "%{LuminaEngineDirectory}/Lumina/Engine/
 IncludeDir["glfw"]	 = 	                "%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/GLFW/include"
 IncludeDir["glm"]	 = 	                "%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/GLM/"
 IncludeDir["imgui"]	 = 	                "%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/imgui/"
+IncludeDir["imnodes"]	 = 	            "%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/imnodes/"
 IncludeDir["vkbootstrap"] =             "%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/vk-bootstrap/"
 IncludeDir["fastgltf"] =                "%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/fastgltf/include"
 IncludeDir["stb"] =                     "%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/stb/"

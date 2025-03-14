@@ -29,6 +29,9 @@ namespace Lumina
 		void SaveRegistry();
 		
 		void CreateAssetHeader(const FAssetPath& InPath);
+
+		void AssetCreated(const FAssetPath& InPath, const FAssetHeader& Header);
+		
 		FAssetHeader FindAssetHeader(const FAssetPath& InPath);
 	
 	private:

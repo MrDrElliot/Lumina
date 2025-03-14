@@ -42,7 +42,7 @@ namespace Lumina
 
     void FAssetRequest::LoadResource(FRequestCallbackContext& Context)
     {
-        ELoadResult LoadResult = Factory->CreateNew(AssetRecord);
+        ELoadResult LoadResult = Factory->LoadFromDisk(AssetRecord);
         AssetRecord->SetLoadingState(EAssetLoadState::Loading);
         
         if (LoadResult == ELoadResult::Failed)

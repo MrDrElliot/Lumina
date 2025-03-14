@@ -121,6 +121,11 @@ namespace Lumina
         SaveRegistry();
     }
 
+    void FAssetRegistry::AssetCreated(const FAssetPath& InPath, const FAssetHeader& Header)
+    {
+        Registry.insert_or_assign(InPath, Header);
+    }
+
     FAssetHeader FAssetRegistry::FindAssetHeader(const FAssetPath& InPath)
     {
         auto Itr = Registry.find(InPath);

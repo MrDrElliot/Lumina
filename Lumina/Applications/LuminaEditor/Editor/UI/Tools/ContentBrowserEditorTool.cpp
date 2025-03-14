@@ -1,6 +1,8 @@
 ﻿#include "ContentBrowserEditorTool.h"
 
 #include "EditorToolContext.h"
+#include "Assets/AssetManager/AssetManager.h"
+#include "Assets/AssetRegistry/AssetRegistry.h"
 #include "Paths/Paths.h"
 #include "Project/Project.h"
 #include "Tools/UI/ImGui/ImGuiX.h"
@@ -63,6 +65,12 @@ namespace Lumina
                         {
                             std::filesystem::path OldPath = ContentItem->GetPath();
                             std::filesystem::path NewPath = OldPath.parent_path() / Buf;
+
+                            
+                            if (!is_directory(OldPath))
+                            {
+                                NewPath += OldPath.extension();
+                            }
             
                             try
                             {
@@ -85,7 +93,8 @@ namespace Lumina
 
                 if (ImGui::MenuItem("Delete"))
                 {
-                    
+                    std::filesystem::remove(ContentItem->GetPath().c_str());
+                    RefreshContentBrowser();
                 }
             }
         };
@@ -115,15 +124,38 @@ namespace Lumina
         {
             std::filesystem::path Path = FProject::Get()->GetProjectSettings().ProjectPath.c_str();
             Path = Path.parent_path() / "Game/";
-            
-            if (std::filesystem::exists(Path))
+
+            if (!std::filesystem::exists(Path))
+                return;
+
+            // Recursive lambda for traversing directories
+            auto AddChildrenRecursive = [&](auto& AddChildrenRecursive, FContentBrowserListViewItem* ParentItem, const std::filesystem::path& ParentPath) -> void
             {
-                for (auto& Directory : std::filesystem::recursive_directory_iterator(Path))
+                for (auto& Entry : std::filesystem::directory_iterator(ParentPath))
                 {
-                    OutlinerListView.AddItemToTree<FContentBrowserListViewItem>(nullptr, Directory.path());
+                    if (!std::filesystem::is_directory(Entry))  // Skip files
+                        continue;
+
+                    auto* ChildItem = ParentItem->AddChild<FContentBrowserListViewItem>(ParentItem, Entry.path());
+
+                    // Recurse into the subdirectory
+                    AddChildrenRecursive(AddChildrenRecursive, ChildItem, Entry.path());
                 }
+            };
+
+            // Process root directories
+            for (auto& Directory : std::filesystem::directory_iterator(Path))
+            {
+                if (!std::filesystem::is_directory(Directory))  // Skip files
+                    continue;
+
+                auto* RootItem = OutlinerListView.AddItemToTree<FContentBrowserListViewItem>(nullptr, Directory.path());
+
+                // Start recursion for subdirectories
+                AddChildrenRecursive(AddChildrenRecursive, RootItem, Directory.path());
             }
         };
+
 
         OutlinerContext.ItemSelectedFunction = [this] (FTreeListViewItem* Item)
         {
@@ -182,30 +214,59 @@ namespace Lumina
             ImGui::OpenPopup("ContentContextMenu");
         }
 
+        ImGui::SetNextWindowSizeConstraints(ImVec2(200.0f, 100.0f), ImVec2(0.0f, 0.0f));
+
         if (ImGui::BeginPopup("ContentContextMenu"))
         {
-            if (ImGui::MenuItem("New Folder"))
+            ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(10.0f, 5.0f));
+            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(8.0f, 5.0f));
+
             {
-                std::filesystem::path NewPath = SelectedPath / "NewFolder";
-                std::filesystem::create_directory(NewPath);
-                RefreshContentBrowser();
-            }
+                const char* FolderIcon = LE_ICON_FOLDER;
+                const char* Folder = "New Folder";
             
-            if (ImGui::BeginMenu("New Asset"))
-            {
-                if (ImGui::MenuItem("Material"))
+                FString MenuItemName = FString(FolderIcon) + " " + Folder;
+                if (ImGui::MenuItem(MenuItemName.c_str()))
                 {
-                    
+                    std::filesystem::path NewPath = SelectedPath / "NewFolder";
+                    std::filesystem::create_directory(NewPath);
+                    RefreshContentBrowser();
+                }
+            }
+
+            ImGui::Separator();
+            
+            {
+                const char* FileIcon = LE_ICON_FILE;
+                const char* File = "New Asset";
+
+                FString MenuItemName = FString(FileIcon) + " " + File;
+
+                if (ImGui::BeginMenu(MenuItemName.c_str()))
+                {
+                    FFactoryRegistry* Registry = Context.GetSubsystem<FAssetManager>()->GetFactoryRegistry();
+
+                    for (FFactory* Factory : Registry->GetFactories())
+                    {
+                        if (ImGui::MenuItem(Factory->GetAssetName().c_str()))
+                        {
+                            FString StringPath(SelectedPath.string().c_str());
+                            FString NewFileName(StringPath + "/" + "NewMaterial.lasset");
+                            if (Factory->CreateNew(NewFileName) != nullptr)
+                            {
+                                RefreshContentBrowser();
+                            }
+                        }
+                    }
+
+                    ImGui::EndMenu();
                 }
 
-                ImGui::EndMenu();
+                ImGui::PopStyleVar(2);
+                ImGui::EndPopup();
             }
-
-            
-            ImGui::EndPopup();
         }
 
-        // Draw content (like tiles or buttons)
         ContentBrowserTileView.Draw(ContentBrowserTileViewContext);
 
         ImGui::EndChild();

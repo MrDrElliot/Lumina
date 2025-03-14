@@ -29,6 +29,7 @@ namespace Lumina
 
 		void NotifyAssetRequestCompleted(FAssetRequest* Request);
 
+		FFactoryRegistry* GetFactoryRegistry() { return &FactoryRegistry; }
 		
 	private:
 

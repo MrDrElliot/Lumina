@@ -101,6 +101,12 @@ namespace Lumina
 
     bool FFileHelper::CreateNewFile(const FString& FilePath, bool bBinary, uint32 Flags)
     {
+        if (std::filesystem::exists(FilePath.c_str())) 
+        {
+            LOG_ERROR("File already exists: {0}", FilePath.c_str());
+            return false;
+        }
+
         std::ios::openmode Mode = std::ios::out | std::ios::trunc;
         if (bBinary)
         {
@@ -116,5 +122,15 @@ namespace Lumina
 
         File.close();
         return true;
+    }
+
+    uint64 FFileHelper::GetFileSize(const FString& FilePath)
+    {
+        if (std::filesystem::exists(FilePath.c_str()))
+        {
+            return std::filesystem::file_size(FilePath.c_str());
+        }
+
+        return 0;
     }
 }

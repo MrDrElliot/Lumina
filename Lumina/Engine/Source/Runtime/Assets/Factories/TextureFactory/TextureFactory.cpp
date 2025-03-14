@@ -13,34 +13,6 @@
 
 namespace Lumina
 {
-    ELoadResult FTextureFactory::CreateNew(FAssetRecord* InRecord)
-    {
-        ATexture* Texture = new ATexture(InRecord->GetAssetPath());
-
-        TVector<uint8> Buffer;
-        if (!FFileHelper::LoadFileToArray(Buffer, InRecord->GetAssetPath().GetPathAsString()))
-        {
-            return ELoadResult::Failed;
-        }
-
-        FMemoryReader Reader(Buffer);
-
-        FAssetHeader Header;
-        Reader << Header;
-
-        if (Header.Type != InRecord->GetAssetType())
-        {
-            return ELoadResult::Failed;
-        }
-
-        InRecord->SetDependencies(eastl::move(Header.Dependencies));
-        
-        Texture->Serialize(Reader);
-        InRecord->SetAssetPtr(Texture);
-        
-        return ELoadResult::Succeeded;
-    }
-
     /*ATexture FTextureFactory::ImportFromSource(std::filesystem::path Path)
     {
         PROFILE_SCOPE_LOG(FTextureFactory::ImportFromSource)
@@ -74,4 +46,36 @@ namespace Lumina
 
         return ImageHandle;
     }*/
+    ELoadResult FTextureFactory::LoadFromDisk(FAssetRecord* InRecord)
+    {
+        ATexture* Texture = new ATexture(InRecord->GetAssetPath());
+
+        TVector<uint8> Buffer;
+        if (!FFileHelper::LoadFileToArray(Buffer, InRecord->GetAssetPath().GetPathAsString()))
+        {
+            return ELoadResult::Failed;
+        }
+
+        FMemoryReader Reader(Buffer);
+
+        FAssetHeader Header;
+        Reader << Header;
+
+        if (Header.Type != InRecord->GetAssetType())
+        {
+            return ELoadResult::Failed;
+        }
+
+        InRecord->SetDependencies(eastl::move(Header.Dependencies));
+        
+        Texture->Serialize(Reader);
+        InRecord->SetAssetPtr(Texture);
+        
+        return ELoadResult::Succeeded;
+    }
+
+    IAsset* FTextureFactory::CreateNew(const FString& Path)
+    {
+        return nullptr;
+    }
 }

@@ -30,17 +30,21 @@ namespace Lumina
         {
             ImGui::TableSetupColumn("Label", ImGuiTableColumnFlags_WidthStretch);
 
-            ImGuiListClipper Clipper;
+            for (int i = 0; i < ListItems.size(); ++i)
+            {
+                DrawListItem(ListItems[i], Context);
+            }
+            
+            /*ImGuiListClipper Clipper;
             Clipper.Begin((int)ListItems.size());
 
             while (Clipper.Step())
             {
                 for (int i = Clipper.DisplayStart; i < Clipper.DisplayEnd; ++i)
                 {
-                    float const CursorPosY = ImGui::GetCursorPosY();
-                    DrawListItem(ListItems[i], Context);
+                    
                 }
-            }
+            }*/
             
             ImGui::EndTable();
         }
@@ -105,6 +109,11 @@ namespace Lumina
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(ItemToDraw->GetDisplayColor()));
         if (ImGui::TreeNodeEx(ItemToDraw, Flags, "%s", DisplayName.c_str()))
         {
+            for (FTreeListViewItem* Child : ItemToDraw->Children)
+            {
+                DrawListItem(Child, Context);
+            }
+            
             ImGui::TreePop();
         }
         ImGui::PopStyleColor();
