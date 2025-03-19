@@ -180,7 +180,7 @@ enum class ERHIBindingPoint : uint8
 	Compute,
 };
 
-ENUM_BITSET(ERHIResourceType)
+ENUM_CLASS_FLAGS(ERHIResourceType)
 
 
 enum class ERHIShaderType : uint8
@@ -191,7 +191,7 @@ enum class ERHIShaderType : uint8
 	Compute =	ERHIResourceType::RRT_ComputeShader,
 };
 
-ENUM_BITSET(ERHIShaderType)
+ENUM_CLASS_FLAGS(ERHIShaderType)
 
 enum class EAPIResourceType : uint8
 {
@@ -771,7 +771,7 @@ namespace Lumina
 		All = 0xF
 	};
 
-	ENUM_BITSET(EColorMask)
+	ENUM_CLASS_FLAGS(EColorMask)
 
 	struct FVertexAttributeDesc
 	{

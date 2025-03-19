@@ -135,7 +135,7 @@ namespace Lumina
         
     };
     
-    ENUM_BITSET(EBufferUsageFlags);
+    ENUM_CLASS_FLAGS(EBufferUsageFlags);
 
     #define BUF_NullResource    EBufferUsageFlags::NullResource
     #define BUF_Dynamic         EBufferUsageFlags::Dynamic

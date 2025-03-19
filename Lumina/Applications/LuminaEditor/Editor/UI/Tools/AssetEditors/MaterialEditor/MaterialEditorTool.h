@@ -4,9 +4,17 @@
 
 namespace Lumina
 {
+    class FMaterialNodeGraph;
+
     class FMaterialEditorTool : public FAssetEditorTool
     {
     public:
+
+        struct FCompilationResultInfo
+        {
+            FString CompilationLog;
+            bool bIsError;
+        };
 
         LUMINA_EDITOR_TOOL(FMaterialEditorTool)
 
@@ -22,13 +30,18 @@ namespace Lumina
 
         void Update(const FUpdateContext& UpdateContext) override;
 
+        void DrawToolMenu(const FUpdateContext& UpdateContext) override;
         void DrawMaterialGraph(const FUpdateContext& UpdateContext);
         void DrawMaterialProperties(const FUpdateContext& UpdateContext);
         void DrawMaterialPreview(const FUpdateContext& UpdateContext);
+        void DrawCompilationLog(const FUpdateContext& UpdateContext);
 
         void InitializeDockingLayout(ImGuiID InDockspaceID, const ImVec2& InDockspaceSize) const override;
 
     private:
+
+        FCompilationResultInfo CompilationResult;
+        FMaterialNodeGraph* NodeGraph;
         
     };
 }

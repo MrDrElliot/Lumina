@@ -126,6 +126,9 @@ namespace Lumina
     {
         VkBufferUsageFlags result = 0;
 
+        // Always include TRANSFER_SRC since hardware vendors confirmed it wouldn't have any performance cost.
+        result |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+        
         if (Usage.IsFlagSet(EBufferUsageFlags::VertexBuffer))
         {
             result |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
@@ -148,17 +151,17 @@ namespace Lumina
 
         if (Usage.IsFlagSet(EBufferUsageFlags::SourceCopy))
         {
-            result |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+            //... VK_BUFFER_USAGE_TRANSFER_SRC_BIT
         }
 
         if (Usage.IsFlagSet(EBufferUsageFlags::StagingBuffer))
         {
-            result |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+            result |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
         }
 
         if (Usage.IsFlagSet(EBufferUsageFlags::CPUWritable))
         {
-            result |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+            result |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
         }
         
         return result;
@@ -422,7 +425,6 @@ namespace Lumina
         {
             UsageFlags |= VK_IMAGE_USAGE_STORAGE_BIT;
         }
-    
         if (InDescription.Flags.IsFlagSet(EImageCreateFlags::CubeCompatible))
         {
             ImageFlags |= VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;

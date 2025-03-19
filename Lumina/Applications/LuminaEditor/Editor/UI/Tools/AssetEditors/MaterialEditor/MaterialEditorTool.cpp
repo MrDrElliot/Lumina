@@ -1,23 +1,21 @@
 ﻿#include "MaterialEditorTool.h"
-
 #include "imnodes.h"
+#include "UI/Tools/NodeGraph/Material/MaterialCompiler.h"
+#include "UI/Tools/NodeGraph/Material/MaterialNodeGraph.h"
 
 
 namespace Lumina
 {
-    const char* MaterialGraphName       = "Material Graph";
-    const char* MaterialPropertiesName  = "Material Properties";
-    const char* MaterialPreviewName     = "Material Preview";
+    const char* MaterialGraphName           = "Material Graph";
+    const char* MaterialPropertiesName      = "Material Properties";
+    const char* MaterialPreviewName         = "Material Preview";
+    const char* MaterialCompileLogName      = "Compilation Log";
 
     void FMaterialEditorTool::OnInitialize()
     {
         CreateToolWindow(MaterialGraphName, [this](const FUpdateContext& Cxt, bool bFocused)
         {
-            ImNodes::BeginNodeEditor();
-
             DrawMaterialGraph(Cxt);
-
-            ImNodes::EndNodeEditor();
         });
 
         CreateToolWindow(MaterialPropertiesName, [this](const FUpdateContext& Cxt, bool bFocused)
@@ -29,11 +27,20 @@ namespace Lumina
         {
             DrawMaterialPreview(Cxt);
         });
+
+        CreateToolWindow(MaterialCompileLogName, [this](const FUpdateContext& Cxt, bool bFocused)
+        {
+            DrawCompilationLog(Cxt);
+        });
+
+        NodeGraph = FMemory::New<FMaterialNodeGraph>();
+
     }
 
 
     void FMaterialEditorTool::OnDeinitialize(const FUpdateContext& UpdateContext)
     {
+        FMemory::Delete(NodeGraph);
     }
 
     void FMaterialEditorTool::Update(const FUpdateContext& UpdateContext)
@@ -41,9 +48,34 @@ namespace Lumina
         
     }
 
+    void FMaterialEditorTool::DrawToolMenu(const FUpdateContext& UpdateContext)
+    {
+        if (ImGui::MenuItem(LE_ICON_RECEIPT_TEXT" Compile"))
+        {
+            FMaterialCompiler Compiler;
+            NodeGraph->CompileGraph(&Compiler);
+
+            if (Compiler.HasErrors())
+            {
+                for (const FMaterialCompiler::FError& Error : Compiler.GetErrors())
+                {
+                    CompilationResult.CompilationLog += "ERROR - [" + Error.ErrorName + "]: " + Error.ErrorDescription + "\n";
+                }
+                
+                CompilationResult.bIsError = true;
+            }
+            else
+            {
+                
+                CompilationResult.CompilationLog = "Material Compiled Successfully! Generated GLSL: \n" + Compiler.GetResult();
+                CompilationResult.bIsError = false;
+            }
+        }
+    }
+
     void FMaterialEditorTool::DrawMaterialGraph(const FUpdateContext& UpdateContext)
     {
-        
+        NodeGraph->DrawGraph();
     }
 
     void FMaterialEditorTool::DrawMaterialProperties(const FUpdateContext& UpdateContext)
@@ -54,19 +86,45 @@ namespace Lumina
     {
     }
 
+    void FMaterialEditorTool::DrawCompilationLog(const FUpdateContext& UpdateContext)
+    {
+        if (!CompilationResult.CompilationLog.empty())
+        {
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(10, 10));
+            ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
+            ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
+
+            ImGui::BeginChild("CompilationLog", ImVec2(0, 0), true, ImGuiWindowFlags_AlwaysUseWindowPadding);
+
+            ImVec4 Color = CompilationResult.bIsError ? ImVec4(1.0f, 0.2f, 0.2f, 1.0f)
+                                                      : ImVec4(0.8f, 0.8f, 0.6f, 1.0f);
+
+            ImGui::TextColored(Color, "%s", CompilationResult.CompilationLog.c_str());
+
+            ImGui::EndChild();
+
+            ImGui::PopStyleColor(2);
+            ImGui::PopStyleVar();
+        }
+    }
+    
     void FMaterialEditorTool::InitializeDockingLayout(ImGuiID InDockspaceID, const ImVec2& InDockspaceSize) const
     {
-        ImGuiID leftDockID = 0, rightDockID = 0, bottomLeftDockID = 0;
+        ImGuiID leftDockID = 0, rightDockID = 0, bottomDockID = 0;
 
         // Split horizontally: Left (Material Graph) and Right (Material Preview)
         ImGui::DockBuilderSplitNode(InDockspaceID, ImGuiDir_Right, 0.3f, &rightDockID, &leftDockID);
 
-        // Split the left dock to create a bottom panel for Material Properties
-        ImGui::DockBuilderSplitNode(leftDockID, ImGuiDir_Down, 0.3f, &bottomLeftDockID, &leftDockID);
+        // Create a full bottom dock by splitting the main dockspace (InDockspaceID) only once
+        ImGui::DockBuilderSplitNode(InDockspaceID, ImGuiDir_Down, 0.3f, &bottomDockID, &InDockspaceID);
 
+        // Dock the windows into their respective locations
         ImGui::DockBuilderDockWindow(GetToolWindowName(MaterialGraphName).c_str(), leftDockID);
-        ImGui::DockBuilderDockWindow(GetToolWindowName(MaterialPropertiesName).c_str(), bottomLeftDockID);
         ImGui::DockBuilderDockWindow(GetToolWindowName(MaterialPreviewName).c_str(), rightDockID);
+
+        // Dock only the MaterialCompileLogName window to the full bottom dock
+        ImGui::DockBuilderDockWindow(GetToolWindowName(MaterialCompileLogName).c_str(), bottomDockID);
     }
+
 
 }

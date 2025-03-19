@@ -12,7 +12,7 @@ namespace Lumina
         Recording = 1,
     };
     
-    ENUM_BITSET(EPendingCommandState);
+    ENUM_CLASS_FLAGS(EPendingCommandState);
 
     class FPendingCommandState
     {
