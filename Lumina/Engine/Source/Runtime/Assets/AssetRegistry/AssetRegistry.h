@@ -33,6 +33,8 @@ namespace Lumina
 		void AssetCreated(const FAssetPath& InPath, const FAssetHeader& Header);
 		
 		FAssetHeader FindAssetHeader(const FAssetPath& InPath, bool* bSuccess = nullptr);
+
+		void GetAllAssetHeaders(TVector<FAssetHeader>& Headers);
 	
 	private:
 		

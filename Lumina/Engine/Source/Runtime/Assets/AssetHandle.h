@@ -43,7 +43,6 @@ namespace Lumina
         FORCEINLINE bool IsUnLoaded() const { return GetLoadState() == EAssetLoadState::Unloaded; }
         FORCEINLINE bool IsLoading() const { return GetLoadState() == EAssetLoadState::Unloading; }
 
-
         FORCEINLINE bool operator==(const FAssetHandle& Other) const { return AssetPath == Other.AssetPath; }
         FORCEINLINE bool operator!=(const FAssetHandle& Other) const { return AssetPath != Other.AssetPath; }
 

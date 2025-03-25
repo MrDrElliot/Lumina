@@ -16,7 +16,7 @@ namespace Lumina
         IEditorToolContext() = default;
         virtual ~IEditorToolContext() = default;
 
-        FORCEINLINE const FSubsystemManager* GetSubsystemManager() const { return SubsystemManager; }
+        FORCEINLINE FSubsystemManager* GetSubsystemManager() const { return SubsystemManager; }
 
         virtual void PushModal(const FString& Title, ImVec2 Size, TFunction<bool(const FUpdateContext&)> DrawFunction) = 0;
 
@@ -27,6 +27,6 @@ namespace Lumina
     public:
 
         FAssetRegistry*               AssetRegistry = nullptr;
-        const FSubsystemManager*      SubsystemManager = nullptr;
+        FSubsystemManager*            SubsystemManager = nullptr;
     };
 }

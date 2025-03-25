@@ -24,7 +24,7 @@ namespace Lumina
 
 		void Update();
 		
-		void LoadAsset(FAssetHandle& InAsset);
+		FAssetRecord* LoadAsset(FAssetHandle& InAsset);
 		void UnloadAsset(FAssetHandle& InAsset);
 
 		void NotifyAssetRequestCompleted(FAssetRequest* Request);
@@ -51,7 +51,7 @@ namespace Lumina
 		THashMap<FAssetPath, TRefCountPtr<FAssetRecord>>		AssetRecord;
 
 		TQueue<FAssetRequest*>									RequestQueue;
-		TSet<FAssetRequest*>									ActiveRequests;
+		TVector<FAssetRequest*>									ActiveRequests;
 
 	};
 	

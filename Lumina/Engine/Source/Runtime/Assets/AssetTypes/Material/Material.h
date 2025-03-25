@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "Assets/Asset.h"
+#include "Containers/Array.h"
 #include "Renderer/RHIFwd.h"
 
 namespace Lumina
@@ -18,7 +19,10 @@ namespace Lumina
         };
 
         DECLARE_ASSET("Material", Material, 1.0)
+
+        void Serialize(FArchive& Ar) override;
         
+        TVector<uint8>          GraphData;
         
     private:
 
@@ -26,6 +30,7 @@ namespace Lumina
         FRHIVertexShaderRef     VertexShader;
         FRHIPixelShaderRef      PixelShader;
         FRHIBindingSetRef       BindingSet;
+
     };
     
 }

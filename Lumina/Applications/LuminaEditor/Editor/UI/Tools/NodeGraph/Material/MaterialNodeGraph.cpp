@@ -2,7 +2,6 @@
 
 #include "MaterialCompiler.h"
 #include "Nodes/MaterialNodeExpression.h"
-#include "Nodes/MaterialGraphParameterNode.h"
 #include "Nodes/MaterialOutputNode.h"
 #include "UI/Tools/NodeGraph/EdNodeGraphPin.h"
 
@@ -13,13 +12,13 @@ namespace Lumina
     {
         CreateNode<FMaterialOutputNode>();
 
-        REGISTER_GRAPH_NODE(FMaterialGraphNode_Expression)
-        REGISTER_GRAPH_NODE(FMaterialGraphNode_Subtract)
-        REGISTER_GRAPH_NODE(FMaterialGraphNode_Multiply)
-        REGISTER_GRAPH_NODE(FMaterialGraphParamNode_Float)
-        REGISTER_GRAPH_NODE(FMaterialGraphParamNode_Float2)
-        REGISTER_GRAPH_NODE(FMaterialGraphParamNode_Float3)
-        REGISTER_GRAPH_NODE(FMaterialGraphParamNode_Float4)
+        REGISTER_GRAPH_NODE(FMaterialExpression_Addition)
+        REGISTER_GRAPH_NODE(FMaterialExpression_Subtraction)
+        REGISTER_GRAPH_NODE(FMaterialExpression_Multiplication)
+        REGISTER_GRAPH_NODE(FMaterialExpression_ConstantFloat)
+        REGISTER_GRAPH_NODE(FMaterialExpression_ConstantFloat2)
+        REGISTER_GRAPH_NODE(FMaterialExpression_ConstantFloat3)
+        REGISTER_GRAPH_NODE(FMaterialExpression_ConstantFloat4)
 
     }
 
@@ -60,11 +59,27 @@ namespace Lumina
         for (int i = 0; i < SortedNodes.size(); ++i)
         {
             FEdGraphNode* Node = SortedNodes[i];
+            
             Node->SetDebugExecutionOrder(i);
+            if (Node == Nodes[0])
+            {
+                continue; 
+            }
+
+            FMaterialGraphNode* MaterialGraphNode = static_cast<FMaterialGraphNode*>(Node);
+            MaterialGraphNode->GenerateDefinition(Compiler);
+
+            LOG_DEBUG("Generating node: {0}", MaterialGraphNode->GetNodeFullName());
         }
-        
+
+        // We then start off the compilation process using the MaterialOutput node as the kick-off.
         FMaterialGraphNode* MaterialOutputNode = static_cast<FMaterialGraphNode*>(Nodes[0]);
-        *Compiler << MaterialOutputNode->GenerateExpression(Compiler) + "\n";
+        MaterialOutputNode->GenerateDefinition(Compiler);
+        
+    }
+
+    void FMaterialNodeGraph::ValidateGraph()
+    {
         
     }
 

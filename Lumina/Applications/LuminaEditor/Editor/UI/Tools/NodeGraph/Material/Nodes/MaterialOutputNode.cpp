@@ -1,6 +1,7 @@
 ﻿#include "MaterialOutputNode.h"
 
-#include "UI/Tools/NodeGraph/Material/Pins/MaterialExpressions.h"
+#include "UI/Tools/NodeGraph/Material/MaterialCompiler.h"
+#include "UI/Tools/NodeGraph/Material/MaterialInput.h"
 
 namespace Lumina
 {
@@ -18,128 +19,144 @@ namespace Lumina
     void FMaterialOutputNode::BuildNode()
     {
         // Base Color (Albedo)
-        CreatePin<FMaterialNodePin_Float4, ENodePinDirection::Input>("Base Color (RGBA)", this, true, EMaterialParamPinFlags::None);
+        BaseColorPin = CreatePin<FMaterialInput, ENodePinDirection::Input>(EMaterialInputType::Float3);
+        BaseColorPin->SetPinName("Base Color (RGBA)");
     
         // Metallic (Determines if the material is metal or non-metal)
-        CreatePin<FMaterialNodePin_Scalar, ENodePinDirection::Input>("Metallic", this, true, EMaterialParamPinFlags::None);
-
+        MetallicPin = CreatePin<FMaterialInput, ENodePinDirection::Input>(EMaterialInputType::Float);
+        MetallicPin->SetPinName("Metallic");
+        
         // Roughness (Controls how smooth or rough the surface is)
-        CreatePin<FMaterialNodePin_Scalar, ENodePinDirection::Input>("Roughness", this, true, EMaterialParamPinFlags::None);
+        RoughnessPin = CreatePin<FMaterialInput, ENodePinDirection::Input>(EMaterialInputType::Float);
+        RoughnessPin->SetPinName("Roughness");
 
         // Specular (Affects intensity of reflections for non-metals)
-        CreatePin<FMaterialNodePin_Scalar, ENodePinDirection::Input>("Specular", this, true, EMaterialParamPinFlags::None);
+        SpecularPin = CreatePin<FMaterialInput, ENodePinDirection::Input>(EMaterialInputType::Float);
+        SpecularPin->SetPinName("Specular");
 
         // Emissive (Self-illumination, for glowing objects)
-        CreatePin<FMaterialNodePin_Float3, ENodePinDirection::Input>("Emissive (RGB)", this, true, EMaterialParamPinFlags::None);
+        EmissivePin = CreatePin<FMaterialInput, ENodePinDirection::Input>(EMaterialInputType::Float3);
+        EmissivePin->SetPinName("Emissive (RGB)");
 
         // Ambient Occlusion (Shadows in crevices to add realism)
-        CreatePin<FMaterialNodePin_Scalar, ENodePinDirection::Input>("Ambient Occlusion", this, true, EMaterialParamPinFlags::None);
+        AOPin = CreatePin<FMaterialInput, ENodePinDirection::Input>(EMaterialInputType::Float);
+        AOPin->SetPinName("Ambient Occlusion");
 
         // Normal Map (For surface detail)
-        CreatePin<FMaterialNodePin_Float3, ENodePinDirection::Input>("Normal Map (XYZ)", this, true, EMaterialParamPinFlags::None);
-
+        NormalPin = CreatePin<FMaterialInput, ENodePinDirection::Input>(EMaterialInputType::Float3);
+        NormalPin->SetPinName("Normal Map (XYZ)");
+        
         // Opacity (For transparent materials)
-        CreatePin<FMaterialNodePin_Scalar, ENodePinDirection::Input>("Opacity", this, true, EMaterialParamPinFlags::None);
+        OpacityPin = CreatePin<FMaterialInput, ENodePinDirection::Input>(EMaterialInputType::Float);
+        OpacityPin->SetPinName("Opacity");
 
         
     }
 
-    FString FMaterialOutputNode::Evaluate(FMaterialCompiler* Compiler)
+    void FMaterialOutputNode::GenerateDefinition(FMaterialCompiler* Compiler)
     {
-        FEdNodeGraphPin* BaseColorPin = GetPinByIndex(0, ENodePinDirection::Input);
-        FEdNodeGraphPin* MetallicPin = GetPinByIndex(1, ENodePinDirection::Input);
-        FEdNodeGraphPin* RoughnessPin = GetPinByIndex(2, ENodePinDirection::Input);
-        FEdNodeGraphPin* SpecularPin = GetPinByIndex(3, ENodePinDirection::Input);
-        FEdNodeGraphPin* EmissivePin = GetPinByIndex(4, ENodePinDirection::Input);
-        FEdNodeGraphPin* AOPin = GetPinByIndex(5, ENodePinDirection::Input);
-        FEdNodeGraphPin* NormalPin = GetPinByIndex(6, ENodePinDirection::Input);
-        FEdNodeGraphPin* OpacityPin = GetPinByIndex(7, ENodePinDirection::Input);
+        FString Output;
+        Output += "\n \n";
     
-        std::stringstream SS;
-    
-        SS << "\n\tMaterialInputs Input = (MaterialInputs)0;\n";
+        Output += "MaterialInput Input = (FMaterialInputs)0;\n";
     
         // Base Color
+        Output += "Input.Diffuse = ";
         if (BaseColorPin->HasConnection())
         {
-            SS << "\tInput.BaseColor = " << BaseColorPin->GetConnections()[0]->GetOwningNode<FMaterialGraphNode>()->Evaluate(Compiler).c_str() << ";\n";
+            Output += BaseColorPin->GetConnections()[0]->GetOwningNode()->GetNodeFullName() + ".rgb;";
         }
         else
         {
-            SS << "\tInput.BaseColor = vec3(0.8f, 0.8f, 0.8f);\n";
+            Output += "vec3(1.0, 1.0, 1.0);";
         }
+        Output += "\n";
     
         // Metallic
+        Output += "Input.Metallic = ";
         if (MetallicPin->HasConnection())
         {
-            SS << "\tInput.Metallic = " << MetallicPin->GetConnections()[0]->GetOwningNode<FMaterialGraphNode>()->Evaluate(Compiler).c_str() << ";\n";
+            Output += MetallicPin->GetConnections()[0]->GetOwningNode()->GetNodeFullName() + ".r;";
         }
         else
         {
-            SS << "\tInput.Metallic = 0.0;\n";
+            Output += "0.0;";
         }
+        Output += "\n";
     
         // Roughness
+        Output += "Input.Roughness = ";
         if (RoughnessPin->HasConnection())
         {
-            SS << "\tInput.Roughness = " << RoughnessPin->GetConnections()[0]->GetOwningNode<FMaterialGraphNode>()->Evaluate(Compiler).c_str() << ";\n";
+            Output += RoughnessPin->GetConnections()[0]->GetOwningNode()->GetNodeFullName() + ".r;";
         }
         else
         {
-            SS << "\tInput.Roughness = 1.0;\n";
+            Output += "1.0;";
         }
+        Output += "\n";
     
         // Specular
+        Output += "Input.Specular = ";
         if (SpecularPin->HasConnection())
         {
-            SS << "\tInput.Specular = " << SpecularPin->GetConnections()[0]->GetOwningNode<FMaterialGraphNode>()->Evaluate(Compiler).c_str() << ";\n";
+            Output += SpecularPin->GetConnections()[0]->GetOwningNode()->GetNodeFullName() + ".r;";
         }
         else
         {
-            SS << "\tInput.Specular = 0.5;\n"; // Default moderate specular reflection
+            Output += "0.5;";
         }
+        Output += "\n";
     
         // Emissive
+        Output += "Input.Emissive = ";
         if (EmissivePin->HasConnection())
         {
-            SS << "\tInput.Emissive = " << EmissivePin->GetConnections()[0]->GetOwningNode<FMaterialGraphNode>()->Evaluate(Compiler).c_str() << ";\n";
+            Output += EmissivePin->GetConnections()[0]->GetOwningNode()->GetNodeFullName() + ".rgb;";
         }
         else
         {
-            SS << "\tInput.Emissive = vec3(0.0, 0.0, 0.0);\n"; // No emission by default
+            Output += "vec3(0.0, 0.0, 0.0);";
         }
+        Output += "\n";
     
         // Ambient Occlusion
+        Output += "Input.AO = ";
         if (AOPin->HasConnection())
         {
-            SS << "\tInput.AmbientOcclusion = " << AOPin->GetConnections()[0]->GetOwningNode<FMaterialGraphNode>()->Evaluate(Compiler).c_str() << ";\n";
+            Output += AOPin->GetConnections()[0]->GetOwningNode()->GetNodeFullName() + ".r;";
         }
         else
         {
-            SS << "\tInput.AmbientOcclusion = 1.0;\n"; // Default full ambient occlusion
+            Output += "1.0;";
         }
+        Output += "\n";
     
-        // Normal Map
+        // Normal
+        Output += "Input.Normal = ";
         if (NormalPin->HasConnection())
         {
-            SS << "\tInput.Normal = " << NormalPin->GetConnections()[0]->GetOwningNode<FMaterialGraphNode>()->Evaluate(Compiler).c_str() << ";\n";
+            Output += "normalize(" + NormalPin->GetConnections()[0]->GetOwningNode()->GetNodeFullName() + ".xyz);";
         }
         else
         {
-            SS << "\tInput.Normal = vec3(0.0, 0.0, 1.0);\n"; // Default flat normal map
+            Output += "vec3(0.0, 0.0, 1.0);";
         }
+        Output += "\n";
     
         // Opacity
+        Output += "Input.Opacity = ";
         if (OpacityPin->HasConnection())
         {
-            SS << "\tInput.Opacity = " << OpacityPin->GetConnections()[0]->GetOwningNode<FMaterialGraphNode>()->Evaluate(Compiler).c_str() << ";\n";
+            Output += OpacityPin->GetConnections()[0]->GetOwningNode()->GetNodeFullName() + ".r;";
         }
         else
         {
-            SS << "\tInput.Opacity = 1.0;\n"; // Fully opaque by default
+            Output += "1.0;";
         }
+        Output += "\n";
     
-        return FString(SS.str().c_str());
+        Compiler->AddRaw(Output);
     }
 
 }

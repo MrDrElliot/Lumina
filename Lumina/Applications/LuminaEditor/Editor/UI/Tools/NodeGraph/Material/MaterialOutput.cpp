@@ -1,10 +1,10 @@
-﻿#include "MaterialInput.h"
+﻿#include "MaterialOutput.h"
 
 #include "Nodes/MaterialGraphNode.h"
 
 namespace Lumina
 {
-    void FMaterialInput::DrawPin()
+    void FMaterialOutput::DrawPin()
     {
         if (ShouldDrawEditor())
         {

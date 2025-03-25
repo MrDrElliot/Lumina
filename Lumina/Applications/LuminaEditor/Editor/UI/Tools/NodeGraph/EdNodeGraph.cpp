@@ -3,11 +3,15 @@
 #include "EdGraphNode.h"
 #include "EdNodeGraphPin.h"
 #include "imnodes.h"
+#include "Core/Math/Math.h"
 
 #define SHOW_DEBUG 1
 
 namespace Lumina
 {
+
+    uint16 GNodeID = 0;
+    
     FEdNodeGraph::FEdNodeGraph()
     {
         ImNodesContext = ImNodes::EditorContextCreate();
@@ -68,6 +72,14 @@ namespace Lumina
         ImNodes::EditorContextFree(ImNodesContext);
     }
 
+    void FEdNodeGraph::Serialize(FArchive& Ar)
+    {
+        for (FEdGraphNode* Node : Nodes)
+        {
+            Node->Serialize(Ar);
+        }
+    }
+
     void FEdNodeGraph::DrawGraph()
     {
         ImNodes::EditorContextSet(ImNodesContext);
@@ -103,9 +115,12 @@ namespace Lumina
         ImGui::PopStyleVar();
 
         TVector<TPair<FEdNodeGraphPin*, FEdNodeGraphPin*>> Links;
+        Links.reserve(40);
+        
         THashMap<uint32, FEdNodeGraphPin*> PinMap;
+        PinMap.reserve(40);
     
-        for (int i = 0; i < Nodes.size(); ++i)
+        for (uint64 i = 0; i < Nodes.size(); ++i)
         {
             FEdGraphNode* Node = Nodes[i];
             
@@ -114,13 +129,14 @@ namespace Lumina
             ImNodes::BeginNode(i);
             ImNodes::BeginNodeTitleBar();
         
-            ImGui::TextUnformatted(Node->GetNodeDisplayName().c_str());
 
             #if SHOW_DEBUG
-            ImGui::SameLine();
-            ImGui::Text("Order: %i", Node->GetDebugExecutionOrder());
+            ImGui::TextColored(ImVec4(1.0f, 1.0f, 1.0f, 1.0f), "%s - %i", Node->GetNodeFullName().c_str(), Node->GetDebugExecutionOrder());
+            #else
+            ImGui::TextUnformatted(Node->GetNodeDisplayName().c_str());
             #endif
 
+            
             ImGui::Dummy(ImVec2(Node->GetMinNodeSize().x, 0.1f));
             ImNodes::EndNodeTitleBar();
 
@@ -136,9 +152,17 @@ namespace Lumina
                 ImNodes::BeginOutputAttribute(Pin->GUID, Shape);
 
                 ImGui::TextUnformatted(Pin->GetPinName().c_str());
+                
                 ImGui::SameLine();
-    
-                Pin->DrawPin();
+
+                if (Pin->HasConnection() && Pin->ShouldHideDuringConnection())
+                {
+                    ImGui::Dummy(ImVec2(1.0f, 1.0f));
+                }
+                else
+                {
+                    Pin->DrawPin();
+                }
     
                 ImNodes::EndOutputAttribute();
     
@@ -157,13 +181,21 @@ namespace Lumina
                 ImNodes::PushColorStyle(ImNodesCol_Pin, Pin->GetPinColor());
                 
                 ImNodesPinShape Shape = (Pin->HasConnection()) ? ImNodesPinShape_CircleFilled : ImNodesPinShape_Circle;
+                
                 ImNodes::BeginInputAttribute(Pin->GUID, Shape);
                 
-                ImGui::TextUnformatted(Pin->GetPinName().c_str());
+                if (Pin->HasConnection() && Pin->ShouldHideDuringConnection())
+                {
+                    ImGui::Dummy(ImVec2(1.0f, 1.0f));
+                }
+                else
+                {
+                    Pin->DrawPin();
+                }
                 
                 ImGui::SameLine();
                 
-                Pin->DrawPin();
+                ImGui::TextUnformatted(Pin->GetPinName().c_str());
                 
                 ImNodes::EndInputAttribute();
                 
@@ -177,6 +209,8 @@ namespace Lumina
             for (uint64 j = 0; j < InputPins.size(); ++j)
             {
                 FEdNodeGraphPin* InputPin = InputPins[j];
+                
+                Assert(InputPin->GetConnections().size() <= 1);
 
                 for (FEdNodeGraphPin* Connection : InputPin->GetConnections())
                 {
@@ -223,52 +257,42 @@ namespace Lumina
         {
             FEdNodeGraphPin* StartPin = nullptr;
             FEdNodeGraphPin* EndPin = nullptr;
-            bool bCanSafeConnect = true;
-        
+    
             for (FEdGraphNode* Node : Nodes)
             {
                 StartPin = Node->GetPin(Start, ENodePinDirection::Output);
-                if (StartPin != nullptr)
+                if (StartPin)
                 {
                     break;
                 }
             }
-        
+
             for (FEdGraphNode* Node : Nodes)
             {
                 EndPin = Node->GetPin(End, ENodePinDirection::Input);
-                if (EndPin != nullptr)
+                if (EndPin)
                 {
                     break;
                 }
             }
 
-            Assert(StartPin != EndPin);
-            Assert(StartPin->OwningNode != EndPin->OwningNode);
-
-            if (EndPin->bSingleInput)
+            if (!StartPin || !EndPin || StartPin == EndPin || StartPin->OwningNode == EndPin->OwningNode)
             {
-                if (StartPin->HasConnection())
-                {
-                    bCanSafeConnect = false;
-                }
+                return;
             }
 
-            if (EndPin->bSingleInput)
+            if (EndPin->HasConnection())
             {
-                if (EndPin->HasConnection())
-                {
-                    bCanSafeConnect = false;
-                }
+                return; // Disallow connection if the input pin is already occupied
             }
+
+            // Allow the connection
+            StartPin->AddConnection(EndPin);
+            EndPin->AddConnection(StartPin);
             
-            
-            if (StartPin != nullptr && EndPin != nullptr && bCanSafeConnect)
-            {
-                StartPin->AddConnection(EndPin);
-                EndPin->AddConnection(StartPin);
-            }
+            ValidateGraph();
         }
+
 
         {
             int ID;
@@ -278,6 +302,8 @@ namespace Lumina
 
                 Pair.first->RemoveConnection(Pair.second);
                 Pair.second->RemoveConnection(Pair.first);
+
+                ValidateGraph();
             }
         }
     }
@@ -302,7 +328,11 @@ namespace Lumina
         Nodes.push_back(InNode);
         
         InNode->BuildNode();
+        InNode->GUID = Math::RandRange<uint16>(0, UINT16_MAX);
+        InNode->FullName = InNode->GetNodeDisplayName() + "_" + eastl::to_string(InNode->GUID);
 
+        ValidateGraph();
+        
         return Nodes.size() - 1;
     }
 }

@@ -1,3 +1,12 @@
 {
-  "ProjectName": "Sandbox"
+    "H:\\Lumina\\Lumina\\Applications/Sandbox\\Game\\Content/NewMaterial.lasset": {
+        "Dependencies": [],
+        "Guid": "E782FF31-0F4A-4293-A99A-3ACC79B77364",
+        "Path": {
+            "AssetPath": "H:\\Lumina\\Lumina\\Applications/Sandbox\\Game\\Content/NewMaterial.lasset",
+            "RawPath": ""
+        },
+        "Type": 3,
+        "Version": 1
+    }
 }

@@ -34,6 +34,11 @@ namespace Lumina::Hash
             return GetHash32( pString, strlen( pString ) );
         }
 
+        FORCEINLINE uint32 GetHash32(float Value)
+        {
+            return GetHash32(&Value, sizeof(float));
+        }
+        
         FORCEINLINE uint32 GetHash32( Blob const& data )
         {
             return GetHash32( data.data(), data.size() );

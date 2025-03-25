@@ -62,6 +62,43 @@ namespace Lumina
         return true;
     }
 
+    FString FFileHelper::FileFinder(const FString& FileName, const FString& IteratorPath, bool bRecursive)
+    {
+        std::filesystem::path Path = IteratorPath.c_str();
+
+        if (!std::filesystem::exists(Path) || !std::filesystem::is_directory(Path))
+        {
+            return "";
+        }
+
+        std::filesystem::directory_options Options = bRecursive 
+            ? std::filesystem::directory_options::follow_directory_symlink
+            : std::filesystem::directory_options::none;
+
+        if (bRecursive)
+        {
+            for (const auto& Entry : std::filesystem::recursive_directory_iterator(Path, Options))
+            {
+                if (Entry.is_regular_file() && Entry.path().filename() == FileName.c_str())
+                {
+                    return Entry.path().string().c_str();
+                }
+            }
+        }
+        else
+        {
+            for (const auto& Entry : std::filesystem::directory_iterator(Path, Options))
+            {
+                if (Entry.is_regular_file() && Entry.path().filename() == FileName.c_str())
+                {
+                    return Entry.path().string().c_str();
+                }
+            }
+        }
+
+        return "";
+    }
+    
     bool FFileHelper::LoadFileIntoString(FString& OutString, const FString& Path, uint32 ReadFlags)
     {
         std::ifstream file(Path.c_str(), std::ios::in);

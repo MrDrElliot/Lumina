@@ -1,5 +1,7 @@
 ﻿#include "MaterialEditorTool.h"
 #include "imnodes.h"
+#include "Assets/AssetTypes/Material/Material.h"
+#include "Core/Serialization/MemoryArchiver.h"
 #include "UI/Tools/NodeGraph/Material/MaterialCompiler.h"
 #include "UI/Tools/NodeGraph/Material/MaterialNodeGraph.h"
 
@@ -43,15 +45,21 @@ namespace Lumina
         FMemory::Delete(NodeGraph);
     }
 
-    void FMaterialEditorTool::Update(const FUpdateContext& UpdateContext)
+    void FMaterialEditorTool::OnAssetLoadFinished()
     {
-        
+        LOG_DEBUG("Asset Load Finished");
+
+        FMemoryReader Reader(Asset->GetAssetPtr<AMaterial>()->GraphData);
+        NodeGraph->Serialize(Reader);
     }
+
 
     void FMaterialEditorTool::DrawToolMenu(const FUpdateContext& UpdateContext)
     {
         if (ImGui::MenuItem(LE_ICON_RECEIPT_TEXT" Compile"))
         {
+            CompilationResult = FCompilationResultInfo();
+            
             FMaterialCompiler Compiler;
             NodeGraph->CompileGraph(&Compiler);
 
@@ -67,8 +75,18 @@ namespace Lumina
             else
             {
                 
-                CompilationResult.CompilationLog = "Material Compiled Successfully! Generated GLSL: \n" + Compiler.GetResult();
+                FString Tree = Compiler.BuildTree();
+                CompilationResult.CompilationLog = "Material Compiled Successfully! Generated GLSL: \n \n \n" + Tree;
                 CompilationResult.bIsError = false;
+
+                AMaterial* Material = (AMaterial*)Asset->GetAssetPtr();
+                TVector<uint8> GraphData;
+                FMemoryWriter Writer(GraphData);
+                NodeGraph->Serialize(Writer);
+
+                Material->GraphData = eastl::move(GraphData);
+                Material->Save();
+                
             }
         }
     }

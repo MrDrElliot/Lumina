@@ -120,7 +120,11 @@ namespace Lumina
     template<typename T, typename V>
     inline void VectorRemove(TVector<T>& Vector, const V& Value)
     {
-        return Vector.erase(Vector.begin(), Vector.end(), Value, Vector.end());
+        auto it = eastl::find(Vector.begin(), Vector.end(), Value);
+        if (it != Vector.end())
+        {
+            Vector.erase(it);
+        }
     }
 
     // Find an element in a vector

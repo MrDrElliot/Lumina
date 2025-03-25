@@ -16,7 +16,7 @@ namespace Lumina
 namespace Lumina
 {
     
-    class FEdNodeGraph
+    class FEdNodeGraph : public LEObject
     {
     public:
 
@@ -32,17 +32,20 @@ namespace Lumina
             FString Tooltip;
             TFunction<FEdGraphNode*()> CreationCallback;
         };
+
         
 
         FEdNodeGraph();
         virtual ~FEdNodeGraph();
 
+        void Serialize(FArchive& Ar) override;
 
         void DrawGraph();
         virtual void OnDrawGraph();
         
         void RegisterGraphAction(const FString& ActionName, const TFunction<void()>& ActionCallback);
 
+        virtual void ValidateGraph() = 0;
         
         template<typename T, typename... Args>
         requires(std::is_base_of_v<FEdGraphNode, T> && std::is_constructible_v<T, Args...>)
@@ -77,7 +80,7 @@ namespace Lumina
     T* FEdNodeGraph::CreateNode(Args&&... args)
     {
         T* New = FMemory::New<T>(TForward<Args>(args)...);
-
+    
         AddNode(New);
         return New;
     }

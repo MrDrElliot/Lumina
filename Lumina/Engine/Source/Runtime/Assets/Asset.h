@@ -24,6 +24,10 @@ namespace Lumina
         FORCEINLINE const FAssetPath& GetAssetPath() const { return AssetPath; }
         FORCEINLINE bool HasValidPath() const { return AssetPath.IsValid(); }
 
+        void SetAssetPath(const FAssetPath& InPath) { AssetPath = InPath; }
+
+        void Save();
+        
         /** Operates for reading and writing serialization, depending which mode the archiver is in. */
         virtual void Serialize(FArchive& Ar) { AssertMsg(0, "Unimplemented!"); }
 

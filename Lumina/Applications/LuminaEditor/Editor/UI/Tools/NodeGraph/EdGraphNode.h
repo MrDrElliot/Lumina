@@ -3,14 +3,14 @@
 #include "Core/Templates/Forward.h"
 #include "Containers/Array.h"
 #include "Core/Math/Color.h"
+#include "Core/Math/Math.h"
+#include "Core/Object/Object.h"
+#include "GUID/GUID.h"
 #include "Memory/Memory.h"
 
 namespace Lumina
 {
     class FEdNodeGraphPin;
-
-    inline uint32 GPinID;
-
     
     enum class ENodePinDirection : uint8
     {
@@ -20,9 +20,11 @@ namespace Lumina
         Count       = 2,
     };
     
-    class FEdGraphNode
+    class FEdGraphNode : public LEObject
     {
     public:
+
+        friend class FEdNodeGraph;
 
         FEdGraphNode() = default;
         
@@ -30,8 +32,11 @@ namespace Lumina
 
         virtual void BuildNode() = 0;
 
+        void Serialize(FArchive& Ar) override;
+
+        FString GetNodeFullName() { return FullName; }
         virtual FString GetNodeDisplayName() const = 0;
-        virtual FString GetNodeTooltip() const = 0;
+        virtual FString GetNodeTooltip() const { return "No Tooltip"; }
         virtual uint32 GetNodeTitleColor() const { return IM_COL32(200, 35, 35, 255); }
         virtual ImVec2 GetMinNodeSize() const { return ImVec2(100, 150); }
 
@@ -61,8 +66,10 @@ namespace Lumina
 
         uint32 DebugExecutionOrder;
 
-        FString Error;
-        bool bHasError;
+        FString     FullName;
+        uint16      GUID;
+        FString     Error;
+        bool        bHasError;
         
     };
 
@@ -72,7 +79,7 @@ namespace Lumina
     T* FEdGraphNode::CreatePin(Args&&... args)
     {
         T* NewPin = FMemory::New<T>(TForward<Args>(args)...);
-        NewPin->GUID = GPinID++;
+        NewPin->GUID = Math::RandRange<uint16>(0, UINT16_MAX);
         NewPin->bInputPin = Direction == ENodePinDirection::Input;
         NewPin->OwningNode = this;
         NodePins[uint32(Direction)].push_back(NewPin);

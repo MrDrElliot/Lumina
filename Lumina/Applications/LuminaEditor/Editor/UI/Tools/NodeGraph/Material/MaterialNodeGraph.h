@@ -1,8 +1,5 @@
 ﻿#pragma once
-#include <sstream>
-#include <string>
 
-#include "Core/LuminaMacros.h"
 #include "UI/Tools/NodeGraph/EdNodeGraph.h"
 
 namespace Lumina
@@ -12,8 +9,6 @@ namespace Lumina
 
 namespace Lumina
 {
-    
-    
     class FMaterialNodeGraph : public FEdNodeGraph
     {
     public:
@@ -22,6 +17,8 @@ namespace Lumina
 
         void OnDrawGraph() override;
         void CompileGraph(FMaterialCompiler* Compiler);
+
+        void ValidateGraph() override;
 
     private:
 

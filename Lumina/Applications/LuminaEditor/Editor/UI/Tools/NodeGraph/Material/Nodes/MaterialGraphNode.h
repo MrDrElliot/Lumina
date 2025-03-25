@@ -2,10 +2,12 @@
 
 #include "UI/Tools/NodeGraph/EdGraphNode.h"
 
+
 namespace Lumina
 {
     class FMaterialCompiler;
 }
+
 
 namespace Lumina
 {
@@ -18,8 +20,12 @@ namespace Lumina
         {}
         
         virtual uint32 GenerateExpression(FMaterialCompiler* Compiler) = 0;
-
+        virtual void GenerateDefinition(FMaterialCompiler* Compiler) = 0;
+        
         FORCEINLINE bool IsDynamic() const { return bDynamic; }
+        
+        virtual float* GetNodeDefaultValue() { return nullptr; }
+
         
     protected:
 

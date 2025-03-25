@@ -4,23 +4,37 @@
 #include "Containers/Array.h"
 #include "Containers/String.h"
 #include "Core/Math/Color.h"
+#include "Core/Object/Object.h"
 
 namespace Lumina
 {
-    class FEdNodeGraphPin
+    class FEdNodeGraphPin : public LEObject
     {
     public:
 
         friend class FEdNodeGraph;
         friend class FEdGraphNode;
 
-        FEdNodeGraphPin() = default;
+        FEdNodeGraphPin()
+            : bSingleInput(0)
+            , bInputPin(0)
+            , bDrawPinEditor(false)
+            , bHidePinDuringConnection(true)
+        {}
+
+        
+        
         virtual ~FEdNodeGraphPin() = default;
 
         virtual void DrawPin() { }
-        const FString GetPinName() const { return PinName; }
-        const FString GetPinTooltip() const { return PinName; }
+        
+        FORCEINLINE void SetPinName(const FString& Name) { PinName = Name; }
+        FORCEINLINE const FString& GetPinName() const { return PinName; }
+        FORCEINLINE const FString& GetPinTooltip() const { return PinName; }
 
+        FORCEINLINE bool ShouldHideDuringConnection() const { return bHidePinDuringConnection; }
+        FORCEINLINE void SetHideDuringConnection(bool bHide) { bHidePinDuringConnection = bHide; }
+        
         virtual uint32 GetPinColor() const { return PinColor; }
         void SetPinColor(uint32 Color) { PinColor = Color;}
                 
@@ -33,6 +47,9 @@ namespace Lumina
         FORCEINLINE uint32 GetGUID() const { return GUID; }
         FORCEINLINE FEdGraphNode* GetOwningNode() const { return OwningNode; }
 
+        FORCEINLINE bool ShouldDrawEditor() const { return bDrawPinEditor; }
+        FORCEINLINE void SetShouldDrawEditor(bool bNew) { bDrawPinEditor = bNew; }
+        
         template<typename T>
         requires(std::is_base_of_v<FEdGraphNode, T>)
         T* GetOwningNode()
@@ -45,11 +62,13 @@ namespace Lumina
 
         FString                         PinName;
         uint32                          PinColor = IM_COL32(255, 255, 255, 255);
-        uint32                          GUID = 0;
+        uint16                          GUID = 0;
         
         TVector<FEdNodeGraphPin*>       Connections;
         FEdGraphNode*                   OwningNode = nullptr;
         uint8                           bSingleInput:1;
         uint8                           bInputPin:1;
+        uint8                           bDrawPinEditor:1;
+        uint8                           bHidePinDuringConnection:1;
     };
 }

@@ -611,6 +611,54 @@ namespace Lumina
                     
                 });
             }
+
+            if (ImGui::MenuItem("Asset Registry", nullptr))
+            {
+                ModalManager.CreateModalDialogue("Asset Registry", ImVec2(1400, 800), [this] (const FUpdateContext& Ctx) -> bool
+                {
+                    FAssetRegistry* AssetRegistry = Ctx.GetSubsystem<FAssetRegistry>();
+                    TVector<FAssetHeader> Assets;
+                    AssetRegistry->GetAllAssetHeaders(Assets);
+
+                    ImGui::Text("Asset Registry");
+                    ImGui::Separator();
+
+                    if (Assets.empty())
+                    {
+                        ImGui::Text("No assets found.");
+                    }
+                    else
+                    {
+                        ImGui::Columns(5, "asset_columns", false);
+                        ImGui::Text("Path"); ImGui::NextColumn();
+                        ImGui::Text("Guid"); ImGui::NextColumn();
+                        ImGui::Text("Version"); ImGui::NextColumn();
+                        ImGui::Text("Type"); ImGui::NextColumn();
+                        ImGui::Text("Dependencies"); ImGui::NextColumn();
+                        ImGui::Separator();
+
+                        for (const FAssetHeader& Asset : Assets)
+                        {
+                            ImGui::Text("%s", Asset.Path.GetPathAsString().c_str()); ImGui::NextColumn();
+                            ImGui::Text("%s", Asset.Guid.String().c_str()); ImGui::NextColumn();
+                            ImGui::Text("%d", Asset.Version); ImGui::NextColumn();
+                            ImGui::Text("%s", AssetTypeToString(Asset.Type).c_str()); ImGui::NextColumn();
+                            ImGui::Text("%zu", Asset.Dependencies.size()); ImGui::NextColumn();
+                        }
+
+                        ImGui::Columns(1);
+
+                        ImGui::Spacing();
+                    }
+
+                    if (ImGui::Button("Close"))
+                    {
+                        return true;
+                    }
+
+                    return false;
+                });
+            }
             
             if (ImGui::MenuItem("Open Project", nullptr))
             {

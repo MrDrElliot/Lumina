@@ -19,6 +19,45 @@ namespace Lumina::Paths
         return std::filesystem::canonical(std::filesystem::current_path().parent_path().parent_path() / "Lumina" / "Engine");
     }
 
+    inline FString CombinePaths(const FString& A, const FString& B)
+    {
+        std::filesystem::path PathA = A.c_str();
+        std::filesystem::path PathB = B.c_str();
+
+        std::filesystem::path Combined = PathA / PathB;
+
+        return Combined.string().c_str();
+    }
+
+    
+    inline FString MakeRelativeTo(const FString& Path, const FString& BasePath)
+    {
+        std::filesystem::path FullPath = std::filesystem::weakly_canonical(Path.c_str());
+        std::filesystem::path Base = std::filesystem::weakly_canonical(BasePath.c_str());
+
+        if (!std::filesystem::exists(Base) || !std::filesystem::is_directory(Base))
+        {
+            return Path;
+        }
+
+        if (!std::filesystem::equivalent(FullPath.root_path(), Base.root_path()))
+        {
+            return Path;
+        }
+
+        std::error_code ec;
+        std::filesystem::path RelativePath = std::filesystem::relative(FullPath, Base, ec);
+    
+        if (ec)
+        {
+            LOG_ERROR("Path Error: {0}", ec.message());
+            return Path;
+        }
+
+        return RelativePath.string().c_str();
+    }
+
+    
     inline std::filesystem::path GetEngineResourceDirectory()
     {
         const char* luminaDirEnv = std::getenv("LUMINA_DIR");

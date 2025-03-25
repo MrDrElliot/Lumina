@@ -27,15 +27,14 @@ namespace Lumina
             ImGui::SameLine();
             DrawContentBrowser(Contxt, bIsFocused, ImVec2(Right, 0));
         });
-
         
-        std::filesystem::path Path = FProject::Get()->GetProjectSettings().ProjectPath.c_str();
-        Path = Path.parent_path() / "Game/Content";
-        SelectedPath = Path;
+        SelectedPath = FProject::Get()->GetProjectContentDirectory().c_str();
         
         ContentBrowserTileViewContext.ItemSelectedFunction = [this] (FTileViewItem* Item)
         {
-            
+            FContentBrowserTileViewItem* ContentItem = static_cast<FContentBrowserTileViewItem*>(Item);
+
+            ToolContext->OpenAssetPath(FString(ContentItem->GetPath().string().c_str()));
         };
         
         ContentBrowserTileViewContext.DrawItemContextMenuFunction = [this] (const TVector<FTileViewItem*> Items)
@@ -257,8 +256,9 @@ namespace Lumina
                     {
                         if (ImGui::MenuItem(Factory->GetAssetName().c_str()))
                         {
-                            FString StringPath(SelectedPath.string().c_str());
-                            FString NewFileName(StringPath + "/" + "NewMaterial.lasset");
+                            FString RelativePath = Paths::MakeRelativeTo(SelectedPath.string().c_str(), FProject::Get()->GetProjectContentDirectory());
+    
+                            FString NewFileName(RelativePath + "/NewMaterial.lasset");
                             if (Factory->CreateNew(NewFileName) != FAssetPath())
                             {
                                 ToolContext->OpenAssetPath(NewFileName);

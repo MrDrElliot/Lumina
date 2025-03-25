@@ -13,6 +13,14 @@ namespace Lumina
 
 namespace Lumina
 {
+
+    class FShaderChunk
+    {
+    public:
+        
+        FString Data;
+    };
+    
     class FMaterialCompiler
     {
     public:
@@ -25,44 +33,33 @@ namespace Lumina
             FMaterialNodePin*   ErrorPin = nullptr;
         };
 
-        FString GetResult() const { return StringStream.str().c_str(); }
         
         FORCEINLINE bool HasErrors() const { return !Errors.empty(); }
         FORCEINLINE void AddError(const FError& Error) { Errors.push_back(Error); }
         FORCEINLINE const TVector<FError>& GetErrors() const { return Errors; }
 
+        FString BuildTree();
 
-        uint32 Add(uint32 A, uint32 B);
-        uint32 Subtract(uint32 A, uint32 B);
-        uint32 Multiply(uint32 A, uint32 B);
-        uint32 Divide(uint32 A, uint32 B);
+        void DefineConstantFloat(const FString& ID, float Value);
+        void DefineConstantFloat2(const FString& ID, float Value[2]);
+        void DefineConstantFloat3(const FString& ID, float Value[3]);
+        void DefineConstantFloat4(const FString& ID, float Value[4]);
 
+        void Multiply(FMaterialInput* A, FMaterialInput* B);
+        void Divide(FMaterialInput* A, FMaterialInput* B);
+        void Add(FMaterialInput* A, FMaterialInput* B);
+        void Subtract(FMaterialInput* A, FMaterialInput* B);
+
+        void AddRaw(const FString& Raw);
+        
         //-----------------------------------------------------------------------------
-        
-        FMaterialCompiler* operator << (const FString& str)
-        {
-            StringStream << str.c_str();
-            return this;
-        }
-        
-        FMaterialCompiler* operator << (const std::string& str)
-        {
-            StringStream << str;
-            return this;
-        }
-
-        FMaterialCompiler* operator << (const char* str)
-        {
-            StringStream << str;
-            return this;
-        }
-
+    
     private:
 
-        FMaterialGraphNode*         CurrentNode = nullptr;
-        FMaterialNodePin*           CurrentPin =  nullptr;
-        std::stringstream           StringStream;
-        TVector<FError>             Errors;
+        FMaterialGraphNode*                 CurrentNode = nullptr;
+        FMaterialNodePin*                   CurrentPin =  nullptr;
+        TVector<FShaderChunk>               ShaderChunks;
+        TVector<FError>                     Errors;
         
     };
 }

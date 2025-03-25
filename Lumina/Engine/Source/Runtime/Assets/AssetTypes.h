@@ -50,6 +50,7 @@ namespace Lumina
             case EAssetType::SkeletalMesh:          return "SkeletalMesh";
             case EAssetType::Texture:               return "Texture";
             case EAssetType::MaterialInstance:      return "MaterialInstance";
+            case EAssetType::Material:              return "Material";
             case EAssetType::Prefab:                return "Prefab";
             case EAssetType::Scene:                 return "Scene";
             case EAssetType::Max:                   return "INVALID";

@@ -32,7 +32,7 @@ namespace Lumina
         //~ IRefCountedObject Interface
 
         FORCEINLINE void FreeAssetMemory() { Assert(ReferenceCount == 0); delete AssetPtr; AssetPtr = nullptr; }
-        FORCEINLINE void SetLoadingState(EAssetLoadState NewState) { LoadState = NewState; }
+        FORCEINLINE void SetLoadingState(EAssetLoadState NewState) { LoadState.store(NewState, eastl::memory_order_relaxed); }
         FORCEINLINE void SetAssetPtr(IAsset* InPtr) { Assert(AssetPtr == nullptr); AssetPtr = InPtr; }
 
         FORCEINLINE void SetDependencies(TVector<FAssetHandle>&& InDependences) { AssetDependencies = FMemory::Move(InDependences); }
@@ -44,8 +44,16 @@ namespace Lumina
         FORCEINLINE FAssetPath& GetAssetPath()              { return AssetPath; }
         FORCEINLINE EAssetType GetAssetType() const         { return AssetType; }
 
+        FORCEINLINE bool HasLoadingFailed() const { return GetLoadState() == EAssetLoadState::Failed; }
         FORCEINLINE bool IsLoaded() const   { return GetLoadState() == EAssetLoadState::Loaded; }
         FORCEINLINE bool IsUnloaded() const { return GetLoadState() == EAssetLoadState::Unloaded; }
+
+        template<typename T>
+        requires(eastl::is_base_of_v<IAsset, T>)
+        T* GetAssetPtr()
+        {
+            return (T*)AssetPtr;
+        }
         
     private:
 

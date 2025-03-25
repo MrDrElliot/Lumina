@@ -4,14 +4,29 @@
 #include "Renderer/RHIIncl.h"
 #include "Assets/AssetTypes/Material/Material.h"
 #include "Core/Serialization/MemoryArchiver.h"
+#include "Paths/Paths.h"
 #include "Platform/Filesystem/FileHelper.h"
+#include "Project/Project.h"
 
 namespace Lumina
 {
 
     ELoadResult FMaterialFactory::LoadFromDisk(FAssetRecord* InRecord)
     {
-        return {};
+        TVector<uint8> Data;
+        if (!FFileHelper::LoadFileToArray(Data, InRecord->GetAssetPath().GetPathAsString()))
+        {
+            return ELoadResult::Failed;
+        }
+        
+        FMemoryReader Reader(Data);
+        AMaterial* Material = FMemory::New<AMaterial>();
+        Material->SetAssetPath(InRecord->GetAssetPath());
+        Material->Serialize(Reader);
+
+        InRecord->SetAssetPtr(Material);
+
+        return ELoadResult::Succeeded;
     }
 
     FAssetPath FMaterialFactory::CreateNew(const FString& Path)
@@ -22,13 +37,15 @@ namespace Lumina
         Header.Version = 1;
         Header.Type = EAssetType::Material;
 
-        if (FFileHelper::CreateNewFile(Path, true))
+        FString FullPathName = Paths::CombinePaths(FProject::Get()->GetProjectContentDirectory(), Path);
+
+        if (FFileHelper::CreateNewFile(FullPathName, true))
         {
             TVector<uint8> Buffer;
             FMemoryWriter Writer(Buffer);
             Writer << Header;
             
-            Assert(FFileHelper::SaveArrayToFile(Buffer, Path));
+            Assert(FFileHelper::SaveArrayToFile(Buffer, FullPathName));
 
             FAssetPath NewAsset(Path);
 

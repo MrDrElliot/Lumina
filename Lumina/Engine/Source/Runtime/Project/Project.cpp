@@ -39,4 +39,20 @@ namespace Lumina
         bHasProjectLoaded = true;
     }
 
+    FString FProject::GetProjectRootDirectory() const
+    {
+        std::filesystem::path Path = GetProjectSettings().ProjectPath.c_str();
+        Path = Path.parent_path();
+
+        return FString(Path.string().c_str());
+    }
+
+    FString FProject::GetProjectContentDirectory() const
+    {
+        std::filesystem::path Path = GetProjectSettings().ProjectPath.c_str();
+        Path = Path.parent_path() / "Game" / "Content";
+        FString StringPath(Path.string().c_str());
+        
+        return StringPath;
+    }
 }

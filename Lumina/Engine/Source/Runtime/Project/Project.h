@@ -24,8 +24,11 @@ namespace Lumina
 
         FORCEINLINE bool HasLoadedProject() const { return bHasProjectLoaded; }
         const FString& GetProjectPath() const { return Settings.ProjectPath; }
+        FString GetProjectRootDirectory() const;
         
         const FSettings& GetProjectSettings() const { return Settings; }
+
+        FString GetProjectContentDirectory() const;
 
 
     private:

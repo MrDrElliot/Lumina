@@ -4,16 +4,15 @@
 #include <nlohmann/json.hpp>
 #include "Paths/Paths.h"
 #include "Platform/Filesystem/FileHelper.h"
+#include "Project/Project.h"
 
 namespace Lumina
 {
     void FAssetRegistry::Initialize(FSubsystemManager& Manager)
     {
         TVector<uint8> Buffer;
-        using Path = std::filesystem::path;
         
-        Path FinalPath = Paths::GetEngineInstallDirectory() / "Applications" / "LuminaEditor" / "AssetRegistry.json";
-        FString PathString = FinalPath.string().c_str();
+        FString PathString = FFileHelper::FileFinder("AssetRegistry.json", FProject::Get()->GetProjectRootDirectory());
 
         FString FileString;
         if (!FFileHelper::LoadFileIntoString(FileString, PathString))
@@ -45,7 +44,7 @@ namespace Lumina
                 
                 FAssetHeader Header;
                 Header.Version = value["Version"].get<int32>();
-                Header.Guid.FromString(value["Guid"].get<std::string>().c_str());
+                Header.Guid = FGuid((value["Guid"].get<std::string>().c_str()));
                 Header.Type = static_cast<EAssetType>(value["Type"].get<int32>());
                 Header.Path = Path;
 
@@ -74,7 +73,7 @@ namespace Lumina
         {
             json JsonHeader;
             JsonHeader["Version"] = Reg.second.Version;
-            JsonHeader["Guid"] = Reg.second.Guid.ToString().c_str();
+            JsonHeader["Guid"] = Reg.second.Guid.String().c_str();
             JsonHeader["Type"] = static_cast<int32>(Reg.second.Type);
             JsonHeader["Path"] =
             {
@@ -86,7 +85,7 @@ namespace Lumina
             json JsonDependencies = json::array();
             for (const auto& Dep : Reg.second.Dependencies)
             {
-                JsonDependencies.push_back(Dep.AssetPath.GetPathAsString().c_str());
+                //JsonDependencies.push_back(Dep.AssetPath.GetPathAsString().c_str());
             }
             
             JsonHeader["Dependencies"] = JsonDependencies;
@@ -95,9 +94,8 @@ namespace Lumina
         }
 
         FString jsonString = JsonRegistry.dump(4).c_str();
-
-        std::filesystem::path FinalPath = Paths::GetEngineInstallDirectory() / "Applications" / "LuminaEditor" / "AssetRegistry.json";
-        FString PathString = FinalPath.string().c_str();
+        
+        FString PathString = FFileHelper::FileFinder("AssetRegistry.json", FProject::Get()->GetProjectRootDirectory());
         
         FFileHelper::SaveStringToFile(jsonString, PathString);
     }
@@ -145,5 +143,13 @@ namespace Lumina
         }
         
         return {};
+    }
+
+    void FAssetRegistry::GetAllAssetHeaders(TVector<FAssetHeader>& Headers)
+    {
+        for (const auto& Pair : Registry)
+        {
+            Headers.push_back(Pair.second);
+        }
     }
 }

@@ -1,1 +1,12 @@
-null
+{
+    "./NewMaterial.lasset": {
+        "Dependencies": [],
+        "Guid": "6EDC14BD-6E7E-4EBF-B066-56ABFC3B42BD",
+        "Path": {
+            "AssetPath": "./NewMaterial.lasset",
+            "RawPath": ""
+        },
+        "Type": 3,
+        "Version": 1
+    }
+}

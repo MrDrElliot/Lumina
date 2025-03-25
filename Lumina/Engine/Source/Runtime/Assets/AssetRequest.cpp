@@ -7,7 +7,7 @@ namespace Lumina
 {
     bool FAssetRequest::Update(FRequestCallbackContext& Context)
     {
-        switch (LoadState)
+        switch (LoadState.load())
         {
             case ELoadStage::LoadResource:
             {
@@ -48,7 +48,7 @@ namespace Lumina
         if (LoadResult == ELoadResult::Failed)
         {
             LOG_ERROR("Resource Request: Failed to load resource data {0}!", AssetRecord->GetAssetPath());
-            LoadState = ELoadStage::Complete;
+            LoadState.store(ELoadStage::Complete, eastl::memory_order_relaxed);
             AssetRecord->SetLoadingState(EAssetLoadState::Failed);
             return;
         }
@@ -56,7 +56,7 @@ namespace Lumina
         /** This may happen because we are waiting on RHI resource upload. */
         if (LoadResult == ELoadResult::InProgress)
         {
-            LoadState = ELoadStage::LoadingResource;
+            LoadState.store(ELoadStage::LoadingResource, eastl::memory_order_relaxed);
             return;
         }
 
@@ -68,7 +68,7 @@ namespace Lumina
         }
 
         /** This resource is fully loaded, wait for dependencies to finish */
-        LoadState = ELoadStage::WaitForDependencies;
+        LoadState.store(ELoadStage::WaitForDependencies, eastl::memory_order_relaxed);
         
     }
 
@@ -91,12 +91,12 @@ namespace Lumina
 
         if (FinishedDependencies.size() != PendingDependencies.size())
         {
-            LoadState = ELoadStage::WaitForDependencies;
+            LoadState.store(ELoadStage::WaitForDependencies, eastl::memory_order_relaxed);
         }
         else
         {
             AssetRecord->GetAssetPtr()->PostLoadDependencies();
-            LoadState = ELoadStage::Complete;
+            LoadState.store(ELoadStage::Complete, eastl::memory_order_relaxed);
             AssetRecord->SetLoadingState(EAssetLoadState::Loaded);
             AssetRecord->GetAssetPtr()->PostLoad();
         }

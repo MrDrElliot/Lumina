@@ -1,6 +1,7 @@
 
 #include "AssetManager.h"
 
+#include "Core/Math/Hash/Hash.h"
 #include "Core/Performance/PerformanceTracker.h"
 
 namespace Lumina
@@ -17,6 +18,7 @@ namespace Lumina
     void FAssetManager::Initialize(FSubsystemManager& Manager)
     {
         AssetRequestThread = std::thread(&FAssetManager::ProcessAssetRequests, this);
+        
     }
 
     void FAssetManager::Deinitialize()
@@ -26,7 +28,8 @@ namespace Lumina
         {
             AssetRequestThread.join();
         }
-
+        
+        rpmalloc_thread_finalize(1);
         AssetRecord.clear();
     }
 
@@ -34,7 +37,7 @@ namespace Lumina
     {
     }
 
-    void FAssetManager::LoadAsset(FAssetHandle& InAsset)
+    FAssetRecord* FAssetManager::LoadAsset(FAssetHandle& InAsset)
     {
         FAssetRecord* FoundRecord = FindOrCreateAssetRecord(InAsset);
         Assert(FoundRecord);
@@ -44,6 +47,8 @@ namespace Lumina
         Assert(ActiveRequest);
         
         RequestQueue.push(ActiveRequest);
+
+        return FoundRecord;
     }
 
     void FAssetManager::UnloadAsset(FAssetHandle& InAsset)
@@ -63,9 +68,7 @@ namespace Lumina
 
     void FAssetManager::NotifyAssetRequestCompleted(FAssetRequest* Request)
     {
-        
-
-        delete Request;
+        FMemory::Delete(Request);
     }
 
     FAssetRecord* FAssetManager::FindOrCreateAssetRecord(const FAssetHandle& InAsset)
@@ -78,11 +81,13 @@ namespace Lumina
         if (Itr == AssetRecord.end())
         {
             Record = FMemory::New<FAssetRecord>(InAsset.GetAssetPath(), InAsset.GetAssetType());
+            AssetRecord.emplace(InAsset.GetAssetPath(), Record);
         }
         else
         {
             Record = Itr->second;
         }
+
 
         return Record;
         
@@ -101,47 +106,49 @@ namespace Lumina
 
     FAssetRequest* FAssetManager::TryFindActiveRequest(FAssetRecord* Record)
     {
-        FAssetRequest* NewRequest = nullptr;
-        auto It = eastl::find_if(ActiveRequests.begin(), ActiveRequests.end(), [Record] (const FAssetRequest* Request)
+        auto It = eastl::find_if(ActiveRequests.begin(), ActiveRequests.end(), [Record](const FAssetRequest* Request)
         {
             return Request->GetAssetRecord() == Record;
         });
-        
-        if (It == ActiveRequests.end())
+
+        if (It != ActiveRequests.end())
         {
-            
-            FFactory* Factory = FactoryRegistry.GetFactory(Record->GetAssetType());
-            NewRequest = new FAssetRequest(Record, Factory);
+            return *It;
         }
-        else
+
+        FFactory* Factory = FactoryRegistry.GetFactory(Record->GetAssetType());
+        if (!Factory) 
         {
-            NewRequest = *It;
+            return nullptr;
         }
+
+        FAssetRequest* NewRequest = FMemory::New<FAssetRequest>(Record, Factory);
+        ActiveRequests.push_back(NewRequest);
 
         return NewRequest;
     }
 
+
     void FAssetManager::ProcessAssetRequests()
     {
+        rpmalloc_thread_initialize();
+        
         while (bAssetThreadRunning)
         {
-            PROFILE_SCOPE(ProcessAssetRequests)
-            
             FAssetRequest::FRequestCallbackContext Context;
             Context.LoadAssetCallback = [this] (FAssetHandle& Handle) { LoadAsset(Handle); };
             
             while (!RequestQueue.empty())
             {
                 FAssetRequest* Request = RequestQueue.front();
+                RequestQueue.pop();
                 
                 if (Request->Update(Context))
                 {
                     NotifyAssetRequestCompleted(Request);
                 }
                 
-                RequestQueue.pop();
             }
-
             
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
