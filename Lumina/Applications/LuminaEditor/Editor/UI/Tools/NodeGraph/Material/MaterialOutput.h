@@ -5,14 +5,12 @@
 
 namespace Lumina
 {
-    class FMaterialOutput : public FEdNodeGraphPin
+    class CMaterialOutput : public CEdNodeGraphPin
     {
     public:
 
-        FMaterialOutput(EMaterialInputType Type)
-            :InputType(Type)
-        {}
-
+        DECLARE_CLASS(CMaterialOutput, CEdNodeGraphPin)
+        
         void DrawPin() override;
         
         EMaterialInputType  InputType = EMaterialInputType::Float;

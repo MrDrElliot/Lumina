@@ -5,32 +5,40 @@
 
 namespace Lumina
 {
-    class FMaterialExpression : public FMaterialGraphNode
+    class CMaterialExpression : public CMaterialGraphNode
     {
     public:
 
+        DECLARE_CLASS_ABSTRACT(CMaterialExpression, CMaterialGraphNode)
+
         void BuildNode() override;
         
-        FMaterialOutput* Output;
+        CMaterialOutput* Output;
         
     };
 
-    class FMaterialExpression_Math : public FMaterialExpression
+    class CMaterialExpression_Math : public CMaterialExpression
     {
     public:
+        
+        DECLARE_CLASS_ABSTRACT(CMaterialExpression_Math, CMaterialExpression)
+
 
         void BuildNode() override;
         
-        FMaterialInput* A;
-        FMaterialInput* B;
+        CMaterialInput* A;
+        CMaterialInput* B;
         
     };
     
-    class FMaterialExpression_Addition : public FMaterialExpression_Math
+    class CMaterialExpression_Addition : public CMaterialExpression_Math
     {
     public:
 
-        LUMINA_ED_GRAPH_NODE(FMaterialExpression_Addition, "Addition", "X + Y")
+        DECLARE_CLASS(CMaterialExpression_Addition, CMaterialExpression_Math)
+        
+        LUMINA_ED_GRAPH_NODE(CMaterialExpression_Addition, "Addition", "X + Y")
+
         
         void BuildNode() override;
 
@@ -39,18 +47,20 @@ namespace Lumina
         uint32 GenerateExpression(FMaterialCompiler* Compiler) override { return 0; }
         void GenerateDefinition(FMaterialCompiler* Compiler) override;
         
-        FMaterialInput* A;
-        FMaterialInput* B;
+        CMaterialInput* A;
+        CMaterialInput* B;
 
         float ConstA;
         float ConstB;
     };
-
-    class FMaterialExpression_Subtraction : public FMaterialExpression_Math
+    
+    class CMaterialExpression_Subtraction : public CMaterialExpression_Math
     {
     public:
-        
-        LUMINA_ED_GRAPH_NODE(FMaterialExpression_Subtraction, "Subtraction", "X - Y")
+
+        DECLARE_CLASS(CMaterialExpression_Subtraction, CMaterialExpression_Math)
+
+        LUMINA_ED_GRAPH_NODE(CMaterialExpression_Subtraction, "Subtraction", "X - Y")
 
         void BuildNode() override;
 
@@ -60,18 +70,20 @@ namespace Lumina
         uint32 GenerateExpression(FMaterialCompiler* Compiler) override { return 0; }
         void GenerateDefinition(FMaterialCompiler* Compiler) override;
         
-        FMaterialInput* A;
-        FMaterialInput* B;
+        CMaterialInput* A;
+        CMaterialInput* B;
 
         float ConstA;
         float ConstB;
     };
-
-    class FMaterialExpression_Multiplication : public FMaterialExpression_Math
+    
+    class CMaterialExpression_Multiplication : public CMaterialExpression_Math
     {
     public:
 
-        LUMINA_ED_GRAPH_NODE(FMaterialExpression_Multiplication, "Multiplication", "X * Y")
+        DECLARE_CLASS(CMaterialExpression_Multiplication, CMaterialExpression_Math)
+
+        LUMINA_ED_GRAPH_NODE(CMaterialExpression_Multiplication, "Multiplication", "X * Y")
 
         
         void BuildNode() override;
@@ -81,18 +93,21 @@ namespace Lumina
         uint32 GenerateExpression(FMaterialCompiler* Compiler) override { return 0; }
         void GenerateDefinition(FMaterialCompiler* Compiler) override;
 
-        FMaterialInput* A;
-        FMaterialInput* B;
+        CMaterialInput* A;
+        CMaterialInput* B;
 
         float ConstA;
         float ConstB;
     };
+    
 
-    class FMaterialExpression_Division : public FMaterialExpression_Math
+    
+    class CMaterialExpression_Division : public CMaterialExpression_Math
     {
     public:
 
-        LUMINA_ED_GRAPH_NODE(FMaterialExpression_Division, "Division", "X / Y")
+        DECLARE_CLASS(CMaterialExpression_Division, CMaterialExpression_Math)
+        LUMINA_ED_GRAPH_NODE(CMaterialExpression_Division, "Division", "X / Y")
 
         void BuildNode() override;
 
@@ -101,8 +116,8 @@ namespace Lumina
         uint32 GenerateExpression(FMaterialCompiler* Compiler) override { return 0; }
         void GenerateDefinition(FMaterialCompiler* Compiler) override;
 
-        FMaterialInput* A;
-        FMaterialInput* B;
+        CMaterialInput* A;
+        CMaterialInput* B;
 
         float ConstA;
         float ConstB;
@@ -112,11 +127,13 @@ namespace Lumina
     //---------------------------------------------------------------------------------------------------------
 
 
-    class FMaterialExpression_Constant : public FMaterialExpression
+    class CMaterialExpression_Constant : public CMaterialExpression
     {
     public:
 
-        FMaterialExpression_Constant(EMaterialInputType Input)
+        DECLARE_CLASS_ABSTRACT(CMaterialExpression_Constant, CMaterialExpression_Math)
+
+        CMaterialExpression_Constant(EMaterialInputType Input)
             :ValueType(Input)
         {}
 
@@ -129,50 +146,54 @@ namespace Lumina
         
     };
 
-    class FMaterialExpression_ConstantFloat : public FMaterialExpression_Constant
+    class CMaterialExpression_ConstantFloat : public CMaterialExpression_Constant
     {
     public:
 
-        LUMINA_ED_GRAPH_NODE(FMaterialExpression_ConstantFloat, "Float", "Static float value")
+        DECLARE_CLASS(CMaterialExpression_ConstantFloat, CMaterialExpression_Constant)
+
+        LUMINA_ED_GRAPH_NODE(CMaterialExpression_ConstantFloat, "Float", "Static float value")
         
-        FMaterialExpression_ConstantFloat()
-            :FMaterialExpression_Constant(EMaterialInputType::Float)
+        CMaterialExpression_ConstantFloat()
+            :CMaterialExpression_Constant(EMaterialInputType::Float)
         {}
 
         FString GetNodeDisplayName() const override { return "Float"; }
         uint32 GenerateExpression(FMaterialCompiler* Compiler) override;
         void GenerateDefinition(FMaterialCompiler* Compiler) override;
         
-        
     };
 
-    class FMaterialExpression_ConstantFloat2 : public FMaterialExpression_Constant
+    class CMaterialExpression_ConstantFloat2 : public CMaterialExpression_Constant
     {
     public:
-        
-        LUMINA_ED_GRAPH_NODE(FMaterialExpression_ConstantFloat2, "Vector 2", "Static vec2 value")
+        DECLARE_CLASS(CMaterialExpression_ConstantFloat2, CMaterialExpression_Constant)
+
+        LUMINA_ED_GRAPH_NODE(CMaterialExpression_ConstantFloat2, "Vector 2", "Static vec2 value")
 
 
-        FMaterialExpression_ConstantFloat2()
-            :FMaterialExpression_Constant(EMaterialInputType::Float2)
+        CMaterialExpression_ConstantFloat2()
+            :CMaterialExpression_Constant(EMaterialInputType::Float2)
         {}
         
         FString GetNodeDisplayName() const override { return "Vec2"; }
         uint32 GenerateExpression(FMaterialCompiler* Compiler) override;
         void GenerateDefinition(FMaterialCompiler* Compiler) override;
-
         
     };
 
-    class FMaterialExpression_ConstantFloat3 : public FMaterialExpression_Constant
+    
+    class CMaterialExpression_ConstantFloat3 : public CMaterialExpression_Constant
     {
     public:
 
-        LUMINA_ED_GRAPH_NODE(FMaterialExpression_ConstantFloat3, "Vector 3", "Static vec3 value")
+        DECLARE_CLASS(CMaterialExpression_ConstantFloat3, CMaterialExpression_Constant)
+        
+        LUMINA_ED_GRAPH_NODE(CMaterialExpression_ConstantFloat3, "Vector 3", "Static vec3 value")
 
         
-        FMaterialExpression_ConstantFloat3()
-            :FMaterialExpression_Constant(EMaterialInputType::Float3)
+        CMaterialExpression_ConstantFloat3()
+            :CMaterialExpression_Constant(EMaterialInputType::Float3)
         {}
 
         FString GetNodeDisplayName() const override { return "Vec3"; }
@@ -180,17 +201,16 @@ namespace Lumina
         void GenerateDefinition(FMaterialCompiler* Compiler) override;
 
     };
-    
 
-    class FMaterialExpression_ConstantFloat4 : public FMaterialExpression_Constant
+    class CMaterialExpression_ConstantFloat4 : public CMaterialExpression_Constant
     {
     public:
-
-        LUMINA_ED_GRAPH_NODE(FMaterialExpression_ConstantFloat4, "Vector 4", "Static vec4 value")
-
         
-        FMaterialExpression_ConstantFloat4()
-            :FMaterialExpression_Constant(EMaterialInputType::Float4)
+        DECLARE_CLASS(CMaterialExpression_ConstantFloat4, CMaterialExpression_Constant)
+        LUMINA_ED_GRAPH_NODE(CMaterialExpression_ConstantFloat4, "Vector 4", "Static vec4 value")
+        
+        CMaterialExpression_ConstantFloat4()
+            :CMaterialExpression_Constant(EMaterialInputType::Float4)
         {}
 
         FString GetNodeDisplayName() const override { return "Vec4"; }

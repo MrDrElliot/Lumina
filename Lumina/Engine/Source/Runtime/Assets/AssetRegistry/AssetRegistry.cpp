@@ -119,6 +119,25 @@ namespace Lumina
         SaveRegistry();
     }
 
+    void FAssetRegistry::RenameAsset(FAssetPath& InAsset, const FString& NewName)
+    {
+        auto Itr = Registry.find(InAsset);
+        Assert(Itr != Registry.end());
+
+        FString FinalName = NewName;
+        if (!StringUtils::EndsWith(FinalName, ".lasset"))
+        {
+            FinalName += ".lasset";
+        }
+
+        FAssetHeader Header = Registry.at(InAsset);
+        Paths::ReplaceFilename(Header.Path.AssetPath, FinalName);
+        InAsset.AssetPath = Header.Path.AssetPath;
+
+        Registry.erase(Itr);
+        Registry.insert_or_assign(InAsset, Header);
+    }
+    
     void FAssetRegistry::AssetCreated(const FAssetPath& InPath, const FAssetHeader& Header)
     {
         Registry.insert_or_assign(InPath, Header);

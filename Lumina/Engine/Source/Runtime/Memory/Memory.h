@@ -83,7 +83,6 @@ public:
 
     static void Shutdown()
     {
-        std::cout << "Program Terminated with: " << GetTotalRequestedMemory() << " Bytes remaining \n";
         GIsMemorySystemInitialized = false;
         rpmalloc_finalize();
     }

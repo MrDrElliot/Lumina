@@ -4,11 +4,11 @@
 
 namespace Lumina
 {
-    void FMaterialOutput::DrawPin()
+    void CMaterialOutput::DrawPin()
     {
         if (ShouldDrawEditor())
         {
-            FMaterialGraphNode* MaterialNode = static_cast<FMaterialGraphNode*>(OwningNode);
+            CMaterialGraphNode* MaterialNode = static_cast<CMaterialGraphNode*>(OwningNode);
             float* NodeValue = MaterialNode->GetNodeDefaultValue();
             switch (InputType)
             {
@@ -43,4 +43,6 @@ namespace Lumina
             ImGui::Dummy(ImVec2(1.5f, 1.5f));
         }
     }
+    IMPLEMENT_CLASS(CMaterialOutput)
+
 }

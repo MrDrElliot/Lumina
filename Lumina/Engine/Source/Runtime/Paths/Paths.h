@@ -2,6 +2,8 @@
 
 #include <filesystem>
 #include <cstdlib>
+#include "Log/Log.h"
+#include "Project/Project.h"
 
 namespace Lumina::Paths
 {
@@ -19,7 +21,7 @@ namespace Lumina::Paths
         return std::filesystem::canonical(std::filesystem::current_path().parent_path().parent_path() / "Lumina" / "Engine");
     }
 
-    inline FString CombinePaths(const FString& A, const FString& B)
+    inline FString Combine(const FString& A, const FString& B)
     {
         std::filesystem::path PathA = A.c_str();
         std::filesystem::path PathB = B.c_str();
@@ -27,6 +29,40 @@ namespace Lumina::Paths
         std::filesystem::path Combined = PathA / PathB;
 
         return Combined.string().c_str();
+    }
+    
+
+    // Function to resolve a virtual path to an absolute path
+    inline FString ResolveVirtualPath(const FString& VirtualPath)
+    {
+        if (StringUtils::StartsWith(VirtualPath, "project://"))
+        {
+            // Remove the "project://" prefix and normalize the path to use forward slashes
+            FString PathWithoutPrefix = VirtualPath.substr(10);  // Remove "project://"
+            StringUtils::ReplaceAllOccurrencesInPlace(PathWithoutPrefix, "\\", "/");
+
+            // Get the project content directory and append the relative path
+            return FProject::Get()->GetProjectContentDirectory() + PathWithoutPrefix;
+        }
+        return VirtualPath;  // If the virtual path doesn't start with "project://", return it unchanged
+    }
+
+    // Function to convert an absolute path to a virtual path
+    inline FString ConvertToVirtualPath(const FString& AbsolutePath)
+    {
+        FString ProjectDir = FProject::Get()->GetProjectContentDirectory();
+    
+        // Normalize the absolute path to use forward slashes
+        FString NormalizedAbsolutePath = AbsolutePath;
+        StringUtils::ReplaceAllOccurrencesInPlace(NormalizedAbsolutePath, "\\", "/");
+
+        // If the absolute path starts with the project directory, convert it to a virtual path
+        if (StringUtils::StartsWith(NormalizedAbsolutePath, ProjectDir.c_str()))
+        {
+            // Replace the project content directory prefix with "project://"
+            return FString("project://") + NormalizedAbsolutePath.substr(ProjectDir.length());
+        }
+        return AbsolutePath;  // Return the path as-is if it's not part of the project
     }
 
     
@@ -57,6 +93,21 @@ namespace Lumina::Paths
         return RelativePath.string().c_str();
     }
 
+    inline void ReplaceFilename(FString& Path, const FString& NewFilename)
+    {
+        // Find the last occurrence of a path separator
+        size_t LastSlash = Path.find_last_of("/\\");
+    
+        if (LastSlash != FString::npos)
+        {
+            // Extract directory and append the new filename
+            Path = Path.substr(0, LastSlash + 1) + NewFilename;
+            return;
+        }
+
+        // If no path separator is found, assume it's just a filename and replace it entirely
+        Path = NewFilename;
+    }
     
     inline std::filesystem::path GetEngineResourceDirectory()
     {

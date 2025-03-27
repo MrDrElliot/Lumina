@@ -30,6 +30,8 @@ namespace Lumina
 		
 		void CreateAssetHeader(const FAssetPath& InPath);
 
+		void RenameAsset(FAssetPath& InAsset, const FString& NewName);
+
 		void AssetCreated(const FAssetPath& InPath, const FAssetHeader& Header);
 		
 		FAssetHeader FindAssetHeader(const FAssetPath& InPath, bool* bSuccess = nullptr);

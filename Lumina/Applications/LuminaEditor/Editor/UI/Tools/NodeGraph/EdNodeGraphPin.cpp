@@ -2,7 +2,7 @@
 
 namespace Lumina
 {
-    void FEdNodeGraphPin::RemoveConnection(FEdNodeGraphPin* Pin)
+    void CEdNodeGraphPin::RemoveConnection(CEdNodeGraphPin* Pin)
     {
         VectorRemove(Connections, Pin);
     }

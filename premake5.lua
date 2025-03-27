@@ -55,5 +55,6 @@ workspace "Lumina"
 
 	group "Applications"
 		include "Lumina/Applications/LuminaEditor"
+		include "Lumina/Applications/Reflector"
 		include "Lumina/Applications/Sandbox"
 	group ""

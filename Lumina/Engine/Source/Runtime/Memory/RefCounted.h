@@ -19,7 +19,7 @@ namespace Lumina
 	};
 
 	/** Intrusive Smart Pointer Implementation */
-	class FRefCounted : public LEObject
+	class FRefCounted
 	{
 	public:
 

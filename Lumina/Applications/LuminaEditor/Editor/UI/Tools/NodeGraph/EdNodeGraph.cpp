@@ -9,10 +9,12 @@
 
 namespace Lumina
 {
-
+    
     uint16 GNodeID = 0;
     
-    FEdNodeGraph::FEdNodeGraph()
+    IMPLEMENT_CLASS(CEdNodeGraph)
+    
+    CEdNodeGraph::CEdNodeGraph()
     {
         ImNodesContext = ImNodes::EditorContextCreate();
         //ImNodes::PushAttributeFlag(ImNodesAttributeFlags_EnableLinkDetachWithDragClick);
@@ -62,9 +64,9 @@ namespace Lumina
     }
 
 
-    FEdNodeGraph::~FEdNodeGraph()
+    CEdNodeGraph::~CEdNodeGraph()
     {
-        for (FEdGraphNode* Node : Nodes)
+        for (CEdGraphNode* Node : Nodes)
         {
             FMemory::Delete(Node);            
         }
@@ -72,15 +74,18 @@ namespace Lumina
         ImNodes::EditorContextFree(ImNodesContext);
     }
 
-    void FEdNodeGraph::Serialize(FArchive& Ar)
+    void CEdNodeGraph::Serialize(FArchive& Ar)
     {
-        for (FEdGraphNode* Node : Nodes)
+        uint32 NumNodes = Ar.IsReading() ? 0 : Nodes.size();
+        Ar << NumNodes;
+        
+        for (CEdGraphNode* Node : Nodes)
         {
             Node->Serialize(Ar);
         }
     }
 
-    void FEdNodeGraph::DrawGraph()
+    void CEdNodeGraph::DrawGraph()
     {
         ImNodes::EditorContextSet(ImNodesContext);
 
@@ -102,7 +107,7 @@ namespace Lumina
                 {
                     if (ImGui::MenuItem(KVP.first.c_str()))
                     {
-                        FEdGraphNode* NewNode = KVP.second.CreationCallback();
+                        CEdGraphNode* NewNode = KVP.second.CreationCallback();
                         uint32 NodeID = AddNode(NewNode);
                         ImNodes::SetNodeScreenSpacePos(NodeID, MousePos);
                     }
@@ -114,15 +119,15 @@ namespace Lumina
         }
         ImGui::PopStyleVar();
 
-        TVector<TPair<FEdNodeGraphPin*, FEdNodeGraphPin*>> Links;
+        TVector<TPair<CEdNodeGraphPin*, CEdNodeGraphPin*>> Links;
         Links.reserve(40);
         
-        THashMap<uint32, FEdNodeGraphPin*> PinMap;
+        THashMap<uint32, CEdNodeGraphPin*> PinMap;
         PinMap.reserve(40);
     
         for (uint64 i = 0; i < Nodes.size(); ++i)
         {
-            FEdGraphNode* Node = Nodes[i];
+            CEdGraphNode* Node = Nodes[i];
             
             ImNodes::PushColorStyle(ImNodesCol_TitleBar, Node->GetNodeTitleColor());
 
@@ -140,10 +145,10 @@ namespace Lumina
             ImGui::Dummy(ImVec2(Node->GetMinNodeSize().x, 0.1f));
             ImNodes::EndNodeTitleBar();
 
-            const TVector<FEdNodeGraphPin*>& OutputPins = Node->GetOutputPins();
+            const TVector<CEdNodeGraphPin*>& OutputPins = Node->GetOutputPins();
             for (uint64 j = 0; j < OutputPins.size(); ++j)
             {
-                FEdNodeGraphPin* Pin = OutputPins[j];
+                CEdNodeGraphPin* Pin = OutputPins[j];
     
                 ImNodes::PushColorStyle(ImNodesCol_Pin, Pin->GetPinColor());
     
@@ -173,10 +178,10 @@ namespace Lumina
                 PinMap.insert_or_assign(Pin->GUID, Pin);
             }
 
-            const TVector<FEdNodeGraphPin*>& InputPins = Node->GetInputPins();
+            const TVector<CEdNodeGraphPin*>& InputPins = Node->GetInputPins();
             for (uint64 j = 0; j < InputPins.size(); ++j)
             {
-                FEdNodeGraphPin* Pin = InputPins[j];
+                CEdNodeGraphPin* Pin = InputPins[j];
                 
                 ImNodes::PushColorStyle(ImNodesCol_Pin, Pin->GetPinColor());
                 
@@ -208,11 +213,11 @@ namespace Lumina
             
             for (uint64 j = 0; j < InputPins.size(); ++j)
             {
-                FEdNodeGraphPin* InputPin = InputPins[j];
+                CEdNodeGraphPin* InputPin = InputPins[j];
                 
                 Assert(InputPin->GetConnections().size() <= 1);
 
-                for (FEdNodeGraphPin* Connection : InputPin->GetConnections())
+                for (CEdNodeGraphPin* Connection : InputPin->GetConnections())
                 {
                     Links.push_back(TPair(InputPin, Connection));
                 }
@@ -244,7 +249,7 @@ namespace Lumina
     
         for (int i = 0; i < Links.size(); ++i)
         {
-            const TPair<FEdNodeGraphPin*, FEdNodeGraphPin*>& Pair = Links[i];
+            const TPair<CEdNodeGraphPin*, CEdNodeGraphPin*>& Pair = Links[i];
         
             ImNodes::Link(i, Pair.first->GUID, Pair.second->GUID);
         }
@@ -255,10 +260,10 @@ namespace Lumina
         int Start, End;
         if (ImNodes::IsLinkCreated(&Start, &End))
         {
-            FEdNodeGraphPin* StartPin = nullptr;
-            FEdNodeGraphPin* EndPin = nullptr;
+            CEdNodeGraphPin* StartPin = nullptr;
+            CEdNodeGraphPin* EndPin = nullptr;
     
-            for (FEdGraphNode* Node : Nodes)
+            for (CEdGraphNode* Node : Nodes)
             {
                 StartPin = Node->GetPin(Start, ENodePinDirection::Output);
                 if (StartPin)
@@ -267,7 +272,7 @@ namespace Lumina
                 }
             }
 
-            for (FEdGraphNode* Node : Nodes)
+            for (CEdGraphNode* Node : Nodes)
             {
                 EndPin = Node->GetPin(End, ENodePinDirection::Input);
                 if (EndPin)
@@ -298,7 +303,7 @@ namespace Lumina
             int ID;
             if (ImNodes::IsLinkDestroyed(&ID))
             {
-                const TPair<FEdNodeGraphPin*, FEdNodeGraphPin*>& Pair = Links[ID];
+                const TPair<CEdNodeGraphPin*, CEdNodeGraphPin*>& Pair = Links[ID];
 
                 Pair.first->RemoveConnection(Pair.second);
                 Pair.second->RemoveConnection(Pair.first);
@@ -309,12 +314,12 @@ namespace Lumina
     }
 
 
-    void FEdNodeGraph::OnDrawGraph()
+    void CEdNodeGraph::OnDrawGraph()
     {
         
     }
 
-    void FEdNodeGraph::RegisterGraphAction(const FString& ActionName, const TFunction<void()>& ActionCallback)
+    void CEdNodeGraph::RegisterGraphAction(const FString& ActionName, const TFunction<void()>& ActionCallback)
     {
         FAction NewAction;
         NewAction.ActionName = ActionName;
@@ -323,7 +328,7 @@ namespace Lumina
         Actions.push_back(NewAction);
     }
 
-    uint32 FEdNodeGraph::AddNode(FEdGraphNode* InNode)
+    uint32 CEdNodeGraph::AddNode(CEdGraphNode* InNode)
     {
         Nodes.push_back(InNode);
         

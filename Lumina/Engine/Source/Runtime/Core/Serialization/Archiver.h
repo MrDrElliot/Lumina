@@ -33,6 +33,8 @@ inline EArchiverFlags operator~(EArchiverFlags flag)
 
 namespace Lumina
 {
+    class CObject;
+
     class FArchive
     {
     public:
@@ -68,6 +70,11 @@ namespace Lumina
         /** Returns the maximum size of data that this archive is allowed to serialize. */
         FORCEINLINE int64 GetMaxSerializeSize() const { return ArMaxSerializeSize; }
 
+        
+        virtual FArchive& operator<<(CObject*& Value)
+        {
+            return *this;
+        }
     
         FORCEINLINE FArchive& operator<<(uint8& Value)
         {

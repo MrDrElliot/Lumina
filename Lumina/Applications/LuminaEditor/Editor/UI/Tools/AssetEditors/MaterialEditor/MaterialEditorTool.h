@@ -4,7 +4,7 @@
 
 namespace Lumina
 {
-    class FMaterialNodeGraph;
+    class CMaterialNodeGraph;
 
     class FMaterialEditorTool : public FAssetEditorTool
     {
@@ -40,7 +40,7 @@ namespace Lumina
     private:
 
         FCompilationResultInfo CompilationResult;
-        FMaterialNodeGraph* NodeGraph;
+        CMaterialNodeGraph* NodeGraph;
         
     };
 }

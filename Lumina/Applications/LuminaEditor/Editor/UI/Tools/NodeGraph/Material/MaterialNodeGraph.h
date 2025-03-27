@@ -9,11 +9,13 @@ namespace Lumina
 
 namespace Lumina
 {
-    class FMaterialNodeGraph : public FEdNodeGraph
+    class CMaterialNodeGraph : public CEdNodeGraph
     {
     public:
 
-        FMaterialNodeGraph();
+        DECLARE_CLASS(CMaterialNodeGraph, CEdGraphNode)
+        
+        CMaterialNodeGraph();
 
         void OnDrawGraph() override;
         void CompileGraph(FMaterialCompiler* Compiler);
@@ -22,7 +24,7 @@ namespace Lumina
 
     private:
 
-        static FEdGraphNode* TopologicalSort(const TVector<FEdGraphNode*>& Nodes, TVector<FEdGraphNode*>& SortedNodes);
+        static CEdGraphNode* TopologicalSort(const TVector<CEdGraphNode*>& Nodes, TVector<CEdGraphNode*>& SortedNodes);
     
     };
 }

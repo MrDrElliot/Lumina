@@ -89,6 +89,8 @@ namespace Lumina
         FEditorTool*                                    LastActiveTool = nullptr;
         FString                                         FocusTargetWindowName; // If this is set we need to switch focus to this window
 
+        THashMap<FGuid, FEditorTool*>                   ActiveAssetTools;
+        
         FEditorModalManager                             ModalManager; 
         bool                                            bDearImGuiDemoWindowOpen = false;
 

@@ -1,7 +1,6 @@
 ﻿#include "EditorUI.h"
 
 #include "imgui.h"
-#include "imnodes.h"
 #include "Assets/AssetRegistry/AssetRegistry.h"
 #include "Memory/Memory.h"
 #include "Project/Project.h"
@@ -79,7 +78,7 @@ namespace Lumina
             DrawTitleBarInfoStats(UpdateContext);
         };
 
-        TitleBar.Draw(TitleBarLeftContents, 250, TitleBarRightContents, 160);
+        TitleBar.Draw(TitleBarLeftContents, 250, TitleBarRightContents, 290);
 
         const ImGuiID DockspaceID = ImGui::GetID("EditorDockSpace");
 
@@ -238,9 +237,13 @@ namespace Lumina
         bool bSuccess;
         FAssetHeader Header = AssetRegistry->FindAssetHeader(InPath, &bSuccess);
 
-        if (bSuccess)
+        // We don't want to open duplicate asset editors.
+        if (ActiveAssetTools.find(Header.Guid) == ActiveAssetTools.end())
         {
-            CreateTool<FMaterialEditorTool>(this, InPath);
+            if (bSuccess)
+            {
+                ActiveAssetTools.insert_or_assign(Header.Guid, CreateTool<FMaterialEditorTool>(this, InPath));
+            }
         }
     }
     
@@ -713,6 +716,13 @@ namespace Lumina
         TInlineString<100> const perfStats( TInlineString<100>::CtorSprintf(),  "FPS: %3.0f", currentFPS );
         ImGui::Text(perfStats.c_str());
 
+        
+        ImGui::SameLine();
+        uint32 CObjectCount = GObjectVector.size();
+        TInlineString<100> const ObjectStats(TInlineString<100>::CtorSprintf(),  "CObject Count: %i", CObjectCount);
+        ImGui::Text(ObjectStats.c_str());
+
+        
         ImGui::SameLine();
         float const allocatedMemory = FMemory::GetTotalAllocatedMemory() / 1024.0f / 1024.0f;
         TInlineString<100> const memStats( TInlineString<100>::CtorSprintf(), "MEM: %.2fMB", allocatedMemory );

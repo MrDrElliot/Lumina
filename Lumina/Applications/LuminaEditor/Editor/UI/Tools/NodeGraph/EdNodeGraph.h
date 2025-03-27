@@ -10,15 +10,17 @@
 
 namespace Lumina
 {
-    class FEdGraphNode;
+    class CEdGraphNode;
 }
 
 namespace Lumina
 {
     
-    class FEdNodeGraph : public LEObject
+    class CEdNodeGraph : public CObject
     {
     public:
+
+        DECLARE_CLASS_ABSTRACT(CEdNodeGraph, CObject)
 
         struct FAction
         {
@@ -30,13 +32,13 @@ namespace Lumina
         {
             FString Name;
             FString Tooltip;
-            TFunction<FEdGraphNode*()> CreationCallback;
+            TFunction<CEdGraphNode*()> CreationCallback;
         };
 
         
 
-        FEdNodeGraph();
-        virtual ~FEdNodeGraph();
+        CEdNodeGraph();
+        virtual ~CEdNodeGraph();
 
         void Serialize(FArchive& Ar) override;
 
@@ -48,22 +50,21 @@ namespace Lumina
         virtual void ValidateGraph() = 0;
         
         template<typename T, typename... Args>
-        requires(std::is_base_of_v<FEdGraphNode, T> && std::is_constructible_v<T, Args...>)
+        requires(std::is_base_of_v<CEdGraphNode, T> && std::is_constructible_v<T, Args...>)
         T* CreateNode(Args&&... args);
 
         template<typename T, typename LAMBDA>
-        requires(std::is_invocable_r_v<FEdGraphNode*, LAMBDA>)
+        requires(std::is_invocable_r_v<CEdGraphNode*, LAMBDA>)
         void RegisterGraphNode(LAMBDA&& Lambda);
-
     
         
     protected:
 
-        uint32 AddNode(FEdGraphNode* InNode);
+        uint32 AddNode(CEdGraphNode* InNode);
         
         
         THashMap<FName, FNodeFactory>                   NodeFactories;
-        TVector<FEdGraphNode*>                          Nodes;
+        TVector<CEdGraphNode*>                          Nodes;
         TVector<FAction>                                Actions;
 
     private:
@@ -76,8 +77,8 @@ namespace Lumina
     
     
     template <typename T, typename... Args>
-    requires (std::is_base_of_v<FEdGraphNode, T> && std::is_constructible_v<T, Args...>)
-    T* FEdNodeGraph::CreateNode(Args&&... args)
+    requires (std::is_base_of_v<CEdGraphNode, T> && std::is_constructible_v<T, Args...>)
+    T* CEdNodeGraph::CreateNode(Args&&... args)
     {
         T* New = FMemory::New<T>(TForward<Args>(args)...);
     
@@ -85,8 +86,8 @@ namespace Lumina
         return New;
     }
 
-    template <typename T, typename LAMBDA> requires (std::is_invocable_r_v<FEdGraphNode*, LAMBDA>)
-    void FEdNodeGraph::RegisterGraphNode(LAMBDA&& Lambda)
+    template <typename T, typename LAMBDA> requires (std::is_invocable_r_v<CEdGraphNode*, LAMBDA>)
+    void CEdNodeGraph::RegisterGraphNode(LAMBDA&& Lambda)
     {
         FNodeFactory Factory;
         Factory.Name = T::Info::StaticDisplayName();
@@ -101,6 +102,6 @@ namespace Lumina
 
 #define REGISTER_GRAPH_NODE(NodeClass)                       \
        RegisterGraphNode<NodeClass>(                    \
-           []() -> FEdGraphNode* { return NodeClass::Info::CreateInstance(); } \
+           []() -> CEdGraphNode* { return NodeClass::Info::CreateInstance(); } \
        );                                                           \
 

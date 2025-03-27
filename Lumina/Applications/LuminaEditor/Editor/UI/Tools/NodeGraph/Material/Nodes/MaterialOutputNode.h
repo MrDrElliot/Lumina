@@ -4,11 +4,13 @@
 
 namespace Lumina
 {
-    class FMaterialOutputNode : public FMaterialGraphNode
+    class CMaterialOutputNode : public CMaterialGraphNode
     {
     public:
 
-        FMaterialOutputNode() = default;
+        DECLARE_CLASS(CMaterialOutputNode, CMaterialGraphNode)
+        
+        CMaterialOutputNode() = default;
 
         FString GetNodeDisplayName() const override;
         FString GetNodeTooltip() const override;
@@ -19,14 +21,15 @@ namespace Lumina
         uint32 GenerateExpression(FMaterialCompiler* Compiler) override { return 1;}
         void GenerateDefinition(FMaterialCompiler* Compiler) override;
 
-        FEdNodeGraphPin* BaseColorPin = nullptr;
-        FEdNodeGraphPin* MetallicPin = nullptr;
-        FEdNodeGraphPin* RoughnessPin = nullptr;
-        FEdNodeGraphPin* SpecularPin = nullptr;
-        FEdNodeGraphPin* EmissivePin = nullptr;
-        FEdNodeGraphPin* AOPin = nullptr;
-        FEdNodeGraphPin* NormalPin = nullptr;
-        FEdNodeGraphPin* OpacityPin = nullptr;
+        CEdNodeGraphPin* BaseColorPin = nullptr;
+        CEdNodeGraphPin* MetallicPin = nullptr;
+        CEdNodeGraphPin* RoughnessPin = nullptr;
+        CEdNodeGraphPin* SpecularPin = nullptr;
+        CEdNodeGraphPin* EmissivePin = nullptr;
+        CEdNodeGraphPin* AOPin = nullptr;
+        CEdNodeGraphPin* NormalPin = nullptr;
+        CEdNodeGraphPin* OpacityPin = nullptr;
     
     };
+    
 }

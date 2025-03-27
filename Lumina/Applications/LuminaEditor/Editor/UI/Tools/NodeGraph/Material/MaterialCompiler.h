@@ -8,7 +8,7 @@
 namespace Lumina
 {
     class FMaterialNodePin;
-    class FMaterialGraphNode;
+    class CMaterialGraphNode;
 }
 
 namespace Lumina
@@ -29,7 +29,7 @@ namespace Lumina
         {
             FString ErrorName;
             FString ErrorDescription;
-            FMaterialGraphNode* ErrorNode = nullptr;
+            CMaterialGraphNode* ErrorNode = nullptr;
             FMaterialNodePin*   ErrorPin = nullptr;
         };
 
@@ -45,10 +45,10 @@ namespace Lumina
         void DefineConstantFloat3(const FString& ID, float Value[3]);
         void DefineConstantFloat4(const FString& ID, float Value[4]);
 
-        void Multiply(FMaterialInput* A, FMaterialInput* B);
-        void Divide(FMaterialInput* A, FMaterialInput* B);
-        void Add(FMaterialInput* A, FMaterialInput* B);
-        void Subtract(FMaterialInput* A, FMaterialInput* B);
+        void Multiply(CMaterialInput* A, CMaterialInput* B);
+        void Divide(CMaterialInput* A, CMaterialInput* B);
+        void Add(CMaterialInput* A, CMaterialInput* B);
+        void Subtract(CMaterialInput* A, CMaterialInput* B);
 
         void AddRaw(const FString& Raw);
         
@@ -56,7 +56,7 @@ namespace Lumina
     
     private:
 
-        FMaterialGraphNode*                 CurrentNode = nullptr;
+        CMaterialGraphNode*                 CurrentNode = nullptr;
         FMaterialNodePin*                   CurrentPin =  nullptr;
         TVector<FShaderChunk>               ShaderChunks;
         TVector<FError>                     Errors;

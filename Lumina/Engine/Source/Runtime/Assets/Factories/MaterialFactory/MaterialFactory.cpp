@@ -14,12 +14,20 @@ namespace Lumina
     ELoadResult FMaterialFactory::LoadFromDisk(FAssetRecord* InRecord)
     {
         TVector<uint8> Data;
-        if (!FFileHelper::LoadFileToArray(Data, InRecord->GetAssetPath().GetPathAsString()))
+        FString FullPath = Paths::ResolveVirtualPath(InRecord->GetAssetPath().GetPathAsString());
+        
+        if (!FFileHelper::LoadFileToArray(Data, FullPath))
         {
             return ELoadResult::Failed;
         }
-        
+
+        FAssetHeader Header;
         FMemoryReader Reader(Data);
+        Reader << Header;
+
+        Assert(Header.Type == EAssetType::Material);
+        Assert(Header.Path == InRecord->GetAssetPath());
+        
         AMaterial* Material = FMemory::New<AMaterial>();
         Material->SetAssetPath(InRecord->GetAssetPath());
         Material->Serialize(Reader);
@@ -31,23 +39,26 @@ namespace Lumina
 
     FAssetPath FMaterialFactory::CreateNew(const FString& Path)
     {
+        FString VirtualPath = Path + "/NewMaterial.lasset";
+        FAssetPath NewAsset(VirtualPath);
+        
+        FString FullPath = Paths::ResolveVirtualPath(VirtualPath);
+        
+        
         FAssetHeader Header;
-        Header.Path = Path;
+        Header.Path = NewAsset;
         Header.Guid = FGuid::Generate();
         Header.Version = 1;
         Header.Type = EAssetType::Material;
-
-        FString FullPathName = Paths::CombinePaths(FProject::Get()->GetProjectContentDirectory(), Path);
-
-        if (FFileHelper::CreateNewFile(FullPathName, true))
+        
+        if (FFileHelper::CreateNewFile(FullPath, true))
         {
             TVector<uint8> Buffer;
             FMemoryWriter Writer(Buffer);
             Writer << Header;
             
-            Assert(FFileHelper::SaveArrayToFile(Buffer, FullPathName));
+            Assert(FFileHelper::SaveArrayToFile(Buffer, FullPath));
 
-            FAssetPath NewAsset(Path);
 
             GEngine->GetEngineSubsystem<FAssetRegistry>()->AssetCreated(NewAsset, Header);
             

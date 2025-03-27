@@ -1,14 +1,15 @@
 ﻿#include "MaterialInput.h"
-
 #include "Nodes/MaterialGraphNode.h"
 
 namespace Lumina
 {
-    void FMaterialInput::DrawPin()
+    IMPLEMENT_CLASS(CMaterialInput)
+
+    void CMaterialInput::DrawPin()
     {
         if (ShouldDrawEditor())
         {
-            FMaterialGraphNode* MaterialNode = static_cast<FMaterialGraphNode*>(OwningNode);
+            CMaterialGraphNode* MaterialNode = static_cast<CMaterialGraphNode*>(OwningNode);
             float* NodeValue = MaterialNode->GetNodeDefaultValue();
             switch (InputType)
             {

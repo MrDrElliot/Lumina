@@ -8,14 +8,14 @@
 
 namespace Lumina
 {
-    class FEdNodeGraphPin : public LEObject
+    class CEdNodeGraphPin : public CObject
     {
     public:
 
-        friend class FEdNodeGraph;
-        friend class FEdGraphNode;
+        friend class CEdNodeGraph;
+        friend class CEdGraphNode;
 
-        FEdNodeGraphPin()
+        CEdNodeGraphPin()
             : bSingleInput(0)
             , bInputPin(0)
             , bDrawPinEditor(false)
@@ -23,8 +23,7 @@ namespace Lumina
         {}
 
         
-        
-        virtual ~FEdNodeGraphPin() = default;
+        virtual ~CEdNodeGraphPin() = default;
 
         virtual void DrawPin() { }
         
@@ -38,20 +37,20 @@ namespace Lumina
         virtual uint32 GetPinColor() const { return PinColor; }
         void SetPinColor(uint32 Color) { PinColor = Color;}
                 
-        void AddConnection(FEdNodeGraphPin* Pin) { Connections.push_back(Pin); }
-        void RemoveConnection(FEdNodeGraphPin* Pin);
-        TVector<FEdNodeGraphPin*> GetConnections() const { return Connections; }
+        void AddConnection(CEdNodeGraphPin* Pin) { Connections.push_back(Pin); }
+        void RemoveConnection(CEdNodeGraphPin* Pin);
+        TVector<CEdNodeGraphPin*> GetConnections() const { return Connections; }
 
         FORCEINLINE bool IsSingleInput() const { return bSingleInput; }
         FORCEINLINE bool HasConnection() const { return !Connections.empty(); }
         FORCEINLINE uint32 GetGUID() const { return GUID; }
-        FORCEINLINE FEdGraphNode* GetOwningNode() const { return OwningNode; }
+        FORCEINLINE CEdGraphNode* GetOwningNode() const { return OwningNode; }
 
         FORCEINLINE bool ShouldDrawEditor() const { return bDrawPinEditor; }
         FORCEINLINE void SetShouldDrawEditor(bool bNew) { bDrawPinEditor = bNew; }
         
         template<typename T>
-        requires(std::is_base_of_v<FEdGraphNode, T>)
+        requires(std::is_base_of_v<CEdGraphNode, T>)
         T* GetOwningNode()
         {
             return static_cast<T*>(GetOwningNode());
@@ -64,8 +63,8 @@ namespace Lumina
         uint32                          PinColor = IM_COL32(255, 255, 255, 255);
         uint16                          GUID = 0;
         
-        TVector<FEdNodeGraphPin*>       Connections;
-        FEdGraphNode*                   OwningNode = nullptr;
+        TVector<CEdNodeGraphPin*>       Connections;
+        CEdGraphNode*                   OwningNode = nullptr;
         uint8                           bSingleInput:1;
         uint8                           bInputPin:1;
         uint8                           bDrawPinEditor:1;

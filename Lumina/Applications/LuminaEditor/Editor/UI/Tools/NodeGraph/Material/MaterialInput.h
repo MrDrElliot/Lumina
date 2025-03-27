@@ -1,18 +1,22 @@
 ﻿#pragma once
+
 #include "MaterialGraphTypes.h"
+#include "Core/Object/Field.h"
+#include "Core/Object/ObjectMacros.h"
 #include "Platform/GenericPlatform.h"
 #include "UI/Tools/NodeGraph/EdNodeGraphPin.h"
 
 namespace Lumina
 {
-    class FMaterialInput : public FEdNodeGraphPin
+    class CMaterialInput : public CEdNodeGraphPin
     {
     public:
 
-        FMaterialInput(EMaterialInputType Type)
-            :InputType(Type)
-        {}
-        
+        DECLARE_CLASS(CMaterialInput, CEdNodeGraphPin)
+        BEGIN_CLASS_DATA()
+            DEFINE_FIELD(Mask, Integer)
+            DEFINE_FIELD(InputType, Enum)
+        END_CLASS_DATA()
 
         uint32 GetMask() const { return Mask; }
         
@@ -26,4 +30,5 @@ namespace Lumina
         EMaterialInputType  InputType = EMaterialInputType::Float;
 
     };
+
 }

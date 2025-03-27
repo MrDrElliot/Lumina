@@ -43,7 +43,6 @@ namespace Lumina
             FlatUpdateList.push_back(pSubsystem);
             SubsystemLookup[typeHash] = pSubsystem;
             
-
             pSubsystem->Initialize(*this);
             LOG_TRACE("Subsystems: Created Type: {0}", typeid(T).name());
             return pSubsystem;

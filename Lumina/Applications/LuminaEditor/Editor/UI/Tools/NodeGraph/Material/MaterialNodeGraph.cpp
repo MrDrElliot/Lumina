@@ -8,42 +8,44 @@
 
 namespace Lumina
 {
-    FMaterialNodeGraph::FMaterialNodeGraph()
-    {
-        CreateNode<FMaterialOutputNode>();
+    IMPLEMENT_CLASS(CMaterialNodeGraph)
 
-        REGISTER_GRAPH_NODE(FMaterialExpression_Addition)
-        REGISTER_GRAPH_NODE(FMaterialExpression_Subtraction)
-        REGISTER_GRAPH_NODE(FMaterialExpression_Multiplication)
-        REGISTER_GRAPH_NODE(FMaterialExpression_ConstantFloat)
-        REGISTER_GRAPH_NODE(FMaterialExpression_ConstantFloat2)
-        REGISTER_GRAPH_NODE(FMaterialExpression_ConstantFloat3)
-        REGISTER_GRAPH_NODE(FMaterialExpression_ConstantFloat4)
+    CMaterialNodeGraph::CMaterialNodeGraph()
+    {
+        CreateNode<CMaterialOutputNode>();
+
+        REGISTER_GRAPH_NODE(CMaterialExpression_Addition)
+        REGISTER_GRAPH_NODE(CMaterialExpression_Subtraction)
+        REGISTER_GRAPH_NODE(CMaterialExpression_Multiplication)
+        REGISTER_GRAPH_NODE(CMaterialExpression_ConstantFloat)
+        REGISTER_GRAPH_NODE(CMaterialExpression_ConstantFloat2)
+        REGISTER_GRAPH_NODE(CMaterialExpression_ConstantFloat3)
+        REGISTER_GRAPH_NODE(CMaterialExpression_ConstantFloat4)
 
     }
 
-    void FMaterialNodeGraph::OnDrawGraph()
+    void CMaterialNodeGraph::OnDrawGraph()
     {
         
     }
 
-    void FMaterialNodeGraph::CompileGraph(FMaterialCompiler* Compiler)
+    void CMaterialNodeGraph::CompileGraph(FMaterialCompiler* Compiler)
     {
-        TVector<FEdGraphNode*> SortedNodes;
-        TVector<FEdGraphNode*> NodesToEvaluate;
-        TSet<FEdGraphNode*> ReachableNodes;
+        TVector<CEdGraphNode*> SortedNodes;
+        TVector<CEdGraphNode*> NodesToEvaluate;
+        TSet<CEdGraphNode*> ReachableNodes;
         
         if (Nodes.empty())
         {
             return;
         }
 
-        for (FEdGraphNode* Node : Nodes)
+        for (CEdGraphNode* Node : Nodes)
         {
             Node->ClearError();
         }
         
-        FEdGraphNode* CyclicNode = TopologicalSort(Nodes, SortedNodes);
+        CEdGraphNode* CyclicNode = TopologicalSort(Nodes, SortedNodes);
 
         if (CyclicNode != nullptr)
         {
@@ -51,14 +53,14 @@ namespace Lumina
             FMaterialCompiler::FError Error;
             Error.ErrorName = "Cyclic";
             Error.ErrorDescription = "Cycle detected in material node graph! Graph must be acyclic!";
-            Error.ErrorNode = static_cast<FMaterialGraphNode*>(CyclicNode);
+            Error.ErrorNode = static_cast<CMaterialGraphNode*>(CyclicNode);
             Compiler->AddError(Error);
             return;
         }
 
         for (int i = 0; i < SortedNodes.size(); ++i)
         {
-            FEdGraphNode* Node = SortedNodes[i];
+            CEdGraphNode* Node = SortedNodes[i];
             
             Node->SetDebugExecutionOrder(i);
             if (Node == Nodes[0])
@@ -66,51 +68,51 @@ namespace Lumina
                 continue; 
             }
 
-            FMaterialGraphNode* MaterialGraphNode = static_cast<FMaterialGraphNode*>(Node);
+            CMaterialGraphNode* MaterialGraphNode = static_cast<CMaterialGraphNode*>(Node);
             MaterialGraphNode->GenerateDefinition(Compiler);
 
             LOG_DEBUG("Generating node: {0}", MaterialGraphNode->GetNodeFullName());
         }
 
         // We then start off the compilation process using the MaterialOutput node as the kick-off.
-        FMaterialGraphNode* MaterialOutputNode = static_cast<FMaterialGraphNode*>(Nodes[0]);
+        CMaterialGraphNode* MaterialOutputNode = static_cast<CMaterialGraphNode*>(Nodes[0]);
         MaterialOutputNode->GenerateDefinition(Compiler);
         
     }
 
-    void FMaterialNodeGraph::ValidateGraph()
+    void CMaterialNodeGraph::ValidateGraph()
     {
         
     }
 
-    FEdGraphNode* FMaterialNodeGraph::TopologicalSort(const TVector<FEdGraphNode*>& NodesToSort, TVector<FEdGraphNode*>& SortedNodes)
+    CEdGraphNode* CMaterialNodeGraph::TopologicalSort(const TVector<CEdGraphNode*>& NodesToSort, TVector<CEdGraphNode*>& SortedNodes)
     {
-        THashMap<FEdGraphNode*, uint32> InDegree;
-        TQueue<FEdGraphNode*> ReadyQueue;
+        THashMap<CEdGraphNode*, uint32> InDegree;
+        TQueue<CEdGraphNode*> ReadyQueue;
         uint32 ProcessedNodeCount = 0;
 
 
         // Step 1: Initialize in-degree map
-        for (FEdGraphNode* Node : NodesToSort)
+        for (CEdGraphNode* Node : NodesToSort)
         {
             InDegree.insert_or_assign(Node, 0);
         }
 
         // Step 2: Compute in-degree for each node
-        for (FEdGraphNode* Node : NodesToSort)
+        for (CEdGraphNode* Node : NodesToSort)
         {
-            for (FEdNodeGraphPin* OutputPin : Node->GetOutputPins())
+            for (CEdNodeGraphPin* OutputPin : Node->GetOutputPins())
             {
-                for (FEdNodeGraphPin* ConnectedPin : OutputPin->GetConnections())
+                for (CEdNodeGraphPin* ConnectedPin : OutputPin->GetConnections())
                 {
-                    FEdGraphNode* ConnectedNode = ConnectedPin->GetOwningNode();
+                    CEdGraphNode* ConnectedNode = ConnectedPin->GetOwningNode();
                     InDegree[ConnectedNode]++;
                 }
             }
         }
 
         // Step 3: Add nodes with zero in-degree to the queue
-        for (FEdGraphNode* Node : NodesToSort)
+        for (CEdGraphNode* Node : NodesToSort)
         {
             if (InDegree[Node] == 0)
             {
@@ -121,16 +123,16 @@ namespace Lumina
         // Step 4: Process the queue
         while (!ReadyQueue.empty())
         {
-            FEdGraphNode* Node = ReadyQueue.front();
+            CEdGraphNode* Node = ReadyQueue.front();
             ReadyQueue.pop();
             SortedNodes.push_back(Node);
             ProcessedNodeCount++;
 
-            for (FEdNodeGraphPin* OutputPin : Node->GetOutputPins())
+            for (CEdNodeGraphPin* OutputPin : Node->GetOutputPins())
             {
-                for (FEdNodeGraphPin* ConnectedPin : OutputPin->GetConnections())
+                for (CEdNodeGraphPin* ConnectedPin : OutputPin->GetConnections())
                 {
-                    FEdGraphNode* ConnectedNode = ConnectedPin->GetOwningNode();
+                    CEdGraphNode* ConnectedNode = ConnectedPin->GetOwningNode();
                     InDegree[ConnectedNode]--;
 
                     if (InDegree[ConnectedNode] == 0)

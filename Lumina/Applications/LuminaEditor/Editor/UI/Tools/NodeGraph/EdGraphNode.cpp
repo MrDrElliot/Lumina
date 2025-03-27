@@ -4,31 +4,33 @@
 
 namespace Lumina
 {
-    FEdGraphNode::~FEdGraphNode()
+    IMPLEMENT_CLASS(CEdGraphNode)
+    
+    CEdGraphNode::~CEdGraphNode()
     {
         for (auto& Vector : NodePins)
         {
-            for (FEdNodeGraphPin* Pin : Vector)
+            for (CEdNodeGraphPin* Pin : Vector)
             {
                FMemory::Delete(Pin); 
             }
         }
     }
 
-    void FEdGraphNode::Serialize(FArchive& Ar)
+    void CEdGraphNode::Serialize(FArchive& Ar)
     {
-        for (const TVector<FEdNodeGraphPin*>& Vector : NodePins)
+        for (const TVector<CEdNodeGraphPin*>& Vector : NodePins)
         {
-            for (FEdNodeGraphPin* Pin : Vector)
+            for (CEdNodeGraphPin* Pin : Vector)
             {
                 Pin->Serialize(Ar);
             }
         }
     }
 
-    FEdNodeGraphPin* FEdGraphNode::GetPin(uint32 ID, ENodePinDirection Direction)
+    CEdNodeGraphPin* CEdGraphNode::GetPin(uint32 ID, ENodePinDirection Direction)
     {
-        for (FEdNodeGraphPin* Pin : NodePins[uint32(Direction)])
+        for (CEdNodeGraphPin* Pin : NodePins[uint32(Direction)])
         {
             if (Pin->GUID == ID)
             {
@@ -39,7 +41,7 @@ namespace Lumina
         return nullptr;
     }
 
-    FEdNodeGraphPin* FEdGraphNode::GetPinByIndex(uint32 Index, ENodePinDirection Direction)
+    CEdNodeGraphPin* CEdGraphNode::GetPinByIndex(uint32 Index, ENodePinDirection Direction)
     {
         return  NodePins[uint32(Direction)][Index];
     }

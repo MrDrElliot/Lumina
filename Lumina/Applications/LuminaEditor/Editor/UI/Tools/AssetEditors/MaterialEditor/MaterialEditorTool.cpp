@@ -35,7 +35,7 @@ namespace Lumina
             DrawCompilationLog(Cxt);
         });
 
-        NodeGraph = FMemory::New<FMaterialNodeGraph>();
+        NodeGraph = NewObject<CMaterialNodeGraph>();
 
     }
 
@@ -49,7 +49,9 @@ namespace Lumina
     {
         LOG_DEBUG("Asset Load Finished");
 
-        FMemoryReader Reader(Asset->GetAssetPtr<AMaterial>()->GraphData);
+        TVector<uint8> Data = Asset->GetAssetPtr<AMaterial>()->GraphData;
+        FMemoryReader Reader(Data);
+        
         NodeGraph->Serialize(Reader);
     }
 
@@ -79,11 +81,12 @@ namespace Lumina
                 CompilationResult.CompilationLog = "Material Compiled Successfully! Generated GLSL: \n \n \n" + Tree;
                 CompilationResult.bIsError = false;
 
-                AMaterial* Material = (AMaterial*)Asset->GetAssetPtr();
+                AMaterial* Material = Asset->GetAssetPtr<AMaterial>();
+                
                 TVector<uint8> GraphData;
                 FMemoryWriter Writer(GraphData);
                 NodeGraph->Serialize(Writer);
-
+                
                 Material->GraphData = eastl::move(GraphData);
                 Material->Save();
                 

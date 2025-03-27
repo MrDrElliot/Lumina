@@ -1,7 +1,10 @@
 ﻿#pragma once
+
+#include "EdNodeGraphPin.h"
 #include "imgui.h"
 #include "Core/Templates/Forward.h"
 #include "Containers/Array.h"
+#include "Containers/Name.h"
 #include "Core/Math/Color.h"
 #include "Core/Math/Math.h"
 #include "Core/Object/Object.h"
@@ -10,7 +13,7 @@
 
 namespace Lumina
 {
-    class FEdNodeGraphPin;
+    class CEdNodeGraphPin;
     
     enum class ENodePinDirection : uint8
     {
@@ -20,15 +23,18 @@ namespace Lumina
         Count       = 2,
     };
     
-    class FEdGraphNode : public LEObject
+    class CEdGraphNode : public CObject
     {
     public:
 
-        friend class FEdNodeGraph;
-
-        FEdGraphNode() = default;
+        DECLARE_CLASS_ABSTRACT(CEdGraphNode, CObject)
         
-        virtual ~FEdGraphNode();
+
+        friend class CEdNodeGraph;
+
+        CEdGraphNode() = default;
+        
+        virtual ~CEdGraphNode();
 
         virtual void BuildNode() = 0;
 
@@ -48,24 +54,25 @@ namespace Lumina
         bool HasError() const { return bHasError; }
         void ClearError() { Error = FString(); bHasError = false; }
         
-        FEdNodeGraphPin* GetPin(uint32 ID, ENodePinDirection Direction);
-        FEdNodeGraphPin* GetPinByIndex(uint32 Index, ENodePinDirection Direction);
+        CEdNodeGraphPin* GetPin(uint32 ID, ENodePinDirection Direction);
+        CEdNodeGraphPin* GetPinByIndex(uint32 Index, ENodePinDirection Direction);
         
 
-        const TVector<FEdNodeGraphPin*>& GetInputPins() const { return NodePins[uint32(ENodePinDirection::Input)]; }
-        const TVector<FEdNodeGraphPin*>& GetOutputPins() const { return NodePins[uint32(ENodePinDirection::Output)]; }
+        const TVector<CEdNodeGraphPin*>& GetInputPins() const { return NodePins[uint32(ENodePinDirection::Input)]; }
+        const TVector<CEdNodeGraphPin*>& GetOutputPins() const { return NodePins[uint32(ENodePinDirection::Output)]; }
 
         
         template<typename T, ENodePinDirection Direction, typename... Args>
-        requires(std::is_base_of_v<FEdNodeGraphPin, T>)
+        requires(std::is_base_of_v<CEdNodeGraphPin, T>)
         T* CreatePin(Args&&... args);
     
     protected:
 
-        TArray<TVector<FEdNodeGraphPin*>, uint32(ENodePinDirection::Count)> NodePins;
+        TArray<TVector<CEdNodeGraphPin*>, uint32(ENodePinDirection::Count)> NodePins;
 
         uint32 DebugExecutionOrder;
 
+        FName       FactoryID;
         FString     FullName;
         uint16      GUID;
         FString     Error;
@@ -75,18 +82,19 @@ namespace Lumina
 
     
     template <typename T, ENodePinDirection Direction, typename... Args>
-    requires(std::is_base_of_v<FEdNodeGraphPin, T>)
-    T* FEdGraphNode::CreatePin(Args&&... args)
+    requires(std::is_base_of_v<CEdNodeGraphPin, T>)
+    T* CEdGraphNode::CreatePin(Args&&... args)
     {
-        T* NewPin = FMemory::New<T>(TForward<Args>(args)...);
+        CEdNodeGraphPin* NewPin = NewObject<T>();
         NewPin->GUID = Math::RandRange<uint16>(0, UINT16_MAX);
         NewPin->bInputPin = Direction == ENodePinDirection::Input;
         NewPin->OwningNode = this;
         NodePins[uint32(Direction)].push_back(NewPin);
             
-        return NewPin;
+        return static_cast<T*>(NewPin);
     }
 }
+
 
 #define LUMINA_ED_GRAPH_NODE(NodeClass, DisplayName, TooltipText)        \
 struct Info                                                              \
@@ -98,7 +106,7 @@ struct Info                                                              \
     static FString StaticDisplayName() { return FString(DisplayName); }  \
     static FString StaticTooltip() { return FString(TooltipText); }      \
                                                                          \
-    static FEdGraphNode* CreateInstance() { return FMemory::New<NodeClass>(); }    \
+    static CEdGraphNode* CreateInstance() { return FMemory::New<NodeClass>(); }    \
 };
 
 

@@ -68,12 +68,12 @@ namespace Lumina
         ShaderChunks.push_back(Chunk);
     }
 
-    void FMaterialCompiler::Multiply(FMaterialInput* A, FMaterialInput* B)
+    void FMaterialCompiler::Multiply(CMaterialInput* A, CMaterialInput* B)
     {
         FString OwningNode = A->GetOwningNode()->GetNodeFullName();
         uint32 Hash = Lumina::Hash::GetHash32(OwningNode);
 
-        FMaterialExpression_Multiplication* Node = A->GetOwningNode<FMaterialExpression_Multiplication>();
+        CMaterialExpression_Multiplication* Node = A->GetOwningNode<CMaterialExpression_Multiplication>();
         FString ConstAString = eastl::to_string(Node->ConstA);
         FString ConstBString = eastl::to_string(Node->ConstB);
     
@@ -96,12 +96,12 @@ namespace Lumina
     }
 
 
-    void FMaterialCompiler::Divide(FMaterialInput* A, FMaterialInput* B)
+    void FMaterialCompiler::Divide(CMaterialInput* A, CMaterialInput* B)
     {
         FString OwningNode = A->GetOwningNode()->GetNodeFullName();
         uint32 Hash = Lumina::Hash::GetHash32(OwningNode);
 
-        FMaterialExpression_Division* Node = A->GetOwningNode<FMaterialExpression_Division>();
+        CMaterialExpression_Division* Node = A->GetOwningNode<CMaterialExpression_Division>();
         FString ConstAString = eastl::to_string(Node->ConstA);
         FString ConstBString = eastl::to_string(Node->ConstB);
     
@@ -124,12 +124,12 @@ namespace Lumina
     }
 
 
-    void FMaterialCompiler::Add(FMaterialInput* A, FMaterialInput* B)
+    void FMaterialCompiler::Add(CMaterialInput* A, CMaterialInput* B)
     {
         FString OwningNode = A->GetOwningNode()->GetNodeFullName();
         uint32 Hash = Lumina::Hash::GetHash32(OwningNode);
 
-        FMaterialExpression_Addition* Node = A->GetOwningNode<FMaterialExpression_Addition>();
+        CMaterialExpression_Addition* Node = A->GetOwningNode<CMaterialExpression_Addition>();
         FString ConstAString = eastl::to_string(Node->ConstA);
         FString ConstBString = eastl::to_string(Node->ConstB);
     
@@ -152,12 +152,12 @@ namespace Lumina
     }
 
 
-    void FMaterialCompiler::Subtract(FMaterialInput* A, FMaterialInput* B)
+    void FMaterialCompiler::Subtract(CMaterialInput* A, CMaterialInput* B)
     {
         FString OwningNode = A->GetOwningNode()->GetNodeFullName();
         uint32 Hash = Lumina::Hash::GetHash32(OwningNode);
 
-        FMaterialExpression_Subtraction* Node = A->GetOwningNode<FMaterialExpression_Subtraction>();
+        CMaterialExpression_Subtraction* Node = A->GetOwningNode<CMaterialExpression_Subtraction>();
         FString ConstAString = eastl::to_string(Node->ConstA);
         FString ConstBString = eastl::to_string(Node->ConstB);
     

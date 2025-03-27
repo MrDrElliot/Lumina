@@ -34,7 +34,9 @@ namespace Lumina
         {
             FContentBrowserTileViewItem* ContentItem = static_cast<FContentBrowserTileViewItem*>(Item);
 
-            ToolContext->OpenAssetPath(FString(ContentItem->GetPath().string().c_str()));
+            FString AssetPath = Paths::ConvertToVirtualPath(ContentItem->GetPath().string().c_str());
+            
+            ToolContext->OpenAssetPath(AssetPath);
         };
         
         ContentBrowserTileViewContext.DrawItemContextMenuFunction = [this] (const TVector<FTileViewItem*> Items)
@@ -74,6 +76,16 @@ namespace Lumina
                             try
                             {
                                 std::filesystem::rename(OldPath, NewPath);
+                                FAssetRegistry* Registry = Context.GetSubsystem<FAssetRegistry>();
+
+                                if (!std::filesystem::is_directory(OldPath))
+                                {
+                                    FString VirtualPath = Paths::ConvertToVirtualPath(OldPath.string().c_str());
+                                    FAssetPath Path(VirtualPath);
+
+                                    Registry->RenameAsset(Path, Buf);
+                                }
+                                
                                 memset(Buf, 0, sizeof(Buf));
                                 RefreshContentBrowser();
                                 return true;
@@ -256,12 +268,11 @@ namespace Lumina
                     {
                         if (ImGui::MenuItem(Factory->GetAssetName().c_str()))
                         {
-                            FString RelativePath = Paths::MakeRelativeTo(SelectedPath.string().c_str(), FProject::Get()->GetProjectContentDirectory());
-    
-                            FString NewFileName(RelativePath + "/NewMaterial.lasset");
-                            if (Factory->CreateNew(NewFileName) != FAssetPath())
+                            FString VirtualizedPath = Paths::ConvertToVirtualPath(SelectedPath.string().c_str());
+                            
+                            if (FAssetPath NewPath = Factory->CreateNew(VirtualizedPath); NewPath != FAssetPath())
                             {
-                                ToolContext->OpenAssetPath(NewFileName);
+                                ToolContext->OpenAssetPath(NewPath);
                                 RefreshContentBrowser();
                             }
                         }

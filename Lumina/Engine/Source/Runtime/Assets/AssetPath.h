@@ -2,6 +2,7 @@
 
 #include <filesystem>
 #include "AssetTypes.h"
+#include "Core/Assertions/Assert.h"
 #include "Core/Serialization/Archiver.h"
 
 
@@ -11,17 +12,23 @@ namespace Lumina
     {
     public:
 
+        friend class FAssetRegistry;
+
         FAssetPath() = default;
 
         
         FAssetPath(const FString& InAssetPath)
             : AssetPath(InAssetPath)
-        {}
+        {
+            Assert(StringUtils::StartsWith(InAssetPath, "project://"));
+        }
 
         FAssetPath(const FString& InAssetPath, const FString InRawPath)
             : AssetPath(InAssetPath)
             , RawPath(InRawPath)
-        {}
+        {
+            Assert(StringUtils::StartsWith(InAssetPath, "project://"));
+        }
 
         FORCEINLINE FString GetPathAsString() const { return AssetPath; }
         FORCEINLINE FString GetRawPathAsString() const { return RawPath; }
@@ -29,10 +36,7 @@ namespace Lumina
         
         FORCEINLINE bool IsValid() const
         {
-            if (AssetPath.empty()) return false;
-            
-            std::filesystem::path AsPath = GetPathAsString().c_str();
-            return (std::filesystem::exists(AsPath) && !std::filesystem::is_directory(AsPath));
+            return !AssetPath.empty();
         }
 
         FORCEINLINE bool operator == (const FAssetPath& Other) const { return AssetPath == Other.AssetPath; }

@@ -52,6 +52,8 @@ namespace Lumina
         std::filesystem::path Path = GetProjectSettings().ProjectPath.c_str();
         Path = Path.parent_path() / "Game" / "Content";
         FString StringPath(Path.string().c_str());
+
+        StringUtils::ReplaceAllOccurrencesInPlace(StringPath, "\\", "/");
         
         return StringPath;
     }

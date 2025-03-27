@@ -4,6 +4,7 @@
 #include "AssetRegistry/AssetRegistry.h"
 #include "Containers/Array.h"
 #include "Core/Serialization/MemoryArchiver.h"
+#include "Paths/Paths.h"
 #include "Platform/Filesystem/FileHelper.h"
 
 
@@ -22,7 +23,8 @@ namespace Lumina
             Writer << Header;
             Serialize(Writer);
 
-            Assert(FFileHelper::SaveArrayToFile(Blob, AssetPath.GetPathAsString()));
+            FString FullPath = Paths::ResolveVirtualPath(AssetPath.GetPathAsString());
+            Assert(FFileHelper::SaveArrayToFile(Blob, FullPath));
         }
     }
 }

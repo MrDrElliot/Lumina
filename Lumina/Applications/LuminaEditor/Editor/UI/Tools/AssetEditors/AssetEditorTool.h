@@ -23,13 +23,13 @@ namespace Lumina
 
         void Update(const FUpdateContext& UpdateContext) override
         {
-            if ((!bAssetLoadBroadcasted) && Asset->IsLoaded() || Asset->HasLoadingFailed())
+            if (!bAssetLoadBroadcasted && (Asset->IsLoaded() || Asset->HasLoadingFailed()))
             {
                 OnAssetLoadFinished();
                 bAssetLoadBroadcasted = true;
             }
         }
-
+        
         virtual void OnAssetLoadFinished() = 0;
 
     protected:

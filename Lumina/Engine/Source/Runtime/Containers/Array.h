@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Core/Assertions/Assert.h"
 #include "Core/Serialization/Archiver.h"
 #include "Core/Templates/CanBulkSerialize.h"
 #include "Platform/GenericPlatform.h"
@@ -8,9 +9,11 @@
 #include "EASTL/vector.h"
 #include "EASTL/fixed_vector.h"
 #include "EASTL/array.h"
+#include "EASTL/map.h"
 #include "EASTL/queue.h"
 #include "EASTL/set.h"
 #include "EASTL/stack.h"
+#include "EASTL/unordered_set.h"
 
 //-------------------------------------------------------------------------
 #define InvalidIndex -1
@@ -26,9 +29,11 @@ namespace Lumina
     template<typename T, eastl_size_t S> using TArray =         eastl::array<T, S>;
 
     template<typename K, typename V> using TUnorderedMap =      eastl::unordered_map<K, V>;
+    template<typename K, typename V> using TOrderedMap =        eastl::map<K, V>;
     template<typename K, typename V> using THashMap =           eastl::hash_map<K, V, eastl::hash<K>, eastl::equal_to<K>, eastl::allocator, false>;
     template<typename K, typename V> using TPair =              eastl::pair<K, V>;
     template<typename T> using TSet =                           eastl::set<T>;
+    template<typename T> using TUnorderedSet =                  eastl::unordered_set<T>;
     
     template<typename T> using TQueue =                         eastl::queue<T>;
     template<typename T> using TDeque =                         eastl::deque<T>;
@@ -64,7 +69,7 @@ namespace Lumina
             return Ar;
         }
 
-        // Case for bulk serialization (e.g., small types like uint8 or types that support it)
+		// If we don't need to perform per-item serialization, just read it in bulk
         if constexpr (sizeof(ValueType) == 1 || TCanBulkSerialize<ValueType>::Value)
         {
             if (Ar.IsReading())
@@ -125,6 +130,12 @@ namespace Lumina
         {
             Vector.erase(it);
         }
+    }
+
+    template<typename T>
+    inline void VectorRemoveAtIndex(TVector<T>& Vector, uint32 Index)
+    {
+        Vector.erase(Vector.begin() + Index);
     }
 
     // Find an element in a vector

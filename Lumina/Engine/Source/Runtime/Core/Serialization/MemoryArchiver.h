@@ -89,6 +89,8 @@ namespace Lumina
             this->SetFlag(EArchiverFlags::Writing);
         }
 
+        int64 TotalSize() override { return Bytes.size(); }
+        
         virtual void Serialize(void* Data, int64 Num) override
         {
             if (!Data || Num <= 0)

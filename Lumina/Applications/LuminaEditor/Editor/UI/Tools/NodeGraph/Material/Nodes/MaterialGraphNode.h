@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include "Core/Object/Field.h"
 #include "UI/Tools/NodeGraph/EdGraphNode.h"
 
 
@@ -11,13 +12,13 @@ namespace Lumina
 
 namespace Lumina
 {
-    class FMaterialGraphNode : public FEdGraphNode
+    class CMaterialGraphNode : public CEdGraphNode
     {
     public:
 
-        FMaterialGraphNode()
-            :bDynamic(false)
-        {}
+        DECLARE_CLASS_ABSTRACT(CMaterialGraphNode, CEdGraphNode)
+        
+        CMaterialGraphNode() : bDynamic(false) { }
         
         virtual uint32 GenerateExpression(FMaterialCompiler* Compiler) = 0;
         virtual void GenerateDefinition(FMaterialCompiler* Compiler) = 0;

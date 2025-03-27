@@ -16,6 +16,21 @@ namespace Lumina
 
     namespace StringUtils
     {
+        // Checks if a string starts with a specific substring.
+        template<typename StringType>
+        inline bool StartsWith(StringType const& inStr, char const* pStringToMatch)
+        {
+            size_t const matchStrLen = strlen(pStringToMatch);
+
+            if (inStr.length() < matchStrLen)
+            {
+                return false;
+            }
+
+            // Compare substr
+            return strncmp(inStr.c_str(), pStringToMatch, matchStrLen) == 0;
+        }
+        
         template<typename StringType>
         inline bool EndsWith( StringType const& inStr, char const* pStringToMatch )
         {
@@ -131,6 +146,57 @@ namespace Lumina
 
                 lastIdx = idx + 1;
             }
+        }
+
+        // Trim leading and trailing whitespace from a string
+        template<typename StringType>
+        inline StringType Trim(StringType const& originalString)
+        {
+            StringType trimmedString = originalString;
+            // Trim leading whitespace
+            trimmedString.erase(trimmedString.begin(), eastl::find_if_not(trimmedString.begin(), trimmedString.end(), ::isspace));
+            // Trim trailing whitespace
+            trimmedString.erase(eastl::find_if_not(trimmedString.rbegin(), trimmedString.rend(), ::isspace).base(), trimmedString.end());
+            return trimmedString;
+        }
+        
+        // Converts string to lower case
+        template<typename StringType>
+        inline StringType ToLower(StringType const& originalString)
+        {
+            StringType lowerString = originalString;
+            eastl::transform(lowerString.begin(), lowerString.end(), lowerString.begin(), ::tolower);
+            return lowerString;
+        }
+
+        // Converts string to upper case
+        template<typename StringType>
+        inline StringType ToUpper(StringType const& originalString)
+        {
+            StringType upperString = originalString;
+            eastl::transform(upperString.begin(), upperString.end(), upperString.begin(), ::toupper);
+            return upperString;
+        }
+
+        // Joins a list of strings with a delimiter
+        template<typename StringType, typename StringTypeVector>
+        inline StringType Join(const StringTypeVector& strings, const StringType& delimiter)
+        {
+            StringType result;
+            for (size_t i = 0; i < strings.size(); ++i)
+            {
+                if (i > 0)
+                    result += delimiter;
+                result += strings[i];
+            }
+            return result;
+        }
+
+        // Check if a string contains a substring
+        template<typename StringType>
+        inline bool Contains(const StringType& str, const StringType& substring)
+        {
+            return str.find(substring) != StringType::npos;
         }
 
         //-------------------------------------------------------------------------
