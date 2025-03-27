@@ -33,7 +33,6 @@
 *.dylib
 
 # Compiled Static Libraries
-*.lib
 *.a
 *.lai
 *.la
