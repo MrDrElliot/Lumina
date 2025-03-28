@@ -1,25 +1,27 @@
 ﻿#pragma once
+
 #include "Macros.h"
 #include "Platform/GenericPlatform.h"
 
 namespace Lumina
 {
-
+    ENUM()
     enum class ETestEnum : uint8
     {
         TestOne,
         TestTwo,
         TestThree,
     };
+
     
-    LUM_CLASS()
+    CLASS()
     class TestClass
     {
     public:
 
-
-        LUM_FIELD()
-        uint32 Integer = 42;
+        
+        PROPERTY()
+        uint32 Value = 42;
     
     };
 }

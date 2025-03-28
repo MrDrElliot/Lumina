@@ -17,7 +17,7 @@ namespace Lumina::Reflection
     {
         std::cout << "Parsing Solution" << SolutionPath.c_str() << "\n";
 
-        std::filesystem::path CurrentPath = std::filesystem::current_path();
+        std::filesystem::path CurrentPath = std::filesystem::current_path() / "Source" / "Testing";
 
         for (const auto& Path : std::filesystem::recursive_directory_iterator(CurrentPath))
         {

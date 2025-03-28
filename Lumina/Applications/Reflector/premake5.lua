@@ -12,9 +12,16 @@ project "Reflector"
 		
 	removedefines { }
 	
+    postbuildcommands {
+        "{COPY} \"%{wks.location}/External/LLVM/bin/libclang.dll\" \"%{wks.location}/Binaries/" .. outputdir .. "/%{prj.name}\""
+    }
+
+
+	
 	libdirs
 	{ 
-		"%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/LLVM/Lib",
+		"%{LuminaEngineDirectory}/External/LLVM/Lib",
+		"%{LuminaEngineDirectory}/External/LLVM/bin",
 		"$(VULKAN_SDK)/lib/"
 	}
 		
@@ -70,18 +77,9 @@ project "Reflector"
 	filter "system:linux"
 		defines { "LE_PLATFORM_LINUX" }
 
-	filter "configurations:Debug"
-		symbols "On"
-		defines { "LE_DEBUG", "_DEBUG", }
-
 	filter { "system:windows" }	
 		flags { "NoRuntimeChecks", "NoIncrementalLink" }
 
 	filter "configurations:Release"
 		optimize "On"
 		defines { "LE_RELEASE", "NDEBUG", }
-
-	filter "configurations:Shipping"
-		optimize "On"
-		symbols "Off"
-		defines { "LE_SHIP" }

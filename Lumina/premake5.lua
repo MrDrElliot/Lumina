@@ -87,7 +87,6 @@ project "Lumina"
 	    "GLFW",
 	  	"%{VULKAN_SDK}/lib/vulkan-1.lib",  	
 	    "%{VULKAN_SDK}/lib/shaderc_combinedd.lib",
-	    "Engine/ThirdParty/LLVM/lib/libclang.lib",
 	 }
 
 	defines

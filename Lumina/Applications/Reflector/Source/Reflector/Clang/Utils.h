@@ -17,7 +17,7 @@ namespace Lumina::ClangUtils
 
     inline FString GetCursorDisplayName(const CXCursor& cr)
     {
-        auto displayName = clang_getCursorDisplayName(cr);
+        CXString displayName = clang_getCursorDisplayName(cr);
         FString str = clang_getCString(displayName);
         clang_disposeString(displayName);
         return str;

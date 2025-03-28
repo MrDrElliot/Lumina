@@ -13,10 +13,14 @@ namespace Lumina
     public:
 
         DECLARE_CLASS(CMaterialInput, CEdNodeGraphPin)
-        BEGIN_CLASS_DATA()
+        static FClassMemberData RegisterClassMembers()
+        {
+            
+        }
+        /*BEGIN_CLASS_DATA()
             DEFINE_FIELD(Mask, Integer)
             DEFINE_FIELD(InputType, Enum)
-        END_CLASS_DATA()
+        END_CLASS_DATA()*/
 
         uint32 GetMask() const { return Mask; }
         

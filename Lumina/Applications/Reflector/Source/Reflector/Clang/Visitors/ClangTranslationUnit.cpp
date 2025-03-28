@@ -25,24 +25,31 @@ namespace Lumina::Reflection
         switch (CursorKind)
         {
             case (CXCursor_MacroExpansion):
-            {
-                std::cout << "Found Macro!: " << CursorName.c_str() << "\n";
-            }
+                {
+                    return CXChildVisit_Continue;
+                }
+
+            case (CXCursor_MacroDefinition):
+                {
+                    return CXChildVisit_Continue;
+                }
 
             case(CXCursor_ClassDecl):
-            {
-                Visitor::VisitClass(Cursor, Parent, ParserContext);
-            }
+                {
+                    return Visitor::VisitClass(Cursor, Parent, ParserContext);
+                }
 
             case(CXCursor_EnumDecl):
-            {
-                Visitor::VisitEnum(Cursor, Parent, ParserContext);
-            }
-            break;
+                {
+                    return Visitor::VisitEnum(Cursor, Parent, ParserContext);
+                }
 
-        default: break;
+            case(CXCursor_Namespace):
+                {
+                    clang_visitChildren(Cursor, VisitTranslationUnit, ClientData);
+                }
+            
+            default: return CXChildVisit_Continue;
         }
-
-        return CXChildVisit_Continue;
     }
 }
