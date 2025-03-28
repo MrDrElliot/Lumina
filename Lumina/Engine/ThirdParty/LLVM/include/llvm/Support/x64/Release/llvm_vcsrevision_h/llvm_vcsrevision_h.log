@@ -1,8 +1,0 @@
-﻿  1>Generating VCSRevision.h
-  2>Building Custom Rule D:/Git/llvm-project/llvm/include/llvm/Support/CMakeLists.txt
-  CMake Warning at D:/Git/llvm-project/llvm/cmake/modules/VersionFromVCS.cmake:49 (message):
-    Git not found.  Version cannot be determined.
-  Call Stack (most recent call first):
-    D:/Git/llvm-project/llvm/cmake/modules/GenerateVersionFromVCS.cmake:51 (get_source_info)
-  
-  
