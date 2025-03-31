@@ -5,6 +5,7 @@
 /Binaries/
 /Intermediates/
 /.idea/
+/External/
 
 /.vs/
 *.vcxproj
