@@ -37,6 +37,7 @@ workspace "Lumina"
 	filter "system:windows"
 		buildoptions 
 		{ 
+			"-Wno-old-style-cast",
             "/EHsc",
             "/Zc:preprocessor",
             "/Zc:__cplusplus",
