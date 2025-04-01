@@ -6,6 +6,10 @@
 namespace Lumina
 {
 
+#define LUM_CLASS(...)
+#define LUM_FIELD(...)
+#define LUM_FUNCTION(...)
+    
 #define DECLARE_CLASS_NOBASE(ClassName)                                     \
 private:                                                                    \
     using ThisClass = ClassName;                                            \

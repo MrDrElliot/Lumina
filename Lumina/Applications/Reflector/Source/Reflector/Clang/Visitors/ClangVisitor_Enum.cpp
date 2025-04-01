@@ -14,8 +14,8 @@ namespace Lumina::Reflection::Visitor
         {
             clang::EnumConstantDecl* EnumConstantDecl = (clang::EnumConstantDecl*)Cursor.data[0];
 
-            auto const& initVal = EnumConstantDecl->getInitVal();
-            uint32 Value = (int32_t) initVal.getExtValue();
+            const auto& initVal = EnumConstantDecl->getInitVal();
+            uint32 Value = (int32) initVal.getExtValue();
             
             std::cout << "Name: " << ClangUtils::GetCursorDisplayName(Cursor).c_str() << " Value: " << Value << "\n";
         }

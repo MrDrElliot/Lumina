@@ -283,3 +283,8 @@ namespace eastl
         }
     };
 }
+
+namespace eastl
+{
+    
+}

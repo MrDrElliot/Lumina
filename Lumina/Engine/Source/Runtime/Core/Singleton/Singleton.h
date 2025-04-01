@@ -13,5 +13,6 @@ public:
     TSingleton* operator = (const TSingleton*) = delete;
 
     NODISCARD static T* Get() { static T Instance; return &Instance; }
+
     
 };

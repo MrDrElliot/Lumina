@@ -65,10 +65,11 @@ project "Reflector"
 	{ 
 		"Source",
 	    
-	    "%{LuminaEngineDirectory}/Lumina/",
+	   	"%{LuminaEngineDirectory}/Lumina",
 		"%{LuminaEngineDirectory}/Lumina/Engine/",
 	    "%{LuminaEngineDirectory}/Lumina/Engine/Source/",
 	    "%{LuminaEngineDirectory}/Lumina/Engine/Source/Runtime/",
+	    "%{LuminaEngineDirectory}/External/LLVM/include/",
 		includedependencies();
 		
 	}

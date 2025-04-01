@@ -12,6 +12,8 @@ namespace Lumina::Reflection
         Class,
         Struct,
         Enum,
+
+        Size,
     };
 
     inline const char* ReflectionEnumToString(EReflectionMacro Macro)

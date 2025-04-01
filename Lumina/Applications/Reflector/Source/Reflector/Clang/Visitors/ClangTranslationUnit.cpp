@@ -4,6 +4,7 @@
 
 #include "ClangVisitor_Class.h"
 #include "ClangVisitor_Enum.h"
+#include "ClangVisitor_Macro.h"
 #include "Containers/String.h"
 #include "Reflector/Clang/ClangParserContext.h"
 #include "Reflector/Clang/Utils.h"
@@ -16,6 +17,7 @@ namespace Lumina::Reflection
         CXCursorKind CursorKind = clang_getCursorKind(Cursor);
         FString CursorName = ClangUtils::GetCursorDisplayName(Cursor);
 
+        
         std::filesystem::path HeaderPath = ClangUtils::GetHeaderPathForCursor(Cursor);
         if (!exists(HeaderPath))
         {
@@ -26,15 +28,11 @@ namespace Lumina::Reflection
         {
             case (CXCursor_MacroExpansion):
                 {
-                    return CXChildVisit_Continue;
+                    return Visitor::VisitMacro(Cursor,ParserContext-> , ParserContext);
                 }
-
-            case (CXCursor_MacroDefinition):
-                {
-                    return CXChildVisit_Continue;
-                }
-
+            
             case(CXCursor_ClassDecl):
+            case(CXCursor_StructDecl):
                 {
                     return Visitor::VisitClass(Cursor, Parent, ParserContext);
                 }

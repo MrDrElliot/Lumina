@@ -8,9 +8,10 @@
 
 namespace Lumina::Reflection
 {
-    bool FClangParser::Parse(const FString& File)
+    bool FClangParser::Parse(const FReflectedHeader& File)
     {
-        std::cout << "Parsing: " << File.c_str() << "\n";
+        std::cout << "Parsing: " << File.HeaderPath.c_str() << "\n";
+        ParsingContext.SolutionPath = File;
         
         CXIndex ClangIndex = clang_createIndex(0, 1);
         constexpr uint32 ClangOptions = CXTranslationUnit_DetailedPreprocessingRecord | CXTranslationUnit_SkipFunctionBodies | CXTranslationUnit_IncludeBriefCommentsInCodeCompletion;

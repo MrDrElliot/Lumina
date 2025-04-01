@@ -10,7 +10,7 @@ namespace Lumina::Reflection
 
         FClangParser() { }
 
-        bool Parse(const FString& File);
+        bool Parse(const FReflectedHeader& File);
 
         FClangParserContext ParsingContext;
     };
