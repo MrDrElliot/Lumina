@@ -8,6 +8,7 @@ import CheckPython
 # Make sure everything we need is installed
 CheckPython.ValidatePackages()
 
+import time
 import Utils
 import colorama
 
@@ -67,3 +68,4 @@ else:
 ### 🚀 Generate Visual Studio Solution ###
 print(f"{Style.BRIGHT}{Back.GREEN}Generating Visual Studio 2022 solution.{Style.RESET_ALL}")
 subprocess.call(["Tools/premake5.exe", "vs2022"])
+exit(0)
