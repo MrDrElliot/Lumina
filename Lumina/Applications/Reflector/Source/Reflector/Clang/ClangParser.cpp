@@ -8,10 +8,15 @@
 
 namespace Lumina::Reflection
 {
+    FClangParser::FClangParser()
+        : ParsingContext()
+    {
+    }
+
     bool FClangParser::Parse(const FReflectedHeader& File)
     {
-        std::cout << "Parsing: " << File.HeaderPath.c_str() << "\n";
-        ParsingContext.SolutionPath = File;
+        ParsingContext.SolutionPath = File.HeaderPath;
+        ParsingContext.ReflectedHeader = File;
         
         CXIndex ClangIndex = clang_createIndex(0, 1);
         constexpr uint32 ClangOptions = CXTranslationUnit_DetailedPreprocessingRecord | CXTranslationUnit_SkipFunctionBodies | CXTranslationUnit_IncludeBriefCommentsInCodeCompletion;
@@ -38,7 +43,7 @@ namespace Lumina::Reflection
         clangArgs.push_back( "-Wno-vla-extension-static-assert" );
 
 
-        Result = clang_parseTranslationUnit2(ClangIndex, File.c_str(), clangArgs.data(), clangArgs.size(), 0, 0, ClangOptions, &TranslationUnit);
+        Result = clang_parseTranslationUnit2(ClangIndex, File.HeaderPath.c_str(), clangArgs.data(), clangArgs.size(), 0, 0, ClangOptions, &TranslationUnit);
         if (Result == CXError_Success)
         {
             CXCursor Cursor = clang_getTranslationUnitCursor(TranslationUnit);

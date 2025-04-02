@@ -8,7 +8,7 @@ namespace Lumina::Reflection
     {
     public:
 
-        FClangParser() { }
+        FClangParser();
 
         bool Parse(const FReflectedHeader& File);
 

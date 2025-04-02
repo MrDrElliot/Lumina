@@ -7,6 +7,7 @@ namespace Lumina
 {
 
 #define LUM_CLASS(...)
+#define LUM_ENUM(...)
 #define LUM_FIELD(...)
 #define LUM_FUNCTION(...)
     

@@ -10,9 +10,6 @@ namespace Lumina::Reflection
 
     bool FClangParserContext::GetMacroForType(FName HeaderID, const CXCursor& Cursor, FReflectionMacro& Macro)
     {
-        // Try get macros for this header
-        //-------------------------------------------------------------------------
-
         auto headerIter = ReflectionMacros.find(HeaderID);
         if (headerIter == ReflectionMacros.end())
         {
@@ -21,15 +18,18 @@ namespace Lumina::Reflection
 
         TVector<FReflectionMacro>& macrosForHeader = headerIter->second;
 
-        // Check the header macros
-        //-------------------------------------------------------------------------
+        CXSourceRange typeRange = clang_getCursorExtent(Cursor);
+    
+        uint32 enumLineStart, enumColumnStart;
+        clang_getSpellingLocation(clang_getRangeStart(typeRange), nullptr, &enumLineStart, &enumColumnStart, nullptr);
 
-        const CXSourceRange typeRange = clang_getCursorExtent(Cursor);
-
-        for ( auto iter = macrosForHeader.begin(); iter != macrosForHeader.end(); ++iter )
+        for (auto iter = macrosForHeader.begin(); iter != macrosForHeader.end(); ++iter)
         {
-            bool const macroWithinCursorExtents = iter->Position > typeRange.begin_int_data && iter->Position < typeRange.end_int_data;
-            if ( macroWithinCursorExtents )
+            uint32 MacroLineStart = iter->LineNumber;
+            
+            bool bValidMacro = (MacroLineStart < enumLineStart) && (enumLineStart - MacroLineStart <= 1);
+        
+            if (bValidMacro)
             {
                 Macro = *iter;
                 macrosForHeader.erase(iter);
@@ -40,6 +40,7 @@ namespace Lumina::Reflection
         return false;
     }
 
+    
     void FClangParserContext::PushNamespace(const FString& Namespace)
     {
         NamespaceStack.push_back(Namespace);

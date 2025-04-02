@@ -77,7 +77,7 @@ namespace Lumina::Reflection
             for (FReflectedHeader& Header : Project.Headers)
             {
                 LOG_ERROR("Reflecting Header: {0}", Header.HeaderPath);
-                
+
                 if (!Parser.Parse(Header.HeaderPath))
                 {
                     LOG_ERROR("Failed to parse header file! {0}", Header.HeaderPath);

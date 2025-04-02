@@ -9,6 +9,7 @@ namespace Lumina::Reflection
     {
     public:
 
+        FClangParserContext() = default;
 
         void AddReflectedMacro(const FReflectionMacro& Macro);
         bool GetMacroForType(FName HeaderID, const CXCursor& Cursor, FReflectionMacro& Macro);

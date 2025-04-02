@@ -12,7 +12,6 @@ namespace Lumina
     class CObject;
 
     inline TVector<CObject*> GObjectVector;
-
     
     /**
      * Base class for all objects in Lumina, registered using DECLARE_CLASS or DECLARE_CLASS_ABSTRACT.

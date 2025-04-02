@@ -9,6 +9,7 @@ namespace Lumina::Reflection
     {
     public:
 
+        FReflectedHeader() = default;
         FReflectedHeader(const FString& Path);
 
         bool Parse();

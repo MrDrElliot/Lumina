@@ -4,9 +4,9 @@
 
 namespace Lumina::Reflection
 {
-    FReflectionMacro::FReflectionMacro(FReflectedHeader* ReflectedHeader, CXCursor Cursor, CXSourceRange Range, EReflectionMacro InType)
-        : HeaderID(ReflectedHeader->HeaderID)
-        , Type(InType)
+    FReflectionMacro::FReflectionMacro(FReflectedHeader* ReflectedHeader, const CXCursor& Cursor, const CXSourceRange& Range, EReflectionMacro InType)
+        : Type(InType)
+        , HeaderID(ReflectedHeader->HeaderID)
         , Position(Range.begin_int_data)
     {
         clang_getExpansionLocation(clang_getRangeStart(Range), nullptr, &LineNumber, nullptr, nullptr);
@@ -21,8 +21,8 @@ namespace Lumina::Reflection
         }
         clang_disposeTokens( translationUnit, tokens, numTokens );
 
-        size_t const startIdx = MacroContents.find_first_of("(");
-        size_t const endIdx = MacroContents.find_last_of( ')');
+        const size_t startIdx = MacroContents.find_first_of("(");
+        const size_t endIdx = MacroContents.find_last_of( ')');
         if ( startIdx != FString::npos && endIdx != FString::npos && endIdx > startIdx )
         {
             

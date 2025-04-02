@@ -28,7 +28,7 @@ namespace Lumina::Reflection
         {
             case (CXCursor_MacroExpansion):
                 {
-                    return Visitor::VisitMacro(Cursor,ParserContext-> , ParserContext);
+                    return Visitor::VisitMacro(Cursor, &ParserContext->ReflectedHeader, ParserContext);
                 }
             
             case(CXCursor_ClassDecl):

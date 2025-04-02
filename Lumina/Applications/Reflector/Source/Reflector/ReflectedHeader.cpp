@@ -28,7 +28,6 @@ namespace Lumina::Reflection
         if (HeaderFile.tellg() == 0)
         {
             HeaderFile.close();
-            LOG_ERROR("Failed to parse empty header file: {0}", HeaderPath);
             return false;
         }
         

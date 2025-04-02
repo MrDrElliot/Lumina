@@ -1,6 +1,7 @@
 ﻿#include "ClangVisitor_Enum.h"
 
 #include "Containers/String.h"
+#include "Reflector/Clang/ClangParserContext.h"
 #include "Reflector/Clang/Utils.h"
 
 namespace Lumina::Reflection::Visitor
@@ -39,12 +40,25 @@ namespace Lumina::Reflection::Visitor
             return CXChildVisit_Break;
         }
 
+        
+        FReflectionMacro Macro;
+        if(!Context->GetMacroForType(Context->ReflectedHeader.HeaderID, Cursor, Macro))
+        {
+            return CXChildVisit_Continue;
+        }
+
+        if(Macro.Type != EReflectionMacro::Enum)
+        {
+            return CXChildVisit_Continue;
+        }
+        
+        LOG_INFO("Reflecting Enum: {0}", CursorName);
+
         const clang::EnumDecl* pEnumDecl = (const clang::EnumDecl*) Cursor.data[0];
         clang::QualType integerType = pEnumDecl->getIntegerType();
 
         if (integerType.isNull())
         {
-            std::cerr << "Failed to get underlying integer type \n";
             return CXChildVisit_Break;
         }
 

@@ -5,6 +5,7 @@
 
 namespace Lumina
 {
+    LUM_ENUM()
     enum class EObjectFlags : uint32
     {
         None            = 0,        /**< No special properties. */

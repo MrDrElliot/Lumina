@@ -13,4 +13,5 @@
 #define WITH_DEVELOPMENT_TOOLS 1
 #endif
 
-enum { INDEX_NONE = -1 };
+constexpr int32 INDEX_NONE = -1;
+constexpr uint32 INVALID_HANDLE = 0xFFFFFFFF;
