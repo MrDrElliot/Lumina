@@ -26,6 +26,9 @@ namespace Lumina
     LUM_STRUCT()
     struct TestStruct
     {
-        
+
+        uint32 TestInt;
+        float TestFloat;
+        double TestDouble;
     };
 }
