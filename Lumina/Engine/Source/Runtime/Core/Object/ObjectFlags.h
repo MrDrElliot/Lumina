@@ -5,15 +5,14 @@
 
 namespace Lumina
 {
-    LUM_ENUM()
     enum class EObjectFlags : uint32
     {
-        None            = 0,        /**< No special properties. */
+        None            = 0,
 
-        Abstract        = 1 << 0,    /**< Cannot be instantiated directly. */
+        Abstract        = 1 << 0,
 
-        Transient       = 1 << 1,    /**< Object is not saved during serialization. */
-        Persistent      = 1 << 2,    /**< Object should be saved and loaded. */
+        Transient       = 1 << 1,
+        Persistent      = 1 << 2,
 
     };
 

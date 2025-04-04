@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "ClangVisitor_Class.h"
+#include "ClangVisitor_Structure.h"
 
 namespace Lumina::Reflection
 {

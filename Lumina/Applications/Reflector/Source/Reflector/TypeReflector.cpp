@@ -4,13 +4,14 @@
 #include <fstream>
 #include <iostream>
 
-#include "ReflectedProject.h"
 #include "Clang/ClangParser.h"
 #include "Containers/Array.h"
 #include "EASTL/sort.h"
 #include "Memory/Memory.h"
 
 #define VS_PROJECT_ID "{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}"  // VS Project UID
+
+
 
 namespace Lumina::Reflection
 {
@@ -53,7 +54,7 @@ namespace Lumina::Reflection
 
         for (const FString& FilePath : ProjectFilePaths)
         {
-            FReflectedProject Project(FilePath);
+            FReflectedProject Project(Solution.GetPath(), FilePath);
             if (Project.Parse())
             {
                 Projects.push_back(Project);
@@ -78,14 +79,13 @@ namespace Lumina::Reflection
             {
                 LOG_ERROR("Reflecting Header: {0}", Header.HeaderPath);
 
-                if (!Parser.Parse(Header.HeaderPath))
+                if (!Parser.Parse(Project.SolutionPath, Header.HeaderPath))
                 {
                     LOG_ERROR("Failed to parse header file! {0}", Header.HeaderPath);
                 }
             }
         }
-
-
+        
         return true;
     }
 

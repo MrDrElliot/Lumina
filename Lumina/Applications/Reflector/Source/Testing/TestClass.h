@@ -1,11 +1,11 @@
 ﻿#pragma once
 
 #include "Macros.h"
-#include "Platform/GenericPlatform.h"
+#include "Core/Object/ObjectMacros.h"
 
 namespace Lumina
 {
-    ENUM()
+    LUM_ENUM()
     enum class ETestEnum : uint8
     {
         TestOne,
@@ -13,15 +13,19 @@ namespace Lumina
         TestThree,
     };
 
-    
-    CLASS()
+    LUM_CLASS()
     class TestClass
     {
     public:
 
-        
-        PROPERTY()
-        uint32 Value = 42;
+        ETestEnum Test;
     
+    };
+
+    
+    LUM_STRUCT()
+    struct TestStruct
+    {
+        
     };
 }

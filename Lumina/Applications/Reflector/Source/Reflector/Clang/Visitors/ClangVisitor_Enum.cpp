@@ -1,24 +1,41 @@
 ﻿#include "ClangVisitor_Enum.h"
 
 #include "Containers/String.h"
+#include "Memory/Memory.h"
 #include "Reflector/Clang/ClangParserContext.h"
 #include "Reflector/Clang/Utils.h"
+#include "Reflector/Types/ReflectedType.h"
 
 namespace Lumina::Reflection::Visitor
 {
     static CXChildVisitResult VisitEnumContents(CXCursor Cursor, CXCursor parent, CXClientData pClientData)
     {
         FClangParserContext* pContext = static_cast<FClangParserContext*>(pClientData);
-
+        FReflectedEnum* Enum = (FReflectedEnum*)pContext->ParentReflectedType;
+        
         CXCursorKind kind = clang_getCursorKind(Cursor);
+        
         if (kind == CXCursor_EnumConstantDecl)
         {
-            clang::EnumConstantDecl* EnumConstantDecl = (clang::EnumConstantDecl*)Cursor.data[0];
+            FString DisplayName = ClangUtils::GetCursorDisplayName(Cursor);
+            const clang::EnumConstantDecl* EnumConstantDecl = (const clang::EnumConstantDecl*)Cursor.data[0];
 
-            const auto& initVal = EnumConstantDecl->getInitVal();
-            uint32 Value = (int32) initVal.getExtValue();
+            const llvm::APSInt& initVal = EnumConstantDecl->getInitVal();
+            uint32 Value = (int32)initVal.getExtValue();
             
-            std::cout << "Name: " << ClangUtils::GetCursorDisplayName(Cursor).c_str() << " Value: " << Value << "\n";
+            FReflectedEnum::FConstant Constant;
+            Constant.Label = DisplayName;
+            Constant.ID = FName(DisplayName);
+            Constant.Value = Value;
+            
+            const CXString CommentString = clang_Cursor_getBriefCommentText(Cursor);
+            if (CommentString.data != nullptr)
+            {
+                Constant.Description = clang_getCString(CommentString);
+            }
+            clang_disposeString(CommentString);
+
+            Enum->AddConstant(Constant);
         }
 
         return CXChildVisit_Continue;
@@ -42,7 +59,7 @@ namespace Lumina::Reflection::Visitor
 
         
         FReflectionMacro Macro;
-        if(!Context->GetMacroForType(Context->ReflectedHeader.HeaderID, Cursor, Macro))
+        if(!Context->TryFindMacroForCursor(Context->ReflectedHeader.HeaderID, Cursor, Macro))
         {
             return CXChildVisit_Continue;
         }
@@ -52,8 +69,6 @@ namespace Lumina::Reflection::Visitor
             return CXChildVisit_Continue;
         }
         
-        LOG_INFO("Reflecting Enum: {0}", CursorName);
-
         const clang::EnumDecl* pEnumDecl = (const clang::EnumDecl*) Cursor.data[0];
         clang::QualType integerType = pEnumDecl->getIntegerType();
 
@@ -62,7 +77,21 @@ namespace Lumina::Reflection::Visitor
             return CXChildVisit_Break;
         }
 
-        clang_visitChildren(Cursor, VisitEnumContents, Context);
+        FReflectedEnum* Enum = Context->ReflectionDatabase.CreateReflectedType<FReflectedEnum>();
+        Enum->DisplayName = CursorName;
+        Enum->ID = FName(FullyQualifiedName);
+        Enum->HeaderID = Context->ReflectedHeader.HeaderID;
+
+        FReflectedType* PreviousParentType = Context->ParentReflectedType;
+        Context->ParentReflectedType = Enum;
+        {
+            clang_visitChildren(Cursor, VisitEnumContents, Context);
+        }
+        Context->ParentReflectedType = PreviousParentType;
+
+        LOG_INFO("Reflected Enum: {0}: \n{1}", CursorName, Enum->GetTypeAsString());
+
+        Context->ReflectionDatabase.AddReflectedType(Enum);
         
         return CXChildVisit_Continue;
 

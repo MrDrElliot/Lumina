@@ -30,8 +30,32 @@ namespace Lumina::Paths
 
         return Combined.string().c_str();
     }
-    
 
+    inline bool IsUnderDirectory(const FString& ParentDirectory, const FString& Directory)
+    {
+        if (Directory.length() < ParentDirectory.length())
+        {
+            return false;
+        }
+
+        if (FString::comparei(Directory.data(), Directory.data() + ParentDirectory.length(),
+                              ParentDirectory.data(), ParentDirectory.data() + ParentDirectory.length()) != 0)
+        {
+            return false;
+        }
+
+        if (Directory.length() > ParentDirectory.length())
+        {
+            char nextChar = Directory[ParentDirectory.length()];
+            if (nextChar != '/' && nextChar != '\\')
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+    
     // Function to resolve a virtual path to an absolute path
     inline FString ResolveVirtualPath(const FString& VirtualPath)
     {

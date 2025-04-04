@@ -8,8 +8,9 @@
 
 namespace Lumina::Reflection
 {
-    FReflectedProject::FReflectedProject(const FString& ProjectPath)
-        : Path(ProjectPath)
+    FReflectedProject::FReflectedProject(const FString& SlnPath, const FString& ProjectPath)
+        : SolutionPath(SlnPath)
+        , Path(ProjectPath)
         , ParentPath(std::filesystem::path(ProjectPath.c_str()).parent_path().string().c_str())
     {
     }

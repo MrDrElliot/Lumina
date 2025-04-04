@@ -1,6 +1,7 @@
 ﻿#include "ReflectionMacro.h"
 
-#include "Clang/Utils.h"
+#include "Reflector/Clang/Utils.h"
+
 
 namespace Lumina::Reflection
 {
@@ -10,7 +11,7 @@ namespace Lumina::Reflection
         , Position(Range.begin_int_data)
     {
         clang_getExpansionLocation(clang_getRangeStart(Range), nullptr, &LineNumber, nullptr, nullptr);
-
+        
         CXToken* tokens = nullptr;
         uint32 numTokens = 0;
         CXTranslationUnit translationUnit = clang_Cursor_getTranslationUnit(Cursor);
@@ -19,11 +20,11 @@ namespace Lumina::Reflection
         {
             MacroContents += ClangUtils::GetString(clang_getTokenSpelling(translationUnit, tokens[n]));
         }
-        clang_disposeTokens( translationUnit, tokens, numTokens );
+        clang_disposeTokens(translationUnit, tokens, numTokens);
 
         const size_t startIdx = MacroContents.find_first_of("(");
-        const size_t endIdx = MacroContents.find_last_of( ')');
-        if ( startIdx != FString::npos && endIdx != FString::npos && endIdx > startIdx )
+        const size_t endIdx = MacroContents.find_last_of(')');
+        if (startIdx != FString::npos && endIdx != FString::npos && endIdx > startIdx)
         {
             
         }

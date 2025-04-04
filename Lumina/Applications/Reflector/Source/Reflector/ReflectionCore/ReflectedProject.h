@@ -9,12 +9,13 @@ namespace Lumina::Reflection
     {
     public:
 
-        FReflectedProject(const FString& ProjectPath);
+        FReflectedProject(const FString& SlnPath, const FString& ProjectPath);
 
         bool Parse();
         
         FString Name;
         FString Path;
+        FString SolutionPath;
         FString ParentPath;
         TVector<FReflectedHeader> Headers;
     

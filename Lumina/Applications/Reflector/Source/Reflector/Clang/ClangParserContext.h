@@ -1,7 +1,8 @@
 ﻿#pragma once
 #include "Containers/String.h"
-#include "Reflector/ReflectionMacro.h"
+#include "Reflector/ReflectionCore/ReflectionMacro.h"
 #include "Reflector/TypeReflector.h"
+#include "Reflector/ReflectionCore/ReflectionDatabase.h"
 
 namespace Lumina::Reflection
 {
@@ -12,11 +13,15 @@ namespace Lumina::Reflection
         FClangParserContext() = default;
 
         void AddReflectedMacro(const FReflectionMacro& Macro);
-        bool GetMacroForType(FName HeaderID, const CXCursor& Cursor, FReflectionMacro& Macro);
+        bool TryFindMacroForCursor(FName HeaderID, const CXCursor& Cursor, FReflectionMacro& Macro);
 
         void PushNamespace(const FString& Namespace);
-        void Popnamespace();
+        void PopNamespace();
+
         
+        FReflectedType*                             ParentReflectedType;
+
+        FReflectionDatabase                         ReflectionDatabase;
         
         FString                                     ErrorMessage;
         FString                                     SolutionPath;

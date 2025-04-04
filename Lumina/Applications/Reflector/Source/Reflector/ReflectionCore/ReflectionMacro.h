@@ -3,8 +3,7 @@
 
 #include "Lumina.h"
 #include "ReflectedHeader.h"
-#include "ReflectionConfig.h"
-
+#include "Reflector/ReflectionConfig.h"
 
 
 namespace Lumina::Reflection

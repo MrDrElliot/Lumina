@@ -22,7 +22,6 @@ namespace Lumina
      * - CObjects **must** have a default constructor; constructor properties are not supported.
      * - Only default-generated constructors are allowed. (No params).
      */
-    LUM_CLASS()
     class CObject
     {
     public:

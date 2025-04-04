@@ -1,8 +1,8 @@
 ﻿#pragma once
 #include "ProjectSolution.h"
-#include "ReflectedProject.h"
 #include "Containers/Array.h"
 #include "Containers/String.h"
+#include "ReflectionCore/ReflectedProject.h"
 
 namespace Lumina::Reflection
 {

@@ -2,8 +2,8 @@
 
 #include <fstream>
 
-#include "ReflectionConfig.h"
 #include "Log/Log.h"
+#include "Reflector/ReflectionConfig.h"
 
 namespace Lumina::Reflection
 {

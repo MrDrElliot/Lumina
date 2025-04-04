@@ -8,7 +8,7 @@ namespace Lumina::Reflection
         Macros.push_back(Macro);
     }
 
-    bool FClangParserContext::GetMacroForType(FName HeaderID, const CXCursor& Cursor, FReflectionMacro& Macro)
+    bool FClangParserContext::TryFindMacroForCursor(FName HeaderID, const CXCursor& Cursor, FReflectionMacro& Macro)
     {
         auto headerIter = ReflectionMacros.find(HeaderID);
         if (headerIter == ReflectionMacros.end())
@@ -19,15 +19,29 @@ namespace Lumina::Reflection
         TVector<FReflectionMacro>& macrosForHeader = headerIter->second;
 
         CXSourceRange typeRange = clang_getCursorExtent(Cursor);
-    
-        uint32 enumLineStart, enumColumnStart;
-        clang_getSpellingLocation(clang_getRangeStart(typeRange), nullptr, &enumLineStart, &enumColumnStart, nullptr);
+        CXSourceLocation startLoc = clang_getRangeStart(typeRange);
+
+        CXFile cursorFile;
+        unsigned cursorLine, cursorColumn;
+        clang_getSpellingLocation(startLoc, &cursorFile, &cursorLine, &cursorColumn, nullptr);
+
+        CXString FileName = clang_getFileName(cursorFile);
+        FString FileNameChar = clang_getCString(FileName);
+        FileNameChar.make_lower();
+
+        clang_disposeString(FileName);
+
+        FString PathString = HeaderID.c_str();
+        PathString.make_lower();
+
+        if (FileNameChar != PathString)
+        {
+            return false;
+        }
 
         for (auto iter = macrosForHeader.begin(); iter != macrosForHeader.end(); ++iter)
         {
-            uint32 MacroLineStart = iter->LineNumber;
-            
-            bool bValidMacro = (MacroLineStart < enumLineStart) && (enumLineStart - MacroLineStart <= 1);
+            bool bValidMacro = (iter->LineNumber < cursorLine) && ((cursorLine - iter->LineNumber) <= 1);
         
             if (bValidMacro)
             {
@@ -53,7 +67,7 @@ namespace Lumina::Reflection
         }
     }
 
-    void FClangParserContext::Popnamespace()
+    void FClangParserContext::PopNamespace()
     {
         NamespaceStack.pop_back();
 

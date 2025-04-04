@@ -23,6 +23,10 @@ namespace Lumina
         Class*      ParentClass = nullptr;
     };
 
+
+
+
+    
     struct FClassMemberData
     {
         FField*     Fields;

@@ -1,8 +1,6 @@
 ﻿#include "ClangTranslationUnit.h"
 
-#include <iostream>
-
-#include "ClangVisitor_Class.h"
+#include "ClangVisitor_Structure.h"
 #include "ClangVisitor_Enum.h"
 #include "ClangVisitor_Macro.h"
 #include "Containers/String.h"
@@ -11,19 +9,22 @@
 
 namespace Lumina::Reflection
 {
+
     CXChildVisitResult VisitTranslationUnit(CXCursor Cursor, CXCursor Parent, CXClientData ClientData)
     {
         FClangParserContext* ParserContext = (FClangParserContext*)ClientData;
         CXCursorKind CursorKind = clang_getCursorKind(Cursor);
         FString CursorName = ClangUtils::GetCursorDisplayName(Cursor);
-
         
+
+        // Only parser valid headers under the solution directory.
         std::filesystem::path HeaderPath = ClangUtils::GetHeaderPathForCursor(Cursor);
-        if (!exists(HeaderPath))
+        std::filesystem::path RelativePath = std::filesystem::relative(HeaderPath, ParserContext->ReflectedHeader.HeaderPath.c_str());
+        if (!std::filesystem::exists(HeaderPath) || (RelativePath.empty() || RelativePath.string()[0] != '.'))
         {
             return CXChildVisit_Continue;
         }
-        
+
         switch (CursorKind)
         {
             case (CXCursor_MacroExpansion):
@@ -34,7 +35,11 @@ namespace Lumina::Reflection
             case(CXCursor_ClassDecl):
             case(CXCursor_StructDecl):
                 {
-                    return Visitor::VisitClass(Cursor, Parent, ParserContext);
+                    ParserContext->PushNamespace(CursorName);
+                    clang_visitChildren(Cursor, VisitTranslationUnit, ClientData);
+                    ParserContext->PopNamespace();
+                    
+                    return Visitor::VisitStructure(Cursor, Parent, ParserContext);
                 }
 
             case(CXCursor_EnumDecl):
@@ -44,10 +49,17 @@ namespace Lumina::Reflection
 
             case(CXCursor_Namespace):
                 {
+                    ParserContext->PushNamespace(CursorName);
                     clang_visitChildren(Cursor, VisitTranslationUnit, ClientData);
+                    ParserContext->PopNamespace();
                 }
             
-            default: return CXChildVisit_Continue;
+            return CXChildVisit_Continue;
+            
+            default:
+                {
+                    return CXChildVisit_Continue;
+                }
         }
     }
 }

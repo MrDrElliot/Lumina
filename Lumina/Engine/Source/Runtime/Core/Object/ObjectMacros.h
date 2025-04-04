@@ -3,10 +3,8 @@
 #include "Memory/Memory.h"
 
 
-namespace Lumina
-{
-
 #define LUM_CLASS(...)
+#define LUM_STRUCT(...)
 #define LUM_ENUM(...)
 #define LUM_FIELD(...)
 #define LUM_FUNCTION(...)
@@ -54,9 +52,4 @@ public:                                                                         
 #define IMPLEMENT_CLASS(ClassName)                                                              \
     Class ClassName::s_StaticClass = Class();                                                   \
     ClassRegistryHelper<ClassName> ClassName::_ClassRegisterHelper(&ClassName::CreateInstance); \
-
-
-
     
-    
-}

@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include "Core/Application/ApplicationGlobalState.h"
+#include "Core/Performance/PerformanceTracker.h"
 #include "Paths/Paths.h"
 #include "Reflector/TypeReflector.h"
 
@@ -33,13 +34,31 @@ int main(int argc, char* argv[])
     }
 
     Reflection::FTypeReflector TypeReflector(LuminaEditor);
-    if (!TypeReflector.ParseSolution())
+
+    
     {
-        LOG_ERROR("Failed to parse solution: {0}", LuminaEditor);
-        return 0;
+        auto start = std::chrono::high_resolution_clock::now();
+
+        if (!TypeReflector.ParseSolution())
+        {
+            LOG_ERROR("Failed to parse solution: {0}", LuminaEditor);
+            return 0;
+        }
+
+        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> duration = end - start;
+        LOG_INFO("Solution Parsing Took: {0} seconds", duration.count());
     }
     
-    TypeReflector.Build(); 
+    {
+        auto start = std::chrono::high_resolution_clock::now();
 
+        TypeReflector.Build();
+
+        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> duration = end - start;
+        LOG_INFO("Build took: {0} seconds", duration.count());
+    }
+    
     return 0;
 }
