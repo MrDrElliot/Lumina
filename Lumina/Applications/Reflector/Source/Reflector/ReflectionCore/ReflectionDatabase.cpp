@@ -15,6 +15,11 @@ namespace Lumina::Reflection
         }
     }
 
+    void FReflectionDatabase::AddReflectedProject(const FReflectedProject& Project)
+    {
+        ReflectedProjects.push_back(Project);
+    }
+
     void FReflectionDatabase::AddReflectedType(FReflectedType* Type)
     {
         if(Type == nullptr)

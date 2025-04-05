@@ -2,13 +2,12 @@ include(os.getenv("LUMINA_DIR") .. "/Dependencies.lua")
 
 project "Lumina"
 	kind "StaticLib"
-
-
+		
 	outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
-
-	targetdir ("../Binaries/" .. outputdir .. "/%{prj.name}")
-	objdir ("../Intermediates/" .. outputdir .. "/%{prj.name}")
-	
+    
+    targetdir ("%{wks.location}/Binaries/" .. outputdir .. "/%{prj.name}")
+    objdir ("%{wks.location}/Intermediates/" .. outputdir .. "/%{prj.name}")
+		
 	files
 	{
 		"Engine/Source/**.h",
@@ -79,6 +78,7 @@ project "Lumina"
 		"Engine/Source/Runtime",
 		"Engine/ThirdParty/",
 		
+	    reflection_directory();
 		includedependencies();
 	}
 	

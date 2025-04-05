@@ -1,4 +1,5 @@
 -- Grab Vulkan SDK path
+
 VULKAN_SDK = os.getenv("VULKAN_SDK")
 LuminaEngineDirectory = os.getenv("LUMINA_DIR")
 
@@ -23,6 +24,11 @@ IncludeDir["EABase"] =                  "%{LuminaEngineDirectory}/Lumina/Engine/
 IncludeDir["rpmalloc"] =                "%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/rpmalloc/"
 IncludeDir["xxhash"] =                  "%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/xxhash/"
 
+
+
+function reflection_directory()
+    return "%{wks.location}/Intermediates/Reflection/%{prj.name}/"
+end
 
 
 function includedependencies()

@@ -4,11 +4,10 @@ include(os.getenv("LUMINA_DIR") .. "/Dependencies.lua")
 project "Editor"
 	kind "ConsoleApp"
 
-
 	outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
-
-	targetdir ("%{wks.location}/Binaries/" .. outputdir .. "/%{prj.name}")
-	objdir ("%{wks.location}/Intermediates/" .. outputdir .. "/%{prj.name}")
+    
+    targetdir ("%{wks.location}/Binaries/" .. outputdir .. "/%{prj.name}")
+    objdir ("%{wks.location}/Intermediates/" .. outputdir .. "/%{prj.name}")
 	
 	links
 	 {
@@ -33,6 +32,8 @@ project "Editor"
 		"%{LuminaEngineDirectory}/Lumina/Engine/",
 	    "%{LuminaEngineDirectory}/Lumina/Engine/Source/",
 	    "%{LuminaEngineDirectory}/Lumina/Engine/Source/Runtime/",
+	    
+	    reflection_directory();
 		includedependencies();
 	}
 	 

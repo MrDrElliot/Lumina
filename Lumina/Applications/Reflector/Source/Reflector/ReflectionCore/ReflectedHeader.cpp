@@ -1,5 +1,6 @@
 ﻿#include "ReflectedHeader.h"
 
+#include <filesystem>
 #include <fstream>
 
 #include "Log/Log.h"
@@ -14,6 +15,9 @@ namespace Lumina::Reflection
         FString LowercasePath = HeaderPath;
         LowercasePath.make_lower();
         HeaderID = LowercasePath.c_str();
+
+        std::filesystem::path FilesystemPath = Path.c_str();
+        FileName = FilesystemPath.stem().string().c_str();
     }
 
     bool FReflectedHeader::Parse()

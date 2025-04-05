@@ -23,6 +23,9 @@ namespace Lumina::Reflection
             LOG_ERROR("Failed to open project for parsing");
             return false;
         }
+
+        std::filesystem::path FilesystemPath = Path.c_str();
+        Name = FilesystemPath.stem().string().c_str();
         
         std::string ParseLine;
         while (std::getline(ProjectFile, ParseLine))

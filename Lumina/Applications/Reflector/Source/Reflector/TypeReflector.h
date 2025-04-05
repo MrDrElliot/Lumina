@@ -6,6 +6,8 @@
 
 namespace Lumina::Reflection
 {
+    class FClangParser;
+
     class FTypeReflector
     {
     public:
@@ -23,10 +25,9 @@ namespace Lumina::Reflection
 
     private:
 
-        bool WriteGeneratedFiles();
+        bool WriteGeneratedFiles(const FClangParser& Parser);
         
         FProjectSolution Solution;
-        
         TVector<FReflectedProject> Projects;
         
     };

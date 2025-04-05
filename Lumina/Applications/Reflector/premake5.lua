@@ -4,15 +4,15 @@ include(os.getenv("LUMINA_DIR") .. "/Dependencies.lua")
 project "Reflector"
 	kind "ConsoleApp"
 
-
-	outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
-
-	targetdir ("%{wks.location}/Binaries/" .. outputdir .. "/%{prj.name}")
-	objdir ("%{wks.location}/Intermediates/" .. outputdir .. "/%{prj.name}")
+    outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
+    
+    targetdir ("%{wks.location}/Binaries/" .. outputdir .. "/%{prj.name}")
+    objdir ("%{wks.location}/Intermediates/" .. outputdir .. "/%{prj.name}")
 		
 	removedefines { }
 	
-    postbuildcommands {
+    postbuildcommands 
+    {
         "{COPY} \"%{wks.location}/External/LLVM/bin/libclang.dll\" \"%{wks.location}/Binaries/" .. outputdir .. "/%{prj.name}\""
     }
 
@@ -70,6 +70,8 @@ project "Reflector"
 	    "%{LuminaEngineDirectory}/Lumina/Engine/Source/",
 	    "%{LuminaEngineDirectory}/Lumina/Engine/Source/Runtime/",
 	    "%{LuminaEngineDirectory}/External/LLVM/include/",
+	    
+	    reflection_directory();
 		includedependencies();
 		
 	}

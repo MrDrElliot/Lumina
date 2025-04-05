@@ -8,6 +8,13 @@
 #define LUM_ENUM(...)
 #define LUM_FIELD(...)
 #define LUM_FUNCTION(...)
+
+#define MACRO_BODY_COMBINE(A, B, C, D) A##B##C##D
+#define MACRO_BODY_COMBINE_EXPAND(A, B, C, D) MACRO_BODY_COMBINE(A, B, C, D)
+
+#define GENERATED_BODY() MACRO_BODY_COMBINE_EXPAND(Class, _, __LINE__, _GENERATED_BODY);
+
+
     
 #define DECLARE_CLASS_NOBASE(ClassName)                                     \
 private:                                                                    \

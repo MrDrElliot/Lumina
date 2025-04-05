@@ -1,3 +1,3 @@
 @echo off
-python Win-GenProjects.py
+python3 Win-GenProjects.py
 PAUSE

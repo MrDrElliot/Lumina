@@ -3,11 +3,10 @@ include(os.getenv("LUMINA_DIR") .. "/Dependencies.lua")
 project "Sandbox"
 	kind "ConsoleApp"
 
-
-	outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
-
-	targetdir ("%{wks.location}/Binaries/" .. outputdir .. "/%{prj.name}")
-	objdir ("%{wks.location}/Intermediates/" .. outputdir .. "/%{prj.name}")
+    outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
+    
+    targetdir ("%{wks.location}/Binaries/" .. outputdir .. "/%{prj.name}")
+    objdir ("%{wks.location}/Intermediates/" .. outputdir .. "/%{prj.name}")
 		
 	removedefines { }
 		
@@ -35,6 +34,8 @@ project "Sandbox"
 		"%{LuminaEngineDirectory}/Lumina/Engine/",
 	    "%{LuminaEngineDirectory}/Lumina/Engine/Source/",
 	    "%{LuminaEngineDirectory}/Lumina/Engine/Source/Runtime/",
+	    
+	    reflection_directory();
 		includedependencies();
 		
 	}

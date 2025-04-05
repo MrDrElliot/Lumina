@@ -13,7 +13,8 @@ namespace Lumina::Reflection
 
         FReflectionDatabase() = default;
         ~FReflectionDatabase();
-        
+
+        void AddReflectedProject(const FReflectedProject& Project);
         void AddReflectedType(FReflectedType* Type);
 
         template<typename T, typename...Args>
@@ -21,8 +22,9 @@ namespace Lumina::Reflection
         T* CreateReflectedType(Args&&... args);
 
 
-        TVector<FReflectedType*>             ReflectedTypes;
-        THashMap<FName, FReflectedType*>     TypeHashMap;
+        TVector<FReflectedProject>              ReflectedProjects;
+        TVector<FReflectedType*>                ReflectedTypes;
+        THashMap<FName, FReflectedType*>        TypeHashMap;
         
     };
 

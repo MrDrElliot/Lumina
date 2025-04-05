@@ -5,9 +5,11 @@
 #include <iostream>
 
 #include "Clang/ClangParser.h"
+#include "CodeGeneration/CodeGenerator.h"
 #include "Containers/Array.h"
 #include "EASTL/sort.h"
 #include "Memory/Memory.h"
+#include "ReflectionCore/ReflectedProject.h"
 
 #define VS_PROJECT_ID "{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}"  // VS Project UID
 
@@ -75,6 +77,8 @@ namespace Lumina::Reflection
         
         for (FReflectedProject& Project : Projects)
         {
+            Parser.ParsingContext.ReflectionDatabase.AddReflectedProject(Project);
+            
             for (FReflectedHeader& Header : Project.Headers)
             {
                 LOG_ERROR("Reflecting Header: {0}", Header.HeaderPath);
@@ -86,16 +90,19 @@ namespace Lumina::Reflection
             }
         }
 
-        for(auto* Type : Parser.ParsingContext.ReflectionDatabase.ReflectedTypes)
-        {
-            LOG_INFO("Found Reflected Type: {0}", Type->DisplayName);
-        }
+        WriteGeneratedFiles(Parser);
         
         return true;
     }
 
-    bool FTypeReflector::WriteGeneratedFiles()
+    bool FTypeReflector::WriteGeneratedFiles(const FClangParser& Parser)
     {
-        return false;
+
+        FCodeGenerator Generator(Solution, Parser.ParsingContext.ReflectionDatabase);
+
+        Generator.GenerateCodeForSolution();
+
+        
+        return true;
     }
 }

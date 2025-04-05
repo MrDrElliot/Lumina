@@ -15,9 +15,10 @@ namespace Lumina::Reflection
         bool Parse();
         
 
-        FName HeaderID;
-        FString HeaderPath;
-        TVector<FString> Contents;
+        FString             FileName;
+        FName               HeaderID;
+        FString             HeaderPath;
+        TVector<FString>    Contents;
         
     };
 }

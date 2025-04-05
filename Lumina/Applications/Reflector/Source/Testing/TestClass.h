@@ -20,7 +20,6 @@ namespace Lumina
     {
     public:
         
-        
         LUM_FIELD()
         ETestEnum Test;
 
