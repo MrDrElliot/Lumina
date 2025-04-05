@@ -27,6 +27,7 @@ namespace Lumina
         explicit FName(const FInlineString& Str);
 
         FORCEINLINE bool IsValid() const { return ID != 0; }
+        bool IsNone() const;
         FORCEINLINE uint64 GetID() const { return ID; }
         FORCEINLINE operator uint64() const { return ID; }
 
@@ -39,6 +40,7 @@ namespace Lumina
         FORCEINLINE bool operator!=(const FName& Other) const { return ID != Other.ID; }
         
     private:
+        
         FString     StringView;
         uint64      ID = 0;
     };

@@ -88,9 +88,7 @@ namespace Lumina::Reflection::Visitor
             clang_visitChildren(Cursor, VisitEnumContents, Context);
         }
         Context->ParentReflectedType = PreviousParentType;
-
-        LOG_INFO("Reflected Enum: {0}: \n{1}", CursorName, Enum->GetTypeAsString());
-
+        
         Context->ReflectionDatabase.AddReflectedType(Enum);
         
         return CXChildVisit_Continue;

@@ -11,6 +11,9 @@ namespace Lumina::Reflection
     {
     public:
 
+        FReflectionDatabase() = default;
+        ~FReflectionDatabase();
+        
         void AddReflectedType(FReflectedType* Type);
 
         template<typename T, typename...Args>

@@ -32,6 +32,11 @@ namespace Lumina::ClangUtils
         return line;
     }
 
+    inline clang::QualType GetQualType(CXType type) 
+    {
+        return clang::QualType::getFromOpaquePtr( type.data[0] ); 
+    }
+    
     inline bool GetQualifiedNameForType(clang::QualType Type, FString& QualifiedName)
     {
         const clang::Type* pType = Type.getTypePtr();

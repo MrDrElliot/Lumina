@@ -33,6 +33,14 @@ namespace Lumina::Reflection
                 }
             
             case(CXCursor_ClassDecl):
+                {
+                    ParserContext->PushNamespace(CursorName);
+                    clang_visitChildren(Cursor, VisitTranslationUnit, ClientData);
+                    ParserContext->PopNamespace();
+                    
+                    return Visitor::VisitClass(Cursor, Parent, ParserContext);
+                }
+            
             case(CXCursor_StructDecl):
                 {
                     ParserContext->PushNamespace(CursorName);

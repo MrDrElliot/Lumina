@@ -2,6 +2,11 @@
 
 namespace Lumina::Reflection
 {
+
+    FClangParserContext::~FClangParserContext()
+    {
+    }
+
     void FClangParserContext::AddReflectedMacro(const FReflectionMacro& Macro)
     {
         TVector<FReflectionMacro>& Macros = ReflectionMacros[Macro.HeaderID];

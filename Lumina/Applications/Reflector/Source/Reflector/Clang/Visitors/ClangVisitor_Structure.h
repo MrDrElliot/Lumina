@@ -10,4 +10,6 @@ namespace Lumina::Reflection::Visitor
 {
     
     CXChildVisitResult VisitStructure(CXCursor Cursor, CXCursor Parent, FClangParserContext* Context);
+    CXChildVisitResult VisitClass(CXCursor Cursor, CXCursor Parent, FClangParserContext* Context);
+
 }

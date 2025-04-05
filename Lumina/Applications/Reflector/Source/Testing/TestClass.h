@@ -13,13 +13,18 @@ namespace Lumina
         TestThree,
     };
 
+
+    
     LUM_CLASS()
     class TestClass
     {
     public:
-
+        
+        
+        LUM_FIELD()
         ETestEnum Test;
-    
+
+        
     };
 
     
@@ -27,8 +32,13 @@ namespace Lumina
     struct TestStruct
     {
 
+        LUM_FIELD()
         uint32 TestInt;
+        
+        LUM_FIELD()
         float TestFloat;
+
+        LUM_FIELD()
         double TestDouble;
     };
 }

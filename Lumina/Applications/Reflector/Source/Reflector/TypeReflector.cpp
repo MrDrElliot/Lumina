@@ -85,6 +85,11 @@ namespace Lumina::Reflection
                 }
             }
         }
+
+        for(auto* Type : Parser.ParsingContext.ReflectionDatabase.ReflectedTypes)
+        {
+            LOG_INFO("Found Reflected Type: {0}", Type->DisplayName);
+        }
         
         return true;
     }

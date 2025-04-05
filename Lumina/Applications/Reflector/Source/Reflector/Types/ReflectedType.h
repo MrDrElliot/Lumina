@@ -53,6 +53,10 @@ namespace Lumina::Reflection
             FString Name;
         };
 
+        void PushField(const FField& Field);
+
+        FString GetTypeAsString() const override { return " "; }
+        
         TVector<FField>     Fields;
         
     };
@@ -63,5 +67,7 @@ namespace Lumina::Reflection
     {
     public:
         
+        FString GetTypeAsString() const override { return " "; }
+
     };
 }

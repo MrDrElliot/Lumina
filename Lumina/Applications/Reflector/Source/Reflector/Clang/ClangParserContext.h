@@ -11,12 +11,16 @@ namespace Lumina::Reflection
     public:
 
         FClangParserContext() = default;
-
+        ~FClangParserContext();
+        
         void AddReflectedMacro(const FReflectionMacro& Macro);
         bool TryFindMacroForCursor(FName HeaderID, const CXCursor& Cursor, FReflectionMacro& Macro);
 
         void PushNamespace(const FString& Namespace);
         void PopNamespace();
+
+        template<typename T>
+        T* GetParentReflectedType();
 
         
         FReflectedType*                             ParentReflectedType;
@@ -33,4 +37,10 @@ namespace Lumina::Reflection
         FString                                     CurrentNamespace;
         
     };
+
+    template <typename T>
+    T* FClangParserContext::GetParentReflectedType()
+    {
+        return static_cast<T*>(ParentReflectedType);
+    }
 }

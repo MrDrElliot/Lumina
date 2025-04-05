@@ -49,6 +49,12 @@ namespace Lumina
     {
     }
 
+    bool FName::IsNone() const
+    {
+        auto Itr = gNameCache->find(ID);
+        return Itr == gNameCache->end();
+    }
+
     FString FName::ToString() const
     {
         return FString(c_str());

@@ -12,4 +12,9 @@ namespace Lumina::Reflection
 
         return ReturnValue;
     }
+
+    void FReflectedStruct::PushField(const FField& Field)
+    {
+        Fields.push_back(Field);
+    }
 }
