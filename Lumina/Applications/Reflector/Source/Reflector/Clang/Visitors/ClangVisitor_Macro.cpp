@@ -14,6 +14,7 @@ namespace Lumina::Reflection::Visitor
         FString CursorName = ClangUtils::GetCursorDisplayName(Cursor);
         CXSourceRange Range = clang_getCursorExtent(Cursor);
 
+        
         if (CursorName == ReflectionEnumToString(EReflectionMacro::Class))
         {
             ADD_REFLECTION_MACRO(Class)
@@ -33,6 +34,10 @@ namespace Lumina::Reflection::Visitor
         else if (CursorName == ReflectionEnumToString(EReflectionMacro::Method))
         {
             ADD_REFLECTION_MACRO(Method)
+        }
+        else if (CursorName == ReflectionEnumToString(EReflectionMacro::GeneratedBody))
+        {
+            Context->AddGeneratedBodyMacro(FReflectionMacro(Header, Cursor, Range, EReflectionMacro::GeneratedBody));
         }
         
         return CXChildVisit_Continue;

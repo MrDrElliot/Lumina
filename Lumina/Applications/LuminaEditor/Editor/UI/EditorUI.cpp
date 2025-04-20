@@ -2,6 +2,7 @@
 
 #include "imgui.h"
 #include "Assets/AssetRegistry/AssetRegistry.h"
+#include "Core/Object/Object.h"
 #include "Memory/Memory.h"
 #include "Project/Project.h"
 #include "Renderer/RenderContext.h"
@@ -16,6 +17,7 @@
 #include "Tools/EntitySceneEditorTool.h"
 #include "Tools/AssetEditors/MaterialEditor/MaterialEditorTool.h"
 #include "Tools/UI/ImGui/imfilebrowser.h"
+#include "imnodes/imnodes.h"
 
 namespace Lumina
 {
@@ -29,6 +31,8 @@ namespace Lumina
 
     void FEditorUI::Initialize(const FUpdateContext& UpdateContext)
     {
+        ImNodes::CreateContext();
+
         EditorWindowClass.ClassId = ImHashStr("EditorWindowClass");
         EditorWindowClass.DockingAllowUnclassed = false;
         EditorWindowClass.ViewportFlagsOverrideSet = ImGuiViewportFlags_NoAutoMerge;
@@ -62,6 +66,8 @@ namespace Lumina
         SceneManager = nullptr;
         SceneEditorTool = nullptr;
         ConsoleLogTool = nullptr;
+
+        ImNodes::DestroyContext();
     }
 
     void FEditorUI::OnStartFrame(const FUpdateContext& UpdateContext)
@@ -161,7 +167,7 @@ namespace Lumina
 
         if (bDearImGuiDemoWindowOpen)
         {
-            ImGui::ShowDemoWindow(&bDearImGuiDemoWindowOpen);
+            //ImGui::ShowDemoWindow(&bDearImGuiDemoWindowOpen);
         }
 
         for (FEditorTool* Tool : EditorTools)

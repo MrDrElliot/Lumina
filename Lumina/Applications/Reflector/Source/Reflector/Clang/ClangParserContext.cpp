@@ -13,6 +13,12 @@ namespace Lumina::Reflection
         Macros.push_back(Macro);
     }
 
+    void FClangParserContext::AddGeneratedBodyMacro(const FReflectionMacro& Macro)
+    {
+        TQueue<FReflectionMacro>& Macros = GeneratedBodyMacros[Macro.HeaderID];
+        Macros.push(Macro);
+    }
+
     bool FClangParserContext::TryFindMacroForCursor(FName HeaderID, const CXCursor& Cursor, FReflectionMacro& Macro)
     {
         auto headerIter = ReflectionMacros.find(HeaderID);
@@ -21,16 +27,21 @@ namespace Lumina::Reflection
             return false;
         }
 
-        TVector<FReflectionMacro>& macrosForHeader = headerIter->second;
-
         CXSourceRange typeRange = clang_getCursorExtent(Cursor);
         CXSourceLocation startLoc = clang_getRangeStart(typeRange);
 
         CXFile cursorFile;
-        unsigned cursorLine, cursorColumn;
+        uint32 cursorLine, cursorColumn;
         clang_getSpellingLocation(startLoc, &cursorFile, &cursorLine, &cursorColumn, nullptr);
 
         CXString FileName = clang_getFileName(cursorFile);
+
+        if (FileName.data == nullptr)
+        {
+            LOG_ERROR("Failed to find a filename for cursor");
+            return false;
+        }
+
         FString FileNameChar = clang_getCString(FileName);
         FileNameChar.make_lower();
 
@@ -44,6 +55,7 @@ namespace Lumina::Reflection
             return false;
         }
 
+        TVector<FReflectionMacro>& macrosForHeader = headerIter->second;
         for (auto iter = macrosForHeader.begin(); iter != macrosForHeader.end(); ++iter)
         {
             bool bValidMacro = (iter->LineNumber < cursorLine) && ((cursorLine - iter->LineNumber) <= 1);
@@ -59,7 +71,30 @@ namespace Lumina::Reflection
         return false;
     }
 
-    
+    bool FClangParserContext::TryFindGeneratedBodyMacro(FName HeaderID, const CXCursor& Cursor, FReflectionMacro& Macro)
+    {
+        auto headerIter = GeneratedBodyMacros.find(HeaderID);
+        if (headerIter == GeneratedBodyMacros.end())
+        {
+            Macro = {};
+            return false;
+        }
+        
+        TQueue<FReflectionMacro>& MacrosForHeader = headerIter->second;
+
+        if (MacrosForHeader.empty())
+        {
+            Macro = {};
+            return false;
+        }
+        
+        Macro = MacrosForHeader.front();
+        MacrosForHeader.pop();
+
+        return true;
+    }
+
+
     void FClangParserContext::PushNamespace(const FString& Namespace)
     {
         NamespaceStack.push_back(Namespace);

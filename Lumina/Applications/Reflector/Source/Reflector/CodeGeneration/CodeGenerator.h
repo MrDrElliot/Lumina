@@ -14,12 +14,14 @@ namespace Lumina::Reflection
         void GenerateCodeForProject(const FReflectedProject& Project);
 
         void GenerateReflectionCodeForHeader(const FReflectedHeader& Header);
+        void GenerateReflectionCodeForSource(const FReflectedHeader& Header);
 
         void SetProject(const FReflectedProject& Project) { CurrentProject = Project; }
 
     private:
 
         void GenerateCodeHeader(std::stringstream& SS, const FReflectedHeader& Header);
+        void GenerateCodeSource(std::stringstream& SS, const FReflectedHeader& Header);
 
 
     private:

@@ -1,7 +1,7 @@
 ﻿#pragma once
 
 #include "EdNodeGraphPin.h"
-#include "imgui.h"
+#include <imgui.h>
 #include "Core/Templates/Forward.h"
 #include "Containers/Array.h"
 #include "Containers/Name.h"
@@ -26,9 +26,6 @@ namespace Lumina
     class CEdGraphNode : public CObject
     {
     public:
-
-        DECLARE_CLASS_ABSTRACT(CEdGraphNode, CObject)
-        
 
         friend class CEdNodeGraph;
 
@@ -85,13 +82,13 @@ namespace Lumina
     requires(std::is_base_of_v<CEdNodeGraphPin, T>)
     T* CEdGraphNode::CreatePin(Args&&... args)
     {
-        CEdNodeGraphPin* NewPin = NewObject<T>();
+        /*CEdNodeGraphPin* NewPin = NewObject<T>();
         NewPin->GUID = Math::RandRange<uint16>(0, UINT16_MAX);
         NewPin->bInputPin = Direction == ENodePinDirection::Input;
         NewPin->OwningNode = this;
-        NodePins[uint32(Direction)].push_back(NewPin);
+        NodePins[uint32(Direction)].push_back(NewPin);*/
             
-        return static_cast<T*>(NewPin);
+        return nullptr;
     }
 }
 

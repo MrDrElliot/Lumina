@@ -2,7 +2,7 @@
 
 #include "EdGraphNode.h"
 #include "EdNodeGraphPin.h"
-#include "imnodes.h"
+#include "imnodes/imnodes.h"
 #include "Core/Math/Math.h"
 
 #define SHOW_DEBUG 1
@@ -11,8 +11,6 @@ namespace Lumina
 {
     
     uint16 GNodeID = 0;
-    
-    IMPLEMENT_CLASS(CEdNodeGraph)
     
     CEdNodeGraph::CEdNodeGraph()
     {

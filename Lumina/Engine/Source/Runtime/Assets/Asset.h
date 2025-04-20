@@ -8,9 +8,9 @@
 
 namespace Lumina
 {
-    class IAsset
+    class LUMINA_API IAsset
     {
-    public:
+    public: 
 
         IAsset() :AssetPath(FAssetPath()) {}
         IAsset(const FAssetPath& InPath) :AssetPath(InPath) {}

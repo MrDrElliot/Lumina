@@ -43,6 +43,4 @@ namespace Lumina
             ImGui::Dummy(ImVec2(1.5f, 1.5f));
         }
     }
-    IMPLEMENT_CLASS(CMaterialOutput)
-
 }

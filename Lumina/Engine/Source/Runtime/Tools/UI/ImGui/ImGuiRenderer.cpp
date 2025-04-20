@@ -2,7 +2,6 @@
 
 #include "ImGuiDesignIcons.h"
 #include "ImGuiFonts.h"
-#include "imnodes.h"
 #include "Core/Engine/Engine.h"
 #include "Core/Performance/PerformanceTracker.h"
 #include "imgui/imgui_freetype.h"
@@ -20,7 +19,6 @@ namespace Lumina
 
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
-    	ImNodes::CreateContext();
 
         ImGuiIO& io = ImGui::GetIO();
 
@@ -169,7 +167,6 @@ namespace Lumina
 
     void IImGuiRenderer::Deinitialize()
     {
-    	ImNodes::DestroyContext();
     	ImGui::DestroyContext();
     }
 

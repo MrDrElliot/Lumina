@@ -1,82 +1,68 @@
 ﻿#pragma once
 
-#include "Containers/Array.h"
-
+#include "Module/Api.h"
+#include "Object.h"
 
 namespace Lumina
 {
-    struct FField;
+    class FProperty;
 }
 
 namespace Lumina
 {
-    class CObject;
 
-    class Class
+    LUMINA_API void AllocateStaticClass(const TCHAR* Name, CClass** OutClass, uint32 Size, uint32 Alignment);
+
+    /** Base class for any data structure that holds fields */
+    class CStruct : public CObject
     {
-    public:
+
+        DECLARE_CLASS(CStruct, CObject, LUMINA_API)
+
+        CStruct(FName InName, uint32 InSize, uint32 InAlignment, EObjectFlags InFlags)
+            : CObject(nullptr, InFlags, InName)
+            , Size(InSize)
+            , Alignment(InAlignment)
+        {
+        }
         
+        FORCEINLINE uint32 GetSize() const
+        {
+            return Size;
+        }
+
+        FORCEINLINE uint32 GetAlignment() const
+        {
+            return Alignment;
+        }
+
+
+        void AddField(FProperty* Property);
+        FProperty* GetProperty(const FString& Name);
         
-        FString     ClassName;
-        uint64      ID;
-        CObject     *(*CreateFunc)() = nullptr;
-        Class*      ParentClass = nullptr;
+    private:
+        
+        FProperty* LinkedProperty;
+        
+        uint32 Size = 0;
+        uint32 Alignment = 0;
     };
 
-
-
-
-    
-    struct FClassMemberData
-    {
-        FField*     Fields;
-        uint32      NumFields;
-    };
-    
-
-    class FClassRegistry
+    /** Final class for fields and functions. */
+    class CClass final : public CStruct
     {
     public:
-    
-        static FClassRegistry& GetInstance()
+
+        DECLARE_CLASS(CClass, CStruct, LUMINA_API)
+
+        CClass(FName InName, uint32 InSize, uint32 InAlignment, EObjectFlags InFlags)
+            : CStruct(InName, InSize, InAlignment, InFlags)
         {
-            static FClassRegistry Instance;
-            return Instance;
         }
 
-        void Register(Class* Class)
-        {
-            Registry[Class->ID] = Class;
-        }
-
-        CObject* CreateInstance(uint64 ID)
-        {
-            auto it = Registry.find(ID);
-            if (it != Registry.end())
-            {
-                return it->second->CreateFunc();
-            }
-            return nullptr;
-        }
 
     private:
         
-        THashMap<uint64, Class*> Registry;
     };
-    
-    template<typename T>
-    class ClassRegistryHelper
-    {
-    public:
 
-        ClassRegistryHelper(CObject* (*CreateFunc)())
-        {
-            Class* Class = T::StaticClass();
-            Class->CreateFunc = CreateFunc;
-            Class->ID = typeid(T).hash_code();
-            Class->ClassName = typeid(T).name();
-            
-            FClassRegistry::GetInstance().Register(Class);
-        }
-    };
 }

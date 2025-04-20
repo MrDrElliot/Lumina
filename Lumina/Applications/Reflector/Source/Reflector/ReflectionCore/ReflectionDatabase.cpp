@@ -6,13 +6,15 @@ namespace Lumina::Reflection
 {
     FReflectionDatabase::~FReflectionDatabase()
     {
-        while (!ReflectedTypes.empty())
+        for (const auto& Pair : ReflectedTypes)
         {
-            FReflectedType* Type = ReflectedTypes.back();
-            ReflectedTypes.pop_back();
-
-            FMemory::Delete(Type);
+            for (FReflectedType* Type : Pair.second)
+            {
+                FMemory::Delete(Type);
+            }
         }
+
+        ReflectedTypes.clear();
     }
 
     void FReflectionDatabase::AddReflectedProject(const FReflectedProject& Project)
@@ -22,28 +24,16 @@ namespace Lumina::Reflection
 
     void FReflectionDatabase::AddReflectedType(FReflectedType* Type)
     {
-        if(Type == nullptr)
-        {
-            LOG_WARN("Attempted to register a null type");
-            return;
-        }
-
-        if(!Type->ID.IsValid())
+        if(Type == nullptr || !Type->ID.IsValid())
         {
             LOG_WARN("Attempted to register a null type");
             return;
         }
         
+        TVector<FReflectedType*>* TypeVector = &ReflectedTypes[Type->HeaderID];
+        Assert(TypeVector != nullptr);
+        TypeVector->push_back(Type);
         
-        if (TypeHashMap.find(Type->ID) == TypeHashMap.end())
-        {
-            ReflectedTypes.emplace_back(FMemory::Move(Type));
-            TypeHashMap.insert_or_assign(Type->ID, Type);
-        }
-        else
-        {
-            FMemory::Delete(Type);
-            LOG_WARN("Attempted to register type ({0}) that's already been registered", Type->ID.c_str());
-        }
+        TypeHashMap.insert_or_assign(Type->ID, Type);
     }
 }

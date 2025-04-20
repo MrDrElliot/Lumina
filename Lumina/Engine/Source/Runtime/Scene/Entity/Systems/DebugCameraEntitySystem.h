@@ -9,7 +9,7 @@ namespace Lumina
 
 namespace Lumina
 {
-    class FDebugCameraEntitySystem : public FEntitySystem
+    class LUMINA_API FDebugCameraEntitySystem : public FEntitySystem
     {
     public:
 

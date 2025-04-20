@@ -12,7 +12,7 @@ namespace Lumina
 {
 	class FAssetRecord;
 	
-	class FAssetManager : public ISubsystem
+	class LUMINA_API FAssetManager : public ISubsystem
 	{
 	public:
 

@@ -29,7 +29,6 @@ namespace Lumina
             AssetRequestThread.join();
         }
         
-        rpmalloc_thread_finalize(1);
         AssetRecord.clear();
     }
 
@@ -131,7 +130,7 @@ namespace Lumina
 
     void FAssetManager::ProcessAssetRequests()
     {
-        rpmalloc_thread_initialize();
+        Threading::InitializeThreadHeap();
         
         while (bAssetThreadRunning)
         {
@@ -152,6 +151,8 @@ namespace Lumina
             
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
+
+        Threading::ShutdownThreadHeap();
     }
 }
 

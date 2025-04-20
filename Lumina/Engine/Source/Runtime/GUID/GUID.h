@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Module/API.h"
 #include <objbase.h> // For CoCreateGuid and related functions
 #include "Containers/Array.h"
 #include "Core/Serialization/Archiver.h"
@@ -7,7 +8,7 @@
 
 namespace Lumina
 {
-    class FGuid
+    class LUMINA_API FGuid
     {
     public:
         
@@ -58,7 +59,7 @@ namespace Lumina
 namespace eastl
 {
     template <>
-    struct hash<Lumina::FGuid>
+    struct LUMINA_API hash<Lumina::FGuid>
     {
         std::size_t operator()(const Lumina::FGuid& Guid) const noexcept
         {
@@ -79,7 +80,7 @@ namespace eastl
 namespace fmt
 {
     template <>
-    struct formatter<Lumina::FGuid>
+    struct LUMINA_API formatter<Lumina::FGuid>
     {
         // Parses the format specifier (not used here, so we ignore it)
         constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin())

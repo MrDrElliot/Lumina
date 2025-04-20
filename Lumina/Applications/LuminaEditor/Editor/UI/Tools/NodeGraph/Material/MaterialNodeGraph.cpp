@@ -8,20 +8,9 @@
 
 namespace Lumina
 {
-    IMPLEMENT_CLASS(CMaterialNodeGraph)
-
     CMaterialNodeGraph::CMaterialNodeGraph()
     {
         CreateNode<CMaterialOutputNode>();
-
-        REGISTER_GRAPH_NODE(CMaterialExpression_Addition)
-        REGISTER_GRAPH_NODE(CMaterialExpression_Subtraction)
-        REGISTER_GRAPH_NODE(CMaterialExpression_Multiplication)
-        REGISTER_GRAPH_NODE(CMaterialExpression_ConstantFloat)
-        REGISTER_GRAPH_NODE(CMaterialExpression_ConstantFloat2)
-        REGISTER_GRAPH_NODE(CMaterialExpression_ConstantFloat3)
-        REGISTER_GRAPH_NODE(CMaterialExpression_ConstantFloat4)
-
     }
 
     void CMaterialNodeGraph::OnDrawGraph()

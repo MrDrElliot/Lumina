@@ -32,7 +32,7 @@ namespace Lumina
         template<typename... InvokeArgs>
         void Broadcast(InvokeArgs... args)
         {
-            TInlineVector<uint32, 2> RemovalList;
+            TFixedVector<uint32, 2> RemovalList;
 
             for (int i = 0; i < InvokationList.size(); ++i)
             {

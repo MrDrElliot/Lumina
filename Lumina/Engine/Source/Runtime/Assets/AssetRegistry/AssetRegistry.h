@@ -15,7 +15,7 @@ namespace Lumina
 {
 	struct FAssetHeader;
 
-	class FAssetRegistry : public ISubsystem
+	class LUMINA_API FAssetRegistry : public ISubsystem
 	{
 	public:
 

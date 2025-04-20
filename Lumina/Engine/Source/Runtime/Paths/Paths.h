@@ -21,14 +21,54 @@ namespace Lumina::Paths
         return std::filesystem::canonical(std::filesystem::current_path().parent_path().parent_path() / "Lumina" / "Engine");
     }
 
-    inline FString Combine(const FString& A, const FString& B)
+    inline FString Parent(const FString& Path)
     {
-        std::filesystem::path PathA = A.c_str();
-        std::filesystem::path PathB = B.c_str();
+        return std::filesystem::path(Path.c_str()).parent_path().string().c_str();
+    }
 
-        std::filesystem::path Combined = PathA / PathB;
+    template <typename... Paths>
+    inline FString Combine(Paths&&... InPaths)
+    {
 
-        return Combined.string().c_str();
+        std::filesystem::path Path = (std::filesystem::path(std::forward<Paths>(InPaths)) /= ...);
+        
+        return Path.string().c_str();
+    }
+
+    inline FString DirName(const FString& InPath)
+    {
+        size_t LastSlash = InPath.find_last_of("/\\");
+        if (LastSlash != FString::npos)
+        {
+            return InPath.substr(0, LastSlash);
+        }
+        return InPath;
+    }
+    
+    inline FString FileName(const FString& InPath)
+    {
+        size_t LastSlash = InPath.find_last_of("/\\");
+        if (LastSlash != FString::npos)
+        {
+            return InPath.substr(LastSlash + 1);
+        }
+        return InPath;
+    }
+
+    inline FString RemoveExtension(const FString& InPath)
+    {
+        size_t Dot = InPath.find_last_of(".");
+        if (Dot != FString::npos)
+        {
+            return InPath.substr(0, Dot);
+        }
+
+        return InPath;
+    }
+    
+    inline bool Exists(const FString& Filename)
+    {
+        return std::filesystem::exists(Filename.c_str());
     }
 
     inline bool IsUnderDirectory(const FString& ParentDirectory, const FString& Directory)

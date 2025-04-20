@@ -4,8 +4,6 @@
 
 namespace Lumina
 {
-    IMPLEMENT_CLASS(CEdGraphNode)
-    
     CEdGraphNode::~CEdGraphNode()
     {
         for (auto& Vector : NodePins)

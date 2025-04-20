@@ -2,5 +2,4 @@
 
 namespace Lumina
 {
-    IMPLEMENT_CLASS(CMaterialGraphNode)
 }

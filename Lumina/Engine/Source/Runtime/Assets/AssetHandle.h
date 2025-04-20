@@ -13,7 +13,7 @@ namespace Lumina
     /**
      *  Generic Asset Handle, prefer to use the template version.
      */
-    class FAssetHandle
+    class LUMINA_API FAssetHandle
     {
     public:
 

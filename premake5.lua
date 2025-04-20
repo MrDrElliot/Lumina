@@ -12,6 +12,7 @@ workspace "Lumina"
 	
 	defines
 	{
+		"EASTL_USER_DEFINED_ALLOCATOR=1",
 		"_CRT_SECURE_NO_WARNINGS",
 		"GLM_FORCE_DEPTH_ZERO_TO_ONE",
 		"IMGUI_DEFINE_MATH_OPERATORS",
@@ -23,21 +24,23 @@ workspace "Lumina"
 		architecture "x86_64"
 
 	filter "configurations:Debug"
+		runtime "Debug"
 		optimize "Off"
 		symbols "On"
 
 	filter "configurations:Release"
+		runtime "Release"
 		optimize "On"
 		symbols "Default"
 
 	filter "configurations:Shipping"
+		runtime "Release"
 		optimize "Full"
 		symbols "Off"
 
 	filter "system:windows"
 		buildoptions 
-		{ 
-			"/-Wno-old-style-cast",
+		{
             "/EHsc",
             "/Zc:preprocessor",
             "/Zc:__cplusplus",
@@ -46,6 +49,7 @@ workspace "Lumina"
         }
 
 	group "Dependencies"
+		include "Lumina/Engine/ThirdParty/EA"
 		include "Lumina/Engine/ThirdParty/glfw"
 		include "Lumina/Engine/ThirdParty/imgui"
 	group ""

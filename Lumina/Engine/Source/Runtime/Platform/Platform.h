@@ -40,3 +40,25 @@
 #endif
 
 #define NODISCARD [[nodiscard]]
+
+// If we don't have a platform-specific define for the TEXT macro, define it now.
+#if !defined(TEXT)
+    #if PLATFORM_TCHAR_IS_UTF8CHAR
+        #define TEXT_PASTE(x) UTF8TEXT(x)
+    #else
+        #define TEXT_PASTE(x) WIDETEXT(x)
+    #endif
+    #define TEXT(x) TEXT_PASTE(x)
+#endif
+
+
+#define UTF8TEXT_PASTE(x)  u8 ## x
+#define UTF16TEXT_PASTE(x) u ## x
+#if PLATFORM_WIDECHAR_IS_CHAR16
+    #define WIDETEXT_PASTE(x)  UTF16TEXT_PASTE(x)
+#else
+    #define WIDETEXT_PASTE(x)  L ## x
+#endif
+
+#define UTF16TEXT(x) UTF16TEXT_PASTE(x)
+#define WIDETEXT(str) WIDETEXT_PASTE(str)

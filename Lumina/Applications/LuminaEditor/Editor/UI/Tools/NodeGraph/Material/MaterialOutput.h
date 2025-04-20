@@ -8,8 +8,6 @@ namespace Lumina
     class CMaterialOutput : public CEdNodeGraphPin
     {
     public:
-
-        DECLARE_CLASS(CMaterialOutput, CEdNodeGraphPin)
         
         void DrawPin() override;
         

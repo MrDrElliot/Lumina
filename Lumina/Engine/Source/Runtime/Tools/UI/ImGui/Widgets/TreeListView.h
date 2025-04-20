@@ -8,7 +8,7 @@
 namespace Lumina
 {
 
-    class FTreeListViewItem
+    class LUMINA_API FTreeListViewItem
     {
 
         friend class FTreeListView;
@@ -68,7 +68,7 @@ namespace Lumina
         
     };
 
-    struct FTreeListViewContext
+    struct LUMINA_API FTreeListViewContext
     {
         /** Callback to draw any context menus this item may want */
         TFunction<void(const TVector<FTreeListViewItem*>&)>         DrawItemContextMenuFunction;
@@ -81,7 +81,7 @@ namespace Lumina
     };
     
     
-    class FTreeListView
+    class LUMINA_API FTreeListView
     {
     public:
 

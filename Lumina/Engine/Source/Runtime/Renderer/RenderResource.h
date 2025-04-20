@@ -226,7 +226,7 @@ virtual ERHIResourceType GetResourceType() const override { return ERHIResourceT
  */
 namespace Lumina
 {
-    class IRHIResource
+    class LUMINA_API IRHIResource
     {
     public:
 
@@ -400,7 +400,7 @@ namespace Lumina
 	//-------------------------------------------------------------------------------------------------------------------
 
 
-	class FRHIViewport : public IRHIResource
+	class LUMINA_API FRHIViewport : public IRHIResource
 	{
 	public:
 
@@ -752,7 +752,7 @@ namespace Lumina
 		OneMinusSrc1Alpha = InvSrc1Alpha,
 	};
     
-	enum class EBlendOp : uint8
+	enum class LUMINA_API EBlendOp : uint8
 	{
 		Add = 1,
 		Subrtact = 2,
@@ -761,7 +761,7 @@ namespace Lumina
 		Max = 5
 	};
 
-	enum class EColorMask : uint8
+	enum class LUMINA_API EColorMask : uint8
 	{
 		// These values are equal to their counterparts in DX11, DX12, and Vulkan.
 		Red = 1,
@@ -1055,7 +1055,7 @@ namespace Lumina
 		TBitFlags<ERHIShaderType> StageFlags;
 		uint32 Index = 0;
 
-		TInlineVector<FBindingLayoutItem, MaxBindingsPerLayout> Bindings;
+		TFixedVector<FBindingLayoutItem, MaxBindingsPerLayout> Bindings;
 
 		
 		FBindingLayoutDesc& SetVisibility(ERHIShaderType InType) { StageFlags.SetFlag(InType); return *this; }
@@ -1150,7 +1150,7 @@ namespace Lumina
 	
 	struct FBindingSetDesc
 	{
-		TInlineVector<FBindingSetItem, MaxBindingsPerLayout> Bindings;
+		TFixedVector<FBindingSetItem, MaxBindingsPerLayout> Bindings;
 		
 		bool operator ==(const FBindingSetDesc& b) const
 		{

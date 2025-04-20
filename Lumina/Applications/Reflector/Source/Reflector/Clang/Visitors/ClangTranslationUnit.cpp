@@ -15,7 +15,8 @@ namespace Lumina::Reflection
         FClangParserContext* ParserContext = (FClangParserContext*)ClientData;
         CXCursorKind CursorKind = clang_getCursorKind(Cursor);
         FString CursorName = ClangUtils::GetCursorDisplayName(Cursor);
-        
+        FString ParentCursorName = ClangUtils::GetCursorDisplayName(Parent);
+
 
         // Only parser valid headers under the solution directory.
         std::filesystem::path HeaderPath = ClangUtils::GetHeaderPathForCursor(Cursor);

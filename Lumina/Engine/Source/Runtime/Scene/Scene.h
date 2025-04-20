@@ -24,7 +24,7 @@ namespace Lumina
 namespace Lumina
 {
     
-    class FScene
+    class LUMINA_API FScene
     {
     public:
         

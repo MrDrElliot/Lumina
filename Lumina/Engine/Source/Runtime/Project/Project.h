@@ -4,7 +4,7 @@
 
 namespace Lumina
 {
-    class FProject : public TSingleton<FProject>
+    class LUMINA_API FProject : public TSingleton<FProject>
     {
     public:
 

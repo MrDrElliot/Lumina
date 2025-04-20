@@ -4,13 +4,15 @@
 
 namespace Lumina
 {
+    class FNameHashMap;
+    using FNameHashNode = eastl::hash_node<eastl::pair<const uint64, FString>, false>;
 
-    class FName
+    LUMINA_API extern FNameHashMap* gNameCache;
+
+    class LUMINA_API FName
     {
     public:
         
-        using FNameHashNode = eastl::hash_node<eastl::pair<const uint64, FString>, false>;
-
         // Initialize global state.
         static void Initialize();
 

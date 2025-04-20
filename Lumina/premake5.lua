@@ -1,12 +1,12 @@
 include(os.getenv("LUMINA_DIR") .. "/Dependencies.lua")
 
 project "Lumina"
-	kind "StaticLib"
+	kind "SharedLib"
 		
 	outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
     
-    targetdir ("%{wks.location}/Binaries/" .. outputdir .. "/%{prj.name}")
-    objdir ("%{wks.location}/Intermediates/" .. outputdir .. "/%{prj.name}")
+    targetdir ("%{wks.location}/Binaries/" .. outputdir)
+    objdir ("%{wks.location}/Intermediates/Obj/" .. outputdir .. "/%{prj.name}")    
 		
 	files
 	{
@@ -30,28 +30,16 @@ project "Lumina"
 
 		"Engine/ThirdParty/ImGuizmo/**.h",
         "Engine/ThirdParty/ImGuizmo/**.cpp",
-       
-       	"Engine/ThirdParty/imnodes/**.h",
-        "Engine/ThirdParty/imnodes/**.cpp",
-		
-        "Engine/ThirdParty/yaml-cpp/include/**.h",
-        "Engine/ThirdParty/yaml-cpp/src/**.h",
-        "Engine/ThirdParty/yaml-cpp/src/**.cpp",
-        
-        
+	
+            
 	    "Engine/ThirdParty/SPIRV-Reflect/**.h",
 	    "Engine/ThirdParty/SPIRV-Reflect/**.c",
 	    "Engine/ThirdParty/SPIRV-Reflect/**.cpp",
-	    
-	    "Engine/ThirdParty/EA/**.h",
-        "Engine/ThirdParty/EA/**.cpp",
 
 	    "Engine/ThirdParty/fastgltf/src/**.cpp",
 	    "Engine/ThirdParty/fastgltf/deps/simdjson/**.h",
         "Engine/ThirdParty/fastgltf/deps/simdjson/**.cpp",
-        
-        "Engine/ThirdParty/stb_image/**.h",
-     
+            
 	   
 	    "Engine/ThirdParty/imgui/backends/imgui_impl_glfw.h",
 	    "Engine/ThirdParty/imgui/backends/imgui_impl_glfw.cpp",
@@ -84,18 +72,24 @@ project "Lumina"
 	
 	links
 	 {
-	    "GLFW",
-	  	"%{VULKAN_SDK}/lib/vulkan-1.lib",  	
-	    "%{VULKAN_SDK}/lib/shaderc_combinedd.lib",
+	 	"GLFW",
+	 	"ImGui",
+	 	"EA",
+	  	"%{VULKAN_SDK}/lib/vulkan-1.lib",
+	    "DbgHelp",
 	 }
 
 	defines
-	 {
+	{
+		 "LUMINA_ENGINE_DIRECTORY=%{LuminaEngineDirectory}",
+	 	 "LUMINA_ENGINE",
+		 "EASTL_USER_DEFINED_ALLOCATOR=1",
 		 "GLM_FORCE_DEPTH_ZERO_TO_ONE",
 		 "GLFW_INCLUDE_NONE",
+		 "GLFW_STATIC",
 		 "_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS",
 		 "LUMINA_RENDERER_VULKAN"
-	 }
+	}
 
 	filter "system:linux"
 		defines { "LE_PLATFORM_LINUX" }
@@ -107,15 +101,18 @@ project "Lumina"
 		links { "Dbghelp", }
 
 	filter "configurations:Debug"
+		links { "%{VULKAN_SDK}/lib/shaderc_combinedd.lib", }
 		symbols "On"
 		editandcontinue "Off"
 		defines { "LE_DEBUG", "_DEBUG", }
 
 	filter "configurations:Release"
+		links { "%{VULKAN_SDK}/lib/shaderc_combined.lib", }
 		optimize "On"
 		defines { "LE_RELEASE", "NDEBUG", }
 
 	filter "configurations:Shipping"
+		links { "%{VULKAN_SDK}/lib/shaderc_combined.lib", }
 		optimize "On"
 		symbols "Off"
 		defines { "LE_SHIP" }

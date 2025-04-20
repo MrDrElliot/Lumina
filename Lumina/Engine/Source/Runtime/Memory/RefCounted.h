@@ -3,13 +3,14 @@
 #include "Core/Templates/Forward.h"
 #include "Memory.h"
 #include "Core/Assertions/Assert.h"
-#include "Core/Object/Object.h"
+#include "EASTL/internal/atomic/atomic.h"
+#include "EASTL/internal/atomic/atomic_standalone.h"
 #include "Log/Log.h"
 
 namespace Lumina
 {
 	/** A virtual interface for ref counted objects to implement. */
-	class IRefCountedObject
+	class LUMINA_API IRefCountedObject
 	{
 	public:
 		virtual ~IRefCountedObject() { }
@@ -19,7 +20,7 @@ namespace Lumina
 	};
 
 	/** Intrusive Smart Pointer Implementation */
-	class FRefCounted
+	class LUMINA_API FRefCounted
 	{
 	public:
 
@@ -60,7 +61,7 @@ namespace Lumina
 	 * A smart pointer to an object which implements AddRef/Release.
 	 */
 	template<typename ReferencedType>
-	class TRefCountPtr
+	class LUMINA_API TRefCountPtr
 	{
 		typedef ReferencedType* ReferenceType;
 

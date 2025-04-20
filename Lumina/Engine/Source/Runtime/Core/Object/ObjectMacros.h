@@ -1,6 +1,13 @@
 ﻿#pragma once
 
 #include "Memory/Memory.h"
+#include "Core/Object/ObjectCore.h"
+
+
+class Lumina::CClass;
+
+#define NO_API
+
 
 
 #define LUM_CLASS(...)
@@ -9,54 +16,64 @@
 #define LUM_FIELD(...)
 #define LUM_FUNCTION(...)
 
+
 #define MACRO_BODY_COMBINE(A, B, C, D) A##B##C##D
 #define MACRO_BODY_COMBINE_EXPAND(A, B, C, D) MACRO_BODY_COMBINE(A, B, C, D)
 
-#define GENERATED_BODY() MACRO_BODY_COMBINE_EXPAND(Class, _, __LINE__, _GENERATED_BODY);
+
+// =====================================================================================================
+// NOTE: Clang has a known limitation where it struggles to properly expand variadic macros
+// during parsing (especially when using libclang or Clang tooling).
+// 
+// When REFLECTION_PARSER is defined (i.e., when running our custom reflection parser),
+// we disable the GENERATED_BODY macro expansion to prevent parsing errors and allow
+// correct type discovery.
+//
+// This workaround ensures that Clang sees an empty GENERATED_BODY(...) instead of trying
+// to expand it and breaking the AST.
+//
+// IMPORTANT: This does not affect normal compilation; only parsing for reflection!
+// =====================================================================================================
+#if defined(REFLECTION_PARSER)
+#define GENERATED_BODY(...)
+#else
+#define GENERATED_BODY(...) MACRO_BODY_COMBINE_EXPAND(CURRENT_FILE_ID, _, __LINE__, _GENERATED_BODY)
+#endif
 
 
-    
-#define DECLARE_CLASS_NOBASE(ClassName)                                     \
-private:                                                                    \
-    using ThisClass = ClassName;                                            \
-    static Class s_StaticClass;                                             \
-public:                                                                     \
-    static Class* StaticClass() { return &s_StaticClass; }                  \
-    virtual Class* GetClass() const override { return StaticClass(); }      \
-    static RegisterClassHelper _ClassRegisterHelper;                        \
-                                                                            \
-
-#define DECLARE_CLASS_ABSTRACT(ClassName, BaseClass)                              \
-private:                                                                          \
-    using Super = BaseClass;                                                      \
-    using ThisClass = ClassName;                                                  \
-    static Class s_StaticClass;                                                   \
-public:                                                                           \
-    static Class* StaticClass() { return &s_StaticClass; }                        \
-    virtual Class* GetClass() const override { return StaticClass(); }            \
-    static ClassRegistryHelper<ClassName> _ClassRegisterHelper;                   \
-    static CObject* CreateInstance() { return nullptr; }
-
-#define DECLARE_CLASS(ClassName, BaseClass)                                       \
-private:                                                                          \
-    using Super = BaseClass;                                                      \
-    using ThisClass = ClassName;                                                  \
-    static Class s_StaticClass;                                                   \
-public:                                                                           \
-    static Class* StaticClass() { return &s_StaticClass; }                        \
-    virtual Class* GetClass() const override { return StaticClass(); }            \
-    static ClassRegistryHelper<ClassName> _ClassRegisterHelper;                   \
-    static CObject* CreateInstance() { return FMemory::New<ClassName>(); }        \
-
-#define BEGIN_CLASS_DATA()                                                        \
-    static FClassMemberData RegisterClassMembers() {                              \
 
 
-#define END_CLASS_DATA()                \
-    }                                   \
-    
+#define DECLARE_CLASS(TClass, TBaseClass, TAPI) \
+private: \
+    TClass& operator=(TClass&&); \
+    TClass& operator=(const TClass&); \
+    TAPI static CClass* GetPrivateStaticClass(); \
+public: \
+    /** Simple helper typedefs */ \
+    using ThisClass = TClass; \
+    using Super = TBaseClass; \
+    /** Returns CClass object representing this class */ \
+    inline static CClass* StaticClass() \
+    { \
+        return GetPrivateStaticClass(); \
+    } \
 
-#define IMPLEMENT_CLASS(ClassName)                                                              \
-    Class ClassName::s_StaticClass = Class();                                                   \
-    ClassRegistryHelper<ClassName> ClassName::_ClassRegisterHelper(&ClassName::CreateInstance); \
-    
+
+#define IMPLEMENT_CLASS(TClass) \
+    FClassRegistrationInfo Registration_Info_CClass_##TClass; \
+    CClass* TClass::GetPrivateStaticClass() \
+    { \
+        if (Registration_Info_CClass_##TClass.Singleton == nullptr) \
+        { \
+            AllocateStaticClass(TEXT(#TClass), &Registration_Info_CClass_##TClass.Singleton, sizeof(TClass), alignof(TClass)); \
+        } \
+        return Registration_Info_CClass_##TClass.Singleton; \
+    }
+
+
+
+#define BEGIN_DATA_DESC(TClass) static struct Z_DataDesc_##TClass {
+
+#define DEFINE_DATA_FIELD(Field)
+
+#define END_DATA_DESC(TClass) }

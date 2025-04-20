@@ -15,8 +15,6 @@ namespace Lumina
     class CMaterialGraphNode : public CEdGraphNode
     {
     public:
-
-        DECLARE_CLASS_ABSTRACT(CMaterialGraphNode, CEdGraphNode)
         
         CMaterialGraphNode() : bDynamic(false) { }
         

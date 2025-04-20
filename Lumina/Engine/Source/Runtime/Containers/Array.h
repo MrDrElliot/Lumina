@@ -24,20 +24,20 @@ namespace Lumina
     // Commonly used containers aliases
     //-------------------------------------------------------------------------
 
-    template<typename T> using TVector =                        eastl::vector<T>;
-    template<typename T, eastl_size_t S> using TInlineVector =  eastl::fixed_vector<T, S, true>;
-    template<typename T, eastl_size_t S> using TArray =         eastl::array<T, S>;
-
-    template<typename K, typename V> using TUnorderedMap =      eastl::unordered_map<K, V>;
-    template<typename K, typename V> using TOrderedMap =        eastl::map<K, V>;
-    template<typename K, typename V> using THashMap =           eastl::hash_map<K, V, eastl::hash<K>, eastl::equal_to<K>, eastl::allocator, false>;
-    template<typename K, typename V> using TPair =              eastl::pair<K, V>;
-    template<typename T> using TSet =                           eastl::set<T>;
-    template<typename T> using TUnorderedSet =                  eastl::unordered_set<T>;
-    
-    template<typename T> using TQueue =                         eastl::queue<T>;
-    template<typename T> using TDeque =                         eastl::deque<T>;
-    template<typename T> using TStack =                         eastl::stack<T>;
+    template<typename T> using TVector =                                                eastl::vector<T>;
+    template<typename T, eastl_size_t S, bool bOverflow = true> using TFixedVector =    eastl::fixed_vector<T, S, bOverflow>;
+    template<typename T, eastl_size_t S> using TArray =                                 eastl::array<T, S>;
+                                                                                        
+    template<typename K, typename V> using TUnorderedMap =                              eastl::unordered_map<K, V>;
+    template<typename K, typename V> using TOrderedMap =                                eastl::map<K, V>;
+    template<typename K, typename V> using THashMap =                                   eastl::hash_map<K, V, eastl::hash<K>, eastl::equal_to<K>>;
+    template<typename K, typename V> using TPair =                                      eastl::pair<K, V>;
+    template<typename T> using TSet =                                                   eastl::set<T>;
+    template<typename T> using TUnorderedSet =                                          eastl::unordered_set<T>;
+                                                                                        
+    template<typename T> using TQueue =                                                 eastl::queue<T>;
+    template<typename T> using TDeque =                                                 eastl::deque<T>;
+    template<typename T> using TStack =                                                 eastl::stack<T>;
     
 
     using Blob = TVector<uint8>;
@@ -222,27 +222,27 @@ namespace Lumina
     //-------------------------------------------------------------------------
 
     template<typename T, typename V, eastl_size_t S>
-    inline bool VectorContains( TInlineVector<T, S> const& vector, V const& value )
+    inline bool VectorContains(TFixedVector<T, S> const& vector, V const& value)
     {
         return eastl::find( vector.begin(), vector.end(), value ) != vector.end();
     }
 
     template<typename T, eastl_size_t S, typename V, typename Predicate>
-    inline bool VectorContains( TInlineVector<T, S> const& vector, V const& value, Predicate predicate )
+    inline bool VectorContains(TFixedVector<T, S> const& vector, V const& value, Predicate predicate)
     {
         return eastl::find( vector.begin(), vector.end(), value, eastl::forward<Predicate>( predicate ) ) != vector.end();
     }
 
     // Find an element in a vector
     template<typename T, typename V, eastl_size_t S>
-    inline typename TInlineVector<T, S>::const_iterator VectorFind( TInlineVector<T, S> const& vector, V const& value )
+    inline typename TFixedVector<T, S>::const_iterator VectorFind(TFixedVector<T, S> const& vector, V const& value)
     {
         return eastl::find( vector.begin(), vector.end(), value );
     }
 
     // Find an element in a vector
     template<typename T, typename V, eastl_size_t S, typename Predicate>
-    inline typename TInlineVector<T, S>::const_iterator VectorFind( TInlineVector<T, S> const& vector, V const& value, Predicate predicate )
+    inline typename TFixedVector<T, S>::const_iterator VectorFind(TFixedVector<T, S> const& vector, V const& value, Predicate predicate)
     {
         return eastl::find( vector.begin(), vector.end(), value, eastl::forward<Predicate>( predicate ) );
     }
@@ -250,7 +250,7 @@ namespace Lumina
     // Find an element in a vector
     // Require non-const versions since we might want to modify the result
     template<typename T, typename V, eastl_size_t S>
-    inline typename TInlineVector<T, S>::iterator VectorFind( TInlineVector<T, S>& vector, V const& value )
+    inline typename TFixedVector<T, S>::iterator VectorFind(TFixedVector<T, S>& vector, V const& value )
     {
         return eastl::find( vector.begin(), vector.end(), value );
     }
@@ -258,13 +258,13 @@ namespace Lumina
     // Find an element in a vector
     // Require non-const versions since we might want to modify the result
     template<typename T, typename V, eastl_size_t S, typename Predicate>
-    inline typename TInlineVector<T, S>::iterator VectorFind( TInlineVector<T, S>& vector, V const& value, Predicate predicate )
+    inline typename TFixedVector<T, S>::iterator VectorFind(TFixedVector<T, S>& vector, V const& value, Predicate predicate )
     {
         return eastl::find( vector.begin(), vector.end(), value, eastl::forward<Predicate>( predicate ) );
     }
 
     template<typename T, typename V, eastl_size_t S>
-    inline int32_t VectorFindIndex( TInlineVector<T, S> const& vector, V const& value )
+    inline int32_t VectorFindIndex(TFixedVector<T, S> const& vector, V const& value )
     {
         auto iter = eastl::find( vector.begin(), vector.end(), value );
         if ( iter == vector.end() )
@@ -278,7 +278,7 @@ namespace Lumina
     }
 
     template<typename T, typename V, eastl_size_t S, typename Predicate>
-    inline int32_t VectorFindIndex( TInlineVector<T, S> const& vector, V const& value, Predicate predicate )
+    inline int32_t VectorFindIndex(TFixedVector<T, S> const& vector, V const& value, Predicate predicate )
     {
         auto iter = eastl::find( vector.begin(), vector.end(), value, predicate );
         if ( iter == vector.end() )
@@ -312,7 +312,7 @@ namespace Lumina
     }
 
     template<typename T, eastl_size_t S>
-    inline void VectorEmplaceBackUnique( TInlineVector<T,S>& vector, T&& item )
+    inline void VectorEmplaceBackUnique(TFixedVector<T,S>& vector, T&& item )
     {
         if ( !VectorContains( vector, item ) )
         {
@@ -321,7 +321,7 @@ namespace Lumina
     }
 
     template<typename T, eastl_size_t S>
-    inline void VectorEmplaceBackUnique( TInlineVector<T, S>& vector, T const& item )
+    inline void VectorEmplaceBackUnique(TFixedVector<T, S>& vector, T const& item )
     {
         if ( !VectorContains( vector, item ) )
         {

@@ -5,23 +5,25 @@ project "Sandbox"
 
     outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
     
-    targetdir ("%{wks.location}/Binaries/" .. outputdir .. "/%{prj.name}")
-    objdir ("%{wks.location}/Intermediates/" .. outputdir .. "/%{prj.name}")
+    targetdir ("%{wks.location}/Binaries/" .. outputdir)
+    objdir ("%{wks.location}/Intermediates/Obj/" .. outputdir .. "/%{prj.name}")    
 		
 	removedefines { }
+
 		
 	links
-	 {
+	{
 		"Lumina",
-	  	"GLFW",
-	  	"imgui",
-	  	"$(VULKAN_SDK)/lib/vulkan-1.lib",
-	 }
+		"EA",
+	}
+
 
 	files
 	{
 		"Source/**.h",
 		"Source/**.cpp",
+		"%{wks.location}/Intermediates/Reflection/Sandbox/**.h",
+		"%{wks.location}/Intermediates/Reflection/Sandbox/**.cpp",
 
 	}
 
@@ -34,7 +36,8 @@ project "Sandbox"
 		"%{LuminaEngineDirectory}/Lumina/Engine/",
 	    "%{LuminaEngineDirectory}/Lumina/Engine/Source/",
 	    "%{LuminaEngineDirectory}/Lumina/Engine/Source/Runtime/",
-	    
+	    "%{wks.location}/Intermediates/Reflection/Sandbox/",
+
 	    reflection_directory();
 		includedependencies();
 		
@@ -45,6 +48,7 @@ project "Sandbox"
 		defines { "LE_PLATFORM_LINUX" }
 
 	filter "configurations:Debug"
+		runtime "Debug"
 		symbols "On"
 		defines { "LE_DEBUG", "_DEBUG", }
 
@@ -52,10 +56,12 @@ project "Sandbox"
 		flags { "NoRuntimeChecks", "NoIncrementalLink" }
 
 	filter "configurations:Release"
+		runtime "Release"
 		optimize "On"
 		defines { "LE_RELEASE", "NDEBUG", }
 
 	filter "configurations:Shipping"
+		runtime "Release"
 		optimize "On"
 		symbols "Off"
 		defines { "LE_SHIP" }

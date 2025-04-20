@@ -1,10 +1,12 @@
 ﻿#pragma once
 
+#include "Module/API.h"
+
 namespace Lumina
 {
     
     
-    class FApplicationGlobalState
+    class LUMINA_API FApplicationGlobalState
     {
     public:
 

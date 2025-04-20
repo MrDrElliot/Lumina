@@ -1,20 +1,28 @@
 ﻿#include "ReflectedType.h"
+#include "Properties/ReflectedProperty.h"
+
 
 namespace Lumina::Reflection
 {
-    FString FReflectedEnum::GetTypeAsString() const
+    void FReflectedEnum::DefineConstructionStatics(std::stringstream& SS)
     {
-        FString ReturnValue;
-        for (const FConstant& Constant : Constants)
-        {
-            ReturnValue += Constant.Label + " " + eastl::to_string(Constant.Value) + "\n";            
-        }
-
-        return ReturnValue;
     }
 
-    void FReflectedStruct::PushField(const FField& Field)
+    FReflectedStruct::~FReflectedStruct()
     {
-        Fields.push_back(Field);
+        for (const FReflectedProperty* Prop : Props)
+        {
+            FMemory::Delete(Prop);    
+        }
+    }
+
+    void FReflectedStruct::DefineConstructionStatics(std::stringstream& SS)
+    {
+        SS << "struct Construct_CStruct_" << DisplayName.c_str() << "_Statics\n{\n\n";
+    }
+
+    void FReflectedClass::DefineConstructionStatics(std::stringstream& SS)
+    {
+        SS << "struct Construct_CClass_" << DisplayName.c_str() << "_Statics\n{\n";
     }
 }

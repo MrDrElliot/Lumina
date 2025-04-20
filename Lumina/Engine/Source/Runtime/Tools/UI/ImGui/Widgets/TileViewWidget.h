@@ -9,7 +9,7 @@
 namespace Lumina
 {
 
-    class FTileViewItem
+    class LUMINA_API FTileViewItem
     {
 
         friend class FTileViewWidget;
@@ -53,7 +53,7 @@ namespace Lumina
         
     };
 
-    struct FTileViewContext
+    struct LUMINA_API FTileViewContext
     {
         /** Callback to draw any context menus this item may want */
         TFunction<void(const TVector<FTileViewItem*>&)>         DrawItemContextMenuFunction;
@@ -65,7 +65,7 @@ namespace Lumina
         TFunction<void(FTileViewItem*)>                         ItemSelectedFunction;
     };
 
-    class FTileViewWidget
+    class LUMINA_API FTileViewWidget
     {
     public:
 

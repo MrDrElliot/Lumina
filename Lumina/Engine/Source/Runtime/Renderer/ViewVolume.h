@@ -1,12 +1,13 @@
 ﻿#pragma once
 
+#include "Module/API.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include "Platform/WindowsPlatform.h"
 
 namespace Lumina
 {
-    class FViewVolume
+    class LUMINA_API FViewVolume
     {
     public:
 

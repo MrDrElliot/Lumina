@@ -3,8 +3,13 @@ project "ImGui"
     staticruntime "on"
 	language "C++"
 
-	targetdir ("%{wks.location}/Binaries/" .. outputdir .. "/%{prj.name}")
-	objdir ("%{wks.location}/Intermediates/" .. outputdir .. "/%{prj.name}")
+    targetdir ("%{wks.location}/Binaries/" .. outputdir)
+    objdir ("%{wks.location}/Intermediates/Obj/" .. outputdir .. "/%{prj.name}")
+
+    defines
+    {
+        "LUMINA_ENGINE",
+    }
 
 	files
 	{

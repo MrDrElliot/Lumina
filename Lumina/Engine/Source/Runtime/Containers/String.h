@@ -247,8 +247,9 @@ namespace Lumina
 
         //-------------------------------------------------------------------------
 
-        FORCEINLINE FWString ToWideString( FString const& str ) { return FWString( FWString::CtorConvert(), str ); }
-        FORCEINLINE FWString ToWideString( char const* pStr ) { return FWString( FWString::CtorConvert(), pStr ); }
+        FORCEINLINE FWString ToWideString(const FString& str) { return FWString( FWString::CtorConvert(), str ); }
+        FORCEINLINE FWString ToWideString(const char* pStr) { return FWString( FWString::CtorConvert(), pStr ); }
+        FORCEINLINE FString FromWideString(const FWString& Str) { return FString(FString::CtorConvert(), Str); }
     }
     
 }

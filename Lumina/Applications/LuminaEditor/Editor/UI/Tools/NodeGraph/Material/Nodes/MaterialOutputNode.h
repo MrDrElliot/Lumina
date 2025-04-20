@@ -7,8 +7,6 @@ namespace Lumina
     class CMaterialOutputNode : public CMaterialGraphNode
     {
     public:
-
-        DECLARE_CLASS(CMaterialOutputNode, CMaterialGraphNode)
         
         CMaterialOutputNode() = default;
 

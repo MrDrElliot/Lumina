@@ -22,9 +22,9 @@ namespace Lumina::Reflection
         T* CreateReflectedType(Args&&... args);
 
 
-        TVector<FReflectedProject>              ReflectedProjects;
-        TVector<FReflectedType*>                ReflectedTypes;
-        THashMap<FName, FReflectedType*>        TypeHashMap;
+        TVector<FReflectedProject>                  ReflectedProjects;
+        THashMap<FName, TVector<FReflectedType*>>   ReflectedTypes;
+        THashMap<FName, FReflectedType*>            TypeHashMap;
         
     };
 

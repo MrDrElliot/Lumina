@@ -10,7 +10,7 @@ namespace Lumina
 {
     class FUpdateContext;
 
-    class ISubsystem : public INonCopyable
+    class LUMINA_API ISubsystem : public INonCopyable
     {
     public:
 
@@ -24,7 +24,7 @@ namespace Lumina
 
     };
 
-    class FSubsystemManager
+    class LUMINA_API FSubsystemManager
     {
     public:
         

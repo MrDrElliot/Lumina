@@ -1,14 +1,47 @@
 #pragma once
 
-#include "Source/Runtime/Core/Application/Application.h"
 #include "Core/Engine/Engine.h"
+#include "Core/Object/Object.h"
+#include "Source/Runtime/Core/Application/Application.h"
+#include "Sandbox.generated.h"
 
-namespace Lumina
+using namespace Lumina;
+
+LUM_CLASS()
+class CTestClass : public CObject
 {
-	class FScene;
-}
+public:
 
-class FSandboxEngine : public Lumina::FEngine
+	GENERATED_BODY()
+
+	
+	LUM_FIELD()
+	uint8 Value;
+
+	LUM_FIELD()
+	uint16 Value16;
+
+	LUM_FIELD()
+	uint32 Value32;
+	
+};
+
+LUM_CLASS()
+class COtherClass : public CObject
+{
+public:
+
+	GENERATED_BODY()
+
+	LUM_FIELD()
+	uint8 Index;
+
+	LUM_FIELD()
+	int64 Int64Value;
+};
+
+
+class FSandboxEngine : public FEngine
 {
 public:
 
@@ -18,6 +51,7 @@ public:
 private:
 	
 };
+
 using namespace Lumina;
 
 class FSandbox : public Lumina::FApplication
@@ -29,7 +63,7 @@ public:
 	void EngineLoopCallback(const Lumina::FUpdateContext& UpdateContext);
 	void CreateEngine() override;
 	bool ApplicationLoop() override;
-	bool Initialize() override;
+	bool Initialize(int argc, char** argv) override;
 	void Shutdown() override;
 
 

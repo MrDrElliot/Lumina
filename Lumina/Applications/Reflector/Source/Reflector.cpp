@@ -2,7 +2,8 @@
 
 #include <clang-c/Index.h>
 #include <iostream>
-
+#include <Lumina_eastl.cpp>
+#include "Memory/Memory.h"
 #include "Core/Application/ApplicationGlobalState.h"
 #include "Core/Performance/PerformanceTracker.h"
 #include "Paths/Paths.h"
@@ -22,10 +23,9 @@ int main(int argc, char* argv[])
     std::cout.setf(std::ios::fixed, std::ios::floatfield);
     std::cout.precision( 2 );
 
-    std::cout << "\n";
-    std::cout << "===============================================" << "\n";
-    std::cout << " Lumina Reflector" << "\n";
-    std::cout << "===============================================" << "\n" << "\n";
+    LOG_INFO("===============================================");
+    LOG_INFO("Lumina Reflection Tool");
+    LOG_INFO("===============================================");
 
     if (!std::filesystem::exists(LuminaEditor.c_str()))
     {
@@ -61,4 +61,19 @@ int main(int argc, char* argv[])
     }
     
     return 0;
+}
+
+
+
+DECLARE_MODULE_ALLOCATOR_OVERRIDES()
+
+
+namespace eastl
+{
+    void AssertionFailure(const char* expression)
+    {
+        // You can also hook this into your engine's log or crash reporter
+        std::fprintf(stderr, "EASTL Assertion Failure: %s\n", expression);
+        std::abort(); // Crash the program, like assert would
+    }
 }

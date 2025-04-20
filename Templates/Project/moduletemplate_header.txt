@@ -1,0 +1,8 @@
+#pragma once
+
+#include "Lumina/Module/Module.h"
+
+
+// Defines a Lumina module.
+
+DECLARE_GAME_MODULE($PROJECT_NAME)

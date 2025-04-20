@@ -12,8 +12,6 @@ namespace Lumina
     class CMaterialNodeGraph : public CEdNodeGraph
     {
     public:
-
-        DECLARE_CLASS(CMaterialNodeGraph, CEdGraphNode)
         
         CMaterialNodeGraph();
 

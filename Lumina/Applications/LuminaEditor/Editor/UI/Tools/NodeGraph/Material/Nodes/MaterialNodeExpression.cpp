@@ -5,9 +5,6 @@
 
 namespace Lumina
 {
-    IMPLEMENT_CLASS(CMaterialExpression)
-    IMPLEMENT_CLASS(CMaterialExpression_Math)
-    IMPLEMENT_CLASS(CMaterialExpression_Constant)
     
     void CMaterialExpression::BuildNode()
     {
@@ -129,7 +126,6 @@ namespace Lumina
     {
         Compiler->DefineConstantFloat2(FullName, &Value.R);
     }
-    IMPLEMENT_CLASS(CMaterialExpression_ConstantFloat2)
 
 
     uint32 CMaterialExpression_ConstantFloat3::GenerateExpression(FMaterialCompiler* Compiler)
@@ -141,7 +137,6 @@ namespace Lumina
     {
         Compiler->DefineConstantFloat3(FullName, &Value.R);
     }
-    IMPLEMENT_CLASS(CMaterialExpression_ConstantFloat3)
 
 
     uint32 CMaterialExpression_ConstantFloat4::GenerateExpression(FMaterialCompiler* Compiler)
@@ -153,7 +148,6 @@ namespace Lumina
     {
         Compiler->DefineConstantFloat4(FullName, &Value.R);
     }
-    IMPLEMENT_CLASS(CMaterialExpression_ConstantFloat4)
 
 
     void CMaterialExpression_Addition::BuildNode()
@@ -186,7 +180,6 @@ namespace Lumina
         B->SetPinName("Y");
         B->SetShouldDrawEditor(true);
     }
-    IMPLEMENT_CLASS(CMaterialExpression_Addition)
 
 
     void CMaterialExpression_Subtraction::GenerateDefinition(FMaterialCompiler* Compiler)
@@ -207,16 +200,12 @@ namespace Lumina
         B->SetShouldDrawEditor(true);
     }
 
-    IMPLEMENT_CLASS(CMaterialExpression_Subtraction)
 
 
     void CMaterialExpression_Multiplication::GenerateDefinition(FMaterialCompiler* Compiler)
     {
         Compiler->Multiply(A, B);
     }
-
-    IMPLEMENT_CLASS(CMaterialExpression_Multiplication)
-
 
     void CMaterialExpression_Division::BuildNode()
     {
@@ -235,7 +224,4 @@ namespace Lumina
     {
         Compiler->Divide(A, B);
     }
-
-    IMPLEMENT_CLASS(CMaterialExpression_Division)
-
 }

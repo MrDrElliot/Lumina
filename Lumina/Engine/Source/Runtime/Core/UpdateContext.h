@@ -9,7 +9,7 @@ namespace Lumina
 {
     class FSubsystemManager;
 
-    class FUpdateContext
+    class LUMINA_API FUpdateContext
     {
     public:
 

@@ -8,8 +8,6 @@
 #endif
 #endif
 
-#include <memory>
-
 #include "Core/Application/ApplicationGlobalState.h"
 
 
@@ -29,7 +27,7 @@ inline int GuardedMain(int argc, char** argv)
 	{
 		Lumina::FApplicationGlobalState GlobalState;
 		Lumina::FApplication* App = Lumina::CreateApplication(argc, argv);
-		Result = App->Run();
+		Result = App->Run(argc, argv);
 	}
 	
 #ifdef LE_PLATFORM_WINDOWS

@@ -5,31 +5,32 @@ project "Reflector"
 	kind "ConsoleApp"
 
     outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
-    
-    targetdir ("%{wks.location}/Binaries/" .. outputdir .. "/%{prj.name}")
-    objdir ("%{wks.location}/Intermediates/" .. outputdir .. "/%{prj.name}")
-		
+
+    targetdir ("%{wks.location}/Binaries/" .. outputdir)
+    objdir ("%{wks.location}/Intermediates/Obj/" .. outputdir .. "/%{prj.name}")
+
 	removedefines { }
-	
-    postbuildcommands 
-    {
-        "{COPY} \"%{wks.location}/External/LLVM/bin/libclang.dll\" \"%{wks.location}/Binaries/" .. outputdir .. "/%{prj.name}\""
-    }
+
+	postbuildcommands 
+	{
+	    "{COPYFILE} \"%{wks.location}/External/LLVM/bin/libclang.dll\" \"%{wks.location}/Binaries/%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}/\""
+	}
 
 
-	
 	libdirs
-	{ 
+	{
 		"%{LuminaEngineDirectory}/External/LLVM/Lib",
 		"%{LuminaEngineDirectory}/External/LLVM/bin",
 		"$(VULKAN_SDK)/lib/"
 	}
-		
+
 	links
-	 {
+	{
 		"Lumina",
 	  	"GLFW",
 	  	"imgui",
+	  	"EA",
+	  	
 	  	"vulkan-1.lib",
 	  	"clangBasic.lib",
 	  	"clangLex.lib",
@@ -50,7 +51,7 @@ project "Reflector"
 	  	"LLVMTransformUtils.lib",
 	  	"LLVMCore.lib",
         "LLVMSupport.lib",
-	 }
+	}
 	  
 
 	files
@@ -70,6 +71,7 @@ project "Reflector"
 	    "%{LuminaEngineDirectory}/Lumina/Engine/Source/",
 	    "%{LuminaEngineDirectory}/Lumina/Engine/Source/Runtime/",
 	    "%{LuminaEngineDirectory}/External/LLVM/include/",
+	    "%{wks.location}/Intermediates/Reflection/Reflector/",
 	    
 	    reflection_directory();
 		includedependencies();

@@ -14,6 +14,9 @@
 
 namespace Lumina
 {
+    LUMINA_API FEngine* GEngine = nullptr;
+
+
     bool FEngine::Initialize(FApplication* App)
     {
         //-------------------------------------------------------------------------

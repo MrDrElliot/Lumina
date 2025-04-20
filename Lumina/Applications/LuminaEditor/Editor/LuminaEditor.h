@@ -29,7 +29,7 @@ namespace Lumina
     
         LuminaEditor();
 
-        bool Initialize() override;
+        bool Initialize(int argc, char** argv) override;
         void CreateEngine() override;
         
         bool ApplicationLoop() override;
@@ -45,5 +45,7 @@ namespace Lumina
         
         
     };
+
+    
     
 }

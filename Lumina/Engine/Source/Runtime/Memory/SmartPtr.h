@@ -2,11 +2,23 @@
 
 #include "EASTL/shared_ptr.h"
 #include "EASTL/unique_ptr.h"
+#include "Memory/Memory.h"
+
 
 namespace Lumina
 {
+
+    template <typename T>
+    struct lumina_smart_ptr_delete
+    {
+        void operator()(T* p) const
+        {
+            FMemory::Delete(p);
+        }
+    };
+
     template<typename S> using TSharedPtr =         eastl::shared_ptr<S>;
-    template<typename S> using TUniquePtr =         eastl::unique_ptr<S>;
+    template<typename S> using TUniquePtr =         eastl::unique_ptr<S, lumina_smart_ptr_delete<S>>;
     template<typename S> using TWeakPtr =           eastl::weak_ptr<S>;
     template<typename S> using TSharedFromThis =    eastl::enable_shared_from_this<S>;
 

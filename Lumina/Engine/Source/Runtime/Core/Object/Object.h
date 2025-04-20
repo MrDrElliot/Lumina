@@ -1,17 +1,14 @@
 ﻿#pragma once
 
-#include "Class.h"
+#include "ObjectBase.h"
 #include "ObjectMacros.h"
-#include "ObjectFlags.h"
-#include "Core/Functional/Function.h"
 #include "Core/Serialization/Archiver.h"
 #include "Memory/Memory.h"
 
 namespace Lumina
 {
+    class CClass;
     class CObject;
-
-    inline TVector<CObject*> GObjectVector;
     
     /**
      * Base class for all objects in Lumina, registered using DECLARE_CLASS or DECLARE_CLASS_ABSTRACT.
@@ -22,75 +19,35 @@ namespace Lumina
      * - CObjects **must** have a default constructor; constructor properties are not supported.
      * - Only default-generated constructors are allowed. (No params).
      */
-    class CObject
+    
+    class CObject : public CObjectBase
     {
     public:
+
+        DECLARE_CLASS(CObject, CObject, LUMINA_API)
         
-        /** Default constructor. Required for all CObjects. */
-        CObject() = default;
+        /** Internal constructor */
+        LUMINA_API CObject(EObjectFlags InFlags)
+            : CObjectBase(InFlags)
+        {
+        }
+
+        /** Internal constructor */
+        LUMINA_API CObject(CClass* InClass, EObjectFlags InFlags, FName InName)
+            :CObjectBase(InClass, InFlags, InName)
+        {
+        }
 
         /** Virtual destructor to allow proper cleanup in derived classes. */
-        virtual ~CObject() = default;
+        LUMINA_API virtual ~CObject() = default;
 
         /** Serializes object data. Can be overridden by derived classes. */
-        virtual void Serialize(FArchive& Ar) {}
-
-        /** Returns the class type name. Must be implemented by derived classes. */
-        virtual Class* GetClass() const = 0;
+        LUMINA_API virtual void Serialize(FArchive& Ar) {}
+    
         
-
-        FORCEINLINE EObjectFlags GetFlags() const { return ObjectFlags; }
-        FORCEINLINE bool HasAnyFlag(EObjectFlags Flag) { return EnumHasAnyFlags(ObjectFlags, Flag); }
-        FORCEINLINE bool HasAllFlags(EObjectFlags Flags) { return EnumHasAllFlags(ObjectFlags, Flags); }
-        
-
-        // DO NOT USE.
-        void SetGlobalObjectEntryElement(uint32 Index) { ObjectIndex = Index; }
-        uint32 GlobalObjectIndex() const { return ObjectIndex; }
+    
         
     private:
 
-        EObjectFlags ObjectFlags;
-        uint32 ObjectIndex = 0;
     };
-    
-    inline void DeleteObject(CObject* Obj)
-    {
-        Assert(Obj != nullptr);
-        VectorRemoveAtIndex(GObjectVector, Obj->GlobalObjectIndex());
-        FMemory::Delete(Obj);
-    }
-
-    
-    template <typename T>
-    concept IsValidCObject = std::is_base_of_v<CObject, T> && !std::is_abstract_v<T>;
-    
-    template<IsValidCObject T>
-    inline T* NewObject(Class* ClassID)
-    {
-
-        CObject* Obj = FClassRegistry::GetInstance().CreateInstance(ClassID->ID);
-        if (Obj)
-        {
-            Obj->SetGlobalObjectEntryElement(GObjectVector.size() - 1);
-            return static_cast<T*>(Obj);
-        }
-
-        return nullptr;
-    }
-
-    template<IsValidCObject T>
-    inline T* NewObject()
-    {
-        
-        CObject* Obj = FClassRegistry::GetInstance().CreateInstance(T::StaticClass()->ID);
-        if (Obj)
-        {
-            GObjectVector.emplace_back(Obj);
-            Obj->SetGlobalObjectEntryElement(GObjectVector.size() - 1);
-            return static_cast<T*>(Obj);
-        }
-
-        return nullptr;
-    }
 }

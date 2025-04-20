@@ -1,0 +1,62 @@
+
+LuminaEngineDirectory = os.getenv("LUMINA_DIR")
+
+workspace "$PROJECT_NAME"
+	configurations { "Debug", "Release", "Shipping" }
+	targetdir "Build"
+	startproject "$PROJECT_NAME"
+	conformancemode "On"
+
+	language "C++"
+	cppdialect "C++20"
+	staticruntime "Off"
+
+	flags  { "MultiProcessorCompile" }
+
+	defines
+	{
+		"_CRT_SECURE_NO_WARNINGS",
+		"GLM_FORCE_DEPTH_ZERO_TO_ONE",
+		"IMGUI_DEFINE_MATH_OPERATORS",
+	}
+
+	filter "action:vs"
+
+	filter "language:C++ or language:C"
+		architecture "x86_64"
+
+	filter "configurations:Debug"
+		optimize "Off"
+		symbols "On"
+
+	filter "configurations:Release"
+		optimize "On"
+		symbols "Default"
+
+	filter "configurations:Shipping"
+		optimize "Full"
+		symbols "Off"
+
+	filter "system:windows"
+		buildoptions
+		{
+			"/-Wno-old-style-cast",
+            "/EHsc",
+            "/Zc:preprocessor",
+            "/Zc:__cplusplus",
+            "/W2",
+            "/MP",
+        }
+
+    group "Dependencies"
+		include(path.join(LuminaEngineDirectory, "Lumina/Engine/ThirdParty/glfw"))
+		include(path.join(LuminaEngineDirectory, "Lumina/Engine/ThirdParty/imgui"))
+	group ""
+
+	group "Engine"
+    	include(path.join(LuminaEngineDirectory, "Lumina"))
+	group ""
+
+	group "Games"
+		include "Source"
+	group ""

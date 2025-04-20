@@ -5,7 +5,7 @@
 
 namespace Lumina
 {
-    struct FFileHelper 
+    struct LUMINA_API FFileHelper 
     {
     
         static bool SaveArrayToFile(const TVector<uint8>& Array, const FString& Path, uint32 WriteFlags = 0);

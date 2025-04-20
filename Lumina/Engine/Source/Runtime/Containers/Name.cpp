@@ -11,7 +11,8 @@ namespace Lumina
         eastl::hash_node<value_type, false> const* const* GetBuckets() const { return mpBucketArray; }
     };
 
-    static FNameHashMap*     gNameCache = nullptr;
+    FNameHashMap* gNameCache = nullptr;
+    
 
     void FName::Initialize()
     {
@@ -21,6 +22,7 @@ namespace Lumina
     void FName::Shutdown()
     {
         FMemory::Delete(gNameCache);
+        gNameCache = nullptr;
     }
 
     FName::FName(const char* Char)

@@ -11,7 +11,7 @@ namespace Lumina
 
 namespace Lumina
 {
-    class IDevelopmentToolUI
+    class LUMINA_API IDevelopmentToolUI
     {
     public:
         IDevelopmentToolUI() = default;

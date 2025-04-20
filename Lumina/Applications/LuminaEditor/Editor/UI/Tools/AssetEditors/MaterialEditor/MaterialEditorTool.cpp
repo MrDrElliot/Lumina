@@ -1,5 +1,5 @@
 ﻿#include "MaterialEditorTool.h"
-#include "imnodes.h"
+#include "imnodes/imnodes.h"
 #include "Assets/AssetTypes/Material/Material.h"
 #include "Core/Serialization/MemoryArchiver.h"
 #include "UI/Tools/NodeGraph/Material/MaterialCompiler.h"
@@ -35,7 +35,7 @@ namespace Lumina
             DrawCompilationLog(Cxt);
         });
 
-        NodeGraph = NewObject<CMaterialNodeGraph>();
+        NodeGraph = nullptr;//NewObject<CMaterialNodeGraph>();
 
     }
 
@@ -115,7 +115,7 @@ namespace Lumina
             ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
             ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
 
-            ImGui::BeginChild("CompilationLog", ImVec2(0, 0), true, ImGuiWindowFlags_AlwaysUseWindowPadding);
+            ImGui::BeginChild("CompilationLog", ImVec2(0, 0), true);
 
             ImVec4 Color = CompilationResult.bIsError ? ImVec4(1.0f, 0.2f, 0.2f, 1.0f)
                                                       : ImVec4(0.8f, 0.8f, 0.6f, 1.0f);

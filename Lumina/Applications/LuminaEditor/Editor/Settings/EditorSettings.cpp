@@ -10,14 +10,13 @@ namespace Lumina
     void FEditorSettings::LoadSettings()
     {
         std::filesystem::path ConfigPath = Paths::ResolveFromEngine("Applications/LuminaEditor/Config/EditorSettings.json");
-        std::filesystem::path SandboxPath = Paths::GetEngineInstallDirectory() / "Applications/Sandbox/Sandbox.lproject";
 
         if (!FFileHelper::DoesFileExist(ConfigPath.string().c_str()))
         {
             LOG_INFO("Could not find EditorSettings.json, creating default");
             
             nlohmann::json DefaultJson;
-            DefaultJson["StartupProject"] = SandboxPath;
+            DefaultJson["StartupProject"] = "NULL";
 
             FString DefaultJsonString = DefaultJson.dump(4).c_str();
             FFileHelper::SaveStringToFile(DefaultJsonString, ConfigPath.string().c_str());

@@ -14,7 +14,7 @@ namespace Lumina
 namespace Lumina
 {
     
-    class FEntitySystem
+    class LUMINA_API FEntitySystem
     {
     public:
 

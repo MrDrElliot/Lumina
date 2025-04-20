@@ -76,8 +76,9 @@ namespace Lumina::Reflection::Visitor
         {
             return CXChildVisit_Break;
         }
-
+        
         FReflectedEnum* Enum = Context->ReflectionDatabase.CreateReflectedType<FReflectedEnum>();
+        Enum->LineNumber = ClangUtils::GetCursorLineNumber(Cursor);
         Enum->DisplayName = CursorName;
         Enum->ID = FName(FullyQualifiedName);
         Enum->HeaderID = Context->ReflectedHeader.HeaderID;

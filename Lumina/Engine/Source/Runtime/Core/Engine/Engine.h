@@ -1,9 +1,11 @@
 ﻿#pragma once
 
+#include "Module/API.h"
 #include "Lumina.h"
 #include "Core/UpdateContext.h"
 #include "Core/Delegates/Delegate.h"
 #include "Renderer/RHIFwd.h"
+#include "Renderer/RHIIncl.h"
 #include "Subsystems/Subsystem.h"
 
 
@@ -24,8 +26,6 @@ namespace Lumina
 namespace Lumina
 {
 
-    inline FEngine* GEngine = nullptr;
-    
     struct FCoreDelegates
     {
         static TMulticastDelegate<void>		OnEngineInit;
@@ -33,7 +33,7 @@ namespace Lumina
         static TMulticastDelegate<void>		PreEngineShutdown;
     };
     
-    class FEngine
+    class LUMINA_API FEngine
     {
     public:
         
@@ -84,4 +84,7 @@ namespace Lumina
 
         FRHIViewportRef         EngineViewport;
     };
+
+    extern LUMINA_API FEngine* GEngine;
+
 }

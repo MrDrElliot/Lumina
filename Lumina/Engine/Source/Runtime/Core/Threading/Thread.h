@@ -35,6 +35,9 @@ namespace Lumina
         
         void Initialize(const char* MainThreadName);
         void Shutdown();
+
+        void InitializeThreadHeap();
+        void ShutdownThreadHeap();
     }
     
 

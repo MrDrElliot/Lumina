@@ -121,3 +121,4 @@ do {                                                    \
     }                                                   \
 } while (false)
 
+#define LUMINA_NO_ENTRY() AssertMsg(false, "No Entry function called!")

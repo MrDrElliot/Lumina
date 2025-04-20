@@ -14,7 +14,11 @@ namespace Lumina::Reflection
         ~FClangParserContext();
         
         void AddReflectedMacro(const FReflectionMacro& Macro);
+        void AddGeneratedBodyMacro(const FReflectionMacro& Macro);
+        
         bool TryFindMacroForCursor(FName HeaderID, const CXCursor& Cursor, FReflectionMacro& Macro);
+
+        bool TryFindGeneratedBodyMacro(FName HeaderID, const CXCursor& Cursor, FReflectionMacro& Macro);
 
         void PushNamespace(const FString& Namespace);
         void PopNamespace();
@@ -24,6 +28,7 @@ namespace Lumina::Reflection
 
         
         FReflectedType*                             ParentReflectedType;
+        FReflectedType*                             LastReflectedType;
 
         FReflectionDatabase                         ReflectionDatabase;
         
@@ -32,6 +37,7 @@ namespace Lumina::Reflection
         FReflectedHeader                            ReflectedHeader;
         
         THashMap<FName, TVector<FReflectionMacro>>  ReflectionMacros;
+        THashMap<FName, TQueue<FReflectionMacro>>  GeneratedBodyMacros;
         
         TVector<FString>                            NamespaceStack;
         FString                                     CurrentNamespace;

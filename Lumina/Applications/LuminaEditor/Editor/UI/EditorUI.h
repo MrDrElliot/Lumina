@@ -1,8 +1,10 @@
 ﻿#pragma once
+
 #include "Memory/RefCounted.h"
 #include "Scene/Scene.h"
 #include "Tools/EditorToolContext.h"
 #include "Tools/EditorToolModal.h"
+#include <ThirdParty/imgui/imgui.h>
 #include "Tools/UI/DevelopmentToolUI.h"
 #include "Tools/UI/ImGui/imfilebrowser.h"
 #include "Tools/UI/ImGui/ImGuiX.h"

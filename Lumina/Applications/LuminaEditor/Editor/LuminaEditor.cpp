@@ -1,6 +1,6 @@
 #include "LuminaEditor.h"
 #include "EntryPoint.h"
-#include "Core/Threading/Thread.h"
+#include <Lumina_eastl.cpp>
 #include "Project/Project.h"
 #include "Renderer/RenderResource.h"
 #include "Scene/Scene.h"
@@ -12,13 +12,13 @@ namespace Lumina
 
     void FEditorEngine::CreateDevelopmentTools()
     {
-        DeveloperToolUI = new FEditorUI();
+        DeveloperToolUI = FMemory::New<FEditorUI>();
     }
 
     
     FApplication* CreateApplication(int argc, char** argv)
     {
-        return new LuminaEditor();
+        return FMemory::New<LuminaEditor>();
     }
     
     LuminaEditor::LuminaEditor()
@@ -26,12 +26,12 @@ namespace Lumina
     {
     }
     
-    bool LuminaEditor::Initialize()
+    bool LuminaEditor::Initialize(int argc, char** argv)
     {
 
         FEditorSettings::Get()->LoadSettings();
         std::filesystem::path StartupProject = FEditorSettings::Get()->GetStartupProject().c_str();
-        FProject::Get()->LoadProject(StartupProject.string().c_str());
+        FProject::Get()->LoadProject(StartupProject.generic_string().c_str());
 
         Engine->Initialize(this);
         
@@ -40,7 +40,7 @@ namespace Lumina
 
     void LuminaEditor::CreateEngine()
     {
-        GEditor = new FEditorEngine();
+        GEditor = FMemory::New<FEditorEngine>();
         Engine = GEditor;
         Engine->SetUpdateCallback([] (const FUpdateContext&) { });
     }
@@ -67,5 +67,18 @@ namespace Lumina
     void LuminaEditor::Shutdown()
     {
         
+    }
+}
+
+
+DECLARE_MODULE_ALLOCATOR_OVERRIDES()
+
+
+namespace eastl
+{
+    void AssertionFailure(const char* expression)
+    {
+        std::fprintf(stderr, "EASTL Assertion Failure: %s\n", expression);
+        std::abort();
     }
 }

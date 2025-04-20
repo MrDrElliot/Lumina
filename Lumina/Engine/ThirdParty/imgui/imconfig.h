@@ -23,14 +23,18 @@
 // Using Dear ImGui via a shared library is not recommended, because of function call overhead and because we don't guarantee backward nor forward ABI compatibility.
 // DLL users: heaps and globals are not shared across DLL boundaries! You will need to call SetCurrentContext() + SetAllocatorFunctions()
 // for each static/DLL boundary you are calling from. Read "Context and Memory Allocators" section of imgui.cpp for more details.
-#define IMGUI_API __declspec( dllexport )
-//#define IMGUI_API __declspec( dllimport )
+
+#ifdef LUMINA_ENGINE
+    #define IMGUI_API __declspec(dllexport)
+#else
+    #define IMGUI_API __declspec(dllimport)
+#endif
 
 //#define IMGUI_IMPL_VULKAN_NO_PROTOTYPES
 
 //---- Don't define obsolete functions/enums/behaviors. Consider enabling from time to time after updating to clean your code of obsolete function/names.
-//#define IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-//#define IMGUI_DISABLE_OBSOLETE_KEYIO                      // 1.87+ disable legacy io.KeyMap[]+io.KeysDown[] in favor io.AddKeyEvent(). This is automatically done by IMGUI_DISABLE_OBSOLETE_FUNCTIONS.
+#define IMGUI_DISABLE_OBSOLETE_FUNCTIONS
+#define IMGUI_DISABLE_OBSOLETE_KEYIO                      // 1.87+ disable legacy io.KeyMap[]+io.KeysDown[] in favor io.AddKeyEvent(). This is automatically done by IMGUI_DISABLE_OBSOLETE_FUNCTIONS.
 
 //---- Disable all of Dear ImGui or don't implement standard windows/tools.
 // It is very strongly recommended to NOT disable the demo windows and debug tool during development. They are extremely useful in day to day work. Please read comments in imgui_demo.cpp.

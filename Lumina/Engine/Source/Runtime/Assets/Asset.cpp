@@ -1,5 +1,4 @@
 #include "Asset.h"
-
 #include "AssetHeader.h"
 #include "AssetRegistry/AssetRegistry.h"
 #include "Containers/Array.h"

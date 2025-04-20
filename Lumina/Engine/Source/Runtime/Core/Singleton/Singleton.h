@@ -1,4 +1,5 @@
 #pragma once
+#include "Module/API.h"
 #include "Platform/Platform.h"
 
 /** Defines a simple singleton class */

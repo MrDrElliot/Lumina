@@ -1,13 +1,13 @@
 
 #include "Sandbox.h"
+#include "Lumina_eastl.cpp"
 #include "EntryPoint.h"
 #include "Assets/AssetManager/AssetManager.h"
-#include "Core/Math/Transform.h"
+#include "Core/Module/ModuleManager.h"
+#include "Core/Object/Class.h"
 #include "Input/Input.h"
 #include "Scene/Entity/Systems/EntitySystem.h"
 #include "Renderer/RenderContext.h"
-#include "Renderer/RenderManager.h"
-#include "Scene/Subsystems/FCameraManager.h"
 
 using namespace Lumina;
 
@@ -24,7 +24,6 @@ void FSandbox::CreateEngine()
 
 void FSandbox::EngineLoopCallback(const FUpdateContext& UpdateContext)
 {
-	
 }
 
 bool FSandbox::ApplicationLoop()
@@ -32,7 +31,7 @@ bool FSandbox::ApplicationLoop()
 	return true;
 }
 
-bool FSandbox::Initialize()
+bool FSandbox::Initialize(int argc, char** argv)
 {
 	return true;
 }
@@ -41,8 +40,18 @@ void FSandbox::Shutdown()
 {
 }
 
-
 Lumina::FApplication* Lumina::CreateApplication(int argc, char** argv)
 {
 	return new FSandbox();
 }
+
+namespace eastl 
+{
+	void AssertionFailure(const char* pExpression)
+	{
+		std::fprintf(stderr, "EASTL Assertion Failed: %s\n", pExpression);
+		std::abort();
+	}
+}
+
+DECLARE_MODULE_ALLOCATOR_OVERRIDES()

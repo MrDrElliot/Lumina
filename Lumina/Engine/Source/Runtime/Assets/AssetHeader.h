@@ -11,7 +11,7 @@ namespace Lumina
     class FAssetHandle;
     enum class EAssetType : uint8;
 
-    struct FAssetHeader
+    struct LUMINA_API FAssetHeader
     {
         
         int32                       Version = -1;

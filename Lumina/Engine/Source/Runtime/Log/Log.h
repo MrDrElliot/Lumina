@@ -1,14 +1,13 @@
 #pragma once
 
 #include <spdlog/spdlog.h>
-
-#include "Memory/SmartPtr.h"
+#include "Module/API.h"
 #include "Sinks/ConsoleSink.h"
 
 
 namespace Lumina
 {
-	class FLog
+	class LUMINA_API FLog
 	{
 	public:
 

@@ -15,6 +15,18 @@ namespace Lumina::ClangUtils
         return str;
     }
 
+    inline uint32 GetCursorLineNumber(const CXCursor& Cr)
+    {
+        uint32 Line = 0;
+        uint32 Column = 0;
+        uint32 Offset = 0;
+
+        CXSourceLocation Location = clang_getCursorLocation(Cr);
+        clang_getSpellingLocation(Location, nullptr, &Line, &Column, &Offset);
+
+        return Line;
+    }
+
     inline FString GetCursorDisplayName(const CXCursor& cr)
     {
         CXString displayName = clang_getCursorDisplayName(cr);

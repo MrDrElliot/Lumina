@@ -6,16 +6,14 @@ project "Editor"
 
 	outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
     
-    targetdir ("%{wks.location}/Binaries/" .. outputdir .. "/%{prj.name}")
-    objdir ("%{wks.location}/Intermediates/" .. outputdir .. "/%{prj.name}")
+    targetdir ("%{wks.location}/Binaries/" .. outputdir)
+    objdir ("%{wks.location}/Intermediates/Obj/" .. outputdir .. "/%{prj.name}")   
 	
 	links
 	 {
 		"Lumina",
-	  	"GLFW",
-	  	"imgui",
-	  	"$(VULKAN_SDK)/lib/vulkan-1.lib",
-	    "%{VULKAN_SDK}/lib/shaderc.lib",  	
+		"DbgHelp",
+		"EA",
 	 }
 	 
 	files

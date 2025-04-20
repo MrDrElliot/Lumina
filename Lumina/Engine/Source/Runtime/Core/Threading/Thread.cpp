@@ -1,5 +1,6 @@
 #include "Thread.h"
 
+#include "rpmalloc.h"
 #include "Core/Assertions/Assert.h"
 
 
@@ -40,6 +41,16 @@ namespace Lumina
         void Shutdown()
         {
             gMainThreadID = {};
+        }
+
+        void InitializeThreadHeap()
+        {
+            rpmalloc_thread_initialize();
+        }
+
+        void ShutdownThreadHeap()
+        {
+            rpmalloc_thread_finalize(1);
         }
     }
 }

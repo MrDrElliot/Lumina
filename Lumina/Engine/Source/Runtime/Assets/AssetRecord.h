@@ -13,7 +13,7 @@ namespace Lumina
 namespace Lumina
 {
 
-    class FAssetRecord : public IRefCountedObject
+    class LUMINA_API FAssetRecord : public IRefCountedObject
     {
     public:
 

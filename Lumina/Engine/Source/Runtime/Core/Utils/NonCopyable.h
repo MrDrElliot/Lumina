@@ -1,10 +1,11 @@
 #pragma once
 
+#include "Module/API.h"
 
 namespace Lumina
 {
 
-    class INonCopyable
+    class LUMINA_API INonCopyable
     {
     public:
         INonCopyable() = default;

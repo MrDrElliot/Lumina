@@ -8,7 +8,6 @@ IncludeDir["spdlog"] = 	                "%{LuminaEngineDirectory}/Lumina/Engine/
 IncludeDir["glfw"]	 = 	                "%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/GLFW/include"
 IncludeDir["glm"]	 = 	                "%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/GLM/"
 IncludeDir["imgui"]	 = 	                "%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/imgui/"
-IncludeDir["imnodes"]	 = 	            "%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/imnodes/"
 IncludeDir["vkbootstrap"] =             "%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/vk-bootstrap/"
 IncludeDir["fastgltf"] =                "%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/fastgltf/include"
 IncludeDir["stb"] =                     "%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/stb/"
@@ -24,10 +23,10 @@ IncludeDir["EABase"] =                  "%{LuminaEngineDirectory}/Lumina/Engine/
 IncludeDir["rpmalloc"] =                "%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/rpmalloc/"
 IncludeDir["xxhash"] =                  "%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/xxhash/"
 
-
+outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 function reflection_directory()
-    return "%{wks.location}/Intermediates/Reflection/%{prj.name}/"
+    return "%{wks.location}/Intermediates/LRT/%{prj.name}/"
 end
 
 

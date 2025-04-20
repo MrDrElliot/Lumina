@@ -7,8 +7,8 @@ project "GLFW"
 	outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 
-	targetdir ("%{wks.location}/Binaries/" .. outputdir .. "/%{prj.name}")
-	objdir ("%{wks.location}/Intermediates/" .. outputdir .. "/%{prj.name}")
+    targetdir ("%{wks.location}/Binaries/" .. outputdir)
+    objdir ("%{wks.location}/Intermediates/Obj/" .. outputdir .. "/%{prj.name}")    
 
 	files
 	{

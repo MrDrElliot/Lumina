@@ -15,50 +15,50 @@ namespace Lumina::Hash
     //-------------------------------------------------------------------------
     // This is the default hashing algorithm for the engine
 
-    FORCEINLINE void HashCombine(size_t& seed, size_t value)
+    LUMINA_API FORCEINLINE void HashCombine(size_t& seed, size_t value)
     {
         seed ^= value + 0x9e3779b9 + (seed << 6) + (seed >> 2);
     }
     
     namespace XXHash
     {
-        uint32 GetHash32( void const* pData, size_t size );
+        LUMINA_API uint32 GetHash32( void const* pData, size_t size );
 
-        FORCEINLINE uint32 GetHash32( const FString& string )
+        LUMINA_API FORCEINLINE uint32 GetHash32( const FString& string )
         {
             return GetHash32( string.c_str(), string.length() );
         }
 
-        FORCEINLINE uint32 GetHash32( char const* pString )
+        LUMINA_API FORCEINLINE uint32 GetHash32( char const* pString )
         {
             return GetHash32( pString, strlen( pString ) );
         }
 
-        FORCEINLINE uint32 GetHash32(float Value)
+        LUMINA_API FORCEINLINE uint32 GetHash32(float Value)
         {
             return GetHash32(&Value, sizeof(float));
         }
         
-        FORCEINLINE uint32 GetHash32( Blob const& data )
+        LUMINA_API FORCEINLINE uint32 GetHash32( Blob const& data )
         {
             return GetHash32( data.data(), data.size() );
         }
 
         //-------------------------------------------------------------------------
 
-        uint64_t GetHash64( void const* pData, size_t size );
+        LUMINA_API uint64_t GetHash64( void const* pData, size_t size );
 
-        FORCEINLINE uint64_t GetHash64( const FString& string )
+        LUMINA_API FORCEINLINE uint64_t GetHash64( const FString& string )
         {
             return GetHash64( string.c_str(), string.length() );
         }
 
-        FORCEINLINE uint64_t GetHash64( char const* pString )
+        LUMINA_API FORCEINLINE uint64_t GetHash64( char const* pString )
         {
             return GetHash64( pString, strlen( pString ) );
         }
 
-        FORCEINLINE uint64_t GetHash64( Blob const& data )
+        LUMINA_API FORCEINLINE uint64_t GetHash64( Blob const& data )
         {
             return GetHash64( data.data(), data.size() );
         }

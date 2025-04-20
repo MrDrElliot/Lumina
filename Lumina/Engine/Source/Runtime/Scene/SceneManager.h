@@ -14,7 +14,7 @@ namespace Lumina
 {
     class FScene;
     
-    class FSceneManager : public ISubsystem
+    class LUMINA_API FSceneManager : public ISubsystem
     {
     public:
 

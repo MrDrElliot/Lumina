@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include "EdGraphNode.h"
-#include "imnodes_internal.h"
+#include "imnodes/imnodes_internal.h"
 #include "Containers/Array.h"
 #include "Containers/Name.h"
 #include "Core/Functional/Function.h"
@@ -19,9 +19,7 @@ namespace Lumina
     class CEdNodeGraph : public CObject
     {
     public:
-
-        DECLARE_CLASS_ABSTRACT(CEdNodeGraph, CObject)
-
+        
         struct FAction
         {
             FString             ActionName;
@@ -36,7 +34,6 @@ namespace Lumina
         };
 
         
-
         CEdNodeGraph();
         virtual ~CEdNodeGraph();
 

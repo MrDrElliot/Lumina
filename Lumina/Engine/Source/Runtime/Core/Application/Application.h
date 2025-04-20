@@ -5,7 +5,7 @@
 
 namespace Lumina
 {
-	enum class EApplicationFlags : uint32
+	enum class LUMINA_API EApplicationFlags : uint32
 	{
 		DevelopmentTools =		1 << 0,
 	};
@@ -20,20 +20,19 @@ namespace Lumina
 		return static_cast<EApplicationFlags>(static_cast<uint32>(lhs) & static_cast<uint32>(rhs));
 	}
 	
-	class FApplication
+	class LUMINA_API FApplication
 	{
 	public:
 
-		FApplication() = default;
 		FApplication(FString InApplicationName = "Unnamed Application", uint32 AppFlags = 0);
-		virtual ~FApplication();
+		virtual ~FApplication() = default;
 
 		static FApplication& Get() { return *Instance; }
 
-		int32 Run();
+		int32 Run(int argc, char** argv);
 
 		virtual bool ApplicationLoop() = 0;
-		virtual bool Initialize() = 0;
+		virtual bool Initialize(int argc, char** argv) = 0;
 		virtual void Shutdown() = 0;
 
 		virtual void RenderDeveloperTools(const FUpdateContext& UpdateContext) { }
@@ -50,7 +49,9 @@ namespace Lumina
 		virtual void CreateEngine() = 0;
 		
 	private:
-		
+
+		void PreInitStartup(int argc, char** argv);
+		void SetGameFromCommandLine(int argc, char** argv);
 		bool CreateApplicationWindow();
 		bool FatalError(const FString& Error);
 		

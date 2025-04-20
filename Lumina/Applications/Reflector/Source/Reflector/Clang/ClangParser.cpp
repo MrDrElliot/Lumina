@@ -36,7 +36,7 @@ namespace Lumina::Reflection
         CXErrorCode Result = CXError_Failure;
 
         TVector<FString> FullIncludePaths;
-        TInlineVector<const char*, 10> clangArgs;
+        TFixedVector<const char*, 10> clangArgs;
         
         for (const char* Path : g_includePaths)
         {
@@ -56,17 +56,24 @@ namespace Lumina::Reflection
         clangArgs.push_back( "c++" );
         clangArgs.push_back( "-std=c++17" );
         clangArgs.push_back( "-O0" );
-        clangArgs.push_back( "-D NDEBUG" );
-        clangArgs.push_back( "-Werror" );
-        clangArgs.push_back( "-Wno-multichar" );
-        clangArgs.push_back( "-Wno-deprecated-builtins" );
+        clangArgs.push_back( "-D" );
+        clangArgs.push_back( "NDEBUG" );
+        clangArgs.push_back( "-D" );
+        clangArgs.push_back( "REFLECTION_PARSER" );
+        clangArgs.push_back( "-Wno-return-type-c-linkage" );
+        clangArgs.push_back( "-Wno-unknown-warning-option" );
+        clangArgs.push_back( "-Wno-c++98-compat-pedantic" );
+        clangArgs.push_back( "-Wno-gnu-folding-constant" );
+        clangArgs.push_back( "-Wno-vla-extension-static-assert" );
         clangArgs.push_back( "-fparse-all-comments" );
         clangArgs.push_back( "-fms-extensions" );
         clangArgs.push_back( "-fms-compatibility" );
-        clangArgs.push_back( "-Wno-unknown-warning-option" );
-        clangArgs.push_back( "-Wno-return-type-c-linkage" );
-        clangArgs.push_back( "-Wno-gnu-folding-constant" );
-        clangArgs.push_back( "-Wno-vla-extension-static-assert" );
+        clangArgs.push_back( "-fretain-comments-from-system-headers" );
+        clangArgs.push_back( "-fno-spell-checking" );
+        clangArgs.push_back( "-fmacro-backtrace-limit=0" );
+        clangArgs.push_back("-Xclang");
+        clangArgs.push_back("-ast-dump");
+
 
 
         Result = clang_parseTranslationUnit2(ClangIndex, File.HeaderPath.c_str(), clangArgs.data(), clangArgs.size(), 0, 0, ClangOptions, &TranslationUnit);

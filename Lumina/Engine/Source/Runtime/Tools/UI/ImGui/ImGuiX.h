@@ -10,7 +10,7 @@
 
 namespace Lumina::ImGuiX
 {
-    struct FImGuiImageInfo
+    struct LUMINA_API FImGuiImageInfo
     {
         FORCEINLINE bool IsValid() const { return ID != 0; }
         
@@ -22,24 +22,24 @@ namespace Lumina::ImGuiX
     // Generic draw helpers...
     //--------------------------------------------------------------
 
-    void ItemTooltip(const char* fmt, ...);
+    LUMINA_API void ItemTooltip(const char* fmt, ...);
 
-    void TextTooltip(const char* fmt, ...);
+    LUMINA_API void TextTooltip(const char* fmt, ...);
 
-    bool ButtonEx( char const* pIcon, char const* pLabel, ImVec2 const& size = ImVec2( 0, 0 ), const ImColor& backgroundColor = ImGui::ColorConvertFloat4ToU32( ImGui::GetStyle().Colors[ImGuiCol_Button] ), const ImColor& iconColor = ImGui::ColorConvertFloat4ToU32( ImGui::GetStyle().Colors[ImGuiCol_Text] ), const ImColor& foregroundColor = ImGui::ColorConvertFloat4ToU32( ImGui::GetStyle().Colors[ImGuiCol_Text] ), bool shouldCenterContents = false );
+    LUMINA_API bool ButtonEx( char const* pIcon, char const* pLabel, ImVec2 const& size = ImVec2( 0, 0 ), const ImColor& backgroundColor = ImGui::ColorConvertFloat4ToU32( ImGui::GetStyle().Colors[ImGuiCol_Button] ), const ImColor& iconColor = ImGui::ColorConvertFloat4ToU32( ImGui::GetStyle().Colors[ImGuiCol_Text] ), const ImColor& foregroundColor = ImGui::ColorConvertFloat4ToU32( ImGui::GetStyle().Colors[ImGuiCol_Text] ), bool shouldCenterContents = false );
 
-    inline bool FlatButton( char const* pLabel, ImVec2 const& size = ImVec2( 0, 0 ), const ImColor& foregroundColor = ImGui::ColorConvertFloat4ToU32( ImGui::GetStyle().Colors[ImGuiCol_Text] ) )
+    LUMINA_API inline bool FlatButton( char const* pLabel, ImVec2 const& size = ImVec2( 0, 0 ), const ImColor& foregroundColor = ImGui::ColorConvertFloat4ToU32( ImGui::GetStyle().Colors[ImGuiCol_Text] ) )
     {
         return ButtonEx( nullptr, pLabel, size, ImColor(0.0f), ImColor(0.0f), ImGui::ColorConvertFloat4ToU32( ImGui::GetStyle().Colors[ImGuiCol_Text] ) );
     }
 
-    TPair<bool, uint32> DirectoryTreeViewRecursive(const std::filesystem::path& Path, uint32* Count, int* SelectionMask);
+    LUMINA_API TPair<bool, uint32> DirectoryTreeViewRecursive(const std::filesystem::path& Path, uint32* Count, int* SelectionMask);
 
-    void SameLineSeparator( float width = 0, const ImColor& color = ImColor(0));
+    LUMINA_API void SameLineSeparator( float width = 0, const ImColor& color = ImColor(0));
 
 
 
-    struct ApplicationTitleBar
+    struct LUMINA_API ApplicationTitleBar
     {
         constexpr static float const s_windowControlButtonWidth = 45;
         constexpr static float const s_minimumDraggableGap = 24; // Minimum open gap left open to allow dragging

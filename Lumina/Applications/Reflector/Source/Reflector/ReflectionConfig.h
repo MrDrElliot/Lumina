@@ -12,7 +12,7 @@ namespace Lumina::Reflection
         Class,
         Struct,
         Enum,
-
+        GeneratedBody,
         Size,
     };
 
@@ -25,6 +25,7 @@ namespace Lumina::Reflection
             case EReflectionMacro::Class: return "LUM_CLASS";
             case EReflectionMacro::Struct: return "LUM_STRUCT";
             case EReflectionMacro::Enum: return "LUM_ENUM";
+            case EReflectionMacro::GeneratedBody: return "GENERATED_BODY";
         }
         
         return nullptr;

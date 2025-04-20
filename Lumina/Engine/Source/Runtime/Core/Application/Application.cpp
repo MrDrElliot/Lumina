@@ -1,8 +1,17 @@
 
 #include "Application.h"
+
+#include "ApplicationGlobalState.h"
 #include "Assets/AssetManager/AssetManager.h"
+#include "Core/Module/ModuleManager.h"
+#include "Core/Object/ObjectBase.h"
+#include "Core/Object/ObjectCore.h"
+#include "Core/Utils/CommandLineParser.h"
 #include "Core/Windows/Window.h"
 #include "Core/Windows/WindowTypes.h"
+#include "Paths/Paths.h"
+#include "Platform/Process/PlatformProcess.h"
+#include "Project/Project.h"
 
 namespace Lumina
 {
@@ -20,23 +29,20 @@ namespace Lumina
         Instance = this;
     }
 
-    FApplication::~FApplication()
-    {
-        Instance = nullptr;
-    }
-
-    int32 FApplication::Run()
+    int32 FApplication::Run(int argc, char** argv)
     {
         LOG_TRACE("Initializing Application: {0}", ApplicationName.c_str());
 
         //---------------------------------------------------------------
         // Application initialization.
         //--------------------------------------------------------------
-        
+
+        PreInitStartup(argc, argv);
         CreateApplicationWindow();
         CreateEngine();
+
         
-        if (!Initialize())
+        if (!Initialize(argc, argv))
         {
             Shutdown();
             return 1;
@@ -74,6 +80,8 @@ namespace Lumina
         
         Window->Shutdown();
 
+        FModuleManager::Get()->UnloadAllModules();
+
         delete Window;
         
         return 0;
@@ -96,6 +104,55 @@ namespace Lumina
         OnWindowResized(Extent);
     }
 
+
+    void FApplication::PreInitStartup(int argc, char** argv)
+    {
+        SetGameFromCommandLine(argc, argv);
+
+        // Must be called after module initialization.
+        ProcessNewlyLoadedCObjects();
+
+    }
+
+    void FApplication::SetGameFromCommandLine(int argc, char** argv)
+    {
+        FCommandLineParser Parser(argc, argv);
+        FString ProjectPath = "";
+        FString ProjectDirectory = "";
+        FString ProjectName = "";
+        
+        if (Parser.Has("--project"))
+        {
+            ProjectPath = Parser.Get("--project");
+            LOG_DEBUG("Project Path: {0}", ProjectPath);
+            ProjectDirectory = Paths::Parent(ProjectPath);
+        }
+        else
+        {
+            LOG_ERROR("Error finding project from command line: {0}", *argv);
+            return;
+        }
+
+        ProjectName = Paths::RemoveExtension(Paths::FileName(ProjectPath));
+
+        //@TODO Proper module discovery.
+        FString DLLName = ProjectName + ".dll";
+        FString ProjectBinariesPath = Paths::Combine(ProjectDirectory.c_str(), "Binaries/Debug-windows-x86_64");
+
+        Platform::PushDLLDirectory(StringUtils::ToWideString(ProjectBinariesPath).c_str());
+        IModuleInterface* Module = FModuleManager::Get()->LoadModule(DLLName);
+        Platform::PopDLLDirectory();
+
+        if (Module)
+        {
+            LOG_WARN("Module Successfully Loaded: {0}", ProjectPath);
+        }
+        else
+        {
+            LOG_ERROR("Failed to load module {0}", ProjectBinariesPath);
+        }
+        
+    }
 
     bool FApplication::CreateApplicationWindow()
     {

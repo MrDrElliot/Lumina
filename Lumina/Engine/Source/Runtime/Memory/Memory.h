@@ -4,21 +4,17 @@
 #include <rpmalloc.h>
 
 #include "Core/Assertions/Assert.h"
+#include "Module/API.h"
 #include "Platform/WindowsPlatform.h"
+#include <Core/Assertions/Assert.h>
 
 static bool GIsMemorySystemInitialized = false;
 static rpmalloc_config_t GrpmallocConfig;
 
 #define DEFAULT_ALIGNMENT 8
 
-//-------------------------------------------------------------------------
-// Note: We dont globally overload the new or delete operators
-//-------------------------------------------------------------------------
-// Right now we use the default system allocators for new/delete calls and static allocations
-// If in the future, we hit performance issues with allocation then we can consider globally overloading those operators
-//-------------------------------------------------------------------------
 
-class FMemory
+class LUMINA_API FMemory
 {
 public:
 
@@ -66,23 +62,27 @@ public:
     
     static void CustomAssert( char const* pMessage )
     {
-        std::cout << pMessage;
+        std::cerr << pMessage << "\n";
     }
 
     static void Initialize()
     {
-        Assert(!GIsMemorySystemInitialized);
-        memset(&GrpmallocConfig, 0, sizeof(rpmalloc_config_t));
-        GrpmallocConfig.error_callback = &CustomAssert;
+        if (!GIsMemorySystemInitialized)
+        {
+            memset(&GrpmallocConfig, 0, sizeof(rpmalloc_config_t));
+            GrpmallocConfig.error_callback = &CustomAssert;
 
-        rpmalloc_initialize_config(&GrpmallocConfig);
+            rpmalloc_initialize_config(&GrpmallocConfig);
 
-        GIsMemorySystemInitialized = true;
-        
+            GIsMemorySystemInitialized = true;
+
+            std::cout << "Memory System Initialized \n";
+        }
     }
 
     static void Shutdown()
     {
+        std::cout << "Memory System Shutdown Reamining Allocations: " << GNumAllocationsActive << "\n";
         GIsMemorySystemInitialized = false;
         rpmalloc_finalize();
     }
@@ -117,11 +117,20 @@ public:
 
     NODISCARD static void* Malloc(size_t size, size_t alignment = DEFAULT_ALIGNMENT)
     {
-        if (size == 0) return nullptr;
+        if (UNLIKELY(!GIsMemorySystemInitialized))
+        {
+            FMemory::Initialize();
+        }
+
+        if (UNLIKELY(size == 0))
+        {
+            return nullptr;
+        }
+        
         void* pMemory = nullptr;
         pMemory = rpaligned_alloc(alignment, size);
-
         Assert(IsAligned(pMemory, alignment));
+
         return pMemory;
     }
 
@@ -132,18 +141,18 @@ public:
     }
     
 
-    NODISCARD static void* Realloc( void* pMemory, size_t newSize, size_t originalAlignment = DEFAULT_ALIGNMENT)
+    NODISCARD static void* Realloc(void* pMemory, size_t newSize, size_t originalAlignment = DEFAULT_ALIGNMENT)
     {
         void* pReallocatedMemory = nullptr;
 
-        pReallocatedMemory = rprealloc( pMemory, newSize );
+        pReallocatedMemory = rprealloc(pMemory, newSize);
 
 
         Assert(pReallocatedMemory != nullptr);
         return pReallocatedMemory;
     }
 
-    static void Free( void*& pMemory )
+    static void Free(void*& pMemory)
     {
         rpfree((uint8_t*)pMemory);
         pMemory = nullptr;
@@ -174,6 +183,48 @@ public:
         Free( (void*&) pType );
     }
     
+
+
+    // Basic single object allocation
+    void* operator new(std::size_t size)
+    {
+        return FMemory::Malloc(size);
+    }
+
+    void operator delete(void* ptr) noexcept
+    {
+        FMemory::Free(ptr);
+    }
+
+    // Array allocation
+    void* operator new[](std::size_t size)
+    {
+        return FMemory::Malloc(size);
+    }
+
+    void operator delete[](void* ptr) noexcept
+    {
+        FMemory::Free(ptr);
+    }
+
+#define DECLARE_MODULE_ALLOCATOR_OVERRIDES() \
+    void* operator new(std::size_t size) { return FMemory::Malloc(size); } \
+    void operator delete(void* ptr) noexcept { FMemory::Free(ptr); } \
+    void* operator new[](std::size_t size) { return FMemory::Malloc(size); } \
+    void operator delete[](void* ptr) noexcept { FMemory::Free(ptr); } \
+    void* operator new(std::size_t size, std::align_val_t align) { return FMemory::Malloc(size, static_cast<size_t>(align)); } \
+    void* operator new[](std::size_t size, std::align_val_t align) { return FMemory::Malloc(size, static_cast<size_t>(align)); } \
+    void operator delete(void* ptr, std::align_val_t) noexcept { FMemory::Free(ptr); } \
+    void operator delete[](void* ptr, std::align_val_t) noexcept { FMemory::Free(ptr); } \
+    void* operator new(std::size_t size, const std::nothrow_t&) noexcept { return FMemory::Malloc(size); } \
+    void* operator new[](std::size_t size, const std::nothrow_t&) noexcept { return FMemory::Malloc(size); } \
+    void operator delete(void* ptr, const std::nothrow_t&) noexcept { FMemory::Free(ptr); } \
+    void operator delete[](void* ptr, const std::nothrow_t&) noexcept { FMemory::Free(ptr); } \
+    void operator delete(void* ptr, std::size_t) noexcept { FMemory::Free(ptr); } \
+    void operator delete[](void* ptr, std::size_t) noexcept { FMemory::Free(ptr); } \
+    void operator delete(void* ptr, std::size_t, std::align_val_t) noexcept { FMemory::Free(ptr); } \
+    void operator delete[](void* ptr, std::size_t, std::align_val_t) noexcept { FMemory::Free(ptr); } \
+
 };
 
 

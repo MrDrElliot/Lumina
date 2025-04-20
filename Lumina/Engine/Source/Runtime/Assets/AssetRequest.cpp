@@ -1,6 +1,5 @@
 
 #include "AssetRequest.h"
-
 #include "Factories/Factory.h"
 
 namespace Lumina
@@ -80,7 +79,7 @@ namespace Lumina
     void FAssetRequest::ProcessDependencies(FRequestCallbackContext& Context)
     {
         /** Check if all of our dependencies are fully loaded */
-        TInlineVector<FAssetHandle, 4> FinishedDependencies;
+        TFixedVector<FAssetHandle, 4> FinishedDependencies;
         for (FAssetHandle& Handle : PendingDependencies)
         {
             if (Handle.IsLoaded())
