@@ -1,17 +1,71 @@
 ﻿#pragma once
-#include "Core/LuminaMacros.h"
+
 #include "Module/API.h"
+#include "ObjectFlags.h"
+#include "Core/LuminaMacros.h"
 #include "Platform/GenericPlatform.h"
+
 
 namespace Lumina
 {
+    class CObjectBase;
+    class CEnum;
     class CObject;
     class CClass;
 }
 
+
 namespace Lumina
 {
+    extern THashMap<FName, CObjectBase*> ObjectNameHash;
+    
+    struct FConstructCObjectParams
+    {
+        
+        FConstructCObjectParams(const CClass* InClass)
+            : Class(InClass)
+            , Name()
+            , Flags(EObjectFlags::OF_None)
+        {}
+        
+        const CClass* Class;
+        FName Name;
+        EObjectFlags Flags;
+    };
 
+    LUMINA_API FName MakeUniqueObjectName(const CClass* Class, FName InBaseName = NAME_None);
+    LUMINA_API CObject* StaticAllocateObject(const FConstructCObjectParams& Params);
+
+    LUMINA_API CObject* FindObjectFast(const CClass* InClass, FName ObjectName);
+    LUMINA_API CObject* StaticLoadObject(const CClass* InClass, const TCHAR* InPath, const TCHAR* InName);
+    
+
+    template<typename T>
+    inline T* FindObject(const TCHAR* Name)
+    {
+        return (T*)FindObjectFast(T::StaticClass(), Name);
+    }
+
+    template<typename T>
+    inline T* LoadObject(const TCHAR* Path, const TCHAR* Name)
+    {
+        return (T*)StaticLoadObject(T::StaticClass(), Path, Name);
+    }
+
+    template<typename T>
+    T* NewObject(FName Name = NAME_None, EObjectFlags Flags = OF_None)
+    {
+        FConstructCObjectParams Params(T::StaticClass());
+        Params.Name = Name;
+        Params.Flags = Flags;
+
+        CObject* Obj = StaticAllocateObject(Params);
+        
+        return (T*)Obj;
+        
+    }
+    
+    
     enum class EPropertyFlags : uint64
     {
         None = 0,
@@ -61,6 +115,7 @@ namespace Lumina
     };
 
     using FClassRegistrationInfo = TRegistrationInfo<CClass>;
+    using FEnumRegistrationInfo = TRegistrationInfo<CEnum>;
 
 
     struct FPropertyParams
@@ -68,7 +123,7 @@ namespace Lumina
         const char*         Name;
         EPropertyFlags      PropertyFlags;
         EPropertyTypeFlags  TypeFlags;
-        
+        uint16              Offset;
     };
     
     struct FClassParams
@@ -79,8 +134,23 @@ namespace Lumina
     };
 
     
+    struct FEnumeratorParam
+    {
+        const char*               NameUTF8;
+        int64                     Value;
+    };
+    
+    struct FEnumParams
+    {
+        const char*                 Name;
+        const FEnumeratorParam*     Params;
+        int16                       NumParams;
+    };
+
+    
 
     LUMINA_API void ConstructCClass(CClass** OutClass, const FClassParams& Params);
+    LUMINA_API void ConstructCEnum(CEnum** OutEnum, const FEnumParams& Params);
     
     
 }

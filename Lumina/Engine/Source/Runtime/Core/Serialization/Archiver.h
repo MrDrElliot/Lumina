@@ -6,6 +6,11 @@
 #include "Platform/WindowsPlatform.h"
 #include "Containers/String.h"
 
+namespace Lumina
+{
+    class FField;
+}
+
 enum class EArchiverFlags : uint8
 {
     None      = 0,
@@ -72,6 +77,11 @@ namespace Lumina
 
         
         virtual FArchive& operator<<(CObject*& Value)
+        {
+            return *this;
+        }
+
+        virtual FArchive& operator<<(FField*& Value)
         {
             return *this;
         }

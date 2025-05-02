@@ -19,12 +19,20 @@ namespace Lumina
      * - CObjects **must** have a default constructor; constructor properties are not supported.
      * - Only default-generated constructors are allowed. (No params).
      */
-    
+
+    LUMINA_API CClass* Construct_CClass_CObject();
+
     class CObject : public CObjectBase
     {
     public:
 
+        friend CObject* StaticAllocateObject();
+
         DECLARE_CLASS(CObject, CObject, LUMINA_API)
+        DEFINE_DEFAULT_CONSTRUCTOR_CALL(CObject)
+
+        LUMINA_API CObject();
+        LUMINA_API CObject(ENoInit);
         
         /** Internal constructor */
         LUMINA_API CObject(EObjectFlags InFlags)
@@ -43,8 +51,9 @@ namespace Lumina
 
         /** Serializes object data. Can be overridden by derived classes. */
         LUMINA_API virtual void Serialize(FArchive& Ar) {}
-    
-        
+
+        /** Called after constructor and after properites have been initialized. */
+        LUMINA_API virtual void PostInitProperties();
     
         
     private:

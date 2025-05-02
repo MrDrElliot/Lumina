@@ -29,12 +29,16 @@ namespace Lumina
             Registrations.emplace_back(RegisterFunc);
         }
 
-        void ProcessRegistrations()
+        void ProcessRegistrations(void (*InvokeFunc)(TType*) = nullptr)
         {
             uint32 Num = Registrations.size();
             for (FRegistrant& Registrant : Registrations)
             {
-                Registrant.RegisterFunc();    
+                TType* NewType = Registrant.RegisterFunc();
+                if (InvokeFunc)
+                {
+                    InvokeFunc(NewType);
+                }
             }
 
             ProcessedRegistrations = Num;
@@ -53,4 +57,5 @@ namespace Lumina
     };
 
     using FClassDeferredRegistry = TDeferredRegistry<FClassRegistrationInfo>;
+    using FEnumDeferredRegistry = TDeferredRegistry<FEnumRegistrationInfo>;
 }

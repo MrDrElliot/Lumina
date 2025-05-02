@@ -10,7 +10,14 @@ namespace Lumina::Reflection
     {
     public:
 
-        FClangParserContext() = default;
+        FClangParserContext()
+            : ParentReflectedType(nullptr)
+            , LastReflectedType(nullptr)
+            , Solution("")
+            , Project("", "")
+        {
+        }
+
         ~FClangParserContext();
         
         void AddReflectedMacro(const FReflectionMacro& Macro);
@@ -33,7 +40,8 @@ namespace Lumina::Reflection
         FReflectionDatabase                         ReflectionDatabase;
         
         FString                                     ErrorMessage;
-        FString                                     SolutionPath;
+        FProjectSolution                            Solution;
+        FReflectedProject                           Project;
         FReflectedHeader                            ReflectedHeader;
         
         THashMap<FName, TVector<FReflectionMacro>>  ReflectionMacros;

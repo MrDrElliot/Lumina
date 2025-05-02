@@ -9,6 +9,7 @@
 #include "Containers/Array.h"
 #include "EASTL/sort.h"
 #include "Memory/Memory.h"
+#include "Paths/Paths.h"
 #include "ReflectionCore/ReflectedProject.h"
 
 #define VS_PROJECT_ID "{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}"  // VS Project UID
@@ -57,6 +58,8 @@ namespace Lumina::Reflection
         for (const FString& FilePath : ProjectFilePaths)
         {
             FReflectedProject Project(Solution.GetPath(), FilePath);
+            
+            
             if (Project.Parse())
             {
                 Projects.push_back(Project);
@@ -74,26 +77,29 @@ namespace Lumina::Reflection
     bool FTypeReflector::Build()
     {
         FClangParser Parser;
-        
+        TVector<FReflectedHeader*> HeadersToRemove;
+        HeadersToRemove.reserve(14);
+    
         for (FReflectedProject& Project : Projects)
         {
             Parser.ParsingContext.ReflectionDatabase.AddReflectedProject(Project);
-            
+    
             for (FReflectedHeader& Header : Project.Headers)
             {
-                LOG_ERROR("Reflecting Header: {0}", Header.HeaderPath);
-
-                if (!Parser.Parse(Project.SolutionPath, Header.HeaderPath))
+                LOG_ERROR("Reflecting Header: {0} - under project {1}", Header.HeaderPath, Project.Name);
+                
+                if (!Parser.Parse(Project.SolutionPath, Header.HeaderPath, Project))
                 {
                     LOG_ERROR("Failed to parse header file! {0}", Header.HeaderPath);
                 }
             }
         }
 
+
         WriteGeneratedFiles(Parser);
-        
         return true;
     }
+
 
     bool FTypeReflector::WriteGeneratedFiles(const FClangParser& Parser)
     {

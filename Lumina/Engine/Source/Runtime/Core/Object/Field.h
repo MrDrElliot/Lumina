@@ -8,21 +8,22 @@
 namespace Lumina
 {
     class FField;
+    class CStruct;
+    class FProperty;
 
     enum class EFieldFlags : uint32
     {
         None      = 0,
         Editable  = 1 << 0,
-        Nullable  = 1 << 1,  // Example: allow null values for the field
-        Default   = 1 << 2,  // Example: a default value is provided for the field
+        Nullable  = 1 << 1,
+        Default   = 1 << 2,
     };
 
     ENUM_CLASS_FLAGS(EFieldFlags)
 
     struct FFieldOwner
     {
-        TVariant<CObject*, FField*>     Variant;
-
+        TVariant<CStruct*, FField*>     Variant;
     };
     
     class FField
@@ -36,11 +37,13 @@ namespace Lumina
             Next = nullptr;
         }
 
-        // Mirrored in CClass.
-        LUMINA_API virtual void AddProperty(FProperty* Property) { std::unreachable(); };
+        virtual ~FField() = default;
+
+        // Mirrored in CStruct.
+        LUMINA_API virtual void AddProperty(FProperty* Property) { LUMINA_NO_ENTRY(); }
 
         
-        FString         Name;
+        FName           Name;
         uint32          Offset;
         FField*         Next;
         FFieldOwner     Owner;

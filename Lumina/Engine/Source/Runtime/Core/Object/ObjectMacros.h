@@ -6,6 +6,9 @@
 
 class Lumina::CClass;
 
+enum EInternal { EC_InternalUseOnlyConstructor };
+
+
 #define NO_API
 
 
@@ -13,7 +16,7 @@ class Lumina::CClass;
 #define LUM_CLASS(...)
 #define LUM_STRUCT(...)
 #define LUM_ENUM(...)
-#define LUM_FIELD(...)
+#define LUM_PROPERTY(...)
 #define LUM_FUNCTION(...)
 
 
@@ -45,6 +48,7 @@ class Lumina::CClass;
 
 #define DECLARE_CLASS(TClass, TBaseClass, TAPI) \
 private: \
+    friend struct Construct_CClass_##TClass##_Statics; \
     TClass& operator=(TClass&&); \
     TClass& operator=(const TClass&); \
     TAPI static CClass* GetPrivateStaticClass(); \
@@ -57,7 +61,27 @@ public: \
     { \
         return GetPrivateStaticClass(); \
     } \
+	inline void* operator new(const size_t InSize, EInternal InMem, FName InName = NAME_None, EObjectFlags InSetFlags = OF_None) \
+	{ \
+        FConstructCObjectParams Params(StaticClass()); \
+        Params.Name = InName; \
+        Params.Flags = InSetFlags; \
+		return StaticAllocateObject(Params); \
+	} \
+    inline void* operator new(const size_t InSize, EInternal* InMem) \
+    { \
+        return (void*)InMem; \
+    } \
 
+#define DECLARE_SERIALIZER(TClass) \
+    friend FArchive& operator << (FArchive& Ar, TClass*& Res) \
+    { \
+        return Ar << (CObject*&)Res; \
+    } \
+
+
+#define DEFINE_DEFAULT_CONSTRUCTOR_CALL(TClass) \
+    static void __DefaultConstructor(const FObjectInitializer& OI) { new ((EInternal*)OI.GetObj()) TClass; }
 
 #define IMPLEMENT_CLASS(TClass) \
     FClassRegistrationInfo Registration_Info_CClass_##TClass; \
@@ -65,15 +89,55 @@ public: \
     { \
         if (Registration_Info_CClass_##TClass.Singleton == nullptr) \
         { \
-            AllocateStaticClass(TEXT(#TClass), &Registration_Info_CClass_##TClass.Singleton, sizeof(TClass), alignof(TClass)); \
+            AllocateStaticClass( \
+            TEXT(#TClass), \
+            &Registration_Info_CClass_##TClass.Singleton, \
+            sizeof(TClass), \
+            alignof(TClass), \
+            &TClass::Super::StaticClass, \
+            (CClass::ClassConstructorType)InternalConstructor<TClass>); \
         } \
         return Registration_Info_CClass_##TClass.Singleton; \
     }
 
+/** Intrinsic classic auto register. */
+#define IMPLEMENT_INTRINSIC_CLASS(TClass, TBaseClass, TAPI) \
+    TAPI CClass* Construct_CClass_##TClass(); \
+    extern FClassRegistrationInfo Registration_Info_CClass_##TClass; \
+    struct Construct_CClass_##TClass##_Statics \
+    { \
+        static CClass* Construct() \
+        { \
+            extern TAPI CClass* Construct_CClass_##TBaseClass(); \
+            CClass* SuperClass = Construct_CClass_##TBaseClass(); \
+            CClass* Class = TClass::StaticClass(); \
+            CObjectForceRegistration(Class); \
+            return Class; \
+        } \
+    }; \
+    CClass* Construct_CClass_##TClass() \
+    { \
+        if(!Registration_Info_CClass_##TClass.Singleton) \
+        { \
+            Registration_Info_CClass_##TClass.Singleton = Construct_CClass_##TClass##_Statics::Construct(); \
+        } \
+        return Registration_Info_CClass_##TClass.Singleton; \
+    } \
+    IMPLEMENT_CLASS(TClass) \
+    static FRegisterCompiledInInfo AutoInitialize_##TClass(&Construct_CClass_##TClass, TEXT(#TClass));
 
 
-#define BEGIN_DATA_DESC(TClass) static struct Z_DataDesc_##TClass {
+namespace LuminaAsserts_Private
+{
+    // A junk function to allow us to use sizeof on a member variable which is potentially a bitfield
+    template <typename T>
+    bool GetMemberNameCheckedJunk(const T&);
+    template <typename T>
+    bool GetMemberNameCheckedJunk(const volatile T&);
+    template <typename R, typename ...Args>
+    bool GetMemberNameCheckedJunk(R(*)(Args...));
+}
 
-#define DEFINE_DATA_FIELD(Field)
-
-#define END_DATA_DESC(TClass) }
+// Returns FName(TEXT("MemberName")), while statically verifying that the member exists in ClassName
+#define GET_MEMBER_NAME_CHECKED(ClassName, MemberName) \
+((void)sizeof(LuminaAsserts_Private::GetMemberNameCheckedJunk(((ClassName*)0)->MemberName)), FName(TEXT(#MemberName)))

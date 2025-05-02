@@ -16,5 +16,6 @@ namespace Lumina
         FString GetDisplayName() const { return Name; }
         
         FString Name;
+        FString Outer;
     };
 }

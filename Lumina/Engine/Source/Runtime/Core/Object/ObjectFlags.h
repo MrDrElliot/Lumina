@@ -1,18 +1,19 @@
 ﻿#pragma once
 #include "Core/LuminaMacros.h"
-#include "Platform/GenericPlatform.h"
 
 
 namespace Lumina
 {
-    enum class EObjectFlags : uint32
+    enum EObjectFlags
     {
-        None            = 0,
+        OF_None            = 0,
+        
+        OF_Transient       = 1 << 0,
+        OF_Persistent      = 1 << 1,
 
-        Abstract        = 1 << 0,
+        OF_DefaultObject   = 1 << 2,
 
-        Transient       = 1 << 1,
-        Persistent      = 1 << 2,
+        OF_PendingDelete   = 1 << 3,
 
     };
 

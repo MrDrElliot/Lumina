@@ -2,7 +2,7 @@
 
 #include "Containers/Name.h"
 
-#define NAME_None None
+#define NAME_None FName("NAME_None")
 
 #define ENUM_CLASS_FLAGS(Enum) \
 inline           Enum& operator|=(Enum& Lhs, Enum Rhs) { return Lhs = (Enum)((__underlying_type(Enum))Lhs | (__underlying_type(Enum))Rhs); } \

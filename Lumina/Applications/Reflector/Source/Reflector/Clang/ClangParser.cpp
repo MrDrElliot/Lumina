@@ -24,17 +24,15 @@ namespace Lumina::Reflection
     {
     }
 
-    bool FClangParser::Parse(const FString& SolutionPath, const FReflectedHeader& File)
+    bool FClangParser::Parse(const FString& SolutionPath, const FReflectedHeader& File, const FReflectedProject& Project)
     {
-        ParsingContext.SolutionPath = SolutionPath;
+        ParsingContext.Solution = FProjectSolution(SolutionPath.c_str());
         ParsingContext.ReflectedHeader = File;
+        ParsingContext.Project = Project;
         
         CXIndex ClangIndex = clang_createIndex(0, 1);
         constexpr uint32 ClangOptions = CXTranslationUnit_DetailedPreprocessingRecord | CXTranslationUnit_SkipFunctionBodies | CXTranslationUnit_IncludeBriefCommentsInCodeCompletion;
-
-        CXTranslationUnit TranslationUnit;
-        CXErrorCode Result = CXError_Failure;
-
+        
         TVector<FString> FullIncludePaths;
         TFixedVector<const char*, 10> clangArgs;
         
@@ -75,7 +73,9 @@ namespace Lumina::Reflection
         clangArgs.push_back("-ast-dump");
 
 
-
+        CXTranslationUnit TranslationUnit;
+        CXErrorCode Result = CXError_Failure;
+        
         Result = clang_parseTranslationUnit2(ClangIndex, File.HeaderPath.c_str(), clangArgs.data(), clangArgs.size(), 0, 0, ClangOptions, &TranslationUnit);
         if (Result == CXError_Success)
         {

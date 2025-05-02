@@ -1,7 +1,6 @@
 ﻿#include "ClangVisitor_Enum.h"
 
 #include "Containers/String.h"
-#include "Memory/Memory.h"
 #include "Reflector/Clang/ClangParserContext.h"
 #include "Reflector/Clang/Utils.h"
 #include "Reflector/Types/ReflectedType.h"

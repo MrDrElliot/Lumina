@@ -37,8 +37,14 @@ namespace Lumina
                 (*gNameCache)[ID] = FString(Char);
             }
         }
-
+#if _DEBUG
         StringView = (*gNameCache)[ID];
+#endif
+    }
+
+    FName::FName(const TCHAR* Char)
+        :FName(WIDE_TO_UTF8(Char))
+    {
     }
 
     FName::FName(const FString& Str)

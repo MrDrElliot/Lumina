@@ -13,5 +13,7 @@
 #define WITH_DEVELOPMENT_TOOLS 0
 #endif
 
-constexpr int32 INDEX_NONE = -1;
+enum ENoInit { NoInit };
+
+constexpr int8 INDEX_NONE = -1;
 constexpr uint32 INVALID_HANDLE = 0xFFFFFFFF;

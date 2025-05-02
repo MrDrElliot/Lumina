@@ -1,50 +1,57 @@
 ﻿#include "Class.h"
-
 #include "Core/Reflection/Type/LuminaTypes.h"
 
 namespace Lumina
 {
     
-    LUMINA_API void AllocateStaticClass(const TCHAR* Name, CClass** OutClass, uint32 Size, uint32 Alignment)
+    LUMINA_API void AllocateStaticClass(const TCHAR* Name, CClass** OutClass, uint32 Size, uint32 Alignment, CClass* (*SuperClassFn)(), CClass::ClassConstructorType InClassConstructor)
     {
         Assert(*OutClass == nullptr);
+        
+        *OutClass = (CClass*)FMemory::Malloc(sizeof(CClass), alignof(CClass));
+        *OutClass = ::new (*OutClass) CClass(FName(Name), Size, Alignment, EObjectFlags::OF_None, InClassConstructor);
+        
+        CClass* NewClass = *OutClass;
+        CClass* SuperClass = SuperClassFn();
+        
+        
+        bool bValidSuperClass = (SuperClass != NewClass);
+        NewClass->SetSuperStruct(bValidSuperClass ? SuperClass : nullptr);
 
-        CClass* NewClass = FMemory::New<CClass>(FName(StringUtils::FromWideString(Name)), Size, Alignment, EObjectFlags::None);
+        NewClass->RegisterDependencies();
         NewClass->BeginRegister();
-
-        *OutClass = NewClass;
     }
 
-    void CStruct::AddField(FProperty* Property)
+
+    //-----------------------------------------------------------------------------------------------------------------------------------------
+
+    
+    IMPLEMENT_INTRINSIC_CLASS(CField, CObject, LUMINA_API)
+    IMPLEMENT_INTRINSIC_CLASS(CEnum, CField, LUMINA_API)
+    IMPLEMENT_INTRINSIC_CLASS(CStruct, CField, LUMINA_API)
+    IMPLEMENT_INTRINSIC_CLASS(CClass, CStruct, LUMINA_API)
+
+
+    //-----------------------------------------------------------------------------------------------
+
+    CObject* CClass::CreateDefaultObject()
     {
-        if (LinkedProperty == nullptr)
+        if (ClassDefaultObject != nullptr)
         {
-            LinkedProperty = Property;
+            return ClassDefaultObject;
         }
-        else
-        {
-            FProperty* Current = LinkedProperty;
-            while (Current->Next != nullptr)
-            {
-                Current = (FProperty*)Current->Next;
-            }
-            Current->Next = Property;
-        }
-        Property->Next = nullptr;
+
+        FString DefaultObjectName = GetName().c_str();
+        DefaultObjectName += "_CDO";
+        
+        FConstructCObjectParams Params(this);
+        Params.Flags |= EObjectFlags::OF_DefaultObject;
+        Params.Name = FName(DefaultObjectName);
+        
+        ClassDefaultObject = StaticAllocateObject(Params);
+        
+        return ClassDefaultObject;
+        
     }
 
-    FProperty* CStruct::GetProperty(const FString& Name)
-    {
-        FProperty* Current = LinkedProperty;
-        while (Current != nullptr)
-        {
-            if (Current->Name == Name)
-            {
-                return Current;
-            }
-            
-            Current = (FProperty*)Current->Next;
-        }
-        return nullptr;
-    }
 }

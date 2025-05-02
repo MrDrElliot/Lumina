@@ -8,6 +8,19 @@ namespace Lumina
 {
     namespace Math
     {
+
+        template<typename T>
+        inline T Max(const T& First, const T& Second)
+        {
+            return (First > Second) ? First : Second;
+        }
+
+        template<typename T>
+        inline T Min(const T& First, const T& Second)
+        {
+            return (First > Second) ? Second : First;
+        }
+        
         template<typename T>
         requires(eastl::is_integral_v<T> && eastl::is_unsigned_v<T> && (sizeof(T) <= 4))
         inline T RandRange(T First, T Second)

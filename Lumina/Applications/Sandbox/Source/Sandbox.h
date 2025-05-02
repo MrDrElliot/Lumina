@@ -7,36 +7,49 @@
 
 using namespace Lumina;
 
+LUM_ENUM()
+enum class ETestEnum : uint8
+{
+	One = 14,
+	Two = 200,
+	Three = 222,
+};
+
 LUM_CLASS()
 class CTestClass : public CObject
 {
-public:
-
-	GENERATED_BODY()
 
 	
-	LUM_FIELD()
+	GENERATED_BODY()
+public:
+
+	CTestClass()
+	{}
+	
+	LUM_PROPERTY()
 	uint8 Value;
 
-	LUM_FIELD()
+	LUM_PROPERTY()
 	uint16 Value16;
 
-	LUM_FIELD()
+	LUM_PROPERTY()
 	uint32 Value32;
 	
 };
 
 LUM_CLASS()
-class COtherClass : public CObject
+class COtherClass : public CTestClass
 {
+
+	
+	GENERATED_BODY()
+	
 public:
 
-	GENERATED_BODY()
-
-	LUM_FIELD()
+	LUM_PROPERTY()
 	uint8 Index;
 
-	LUM_FIELD()
+	LUM_PROPERTY()
 	int64 Int64Value;
 };
 

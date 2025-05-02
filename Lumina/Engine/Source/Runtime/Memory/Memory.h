@@ -82,7 +82,7 @@ public:
 
     static void Shutdown()
     {
-        std::cout << "Memory System Shutdown Reamining Allocations: " << GNumAllocationsActive << "\n";
+        std::cout << "Memory System Shutdown Reamining Allocations: " << "\n";
         GIsMemorySystemInitialized = false;
         rpmalloc_finalize();
     }
@@ -117,14 +117,11 @@ public:
 
     NODISCARD static void* Malloc(size_t size, size_t alignment = DEFAULT_ALIGNMENT)
     {
+        Assert(size != 0);
+        
         if (UNLIKELY(!GIsMemorySystemInitialized))
         {
             FMemory::Initialize();
-        }
-
-        if (UNLIKELY(size == 0))
-        {
-            return nullptr;
         }
         
         void* pMemory = nullptr;
@@ -163,14 +160,13 @@ public:
     NODISCARD static FORCEINLINE T* New(ConstructorParams&&... params)
     {
         void* pMemory = Malloc(sizeof(T), alignof(T));
-        Assert(pMemory != nullptr);
         return new(pMemory) T(eastl::forward<ConstructorParams>(params)...);
     }
 
     template<typename T>
     static FORCEINLINE void Delete(T*& pType)
     {
-        if ( pType != nullptr )
+        if (pType != nullptr)
         {
             pType->~T();
             Free( (void*&) pType );
@@ -178,7 +174,7 @@ public:
     }
 
     template< typename T >
-    static FORCEINLINE void Free( T*& pType )
+    static FORCEINLINE void Free(T*& pType)
     {
         Free( (void*&) pType );
     }

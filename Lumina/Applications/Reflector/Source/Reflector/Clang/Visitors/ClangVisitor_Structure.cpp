@@ -16,60 +16,70 @@ static void CreatePropertyForType(FReflectedStruct* Struct, EPropertyTypeFlags F
         {
             auto* Prop = Struct->PushProperty<FReflectedUInt8Property>();
             Prop->Name = Name;
+            Prop->Outer = Struct->DisplayName;
         }
         break;
     case EPropertyTypeFlags::UInt16:
         {
             auto* Prop = Struct->PushProperty<FReflectedUInt16Property>();
             Prop->Name = Name;
+            Prop->Outer = Struct->DisplayName;
         }
         break;
     case EPropertyTypeFlags::UInt32:
         {
             auto* Prop = Struct->PushProperty<FReflectedUInt32Property>();
             Prop->Name = Name;
+            Prop->Outer = Struct->DisplayName;
         }
         break;
     case EPropertyTypeFlags::UInt64:
         {
             auto* Prop = Struct->PushProperty<FReflectedUInt64Property>();
             Prop->Name = Name;
+            Prop->Outer = Struct->DisplayName;
         }
         break;
     case EPropertyTypeFlags::Int8:
         {
             auto* Prop = Struct->PushProperty<FReflectedInt8Property>();
             Prop->Name = Name;
+            Prop->Outer = Struct->DisplayName;
         }
         break;
     case EPropertyTypeFlags::Int16:
         {
             auto* Prop = Struct->PushProperty<FReflectedInt16Property>();
             Prop->Name = Name;
+            Prop->Outer = Struct->DisplayName;
         }
         break;
     case EPropertyTypeFlags::Int32:
         {
             auto* Prop = Struct->PushProperty<FReflectedInt32Property>();
             Prop->Name = Name;
+            Prop->Outer = Struct->DisplayName;
         }
         break;
     case EPropertyTypeFlags::Int64:
         {
             auto* Prop = Struct->PushProperty<FReflectedInt64Property>();
             Prop->Name = Name;
+            Prop->Outer = Struct->DisplayName;
         }
         break;
     case EPropertyTypeFlags::Float:
         {
             auto* Prop = Struct->PushProperty<FReflectedFloatProperty>();
             Prop->Name = Name;
+            Prop->Outer = Struct->DisplayName;
         }
         break;
     case EPropertyTypeFlags::Double:
         {
             auto* Prop = Struct->PushProperty<FReflectedDoubleProperty>();
             Prop->Name = Name;
+            Prop->Outer = Struct->DisplayName;
         }
         break;
     default:

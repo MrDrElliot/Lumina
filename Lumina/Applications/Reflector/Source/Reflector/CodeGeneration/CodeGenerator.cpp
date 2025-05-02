@@ -101,12 +101,12 @@ namespace Lumina::Reflection
         std::filesystem::path RelativeHeaderPath = std::filesystem::relative(FullHeaderPath, SolutionRoot);
 
         SS << "#include \"" << "../../../Lumina/Engine/Source/Runtime/Core/Object/ObjectMacros.h" << "\"\n";
+        SS << "#include \"" << "../../../Lumina/Engine/Source/Runtime/Core/Reflection/ReflectedTypeAccessors.h" << "\"\n";
 
         SS << "\n\n\n";
 
         if (ReflectionDatabase->ReflectedTypes.find(Header.HeaderID) == ReflectionDatabase->ReflectedTypes.end())
         {
-            LOG_INFO("No registered reflection types for header {0}", Header.HeaderID);
             return;
         }
         
@@ -124,6 +124,16 @@ namespace Lumina::Reflection
         FileID = StringUtils::ReplaceAllOccurrences(FileID, "\\", "_");
         FileID = StringUtils::ReplaceAllOccurrences(FileID, ".", "_");
 
+        
+        for (FReflectedType* Type : ReflectedTypes)
+        {
+            if (Type->Type == FReflectedType::EType::Enum)
+            {
+                SS << "enum class " << Type->DisplayName.c_str() << " : uint8;\n";
+                SS << "template<> Lumina::CEnum* StaticEnum<" << Type->DisplayName.c_str() << ">();\n\n";
+            }
+        }
+        
         for (FReflectedType* Type : ReflectedTypes)
         {
             if (Type->Type == FReflectedType::EType::Class)
@@ -136,6 +146,7 @@ namespace Lumina::Reflection
                 SS << "\\\n";
                 SS << "public: \\\n";
                 SS << "\tDECLARE_CLASS(" << Type->DisplayName.c_str() << ", " << Class->Parent.c_str() << ", NO_API" << ") \\\n";
+                SS << "\tDEFINE_DEFAULT_CONSTRUCTOR_CALL(" << Type->DisplayName.c_str() << ")\n";
                 SS << "\n\n";
             }
 
@@ -186,7 +197,6 @@ namespace Lumina::Reflection
 
         if (ReflectionDatabase->ReflectedTypes.find(Header.HeaderID) == ReflectionDatabase->ReflectedTypes.end())
         {
-            LOG_INFO("No registered reflection types for header {0}", Header.HeaderID);
             return;
         }
 
@@ -214,15 +224,26 @@ namespace Lumina::Reflection
         SS << "#include \"" << Header.HeaderPath.c_str() << "\" \n";
         SS << "#include \"" << "../../../Lumina/Engine/Source/Runtime/Core/Object/Class.h" << "\" \n";
         SS << "\n\n\n";
+
+        bool bHasEnum = false;
         
-        SS << "/* Begin Initialization Functions */\n\n";
+        SS << "// Begin Cross-Module References\n";
         for (FReflectedType* Type : ReflectedTypes)
         {
-            if (Type->Type == FReflectedType::EType::Class)
+            if (Type->Type == FReflectedType::EType::Enum)
             {
-                SS << "CClass* " << "Construct_CClass_" << Type->DisplayName.c_str() << "();\n";
+                bHasEnum = true;
+                SS << "CEnum* Construct_CEnum_" << Type->DisplayName.c_str() << "();";
             }
+            else if (Type->Type == FReflectedType::EType::Class)
+            {
+                SS << "CClass* Construct_CClass_" << Type->DisplayName.c_str() << "();";
+            }
+
+
+            SS << "\n";
         }
+        SS << "// End Cross-Module References\n\n";
 
         SS << "\n\n\n";
 
@@ -294,6 +315,51 @@ namespace Lumina::Reflection
                 {
 
                 }
+
+                if (Type->Type == FReflectedType::EType::Enum)
+                {
+
+                    FReflectedEnum* Enum = static_cast<FReflectedEnum*>(Type);
+
+                    SS << "static FEnumRegistrationInfo Registration_Info_CEnum_" << Type->DisplayName << ";\n\n";
+
+                    SS << "struct Construct_CEnum_" << Type->DisplayName << "_Statics\n";
+                    SS << "{\n";
+
+                    SS << "\tstatic constexpr FEnumeratorParam Enumerators[] = {\n";
+                    for (FReflectedEnum::FConstant Constant : Enum->Constants)
+                    {
+                        SS << "\t\t{ " << "\"" <<Type->DisplayName << "::" << Constant.Label << "\", " << Constant.Value << " },\n";
+                    }
+                    SS << "\t};\n";
+
+                    SS << "\tstatic const FEnumParams EnumParams;\n";
+                    SS << "};\n";
+
+                    SS << "const FEnumParams Construct_CEnum_" << Type->DisplayName << "_Statics::EnumParams = {\n";
+                    SS << "\t\"" << Type->DisplayName << "\",\n";
+                    SS << "\t Construct_CEnum_" << Type->DisplayName << "_Statics::Enumerators,\n";
+                    SS << "\tstd::size(Construct_CEnum_" << Type->DisplayName << "_Statics::Enumerators),\n";
+                    SS << "};\n\n";
+                    
+                    SS << "CEnum* Construct_CEnum_" << Type->DisplayName << "()\n";
+                    SS << "{\n";
+                    SS << "\tif(!Registration_Info_CEnum_" << Type->DisplayName << ".Singleton)" << "\n";
+                    SS << "\t{\n";
+                    SS << "\t\tConstructCEnum(&Registration_Info_CEnum_" << Type->DisplayName << ".Singleton, Construct_CEnum_" << Type->DisplayName << "_Statics::EnumParams);" << "\n";
+                    SS << "\t}\n";
+                    SS << "\treturn Registration_Info_CEnum_" << Type->DisplayName << ".Singleton;" << "\n";
+                    SS << "}\n";
+
+                    SS << "\n";
+                    
+                    SS << "template<> Lumina::CEnum* StaticEnum<" << Type->DisplayName << ">()\n";
+                    SS << "{\n";
+                    SS << "\treturn Construct_CEnum_" << Type->DisplayName << "();\n";
+                    SS << "}\n";
+                }
+
+                SS << "\n\n";
             }
         }
 
@@ -304,7 +370,7 @@ namespace Lumina::Reflection
 
         SS << "struct Registration_" << FileID.c_str() << "\n";
         SS << "{\n";
-        SS << "    static constexpr FClassRegisterCompiledInInfo Register_Statics_CClass" << "[] = {\n";
+        SS << "\tstatic constexpr FClassRegisterCompiledInInfo ClassInfo" << "[] = {\n";
 
         for (FReflectedType* Type : ReflectedTypes)
         {
@@ -313,13 +379,37 @@ namespace Lumina::Reflection
                 SS << "\t{ " << "Construct_CClass_" << Type->DisplayName.c_str() << ", TEXT(\"" << Type->DisplayName.c_str() << "\") },\n";
             }
         }
+        SS << "\t};\n";
 
-        SS << "    };\n";
+        SS << "\t static constexpr FEnumRegisterCompiledInInfo EnumInfo[] = {\n";
+
+        for (FReflectedType* Type : ReflectedTypes)
+        {
+            if (Type->Type == FReflectedType::EType::Enum)
+            {
+                SS << "\t{ " << "Construct_CEnum_" << Type->DisplayName.c_str() << ", TEXT(\"" << Type->DisplayName.c_str() << "\") },\n";
+            }
+        }
+        SS << "\t};\n";
+
+
         SS << "};\n\n";
 
         SS << "static FRegisterCompiledInInfo Register_Static_Initializer" << "(\n";
-        SS << "    Registration_" << FileID.c_str() << "::Register_Statics_CClass" << ",\n";
-        SS << "    std::size(Registration_" << FileID.c_str() << "::Register_Statics_CClass" << ")\n";
+
+        if (bHasEnum)
+        {
+            SS << "\tRegistration_" << FileID.c_str() << "::EnumInfo" << ",\n";
+            SS << "\tstd::size(Registration_" << FileID.c_str() << "::EnumInfo" << "),\n";
+        }
+        else
+        {
+            SS << "nullptr,\n";
+            SS << "0,\n";
+        }
+        
+        SS << "\tRegistration_" << FileID.c_str() << "::ClassInfo" << ",\n";
+        SS << "\tstd::size(Registration_" << FileID.c_str() << "::ClassInfo" << ")\n";
         SS << ");\n\n";
 
         SS << "// ** End Static Registration **\n\n";

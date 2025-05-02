@@ -5,6 +5,7 @@
 #include "Assets/AssetManager/AssetManager.h"
 #include "Core/Module/ModuleManager.h"
 #include "Core/Object/Class.h"
+#include "Core/Reflection/Type/LuminaTypes.h"
 #include "Input/Input.h"
 #include "Scene/Entity/Systems/EntitySystem.h"
 #include "Renderer/RenderContext.h"
@@ -33,6 +34,22 @@ bool FSandbox::ApplicationLoop()
 
 bool FSandbox::Initialize(int argc, char** argv)
 {
+	COtherClass* TestClass = NewObject<COtherClass>();
+	COtherClass* TestClass2 = NewObject<COtherClass>();
+	COtherClass* TestClass3 = NewObject<COtherClass>();
+	COtherClass* TestClass4 = NewObject<COtherClass>();
+	COtherClass* TestClass5 = NewObject<COtherClass>();
+	COtherClass* TestClass6 = NewObject<COtherClass>();
+	COtherClass* TestClass7 = NewObject<COtherClass>();
+
+	CClass* Class = TestClass->GetClass();
+	FProperty* Prop = Class->GetProperty(GET_MEMBER_NAME_CHECKED(COtherClass, Value));
+	Prop->SetValuePtr<uint8>(TestClass, 69);
+
+	CEnum* Enum = StaticEnum<ETestEnum>();
+	
+	CObject* LoadedObject = LoadObject<CClass>(TEXT(""), TEXT("COtherClass"));
+	
 	return true;
 }
 

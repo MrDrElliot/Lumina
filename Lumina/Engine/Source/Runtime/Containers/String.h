@@ -3,6 +3,7 @@
 #include <spdlog/fmt/fmt.h>
 #include "EASTL/fixed_string.h"
 #include "EASTL/string.h"
+#include <ostream>
 #include "Platform/WindowsPlatform.h"
 #include "Platform/GenericPlatform.h"
 
@@ -13,7 +14,8 @@ namespace Lumina
     template<eastl_size_t S> using TInlineString = eastl::fixed_string<char, S, true>;
     using FInlineString = eastl::fixed_string<char, 255, true>;
     using FWString = eastl::basic_string<wchar_t>;
-
+    
+    
     namespace StringUtils
     {
         // Checks if a string starts with a specific substring.
@@ -251,8 +253,13 @@ namespace Lumina
         FORCEINLINE FWString ToWideString(const char* pStr) { return FWString( FWString::CtorConvert(), pStr ); }
         FORCEINLINE FString FromWideString(const FWString& Str) { return FString(FString::CtorConvert(), Str); }
     }
-    
 }
+
+#define WIDE_TO_UTF8(Str) \
+    StringUtils::FromWideString(Str)
+
+#define UTF8_TO_WIDE(Str) \
+    StringUtils::ToWideString(Str)
 
 namespace fmt
 {
@@ -287,5 +294,9 @@ namespace eastl
 
 namespace eastl
 {
-    
+    inline std::ostream& operator<<(std::ostream& os, const Lumina::FString& str)
+    {
+        os.write(str.c_str(), str.size());
+        return os;
+    }
 }

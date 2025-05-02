@@ -20,8 +20,8 @@ namespace Lumina::Reflection
     {
         switch (Macro)
         {
-            case EReflectionMacro::Field: return "LUM_FIELD";
-            case EReflectionMacro::Method: return "LUM_METHOD";
+            case EReflectionMacro::Field: return "LUM_PROPERTY";
+            case EReflectionMacro::Method: return "LUM_FUNCTION";
             case EReflectionMacro::Class: return "LUM_CLASS";
             case EReflectionMacro::Struct: return "LUM_STRUCT";
             case EReflectionMacro::Enum: return "LUM_ENUM";

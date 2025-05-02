@@ -8,6 +8,5 @@ namespace Lumina::Reflection
         : Path(SlnPath.string().c_str())
         , ParentPath(SlnPath.parent_path().string().c_str())
     {
-        Assert(std::filesystem::exists(SlnPath));
     }
 }

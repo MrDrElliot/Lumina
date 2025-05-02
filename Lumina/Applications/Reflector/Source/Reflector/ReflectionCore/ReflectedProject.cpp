@@ -50,6 +50,7 @@ namespace Lumina::Reflection
                     {
                         const FString HeaderPath = Line.substr(FirstIndex, SecondIndex - FirstIndex);
                         FString HeaderFileFullPath = ParentPath + "\\" + HeaderPath;
+                        
                         FReflectedHeader Header(HeaderFileFullPath);
 
                         if (Header.Parse())

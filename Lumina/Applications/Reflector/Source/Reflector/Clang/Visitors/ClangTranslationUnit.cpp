@@ -4,6 +4,7 @@
 #include "ClangVisitor_Enum.h"
 #include "ClangVisitor_Macro.h"
 #include "Containers/String.h"
+#include "Paths/Paths.h"
 #include "Reflector/Clang/ClangParserContext.h"
 #include "Reflector/Clang/Utils.h"
 
