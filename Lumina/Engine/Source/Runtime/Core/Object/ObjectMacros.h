@@ -81,7 +81,7 @@ public: \
 
 
 #define DEFINE_DEFAULT_CONSTRUCTOR_CALL(TClass) \
-    static void __DefaultConstructor(const FObjectInitializer& OI) { new ((EInternal*)OI.GetObj()) TClass; }
+    static void __DefaultConstructor(const FObjectInitializer& OI) { new ((EInternal*)OI.GetObj())TClass; }
 
 #define IMPLEMENT_CLASS(TClass) \
     FClassRegistrationInfo Registration_Info_CClass_##TClass; \
