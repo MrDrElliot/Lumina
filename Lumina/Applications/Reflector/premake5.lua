@@ -9,6 +9,13 @@ project "Reflector"
     targetdir ("%{wks.location}/Binaries/" .. outputdir)
     objdir ("%{wks.location}/Intermediates/Obj/" .. outputdir .. "/%{prj.name}")
 
+	configurations { "Release", }
+
+	configmap {
+		["Release"] = "Release",
+		["Debug"] = "Release",
+		["Shipping"] = "Release",
+	}
 	removedefines { }
 
 	postbuildcommands 
@@ -26,9 +33,6 @@ project "Reflector"
 
 	links
 	{
-		"Lumina",
-	  	"GLFW",
-	  	"imgui",
 	  	"EA",
 	  	
 	  	"vulkan-1.lib",
@@ -58,7 +62,8 @@ project "Reflector"
 	{
 		"Source/**.h",
 		"Source/**.cpp",
-
+		"%{wks.location}/Lumina/Engine/ThirdParty/xxhash/**.h",
+		"%{wks.location}/Lumina/Engine/ThirdParty/xxhash/**.c",
 	}
 
 
@@ -67,10 +72,10 @@ project "Reflector"
 		"Source",
 	    
 	   	"%{LuminaEngineDirectory}/Lumina",
-		"%{LuminaEngineDirectory}/Lumina/Engine/",
-	    "%{LuminaEngineDirectory}/Lumina/Engine/Source/",
-	    "%{LuminaEngineDirectory}/Lumina/Engine/Source/Runtime/",
-	    "%{LuminaEngineDirectory}/External/LLVM/include/",
+		"%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/",
+		"%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/EA/EABase/include/common",
+		"%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/EA/EASTL/include/",
+		"%{LuminaEngineDirectory}/External/LLVM/include/",
 	    "%{wks.location}/Intermediates/Reflection/Reflector/",
 	    
 	    reflection_directory();
@@ -78,13 +83,3 @@ project "Reflector"
 		
 	}
 
-
-	filter "system:linux"
-		defines { "LE_PLATFORM_LINUX" }
-
-	filter { "system:windows" }	
-		flags { "NoRuntimeChecks", "NoIncrementalLink" }
-
-	filter "configurations:Release"
-		optimize "On"
-		defines { "LE_RELEASE", "NDEBUG", }

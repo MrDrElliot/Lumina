@@ -1,7 +1,6 @@
 ﻿#pragma once
 #include <clang-c/Index.h>
 
-#include "Lumina.h"
 #include "ReflectedHeader.h"
 #include "Reflector/ReflectionConfig.h"
 
@@ -17,10 +16,10 @@ namespace Lumina::Reflection
 
 
         EReflectionMacro                Type;
-        FName                           HeaderID;
-        uint32                          LineNumber = 0;
-        uint32                          Position = INVALID_HANDLE;
+        eastl::string                           HeaderID;
+        uint32_t                          LineNumber = 0;
+        uint32_t                          Position = -1;
 
-        FString                         MacroContents;
+        eastl::string                         MacroContents;
     };
 }

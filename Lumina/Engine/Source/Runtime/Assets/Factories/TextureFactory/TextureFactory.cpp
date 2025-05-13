@@ -46,34 +46,7 @@ namespace Lumina
 
         return ImageHandle;
     }*/
-    ELoadResult FTextureFactory::LoadFromDisk(FAssetRecord* InRecord)
-    {
-        ATexture* Texture = new ATexture(InRecord->GetAssetPath());
-
-        TVector<uint8> Buffer;
-        if (!FFileHelper::LoadFileToArray(Buffer, InRecord->GetAssetPath().GetPathAsString()))
-        {
-            return ELoadResult::Failed;
-        }
-
-        FMemoryReader Reader(Buffer);
-
-        FAssetHeader Header;
-        Reader << Header;
-
-        if (Header.Type != InRecord->GetAssetType())
-        {
-            return ELoadResult::Failed;
-        }
-
-        InRecord->SetDependencies(eastl::move(Header.Dependencies));
-        
-        Texture->Serialize(Reader);
-        InRecord->SetAssetPtr(Texture);
-        
-        return ELoadResult::Succeeded;
-    }
-
+    
     FAssetPath FTextureFactory::CreateNew(const FString& Path)
     {
         return {};

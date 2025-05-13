@@ -8,8 +8,11 @@ workspace "Lumina"
 	cppdialect "C++20"
 	staticruntime "Off"
 
-	flags  { "MultiProcessorCompile" }
-	
+	flags  
+	{
+		"MultiProcessorCompile", 
+	}
+		
 	defines
 	{
 		"EASTL_USER_DEFINED_ALLOCATOR=1",
@@ -46,6 +49,7 @@ workspace "Lumina"
             "/Zc:__cplusplus",
             "/W2",
             "/MP",
+            "/Zm2000",
         }
 
 	group "Dependencies"

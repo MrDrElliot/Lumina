@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include <filesystem>
 
-#include "Containers/String.h"
+#include "EASTL/string.h"
 
 namespace Lumina::Reflection
 {
@@ -12,13 +12,13 @@ namespace Lumina::Reflection
         FProjectSolution(const std::filesystem::path& SlnPath);
 
         
-        const FString& GetPath() const { return Path; }
-        const FString& GetParentPath() const { return ParentPath; }
+        const eastl::string& GetPath() const { return Path; }
+        const eastl::string& GetParentPath() const { return ParentPath; }
 
     private:
 
-        FString Path;
-        FString ParentPath;
+        eastl::string Path;
+        eastl::string ParentPath;
     
     };
 }

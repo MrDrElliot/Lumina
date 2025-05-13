@@ -41,7 +41,7 @@ namespace Lumina
 
     void FAssetRequest::LoadResource(FRequestCallbackContext& Context)
     {
-        ELoadResult LoadResult = Factory->LoadFromDisk(AssetRecord);
+        ELoadResult LoadResult;// = Factory->LoadFromDisk(AssetRecord);
         AssetRecord->SetLoadingState(EAssetLoadState::Loading);
         
         if (LoadResult == ELoadResult::Failed)
@@ -73,7 +73,7 @@ namespace Lumina
 
     void FAssetRequest::UpdateResourceFactory()
     {
-        Factory->UpdateInProcessRequest(AssetRecord);
+        //Factory->UpdateInProcessRequest(AssetRecord);
     }
 
     void FAssetRequest::ProcessDependencies(FRequestCallbackContext& Context)

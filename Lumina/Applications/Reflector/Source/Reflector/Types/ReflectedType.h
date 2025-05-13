@@ -1,19 +1,41 @@
 ﻿#pragma once
-#include "Containers/Name.h"
-#include "Core/Object/ObjectCore.h"
-#include "Memory/Memory.h"
 #include <sstream>
 
+#include "EASTL/string.h"
+#include "EASTL/vector.h"
 
 namespace Lumina
 {
     class FReflectedProperty;
 }
 
-namespace Lumina
+enum class EPropertyTypeFlags : uint16_t
 {
-    enum class EPropertyTypeFlags : uint16;
-}
+    None = 0,
+
+    // Signed integers
+    Int8                = 1 << 0,
+    Int16               = 1 << 1,
+    Int32               = 1 << 2,
+    Int64               = 1 << 3,
+
+    // Unsigned integers
+    UInt8               = 1 << 4,
+    UInt16              = 1 << 5,
+    UInt32              = 1 << 6,
+    UInt64              = 1 << 7,
+
+    // Floats
+    Float               = 1 << 8,
+    Double              = 1 << 9,
+
+    // Other types
+    Bool                = 1 << 10,
+    Object              = 1 << 12,
+    Class               = 1 << 13,
+    Name                = 1 << 14,
+    String              = 1 << 15,
+};
 
 namespace Lumina::Reflection
 {
@@ -43,7 +65,7 @@ namespace Lumina::Reflection
     {
     public:
 
-        enum class EType : uint8
+        enum class EType : uint8_t
         {
             Class,
             Structure,
@@ -53,12 +75,14 @@ namespace Lumina::Reflection
         virtual ~FReflectedType() = default;
         virtual void DefineConstructionStatics(std::stringstream& SS) = 0;
 
-        uint32      GeneratedBodyLineNumber;
-        uint32      LineNumber;
-        FName       ID;
-        FName       HeaderID;
-        FString     DisplayName;
-        EType       Type;
+        uint32_t        GeneratedBodyLineNumber;
+        uint32_t        LineNumber;
+        eastl::string   ID;
+        eastl::string   HeaderID;
+        eastl::string   DisplayName;
+        eastl::string   QualifiedName;
+        eastl::string   Namespace;
+        EType           Type;
         
     };
     
@@ -70,10 +94,10 @@ namespace Lumina::Reflection
 
         struct FConstant
         {
-            FName ID;
-            FString Label;
-            FString Description;
-            uint32 Value;
+            eastl::string ID;
+            eastl::string Label;
+            eastl::string Description;
+            uint32_t Value;
         };
 
         FReflectedEnum()
@@ -85,7 +109,7 @@ namespace Lumina::Reflection
 
         void AddConstant(const FConstant& Constant) { Constants.push_back(Constant); }
 
-        TVector<FConstant> Constants;
+        eastl::vector<FConstant> Constants;
         
         
     };
@@ -106,16 +130,16 @@ namespace Lumina::Reflection
         template<typename T>
         T* PushProperty()
         {
-            T* New = FMemory::New<T>();
+            T* New = new T;
             Props.push_back(New);
             return New;
         }
 
         void DefineConstructionStatics(std::stringstream& SS) override;
         
-        TVector<const FReflectedProperty*>      Props;
+        eastl::vector<const FReflectedProperty*>      Props;
 
-        FString                                 Parent;
+        eastl::string                                 Parent;
     };
 
     

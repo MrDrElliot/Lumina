@@ -1,5 +1,8 @@
 ﻿#include "ClangParserContext.h"
 
+#include "xxhash.h"
+#include "EASTL/queue.h"
+
 namespace Lumina::Reflection
 {
 
@@ -7,21 +10,27 @@ namespace Lumina::Reflection
     {
     }
 
-    void FClangParserContext::AddReflectedMacro(const FReflectionMacro& Macro)
+    void FClangParserContext::AddReflectedMacro(FReflectionMacro&& Macro)
     {
-        TVector<FReflectionMacro>& Macros = ReflectionMacros[Macro.HeaderID];
-        Macros.push_back(Macro);
+        uint64 Hash = XXH64(Macro.HeaderID.c_str(), strlen(Macro.HeaderID.c_str()), 0);
+
+        eastl::vector<FReflectionMacro>& Macros = ReflectionMacros[Hash];
+        Macros.push_back(eastl::move(Macro));
     }
 
-    void FClangParserContext::AddGeneratedBodyMacro(const FReflectionMacro& Macro)
+    void FClangParserContext::AddGeneratedBodyMacro(FReflectionMacro&& Macro)
     {
-        TQueue<FReflectionMacro>& Macros = GeneratedBodyMacros[Macro.HeaderID];
-        Macros.push(Macro);
+        uint64 Hash = XXH64(Macro.HeaderID.c_str(), strlen(Macro.HeaderID.c_str()), 0);
+        
+        eastl::queue<FReflectionMacro>& Macros = GeneratedBodyMacros[Hash];
+        Macros.push(eastl::move(Macro));
     }
 
-    bool FClangParserContext::TryFindMacroForCursor(FName HeaderID, const CXCursor& Cursor, FReflectionMacro& Macro)
+    bool FClangParserContext::TryFindMacroForCursor(eastl::string HeaderID, const CXCursor& Cursor, FReflectionMacro& Macro)
     {
-        auto headerIter = ReflectionMacros.find(HeaderID);
+        uint64 Hash = XXH64(HeaderID.c_str(), strlen(HeaderID.c_str()), 0);
+
+        auto headerIter = ReflectionMacros.find(Hash);
         if (headerIter == ReflectionMacros.end())
         {
             return false;
@@ -31,31 +40,27 @@ namespace Lumina::Reflection
         CXSourceLocation startLoc = clang_getRangeStart(typeRange);
 
         CXFile cursorFile;
-        uint32 cursorLine, cursorColumn;
+        uint32_t cursorLine, cursorColumn;
         clang_getSpellingLocation(startLoc, &cursorFile, &cursorLine, &cursorColumn, nullptr);
 
         CXString FileName = clang_getFileName(cursorFile);
 
         if (FileName.data == nullptr)
         {
-            LOG_ERROR("Failed to find a filename for cursor");
             return false;
         }
 
-        FString FileNameChar = clang_getCString(FileName);
+        eastl::string FileNameChar = clang_getCString(FileName);
         FileNameChar.make_lower();
 
         clang_disposeString(FileName);
 
-        FString PathString = HeaderID.c_str();
-        PathString.make_lower();
-
-        if (FileNameChar != PathString)
+        if (FileNameChar != HeaderID)
         {
             return false;
         }
 
-        TVector<FReflectionMacro>& macrosForHeader = headerIter->second;
+        eastl::vector<FReflectionMacro>& macrosForHeader = headerIter->second;
         for (auto iter = macrosForHeader.begin(); iter != macrosForHeader.end(); ++iter)
         {
             bool bValidMacro = (iter->LineNumber < cursorLine) && ((cursorLine - iter->LineNumber) <= 1);
@@ -71,16 +76,18 @@ namespace Lumina::Reflection
         return false;
     }
 
-    bool FClangParserContext::TryFindGeneratedBodyMacro(FName HeaderID, const CXCursor& Cursor, FReflectionMacro& Macro)
+    bool FClangParserContext::TryFindGeneratedBodyMacro(eastl::string HeaderID, const CXCursor& Cursor, FReflectionMacro& Macro)
     {
-        auto headerIter = GeneratedBodyMacros.find(HeaderID);
+        uint64 Hash = XXH64(HeaderID.c_str(), strlen(HeaderID.c_str()), 0);
+        auto headerIter = GeneratedBodyMacros.find(Hash);
         if (headerIter == GeneratedBodyMacros.end())
         {
             Macro = {};
             return false;
         }
+
         
-        TQueue<FReflectionMacro>& MacrosForHeader = headerIter->second;
+        eastl::queue<FReflectionMacro>& MacrosForHeader = headerIter->second;
 
         if (MacrosForHeader.empty())
         {
@@ -89,21 +96,21 @@ namespace Lumina::Reflection
         }
         
         Macro = MacrosForHeader.front();
+        
         MacrosForHeader.pop();
 
         return true;
     }
 
 
-    void FClangParserContext::PushNamespace(const FString& Namespace)
+    void FClangParserContext::PushNamespace(const eastl::string& Namespace)
     {
         NamespaceStack.push_back(Namespace);
 
         CurrentNamespace.clear();
-        for (const FString& String : NamespaceStack)
+        for (const eastl::string& String : NamespaceStack)
         {
             CurrentNamespace.append(String);
-            CurrentNamespace.append( "::" );
         }
     }
 
@@ -112,10 +119,9 @@ namespace Lumina::Reflection
         NamespaceStack.pop_back();
 
         CurrentNamespace.clear();
-        for (const FString& String : NamespaceStack)
+        for (const eastl::string& String : NamespaceStack)
         {
             CurrentNamespace.append(String);
-            CurrentNamespace.append( "::" );
         }
     }
 }

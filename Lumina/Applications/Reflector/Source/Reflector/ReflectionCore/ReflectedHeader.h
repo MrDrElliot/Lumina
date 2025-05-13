@@ -1,7 +1,9 @@
 ﻿#pragma once
-#include "Containers/Array.h"
-#include "Containers/Name.h"
-#include "Containers/String.h"
+#include <string>
+
+#include "EASTL/string.h"
+#include "EASTL/vector.h"
+
 
 namespace Lumina::Reflection
 {
@@ -10,15 +12,14 @@ namespace Lumina::Reflection
     public:
 
         FReflectedHeader() = default;
-        FReflectedHeader(const FString& Path);
+        FReflectedHeader(const eastl::string& Path);
 
         bool Parse();
         
 
-        FString             FileName;
-        FName               HeaderID;
-        FString             HeaderPath;
-        TVector<FString>    Contents;
+        eastl::string             FileName;
+        eastl::string             HeaderID;
+        eastl::string             HeaderPath;
 
 
         

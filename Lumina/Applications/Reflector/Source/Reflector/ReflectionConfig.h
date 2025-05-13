@@ -1,11 +1,11 @@
 #pragma once
-#include "Platform/GenericPlatform.h"
+#include <cstdint>
 
 
 namespace Lumina::Reflection
 {
 
-    enum class EReflectionMacro : uint8
+    enum class EReflectionMacro : uint8_t
     {
         Field,
         Method,

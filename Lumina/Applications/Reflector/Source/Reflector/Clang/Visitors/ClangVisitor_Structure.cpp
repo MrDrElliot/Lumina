@@ -4,97 +4,98 @@
 #include "Reflector/Clang/Utils.h"
 #include "Reflector/ReflectionCore/ReflectionMacro.h"
 #include "Reflector/Types/Properties/ReflectedNumericProperty.h"
+#include "Reflector/Utils/StringUtils.h"
 
 namespace Lumina::Reflection::Visitor
 {
 
-static void CreatePropertyForType(FReflectedStruct* Struct, EPropertyTypeFlags Flags, const FString& Name)
-{
-    switch (Flags)
+    static void CreatePropertyForType(FReflectedStruct* Struct, EPropertyTypeFlags Flags, const eastl::string& Name)
     {
-    case EPropertyTypeFlags::UInt8:
+        switch (Flags)
         {
-            auto* Prop = Struct->PushProperty<FReflectedUInt8Property>();
-            Prop->Name = Name;
-            Prop->Outer = Struct->DisplayName;
+        case EPropertyTypeFlags::UInt8:
+            {
+                auto* Prop = Struct->PushProperty<FReflectedUInt8Property>();
+                Prop->Name = Name;
+                Prop->Outer = Struct->DisplayName;
+            }
+            break;
+        case EPropertyTypeFlags::UInt16:
+            {
+                auto* Prop = Struct->PushProperty<FReflectedUInt16Property>();
+                Prop->Name = Name;
+                Prop->Outer = Struct->DisplayName;
+            }
+            break;
+        case EPropertyTypeFlags::UInt32:
+            {
+                auto* Prop = Struct->PushProperty<FReflectedUInt32Property>();
+                Prop->Name = Name;
+                Prop->Outer = Struct->DisplayName;
+            }
+            break;
+        case EPropertyTypeFlags::UInt64:
+            {
+                auto* Prop = Struct->PushProperty<FReflectedUInt64Property>();
+                Prop->Name = Name;
+                Prop->Outer = Struct->DisplayName;
+            }
+            break;
+        case EPropertyTypeFlags::Int8:
+            {
+                auto* Prop = Struct->PushProperty<FReflectedInt8Property>();
+                Prop->Name = Name;
+                Prop->Outer = Struct->DisplayName;
+            }
+            break;
+        case EPropertyTypeFlags::Int16:
+            {
+                auto* Prop = Struct->PushProperty<FReflectedInt16Property>();
+                Prop->Name = Name;
+                Prop->Outer = Struct->DisplayName;
+            }
+            break;
+        case EPropertyTypeFlags::Int32:
+            {
+                auto* Prop = Struct->PushProperty<FReflectedInt32Property>();
+                Prop->Name = Name;
+                Prop->Outer = Struct->DisplayName;
+            }
+            break;
+        case EPropertyTypeFlags::Int64:
+            {
+                auto* Prop = Struct->PushProperty<FReflectedInt64Property>();
+                Prop->Name = Name;
+                Prop->Outer = Struct->DisplayName;
+            }
+            break;
+        case EPropertyTypeFlags::Float:
+            {
+                auto* Prop = Struct->PushProperty<FReflectedFloatProperty>();
+                Prop->Name = Name;
+                Prop->Outer = Struct->DisplayName;
+            }
+            break;
+        case EPropertyTypeFlags::Double:
+            {
+                auto* Prop = Struct->PushProperty<FReflectedDoubleProperty>();
+                Prop->Name = Name;
+                Prop->Outer = Struct->DisplayName;
+            }
+            break;
+        default:
+            {
+                
+            }
+            break;
         }
-        break;
-    case EPropertyTypeFlags::UInt16:
-        {
-            auto* Prop = Struct->PushProperty<FReflectedUInt16Property>();
-            Prop->Name = Name;
-            Prop->Outer = Struct->DisplayName;
-        }
-        break;
-    case EPropertyTypeFlags::UInt32:
-        {
-            auto* Prop = Struct->PushProperty<FReflectedUInt32Property>();
-            Prop->Name = Name;
-            Prop->Outer = Struct->DisplayName;
-        }
-        break;
-    case EPropertyTypeFlags::UInt64:
-        {
-            auto* Prop = Struct->PushProperty<FReflectedUInt64Property>();
-            Prop->Name = Name;
-            Prop->Outer = Struct->DisplayName;
-        }
-        break;
-    case EPropertyTypeFlags::Int8:
-        {
-            auto* Prop = Struct->PushProperty<FReflectedInt8Property>();
-            Prop->Name = Name;
-            Prop->Outer = Struct->DisplayName;
-        }
-        break;
-    case EPropertyTypeFlags::Int16:
-        {
-            auto* Prop = Struct->PushProperty<FReflectedInt16Property>();
-            Prop->Name = Name;
-            Prop->Outer = Struct->DisplayName;
-        }
-        break;
-    case EPropertyTypeFlags::Int32:
-        {
-            auto* Prop = Struct->PushProperty<FReflectedInt32Property>();
-            Prop->Name = Name;
-            Prop->Outer = Struct->DisplayName;
-        }
-        break;
-    case EPropertyTypeFlags::Int64:
-        {
-            auto* Prop = Struct->PushProperty<FReflectedInt64Property>();
-            Prop->Name = Name;
-            Prop->Outer = Struct->DisplayName;
-        }
-        break;
-    case EPropertyTypeFlags::Float:
-        {
-            auto* Prop = Struct->PushProperty<FReflectedFloatProperty>();
-            Prop->Name = Name;
-            Prop->Outer = Struct->DisplayName;
-        }
-        break;
-    case EPropertyTypeFlags::Double:
-        {
-            auto* Prop = Struct->PushProperty<FReflectedDoubleProperty>();
-            Prop->Name = Name;
-            Prop->Outer = Struct->DisplayName;
-        }
-        break;
-    default:
-        {
-            LOG_WARN("CreatePropertyForType: Unknown property type for name {0}", Name.c_str());
-        }
-        break;
     }
-}
     
     static CXChildVisitResult VisitStructureContents(CXCursor Cursor, CXCursor parent, CXClientData pClientData)
     {
         FClangParserContext* Context = (FClangParserContext*)pClientData;
-        FString CursorName = ClangUtils::GetCursorDisplayName(Cursor);
-        FString ParentCursorName = ClangUtils::GetCursorDisplayName(parent);
+        eastl::string CursorName = ClangUtils::GetCursorDisplayName(Cursor);
+        eastl::string ParentCursorName = ClangUtils::GetCursorDisplayName(parent);
 
         CXCursorKind Kind = clang_getCursorKind(Cursor);
 
@@ -117,8 +118,13 @@ static void CreatePropertyForType(FReflectedStruct* Struct, EPropertyTypeFlags F
                 
                 CXType FieldType = clang_getCursorType(Cursor);
                 clang::QualType FieldQualType = ClangUtils::GetQualType(FieldType);
-                FString TypeSpelling = ClangUtils::GetString(clang_getTypeSpelling(FieldType));
+                eastl::string TypeSpelling = ClangUtils::GetString(clang_getTypeSpelling(FieldType));
 
+                if (FieldQualType->isTemplateTypeParmType())
+                {
+                    std::cout << "Template\n";
+                }
+                
                 EPropertyTypeFlags PropFlags = GetCoreTypeFromName(TypeSpelling.c_str());
                 CreatePropertyForType(Struct, PropFlags, CursorName);
                 
@@ -133,13 +139,23 @@ static void CreatePropertyForType(FReflectedStruct* Struct, EPropertyTypeFlags F
     static CXChildVisitResult VisitClassContents(CXCursor Cursor, CXCursor parent, CXClientData pClientData)
     {
         FClangParserContext* Context = (FClangParserContext*)pClientData;
-        FString CursorName = ClangUtils::GetCursorDisplayName(Cursor);
-        FString ParentCursorName = ClangUtils::GetCursorDisplayName(parent);
+        eastl::string CursorName = ClangUtils::GetCursorDisplayName(Cursor);
+        eastl::string ParentCursorName = ClangUtils::GetCursorDisplayName(parent);
 
         CXCursorKind Kind = clang_getCursorKind(Cursor);
 
         FReflectedClass* Class = Context->GetParentReflectedType<FReflectedClass>();
-        
+#if 0
+        const clang::CXXBaseSpecifier* pBaseSpecifier = (const clang::CXXBaseSpecifier*)Cursor.data[0];
+        if (pBaseSpecifier)
+        {
+            eastl::string FullyQualifiedName;
+            if (!ClangUtils::GetQualifiedNameForType(clang::QualType::getFromOpaquePtr(pBaseSpecifier->getType().getTypePtr()), FullyQualifiedName))
+            {
+                return CXChildVisit_Break;
+            }
+        }
+#endif    
         switch (Kind)
         {
         case(CXCursor_CXXBaseSpecifier):
@@ -149,6 +165,7 @@ static void CreatePropertyForType(FReflectedStruct* Struct, EPropertyTypeFlags F
             break;
         case(CXCursor_FieldDecl):
             {
+                
                 FReflectionMacro Macro;
                 if(!Context->TryFindMacroForCursor(Context->ReflectedHeader.HeaderID, Cursor, Macro))
                 {
@@ -157,7 +174,8 @@ static void CreatePropertyForType(FReflectedStruct* Struct, EPropertyTypeFlags F
                 
                 CXType FieldType = clang_getCursorType(Cursor);
                 clang::QualType FieldQualType = ClangUtils::GetQualType(FieldType);
-                FString TypeSpelling = ClangUtils::GetString(clang_getTypeSpelling(FieldType));
+                eastl::string TypeSpelling = ClangUtils::GetString(clang_getTypeSpelling(FieldType));
+                FieldQualType-
                 EPropertyTypeFlags PropFlags = GetCoreTypeFromName(TypeSpelling.c_str());
                 CreatePropertyForType(Class, PropFlags, CursorName);
 
@@ -170,15 +188,14 @@ static void CreatePropertyForType(FReflectedStruct* Struct, EPropertyTypeFlags F
     
     CXChildVisitResult VisitStructure(CXCursor Cursor, CXCursor Parent, FClangParserContext* Context)
     {
-        FString CursorName = ClangUtils::GetCursorDisplayName(Cursor);
+        eastl::string CursorName = ClangUtils::GetCursorDisplayName(Cursor);
 
-        FString FullyQualifiedCursorName;
+        eastl::string FullyQualifiedCursorName;
         CXType Type = clang_getCursorType(Cursor);
         void* Data = Type.data[0];
         
         if (!ClangUtils::GetQualifiedNameForType(clang::QualType::getFromOpaquePtr(Data), FullyQualifiedCursorName))
         {
-            LOG_ERROR("Failed to get fully qualified name for cursor");
             return CXChildVisit_Break;
         }
         
@@ -191,7 +208,6 @@ static void CreatePropertyForType(FReflectedStruct* Struct, EPropertyTypeFlags F
         FReflectionMacro GeneratedBody;
         if (!Context->TryFindGeneratedBodyMacro(Context->ReflectedHeader.HeaderID, Cursor, GeneratedBody))
         {
-            LOG_ERROR("Faield to find a GENERATED_BODY() for structure - {0}", CursorName);
             return CXChildVisit_Break;
         }
         
@@ -200,7 +216,7 @@ static void CreatePropertyForType(FReflectedStruct* Struct, EPropertyTypeFlags F
         ReflectedClass->GeneratedBodyLineNumber = GeneratedBody.LineNumber;
         ReflectedClass->LineNumber = ClangUtils::GetCursorLineNumber(Cursor);
         ReflectedClass->DisplayName = CursorName;
-        ReflectedClass->ID = FName(CursorName);
+        ReflectedClass->ID = eastl::string(CursorName);
         ReflectedClass->HeaderID = Context->ReflectedHeader.HeaderID;
 
         Context->LastReflectedType = ReflectedClass;
@@ -218,15 +234,14 @@ static void CreatePropertyForType(FReflectedStruct* Struct, EPropertyTypeFlags F
 
     CXChildVisitResult VisitClass(CXCursor Cursor, CXCursor Parent, FClangParserContext* Context)
     {
-        FString CursorName = ClangUtils::GetCursorDisplayName(Cursor);
+        eastl::string CursorName = ClangUtils::GetCursorDisplayName(Cursor);
 
-        FString FullyQualifiedCursorName;
+        eastl::string FullyQualifiedCursorName;
         CXType Type = clang_getCursorType(Cursor);
         void* Data = Type.data[0];
         
         if (!ClangUtils::GetQualifiedNameForType(clang::QualType::getFromOpaquePtr(Data), FullyQualifiedCursorName))
         {
-            LOG_ERROR("Failed to get fully qualified name for cursor");
             return CXChildVisit_Break;
         }
         
@@ -239,7 +254,6 @@ static void CreatePropertyForType(FReflectedStruct* Struct, EPropertyTypeFlags F
         FReflectionMacro GeneratedBody;
         if (!Context->TryFindGeneratedBodyMacro(Context->ReflectedHeader.HeaderID, Cursor, GeneratedBody))
         {
-            LOG_ERROR("Failed to find a GENERATED_BODY() for class - {0}", CursorName);
             return CXChildVisit_Break;
         }
         
@@ -247,8 +261,15 @@ static void CreatePropertyForType(FReflectedStruct* Struct, EPropertyTypeFlags F
         ReflectedClass->Type = FReflectedType::EType::Class;
         ReflectedClass->GeneratedBodyLineNumber = GeneratedBody.LineNumber;
         ReflectedClass->LineNumber = ClangUtils::GetCursorLineNumber(Cursor);
+    
+        if (!Context->CurrentNamespace.empty())
+        {
+            ReflectedClass->QualifiedName = Context->CurrentNamespace + CursorName;
+            ReflectedClass->Namespace = Context->CurrentNamespace;
+        }
+    
         ReflectedClass->DisplayName = CursorName;
-        ReflectedClass->ID = FName(CursorName);
+        ReflectedClass->ID = eastl::string(CursorName);
         ReflectedClass->HeaderID = Context->ReflectedHeader.HeaderID;
 
         FReflectedType* PreviousType = Context->ParentReflectedType;

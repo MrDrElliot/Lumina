@@ -6,10 +6,7 @@
 
 #include "Clang/ClangParser.h"
 #include "CodeGeneration/CodeGenerator.h"
-#include "Containers/Array.h"
 #include "EASTL/sort.h"
-#include "Memory/Memory.h"
-#include "Paths/Paths.h"
 #include "ReflectionCore/ReflectedProject.h"
 
 #define VS_PROJECT_ID "{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}"  // VS Project UID
@@ -18,7 +15,7 @@
 
 namespace Lumina::Reflection
 {
-    FTypeReflector::FTypeReflector(const FString& InSolutionPath)
+    FTypeReflector::FTypeReflector(const eastl::string& InSolutionPath)
         :Solution(InSolutionPath.c_str())
     {
     }
@@ -28,34 +25,34 @@ namespace Lumina::Reflection
         std::cout << "Parsing Solution: " << Solution.GetPath().c_str() << "\n";
         std::ifstream slnFile(Solution.GetPath().c_str());
 
-        TVector<FString> ProjectFilePaths;
+        eastl::vector<eastl::string> ProjectFilePaths;
 
         std::string CurrentLine;
         while (std::getline(slnFile, CurrentLine))
         {
-            FString Line(CurrentLine.c_str());
-            if (Line.find(VS_PROJECT_ID) != FString::npos)
+            eastl::string Line(CurrentLine.c_str());
+            if (Line.find(VS_PROJECT_ID) != eastl::string::npos)
             {
                 auto projectNameStartIdx = Line.find(" = \"");
                 projectNameStartIdx += 4;
                 auto projectNameEndIdx = Line.find("\", \"", projectNameStartIdx);
                 auto projectPathStartIdx = projectNameEndIdx + 4;
                 auto projectPathEndIdx = Line.find("\"", projectPathStartIdx);
-                const FString projectPathString = Line.substr(projectPathStartIdx, projectPathEndIdx - projectPathStartIdx);
+                const eastl::string projectPathString = Line.substr(projectPathStartIdx, projectPathEndIdx - projectPathStartIdx);
 
-                FString ProjectPath = Solution.GetParentPath() + "\\" + projectPathString;
-                ProjectFilePaths.push_back(FMemory::Move(ProjectPath));
+                eastl::string ProjectPath = Solution.GetParentPath() + "\\" + projectPathString;
+                ProjectFilePaths.push_back(std::move(ProjectPath));
             }
         }
 
         slnFile.close();
 
-        eastl::sort(ProjectFilePaths.begin(), ProjectFilePaths.end(), [](const FString& A, const FString& B)
+        eastl::sort(ProjectFilePaths.begin(), ProjectFilePaths.end(), [](const eastl::string& A, const eastl::string& B)
         {
             return A < B;
         });
 
-        for (const FString& FilePath : ProjectFilePaths)
+        for (const eastl::string& FilePath : ProjectFilePaths)
         {
             FReflectedProject Project(Solution.GetPath(), FilePath);
             
@@ -77,7 +74,7 @@ namespace Lumina::Reflection
     bool FTypeReflector::Build()
     {
         FClangParser Parser;
-        TVector<FReflectedHeader*> HeadersToRemove;
+        eastl::vector<FReflectedHeader*> HeadersToRemove;
         HeadersToRemove.reserve(14);
     
         for (FReflectedProject& Project : Projects)
@@ -86,11 +83,9 @@ namespace Lumina::Reflection
     
             for (FReflectedHeader& Header : Project.Headers)
             {
-                LOG_ERROR("Reflecting Header: {0} - under project {1}", Header.HeaderPath, Project.Name);
-                
                 if (!Parser.Parse(Project.SolutionPath, Header.HeaderPath, Project))
                 {
-                    LOG_ERROR("Failed to parse header file! {0}", Header.HeaderPath);
+                    
                 }
             }
         }

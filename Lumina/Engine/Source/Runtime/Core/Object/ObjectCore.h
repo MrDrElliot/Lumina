@@ -25,39 +25,42 @@ namespace Lumina
         FConstructCObjectParams(const CClass* InClass)
             : Class(InClass)
             , Name()
+            , Package(nullptr)
             , Flags(EObjectFlags::OF_None)
         {}
         
         const CClass* Class;
         FName Name;
+        const TCHAR* Package;
         EObjectFlags Flags;
     };
 
     LUMINA_API FName MakeUniqueObjectName(const CClass* Class, FName InBaseName = NAME_None);
     LUMINA_API CObject* StaticAllocateObject(const FConstructCObjectParams& Params);
 
-    LUMINA_API CObject* FindObjectFast(const CClass* InClass, FName ObjectName);
-    LUMINA_API CObject* StaticLoadObject(const CClass* InClass, const TCHAR* InPath, const TCHAR* InName);
+    LUMINA_API CObject* FindObjectFast(const CClass* InClass, FName QualifiedName);
+    LUMINA_API CObject* StaticLoadObject(const CClass* InClass, const TCHAR* QualifiedName);
     
 
     template<typename T>
-    inline T* FindObject(const TCHAR* Name)
+    inline T* FindObject(const TCHAR* FullName)
     {
-        return (T*)FindObjectFast(T::StaticClass(), Name);
+        return (T*)FindObjectFast(T::StaticClass(), FullName);
     }
 
     template<typename T>
-    inline T* LoadObject(const TCHAR* Path, const TCHAR* Name)
+    inline T* LoadObject(const TCHAR* FullName)
     {
-        return (T*)StaticLoadObject(T::StaticClass(), Path, Name);
+        return (T*)StaticLoadObject(T::StaticClass(), FullName);
     }
 
     template<typename T>
-    T* NewObject(FName Name = NAME_None, EObjectFlags Flags = OF_None)
+    T* NewObject(const TCHAR* Package = TEXT("Transient"), FName Name = NAME_None, EObjectFlags Flags = OF_None)
     {
         FConstructCObjectParams Params(T::StaticClass());
         Params.Name = Name;
         Params.Flags = Flags;
+        Params.Package = Package;
 
         CObject* Obj = StaticAllocateObject(Params);
         

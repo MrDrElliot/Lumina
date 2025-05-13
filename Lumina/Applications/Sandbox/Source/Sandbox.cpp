@@ -17,10 +17,7 @@ void FSandbox::CreateEngine()
 {
 	Engine = FMemory::New<FSandboxEngine>();
 	Engine->Initialize(this);
-	Engine->SetUpdateCallback([this] (const FUpdateContext& UpdateContext)
-	{
-		EngineLoopCallback(UpdateContext);
-	});
+	Engine->SetUpdateCallback(std::bind(&FSandbox::EngineLoopCallback, this, std::placeholders::_1));
 }
 
 void FSandbox::EngineLoopCallback(const FUpdateContext& UpdateContext)
@@ -41,14 +38,15 @@ bool FSandbox::Initialize(int argc, char** argv)
 	COtherClass* TestClass5 = NewObject<COtherClass>();
 	COtherClass* TestClass6 = NewObject<COtherClass>();
 	COtherClass* TestClass7 = NewObject<COtherClass>();
+	
 
 	CClass* Class = TestClass->GetClass();
 	FProperty* Prop = Class->GetProperty(GET_MEMBER_NAME_CHECKED(COtherClass, Value));
 	Prop->SetValuePtr<uint8>(TestClass, 69);
 
 	CEnum* Enum = StaticEnum<ETestEnum>();
-	
-	CObject* LoadedObject = LoadObject<CClass>(TEXT(""), TEXT("COtherClass"));
+
+	const TCHAR* Package = Class->GetPackage();
 	
 	return true;
 }

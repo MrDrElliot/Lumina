@@ -13,10 +13,10 @@ namespace Lumina::Reflection
         clang_getExpansionLocation(clang_getRangeStart(Range), nullptr, &LineNumber, nullptr, nullptr);
         
         CXToken* tokens = nullptr;
-        uint32 numTokens = 0;
+        uint32_t numTokens = 0;
         CXTranslationUnit translationUnit = clang_Cursor_getTranslationUnit(Cursor);
         clang_tokenize(translationUnit, Range, &tokens, &numTokens);
-        for (uint32 n = 0; n < numTokens; n++)
+        for (uint32_t n = 0; n < numTokens; n++)
         {
             MacroContents += ClangUtils::GetString(clang_getTokenSpelling(translationUnit, tokens[n]));
         }
@@ -24,7 +24,7 @@ namespace Lumina::Reflection
 
         const size_t startIdx = MacroContents.find_first_of("(");
         const size_t endIdx = MacroContents.find_last_of(')');
-        if (startIdx != FString::npos && endIdx != FString::npos && endIdx > startIdx)
+        if (startIdx != eastl::string::npos && endIdx != eastl::string::npos && endIdx > startIdx)
         {
             
         }

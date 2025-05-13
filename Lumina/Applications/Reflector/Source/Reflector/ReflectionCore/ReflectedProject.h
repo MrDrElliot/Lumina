@@ -1,7 +1,6 @@
 ﻿#pragma once
 #include "ReflectedHeader.h"
-#include "Containers/Array.h"
-#include "Containers/String.h"
+
 
 namespace Lumina::Reflection
 {
@@ -9,15 +8,15 @@ namespace Lumina::Reflection
     {
     public:
 
-        FReflectedProject(const FString& SlnPath, const FString& ProjectPath);
+        FReflectedProject(const eastl::string& SlnPath, const eastl::string& ProjectPath);
 
         bool Parse();
         
-        FString Name;
-        FString Path;
-        FString SolutionPath;
-        FString ParentPath;
-        TVector<FReflectedHeader> Headers;
+        eastl::string Name;
+        eastl::string Path;
+        eastl::string SolutionPath;
+        eastl::string ParentPath;
+        eastl::vector<FReflectedHeader> Headers;
     
     };
 }

@@ -2,37 +2,22 @@
 
 #include "Assets/Asset.h"
 #include "Assets/AssetHandle.h"
+#include "Core/Object/Object.h"
 #include "Renderer/MeshData.h"
-
-
-namespace Lumina
-{
-    class AMaterialInstance;
-}
+#include "Mesh.generated.h"
 
 namespace Lumina
 {
-    class AMesh : public IAsset
+    LUM_CLASS()
+    class CMesh : public CObject
     {
+        GENERATED_BODY()
         
     public:
-        
-        AMesh(const FAssetPath& InPath)
-            : IAsset(InPath)
-        {}
-
-        void PostLoad() override;
-        
-        void Serialize(FArchive& Ar) override
-        {
-            Ar << MeshResource;
-        }
-
         
         FORCEINLINE const FMeshResource& GetMeshResource() const { return MeshResource; }
         FORCEINLINE const uint32 GetNumIndicies() const { return (uint32)MeshResource.Indices.size(); }
         FORCEINLINE const uint32 GetNumVertices() const { return (uint32)MeshResource.Indices.size(); }
-        FORCEINLINE const TVector<TAssetHandle<AMaterialInstance>>& GetMaterials() const { return Materials; }
 
         void Bind();
 
@@ -40,7 +25,6 @@ namespace Lumina
     private:
         
         FMeshResource                               MeshResource = {};
-        TVector<TAssetHandle<AMaterialInstance>>    Materials;
     };
     
 }

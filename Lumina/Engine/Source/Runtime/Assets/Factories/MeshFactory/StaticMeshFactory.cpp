@@ -12,34 +12,6 @@
 
 namespace Lumina
 {
-    ELoadResult FStaticMeshFactory::LoadFromDisk(FAssetRecord* InRecord)
-    {
-        AStaticMesh* NewMesh = new AStaticMesh(InRecord->GetAssetPath());
-
-        TVector<uint8> Buffer;
-        if (!FFileHelper::LoadFileToArray(Buffer, InRecord->GetAssetPath().GetPathAsString()))
-        {
-            return ELoadResult::Failed;
-        }
-
-        FMemoryReader Reader(Buffer);
-
-        FAssetHeader Header;
-        Reader << Header;
-
-        if (Header.Type != InRecord->GetAssetType())
-        {
-            return ELoadResult::Failed;
-        }
-
-        InRecord->SetDependencies(eastl::move(Header.Dependencies));
-        
-        NewMesh->Serialize(Reader);
-
-        InRecord->SetAssetPtr(NewMesh);
-        
-        return ELoadResult::Succeeded;
-    }
 
     FAssetPath FStaticMeshFactory::CreateNew(const FString& Path)
     {

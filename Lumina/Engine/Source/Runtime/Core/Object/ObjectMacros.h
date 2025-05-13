@@ -19,9 +19,17 @@ enum EInternal { EC_InternalUseOnlyConstructor };
 #define LUM_PROPERTY(...)
 #define LUM_FUNCTION(...)
 
+#define CONCAT_INNER(a, b) a##b
+#define CONCAT(a, b) CONCAT_INNER(a, b)
 
-#define MACRO_BODY_COMBINE(A, B, C, D) A##B##C##D
-#define MACRO_BODY_COMBINE_EXPAND(A, B, C, D) MACRO_BODY_COMBINE(A, B, C, D)
+#define CONCAT3_INNER(a, b, c) a##b##c
+#define CONCAT3(a, b, c) CONCAT3_INNER(a, b, c)
+
+#define CONCAT4_INNER(a, b, c, d) a##b##c##d
+#define CONCAT4(a, b, c, d) CONCAT4_INNER(a, b, c, d)
+
+#define CONCAT_WITH_UNDERSCORE(a, b) CONCAT3(a, _, b)
+#define FRIEND_STRUCT_NAME(ns, cls) CONCAT3(Construct_CClass_, CONCAT_WITH_UNDERSCORE(ns, cls), _Statics)
 
 
 // =====================================================================================================
@@ -38,93 +46,97 @@ enum EInternal { EC_InternalUseOnlyConstructor };
 // IMPORTANT: This does not affect normal compilation; only parsing for reflection!
 // =====================================================================================================
 #if defined(REFLECTION_PARSER)
-#define GENERATED_BODY(...)
+
+    #define GENERATED_BODY(...)
+
 #else
-#define GENERATED_BODY(...) MACRO_BODY_COMBINE_EXPAND(CURRENT_FILE_ID, _, __LINE__, _GENERATED_BODY)
+
+    #define GENERATED_BODY(...) CONCAT4(CURRENT_FILE_ID, _, __LINE__, _GENERATED_BODY)
+
 #endif
 
 
 
-
-#define DECLARE_CLASS(TClass, TBaseClass, TAPI) \
+#define DECLARE_CLASS(TNamespace, TClass, TBaseClass, TPackage, TAPI) \
 private: \
-    friend struct Construct_CClass_##TClass##_Statics; \
-    TClass& operator=(TClass&&); \
-    TClass& operator=(const TClass&); \
-    TAPI static CClass* GetPrivateStaticClass(); \
+    friend struct FRIEND_STRUCT_NAME(TNamespace, TClass); \
+    TNamespace::TClass& operator=(TNamespace::TClass&&); \
+    TNamespace::TClass& operator=(const TNamespace::TClass&); \
+    TAPI static Lumina::CClass* GetPrivateStaticClass(); \
 public: \
-    /** Simple helper typedefs */ \
-    using ThisClass = TClass; \
+    using ThisClass = TNamespace::TClass; \
     using Super = TBaseClass; \
-    /** Returns CClass object representing this class */ \
-    inline static CClass* StaticClass() \
+    inline static Lumina::CClass* StaticClass() { return GetPrivateStaticClass(); } \
+    inline static const TCHAR* StaticPackage() { return TEXT(#TPackage); } \
+    inline void* operator new(const size_t InSize, EInternal InMem, Lumina::FName InName = Lumina::NAME_None, Lumina::EObjectFlags InSetFlags = Lumina::OF_None) \
     { \
-        return GetPrivateStaticClass(); \
-    } \
-	inline void* operator new(const size_t InSize, EInternal InMem, FName InName = NAME_None, EObjectFlags InSetFlags = OF_None) \
-	{ \
-        FConstructCObjectParams Params(StaticClass()); \
+        Lumina::FConstructCObjectParams Params(StaticClass()); \
         Params.Name = InName; \
         Params.Flags = InSetFlags; \
-		return StaticAllocateObject(Params); \
-	} \
+        Params.Package = TEXT(#TPackage); \
+        return Lumina::StaticAllocateObject(Params); \
+    } \
     inline void* operator new(const size_t InSize, EInternal* InMem) \
     { \
         return (void*)InMem; \
-    } \
+    }
 
-#define DECLARE_SERIALIZER(TClass) \
-    friend FArchive& operator << (FArchive& Ar, TClass*& Res) \
+
+#define DECLARE_SERIALIZER(TNamespace, TClass) \
+    friend FArchive& operator << (FArchive& Ar, TNamespace::TClass*& Res) \
     { \
         return Ar << (CObject*&)Res; \
     } \
 
 
 #define DEFINE_DEFAULT_CONSTRUCTOR_CALL(TClass) \
-    static void __DefaultConstructor(const FObjectInitializer& OI) { new ((EInternal*)OI.GetObj())TClass; }
+    static void __DefaultConstructor(const Lumina::FObjectInitializer& OI) { new ((EInternal*)OI.GetObj())TClass; }
 
-#define IMPLEMENT_CLASS(TClass) \
-    FClassRegistrationInfo Registration_Info_CClass_##TClass; \
-    CClass* TClass::GetPrivateStaticClass() \
+
+#define IMPLEMENT_CLASS(TNamespace, TClass) \
+    Lumina::FClassRegistrationInfo CONCAT3(Registration_Info_CClass_, TNamespace, _##TClass); \
+    NO_API Lumina::CClass* ##TNamespace::##TClass::GetPrivateStaticClass() \
     { \
-        if (Registration_Info_CClass_##TClass.Singleton == nullptr) \
+        if (CONCAT3(Registration_Info_CClass_, TNamespace, _##TClass).Singleton == nullptr) \
         { \
-            AllocateStaticClass( \
-            TEXT(#TClass), \
-            &Registration_Info_CClass_##TClass.Singleton, \
-            sizeof(TClass), \
-            alignof(TClass), \
-            &TClass::Super::StaticClass, \
-            (CClass::ClassConstructorType)InternalConstructor<TClass>); \
+            Lumina::AllocateStaticClass( \
+                TClass::StaticPackage(), \
+                TEXT(#TClass), \
+                &CONCAT3(Registration_Info_CClass_, TNamespace, _##TClass).Singleton, \
+                sizeof(TNamespace::TClass), \
+                alignof(TNamespace::TClass), \
+                &TNamespace::TClass::Super::StaticClass, \
+                (Lumina::CClass::ClassConstructorType)Lumina::InternalConstructor<TNamespace::TClass>); \
         } \
-        return Registration_Info_CClass_##TClass.Singleton; \
+        return CONCAT4(Registration_Info_CClass_, TNamespace, _, ##TClass).Singleton; \
     }
+
 
 /** Intrinsic classic auto register. */
 #define IMPLEMENT_INTRINSIC_CLASS(TClass, TBaseClass, TAPI) \
-    TAPI CClass* Construct_CClass_##TClass(); \
-    extern FClassRegistrationInfo Registration_Info_CClass_##TClass; \
-    struct Construct_CClass_##TClass##_Statics \
+    TAPI CClass* Construct_CClass_Lumina_##TClass(); \
+    extern FClassRegistrationInfo Registration_Info_CClass_Lumina_##TClass; \
+    struct Construct_CClass_Lumina_##TClass##_Statics \
     { \
         static CClass* Construct() \
         { \
-            extern TAPI CClass* Construct_CClass_##TBaseClass(); \
-            CClass* SuperClass = Construct_CClass_##TBaseClass(); \
+            extern TAPI CClass* Construct_CClass_Lumina_##TBaseClass(); \
+            CClass* SuperClass = Construct_CClass_Lumina_##TBaseClass(); \
             CClass* Class = TClass::StaticClass(); \
             CObjectForceRegistration(Class); \
             return Class; \
         } \
     }; \
-    CClass* Construct_CClass_##TClass() \
+    CClass* Construct_CClass_Lumina_##TClass() \
     { \
-        if(!Registration_Info_CClass_##TClass.Singleton) \
+        if(!Registration_Info_CClass_Lumina_##TClass.Singleton) \
         { \
-            Registration_Info_CClass_##TClass.Singleton = Construct_CClass_##TClass##_Statics::Construct(); \
+            Registration_Info_CClass_Lumina_##TClass.Singleton = Construct_CClass_Lumina_##TClass##_Statics::Construct(); \
         } \
-        return Registration_Info_CClass_##TClass.Singleton; \
+        return Registration_Info_CClass_Lumina_##TClass.Singleton; \
     } \
-    IMPLEMENT_CLASS(TClass) \
-    static FRegisterCompiledInInfo AutoInitialize_##TClass(&Construct_CClass_##TClass, TEXT(#TClass));
+    IMPLEMENT_CLASS(Lumina, TClass) \
+    static FRegisterCompiledInInfo AutoInitialize_##TClass(&Construct_CClass_Lumina_##TClass, TClass::StaticPackage(), TEXT(#TClass));
 
 
 namespace LuminaAsserts_Private

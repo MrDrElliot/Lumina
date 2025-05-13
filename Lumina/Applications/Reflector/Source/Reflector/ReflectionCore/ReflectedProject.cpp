@@ -4,11 +4,10 @@
 #include <fstream>
 
 #include "ReflectedHeader.h"
-#include "Log/Log.h"
 
 namespace Lumina::Reflection
 {
-    FReflectedProject::FReflectedProject(const FString& SlnPath, const FString& ProjectPath)
+    FReflectedProject::FReflectedProject(const eastl::string& SlnPath, const eastl::string& ProjectPath)
         : SolutionPath(SlnPath)
         , Path(ProjectPath)
         , ParentPath(std::filesystem::path(ProjectPath.c_str()).parent_path().string().c_str())
@@ -20,7 +19,6 @@ namespace Lumina::Reflection
         std::ifstream ProjectFile(Path.c_str());
         if (!ProjectFile.is_open())
         {
-            LOG_ERROR("Failed to open project for parsing");
             return false;
         }
 
@@ -30,27 +28,33 @@ namespace Lumina::Reflection
         std::string ParseLine;
         while (std::getline(ProjectFile, ParseLine))
         {
-            FString Line(ParseLine.c_str());
+            eastl::string Line(ParseLine.c_str());
 
             // Convert the line to lowercase to ensure case-insensitive search
-            FString LowerLine = Line;
+            eastl::string LowerLine = Line;
             eastl::transform(LowerLine.begin(), LowerLine.end(), LowerLine.begin(), ::tolower);
 
             // Look for case-insensitive "<clinclude"
             eastl_size_t FirstIndex = LowerLine.find("<clinclude");  
-            if (FirstIndex != FString::npos)
+            if (FirstIndex != eastl::string::npos)
             {
                 FirstIndex = Line.find("Include=\"");
-                if (FirstIndex != FString::npos)
+                if (FirstIndex != eastl::string::npos)
                 {
                     FirstIndex += 9;
 
                     eastl_size_t SecondIndex = Line.find("\"", FirstIndex);
-                    if (SecondIndex != FString::npos)
+                    if (SecondIndex != eastl::string::npos)
                     {
-                        const FString HeaderPath = Line.substr(FirstIndex, SecondIndex - FirstIndex);
-                        FString HeaderFileFullPath = ParentPath + "\\" + HeaderPath;
-                        
+                        const eastl::string HeaderPath = Line.substr(FirstIndex, SecondIndex - FirstIndex);
+                        eastl::string HeaderFileFullPath = ParentPath + "\\" + HeaderPath;
+
+                        // Skip files that contain ".generated." in their name
+                        if (HeaderFileFullPath.find(".generated.") != eastl::string::npos)
+                        {
+                            continue;
+                        }
+
                         FReflectedHeader Header(HeaderFileFullPath);
 
                         if (Header.Parse())
@@ -66,6 +70,4 @@ namespace Lumina::Reflection
 
         return !Headers.empty();
     }
-
-
 }

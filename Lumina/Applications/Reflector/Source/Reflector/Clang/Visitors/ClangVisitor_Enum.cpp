@@ -1,6 +1,5 @@
 ﻿#include "ClangVisitor_Enum.h"
 
-#include "Containers/String.h"
 #include "Reflector/Clang/ClangParserContext.h"
 #include "Reflector/Clang/Utils.h"
 #include "Reflector/Types/ReflectedType.h"
@@ -16,15 +15,15 @@ namespace Lumina::Reflection::Visitor
         
         if (kind == CXCursor_EnumConstantDecl)
         {
-            FString DisplayName = ClangUtils::GetCursorDisplayName(Cursor);
+            eastl::string DisplayName = ClangUtils::GetCursorDisplayName(Cursor);
             const clang::EnumConstantDecl* EnumConstantDecl = (const clang::EnumConstantDecl*)Cursor.data[0];
 
             const llvm::APSInt& initVal = EnumConstantDecl->getInitVal();
-            uint32 Value = (int32)initVal.getExtValue();
+            uint32_t Value = (int32_t)initVal.getExtValue();
             
             FReflectedEnum::FConstant Constant;
             Constant.Label = DisplayName;
-            Constant.ID = FName(DisplayName);
+            Constant.ID = eastl::string(DisplayName);
             Constant.Value = Value;
             
             const CXString CommentString = clang_Cursor_getBriefCommentText(Cursor);
@@ -42,9 +41,9 @@ namespace Lumina::Reflection::Visitor
     
     CXChildVisitResult VisitEnum(CXCursor Cursor, CXCursor Parent, FClangParserContext* Context)
     {
-        FString CursorName = ClangUtils::GetCursorDisplayName(Cursor);
+        eastl::string CursorName = ClangUtils::GetCursorDisplayName(Cursor);
 
-        FString FullyQualifiedName;
+        eastl::string FullyQualifiedName;
         void* Data = clang_getCursorType(Cursor).data[0];
         if(Data == nullptr)
         {
@@ -79,7 +78,7 @@ namespace Lumina::Reflection::Visitor
         FReflectedEnum* Enum = Context->ReflectionDatabase.CreateReflectedType<FReflectedEnum>();
         Enum->LineNumber = ClangUtils::GetCursorLineNumber(Cursor);
         Enum->DisplayName = CursorName;
-        Enum->ID = FName(FullyQualifiedName);
+        Enum->ID = eastl::string(FullyQualifiedName);
         Enum->HeaderID = Context->ReflectedHeader.HeaderID;
 
         FReflectedType* PreviousParentType = Context->ParentReflectedType;

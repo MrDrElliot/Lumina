@@ -15,7 +15,6 @@ namespace Lumina
     {
     public:
 
-        ELoadResult LoadFromDisk(FAssetRecord* InRecord) override;
         FAssetPath CreateNew(const FString& Path) override;
         const FString& GetAssetName() const override { return "Static Mesh"; }
         

@@ -1,6 +1,6 @@
 
+#include "Source/pch.h"
 #include "AssetManager.h"
-
 #include "Core/Math/Hash/Hash.h"
 #include "Core/Performance/PerformanceTracker.h"
 

@@ -1,7 +1,5 @@
 ﻿#include "ProjectSolution.h"
 
-#include "Core/Assertions/Assert.h"
-
 namespace Lumina::Reflection
 {
     FProjectSolution::FProjectSolution(const std::filesystem::path& SlnPath)

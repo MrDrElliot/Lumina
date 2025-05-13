@@ -23,7 +23,7 @@ namespace Lumina
 
             if (Obj && bLoadIfFindFails)
             {
-                Obj = LoadObject<CObject>(TEXT(""), WString.c_str());
+                Obj = LoadObject<CObject>(WString.c_str());
             }
             
         }

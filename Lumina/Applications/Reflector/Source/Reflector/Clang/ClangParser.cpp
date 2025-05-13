@@ -1,8 +1,7 @@
 ﻿#include "ClangParser.h"
-
 #include <clang-c/Index.h>
 
-#include "Containers/Array.h"
+#include "EASTL/fixed_vector.h"
 #include "Visitors/ClangTranslationUnit.h"
 
 namespace Lumina::Reflection
@@ -24,35 +23,35 @@ namespace Lumina::Reflection
     {
     }
 
-    bool FClangParser::Parse(const FString& SolutionPath, const FReflectedHeader& File, const FReflectedProject& Project)
+    bool FClangParser::Parse(const eastl::string& SolutionPath, const FReflectedHeader& File, const FReflectedProject& Project)
     {
         ParsingContext.Solution = FProjectSolution(SolutionPath.c_str());
         ParsingContext.ReflectedHeader = File;
         ParsingContext.Project = Project;
         
         CXIndex ClangIndex = clang_createIndex(0, 1);
-        constexpr uint32 ClangOptions = CXTranslationUnit_DetailedPreprocessingRecord | CXTranslationUnit_SkipFunctionBodies | CXTranslationUnit_IncludeBriefCommentsInCodeCompletion;
+        constexpr uint32_t ClangOptions = CXTranslationUnit_DetailedPreprocessingRecord | CXTranslationUnit_SkipFunctionBodies | CXTranslationUnit_IncludeBriefCommentsInCodeCompletion;
         
-        TVector<FString> FullIncludePaths;
-        TFixedVector<const char*, 10> clangArgs;
+        eastl::vector<eastl::string> FullIncludePaths;
+        eastl::fixed_vector<const char*, 10> clangArgs;
         
         for (const char* Path : g_includePaths)
         {
-            FString SlnPath = std::filesystem::path(SolutionPath.c_str()).parent_path().string().c_str();
-            FString FullPath = SlnPath + Path;
+            eastl::string SlnPath = std::filesystem::path(SolutionPath.c_str()).parent_path().string().c_str();
+            eastl::string FullPath = SlnPath + Path;
             FullIncludePaths.push_back("-I" + FullPath);
             clangArgs.push_back(FullIncludePaths.back().c_str());
 
             if (!std::filesystem::exists(FullPath.c_str()))
             {
-                LOG_ERROR("Failed to find include path: {0}", FullPath);
                 return false;
             }
         }
-        
+
+#if 0
         clangArgs.push_back( "-x" );
         clangArgs.push_back( "c++" );
-        clangArgs.push_back( "-std=c++17" );
+        clangArgs.push_back( "-std=c++20" );
         clangArgs.push_back( "-O0" );
         clangArgs.push_back( "-D" );
         clangArgs.push_back( "NDEBUG" );
@@ -71,6 +70,20 @@ namespace Lumina::Reflection
         clangArgs.push_back( "-fmacro-backtrace-limit=0" );
         clangArgs.push_back("-Xclang");
         clangArgs.push_back("-ast-dump");
+#endif
+
+        clangArgs.push_back("-x");
+        clangArgs.push_back("c++-header");
+        clangArgs.push_back("-std=c++20");
+        clangArgs.push_back("-fsyntax-only");
+        clangArgs.push_back("-DREFLECTION_PARSER");
+        clangArgs.push_back("-DNDEBUG");
+        clangArgs.push_back("-fparse-all-comments");
+        clangArgs.push_back("-fms-extensions");
+        clangArgs.push_back("-fms-compatibility");
+        clangArgs.push_back("-Wno-unknown-warning-option");
+        clangArgs.push_back("-Wno-return-type-c-linkage");
+        clangArgs.push_back("-Wno-c++98-compat-pedantic");
 
 
         CXTranslationUnit TranslationUnit;

@@ -1,7 +1,6 @@
 ﻿#pragma once
 
-#include "Core/Templates/Forward.h"
-#include "Memory/Memory.h"
+#include "EASTL/hash_map.h"
 #include "Reflector/TypeReflector.h"
 #include "Reflector/Types/ReflectedType.h"
 
@@ -22,9 +21,9 @@ namespace Lumina::Reflection
         T* CreateReflectedType(Args&&... args);
 
 
-        TVector<FReflectedProject>                  ReflectedProjects;
-        THashMap<FName, TVector<FReflectedType*>>   ReflectedTypes;
-        THashMap<FName, FReflectedType*>            TypeHashMap;
+        eastl::vector<FReflectedProject>                                    ReflectedProjects;
+        eastl::hash_map<eastl::string, eastl::vector<FReflectedType*>>      ReflectedTypes;
+        eastl::hash_map<eastl::string, FReflectedType*>                     TypeHashMap;
         
     };
 
@@ -35,6 +34,6 @@ namespace Lumina::Reflection
     requires(eastl::is_base_of_v<FReflectedType, T>)
     T* FReflectionDatabase::CreateReflectedType(Args&&... args)
     {
-        return FMemory::New<T>(TForward<Args>(args)...);
+        return new T(std::forward<Args>(args)...);
     }
 }

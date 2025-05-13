@@ -12,9 +12,7 @@ namespace Lumina
     public:
         
         virtual ~FFactory() = default;
-        virtual ELoadResult LoadFromDisk(FAssetRecord* InRecord) = 0;
         virtual FAssetPath CreateNew(const FString& Path) = 0;
-        virtual ELoadResult UpdateInProcessRequest(FAssetRecord* InRecord) { return ELoadResult::Succeeded; }
         
         virtual const FString& GetAssetName() const = 0;
         

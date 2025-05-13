@@ -5,7 +5,7 @@
 namespace Lumina::Fonts
 {
 
-        //-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
     // EMBEDDED FONT DECOMPRESSION
     //-----------------------------------------------------------------------------
     // Use the font compressor in external which uses stb_compress() to compress font into byte array.

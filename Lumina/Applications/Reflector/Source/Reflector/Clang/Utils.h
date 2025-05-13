@@ -1,25 +1,24 @@
 #pragma once
 #include <filesystem>
+#include <iostream>
 #include <clang/AST/Ast.h>
 #include <clang-c/Index.h>
-#include "Containers/String.h"
-#include "Core/Assertions/Assert.h"
 
 
 namespace Lumina::ClangUtils
 {
-    inline FString GetString(CXString&& string)
+    inline eastl::string GetString(CXString&& string)
     {
-        FString str = clang_getCString(string);
+        eastl::string str = clang_getCString(string);
         clang_disposeString(string);
         return str;
     }
 
-    inline uint32 GetCursorLineNumber(const CXCursor& Cr)
+    inline uint32_t GetCursorLineNumber(const CXCursor& Cr)
     {
-        uint32 Line = 0;
-        uint32 Column = 0;
-        uint32 Offset = 0;
+        uint32_t Line = 0;
+        uint32_t Column = 0;
+        uint32_t Offset = 0;
 
         CXSourceLocation Location = clang_getCursorLocation(Cr);
         clang_getSpellingLocation(Location, nullptr, &Line, &Column, &Offset);
@@ -27,17 +26,17 @@ namespace Lumina::ClangUtils
         return Line;
     }
 
-    inline FString GetCursorDisplayName(const CXCursor& cr)
+    inline eastl::string GetCursorDisplayName(const CXCursor& cr)
     {
         CXString displayName = clang_getCursorDisplayName(cr);
-        FString str = clang_getCString(displayName);
+        eastl::string str = clang_getCString(displayName);
         clang_disposeString(displayName);
         return str;
     }
 
-    inline uint32 GetLineNumberForCursor(const CXCursor& cr)
+    inline uint32_t GetLineNumberForCursor(const CXCursor& cr)
     {
-        uint32 line, column, offset;
+        uint32_t line, column, offset;
         CXSourceRange range = clang_getCursorExtent(cr);
         CXSourceLocation start = clang_getRangeStart(range);
         clang_getExpansionLocation( start, nullptr, &line, &column, &offset);
@@ -49,14 +48,18 @@ namespace Lumina::ClangUtils
         return clang::QualType::getFromOpaquePtr( type.data[0] ); 
     }
     
-    inline bool GetQualifiedNameForType(clang::QualType Type, FString& QualifiedName)
+    inline bool GetQualifiedNameForType(clang::QualType Type, eastl::string& QualifiedName)
     {
         const clang::Type* pType = Type.getTypePtr();
 
-        if (pType->isBuiltinType())
+        if (pType->isBooleanType())
+        {
+            QualifiedName = "bool";
+        }
+        else if (pType->isBuiltinType())
         {
             const clang::BuiltinType* pBT = pType->getAs<clang::BuiltinType>();
-
+            
             switch (pBT->getKind())
             {
                 case clang::BuiltinType::Char_S:
@@ -114,22 +117,28 @@ namespace Lumina::ClangUtils
                 case clang::BuiltinType::Double:
                     QualifiedName = "double";
                     break;
-                    
             }
+        }
+        else if (pType->isRecordType())
+        {
+            clang::RecordDecl const* pRecordDecl = pType->getAs<clang::RecordType>()->getDecl();
+            QualifiedName = pRecordDecl->getQualifiedNameAsString().c_str();
         }
         else if (pType->isEnumeralType())
         {
             const clang::NamedDecl* pNamedDecl = pType->getAs<clang::EnumType>()->getDecl();
-            Assert(pNamedDecl != nullptr);
             QualifiedName = pNamedDecl->getQualifiedNameAsString().c_str();
         }
-        else if ( pType->getTypeClass() == clang::Type::Typedef )
+        else if (pType->getTypeClass() == clang::Type::Typedef)
         {
             const clang::NamedDecl* pNamedDecl = pType->getAs<clang::TypedefType>()->getDecl();
-            Assert(pNamedDecl != nullptr);
             QualifiedName = pNamedDecl->getQualifiedNameAsString().c_str();
         }
-
+        else
+        {
+            return false;
+        }
+        
         return true;
     }
 

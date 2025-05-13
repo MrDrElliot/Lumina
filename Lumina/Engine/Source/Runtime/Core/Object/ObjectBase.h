@@ -25,7 +25,7 @@ namespace Lumina
         LUMINA_API virtual ~CObjectBase() override = default;
         
         LUMINA_API CObjectBase(EObjectFlags InFlags);
-        LUMINA_API CObjectBase(CClass* InClass, EObjectFlags InFlags, FName InName);
+        LUMINA_API CObjectBase(CClass* InClass, EObjectFlags InFlags, const TCHAR* Package, FName InName);
 
         // Begin IRefCountedObject
         LUMINA_API uint32 AddRef() const override;
@@ -46,7 +46,7 @@ namespace Lumina
 
     private:
 
-        LUMINA_API void AddObject(FName Name, int32 InternalIndex = -1);
+        LUMINA_API void AddObject(FName Name, int32 InInternalIndex = -1);
         
     public:
         
@@ -64,10 +64,14 @@ namespace Lumina
             return NamePrivate;
         }
 
+        FORCEINLINE const TCHAR* GetPackage() const
+        {
+            return PackagePrivate;    
+        }
+
         LUMINA_API void GetPath(FString& OutPath);
         LUMINA_API FString GetPathName() const;
-
-
+    
     private:
         
         template<typename TClassType>
@@ -111,6 +115,9 @@ namespace Lumina
 
         /** Logical name of this object. */
         FName                   NamePrivate;
+
+        /** Package to represent on disk */
+        const TCHAR*            PackagePrivate;
         
         /** Internal index into the global object array. */
         int32                   InternalIndex;
@@ -135,6 +142,7 @@ namespace Lumina
     struct FClassRegisterCompiledInInfo
     {
         class CClass* (*RegisterFn)();
+        const TCHAR* Package;
         const TCHAR* Name;
     };
 
@@ -147,7 +155,7 @@ namespace Lumina
     
 
     /** Involked from static constructor in generated code */
-    LUMINA_API void RegisterCompiledInInfo(CClass* (*RegisterFn)(), const TCHAR* Name);
+    LUMINA_API void RegisterCompiledInInfo(CClass* (*RegisterFn)(), const TCHAR* Package, const TCHAR* Name);
 
     LUMINA_API void RegisterCompiledInInfo(CEnum* (*RegisterFn)(), const FEnumRegisterCompiledInInfo& Info);
 

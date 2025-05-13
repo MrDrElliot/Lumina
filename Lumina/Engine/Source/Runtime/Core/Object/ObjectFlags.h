@@ -6,14 +6,16 @@ namespace Lumina
 {
     enum EObjectFlags
     {
-        OF_None            = 0,
+        OF_None                 = 0,
         
-        OF_Transient       = 1 << 0,
-        OF_Persistent      = 1 << 1,
+        OF_Transient            = 1 << 0,
+        OF_Persistent           = 1 << 1,
 
-        OF_DefaultObject   = 1 << 2,
+        OF_DefaultObject        = 1 << 2,
 
-        OF_PendingDelete   = 1 << 3,
+        OF_PendingDelete        = 1 << 3,
+
+        OF_CompiledInNative     = 1 << 4,
 
     };
 

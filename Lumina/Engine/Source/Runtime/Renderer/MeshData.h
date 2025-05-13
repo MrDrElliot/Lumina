@@ -11,7 +11,7 @@ namespace Lumina
     {
     public:
 
-        friend class AMesh;
+        friend class CMesh;
         
         FMeshResource() = default;
         

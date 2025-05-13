@@ -10,7 +10,6 @@ namespace Lumina
     {
     public:
 
-        ELoadResult LoadFromDisk(FAssetRecord* InRecord) override;
         FAssetPath CreateNew(const FString& Path) override;
         //static FRHIImageHandle ImportFromSource(std::filesystem::path Path);
 

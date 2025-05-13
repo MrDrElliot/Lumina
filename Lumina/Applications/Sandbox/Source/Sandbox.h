@@ -3,9 +3,9 @@
 #include "Core/Engine/Engine.h"
 #include "Core/Object/Object.h"
 #include "Source/Runtime/Core/Application/Application.h"
+#include "Core/Object/ObjectPtr.h"
 #include "Sandbox.generated.h"
 
-using namespace Lumina;
 
 LUM_ENUM()
 enum class ETestEnum : uint8
@@ -16,11 +16,10 @@ enum class ETestEnum : uint8
 };
 
 LUM_CLASS()
-class CTestClass : public CObject
+class CTestClass : public Lumina::CObject
 {
-
-	
 	GENERATED_BODY()
+	
 public:
 
 	CTestClass()
@@ -34,14 +33,14 @@ public:
 
 	LUM_PROPERTY()
 	uint32 Value32;
-	
+
+	LUM_PROPERTY()
+	Lumina::TObjectPtr<CTestClass> TestObject;
 };
 
 LUM_CLASS()
 class COtherClass : public CTestClass
 {
-
-	
 	GENERATED_BODY()
 	
 public:
@@ -54,7 +53,7 @@ public:
 };
 
 
-class FSandboxEngine : public FEngine
+class FSandboxEngine : public Lumina::FEngine
 {
 public:
 
@@ -65,7 +64,6 @@ private:
 	
 };
 
-using namespace Lumina;
 
 class FSandbox : public Lumina::FApplication
 {

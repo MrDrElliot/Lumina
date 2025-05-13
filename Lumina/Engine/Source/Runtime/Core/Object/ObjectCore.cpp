@@ -8,7 +8,7 @@
 namespace Lumina
 {
     /** Allocates a section of memory for the new object, does not place anything into the memory */
-    CObjectBase* AllocateObject(const CClass* InClass, FName InName, EObjectFlags InFlags)
+    CObjectBase* AllocateCObjectMemory(const CClass* InClass, FName InName, EObjectFlags InFlags)
     {
         // Force 16-byte minimal alignment for cache friendliness.
         uint32 Alignment = Math::Max<uint32>(16, InClass->GetAlignment());
@@ -46,33 +46,33 @@ namespace Lumina
         FName Name = MakeUniqueObjectName(Class, Params.Name);
         EObjectFlags Flags = Params.Flags;
         
-        CObjectBase* Object = AllocateObject(Class, Name, Flags);
+        CObjectBase* Object = AllocateCObjectMemory(Class, Name, Flags);
 
         FMemory::MemsetZero(Object, Params.Class->GetSize());
-        new (Object) CObjectBase(const_cast<CClass*>(Params.Class), Params.Flags, Params.Name);
+        new (Object) CObjectBase(const_cast<CClass*>(Params.Class), Params.Flags, Params.Package, Params.Name);
 
         CObject* Obj = (CObject*)Object;
         Params.Class->ClassConstructor(FObjectInitializer(Obj, Params));
-
+        
         Obj->PostInitProperties();
         
         return Obj;
     }
     
-    CObject* FindObjectFast(const CClass* InClass, FName ObjectName)
+    CObject* FindObjectFast(const CClass* InClass, FName QualifiedName)
     {
-        if (ObjectNameHash.find(ObjectName) != ObjectNameHash.end())
+        if (ObjectNameHash.find(QualifiedName) != ObjectNameHash.end())
         {
-            return (CObject*)ObjectNameHash.at(ObjectName);
+            return (CObject*)ObjectNameHash.at(QualifiedName);
         }
 
         return nullptr;
     }
 
-    CObject* StaticLoadObject(const CClass* InClass, const TCHAR* InPath, const TCHAR* InName)
+    CObject* StaticLoadObject(const CClass* InClass, const TCHAR* QualifiedName)
     {
         CObject* FoundObject = nullptr;
-        FoundObject = FindObjectFast(InClass, InName);
+        FoundObject = FindObjectFast(InClass, QualifiedName);
         if (FoundObject != nullptr)
         {
             return FoundObject;
@@ -150,7 +150,6 @@ namespace Lumina
             default:
                 break;
             }
-    
         }
     }
     
@@ -179,14 +178,15 @@ namespace Lumina
         FConstructCObjectParams ObjectParms(CEnum::StaticClass());
         ObjectParms.Name = Params.Name;
         ObjectParms.Flags = OF_None;
+        ObjectParms.Package = CEnum::StaticPackage();
 
         CEnum* NewEnum = (CEnum*)StaticAllocateObject(ObjectParms);
         *OutEnum = NewEnum;
 
-        for (size_t i = 0; i < Params.NumParams; i++)
+        for (int16 i = 0; i < Params.NumParams; i++)
         {
-            const FEnumeratorParam Param = Params.Params[i];
-            NewEnum->AddEnum(Param.NameUTF8, Param.Value);
+            const FEnumeratorParam* Param = &Params.Params[i];
+            NewEnum->AddEnum(Param->NameUTF8, Param->Value);
         }
     }
 }

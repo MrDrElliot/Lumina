@@ -1,26 +1,15 @@
 #pragma once
-
 #include "Assets/AssetTypes/Mesh/Mesh.h"
-
+#include "StaticMesh.generated.h"
 
 namespace Lumina
 {
-    class AStaticMesh : public AMesh
+    LUM_CLASS()
+    class CStaticMesh : public CMesh
     {
-        DECLARE_ASSET("Static Mesh", StaticMesh, 1)
-        
+        GENERATED_BODY()
     public:
         
-        explicit AStaticMesh(const FAssetPath& InPath)
-            : AMesh(InPath)
-        {}
-
-        virtual ~AStaticMesh() override;
-
-        void Serialize(FArchive& Ar) override
-        {
-            AMesh::Serialize(Ar);
-        }
         
     };
 }

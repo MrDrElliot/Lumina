@@ -1,32 +1,43 @@
 ﻿#pragma once
 #include "Assets/Asset.h"
 #include "Containers/Array.h"
+#include "Core/Object/Object.h"
+#include "Core/Object/ObjectMacros.h"
 #include "Renderer/RHIFwd.h"
+#include "Material.generated.h"
 
 namespace Lumina
 {
-    
-    class AMaterial : public IAsset
+    LUM_ENUM()
+    enum class EMaterialType : uint8
     {
+        None,
+        PBR,
+        PostProcess,
+        UI,
+    };
+
+    LUM_CLASS()
+    class CMaterial : public CObject
+    {
+        GENERATED_BODY()
+        
     public:
 
-        enum class EType : uint8
+
+        CMaterial()
         {
-            None,
-            PBR,
-            PostProcess,
-            UI,
-        };
+            MaterialType = EMaterialType::None;
+        }
 
-        DECLARE_ASSET("Material", Material, 1.0)
-
-        void Serialize(FArchive& Ar) override;
-        
         TVector<uint8>          GraphData;
         
     private:
 
-        EType                   MaterialType = EType::None;
+        LUM_PROPERTY()
+        EMaterialType           MaterialType;
+
+        
         FRHIVertexShaderRef     VertexShader;
         FRHIPixelShaderRef      PixelShader;
         FRHIBindingSetRef       BindingSet;

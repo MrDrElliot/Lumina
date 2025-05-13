@@ -1,6 +1,7 @@
 ﻿#pragma once
-#include "Containers/String.h"
 #include <sstream>
+
+#include "EASTL/string.h"
 
 namespace Lumina
 {
@@ -13,9 +14,9 @@ namespace Lumina
 
 
         virtual const char* GetTypeName() = 0;
-        FString GetDisplayName() const { return Name; }
+        eastl::string GetDisplayName() const { return Name; }
         
-        FString Name;
-        FString Outer;
+        eastl::string Name;
+        eastl::string Outer;
     };
 }

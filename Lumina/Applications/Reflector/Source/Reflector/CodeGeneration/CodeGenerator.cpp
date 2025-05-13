@@ -2,14 +2,27 @@
 #include <fstream>
 #include <sstream>
 #include <string>
-#include <filesystem> // Make sure this is included
-#include "Platform/Filesystem/FileHelper.h"
+#include <filesystem>
+#include <iostream>
+
 #include "Reflector/ReflectionCore/ReflectedHeader.h"
 #include "Reflector/ReflectionCore/ReflectedProject.h"
 #include "Reflector/Types/Properties/ReflectedProperty.h"
+#include "Reflector/Utils/StringUtils.h"
+
+namespace eastl
+{
+    inline std::ostream& operator<<(std::ostream& os, const eastl::string& str)
+    {
+        os.write(str.c_str(), str.size());
+        return os;
+    }
+}
+
 
 namespace Lumina::Reflection
 {
+    
     FCodeGenerator::FCodeGenerator(const FProjectSolution& SlnPath, const FReflectionDatabase& Database)
         : CurrentProject("", "")
         , Solution(SlnPath)
@@ -45,7 +58,7 @@ namespace Lumina::Reflection
         GenerateCodeHeader(stream, Header);
         
 
-        FString ReflectionDataPath = Solution.GetParentPath() + R"(\Intermediates\Reflection\)" + CurrentProject.Name + R"(\)" + Header.FileName + ".generated.h";
+        eastl::string ReflectionDataPath = Solution.GetParentPath() + R"(\Intermediates\Reflection\)" + CurrentProject.Name + R"(\)" + Header.FileName + ".generated.h";
         std::filesystem::path outputPath(ReflectionDataPath.c_str());
         std::filesystem::create_directories(outputPath.parent_path());
         
@@ -55,10 +68,6 @@ namespace Lumina::Reflection
         {
             outputFile << stream.str();
             outputFile.close();
-        }
-        else
-        {
-            LOG_ERROR("Failed to open file: {0}", ReflectionDataPath);
         }
     }
 
@@ -71,7 +80,7 @@ namespace Lumina::Reflection
         GenerateCodeSource(stream, Header);
 
 
-        FString ReflectionDataPath = Solution.GetParentPath() + R"(\Intermediates\Reflection\)" + CurrentProject.Name + R"(\)" + Header.FileName + ".generated.cpp";
+        eastl::string ReflectionDataPath = Solution.GetParentPath() + R"(\Intermediates\Reflection\)" + CurrentProject.Name + R"(\)" + Header.FileName + ".generated.cpp";
         std::filesystem::path outputPath(ReflectionDataPath.c_str());
         std::filesystem::create_directories(outputPath.parent_path());
 
@@ -81,10 +90,6 @@ namespace Lumina::Reflection
         {
             outputFile << stream.str();
             outputFile.close();
-        }
-        else
-        {
-            LOG_ERROR("Failed to open file: {0}", ReflectionDataPath);
         }
     }
 
@@ -103,19 +108,19 @@ namespace Lumina::Reflection
         SS << "#include \"" << "../../../Lumina/Engine/Source/Runtime/Core/Object/ObjectMacros.h" << "\"\n";
         SS << "#include \"" << "../../../Lumina/Engine/Source/Runtime/Core/Reflection/ReflectedTypeAccessors.h" << "\"\n";
 
-        SS << "\n\n\n";
+        SS << "\n\n";
 
         if (ReflectionDatabase->ReflectedTypes.find(Header.HeaderID) == ReflectionDatabase->ReflectedTypes.end())
         {
             return;
         }
         
-        const TVector<FReflectedType*>& ReflectedTypes = ReflectionDatabase->ReflectedTypes.at(Header.HeaderID);
+        const eastl::vector<FReflectedType*>& ReflectedTypes = ReflectionDatabase->ReflectedTypes.at(Header.HeaderID);
 
-        FString FileID = Header.HeaderPath;
+        eastl::string FileID = Header.HeaderPath;
         
         size_t SlashPos = FileID.find_first_of("/\\");
-        if (SlashPos != FString::npos)
+        if (SlashPos != eastl::string::npos)
         {
             FileID = FileID.substr(SlashPos + 1);
         }
@@ -124,6 +129,12 @@ namespace Lumina::Reflection
         FileID = StringUtils::ReplaceAllOccurrences(FileID, "\\", "_");
         FileID = StringUtils::ReplaceAllOccurrences(FileID, ".", "_");
 
+        SS << "#ifdef " << FileID << "_generated_h\n";
+        SS << "#error Already included, missing #pragma once\n";
+        SS << "#endif\n";
+        SS << "#define " << FileID << "_generated_h\n";
+
+        SS << "\n\n\n";
         
         for (FReflectedType* Type : ReflectedTypes)
         {
@@ -139,14 +150,15 @@ namespace Lumina::Reflection
             if (Type->Type == FReflectedType::EType::Class)
             {
                 FReflectedClass* Class = (FReflectedClass*)Type;
+
+                eastl::string PackageName = "/Script/";
                 
                 SS << "#define " << FileID.c_str() << "_" << eastl::to_string(Type->LineNumber).c_str() << "_CLASS \\\n";
                 SS << "private: \\\n";
                 SS << "\\\n";
-                SS << "\\\n";
                 SS << "public: \\\n";
-                SS << "\tDECLARE_CLASS(" << Type->DisplayName.c_str() << ", " << Class->Parent.c_str() << ", NO_API" << ") \\\n";
-                SS << "\tDEFINE_DEFAULT_CONSTRUCTOR_CALL(" << Type->DisplayName.c_str() << ")\n";
+                SS << "\tDECLARE_CLASS(" << Type->Namespace << ", " << Type->DisplayName.c_str() << ", " << Class->Parent.c_str() << ", TEXT(\"" << PackageName.c_str() << "\")" << ", NO_API" << ") \\\n";
+                SS << "\tDEFINE_DEFAULT_CONSTRUCTOR_CALL(" << Type->Namespace << "::" << Type->DisplayName.c_str() << ")\n";
                 SS << "\n\n";
             }
 
@@ -192,7 +204,7 @@ namespace Lumina::Reflection
 
     void FCodeGenerator::GenerateCodeSource(std::stringstream& SS, const FReflectedHeader& Header)
     {
-        FString ReflectionDataPath = Solution.GetParentPath() + R"(\Intermediates\Reflection\)" + CurrentProject.Name + R"(\)" + Header.FileName + ".generated.h";
+        eastl::string ReflectionDataPath = Solution.GetParentPath() + R"(\Intermediates\Reflection\)" + CurrentProject.Name + R"(\)" + Header.FileName + ".generated.h";
 
 
         if (ReflectionDatabase->ReflectedTypes.find(Header.HeaderID) == ReflectionDatabase->ReflectedTypes.end())
@@ -200,10 +212,10 @@ namespace Lumina::Reflection
             return;
         }
 
-        FString FileID = Header.HeaderPath;
+        eastl::string FileID = Header.HeaderPath;
         
         size_t SlashPos = FileID.find_first_of("/\\");
-        if (SlashPos != FString::npos)
+        if (SlashPos != eastl::string::npos)
         {
             FileID = FileID.substr(SlashPos + 1);
         }
@@ -212,7 +224,7 @@ namespace Lumina::Reflection
         FileID = StringUtils::ReplaceAllOccurrences(FileID, "\\", "_");
         FileID = StringUtils::ReplaceAllOccurrences(FileID, ".", "_");
 
-        const TVector<FReflectedType*>& ReflectedTypes = ReflectionDatabase->ReflectedTypes.at(Header.HeaderID);
+        const eastl::vector<FReflectedType*>& ReflectedTypes = ReflectionDatabase->ReflectedTypes.at(Header.HeaderID);
 
 
         SS << "//*************************************************************************\n";
@@ -220,12 +232,14 @@ namespace Lumina::Reflection
         SS << "// This is an auto-generated file - DO NOT EDIT.\n";
         SS << "//*************************************************************************\n\n";
 
-        SS << "#include \"" << ReflectionDataPath.c_str() << "\"\n";
         SS << "#include \"" << Header.HeaderPath.c_str() << "\" \n";
         SS << "#include \"" << "../../../Lumina/Engine/Source/Runtime/Core/Object/Class.h" << "\" \n";
+        SS << "#include \"" << "Renderer/RHIIncl.h\" \n";
         SS << "\n\n\n";
-
+        
         bool bHasEnum = false;
+        bool bHasClass = false;
+        bool bHasParams = false;
         
         SS << "// Begin Cross-Module References\n";
         for (FReflectedType* Type : ReflectedTypes)
@@ -233,11 +247,12 @@ namespace Lumina::Reflection
             if (Type->Type == FReflectedType::EType::Enum)
             {
                 bHasEnum = true;
-                SS << "CEnum* Construct_CEnum_" << Type->DisplayName.c_str() << "();";
+                SS << "Lumina::CEnum* Construct_CEnum_" << Type->DisplayName.c_str() << "();";
             }
             else if (Type->Type == FReflectedType::EType::Class)
             {
-                SS << "CClass* Construct_CClass_" << Type->DisplayName.c_str() << "();";
+                bHasClass = true;
+                SS << "Lumina::CClass* Construct_CClass_" << Type->Namespace << "_" << Type->DisplayName.c_str() << "();";
             }
 
 
@@ -260,49 +275,64 @@ namespace Lumina::Reflection
                     FReflectedClass* Class = static_cast<FReflectedClass*>(Type);
                     
                     SS << "// Begin " << Type->DisplayName.c_str() << "\n";
-                    SS << "IMPLEMENT_CLASS(" << Type->DisplayName.c_str() << ")\n";
+                    SS << "IMPLEMENT_CLASS(" << Type->Namespace << ", " << Type->DisplayName.c_str() << ")\n";
                     Class->DefineConstructionStatics(SS);
 
                     for (const FReflectedProperty* Prop : Class->Props)
                     {
-                        SS << "\tstatic const FPropertyParams " << Prop->Name.c_str() << ";\n";
+                        SS << "\tstatic const Lumina::FPropertyParams " << Prop->Name.c_str() << ";\n";
                     }
                     SS << "\t//...\n\n";
                     
-                    SS << "\tstatic const FClassParams ClassParams;\n";
-                    SS << "\tstatic const FPropertyParams* const PropPointers[];\n";
+                    SS << "\tstatic const Lumina::FClassParams ClassParams;\n";
+                    if (!Class->Props.empty())
+                    {
+                        SS << "\tstatic const Lumina::FPropertyParams* const PropPointers[];\n";
+                    }
                     SS << "};\n\n";
 
-                    SS << "CClass* Construct_CClass_" << Type->DisplayName.c_str() << "()\n";
+                    SS << "Lumina::CClass* Construct_CClass_" << Type->Namespace << "_" << Type->DisplayName.c_str() << "()\n";
                     SS << "{\n";
-                    SS << "\tif (!Registration_Info_CClass_" << Type->DisplayName.c_str() << ".Singleton)\n";
+                    SS << "\tif (!Registration_Info_CClass_" << Type->Namespace << "_" << Type->DisplayName.c_str() << ".Singleton)\n";
                     SS << "\t{\n";
-                    SS << "\t\t ConstructCClass(&Registration_Info_CClass_" << Type->DisplayName.c_str() << ".Singleton, Construct_CClass_" << Type->DisplayName.c_str() << "_Statics::ClassParams);\n";
+                    SS << "\t\tLumina::ConstructCClass(&Registration_Info_CClass_" << Type->Namespace << "_" << Type->DisplayName.c_str() << ".Singleton, Construct_CClass_" << Type->Namespace << "_" << Type->DisplayName.c_str() << "_Statics::ClassParams);\n";
                     SS << "\t}\n";
-                    SS << "\treturn Registration_Info_CClass_" << Type->DisplayName.c_str() << ".Singleton;\n";
+                    SS << "\treturn Registration_Info_CClass_" << Type->Namespace << "_" << Type->DisplayName.c_str() << ".Singleton;\n";
                     SS << "}\n\n";
 
-                    for (const FReflectedProperty* Prop : Class->Props)
+                    if (!Class->Props.empty())
                     {
-                        SS << "const FPropertyParams Construct_CClass_" << Type->DisplayName.c_str() << "_Statics::" << Prop->Name.c_str() << " = ";
-                        Prop->AppendDefinition(SS);
-                    }
-
-                    SS << "\n";
-                    SS << "const FPropertyParams* const Construct_CClass_" << Type->DisplayName.c_str() << "_Statics::PropPointers[] = {\n";
+                        bHasParams = true;
+                        for (const FReflectedProperty* Prop : Class->Props)
+                        {
+                            SS << "const Lumina::FPropertyParams Construct_CClass_" << Type->Namespace << "_" << Type->DisplayName.c_str() << "_Statics::" << Prop->Name.c_str() << " = ";
+                            Prop->AppendDefinition(SS);
+                        }
+                        
+                        SS << "\n";
+                        SS << "const Lumina::FPropertyParams* const Construct_CClass_" << Type->Namespace << "_" << Type->DisplayName.c_str() << "_Statics::PropPointers[] = {\n";
                     
-                    for (const FReflectedProperty* Prop : Class->Props)
+                        for (const FReflectedProperty* Prop : Class->Props)
+                        {
+                            SS << "\t&Construct_CClass_" << Type->Namespace << "_" << Type->DisplayName.c_str() << "_Statics::" << Prop->Name.c_str() << ",\n";
+                        }
+                    
+                        SS << "};\n\n";
+                    }
+                    
+
+                    SS << "const Lumina::FClassParams Construct_CClass_" << Type->Namespace << "_" << Type->DisplayName.c_str() << "_Statics::ClassParams = {\n";
+                    SS << "\t&" << Type->Namespace << "::" << Type->DisplayName.c_str() << "::StaticClass,\n";
+                    if (bHasParams)
                     {
-                        SS << "\t&Construct_CClass_" << Type->DisplayName.c_str() << "_Statics::" << Prop->Name.c_str() << ",\n";
+                        SS << "\tConstruct_CClass_" << Type->Namespace << "_" << Type->DisplayName.c_str() << "_Statics::PropPointers,\n";
+                        SS << "\t(uint32)std::size(" << "Construct_CClass_" << Type->Namespace << "_" << Type->DisplayName.c_str() << "_Statics::PropPointers),\n";
                     }
-                    
-                    SS << "};\n\n";
-                    
-
-                    SS << "const FClassParams Construct_CClass_" << Type->DisplayName.c_str() << "_Statics::ClassParams = {\n";
-                    SS << "\t&" << Type->DisplayName.c_str() << "::StaticClass,\n";
-                    SS << "\tConstruct_CClass_" << Type->DisplayName.c_str() << "_Statics::PropPointers,\n";
-                    SS << "\t(uint32)std::size(" << "Construct_CClass_" << Type->DisplayName.c_str() << "_Statics::PropPointers),\n";
+                    else
+                    {
+                        SS << "\tnullptr,\n";
+                        SS << "\t0\n";
+                    }
                     SS << "};\n\n";
                     
                     
@@ -321,32 +351,32 @@ namespace Lumina::Reflection
 
                     FReflectedEnum* Enum = static_cast<FReflectedEnum*>(Type);
 
-                    SS << "static FEnumRegistrationInfo Registration_Info_CEnum_" << Type->DisplayName << ";\n\n";
+                    SS << "static Lumina::FEnumRegistrationInfo Registration_Info_CEnum_" << Type->DisplayName << ";\n\n";
 
                     SS << "struct Construct_CEnum_" << Type->DisplayName << "_Statics\n";
                     SS << "{\n";
 
-                    SS << "\tstatic constexpr FEnumeratorParam Enumerators[] = {\n";
+                    SS << "\tstatic constexpr Lumina::FEnumeratorParam Enumerators[] = {\n";
                     for (FReflectedEnum::FConstant Constant : Enum->Constants)
                     {
                         SS << "\t\t{ " << "\"" <<Type->DisplayName << "::" << Constant.Label << "\", " << Constant.Value << " },\n";
                     }
                     SS << "\t};\n";
 
-                    SS << "\tstatic const FEnumParams EnumParams;\n";
+                    SS << "\tstatic const Lumina::FEnumParams EnumParams;\n";
                     SS << "};\n";
 
-                    SS << "const FEnumParams Construct_CEnum_" << Type->DisplayName << "_Statics::EnumParams = {\n";
+                    SS << "const Lumina::FEnumParams Construct_CEnum_" << Type->DisplayName << "_Statics::EnumParams = {\n";
                     SS << "\t\"" << Type->DisplayName << "\",\n";
                     SS << "\t Construct_CEnum_" << Type->DisplayName << "_Statics::Enumerators,\n";
                     SS << "\tstd::size(Construct_CEnum_" << Type->DisplayName << "_Statics::Enumerators),\n";
                     SS << "};\n\n";
                     
-                    SS << "CEnum* Construct_CEnum_" << Type->DisplayName << "()\n";
+                    SS << "Lumina::CEnum* Construct_CEnum_" << Type->DisplayName << "()\n";
                     SS << "{\n";
                     SS << "\tif(!Registration_Info_CEnum_" << Type->DisplayName << ".Singleton)" << "\n";
                     SS << "\t{\n";
-                    SS << "\t\tConstructCEnum(&Registration_Info_CEnum_" << Type->DisplayName << ".Singleton, Construct_CEnum_" << Type->DisplayName << "_Statics::EnumParams);" << "\n";
+                    SS << "\t\tLumina::ConstructCEnum(&Registration_Info_CEnum_" << Type->DisplayName << ".Singleton, Construct_CEnum_" << Type->DisplayName << "_Statics::EnumParams);" << "\n";
                     SS << "\t}\n";
                     SS << "\treturn Registration_Info_CEnum_" << Type->DisplayName << ".Singleton;" << "\n";
                     SS << "}\n";
@@ -370,32 +400,33 @@ namespace Lumina::Reflection
 
         SS << "struct Registration_" << FileID.c_str() << "\n";
         SS << "{\n";
-        SS << "\tstatic constexpr FClassRegisterCompiledInInfo ClassInfo" << "[] = {\n";
+        SS << "\tstatic constexpr Lumina::FClassRegisterCompiledInInfo ClassInfo" << "[] = {\n";
 
         for (FReflectedType* Type : ReflectedTypes)
         {
             if (Type->Type == FReflectedType::EType::Class)
             {
-                SS << "\t{ " << "Construct_CClass_" << Type->DisplayName.c_str() << ", TEXT(\"" << Type->DisplayName.c_str() << "\") },\n";
+                SS << "\t{ " << "Construct_CClass_" << Type->Namespace << "_" << Type->DisplayName.c_str() << ", TEXT(\"" << Type->DisplayName.c_str() << "\") },\n";
             }
         }
         SS << "\t};\n";
 
-        SS << "\t static constexpr FEnumRegisterCompiledInInfo EnumInfo[] = {\n";
-
-        for (FReflectedType* Type : ReflectedTypes)
+        if (bHasEnum)
         {
-            if (Type->Type == FReflectedType::EType::Enum)
+            SS << "\tstatic constexpr Lumina::FEnumRegisterCompiledInInfo EnumInfo[] = {\n";
+            for (FReflectedType* Type : ReflectedTypes)
             {
-                SS << "\t{ " << "Construct_CEnum_" << Type->DisplayName.c_str() << ", TEXT(\"" << Type->DisplayName.c_str() << "\") },\n";
+                if (Type->Type == FReflectedType::EType::Enum)
+                {
+                    SS << "\t{ " << "Construct_CEnum_" << Type->DisplayName.c_str() << ", TEXT(\"" << Type->DisplayName.c_str() << "\") },\n";
+                }
             }
+            SS << "\t};\n";
         }
-        SS << "\t};\n";
-
 
         SS << "};\n\n";
 
-        SS << "static FRegisterCompiledInInfo Register_Static_Initializer" << "(\n";
+        SS << "static Lumina::FRegisterCompiledInInfo Register_Static_Initializer" << "(\n";
 
         if (bHasEnum)
         {
@@ -404,8 +435,8 @@ namespace Lumina::Reflection
         }
         else
         {
-            SS << "nullptr,\n";
-            SS << "0,\n";
+            SS << "\tnullptr,\n";
+            SS << "\t0,\n";
         }
         
         SS << "\tRegistration_" << FileID.c_str() << "::ClassInfo" << ",\n";
@@ -416,4 +447,6 @@ namespace Lumina::Reflection
         
     }
 
+    
+    
 }

@@ -1,7 +1,5 @@
 ﻿#pragma once
 #include "ProjectSolution.h"
-#include "Containers/Array.h"
-#include "Containers/String.h"
 #include "ReflectionCore/ReflectedProject.h"
 
 namespace Lumina::Reflection
@@ -12,7 +10,7 @@ namespace Lumina::Reflection
     {
     public:
 
-        FTypeReflector(const FString& SolutionPath);
+        FTypeReflector(const eastl::string& SolutionPath);
 
         /** Gathers all reflectable projects within a solution. */
         bool ParseSolution();
@@ -28,7 +26,7 @@ namespace Lumina::Reflection
         bool WriteGeneratedFiles(const FClangParser& Parser);
         
         FProjectSolution Solution;
-        TVector<FReflectedProject> Projects;
+        eastl::vector<FReflectedProject> Projects;
         
     };
 }

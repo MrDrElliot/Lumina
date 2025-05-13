@@ -22,7 +22,7 @@ namespace Lumina
     {
     public:
 
-        DECLARE_CLASS(CField, CObject, LUMINA_API)
+        DECLARE_CLASS(Lumina, CField, CObject, TEXT("Script/Engine"), LUMINA_API)
         DEFINE_DEFAULT_CONSTRUCTOR_CALL(CField)
         
         CField() = default;
@@ -32,8 +32,8 @@ namespace Lumina
             :CObject(NoInit)
         {}
         
-        CField(FName InName, uint32 InSize, uint32 InAlignment, EObjectFlags InFlags)
-            : CObject(nullptr, InFlags, InName)
+        CField(const TCHAR* Package, FName InName, uint32 InSize, uint32 InAlignment, EObjectFlags InFlags)
+            : CObject(nullptr, InFlags, Package, InName)
             , Size(InSize)
             , Alignment(InAlignment)
         {}
@@ -54,7 +54,7 @@ namespace Lumina
     {
     public:
         
-        DECLARE_CLASS(CEnum, CField, LUMINA_API)
+        DECLARE_CLASS(Lumina, CEnum, CField, TEXT("Script/Engine"), LUMINA_API)
         DEFINE_DEFAULT_CONSTRUCTOR_CALL(CEnum)
 
         CEnum()
@@ -88,14 +88,14 @@ namespace Lumina
     class CStruct : public CField
     {
 
-        DECLARE_CLASS(CStruct, CField, LUMINA_API)
+        DECLARE_CLASS(Lumina, CStruct, CField, TEXT("Script/Engine"), LUMINA_API)
         DEFINE_DEFAULT_CONSTRUCTOR_CALL(CStruct)
 
         CStruct() = default;
 
         // Begin Internal Use Only Constructors 
-        CStruct(FName InName, uint32 InSize, uint32 InAlignment, EObjectFlags InFlags)
-            : CField(InName, InSize, InAlignment, InFlags)
+        CStruct(const TCHAR* Package, FName InName, uint32 InSize, uint32 InAlignment, EObjectFlags InFlags)
+            : CField(Package, InName, InSize, InAlignment, InFlags)
         {}
         //~ End Internal Use Only Constructors
 
@@ -144,7 +144,7 @@ namespace Lumina
     {
     public:
 
-        DECLARE_CLASS(CClass, CStruct, LUMINA_API)
+        DECLARE_CLASS(Lumina, CClass, CStruct, TEXT("Script/Engine"), LUMINA_API)
         DEFINE_DEFAULT_CONSTRUCTOR_CALL(CClass)
 
         typedef void (*ClassConstructorType) (const FObjectInitializer&);
@@ -154,8 +154,8 @@ namespace Lumina
         CClass() = default;
 
         // Begin Internal Use Only Constructors 
-        CClass(FName InName, uint32 InSize, uint32 InAlignment, EObjectFlags InFlags, ClassConstructorType InConstructor)
-            : CStruct(InName, InSize, InAlignment, InFlags)
+        CClass(const TCHAR* Package, FName InName, uint32 InSize, uint32 InAlignment, EObjectFlags InFlags, ClassConstructorType InConstructor)
+            : CStruct(Package, InName, InSize, InAlignment, InFlags)
             , ClassConstructor(InConstructor)
         {}
         //~ End Internal Use Only Constructors
@@ -192,7 +192,7 @@ namespace Lumina
         T::__DefaultConstructor(IO);
     }
 
-    LUMINA_API void AllocateStaticClass(const TCHAR* Name, CClass** OutClass, uint32 Size, uint32 Alignment, CClass* (*SuperClassFn)(), CClass::ClassConstructorType InClassConstructor);
+    LUMINA_API void AllocateStaticClass(const TCHAR* Package, const TCHAR* Name, CClass** OutClass, uint32 Size, uint32 Alignment, CClass* (*SuperClassFn)(), CClass::ClassConstructorType InClassConstructor);
 
 
 }

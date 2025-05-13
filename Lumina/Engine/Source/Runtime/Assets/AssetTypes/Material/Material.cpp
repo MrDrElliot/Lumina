@@ -1,9 +1,8 @@
-﻿#include "Material.h"
+﻿
+#include "Material.h"
+#include "Renderer/RHIIncl.h"
 
 namespace Lumina
 {
-    void AMaterial::Serialize(FArchive& Ar)
-    {
-        Ar << GraphData;
-    }
+    
 }

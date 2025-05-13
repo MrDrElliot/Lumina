@@ -3,61 +3,46 @@
 #include <filesystem>
 #include <fstream>
 
-#include "Log/Log.h"
 #include "Reflector/ReflectionConfig.h"
 
 namespace Lumina::Reflection
 {
     
-    FReflectedHeader::FReflectedHeader(const FString& Path)
+    FReflectedHeader::FReflectedHeader(const eastl::string& Path)
         : HeaderPath(Path)
     {
-        FString LowercasePath = HeaderPath;
+        eastl::string LowercasePath = HeaderPath;
         LowercasePath.make_lower();
         HeaderID = LowercasePath.c_str();
 
         std::filesystem::path FilesystemPath = Path.c_str();
         FileName = FilesystemPath.stem().string().c_str();
     }
-
     bool FReflectedHeader::Parse()
     {
         std::ifstream HeaderFile(HeaderPath.c_str(), std::ios::in | std::ios::binary | std::ios::ate);
         if (!HeaderFile.is_open())
-        {
-            LOG_ERROR("Failed to parse header file: {0}", HeaderPath);
             return false;
-        }
 
-        if (HeaderFile.tellg() == 0)
-        {
-            HeaderFile.close();
+        std::streamsize FileSize = HeaderFile.tellg();
+        if (FileSize <= 0)
             return false;
-        }
-        
+
         HeaderFile.seekg(0, std::ios::beg);
-        {
-            std::string FileLine;
-            while (std::getline(HeaderFile, FileLine))
-            {
-                Contents.emplace_back(FileLine.c_str());
-            }
-        
-            HeaderFile.close();
-        }
+        eastl::string FileData(FileSize, '\0');
+        if (!HeaderFile.read(&FileData[0], FileSize))
+            return false;
 
-        for (const FString& FileLine : Contents)
+        // Search for any of the macro strings directly in the buffer
+        for (uint32_t i = 0; i < (uint32_t)EReflectionMacro::Size; ++i)
         {
-            for (uint32 i = 0; i < (uint32)EReflectionMacro::Size; ++i)
+            if (FileData.find(ReflectionEnumToString(EReflectionMacro(i))) != eastl::string::npos)
             {
-                eastl_size_t MacroIndex = FileLine.find(ReflectionEnumToString(EReflectionMacro(i)));
-                if (MacroIndex != FString::npos)
-                {
-                    return true;
-                }   
+                return true;
             }
         }
 
         return false;
     }
+
 }

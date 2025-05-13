@@ -64,7 +64,7 @@ namespace Lumina
 	class LUMINA_API TRefCountPtr
 	{
 		typedef ReferencedType* ReferenceType;
-
+	
 	public:
 
 		FORCEINLINE TRefCountPtr():

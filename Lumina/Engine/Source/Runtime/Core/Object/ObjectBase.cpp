@@ -43,13 +43,15 @@ namespace Lumina
         FObjectInitializer* Initializer = FObjectInitializer::Get();
         NamePrivate = Initializer->Params.Name;
         ClassPrivate = const_cast<CClass*>(Initializer->Params.Class);
+        PackagePrivate = Initializer->Params.Package;
 
         ObjectNameHash.insert_or_assign(NamePrivate, this);
     }
 
     CObjectBase::CObjectBase(ENoInit)
-       : ObjectFlags()
-       , InternalIndex(0)
+        : ObjectFlags()
+        , PackagePrivate(nullptr)
+        , InternalIndex(0)
     {
         //.. Internal use zero-init constructor.
     }
@@ -57,14 +59,16 @@ namespace Lumina
     CObjectBase::CObjectBase(EObjectFlags InFlags)
         : ObjectFlags(InFlags)
         , ClassPrivate(nullptr)
+        , PackagePrivate(nullptr)
         , NamePrivate("")
         , InternalIndex(0)
     {
     }
 
-    CObjectBase::CObjectBase(CClass* InClass, EObjectFlags InFlags, FName InName)
+    CObjectBase::CObjectBase(CClass* InClass, EObjectFlags InFlags, const TCHAR* Package, FName InName)
         : ObjectFlags(InFlags)
         , ClassPrivate(InClass)
+        , PackagePrivate(Package)
         , NamePrivate(InName)
         , InternalIndex(0)
     {
@@ -113,21 +117,20 @@ namespace Lumina
         ClassPrivate = InClass;
     }
 
-    void CObjectBase::AddObject(FName Name, int32 InternalIndex)
+    void CObjectBase::AddObject(FName Name, int32 InInternalIndex)
     {
         
     }
 
     void CObjectBase::GetPath(FString& OutPath)
     {
-        OutPath = NamePrivate.ToString();
+        OutPath = "";
     }
 
     FString CObjectBase::GetPathName() const
     {
-        return NamePrivate.ToString();
+        return "";
     }
-
 
     //-----------------------------------------------------------------------------------------------
     
@@ -171,7 +174,7 @@ namespace Lumina
         {
             // Remove here so it doesn't happen twice.
             Pending.erase(Pending.begin() + Index);
-            Object->FinishRegister(CClass::StaticClass(), TEXT("Test"));
+            Object->FinishRegister(CClass::StaticClass(), TEXT(""));
             
         }
     }
@@ -198,7 +201,7 @@ namespace Lumina
     }
     
 
-    void RegisterCompiledInInfo(CClass* (*RegisterFn)(), const TCHAR* Name)
+    void RegisterCompiledInInfo(CClass* (*RegisterFn)(), const TCHAR* Package, const TCHAR* Name)
     {
         FClassDeferredRegistry::Get().AddRegistration(RegisterFn);
     }
@@ -217,7 +220,7 @@ namespace Lumina
     {
         for (const FClassRegisterCompiledInInfo* It = Info; It != Info + NumClassInfo; ++It)
         {
-            RegisterCompiledInInfo(It->RegisterFn, Info->Name);
+            RegisterCompiledInInfo(It->RegisterFn, Info->Package, Info->Name);
         }
     }
 
@@ -225,7 +228,7 @@ namespace Lumina
     {
         for (const FClassRegisterCompiledInInfo* It = ClassInfo; It != ClassInfo + NumClassInfo; ++It)
         {
-            RegisterCompiledInInfo(It->RegisterFn, ClassInfo->Name);
+            RegisterCompiledInInfo(It->RegisterFn, ClassInfo->Package, ClassInfo->Name);
         }
 
         for (const FEnumRegisterCompiledInInfo* It = EnumInfo; It != EnumInfo + NumEnumInfo; ++It)

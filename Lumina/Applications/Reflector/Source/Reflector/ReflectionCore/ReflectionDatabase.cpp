@@ -1,7 +1,5 @@
 ﻿#include "ReflectionDatabase.h"
 
-#include "Memory/Memory.h"
-
 namespace Lumina::Reflection
 {
     FReflectionDatabase::~FReflectionDatabase()
@@ -10,7 +8,7 @@ namespace Lumina::Reflection
         {
             for (FReflectedType* Type : Pair.second)
             {
-                FMemory::Delete(Type);
+                delete Type;
             }
         }
 
@@ -24,14 +22,12 @@ namespace Lumina::Reflection
 
     void FReflectionDatabase::AddReflectedType(FReflectedType* Type)
     {
-        if(Type == nullptr || !Type->ID.IsValid())
+        if(Type == nullptr || Type->ID.empty())
         {
-            LOG_WARN("Attempted to register a null type");
             return;
         }
         
-        TVector<FReflectedType*>* TypeVector = &ReflectedTypes[Type->HeaderID];
-        Assert(TypeVector != nullptr);
+        eastl::vector<FReflectedType*>* TypeVector = &ReflectedTypes[Type->HeaderID];
         TypeVector->push_back(Type);
         
         TypeHashMap.insert_or_assign(Type->ID, Type);

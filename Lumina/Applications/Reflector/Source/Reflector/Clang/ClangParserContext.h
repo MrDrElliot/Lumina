@@ -1,5 +1,7 @@
 ﻿#pragma once
-#include "Containers/String.h"
+#include "EASTL/hash_map.h"
+#include "EASTL/queue.h"
+#include "Engine/Source/Runtime/Platform/GenericPlatform.h"
 #include "Reflector/ReflectionCore/ReflectionMacro.h"
 #include "Reflector/TypeReflector.h"
 #include "Reflector/ReflectionCore/ReflectionDatabase.h"
@@ -20,14 +22,14 @@ namespace Lumina::Reflection
 
         ~FClangParserContext();
         
-        void AddReflectedMacro(const FReflectionMacro& Macro);
-        void AddGeneratedBodyMacro(const FReflectionMacro& Macro);
+        void AddReflectedMacro(FReflectionMacro&& Macro);
+        void AddGeneratedBodyMacro(FReflectionMacro&& Macro);
         
-        bool TryFindMacroForCursor(FName HeaderID, const CXCursor& Cursor, FReflectionMacro& Macro);
+        bool TryFindMacroForCursor(eastl::string HeaderID, const CXCursor& Cursor, FReflectionMacro& Macro);
 
-        bool TryFindGeneratedBodyMacro(FName HeaderID, const CXCursor& Cursor, FReflectionMacro& Macro);
+        bool TryFindGeneratedBodyMacro(eastl::string HeaderID, const CXCursor& Cursor, FReflectionMacro& Macro);
 
-        void PushNamespace(const FString& Namespace);
+        void PushNamespace(const eastl::string& Namespace);
         void PopNamespace();
 
         template<typename T>
@@ -39,16 +41,16 @@ namespace Lumina::Reflection
 
         FReflectionDatabase                         ReflectionDatabase;
         
-        FString                                     ErrorMessage;
+        eastl::string                                     ErrorMessage;
         FProjectSolution                            Solution;
         FReflectedProject                           Project;
         FReflectedHeader                            ReflectedHeader;
         
-        THashMap<FName, TVector<FReflectionMacro>>  ReflectionMacros;
-        THashMap<FName, TQueue<FReflectionMacro>>  GeneratedBodyMacros;
+        eastl::hash_map<uint64, eastl::vector<FReflectionMacro>>  ReflectionMacros;
+        eastl::hash_map<uint64, eastl::queue<FReflectionMacro>>   GeneratedBodyMacros;
         
-        TVector<FString>                            NamespaceStack;
-        FString                                     CurrentNamespace;
+        eastl::vector<eastl::string>                            NamespaceStack;
+        eastl::string                                     CurrentNamespace;
         
     };
 

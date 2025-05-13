@@ -7,11 +7,15 @@ project "Lumina"
     
     targetdir ("%{wks.location}/Binaries/" .. outputdir)
     objdir ("%{wks.location}/Intermediates/Obj/" .. outputdir .. "/%{prj.name}")    
-		
+	
+    	
 	files
 	{
 		"Engine/Source/**.h",
 		"Engine/Source/**.cpp",
+		
+		"%{wks.location}/Intermediates/Reflection/%{prj.name}/**.h",
+		"%{wks.location}/Intermediates/Reflection/%{prj.name}/**.cpp",
 		
 		"Engine/ThirdParty/stb_image/**.h",
 
@@ -65,6 +69,7 @@ project "Lumina"
 		"Engine/Source",
 		"Engine/Source/Runtime",
 		"Engine/ThirdParty/",
+		"%{wks.location}/Intermediates/Reflection/%{prj.name}",
 		
 	    reflection_directory();
 		includedependencies();

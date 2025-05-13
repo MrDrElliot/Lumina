@@ -11,7 +11,7 @@ namespace Lumina
     class CObject;
     
     /**
-     * Base class for all objects in Lumina, registered using DECLARE_CLASS or DECLARE_CLASS_ABSTRACT.
+     * Base class for all objects in Lumina.
      * 
      * ## Overview:
      * - "C" Prefix is standard it implies "Class", all objects derived from CObject should be prefixed with "C".
@@ -20,7 +20,7 @@ namespace Lumina
      * - Only default-generated constructors are allowed. (No params).
      */
 
-    LUMINA_API CClass* Construct_CClass_CObject();
+    LUMINA_API CClass* Construct_CClass_Lumina_CObject();
 
     class CObject : public CObjectBase
     {
@@ -28,7 +28,7 @@ namespace Lumina
 
         friend CObject* StaticAllocateObject();
 
-        DECLARE_CLASS(CObject, CObject, LUMINA_API)
+        DECLARE_CLASS(Lumina, CObject, CObject, TEXT("Script/Engine"), LUMINA_API)
         DEFINE_DEFAULT_CONSTRUCTOR_CALL(CObject)
 
         LUMINA_API CObject();
@@ -41,8 +41,8 @@ namespace Lumina
         }
 
         /** Internal constructor */
-        LUMINA_API CObject(CClass* InClass, EObjectFlags InFlags, FName InName)
-            :CObjectBase(InClass, InFlags, InName)
+        LUMINA_API CObject(CClass* InClass, EObjectFlags InFlags, const TCHAR* Package, FName InName)
+            :CObjectBase(InClass, InFlags, Package, InName)
         {
         }
 

@@ -1,27 +1,22 @@
 #pragma once
 
 #include "Assets/Asset.h"
+#include "Core/Object/Object.h"
 #include "Memory/RefCounted.h"
+#include "Texture.generated.h"
 
 
 namespace Lumina
 {
 
-    class ATexture : public IAsset
+    LUM_CLASS()
+    class CTexture : public CObject
     {
+        GENERATED_BODY()
+        
     public:
-        
-        ATexture(const FAssetPath& InPath)
-            : IAsset(InPath)
-        {}
 
-        DECLARE_ASSET("Texture", Texture, 1)
         
-        void Serialize(FArchive& Ar) override;
-        void PostLoad() override;
-        
-    
-    private:
         
  
     };

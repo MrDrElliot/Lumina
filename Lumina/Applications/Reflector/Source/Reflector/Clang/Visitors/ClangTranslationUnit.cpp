@@ -3,26 +3,40 @@
 #include "ClangVisitor_Structure.h"
 #include "ClangVisitor_Enum.h"
 #include "ClangVisitor_Macro.h"
-#include "Containers/String.h"
-#include "Paths/Paths.h"
 #include "Reflector/Clang/ClangParserContext.h"
 #include "Reflector/Clang/Utils.h"
 
 namespace Lumina::Reflection
 {
 
+    eastl::hash_map<eastl::string, std::filesystem::path> CanonicalPathCache;
+    
     CXChildVisitResult VisitTranslationUnit(CXCursor Cursor, CXCursor Parent, CXClientData ClientData)
     {
         FClangParserContext* ParserContext = (FClangParserContext*)ClientData;
         CXCursorKind CursorKind = clang_getCursorKind(Cursor);
-        FString CursorName = ClangUtils::GetCursorDisplayName(Cursor);
-        FString ParentCursorName = ClangUtils::GetCursorDisplayName(Parent);
+        eastl::string CursorName = ClangUtils::GetCursorDisplayName(Cursor);
+        eastl::string ParentCursorName = ClangUtils::GetCursorDisplayName(Parent);
 
 
-        // Only parser valid headers under the solution directory.
-        std::filesystem::path HeaderPath = ClangUtils::GetHeaderPathForCursor(Cursor);
-        std::filesystem::path RelativePath = std::filesystem::relative(HeaderPath, ParserContext->ReflectedHeader.HeaderPath.c_str());
-        if (!std::filesystem::exists(HeaderPath) || (RelativePath.empty() || RelativePath.string()[0] != '.'))
+        // Get the source location of the cursor
+        CXSourceLocation Location = clang_getCursorLocation(Cursor);
+        CXFile CursorFile;
+        unsigned Line, Column, Offset;
+        clang_getSpellingLocation(Location, &CursorFile, &Line, &Column, &Offset);
+
+        if (!CursorFile)
+        {
+            return CXChildVisit_Continue;
+        }
+
+        // Get file name string from CXFile
+        CXString CursorFileNameCX = clang_getFileName(CursorFile);
+        const char* FileNameCStr = clang_getCString(CursorFileNameCX);
+        eastl::string FileNameStr = FileNameCStr ? FileNameCStr : "";
+        clang_disposeString(CursorFileNameCX);
+
+        if (ParserContext->ReflectedHeader.HeaderPath != FileNameStr)
         {
             return CXChildVisit_Continue;
         }
