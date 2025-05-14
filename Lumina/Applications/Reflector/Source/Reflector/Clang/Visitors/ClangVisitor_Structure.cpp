@@ -175,7 +175,6 @@ namespace Lumina::Reflection::Visitor
                 CXType FieldType = clang_getCursorType(Cursor);
                 clang::QualType FieldQualType = ClangUtils::GetQualType(FieldType);
                 eastl::string TypeSpelling = ClangUtils::GetString(clang_getTypeSpelling(FieldType));
-                FieldQualType-
                 EPropertyTypeFlags PropFlags = GetCoreTypeFromName(TypeSpelling.c_str());
                 CreatePropertyForType(Class, PropFlags, CursorName);
 

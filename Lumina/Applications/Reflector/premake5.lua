@@ -28,14 +28,12 @@ project "Reflector"
 	{
 		"%{LuminaEngineDirectory}/External/LLVM/Lib",
 		"%{LuminaEngineDirectory}/External/LLVM/bin",
-		"$(VULKAN_SDK)/lib/"
 	}
 
 	links
 	{
 	  	"EA",
 	  	
-	  	"vulkan-1.lib",
 	  	"clangBasic.lib",
 	  	"clangLex.lib",
 	  	"clangAST.lib",
