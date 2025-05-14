@@ -22,7 +22,7 @@ namespace Lumina::Reflection
 
 
         eastl::vector<FReflectedProject>                                    ReflectedProjects;
-        eastl::hash_map<eastl::string, eastl::vector<FReflectedType*>>      ReflectedTypes;
+        eastl::hash_map<uint64_t, eastl::vector<FReflectedType*>>           ReflectedTypes;
         eastl::hash_map<eastl::string, FReflectedType*>                     TypeHashMap;
         
     };

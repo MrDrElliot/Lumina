@@ -10,15 +10,6 @@ namespace Lumina
     class CClass;
     class CObject;
     
-    /**
-     * Base class for all objects in Lumina.
-     * 
-     * ## Overview:
-     * - "C" Prefix is standard it implies "Class", all objects derived from CObject should be prefixed with "C".
-     * - All objects are tracked in a global object vector.
-     * - CObjects **must** have a default constructor; constructor properties are not supported.
-     * - Only default-generated constructors are allowed. (No params).
-     */
 
     LUMINA_API CClass* Construct_CClass_Lumina_CObject();
 

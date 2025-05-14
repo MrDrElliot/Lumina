@@ -1,5 +1,10 @@
 ﻿#include "ReflectionDatabase.h"
 
+#include <iostream>
+
+#include "xxhash.h"
+#include "Reflector/Clang/Utils.h"
+
 namespace Lumina::Reflection
 {
     FReflectionDatabase::~FReflectionDatabase()
@@ -26,8 +31,9 @@ namespace Lumina::Reflection
         {
             return;
         }
-        
-        eastl::vector<FReflectedType*>* TypeVector = &ReflectedTypes[Type->HeaderID];
+
+        uint64_t Hash = ClangUtils::HashString(Type->HeaderID);        
+        eastl::vector<FReflectedType*>* TypeVector = &ReflectedTypes[Hash];
         TypeVector->push_back(Type);
         
         TypeHashMap.insert_or_assign(Type->ID, Type);

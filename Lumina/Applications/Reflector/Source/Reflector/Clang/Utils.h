@@ -4,6 +4,8 @@
 #include <clang/AST/Ast.h>
 #include <clang-c/Index.h>
 
+#include "xxhash.h"
+
 
 namespace Lumina::ClangUtils
 {
@@ -157,5 +159,10 @@ namespace Lumina::ClangUtils
         }
 
         return HeaderFilePath;
+    }
+
+    inline uint64_t HashString(const eastl::string& str)
+    {
+        return XXH64(str.data(), strlen(str.c_str()), 0);
     }
 }

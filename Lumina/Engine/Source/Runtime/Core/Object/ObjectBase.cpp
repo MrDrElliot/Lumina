@@ -12,6 +12,7 @@ namespace Lumina
 
     TVector<CObjectBase*> PendingDeletes;
     THashMap<FName, CObjectBase*> ObjectNameHash;
+    TFixedVector<CObjectBase*, 2024> GObjectVector;
 
     struct FPendingRegistrantInfo
     {
@@ -46,6 +47,7 @@ namespace Lumina
         PackagePrivate = Initializer->Params.Package;
 
         ObjectNameHash.insert_or_assign(NamePrivate, this);
+        GObjectVector.push_back(this);
     }
 
     CObjectBase::CObjectBase(ENoInit)
@@ -73,6 +75,7 @@ namespace Lumina
         , InternalIndex(0)
     {
         ObjectNameHash.insert_or_assign(NamePrivate, this);
+        GObjectVector.push_back(this);
     }
 
     uint32 CObjectBase::AddRef() const

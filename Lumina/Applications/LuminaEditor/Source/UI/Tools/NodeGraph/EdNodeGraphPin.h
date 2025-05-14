@@ -5,11 +5,14 @@
 #include "Containers/String.h"
 #include "Core/Math/Color.h"
 #include "Core/Object/Object.h"
+#include "EdNodeGraphPin.generated.h"
 
 namespace Lumina
 {
+    LUM_CLASS()
     class CEdNodeGraphPin : public CObject
     {
+        GENERATED_BODY()
     public:
 
         friend class CEdNodeGraph;

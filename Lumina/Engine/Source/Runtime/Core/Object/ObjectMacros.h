@@ -95,12 +95,12 @@ public: \
 
 #define IMPLEMENT_CLASS(TNamespace, TClass) \
     Lumina::FClassRegistrationInfo CONCAT3(Registration_Info_CClass_, TNamespace, _##TClass); \
-    NO_API Lumina::CClass* ##TNamespace::##TClass::GetPrivateStaticClass() \
+    NO_API Lumina::CClass* TNamespace::TClass::GetPrivateStaticClass() \
     { \
         if (CONCAT3(Registration_Info_CClass_, TNamespace, _##TClass).Singleton == nullptr) \
         { \
             Lumina::AllocateStaticClass( \
-                TClass::StaticPackage(), \
+                TNamespace::TClass::StaticPackage(), \
                 TEXT(#TClass), \
                 &CONCAT3(Registration_Info_CClass_, TNamespace, _##TClass).Singleton, \
                 sizeof(TNamespace::TClass), \
@@ -114,20 +114,20 @@ public: \
 
 /** Intrinsic classic auto register. */
 #define IMPLEMENT_INTRINSIC_CLASS(TClass, TBaseClass, TAPI) \
-    TAPI CClass* Construct_CClass_Lumina_##TClass(); \
-    extern FClassRegistrationInfo Registration_Info_CClass_Lumina_##TClass; \
+    TAPI Lumina::CClass* Construct_CClass_Lumina_##TClass(); \
+    extern Lumina::FClassRegistrationInfo Registration_Info_CClass_Lumina_##TClass; \
     struct Construct_CClass_Lumina_##TClass##_Statics \
     { \
-        static CClass* Construct() \
+        static Lumina::CClass* Construct() \
         { \
-            extern TAPI CClass* Construct_CClass_Lumina_##TBaseClass(); \
-            CClass* SuperClass = Construct_CClass_Lumina_##TBaseClass(); \
-            CClass* Class = TClass::StaticClass(); \
-            CObjectForceRegistration(Class); \
+            extern TAPI Lumina::CClass* Construct_CClass_Lumina_##TBaseClass(); \
+            Lumina::CClass* SuperClass = Construct_CClass_Lumina_##TBaseClass(); \
+            Lumina::CClass* Class = Lumina::TClass::StaticClass(); \
+            Lumina::CObjectForceRegistration(Class); \
             return Class; \
         } \
     }; \
-    CClass* Construct_CClass_Lumina_##TClass() \
+    Lumina::CClass* Construct_CClass_Lumina_##TClass() \
     { \
         if(!Registration_Info_CClass_Lumina_##TClass.Singleton) \
         { \
@@ -136,7 +136,7 @@ public: \
         return Registration_Info_CClass_Lumina_##TClass.Singleton; \
     } \
     IMPLEMENT_CLASS(Lumina, TClass) \
-    static FRegisterCompiledInInfo AutoInitialize_##TClass(&Construct_CClass_Lumina_##TClass, TClass::StaticPackage(), TEXT(#TClass));
+    static Lumina::FRegisterCompiledInInfo AutoInitialize_##TClass(&Construct_CClass_Lumina_##TClass, Lumina::TClass::StaticPackage(), TEXT(#TClass));
 
 
 namespace LuminaAsserts_Private

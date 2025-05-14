@@ -5,7 +5,6 @@
 #include "UI/Tools/NodeGraph/Material/MaterialCompiler.h"
 #include "UI/Tools/NodeGraph/Material/MaterialNodeGraph.h"
 
-
 namespace Lumina
 {
     const char* MaterialGraphName           = "Material Graph";
@@ -47,12 +46,6 @@ namespace Lumina
 
     void FMaterialEditorTool::OnAssetLoadFinished()
     {
-        LOG_DEBUG("Asset Load Finished");
-
-        TVector<uint8> Data = Asset->GetAssetPtr<AMaterial>()->GraphData;
-        FMemoryReader Reader(Data);
-        
-        NodeGraph->Serialize(Reader);
     }
 
 
@@ -80,15 +73,6 @@ namespace Lumina
                 FString Tree = Compiler.BuildTree();
                 CompilationResult.CompilationLog = "Material Compiled Successfully! Generated GLSL: \n \n \n" + Tree;
                 CompilationResult.bIsError = false;
-
-                AMaterial* Material = Asset->GetAssetPtr<AMaterial>();
-                
-                TVector<uint8> GraphData;
-                FMemoryWriter Writer(GraphData);
-                NodeGraph->Serialize(Writer);
-                
-                Material->GraphData = eastl::move(GraphData);
-                Material->Save();
                 
             }
         }

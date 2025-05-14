@@ -33,9 +33,7 @@ public:
 
 	LUM_PROPERTY()
 	uint32 Value32;
-
-	LUM_PROPERTY()
-	Lumina::TObjectPtr<CTestClass> TestObject;
+	
 };
 
 LUM_CLASS()

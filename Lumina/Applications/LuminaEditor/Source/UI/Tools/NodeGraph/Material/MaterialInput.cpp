@@ -3,8 +3,6 @@
 
 namespace Lumina
 {
-    IMPLEMENT_CLASS(CMaterialInput)
-
     void CMaterialInput::DrawPin()
     {
         if (ShouldDrawEditor())

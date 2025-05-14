@@ -14,6 +14,7 @@ namespace Lumina
     class CClass;
 
     extern LUMINA_API TVector<CObjectBase*> PendingDeletes;
+    extern LUMINA_API TFixedVector<CObjectBase*, 2024> GObjectVector;
     
     /** Low level implementation of a CObject */
     class CObjectBase : public IRefCountedObject

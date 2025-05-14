@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <iostream>
 
+#include "Reflector/Clang/Utils.h"
 #include "Reflector/ReflectionCore/ReflectedHeader.h"
 #include "Reflector/ReflectionCore/ReflectedProject.h"
 #include "Reflector/Types/Properties/ReflectedProperty.h"
@@ -110,12 +111,13 @@ namespace Lumina::Reflection
 
         SS << "\n\n";
 
-        if (ReflectionDatabase->ReflectedTypes.find(Header.HeaderID) == ReflectionDatabase->ReflectedTypes.end())
+        uint64_t Hash = ClangUtils::HashString(Header.HeaderID);        
+        if (ReflectionDatabase->ReflectedTypes.find(Hash) == ReflectionDatabase->ReflectedTypes.end())
         {
             return;
         }
         
-        const eastl::vector<FReflectedType*>& ReflectedTypes = ReflectionDatabase->ReflectedTypes.at(Header.HeaderID);
+        const eastl::vector<FReflectedType*>& ReflectedTypes = ReflectionDatabase->ReflectedTypes.at(Hash);
 
         eastl::string FileID = Header.HeaderPath;
         
@@ -206,8 +208,8 @@ namespace Lumina::Reflection
     {
         eastl::string ReflectionDataPath = Solution.GetParentPath() + R"(\Intermediates\Reflection\)" + CurrentProject.Name + R"(\)" + Header.FileName + ".generated.h";
 
-
-        if (ReflectionDatabase->ReflectedTypes.find(Header.HeaderID) == ReflectionDatabase->ReflectedTypes.end())
+        uint64_t Hash = ClangUtils::HashString(Header.HeaderID);        
+        if (ReflectionDatabase->ReflectedTypes.find(Hash) == ReflectionDatabase->ReflectedTypes.end())
         {
             return;
         }
@@ -224,7 +226,7 @@ namespace Lumina::Reflection
         FileID = StringUtils::ReplaceAllOccurrences(FileID, "\\", "_");
         FileID = StringUtils::ReplaceAllOccurrences(FileID, ".", "_");
 
-        const eastl::vector<FReflectedType*>& ReflectedTypes = ReflectionDatabase->ReflectedTypes.at(Header.HeaderID);
+        const eastl::vector<FReflectedType*>& ReflectedTypes = ReflectionDatabase->ReflectedTypes.at(Hash);
 
 
         SS << "//*************************************************************************\n";

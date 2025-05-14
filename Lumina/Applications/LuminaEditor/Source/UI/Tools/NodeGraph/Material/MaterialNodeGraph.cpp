@@ -10,7 +10,7 @@ namespace Lumina
 {
     CMaterialNodeGraph::CMaterialNodeGraph()
     {
-        CreateNode<CMaterialOutputNode>();
+        CreateNode(CMaterialOutputNode::StaticClass());
     }
 
     void CMaterialNodeGraph::OnDrawGraph()

@@ -25,9 +25,6 @@ namespace Lumina
     //-----------------------------------------------------------------------------------------------------------------------------------------
 
     
-    IMPLEMENT_INTRINSIC_CLASS(CField, CObject, LUMINA_API)
-    IMPLEMENT_INTRINSIC_CLASS(CEnum, CField, LUMINA_API)
-    IMPLEMENT_INTRINSIC_CLASS(CStruct, CField, LUMINA_API)
     IMPLEMENT_INTRINSIC_CLASS(CClass, CStruct, LUMINA_API)
 
 

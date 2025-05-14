@@ -1,6 +1,7 @@
 
 #include "Core/Object/Class.h"
 
+IMPLEMENT_INTRINSIC_CLASS(CEnum, CField, LUMINA_API)
 namespace Lumina
 {
     uint64 CEnum::GetEnumValueByName(FName Name)

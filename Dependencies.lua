@@ -26,7 +26,7 @@ IncludeDir["xxhash"] =                  "%{LuminaEngineDirectory}/Lumina/Engine/
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 function reflection_directory()
-    return "%{wks.location}/Intermediates/LRT/%{prj.name}/"
+    return "%{wks.location}/Intermediates/Reflection/%{prj.name}/"
 end
 
 

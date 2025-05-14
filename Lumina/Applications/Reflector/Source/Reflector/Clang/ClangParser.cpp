@@ -34,6 +34,10 @@ namespace Lumina::Reflection
         
         eastl::vector<eastl::string> FullIncludePaths;
         eastl::fixed_vector<const char*, 10> clangArgs;
+
+        eastl::string PrjPath = Project.ParentPath + "/Source/";
+        FullIncludePaths.push_back("-I" + PrjPath);
+        clangArgs.push_back(FullIncludePaths.back().c_str());
         
         for (const char* Path : g_includePaths)
         {

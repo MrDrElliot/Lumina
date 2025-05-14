@@ -1,9 +1,11 @@
-﻿#include "Core/Object/Field.h"
-#include "Core/Object/Class.h"
+﻿#include "Core/Object/Class.h"
+#include "Core/Object/Field.h"
 #include "Core/Reflection/Type/LuminaTypes.h"
 
+IMPLEMENT_INTRINSIC_CLASS(CStruct, CField, LUMINA_API)
 namespace Lumina
 {
+
     void CStruct::SetSuperStruct(CStruct* InSuper)
     {
         SuperStruct = InSuper;

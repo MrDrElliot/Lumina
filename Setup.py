@@ -44,7 +44,7 @@ def run_generate():
 
 if __name__ == '__main__':
     zip_filename = "External.zip"
-    extract_to = "External"  # Explicitly setting the extraction folder
+    extract_to = ""  # Explicitly setting the extraction folder
 
     extract_zip(zip_filename, extract_to)
     time.sleep(1)

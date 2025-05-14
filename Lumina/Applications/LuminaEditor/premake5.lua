@@ -18,19 +18,20 @@ project "Editor"
 	 
 	files
 	{
-		"Editor/**.h",
-		"Editor/**.cpp",
+		"Source/**.h",
+		"Source/**.cpp",
 	}
 
 	includedirs
 	{ 
-	    "Editor",
+	    "Source",
 	    
 	    "%{LuminaEngineDirectory}/Lumina/",
-		"%{LuminaEngineDirectory}/Lumina/Engine/",
+		  "%{LuminaEngineDirectory}/Lumina/Engine/",
 	    "%{LuminaEngineDirectory}/Lumina/Engine/Source/",
 	    "%{LuminaEngineDirectory}/Lumina/Engine/Source/Runtime/",
-	    
+	    "%{LuminaEngineDirectory}/Intermediates/Reflection/Lumina/",
+
 	    reflection_directory();
 		includedependencies();
 	}

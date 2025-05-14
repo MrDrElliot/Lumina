@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "UI/Tools/NodeGraph/EdNodeGraph.h"
+#include "MaterialNodeGraph.generated.h"
 
 namespace Lumina
 {
@@ -9,8 +10,11 @@ namespace Lumina
 
 namespace Lumina
 {
+    LUM_CLASS()
     class CMaterialNodeGraph : public CEdNodeGraph
     {
+        GENERATED_BODY()
+        
     public:
         
         CMaterialNodeGraph();

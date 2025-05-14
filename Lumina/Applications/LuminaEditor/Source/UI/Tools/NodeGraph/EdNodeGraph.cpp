@@ -326,6 +326,13 @@ namespace Lumina
         Actions.push_back(NewAction);
     }
 
+    CEdGraphNode* CEdNodeGraph::CreateNode(CClass* NodeClass)
+    {
+        CEdGraphNode* NewNode = NewObject<CEdGraphNode>(NodeClass);
+        AddNode(NewNode);
+        return NewNode;
+    }
+
     uint32 CEdNodeGraph::AddNode(CEdGraphNode* InNode)
     {
         Nodes.push_back(InNode);

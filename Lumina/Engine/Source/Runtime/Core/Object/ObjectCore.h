@@ -67,6 +67,20 @@ namespace Lumina
         return (T*)Obj;
         
     }
+
+    template<typename T>
+    T* NewObject(CClass* InClass, const TCHAR* Package = TEXT("Transient"), FName Name = NAME_None, EObjectFlags Flags = OF_None)
+    {
+        FConstructCObjectParams Params(InClass);
+        Params.Name = Name;
+        Params.Flags = Flags;
+        Params.Package = Package;
+
+        CObject* Obj = StaticAllocateObject(Params);
+        
+        return (T*)Obj;
+        
+    }
     
     
     enum class EPropertyFlags : uint64

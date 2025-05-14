@@ -2,14 +2,12 @@
 
 #include "EdNodeGraphPin.h"
 #include <imgui.h>
-#include "Core/Templates/Forward.h"
 #include "Containers/Array.h"
 #include "Containers/Name.h"
-#include "Core/Math/Color.h"
 #include "Core/Math/Math.h"
 #include "Core/Object/Object.h"
 #include "GUID/GUID.h"
-#include "Memory/Memory.h"
+#include "EdGraphNode.generated.h"
 
 namespace Lumina
 {
@@ -22,10 +20,14 @@ namespace Lumina
 
         Count       = 2,
     };
-    
+
+    LUM_CLASS()
     class CEdGraphNode : public CObject
     {
+        GENERATED_BODY()
+        
     public:
+
 
         friend class CEdNodeGraph;
 
@@ -33,12 +35,12 @@ namespace Lumina
         
         virtual ~CEdGraphNode();
 
-        virtual void BuildNode() = 0;
+        virtual void BuildNode() { }
 
         void Serialize(FArchive& Ar) override;
 
         FString GetNodeFullName() { return FullName; }
-        virtual FString GetNodeDisplayName() const = 0;
+        virtual FString GetNodeDisplayName() const { return "Node"; }
         virtual FString GetNodeTooltip() const { return "No Tooltip"; }
         virtual uint32 GetNodeTitleColor() const { return IM_COL32(200, 35, 35, 255); }
         virtual ImVec2 GetMinNodeSize() const { return ImVec2(100, 150); }

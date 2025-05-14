@@ -83,6 +83,7 @@ namespace Lumina::Reflection
     
             for (FReflectedHeader& Header : Project.Headers)
             {
+                std::cout << "Parsing Header: " << Header.HeaderPath.c_str() << "\n";
                 if (!Parser.Parse(Project.SolutionPath, Header.HeaderPath, Project))
                 {
                     

@@ -1,11 +1,14 @@
 ﻿#pragma once
 
 #include "MaterialGraphNode.h"
+#include "MaterialOutputNode.generated.h"
 
 namespace Lumina
 {
+    LUM_CLASS()
     class CMaterialOutputNode : public CMaterialGraphNode
     {
+        GENERATED_BODY()
     public:
         
         CMaterialOutputNode() = default;

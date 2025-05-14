@@ -10,7 +10,7 @@
 
 
 #if !LE_SHIP
-#define WITH_DEVELOPMENT_TOOLS 0
+#define WITH_DEVELOPMENT_TOOLS 1
 #endif
 
 enum ENoInit { NoInit };

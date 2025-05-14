@@ -114,8 +114,6 @@ namespace Lumina
     {
         Compiler->DefineConstantFloat(FullName, Value.R);
     }
-    IMPLEMENT_CLASS(CMaterialExpression_ConstantFloat)
-
 
     uint32 CMaterialExpression_ConstantFloat2::GenerateExpression(FMaterialCompiler* Compiler)
     {

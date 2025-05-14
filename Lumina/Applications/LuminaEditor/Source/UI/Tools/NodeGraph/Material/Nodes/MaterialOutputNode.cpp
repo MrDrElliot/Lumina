@@ -5,8 +5,6 @@
 
 namespace Lumina
 {
-    IMPLEMENT_CLASS(CMaterialOutputNode)
-
     FString CMaterialOutputNode::GetNodeDisplayName() const
     {
         return "Material Output";
