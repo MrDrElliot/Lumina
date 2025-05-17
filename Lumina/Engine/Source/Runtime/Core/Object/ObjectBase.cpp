@@ -127,12 +127,20 @@ namespace Lumina
 
     void CObjectBase::GetPath(FString& OutPath)
     {
-        OutPath = "";
+        OutPath = GetPathName();
     }
 
     FString CObjectBase::GetPathName() const
     {
-        return "";
+        TInlineString<256> Path;
+        Path.append(StringUtils::FromWideString(GetPackage()).c_str())
+        .append("/")
+        .append(GetClass()->GetName().c_str())
+        .append(".")
+        .append(GetName().c_str());
+
+        
+        return Path.c_str();
     }
 
     //-----------------------------------------------------------------------------------------------

@@ -1,9 +1,9 @@
 ﻿#pragma once
 
 #include "Assets/AssetManager/AssetManager.h"
-#include "Assets/AssetRegistry/AssetRegistry.h"
+#include "Core/Object/Object.h"
+#include "Core/Object/ObjectPtr.h"
 #include "UI/Tools/EditorTool.h"
-#include "UI/Tools/EditorToolContext.h"
 
 namespace Lumina
 {
@@ -11,19 +11,16 @@ namespace Lumina
     {
     public:
         
-        FAssetEditorTool(IEditorToolContext* Context, const FString& AssetName, const FAssetPath& InAsset)
+        FAssetEditorTool(IEditorToolContext* Context, const FString& AssetName, CObject* InAsset)
             : FEditorTool(Context, AssetName, nullptr)
+            , bAssetLoadBroadcasted(false)
         {
-            bAssetLoadBroadcasted = false;
-            FAssetManager* AssetManager = Context->GetSubsystemManager()->GetSubsystem<FAssetManager>();
-            FAssetHeader Header = Context->AssetRegistry->FindAssetHeader(InAsset);
-            FAssetHandle Handle(InAsset, Header.Type);
-            Asset = AssetManager->LoadAsset(Handle);
+            Asset = InAsset;
         }
 
         void Update(const FUpdateContext& UpdateContext) override
         {
-            if (!bAssetLoadBroadcasted && (Asset->IsLoaded() || Asset->HasLoadingFailed()))
+            if (!bAssetLoadBroadcasted && Asset != nullptr)
             {
                 OnAssetLoadFinished();
                 bAssetLoadBroadcasted = true;
@@ -34,8 +31,8 @@ namespace Lumina
 
     protected:
 
-        TRefCountPtr<FAssetRecord>      Asset;
-        uint8 bAssetLoadBroadcasted:1;
+        TObjectPtr<CObject>         Asset;
+        uint8                       bAssetLoadBroadcasted:1;
 
     };
 }

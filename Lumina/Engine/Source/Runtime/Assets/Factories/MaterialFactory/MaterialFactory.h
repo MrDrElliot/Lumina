@@ -1,15 +1,19 @@
 #pragma once
 
 #include "Assets/Factories/Factory.h"
+#include "MaterialFactory.generated.h"
 
 namespace Lumina
 {
-	class FMaterialFactory : public FFactory
+	LUM_CLASS()
+	class CMaterialFactory : public CFactory
 	{
+		GENERATED_BODY()
 	public:
 
-		FAssetPath CreateNew(const FString& Path) override;
-		const FString& GetAssetName() const override { return "Material"; }
+		CObject* CreateNew(const FString& Path) override;
+		FString GetAssetName() const override { return "Material"; }
 
+		void CreateAssetFile(const FString& Path) override;
 	};
 }

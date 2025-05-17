@@ -95,7 +95,7 @@ inline LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS* exceptionInfo)
             __debugbreak();                             \
             std::exit(1);                               \
         }                                               \
-    } while (false)
+    } while (false);
 
 // Macro for assertion with a custom message
 #define AssertMsg(condition, msg)                       \

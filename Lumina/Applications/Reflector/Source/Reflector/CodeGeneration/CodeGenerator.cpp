@@ -153,13 +153,13 @@ namespace Lumina::Reflection
             {
                 FReflectedClass* Class = (FReflectedClass*)Type;
 
-                eastl::string PackageName = "/Script/";
+                eastl::string PackageName = "script://" + CurrentProject.Name;
                 
                 SS << "#define " << FileID.c_str() << "_" << eastl::to_string(Type->LineNumber).c_str() << "_CLASS \\\n";
                 SS << "private: \\\n";
                 SS << "\\\n";
                 SS << "public: \\\n";
-                SS << "\tDECLARE_CLASS(" << Type->Namespace << ", " << Type->DisplayName.c_str() << ", " << Class->Parent.c_str() << ", TEXT(\"" << PackageName.c_str() << "\")" << ", NO_API" << ") \\\n";
+                SS << "\tDECLARE_CLASS(" << Type->Namespace << ", " << Type->DisplayName.c_str() << ", " << Class->Parent.c_str() << ", " << PackageName.c_str() << ", NO_API" << ") \\\n";
                 SS << "\tDEFINE_DEFAULT_CONSTRUCTOR_CALL(" << Type->Namespace << "::" << Type->DisplayName.c_str() << ")\n";
                 SS << "\n\n";
             }

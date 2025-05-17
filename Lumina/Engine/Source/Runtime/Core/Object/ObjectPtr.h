@@ -11,7 +11,7 @@ namespace Lumina
 	class CObject;
 	
 	template<typename ReferencedType>
-	class LUMINA_API TObjectPtr
+	class TObjectPtr
 	{
 		typedef ReferencedType* ReferenceType;
 

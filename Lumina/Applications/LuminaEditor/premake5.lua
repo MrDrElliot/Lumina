@@ -20,6 +20,8 @@ project "Editor"
 	{
 		"Source/**.h",
 		"Source/**.cpp",
+		"%{wks.location}/Intermediates/Reflection/Editor/**.h",
+        "%{wks.location}/Intermediates/Reflection/Editor/**.cpp",
 	}
 
 	includedirs
@@ -27,7 +29,7 @@ project "Editor"
 	    "Source",
 	    
 	    "%{LuminaEngineDirectory}/Lumina/",
-		  "%{LuminaEngineDirectory}/Lumina/Engine/",
+		"%{LuminaEngineDirectory}/Lumina/Engine/",
 	    "%{LuminaEngineDirectory}/Lumina/Engine/Source/",
 	    "%{LuminaEngineDirectory}/Lumina/Engine/Source/Runtime/",
 	    "%{LuminaEngineDirectory}/Intermediates/Reflection/Lumina/",

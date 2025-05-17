@@ -2,6 +2,7 @@
 
 #include "imgui.h"
 #include "Assets/AssetRegistry/AssetRegistry.h"
+#include "Core/Object/Class.h"
 #include "Core/Object/Object.h"
 #include "Memory/Memory.h"
 #include "Project/Project.h"
@@ -18,6 +19,7 @@
 #include "Tools/AssetEditors/MaterialEditor/MaterialEditorTool.h"
 #include "Tools/UI/ImGui/imfilebrowser.h"
 #include "imnodes/imnodes.h"
+#include "Paths/Paths.h"
 
 namespace Lumina
 {
@@ -238,18 +240,15 @@ namespace Lumina
     }
 
     
-    void FEditorUI::OpenAssetPath(const FAssetPath& InPath)
+    void FEditorUI::OpenAssetEditor(CClass* Class, const FString& InPath, const FString& InName)
     {
-        bool bSuccess;
-        FAssetHeader Header = AssetRegistry->FindAssetHeader(InPath, &bSuccess);
-
-        // We don't want to open duplicate asset editors.
-        if (ActiveAssetTools.find(Header.Guid) == ActiveAssetTools.end())
+        FString VirtualPath = Paths::ConvertToVirtualPath(InPath) + Class->GetName().c_str() + "/" + InName;
+        FWString PathString = StringUtils::ToWideString(VirtualPath).c_str();
+        CObject* Asset = FindObject<CObject>(PathString.c_str());
+        
+        if (Asset != nullptr)
         {
-            if (bSuccess)
-            {
-                ActiveAssetTools.insert_or_assign(Header.Guid, CreateTool<FMaterialEditorTool>(this, InPath));
-            }
+            ActiveAssetTools.insert_or_assign(Asset, CreateTool<FMaterialEditorTool>(this, Asset));
         }
     }
     
@@ -257,7 +256,7 @@ namespace Lumina
     {
         ImGuiID sourceToolID = SourceTool->PrevDockspaceID;
         ImGuiID destinationToolID = SourceTool->CurrDockspaceID;
-        Assert(sourceToolID != 0 && destinationToolID != 0);
+        Assert(sourceToolID != 0 && destinationToolID != 0)
         
         // Helper to build an array of strings pointer into the same contiguous memory buffer.
         struct ContiguousStringArrayBuilder

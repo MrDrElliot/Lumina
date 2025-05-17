@@ -14,8 +14,8 @@ project "Lumina"
 		"Engine/Source/**.h",
 		"Engine/Source/**.cpp",
 		
-		"%{wks.location}/Intermediates/Reflection/%{prj.name}/**.h",
-		"%{wks.location}/Intermediates/Reflection/%{prj.name}/**.cpp",
+		"%{wks.location}/Intermediates/Reflection/Lumina/**.h",
+		"%{wks.location}/Intermediates/Reflection/Lumina/**.cpp",
 		
 		"Engine/ThirdParty/stb_image/**.h",
 

@@ -40,11 +40,14 @@ namespace Lumina
         FString DefaultObjectName = GetName().c_str();
         DefaultObjectName += "_CDO";
         
+        LOG_ERROR("WTF: {}", DefaultObjectName);
         FConstructCObjectParams Params(this);
         Params.Flags |= EObjectFlags::OF_DefaultObject;
         Params.Name = FName(DefaultObjectName);
         
         ClassDefaultObject = StaticAllocateObject(Params);
+
+        ClassDefaultObject->PostCreateCDO();
         
         return ClassDefaultObject;
         

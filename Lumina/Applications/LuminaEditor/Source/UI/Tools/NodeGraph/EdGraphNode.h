@@ -93,19 +93,3 @@ namespace Lumina
         return nullptr;
     }
 }
-
-
-#define LUMINA_ED_GRAPH_NODE(NodeClass, DisplayName, TooltipText)        \
-struct Info                                                              \
-{                                                                        \
-    static constexpr const char* Name = DisplayName;                     \
-    static constexpr const char* Tooltip = TooltipText;                  \
-    using NodeType = NodeClass;                                          \
-                                                                         \
-    static FString StaticDisplayName() { return FString(DisplayName); }  \
-    static FString StaticTooltip() { return FString(TooltipText); }      \
-                                                                         \
-    static CEdGraphNode* CreateInstance() { return FMemory::New<NodeClass>(); }    \
-};
-
-

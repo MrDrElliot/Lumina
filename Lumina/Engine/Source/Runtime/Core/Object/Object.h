@@ -45,7 +45,9 @@ namespace Lumina
 
         /** Called after constructor and after properites have been initialized. */
         LUMINA_API virtual void PostInitProperties();
-    
+
+        /** Called after classes Class Default Object has been created */
+        LUMINA_API virtual void PostCreateCDO() { }
         
     private:
 

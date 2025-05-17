@@ -32,21 +32,8 @@ bool FSandbox::ApplicationLoop()
 bool FSandbox::Initialize(int argc, char** argv)
 {
 	COtherClass* TestClass = NewObject<COtherClass>();
-	COtherClass* TestClass2 = NewObject<COtherClass>();
-	COtherClass* TestClass3 = NewObject<COtherClass>();
-	COtherClass* TestClass4 = NewObject<COtherClass>();
-	COtherClass* TestClass5 = NewObject<COtherClass>();
-	COtherClass* TestClass6 = NewObject<COtherClass>();
-	COtherClass* TestClass7 = NewObject<COtherClass>();
-	
 
-	CClass* Class = TestClass->GetClass();
-	FProperty* Prop = Class->GetProperty(GET_MEMBER_NAME_CHECKED(COtherClass, Value));
-	Prop->SetValuePtr<uint8>(TestClass, 69);
-
-	CEnum* Enum = StaticEnum<ETestEnum>();
-
-	const TCHAR* Package = Class->GetPackage();
+	FString Path = TestClass->GetPathName();
 	
 	return true;
 }

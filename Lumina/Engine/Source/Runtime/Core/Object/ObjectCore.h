@@ -14,6 +14,7 @@ namespace Lumina
     class CClass;
 }
 
+#define TRANSIENT_PACKAGE TEXT("Transient")
 
 namespace Lumina
 {
@@ -55,7 +56,7 @@ namespace Lumina
     }
 
     template<typename T>
-    T* NewObject(const TCHAR* Package = TEXT("Transient"), FName Name = NAME_None, EObjectFlags Flags = OF_None)
+    T* NewObject(const TCHAR* Package = TRANSIENT_PACKAGE, FName Name = NAME_None, EObjectFlags Flags = OF_None)
     {
         FConstructCObjectParams Params(T::StaticClass());
         Params.Name = Name;
@@ -69,7 +70,7 @@ namespace Lumina
     }
 
     template<typename T>
-    T* NewObject(CClass* InClass, const TCHAR* Package = TEXT("Transient"), FName Name = NAME_None, EObjectFlags Flags = OF_None)
+    T* NewObject(CClass* InClass, const TCHAR* Package = TRANSIENT_PACKAGE, FName Name = NAME_None, EObjectFlags Flags = OF_None)
     {
         FConstructCObjectParams Params(InClass);
         Params.Name = Name;
@@ -81,7 +82,18 @@ namespace Lumina
         return (T*)Obj;
         
     }
-    
+
+    template<typename T>
+    T* GetMutableDefault()
+    {
+        return T::StaticClass()->template GetDefaultObject<T>();
+    }
+
+    template<typename T>
+    const T* GetDefault()
+    {
+        return T::StaticClass()->template GetDefaultObject<T>();
+    }
     
     enum class EPropertyFlags : uint64
     {

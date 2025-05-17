@@ -6,13 +6,17 @@
 
 namespace Lumina
 {
-    class FTextureFactory : public FFactory
+    LUM_CLASS()
+    class CTextureFactory : public CFactory
     {
+        GENERATED_BODY()
     public:
 
-        FAssetPath CreateNew(const FString& Path) override;
+        CObject* CreateNew(const FString& Path) override;
         //static FRHIImageHandle ImportFromSource(std::filesystem::path Path);
 
-        const FString& GetAssetName() const override { return "Texture"; }
+        FString GetAssetName() const override { return "Texture"; }
+
+        void CreateAssetFile(const FString& Path) override;
     };
 }

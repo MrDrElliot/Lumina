@@ -114,7 +114,7 @@ namespace Lumina
         {
             return *It;
         }
-
+#if 0
         FFactory* Factory = FactoryRegistry.GetFactory(Record->GetAssetType());
         if (!Factory) 
         {
@@ -123,8 +123,8 @@ namespace Lumina
 
         FAssetRequest* NewRequest = FMemory::New<FAssetRequest>(Record, Factory);
         ActiveRequests.push_back(NewRequest);
-
-        return NewRequest;
+#endif
+        return nullptr;
     }
 
 

@@ -129,7 +129,7 @@ namespace Lumina
         }
         else
         {
-            LOG_ERROR("Error finding project from command line: {0}", *argv);
+            LOG_WARN("Error finding project from command line: {0}", *argv);
             return;
         }
 

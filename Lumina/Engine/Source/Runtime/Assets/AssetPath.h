@@ -20,14 +20,12 @@ namespace Lumina
         FAssetPath(const FString& InAssetPath)
             : AssetPath(InAssetPath)
         {
-            Assert(StringUtils::StartsWith(InAssetPath, "project://"));
         }
 
         FAssetPath(const FString& InAssetPath, const FString InRawPath)
             : AssetPath(InAssetPath)
             , RawPath(InRawPath)
         {
-            Assert(StringUtils::StartsWith(InAssetPath, "project://"));
         }
 
         FORCEINLINE FString GetPathAsString() const { return AssetPath; }

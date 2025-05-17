@@ -1,22 +1,21 @@
 #pragma once
 
-#include <filesystem>
-#include <fastgltf/glm_element_traits.hpp>
-#include "Containers/Array.h"
 #include "Assets/Factories/Factory.h"
-#include "Platform/GenericPlatform.h"
+#include "StaticMeshFactory.generated.h"
 
 
 
 namespace Lumina
 {
-    
-    class FStaticMeshFactory : public FFactory
+    LUM_CLASS()
+    class CStaticMeshFactory : public CFactory
     {
+        GENERATED_BODY()
     public:
 
-        FAssetPath CreateNew(const FString& Path) override;
-        const FString& GetAssetName() const override { return "Static Mesh"; }
-        
+        CObject* CreateNew(const FString& Path) override;
+        FString GetAssetName() const override { return "Static Mesh"; }
+
+        void CreateAssetFile(const FString& Path) override;
     };
 }

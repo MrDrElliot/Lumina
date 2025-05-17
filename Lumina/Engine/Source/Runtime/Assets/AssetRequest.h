@@ -6,7 +6,7 @@
 
 namespace Lumina
 {
-    class FFactory;
+    class CFactory;
     
     class FAssetRequest
     {
@@ -27,16 +27,16 @@ namespace Lumina
             TFunction<void(FAssetHandle&)>	LoadAssetCallback;
         };
         
-        FAssetRequest(FAssetRecord* InRecord, FFactory* InFactory)
+        FAssetRequest(FAssetRecord* InRecord, CFactory* InFactory)
             : AssetRecord(InRecord)
             , Factory(InFactory)
         {
-            Assert(InRecord != nullptr);
-            Assert(InFactory != nullptr);
+            Assert(InRecord != nullptr)
+            Assert(InFactory != nullptr)
         }
 
         FORCEINLINE FAssetRecord* GetAssetRecord() const { return AssetRecord; }
-        FORCEINLINE FFactory* GetFactory() const { return Factory; }
+        FORCEINLINE CFactory* GetFactory() const { return Factory; }
         FORCEINLINE ELoadStage GetLoadStage() const { return LoadState; }
         FORCEINLINE bool IsLoadingCompleted() const { return LoadState == ELoadStage::Complete; }
 
@@ -56,7 +56,7 @@ namespace Lumina
     private:
         
         FAssetRecord*                   AssetRecord;
-        FFactory*                       Factory;
+        CFactory*                       Factory;
         eastl::atomic<ELoadStage>       LoadState = ELoadStage::LoadResource;
         TVector<FAssetHandle>           PendingDependencies;
 

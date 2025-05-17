@@ -171,6 +171,11 @@ namespace Lumina
             return ClassDefaultObject;
         }
 
+        template<typename T>
+        T* GetDefaultObject() const
+        {
+            return static_cast<T*>(GetDefaultObject());
+        }
 
 
         mutable int32   ClassUnique = 0;

@@ -4,6 +4,11 @@
 
 namespace Lumina
 {
+    class CClass;
+}
+
+namespace Lumina
+{
     class FSubsystemManager;
 }
 
@@ -20,7 +25,7 @@ namespace Lumina
 
         virtual void PushModal(const FString& Title, ImVec2 Size, TFunction<bool(const FUpdateContext&)> DrawFunction) = 0;
 
-        virtual void OpenAssetPath(const FAssetPath& InPath) = 0;
+        virtual void OpenAssetEditor(CClass* Class, const FString& InPath, const FString& InName) = 0;
 
     protected:
     

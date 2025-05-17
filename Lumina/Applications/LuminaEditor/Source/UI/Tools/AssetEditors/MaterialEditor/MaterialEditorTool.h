@@ -18,8 +18,8 @@ namespace Lumina
 
         LUMINA_EDITOR_TOOL(FMaterialEditorTool)
 
-        FMaterialEditorTool(IEditorToolContext* Context, const FAssetPath& Path)
-            : FAssetEditorTool(Context, "Material", Path)
+        FMaterialEditorTool(IEditorToolContext* Context, CObject* Asset)
+            : FAssetEditorTool(Context, "Material", Asset)
         {
         }
 

@@ -3,6 +3,8 @@
 #include "EditorToolContext.h"
 #include "Assets/AssetManager/AssetManager.h"
 #include "Assets/AssetRegistry/AssetRegistry.h"
+#include "Assets/Definition/AssetDefinition.h"
+#include "Assets/Factories/Factory.h"
 #include "Paths/Paths.h"
 #include "Project/Project.h"
 #include "Tools/UI/ImGui/ImGuiX.h"
@@ -33,10 +35,7 @@ namespace Lumina
         ContentBrowserTileViewContext.ItemSelectedFunction = [this] (FTileViewItem* Item)
         {
             FContentBrowserTileViewItem* ContentItem = static_cast<FContentBrowserTileViewItem*>(Item);
-
-            FString AssetPath = Paths::ConvertToVirtualPath(ContentItem->GetPath().string().c_str());
-            
-            ToolContext->OpenAssetPath(AssetPath);
+            ToolContext->OpenAssetEditor(nullptr, ContentItem->GetPath().string().c_str(), "");
         };
         
         ContentBrowserTileViewContext.DrawItemContextMenuFunction = [this] (const TVector<FTileViewItem*> Items)
@@ -254,14 +253,40 @@ namespace Lumina
 
             ImGui::Separator();
             
+            const char* FileIcon = LE_ICON_FILE;
+            const char* File = "New Asset";
+
+            FString MenuItemName = FString(FileIcon) + " " + File;
+
+            if (ImGui::BeginMenu(MenuItemName.c_str()))
             {
-                const char* FileIcon = LE_ICON_FILE;
-                const char* File = "New Asset";
-
-                FString MenuItemName = FString(FileIcon) + " " + File;
-
-                if (ImGui::BeginMenu(MenuItemName.c_str()))
+                TVector<CAssetDefinition*> Definitions;
+                CAssetDefinitionRegistry::Get()->GetAssetDefinitions(Definitions);
+                for (CAssetDefinition* Definition : Definitions)
                 {
+                    FString DisplayName = Definition->GetAssetDisplayName();
+                    if (ImGui::MenuItem(DisplayName.c_str()))
+                    {
+                        CFactory* Factory = Definition->GetFactory();
+                        FString PathString = SelectedPath.string().c_str();
+                        Factory->CreateAssetFile(PathString);
+                        ToolContext->OpenAssetEditor(Definition->GetAssetClass(), PathString, DisplayName);
+                        RefreshContentBrowser();
+                    }
+                }
+                
+                ImGui::EndMenu();
+            }
+            
+            ImGui::PopStyleVar(2);
+            ImGui::EndPopup();
+        }
+
+        ContentBrowserTileView.Draw(ContentBrowserTileViewContext);
+        ImGui::EndChild();
+
+
+#if 0
                     FFactoryRegistry* Registry = Context.GetSubsystem<FAssetManager>()->GetFactoryRegistry();
 
                     for (FFactory* Factory : Registry->GetFactories())
@@ -280,16 +305,9 @@ namespace Lumina
 
                     ImGui::EndMenu();
                 }
-
                 ImGui::PopStyleVar(2);
                 ImGui::EndPopup();
-            }
-        }
-
-        ContentBrowserTileView.Draw(ContentBrowserTileViewContext);
-
-        ImGui::EndChild();
-    }
-
+#endif
     
+    }
 }

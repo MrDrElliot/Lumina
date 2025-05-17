@@ -2,7 +2,6 @@
 
 #include "Assets/AssetHandle.h"
 #include "Assets/AssetRequest.h"
-#include "Assets/Factories/FactoryRegistry.h"
 #include "Containers/Array.h"
 #include "Core/Threading/Thread.h"
 #include "Subsystems/Subsystem.h"
@@ -29,7 +28,6 @@ namespace Lumina
 
 		void NotifyAssetRequestCompleted(FAssetRequest* Request);
 
-		FFactoryRegistry* GetFactoryRegistry() { return &FactoryRegistry; }
 		
 	private:
 
@@ -45,8 +43,6 @@ namespace Lumina
 		std::thread												AssetRequestThread;
 		eastl::atomic<bool>										bAssetThreadRunning = true;
 		mutable FRecursiveMutex									RecursiveMutex;
-																
-		FFactoryRegistry										FactoryRegistry;
 		
 		THashMap<FAssetPath, TRefCountPtr<FAssetRecord>>		AssetRecord;
 

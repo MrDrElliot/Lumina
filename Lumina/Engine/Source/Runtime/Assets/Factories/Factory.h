@@ -1,20 +1,23 @@
 #pragma once
 
-#include "Assets/AssetHandle.h"
-#include "Assets/AssetTypes.h"
-
+#include "Core/Object/Object.h"
+#include "Factory.generated.h"
 
 
 namespace Lumina
 {
-    class FFactory
+    LUM_CLASS()
+    class CFactory : public CObject
     {
+        GENERATED_BODY()
+
     public:
         
-        virtual ~FFactory() = default;
-        virtual FAssetPath CreateNew(const FString& Path) = 0;
+        virtual CObject* CreateNew(const FString& Path) { return nullptr; }
         
-        virtual const FString& GetAssetName() const = 0;
+        virtual FString GetAssetName() const { return ""; }
+        
+        virtual void CreateAssetFile(const FString& Path) { }
         
     };
 }

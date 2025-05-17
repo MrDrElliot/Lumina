@@ -11,9 +11,17 @@
 namespace Lumina
 {
     
-    FAssetPath FMaterialFactory::CreateNew(const FString& Path)
+    CObject* CMaterialFactory::CreateNew(const FString& Path)
     {
-        return {};   
+        return NewObject<CMaterial>();
     }
-    
+
+    void CMaterialFactory::CreateAssetFile(const FString& Path)
+    {
+        FString FullPath = Path + ".lasset";
+        if (FFileHelper::CreateNewFile(FullPath, true))
+        {
+            LOG_INFO("Created New Material: {}", FullPath);
+        }
+    }
 }

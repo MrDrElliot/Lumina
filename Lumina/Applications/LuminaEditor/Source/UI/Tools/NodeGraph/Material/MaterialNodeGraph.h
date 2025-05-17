@@ -19,6 +19,8 @@ namespace Lumina
         
         CMaterialNodeGraph();
 
+        void Initialize() override;
+        
         void OnDrawGraph() override;
         void CompileGraph(FMaterialCompiler* Compiler);
 

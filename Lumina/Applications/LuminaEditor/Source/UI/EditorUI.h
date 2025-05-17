@@ -45,7 +45,7 @@ namespace Lumina
 
         void PushModal(const FString& Title, ImVec2 Size, TFunction<bool(const FUpdateContext&)> DrawFunction) override;
 
-        void OpenAssetPath(const FAssetPath& InPath) override;
+        void OpenAssetEditor(CClass* Class, const FString& InPath, const FString& InName) override;
         
         template<typename T, typename... Args>
         requires std::is_base_of_v<FEditorTool, T>
@@ -91,7 +91,7 @@ namespace Lumina
         FEditorTool*                                    LastActiveTool = nullptr;
         FString                                         FocusTargetWindowName; // If this is set we need to switch focus to this window
 
-        THashMap<FGuid, FEditorTool*>                   ActiveAssetTools;
+        THashMap<CObject*, FEditorTool*>                ActiveAssetTools;
         
         FEditorModalManager                             ModalManager; 
         bool                                            bDearImGuiDemoWindowOpen = false;

@@ -47,8 +47,13 @@ namespace Lumina
         return ImageHandle;
     }*/
     
-    FAssetPath FTextureFactory::CreateNew(const FString& Path)
+    CObject* CTextureFactory::CreateNew(const FString& Path)
     {
         return {};
+    }
+
+    void CTextureFactory::CreateAssetFile(const FString& Path)
+    {
+        CFactory::CreateAssetFile(Path);
     }
 }
