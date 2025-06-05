@@ -16,6 +16,17 @@ namespace Lumina
         return (CObjectBase*)FMemory::Malloc(InClass->GetSize(), Alignment);
     }
 
+    FString GetObjectNameFromPath(const FString& InPath)
+    {
+        SIZE_T Pos = InPath.find_last_of("/");
+        if (Pos != FString::npos)
+        {
+            return InPath.substr(Pos + 1);
+        }
+
+        return InPath;
+    }
+
     
     FName MakeUniqueObjectName(const CClass* Class, FName InBaseName)
     {
@@ -61,27 +72,25 @@ namespace Lumina
     
     CObject* FindObjectFast(const CClass* InClass, FName QualifiedName)
     {
-        if (ObjectNameHash.find(QualifiedName) != ObjectNameHash.end())
-        {
-            return (CObject*)ObjectNameHash.at(QualifiedName);
-        }
+        CObject* ReturnObject = nullptr;
 
-        return nullptr;
+        FString ObjectName = GetObjectNameFromPath(QualifiedName.c_str());
+
+        if (ObjectNameHash.find(FName(ObjectName)) != ObjectNameHash.end())
+        {
+            ReturnObject = (CObject*)ObjectNameHash.at(QualifiedName);
+        }
+        
+        return ReturnObject;
     }
 
     CObject* StaticLoadObject(const CClass* InClass, const TCHAR* QualifiedName)
     {
         CObject* FoundObject = nullptr;
+
         FoundObject = FindObjectFast(InClass, QualifiedName);
-        if (FoundObject != nullptr)
-        {
-            return FoundObject;
-        }
-
         
-
-        return nullptr;
-
+        return FoundObject;
     }
 
     template<typename TPropertyType>

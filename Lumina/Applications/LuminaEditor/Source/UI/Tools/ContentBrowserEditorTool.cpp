@@ -35,7 +35,7 @@ namespace Lumina
         ContentBrowserTileViewContext.ItemSelectedFunction = [this] (FTileViewItem* Item)
         {
             FContentBrowserTileViewItem* ContentItem = static_cast<FContentBrowserTileViewItem*>(Item);
-            ToolContext->OpenAssetEditor(nullptr, ContentItem->GetPath().string().c_str(), "");
+            ToolContext->OpenAssetEditor(ContentItem->GetVirtualPath());
         };
         
         ContentBrowserTileViewContext.DrawItemContextMenuFunction = [this] (const TVector<FTileViewItem*> Items)
@@ -79,8 +79,7 @@ namespace Lumina
 
                                 if (!std::filesystem::is_directory(OldPath))
                                 {
-                                    FString VirtualPath = Paths::ConvertToVirtualPath(OldPath.string().c_str());
-                                    FAssetPath Path(VirtualPath);
+                                    FAssetPath Path("");
 
                                     Registry->RenameAsset(Path, Buf);
                                 }
@@ -268,9 +267,9 @@ namespace Lumina
                     if (ImGui::MenuItem(DisplayName.c_str()))
                     {
                         CFactory* Factory = Definition->GetFactory();
-                        FString PathString = SelectedPath.string().c_str();
+                        FString PathString = Paths::Combine(SelectedPath.string().c_str(), Factory->GetDefaultAssetCreationName(PathString).c_str());
                         Factory->CreateAssetFile(PathString);
-                        ToolContext->OpenAssetEditor(Definition->GetAssetClass(), PathString, DisplayName);
+                        ToolContext->OpenAssetEditor(PathString);
                         RefreshContentBrowser();
                     }
                 }

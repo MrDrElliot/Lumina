@@ -42,7 +42,8 @@ namespace Lumina
     LUMINA_API CObject* FindObjectFast(const CClass* InClass, FName QualifiedName);
     LUMINA_API CObject* StaticLoadObject(const CClass* InClass, const TCHAR* QualifiedName);
     
-
+    LUMINA_API void ResolveObjectPath(FString& OutPath, const FStringView& InPath);
+    
     template<typename T>
     inline T* FindObject(const TCHAR* FullName)
     {
@@ -54,6 +55,8 @@ namespace Lumina
     {
         return (T*)StaticLoadObject(T::StaticClass(), FullName);
     }
+
+    
 
     template<typename T>
     T* NewObject(const TCHAR* Package = TRANSIENT_PACKAGE, FName Name = NAME_None, EObjectFlags Flags = OF_None)

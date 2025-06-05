@@ -29,7 +29,6 @@ namespace Lumina::Paths
     template <typename... Paths>
     inline FString Combine(Paths&&... InPaths)
     {
-
         std::filesystem::path Path = (std::filesystem::path(std::forward<Paths>(InPaths)) /= ...);
         
         return Path.string().c_str();
@@ -97,37 +96,10 @@ namespace Lumina::Paths
     }
     
     // Function to resolve a virtual path to an absolute path
-    inline FString ResolveVirtualPath(const FString& VirtualPath)
-    {
-        if (StringUtils::StartsWith(VirtualPath, "project://"))
-        {
-            // Remove the "project://" prefix and normalize the path to use forward slashes
-            FString PathWithoutPrefix = VirtualPath.substr(10);  // Remove "project://"
-            StringUtils::ReplaceAllOccurrencesInPlace(PathWithoutPrefix, "\\", "/");
-
-            // Get the project content directory and append the relative path
-            return FProject::Get()->GetProjectContentDirectory() + PathWithoutPrefix;
-        }
-        return VirtualPath;  // If the virtual path doesn't start with "project://", return it unchanged
-    }
+    LUMINA_API FString ResolveVirtualPath(const FString& VirtualPath);
 
     // Function to convert an absolute path to a virtual path
-    inline FString ConvertToVirtualPath(const FString& AbsolutePath)
-    {
-        FString ProjectDir = FProject::Get()->GetProjectContentDirectory();
-    
-        // Normalize the absolute path to use forward slashes
-        FString NormalizedAbsolutePath = AbsolutePath;
-        StringUtils::ReplaceAllOccurrencesInPlace(NormalizedAbsolutePath, "\\", "/");
-
-        // If the absolute path starts with the project directory, convert it to a virtual path
-        if (StringUtils::StartsWith(NormalizedAbsolutePath, ProjectDir.c_str()))
-        {
-            // Replace the project content directory prefix with "project://"
-            return FString("project://") + NormalizedAbsolutePath.substr(ProjectDir.length());
-        }
-        return AbsolutePath;  // Return the path as-is if it's not part of the project
-    }
+    LUMINA_API FString ConvertToVirtualPath(const FString& AbsolutePath);
 
     
     inline FString MakeRelativeTo(const FString& Path, const FString& BasePath)

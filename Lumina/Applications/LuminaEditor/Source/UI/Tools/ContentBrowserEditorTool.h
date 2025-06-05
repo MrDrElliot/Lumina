@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "EditorTool.h"
+#include "Paths/Paths.h"
 #include "Tools/UI/ImGui/Widgets/TileViewWidget.h"
 #include "Tools/UI/ImGui/Widgets/TreeListView.h"
 
@@ -50,8 +51,9 @@ namespace Lumina
         public:
             
             FContentBrowserTileViewItem(FTileViewItem* InParent, const std::filesystem::path& path)
-                : FTileViewItem(InParent),
-                  Path(std::move(path))
+                : FTileViewItem(InParent)
+                , Path(std::move(path))
+                , VirtualPath(Paths::ConvertToVirtualPath(path.string().c_str()))
             {}
 
             const char* GetTooltipText() const override { return "Test"; }
@@ -63,10 +65,12 @@ namespace Lumina
             }
 
             std::filesystem::path GetPath() const { return Path; }
+            FString GetVirtualPath() const { return VirtualPath; }
             
         private:
 
-            std::filesystem::path Path;
+            std::filesystem::path   Path;
+            FString                 VirtualPath;
         };
 
         LUMINA_SINGLETON_EDITOR_TOOL(FContentBrowserEditorTool)

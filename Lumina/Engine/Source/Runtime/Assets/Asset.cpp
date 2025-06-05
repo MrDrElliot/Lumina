@@ -14,16 +14,5 @@ namespace Lumina
         FAssetRegistry* Registry = GEngine->GetEngineSubsystem<FAssetRegistry>();
         bool bSuccess;
         FAssetHeader Header = Registry->FindAssetHeader(AssetPath, &bSuccess);
-        
-        if (bSuccess)
-        {
-            TVector<uint8> Blob;
-            FMemoryWriter Writer(Blob);
-            Writer << Header;
-            Serialize(Writer);
-
-            FString FullPath = Paths::ResolveVirtualPath(AssetPath.GetPathAsString());
-            Assert(FFileHelper::SaveArrayToFile(Blob, FullPath));
-        }
     }
 }

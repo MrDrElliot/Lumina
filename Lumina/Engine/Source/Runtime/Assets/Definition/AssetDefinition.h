@@ -18,7 +18,7 @@ namespace Lumina
     public:
         
         void PostCreateCDO() override;
-
+        
         virtual FString GetAssetDisplayName() const { return ""; }
 
         virtual FString GetAssetDescription() const { return ""; }

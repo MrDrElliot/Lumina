@@ -226,7 +226,7 @@ namespace Lumina
     void FEditorUI::DestroyTool(const FUpdateContext& UpdateContext, FEditorTool* Tool)
     {
         auto Itr = eastl::find(EditorTools.begin(), EditorTools.end(), Tool);
-        Assert(Itr != EditorTools.end());
+        Assert(Itr != EditorTools.end())
 
         
         Tool->Deinitialize(UpdateContext);
@@ -240,15 +240,16 @@ namespace Lumina
     }
 
     
-    void FEditorUI::OpenAssetEditor(CClass* Class, const FString& InPath, const FString& InName)
+    void FEditorUI::OpenAssetEditor(const FString& InPath)
     {
-        FString VirtualPath = Paths::ConvertToVirtualPath(InPath) + Class->GetName().c_str() + "/" + InName;
-        FWString PathString = StringUtils::ToWideString(VirtualPath).c_str();
-        CObject* Asset = FindObject<CObject>(PathString.c_str());
+        CObject* Asset = LoadObject<CObject>(UTF8_TO_WIDE(InPath).c_str());
         
-        if (Asset != nullptr)
+        if (Asset != nullptr && ActiveAssetTools.find(Asset) == ActiveAssetTools.end())
         {
-            ActiveAssetTools.insert_or_assign(Asset, CreateTool<FMaterialEditorTool>(this, Asset));
+            FEditorTool* NewTool = CreateTool<FMaterialEditorTool>(this, Asset);
+            Assert(NewTool != nullptr)
+            
+            ActiveAssetTools.insert_or_assign(Asset, NewTool);
         }
     }
     
@@ -263,9 +264,9 @@ namespace Lumina
         {
             void AddEntry( const char* data, size_t dataLength )
             {
-                int32_t const bufferSize = (int32_t) m_buffer.size();
+                const int32 bufferSize = (int32_t) m_buffer.size();
                 m_offsets.push_back( bufferSize );
-                int32_t const offset = bufferSize;
+                const int32 offset = bufferSize;
                 m_buffer.resize( bufferSize + (int32_t) dataLength );
                 memcpy( m_buffer.data() + offset, data, dataLength );
             }
@@ -273,14 +274,14 @@ namespace Lumina
             void BuildPointerArray( ImVector<const char*>& outArray )
             {
                 outArray.resize( (int32_t) m_offsets.size() );
-                for ( int32_t n = 0; n < (int32_t) m_offsets.size(); n++ )
+                for (int32 n = 0; n < (int32) m_offsets.size(); n++)
                 {
                     outArray[n] = m_buffer.data() + m_offsets[n];
                 }
             }
 
             TVector<char>       m_buffer;
-            TVector<int32_t>    m_offsets;
+            TVector<int32>    m_offsets;
         };
 
         ContiguousStringArrayBuilder namePairsBuilder;

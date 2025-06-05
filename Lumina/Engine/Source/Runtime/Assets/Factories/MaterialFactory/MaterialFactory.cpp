@@ -3,7 +3,6 @@
 #include "Assets/AssetRegistry/AssetRegistry.h"
 #include "Renderer/RHIIncl.h"
 #include "Assets/AssetTypes/Material/Material.h"
-#include "Core/Serialization/MemoryArchiver.h"
 #include "Paths/Paths.h"
 #include "Platform/Filesystem/FileHelper.h"
 #include "Project/Project.h"

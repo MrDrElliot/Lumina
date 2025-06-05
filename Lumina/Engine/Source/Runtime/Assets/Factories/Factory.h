@@ -18,6 +18,8 @@ namespace Lumina
         virtual FString GetAssetName() const { return ""; }
         
         virtual void CreateAssetFile(const FString& Path) { }
+
+        virtual FString GetDefaultAssetCreationName(const FString& InPath) { return "New_Asset"; }
         
     };
 }
