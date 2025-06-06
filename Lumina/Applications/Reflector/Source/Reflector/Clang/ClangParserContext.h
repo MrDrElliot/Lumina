@@ -29,6 +29,9 @@ namespace Lumina::Reflection
 
         bool TryFindGeneratedBodyMacro(eastl::string HeaderID, const CXCursor& Cursor, FReflectionMacro& Macro);
 
+        void LogError(char const* pErrorFormat, ...) const;
+
+
         void PushNamespace(const eastl::string& Namespace);
         void PopNamespace();
 
@@ -41,7 +44,7 @@ namespace Lumina::Reflection
 
         FReflectionDatabase                         ReflectionDatabase;
         
-        eastl::string                                     ErrorMessage;
+        mutable eastl::string                               ErrorMessage;
         FProjectSolution                            Solution;
         FReflectedProject                           Project;
         FReflectedHeader                            ReflectedHeader;

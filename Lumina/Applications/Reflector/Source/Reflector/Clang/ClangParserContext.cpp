@@ -102,6 +102,18 @@ namespace Lumina::Reflection
         return true;
     }
 
+    void FClangParserContext::LogError(char const* pErrorFormat, ...) const
+    {
+        char buffer[1024];
+
+        va_list args;
+        va_start( args, pErrorFormat );
+        vsnprintf(buffer, 1024, pErrorFormat, args);
+        va_end( args );
+
+        ErrorMessage = buffer;
+    }
+
 
     void FClangParserContext::PushNamespace(const eastl::string& Namespace)
     {

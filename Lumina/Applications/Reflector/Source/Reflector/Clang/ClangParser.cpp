@@ -99,10 +99,33 @@ namespace Lumina::Reflection
             CXCursor Cursor = clang_getTranslationUnitCursor(TranslationUnit);
             clang_visitChildren(Cursor, VisitTranslationUnit, &ParsingContext);
         }
+        else
+        {
+            switch (Result)
+            {
+            case CXError_Failure:
+                ParsingContext.LogError("Clang Unknown failure");
+                break;
+
+            case CXError_Crashed:
+                ParsingContext.LogError("Clang crashed");
+                break;
+
+            case CXError_InvalidArguments:
+                ParsingContext.LogError("Clang Invalid arguments");
+                break;
+
+            case CXError_ASTReadError:
+                ParsingContext.LogError("Clang AST read error");
+                break;
+            }
+        }
 
         clang_disposeTranslationUnit(TranslationUnit);
         clang_disposeIndex(ClangIndex);
+        
 
         return true;
     }
+    
 }

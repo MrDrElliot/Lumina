@@ -119,13 +119,9 @@ namespace Lumina::Reflection::Visitor
                 CXType FieldType = clang_getCursorType(Cursor);
                 clang::QualType FieldQualType = ClangUtils::GetQualType(FieldType);
                 eastl::string TypeSpelling = ClangUtils::GetString(clang_getTypeSpelling(FieldType));
-
-                if (FieldQualType->isTemplateTypeParmType())
-                {
-                    std::cout << "Template\n";
-                }
                 
                 EPropertyTypeFlags PropFlags = GetCoreTypeFromName(TypeSpelling.c_str());
+
                 CreatePropertyForType(Struct, PropFlags, CursorName);
                 
             }
@@ -174,8 +170,12 @@ namespace Lumina::Reflection::Visitor
                 
                 CXType FieldType = clang_getCursorType(Cursor);
                 clang::QualType FieldQualType = ClangUtils::GetQualType(FieldType);
-                eastl::string TypeSpelling = ClangUtils::GetString(clang_getTypeSpelling(FieldType));
+
+                eastl::string TypeSpelling;
+                ClangUtils::GetQualifiedNameForType(FieldQualType, TypeSpelling);
+                
                 EPropertyTypeFlags PropFlags = GetCoreTypeFromName(TypeSpelling.c_str());
+                
                 CreatePropertyForType(Class, PropFlags, CursorName);
 
             }

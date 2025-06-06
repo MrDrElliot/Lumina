@@ -84,14 +84,14 @@ namespace Lumina::Reflection
             for (FReflectedHeader& Header : Project.Headers)
             {
                 std::cout << "Parsing Header: " << Header.HeaderPath.c_str() << "\n";
+                
                 if (!Parser.Parse(Project.SolutionPath, Header.HeaderPath, Project))
                 {
-                    
                 }
             }
         }
 
-
+        std::cout << Parser.ParsingContext.ErrorMessage.c_str() << "\n";
         WriteGeneratedFiles(Parser);
         return true;
     }

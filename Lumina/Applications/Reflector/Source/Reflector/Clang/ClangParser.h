@@ -10,7 +10,11 @@ namespace Lumina::Reflection
         FClangParser();
 
         bool Parse(const eastl::string& SolutionPath, const FReflectedHeader& File, const FReflectedProject& Project);
-
+        
         FClangParserContext ParsingContext;
+
+
+    private:
+
     };
 }

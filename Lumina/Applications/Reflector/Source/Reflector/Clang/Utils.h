@@ -123,13 +123,14 @@ namespace Lumina::ClangUtils
         }
         else if (pType->isRecordType())
         {
-            clang::RecordDecl const* pRecordDecl = pType->getAs<clang::RecordType>()->getDecl();
+            const clang::RecordDecl* pRecordDecl = pType->getAs<clang::RecordType>()->getDecl();
             QualifiedName = pRecordDecl->getQualifiedNameAsString().c_str();
         }
         else if (pType->isEnumeralType())
         {
             const clang::NamedDecl* pNamedDecl = pType->getAs<clang::EnumType>()->getDecl();
             QualifiedName = pNamedDecl->getQualifiedNameAsString().c_str();
+            std::cout << QualifiedName.c_str() << "\n";
         }
         else if (pType->getTypeClass() == clang::Type::Typedef)
         {
