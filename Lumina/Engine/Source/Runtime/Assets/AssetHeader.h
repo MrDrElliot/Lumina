@@ -15,18 +15,18 @@ namespace Lumina
     {
         
         int32                       Version = -1;
+        FString                     ClassName;
         FGuid                       Guid;
         EAssetType                  Type;
-        TVector<FAssetHandle>       Dependencies;
         FAssetPath                  Path;
 
-        friend FArchive& operator << (FArchive& Ar, FAssetHeader& data)
+        friend FArchive& operator << (FArchive& Ar, FAssetHeader& Data)
         {
-            Ar << data.Version;
-            Ar << data.Guid;
-            Ar << data.Type;
-            Ar << data.Dependencies;
-            Ar << data.Path;
+            Ar << Data.Version;
+            Ar << Data.ClassName;
+            Ar << Data.Guid;
+            Ar << Data.Type;
+            Ar << Data.Path;
 
             return Ar;
         }

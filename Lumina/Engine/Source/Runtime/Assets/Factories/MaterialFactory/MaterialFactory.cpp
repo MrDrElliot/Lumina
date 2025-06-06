@@ -18,9 +18,24 @@ namespace Lumina
     void CMaterialFactory::CreateAssetFile(const FString& Path)
     {
         FString FullPath = Path + ".lasset";
-        if (FFileHelper::CreateNewFile(FullPath, true))
+        if (!FFileHelper::CreateNewFile(FullPath, true))
         {
-            LOG_INFO("Created New Material: {}", FullPath);
+            LOG_INFO("Failed to created New Material: {}", FullPath);
+            return;
         }
+
+        FAssetHeader Header;
+        Header.Path = FAssetPath(Paths::ConvertToVirtualPath(Path));
+        Header.ClassName = "CMaterial";
+        Header.Type = EAssetType::Material;
+        Header.Version = 1;
+        Header.Guid = FGuid::Generate();
+
+        TVector<uint8> Blob;
+        FMemoryWriter Writer(Blob);
+        Writer << Header;
+        
+        FFileHelper::SaveArrayToFile(Blob, FullPath);
+        
     }
 }

@@ -16,8 +16,6 @@ namespace Lumina
     void CMaterialNodeGraph::Initialize()
     {
         Super::Initialize();
-
-        CreateNode(CMaterialOutputNode::StaticClass());
     }
 
     void CMaterialNodeGraph::OnDrawGraph()

@@ -80,16 +80,7 @@ namespace Lumina
                 {"AssetPath", Reg.second.Path.GetPathAsString().c_str()},
                 {"RawPath", Reg.second.Path.GetRawPathAsString().c_str()}
             };
-
-            // Handle Dependencies
-            json JsonDependencies = json::array();
-            for (const auto& Dep : Reg.second.Dependencies)
-            {
-                //JsonDependencies.push_back(Dep.AssetPath.GetPathAsString().c_str());
-            }
             
-            JsonHeader["Dependencies"] = JsonDependencies;
-
             JsonRegistry[Reg.first.GetPathAsString().c_str()] = JsonHeader;
         }
 

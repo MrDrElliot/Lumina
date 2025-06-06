@@ -16,8 +16,9 @@ namespace Lumina
     public:
         
         uint32 GetMask() const { return Mask; }
-        
         void DrawPin() override;
+
+        void SetInputType(EMaterialInputType InType) { InputType = InType; }
         
     private:
 

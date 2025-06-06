@@ -101,7 +101,6 @@ namespace Lumina
 
         
         virtual void SetSuperStruct(CStruct* InSuper);
-        
 
         void RegisterDependencies() override;
         
@@ -113,6 +112,8 @@ namespace Lumina
 
         LUMINA_API FProperty* GetProperty(const FName& Name);
         LUMINA_API virtual void AddProperty(FProperty* Property);
+
+        LUMINA_API void ForEachProperty(TMoveOnlyFunction<void(FProperty*)> Callback);
 
         template<class T>
         bool IsChildOf() const

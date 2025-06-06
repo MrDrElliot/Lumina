@@ -159,7 +159,7 @@ namespace Lumina::Reflection
                 SS << "private: \\\n";
                 SS << "\\\n";
                 SS << "public: \\\n";
-                SS << "\tDECLARE_CLASS(" << Type->Namespace << ", " << Type->DisplayName.c_str() << ", " << Class->Parent.c_str() << ", " << PackageName.c_str() << ", NO_API" << ") \\\n";
+                SS << "\tDECLARE_CLASS(" << Type->Namespace << ", " << Type->DisplayName.c_str() << ", " << Class->Parent.c_str() << ", \"" << PackageName.c_str() << "\", NO_API" << ") \\\n";
                 SS << "\tDEFINE_DEFAULT_CONSTRUCTOR_CALL(" << Type->Namespace << "::" << Type->DisplayName.c_str() << ")\n";
                 SS << "\n\n";
             }
@@ -408,7 +408,7 @@ namespace Lumina::Reflection
         {
             if (Type->Type == FReflectedType::EType::Class)
             {
-                SS << "\t{ " << "Construct_CClass_" << Type->Namespace << "_" << Type->DisplayName.c_str() << ", TEXT(\"" << Type->DisplayName.c_str() << "\") },\n";
+                SS << "\t{ " << "Construct_CClass_" << Type->Namespace << "_" << Type->DisplayName.c_str() << ", TEXT(\"script://\"), TEXT(\"" << Type->DisplayName.c_str() << "\") },\n";
             }
         }
         SS << "\t};\n";

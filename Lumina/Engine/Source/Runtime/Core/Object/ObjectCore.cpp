@@ -2,6 +2,9 @@
 #include "ObjectCore.h"
 #include "Class.h"
 #include "Object.h"
+#include "Assets/AssetManager/AssetManager.h"
+#include "Assets/AssetTypes/Material/Material.h"
+#include "Core/Engine/Engine.h"
 #include "Core/Math/Math.h"
 #include "Core/Reflection/Type/LuminaTypes.h"
 
@@ -73,10 +76,8 @@ namespace Lumina
     CObject* FindObjectFast(const CClass* InClass, FName QualifiedName)
     {
         CObject* ReturnObject = nullptr;
-
-        FString ObjectName = GetObjectNameFromPath(QualifiedName.c_str());
-
-        if (ObjectNameHash.find(FName(ObjectName)) != ObjectNameHash.end())
+        
+        if (ObjectNameHash.find(FName(QualifiedName)) != ObjectNameHash.end())
         {
             ReturnObject = (CObject*)ObjectNameHash.at(QualifiedName);
         }
@@ -86,11 +87,28 @@ namespace Lumina
 
     CObject* StaticLoadObject(const CClass* InClass, const TCHAR* QualifiedName)
     {
+        FString FullPath = WIDE_TO_UTF8(QualifiedName);
+        FName ObjectName = FName(GetObjectNameFromPath(FullPath));
+        
         CObject* FoundObject = nullptr;
+        
+        FoundObject = FindObjectFast(InClass, ObjectName);
 
-        FoundObject = FindObjectFast(InClass, QualifiedName);
+        if (FoundObject == nullptr)
+        {
+            FAssetManager* Manager = GEngine->GetEngineSubsystem<FAssetManager>();
+            FAssetRequest* Request = Manager->LoadAsset(FullPath);
+            Manager->FlushAsyncLoading();
+
+            FoundObject = Request->GetPendingObject();
+        }
         
         return FoundObject;
+    }
+
+    void ResolveObjectPath(FString& OutPath, const FStringView& InPath)
+    {
+        
     }
 
     template<typename TPropertyType>

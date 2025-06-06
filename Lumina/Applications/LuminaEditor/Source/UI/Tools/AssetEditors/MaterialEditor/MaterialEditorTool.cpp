@@ -1,7 +1,6 @@
 ﻿#include "MaterialEditorTool.h"
 #include "imnodes/imnodes.h"
 #include "Assets/AssetTypes/Material/Material.h"
-#include "Core/Serialization/MemoryArchiver.h"
 #include "UI/Tools/NodeGraph/Material/MaterialCompiler.h"
 #include "UI/Tools/NodeGraph/Material/MaterialNodeGraph.h"
 
@@ -34,7 +33,8 @@ namespace Lumina
             DrawCompilationLog(Cxt);
         });
 
-        NodeGraph = nullptr;//NewObject<CMaterialNodeGraph>();
+        NodeGraph = NewObject<CMaterialNodeGraph>();
+        NodeGraph->Initialize();
 
     }
 
@@ -69,12 +69,15 @@ namespace Lumina
             }
             else
             {
-                
                 FString Tree = Compiler.BuildTree();
                 CompilationResult.CompilationLog = "Material Compiled Successfully! Generated GLSL: \n \n \n" + Tree;
                 CompilationResult.bIsError = false;
                 
             }
+        }
+        if (ImGui::MenuItem(Asset->GetName().c_str()))
+        {
+            
         }
     }
 

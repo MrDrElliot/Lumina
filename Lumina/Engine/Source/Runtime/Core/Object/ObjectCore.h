@@ -45,9 +45,9 @@ namespace Lumina
     LUMINA_API void ResolveObjectPath(FString& OutPath, const FStringView& InPath);
     
     template<typename T>
-    inline T* FindObject(const TCHAR* FullName)
+    inline T* FindObject(const TCHAR* QualifiedName)
     {
-        return (T*)FindObjectFast(T::StaticClass(), FullName);
+        return (T*)FindObjectFast(T::StaticClass(), QualifiedName);
     }
 
     template<typename T>

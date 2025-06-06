@@ -36,33 +36,14 @@ namespace Lumina
     {
     }
 
-    FAssetRecord* FAssetManager::LoadAsset(FAssetHandle& InAsset)
+    FAssetRequest* FAssetManager::LoadAsset(const FString& InAssetPath)
     {
-        FAssetRecord* FoundRecord = FindOrCreateAssetRecord(InAsset);
-        Assert(FoundRecord);
-        InAsset.AssetRecord = FoundRecord;
-        
-        FAssetRequest* ActiveRequest = TryFindActiveRequest(FoundRecord);
-        Assert(ActiveRequest);
+        FAssetRequest* ActiveRequest = TryFindActiveRequest(InAssetPath);
+        Assert(ActiveRequest)
         
         RequestQueue.push(ActiveRequest);
 
-        return FoundRecord;
-    }
-
-    void FAssetManager::UnloadAsset(FAssetHandle& InAsset)
-    {
-        FAssetRecord* FoundRecord = FindAssetRecord(InAsset);
-
-        if (FoundRecord->GetReferenceCount() > 0)
-        {
-            FoundRecord->Release();
-        }
-        else
-        {
-            FoundRecord->SetLoadingState(EAssetLoadState::Unloaded);
-            FoundRecord->FreeAssetMemory();
-        }
+        return ActiveRequest;
     }
 
     void FAssetManager::NotifyAssetRequestCompleted(FAssetRequest* Request)
@@ -70,61 +51,40 @@ namespace Lumina
         FMemory::Delete(Request);
     }
 
-    FAssetRecord* FAssetManager::FindOrCreateAssetRecord(const FAssetHandle& InAsset)
+    void FAssetManager::FlushAsyncLoading()
     {
-        Assert(InAsset.IsSet());
-        FRecursiveScopeLock ScopeLock(RecursiveMutex);
-
-        FAssetRecord* Record;
-        auto const Itr = AssetRecord.find(InAsset.GetAssetPath());
-        if (Itr == AssetRecord.end())
-        {
-            Record = FMemory::New<FAssetRecord>(InAsset.GetAssetPath(), InAsset.GetAssetType());
-            AssetRecord.emplace(InAsset.GetAssetPath(), Record);
-        }
-        else
-        {
-            Record = Itr->second;
-        }
-
-
-        return Record;
-        
+        std::unique_lock<std::mutex> lock(FlushMutex);
+        FlushCV.wait(lock, [this] { return RequestQueue.empty(); });
     }
+
 
     FAssetRecord* FAssetManager::FindAssetRecord(const FAssetHandle& InHandle)
     {
-        Assert(InHandle.IsSet());
+        Assert(InHandle.IsSet())
         FRecursiveScopeLock ScopeLock(RecursiveMutex);
 
         auto const Itr = AssetRecord.find(InHandle.GetAssetPath());
-        Assert(Itr != AssetRecord.end());
+        Assert(Itr != AssetRecord.end())
 
         return Itr->second;
     }
 
-    FAssetRequest* FAssetManager::TryFindActiveRequest(FAssetRecord* Record)
+    FAssetRequest* FAssetManager::TryFindActiveRequest(const FString& InAssetPath)
     {
-        auto It = eastl::find_if(ActiveRequests.begin(), ActiveRequests.end(), [Record](const FAssetRequest* Request)
+        FAssetRequest** It = eastl::find_if(ActiveRequests.begin(), ActiveRequests.end(), [InAssetPath](const FAssetRequest* Request)
         {
-            return Request->GetAssetRecord() == Record;
+            return Request->GetAssetPath() == InAssetPath;
         });
 
         if (It != ActiveRequests.end())
         {
             return *It;
         }
-#if 0
-        FFactory* Factory = FactoryRegistry.GetFactory(Record->GetAssetType());
-        if (!Factory) 
-        {
-            return nullptr;
-        }
-
-        FAssetRequest* NewRequest = FMemory::New<FAssetRequest>(Record, Factory);
+        
+        FAssetRequest* NewRequest = FMemory::New<FAssetRequest>(InAssetPath);
         ActiveRequests.push_back(NewRequest);
-#endif
-        return nullptr;
+        return NewRequest;
+        
     }
 
 
@@ -134,19 +94,21 @@ namespace Lumina
         
         while (bAssetThreadRunning)
         {
-            FAssetRequest::FRequestCallbackContext Context;
-            Context.LoadAssetCallback = [this] (FAssetHandle& Handle) { LoadAsset(Handle); };
-            
             while (!RequestQueue.empty())
             {
                 FAssetRequest* Request = RequestQueue.front();
                 RequestQueue.pop();
                 
-                if (Request->Update(Context))
+                if (Request->Process())
                 {
                     NotifyAssetRequestCompleted(Request);
                 }
-                
+                else if (!Request->bFailed)
+                {
+                    RequestQueue.push(Request);
+                }
+
+                FlushCV.notify_all();
             }
             
             std::this_thread::sleep_for(std::chrono::milliseconds(10));

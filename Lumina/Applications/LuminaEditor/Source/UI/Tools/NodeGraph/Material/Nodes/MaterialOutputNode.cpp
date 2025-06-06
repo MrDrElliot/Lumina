@@ -18,38 +18,6 @@ namespace Lumina
 
     void CMaterialOutputNode::BuildNode()
     {
-        // Base Color (Albedo)
-        BaseColorPin = CreatePin<CMaterialInput, ENodePinDirection::Input>(EMaterialInputType::Float3);
-        BaseColorPin->SetPinName("Base Color (RGBA)");
-    
-        // Metallic (Determines if the material is metal or non-metal)
-        MetallicPin = CreatePin<CMaterialInput, ENodePinDirection::Input>(EMaterialInputType::Float);
-        MetallicPin->SetPinName("Metallic");
-        
-        // Roughness (Controls how smooth or rough the surface is)
-        RoughnessPin = CreatePin<CMaterialInput, ENodePinDirection::Input>(EMaterialInputType::Float);
-        RoughnessPin->SetPinName("Roughness");
-
-        // Specular (Affects intensity of reflections for non-metals)
-        SpecularPin = CreatePin<CMaterialInput, ENodePinDirection::Input>(EMaterialInputType::Float);
-        SpecularPin->SetPinName("Specular");
-
-        // Emissive (Self-illumination, for glowing objects)
-        EmissivePin = CreatePin<CMaterialInput, ENodePinDirection::Input>(EMaterialInputType::Float3);
-        EmissivePin->SetPinName("Emissive (RGB)");
-
-        // Ambient Occlusion (Shadows in crevices to add realism)
-        AOPin = CreatePin<CMaterialInput, ENodePinDirection::Input>(EMaterialInputType::Float);
-        AOPin->SetPinName("Ambient Occlusion");
-
-        // Normal Map (For surface detail)
-        NormalPin = CreatePin<CMaterialInput, ENodePinDirection::Input>(EMaterialInputType::Float3);
-        NormalPin->SetPinName("Normal Map (XYZ)");
-        
-        // Opacity (For transparent materials)
-        OpacityPin = CreatePin<CMaterialInput, ENodePinDirection::Input>(EMaterialInputType::Float);
-        OpacityPin->SetPinName("Opacity");
-
         
     }
 

@@ -1,103 +1,42 @@
 
 #include "AssetRequest.h"
+
+#include "Core/Serialization/MemoryArchiver.h"
 #include "Factories/Factory.h"
+#include "Paths/Paths.h"
+#include "Core/Object/Class.h"
+#include "Core/Reflection/Type/LuminaTypes.h"
+#include "Platform/Filesystem/FileHelper.h"
 
 namespace Lumina
 {
-    bool FAssetRequest::Update(FRequestCallbackContext& Context)
+    bool FAssetRequest::Process()
     {
-        switch (LoadState.load())
-        {
-            case ELoadStage::LoadResource:
-            {
-                LoadResource(Context);
-            }
-            break;
+        FString FullPath = Paths::ResolveVirtualPath(AssetPath) + ".lasset";
 
-            case ELoadStage::LoadingResource:
-            {
-                UpdateResourceFactory();
-            }
-        
-            case ELoadStage::WaitForDependencies:
-            {
-               ProcessDependencies(Context);
-            }
-            break;
-        }
-
-        /** If we haven't completed or failed, request a process next update */
-        if (LoadState != ELoadStage::Complete)
+        TVector<uint8> Blob;
+        if (!FFileHelper::LoadFileToArray(Blob, FullPath))
         {
-            FAssetHandle Handle(AssetRecord->GetAssetPath(), AssetRecord->GetAssetType());
-            Context.LoadAssetCallback(Handle);
+            LOG_ERROR("Failed to find file at path: {}", FullPath);
+            bFailed = true;
             return false;
         }
-        else
-        {
-            return true;
-        }
-    }
 
-    void FAssetRequest::LoadResource(FRequestCallbackContext& Context)
-    {
-        ELoadResult LoadResult;// = Factory->LoadFromDisk(AssetRecord);
-        AssetRecord->SetLoadingState(EAssetLoadState::Loading);
+        FMemoryReader Reader(Blob);
         
-        if (LoadResult == ELoadResult::Failed)
-        {
-            LOG_ERROR("Resource Request: Failed to load resource data {0}!", AssetRecord->GetAssetPath());
-            LoadState.store(ELoadStage::Complete, eastl::memory_order_relaxed);
-            AssetRecord->SetLoadingState(EAssetLoadState::Failed);
-            return;
-        }
-
-        /** This may happen because we are waiting on RHI resource upload. */
-        if (LoadResult == ELoadResult::InProgress)
-        {
-            LoadState.store(ELoadStage::LoadingResource, eastl::memory_order_relaxed);
-            return;
-        }
-
-        /** Send our dependencies to get loaded as well, only happens once. Then they process themselves. */
-        PendingDependencies = AssetRecord->AssetDependencies;
-        for (FAssetHandle& Handle : PendingDependencies)
-        {
-            Context.LoadAssetCallback(Handle);
-        }
-
-        /** This resource is fully loaded, wait for dependencies to finish */
-        LoadState.store(ELoadStage::WaitForDependencies, eastl::memory_order_relaxed);
+        FAssetHeader Header;
+        Reader << Header;
         
-    }
+        CClass* Class = FindObject<CClass>(UTF8_TO_WIDE(Header.ClassName).c_str());
+        
+        FString Name = Paths::FileName(AssetPath);
+        PendingObject = NewObject<CObject>(Class, UTF8_TO_WIDE(AssetPath).c_str(), FName(Name));
 
-    void FAssetRequest::UpdateResourceFactory()
-    {
-        //Factory->UpdateInProcessRequest(AssetRecord);
-    }
-
-    void FAssetRequest::ProcessDependencies(FRequestCallbackContext& Context)
-    {
-        /** Check if all of our dependencies are fully loaded */
-        TFixedVector<FAssetHandle, 4> FinishedDependencies;
-        for (FAssetHandle& Handle : PendingDependencies)
+        Class->ForEachProperty([this](FProperty* Prop)
         {
-            if (Handle.IsLoaded())
-            {
-                FinishedDependencies.push_back(Handle);
-            }
-        }
-
-        if (FinishedDependencies.size() != PendingDependencies.size())
-        {
-            LoadState.store(ELoadStage::WaitForDependencies, eastl::memory_order_relaxed);
-        }
-        else
-        {
-            AssetRecord->GetAssetPtr()->PostLoadDependencies();
-            LoadState.store(ELoadStage::Complete, eastl::memory_order_relaxed);
-            AssetRecord->SetLoadingState(EAssetLoadState::Loaded);
-            AssetRecord->GetAssetPtr()->PostLoad();
-        }
+            LOG_ERROR("{}", Prop->Name.c_str());
+        });
+        
+        return true;
     }
 }

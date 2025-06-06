@@ -6,11 +6,11 @@
 #include "Containers/Name.h"
 #include "Core/Math/Math.h"
 #include "Core/Object/Object.h"
-#include "GUID/GUID.h"
 #include "EdGraphNode.generated.h"
 
 namespace Lumina
 {
+    enum class EMaterialInputType : uint8;
     class CEdNodeGraphPin;
     
     enum class ENodePinDirection : uint8
@@ -60,10 +60,7 @@ namespace Lumina
         const TVector<CEdNodeGraphPin*>& GetInputPins() const { return NodePins[uint32(ENodePinDirection::Input)]; }
         const TVector<CEdNodeGraphPin*>& GetOutputPins() const { return NodePins[uint32(ENodePinDirection::Output)]; }
 
-        
-        template<typename T, ENodePinDirection Direction, typename... Args>
-        requires(std::is_base_of_v<CEdNodeGraphPin, T>)
-        T* CreatePin(Args&&... args);
+        CEdNodeGraphPin* CreatePin(CClass* InClass, const FString& Name, ENodePinDirection Direction, EMaterialInputType Type);
     
     protected:
 
@@ -78,18 +75,5 @@ namespace Lumina
         bool        bHasError;
         
     };
-
     
-    template <typename T, ENodePinDirection Direction, typename... Args>
-    requires(std::is_base_of_v<CEdNodeGraphPin, T>)
-    T* CEdGraphNode::CreatePin(Args&&... args)
-    {
-        /*CEdNodeGraphPin* NewPin = NewObject<T>();
-        NewPin->GUID = Math::RandRange<uint16>(0, UINT16_MAX);
-        NewPin->bInputPin = Direction == ENodePinDirection::Input;
-        NewPin->OwningNode = this;
-        NodePins[uint32(Direction)].push_back(NewPin);*/
-            
-        return nullptr;
-    }
 }

@@ -8,8 +8,7 @@ namespace Lumina
     
     void CMaterialExpression::BuildNode()
     {
-        Output = CreatePin<CMaterialOutput, ENodePinDirection::Output>(EMaterialInputType::Float);
-        Output->SetShouldDrawEditor(false);
+
     }
 
     void CMaterialExpression_Math::BuildNode()
@@ -19,89 +18,7 @@ namespace Lumina
 
     void CMaterialExpression_Constant::BuildNode()
     {
-        switch (ValueType)
-        {
-        case EMaterialInputType::Float:
-            {
-                CMaterialOutput* ValuePin = CreatePin<CMaterialOutput, ENodePinDirection::Output>(EMaterialInputType::Float);
-                ValuePin->SetShouldDrawEditor(true);
-                ValuePin->SetHideDuringConnection(false);
-                ValuePin->SetPinName("X");
-            }
-            break;
-        case EMaterialInputType::Float2:
-            {
-                CMaterialOutput* ValuePin = CreatePin<CMaterialOutput, ENodePinDirection::Output>(EMaterialInputType::Float2);
-                ValuePin->SetShouldDrawEditor(true);
-                ValuePin->SetHideDuringConnection(false);
-                ValuePin->SetPinName("XY");
-                
-                CMaterialOutput* R = CreatePin<CMaterialOutput, ENodePinDirection::Output>(EMaterialInputType::Float);
-                R->SetPinColor(IM_COL32(255, 10, 10, 255));
-                R->SetHideDuringConnection(false);
-                R->SetPinName("X");
-                
-                CMaterialOutput* G = CreatePin<CMaterialOutput, ENodePinDirection::Output>(EMaterialInputType::Float);
-                R->SetPinColor(IM_COL32(10, 255, 10, 255));
-                G->SetHideDuringConnection(false);
-                G->SetPinName("Y");
-                
-            }
-            break;
-        case EMaterialInputType::Float3:
-            {
-                CMaterialOutput* ValuePin = CreatePin<CMaterialOutput, ENodePinDirection::Output>(EMaterialInputType::Float3);
-                ValuePin->SetShouldDrawEditor(true);
-                ValuePin->SetHideDuringConnection(false);
-                ValuePin->SetPinName("RGB");
-                
-                CMaterialOutput* R = CreatePin<CMaterialOutput, ENodePinDirection::Output>(EMaterialInputType::Float);
-                R->SetPinColor(IM_COL32(255, 10, 10, 255));
-                R->SetHideDuringConnection(false);
-                R->SetPinName("R");
-                
-                CMaterialOutput* G = CreatePin<CMaterialOutput, ENodePinDirection::Output>(EMaterialInputType::Float);
-                G->SetPinColor(IM_COL32(10, 255, 10, 255));
-                G->SetHideDuringConnection(false);
-                G->SetPinName("G");
 
-                CMaterialOutput* B = CreatePin<CMaterialOutput, ENodePinDirection::Output>(EMaterialInputType::Float);
-                B->SetPinColor(IM_COL32(10, 10, 255, 255));
-                B->SetHideDuringConnection(false);
-                B->SetPinName("B");
-
-            }
-            break;
-        case EMaterialInputType::Float4:
-            {
-                CMaterialOutput* ValuePin = CreatePin<CMaterialOutput, ENodePinDirection::Output>(EMaterialInputType::Float4);
-                ValuePin->SetShouldDrawEditor(true);
-                ValuePin->SetHideDuringConnection(false);
-                ValuePin->SetPinName("RGBA");
-                
-                CMaterialOutput* R = CreatePin<CMaterialOutput, ENodePinDirection::Output>(EMaterialInputType::Float);
-                R->SetPinColor(IM_COL32(255, 10, 10, 255));
-                R->SetHideDuringConnection(false);
-                R->SetPinName("R");
-                
-                CMaterialOutput* G = CreatePin<CMaterialOutput, ENodePinDirection::Output>(EMaterialInputType::Float);
-                G->SetPinColor(IM_COL32(10, 255, 10, 255));
-                G->SetHideDuringConnection(false);
-                G->SetPinName("G");
-
-                CMaterialOutput* B = CreatePin<CMaterialOutput, ENodePinDirection::Output>(EMaterialInputType::Float);
-                B->SetPinColor(IM_COL32(10, 10, 255, 255));
-                B->SetHideDuringConnection(false);
-                B->SetPinName("B");
-
-                CMaterialOutput* A = CreatePin<CMaterialOutput, ENodePinDirection::Output>(EMaterialInputType::Float);
-                A->SetHideDuringConnection(false);
-                A->SetPinName("A");
-            }
-            break;
-        case EMaterialInputType::Wildcard:
-            break;
-        }
         
     }
 
@@ -151,14 +68,6 @@ namespace Lumina
     void CMaterialExpression_Addition::BuildNode()
     {
         CMaterialExpression_Math::BuildNode();
-
-        A = CreatePin<CMaterialInput, ENodePinDirection::Input>(EMaterialInputType::Float);
-        A->SetPinName("X");
-        A->SetShouldDrawEditor(true);
-        
-        B = CreatePin<CMaterialInput, ENodePinDirection::Input>(EMaterialInputType::Float);
-        B->SetPinName("Y");
-        B->SetShouldDrawEditor(true);
     }
 
     void CMaterialExpression_Addition::GenerateDefinition(FMaterialCompiler* Compiler)
@@ -169,14 +78,6 @@ namespace Lumina
     void CMaterialExpression_Subtraction::BuildNode()
     {
         CMaterialExpression_Math::BuildNode();
-
-        A = CreatePin<CMaterialInput, ENodePinDirection::Input>(EMaterialInputType::Float);
-        A->SetPinName("X");
-        A->SetShouldDrawEditor(true);
-        
-        B = CreatePin<CMaterialInput, ENodePinDirection::Input>(EMaterialInputType::Float);
-        B->SetPinName("Y");
-        B->SetShouldDrawEditor(true);
     }
 
 
@@ -188,14 +89,6 @@ namespace Lumina
     void CMaterialExpression_Multiplication::BuildNode()
     {
         CMaterialExpression_Math::BuildNode();
-        
-        A = CreatePin<CMaterialInput, ENodePinDirection::Input>(EMaterialInputType::Float);
-        A->SetPinName("X");
-        A->SetShouldDrawEditor(true);
-        
-        B = CreatePin<CMaterialInput, ENodePinDirection::Input>(EMaterialInputType::Float);
-        B->SetPinName("Y");
-        B->SetShouldDrawEditor(true);
     }
 
 
@@ -208,14 +101,6 @@ namespace Lumina
     void CMaterialExpression_Division::BuildNode()
     {
         CMaterialExpression_Math::BuildNode();
-
-        A = CreatePin<CMaterialInput, ENodePinDirection::Input>(EMaterialInputType::Float);
-        A->SetPinName("X");
-        A->SetShouldDrawEditor(true);
-        
-        B = CreatePin<CMaterialInput, ENodePinDirection::Input>(EMaterialInputType::Float);
-        B->SetPinName("Y");
-        B->SetShouldDrawEditor(true);
     }
 
     void CMaterialExpression_Division::GenerateDefinition(FMaterialCompiler* Compiler)

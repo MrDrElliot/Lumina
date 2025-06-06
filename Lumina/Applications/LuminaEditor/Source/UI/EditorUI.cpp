@@ -643,7 +643,6 @@ namespace Lumina
                         ImGui::Text("Guid"); ImGui::NextColumn();
                         ImGui::Text("Version"); ImGui::NextColumn();
                         ImGui::Text("Type"); ImGui::NextColumn();
-                        ImGui::Text("Dependencies"); ImGui::NextColumn();
                         ImGui::Separator();
 
                         for (const FAssetHeader& Asset : Assets)
@@ -652,7 +651,6 @@ namespace Lumina
                             ImGui::Text("%s", Asset.Guid.String().c_str()); ImGui::NextColumn();
                             ImGui::Text("%d", Asset.Version); ImGui::NextColumn();
                             ImGui::Text("%s", AssetTypeToString(Asset.Type).c_str()); ImGui::NextColumn();
-                            ImGui::Text("%zu", Asset.Dependencies.size()); ImGui::NextColumn();
                         }
 
                         ImGui::Columns(1);
