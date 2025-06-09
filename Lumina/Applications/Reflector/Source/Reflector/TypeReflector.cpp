@@ -22,7 +22,6 @@ namespace Lumina::Reflection
 
     bool FTypeReflector::ParseSolution()
     {
-        std::cout << "Parsing Solution: " << Solution.GetPath().c_str() << "\n";
         std::ifstream slnFile(Solution.GetPath().c_str());
 
         eastl::vector<eastl::string> ProjectFilePaths;
@@ -87,7 +86,12 @@ namespace Lumina::Reflection
             }
         }
 
-        std::cout << Parser.ParsingContext.ErrorMessage.c_str() << "\n";
+        std::cout << "[Reflection] Number of headers reflected: " << Parser.ParsingContext.NumHeadersReflected << "\n";
+
+        if (Parser.ParsingContext.HasError())
+        {
+            std::cout << Parser.ParsingContext.ErrorMessage.c_str() << "\n";
+        }
         WriteGeneratedFiles(Parser);
         return true;
     }

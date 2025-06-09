@@ -31,6 +31,8 @@ namespace Lumina::Reflection
 
         void LogError(char const* pErrorFormat, ...) const;
 
+        bool HasError() const { return !ErrorMessage.empty(); }
+
 
         void PushNamespace(const eastl::string& Namespace);
         void PopNamespace();
@@ -39,21 +41,23 @@ namespace Lumina::Reflection
         T* GetParentReflectedType();
 
         
-        FReflectedType*                             ParentReflectedType;
-        FReflectedType*                             LastReflectedType;
-
-        FReflectionDatabase                         ReflectionDatabase;
+        FReflectedType*                                             ParentReflectedType;
+        FReflectedType*                                             LastReflectedType;
+                                                                    
+        FReflectionDatabase                                         ReflectionDatabase;
         
-        mutable eastl::string                               ErrorMessage;
-        FProjectSolution                            Solution;
-        FReflectedProject                           Project;
-        FReflectedHeader                            ReflectedHeader;
+        mutable eastl::string                                       ErrorMessage;
+        FProjectSolution                                            Solution;
+        FReflectedProject                                           Project;
+        FReflectedHeader                                            ReflectedHeader;
         
-        eastl::hash_map<uint64, eastl::vector<FReflectionMacro>>  ReflectionMacros;
-        eastl::hash_map<uint64, eastl::queue<FReflectionMacro>>   GeneratedBodyMacros;
+        eastl::hash_map<uint64, eastl::vector<FReflectionMacro>>    ReflectionMacros;
+        eastl::hash_map<uint64, eastl::queue<FReflectionMacro>>     GeneratedBodyMacros;
         
-        eastl::vector<eastl::string>                            NamespaceStack;
-        eastl::string                                     CurrentNamespace;
+        eastl::vector<eastl::string>                                NamespaceStack;
+        eastl::string                                               CurrentNamespace;
+                                                                    
+        uint32                                                      NumHeadersReflected = 0;
         
     };
 

@@ -45,8 +45,11 @@ namespace Lumina::Reflection
     {
         for (const FReflectedHeader& Header : Project.Headers)
         {
-            GenerateReflectionCodeForHeader(Header);
-            GenerateReflectionCodeForSource(Header);
+            if (!Header.bSkip)
+            {
+                GenerateReflectionCodeForHeader(Header);
+                GenerateReflectionCodeForSource(Header);
+            }
         }
     }
 

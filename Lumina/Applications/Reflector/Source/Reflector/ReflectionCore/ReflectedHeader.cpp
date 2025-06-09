@@ -10,6 +10,7 @@ namespace Lumina::Reflection
     
     FReflectedHeader::FReflectedHeader(const eastl::string& Path)
         : HeaderPath(Path)
+        , bSkip(false)
     {
         eastl::string LowercasePath = HeaderPath;
         LowercasePath.make_lower();

@@ -11,7 +11,10 @@ namespace Lumina::Reflection
     {
     public:
 
-        FReflectedHeader() = default;
+        FReflectedHeader()
+            :bSkip(false)
+        {}
+        
         FReflectedHeader(const eastl::string& Path);
 
         bool Parse();
@@ -20,6 +23,7 @@ namespace Lumina::Reflection
         eastl::string             FileName;
         eastl::string             HeaderID;
         eastl::string             HeaderPath;
+        uint8_t                   bSkip:1;
 
 
         

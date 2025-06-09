@@ -10,11 +10,6 @@
 
 namespace Lumina
 {
-    class CEdGraphNode;
-}
-
-namespace Lumina
-{
     LUM_ENUM()
     enum class EMaterialType : uint8
     {
@@ -38,7 +33,7 @@ namespace Lumina
 
 
         LUM_PROPERTY()
-        TVector<uint64> Nodes;
+        TVector<uint8> Nodes;
         
         LUM_PROPERTY()
         EMaterialType           MaterialType;

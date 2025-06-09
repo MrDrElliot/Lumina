@@ -7,6 +7,9 @@
 #include "EASTL/fixed_vector.h"
 #include "Visitors/ClangTranslationUnit.h"
 
+
+#define OPTIMIZE_HEADER_WRITES 1
+
 namespace Lumina::Reflection
 {
 
@@ -15,12 +18,10 @@ namespace Lumina::Reflection
         "/Lumina/Engine",
         "/Lumina/Engine/Source",
         "/Lumina/Engine/Source/Runtime",
-        "/Lumina/Engine/ThirdParty/",
-        "/Lumina/Engine/ThirdParty/imgui/",
-        "/Lumina/Engine/ThirdParty/rpmalloc/",
-        "/Lumina/Engine/ThirdParty/spdlog/include/",
-        "/Lumina/Engine/ThirdParty/EA/EABase/include/common/",
-        "/Lumina/Engine/ThirdParty/EA/EASTL/include/",
+        "/Lumina/Engine/ThirdParty",
+        "/Lumina/Engine/ThirdParty/spdlog/include",
+        "/Lumina/Engine/ThirdParty/EA/EABase/include/common",
+        "/Lumina/Engine/ThirdParty/EA/EASTL/include",
     };
 
     
@@ -29,20 +30,71 @@ namespace Lumina::Reflection
     {
     }
 
-    bool FClangParser::Parse(const eastl::string& SolutionPath, const eastl::vector<FReflectedHeader>& Headers, const FReflectedProject& Project)
+    bool FClangParser::Parse(const eastl::string& SolutionPath, eastl::vector<FReflectedHeader>& Headers, const FReflectedProject& Project)
     {
         ParsingContext.Solution = FProjectSolution(SolutionPath.c_str());
         ParsingContext.Project = Project;
 
-        const eastl::string AmalgamationPath = ParsingContext.Solution.GetParentPath() + "/Intermediates/Reflection/" + Project.Name + "/ReflectHeaders.h";
+        const eastl::string ProjectReflectionDirectory = ParsingContext.Solution.GetParentPath() + "/Intermediates/Reflection/" + Project.Name;
+        const eastl::string AmalgamationPath = ProjectReflectionDirectory + "/ReflectHeaders.h";
+        
         std::ofstream AmalgamationFile(AmalgamationPath.c_str());
 
-        // Generate includes for each reflected header
+#if OPTIMIZE_HEADER_WRITES
+        
+        for (const FReflectedHeader& Header : Headers)
+        {
+            const eastl::string ReflectionCounterpart = ProjectReflectionDirectory + "/" + Header.FileName + ".generated.h";
+
+            bool bNeedsReflection = false;
+
+            if (!std::filesystem::exists(ReflectionCounterpart.c_str()))
+            {
+                bNeedsReflection = true;
+            }
+            else
+            {
+                auto HeaderTime = std::filesystem::last_write_time(Header.HeaderPath.c_str());
+                auto GeneratedTime = std::filesystem::last_write_time(ReflectionCounterpart.c_str());
+
+                if (HeaderTime > GeneratedTime)
+                {
+                    bNeedsReflection = true;
+                }
+            }
+
+            
+            if (bNeedsReflection)
+            {
+                AmalgamationFile << "#include \"" << Header.HeaderPath.c_str() << "\"\n";
+                ParsingContext.NumHeadersReflected++;
+            }
+            else
+            {
+                for (auto& DatabaseProject : ParsingContext.ReflectionDatabase.ReflectedProjects)
+                {
+                    if (DatabaseProject.Name == Project.Name)
+                    {
+                        auto& headers = DatabaseProject.Headers;
+                        headers.erase(
+                            eastl::remove_if(headers.begin(), headers.end(), [&](const FReflectedHeader& DbHeader)
+                            {
+                                return DbHeader.HeaderPath == Header.HeaderPath;
+                            }), headers.end()
+                        );
+                    }
+                }
+            }
+        }
+        
+#else
+        
         for (const FReflectedHeader& Header : Headers)
         {
             AmalgamationFile << "#include \"" << Header.HeaderPath.c_str() << "\"\n";
         }
-
+        
+#endif
         AmalgamationFile.close();
 
         

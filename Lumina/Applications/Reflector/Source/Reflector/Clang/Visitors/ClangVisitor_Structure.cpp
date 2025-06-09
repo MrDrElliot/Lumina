@@ -265,8 +265,6 @@ namespace Lumina::Reflection::Visitor
                 
                 CXType FieldType = clang_getCursorType(Cursor);
                 clang::QualType FieldQualType = ClangUtils::GetQualType(FieldType);
-
-                std::cout << ClangUtils::GetCursorDisplayName(Cursor).c_str() << " - " << FieldQualType.getAsString() << "\n";
                 
                 eastl::string TypeSpelling;
                 ClangUtils::GetQualifiedNameForType(FieldQualType, TypeSpelling);
