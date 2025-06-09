@@ -22,6 +22,10 @@ Lumina is a lightweight and flexible game engine designed to simplify game devel
 - **Linux**: *Not currently supported.*
 - **MacOS**: *Not currently supported.*
 
+- **MSVC**: 17.8 (19.38) or higher.
+- **Clang**: *Not currently supported.*
+- **GCC**: *Not currently supported.*
+
 ---
 
 ## What's Included
