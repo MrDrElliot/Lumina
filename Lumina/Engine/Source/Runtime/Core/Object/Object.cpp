@@ -7,13 +7,13 @@ extern Lumina::FClassRegistrationInfo Registration_Info_CClass_Lumina_CObject;
     
 Lumina::CClass* Construct_CClass_Lumina_CObject()
 {
-    if (!Registration_Info_CClass_Lumina_CObject.Singleton)
+    if (!Registration_Info_CClass_Lumina_CObject.OuterSingleton)
     {
-        Registration_Info_CClass_Lumina_CObject.Singleton = Lumina::CObject::StaticClass();
-        Lumina::CObjectForceRegistration(Registration_Info_CClass_Lumina_CObject.Singleton);
+        Registration_Info_CClass_Lumina_CObject.OuterSingleton = Lumina::CObject::StaticClass();
+        Lumina::CObjectForceRegistration(Registration_Info_CClass_Lumina_CObject.OuterSingleton);
     }
-    Assert(Registration_Info_CClass_Lumina_CObject.Singleton->GetClass() != nullptr);
-    return Registration_Info_CClass_Lumina_CObject.Singleton;
+    Assert(Registration_Info_CClass_Lumina_CObject.OuterSingleton->GetClass() != nullptr)
+    return Registration_Info_CClass_Lumina_CObject.OuterSingleton;
 }
     
 IMPLEMENT_CLASS(Lumina, CObject)

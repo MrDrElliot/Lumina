@@ -113,6 +113,21 @@ namespace Lumina
         LUMINA_API FProperty* GetProperty(const FName& Name);
         LUMINA_API virtual void AddProperty(FProperty* Property);
 
+        template<typename PropertyType>
+        requires std::is_base_of_v<FProperty, PropertyType>
+        void ForEachProperty(TMoveOnlyFunction<void(PropertyType*)> Callback)
+        {
+            PropertyType* Current = (PropertyType*)LinkedProperty;
+            while (Current != nullptr)
+            {
+                if (typeid(PropertyType) == typeid(*Current))
+                {
+                    Callback(Current);
+                }
+                Current = (PropertyType*)Current->Next;
+            }
+        }
+
         LUMINA_API void ForEachProperty(TMoveOnlyFunction<void(FProperty*)> Callback);
 
         template<class T>

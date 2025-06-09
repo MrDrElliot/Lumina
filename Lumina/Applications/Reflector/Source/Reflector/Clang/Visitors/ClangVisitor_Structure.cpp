@@ -3,13 +3,13 @@
 #include "Reflector/Clang/ClangParserContext.h"
 #include "Reflector/Clang/Utils.h"
 #include "Reflector/ReflectionCore/ReflectionMacro.h"
+#include "Reflector/Types/Properties/ReflectedEnumProperty.h"
 #include "Reflector/Types/Properties/ReflectedNumericProperty.h"
-#include "Reflector/Utils/StringUtils.h"
 
 namespace Lumina::Reflection::Visitor
 {
 
-    static void CreatePropertyForType(FReflectedStruct* Struct, EPropertyTypeFlags Flags, const eastl::string& Name)
+    static void CreatePropertyForType(FReflectedStruct* Struct, EPropertyTypeFlags Flags, const eastl::string& Name, const eastl::string& TypeName)
     {
         switch (Flags)
         {
@@ -17,70 +17,165 @@ namespace Lumina::Reflection::Visitor
             {
                 auto* Prop = Struct->PushProperty<FReflectedUInt8Property>();
                 Prop->Name = Name;
-                Prop->Outer = Struct->DisplayName;
+                Prop->TypeName = TypeName;
+                if (Struct->Namespace.empty())
+                {
+                    Prop->Outer = Struct->DisplayName;
+                }
+                else
+                {
+                    Prop->Outer = Struct->Namespace + "::" + Struct->DisplayName;
+                }
             }
             break;
         case EPropertyTypeFlags::UInt16:
             {
                 auto* Prop = Struct->PushProperty<FReflectedUInt16Property>();
                 Prop->Name = Name;
-                Prop->Outer = Struct->DisplayName;
+                Prop->TypeName = TypeName;
+                if (Struct->Namespace.empty())
+                {
+                    Prop->Outer = Struct->DisplayName;
+                }
+                else
+                {
+                    Prop->Outer = Struct->Namespace + "::" + Struct->DisplayName;
+                }
             }
             break;
         case EPropertyTypeFlags::UInt32:
             {
                 auto* Prop = Struct->PushProperty<FReflectedUInt32Property>();
                 Prop->Name = Name;
-                Prop->Outer = Struct->DisplayName;
+                Prop->TypeName = TypeName;
+                if (Struct->Namespace.empty())
+                {
+                    Prop->Outer = Struct->DisplayName;
+                }
+                else
+                {
+                    Prop->Outer = Struct->Namespace + "::" + Struct->DisplayName;
+                }
             }
             break;
         case EPropertyTypeFlags::UInt64:
             {
                 auto* Prop = Struct->PushProperty<FReflectedUInt64Property>();
                 Prop->Name = Name;
-                Prop->Outer = Struct->DisplayName;
+                Prop->TypeName = TypeName;
+                if (Struct->Namespace.empty())
+                {
+                    Prop->Outer = Struct->DisplayName;
+                }
+                else
+                {
+                    Prop->Outer = Struct->Namespace + "::" + Struct->DisplayName;
+                }
             }
             break;
         case EPropertyTypeFlags::Int8:
             {
                 auto* Prop = Struct->PushProperty<FReflectedInt8Property>();
                 Prop->Name = Name;
-                Prop->Outer = Struct->DisplayName;
+                Prop->TypeName = TypeName;
+                if (Struct->Namespace.empty())
+                {
+                    Prop->Outer = Struct->DisplayName;
+                }
+                else
+                {
+                    Prop->Outer = Struct->Namespace + "::" + Struct->DisplayName;
+                }
             }
             break;
         case EPropertyTypeFlags::Int16:
             {
                 auto* Prop = Struct->PushProperty<FReflectedInt16Property>();
                 Prop->Name = Name;
-                Prop->Outer = Struct->DisplayName;
+                Prop->TypeName = TypeName;
+                if (Struct->Namespace.empty())
+                {
+                    Prop->Outer = Struct->DisplayName;
+                }
+                else
+                {
+                    Prop->Outer = Struct->Namespace + "::" + Struct->DisplayName;
+                }
             }
             break;
         case EPropertyTypeFlags::Int32:
             {
                 auto* Prop = Struct->PushProperty<FReflectedInt32Property>();
                 Prop->Name = Name;
-                Prop->Outer = Struct->DisplayName;
+                Prop->TypeName = TypeName;
+                if (Struct->Namespace.empty())
+                {
+                    Prop->Outer = Struct->DisplayName;
+                }
+                else
+                {
+                    Prop->Outer = Struct->Namespace + "::" + Struct->DisplayName;
+                }
             }
             break;
         case EPropertyTypeFlags::Int64:
             {
                 auto* Prop = Struct->PushProperty<FReflectedInt64Property>();
                 Prop->Name = Name;
-                Prop->Outer = Struct->DisplayName;
+                Prop->TypeName = TypeName;
+                if (Struct->Namespace.empty())
+                {
+                    Prop->Outer = Struct->DisplayName;
+                }
+                else
+                {
+                    Prop->Outer = Struct->Namespace + "::" + Struct->DisplayName;
+                }
             }
             break;
         case EPropertyTypeFlags::Float:
             {
                 auto* Prop = Struct->PushProperty<FReflectedFloatProperty>();
                 Prop->Name = Name;
-                Prop->Outer = Struct->DisplayName;
+                Prop->TypeName = TypeName;
+                if (Struct->Namespace.empty())
+                {
+                    Prop->Outer = Struct->DisplayName;
+                }
+                else
+                {
+                    Prop->Outer = Struct->Namespace + "::" + Struct->DisplayName;
+                }
             }
             break;
         case EPropertyTypeFlags::Double:
             {
                 auto* Prop = Struct->PushProperty<FReflectedDoubleProperty>();
                 Prop->Name = Name;
-                Prop->Outer = Struct->DisplayName;
+                Prop->TypeName = TypeName;
+                if (Struct->Namespace.empty())
+                {
+                    Prop->Outer = Struct->DisplayName;
+                }
+                else
+                {
+                    Prop->Outer = Struct->Namespace + "::" + Struct->DisplayName;
+                }
+            }
+            break;
+        case EPropertyTypeFlags::Enum:
+            {
+                auto* Prop = Struct->PushProperty<FReflectedEnumProperty>();
+                Prop->Name = Name;
+                Prop->TypeName = TypeName;
+                if (Struct->Namespace.empty())
+                {
+                    Prop->Outer = Struct->DisplayName;
+                }
+                else
+                {
+                    Prop->Outer = Struct->Namespace + "::" + Struct->DisplayName;
+                }
             }
             break;
         default:
@@ -121,8 +216,8 @@ namespace Lumina::Reflection::Visitor
                 eastl::string TypeSpelling = ClangUtils::GetString(clang_getTypeSpelling(FieldType));
                 
                 EPropertyTypeFlags PropFlags = GetCoreTypeFromName(TypeSpelling.c_str());
-
-                CreatePropertyForType(Struct, PropFlags, CursorName);
+                
+                CreatePropertyForType(Struct, PropFlags, CursorName, TypeSpelling);
                 
             }
             break;
@@ -168,16 +263,32 @@ namespace Lumina::Reflection::Visitor
                     return CXChildVisit_Continue;
                 }
                 
+                
                 CXType FieldType = clang_getCursorType(Cursor);
                 clang::QualType FieldQualType = ClangUtils::GetQualType(FieldType);
+
+                if (FieldQualType->isTemplateTypeParmType() )
+                {
+                    Context->LogError("Cannot expose template argument member");
+                    return CXChildVisit_Break;
+                }
 
                 eastl::string TypeSpelling;
                 ClangUtils::GetQualifiedNameForType(FieldQualType, TypeSpelling);
                 
                 EPropertyTypeFlags PropFlags = GetCoreTypeFromName(TypeSpelling.c_str());
-                
-                CreatePropertyForType(Class, PropFlags, CursorName);
 
+                // Is not a core type.
+                if (PropFlags == EPropertyTypeFlags::None)
+                {
+                    if (FieldQualType->isEnumeralType())
+                    {
+                        PropFlags = EPropertyTypeFlags::Enum;
+                    }
+                }
+                
+                CreatePropertyForType(Class, PropFlags, CursorName, FieldQualType.getUnqualifiedType().getAsString().c_str());
+                
             }
             break;
         }
@@ -215,7 +326,7 @@ namespace Lumina::Reflection::Visitor
         ReflectedClass->GeneratedBodyLineNumber = GeneratedBody.LineNumber;
         ReflectedClass->LineNumber = ClangUtils::GetCursorLineNumber(Cursor);
         ReflectedClass->DisplayName = CursorName;
-        ReflectedClass->ID = eastl::string(CursorName);
+        ReflectedClass->ID = CursorName;
         ReflectedClass->HeaderID = Context->ReflectedHeader.HeaderID;
 
         Context->LastReflectedType = ReflectedClass;
@@ -268,7 +379,7 @@ namespace Lumina::Reflection::Visitor
         }
     
         ReflectedClass->DisplayName = CursorName;
-        ReflectedClass->ID = eastl::string(CursorName);
+        ReflectedClass->ID = CursorName;
         ReflectedClass->HeaderID = Context->ReflectedHeader.HeaderID;
 
         FReflectedType* PreviousType = Context->ParentReflectedType;

@@ -31,7 +31,7 @@ namespace Lumina
 
         void ProcessRegistrations(void (*InvokeFunc)(TType*) = nullptr)
         {
-            uint32 Num = Registrations.size();
+            SIZE_T Num = Registrations.size();
             for (FRegistrant& Registrant : Registrations)
             {
                 TType* NewType = Registrant.RegisterFunc();
@@ -52,7 +52,7 @@ namespace Lumina
     private:
         
         TVector<FRegistrant>    Registrations;
-        uint32                  ProcessedRegistrations = 0;
+        SIZE_T                  ProcessedRegistrations = 0;
         
     };
 

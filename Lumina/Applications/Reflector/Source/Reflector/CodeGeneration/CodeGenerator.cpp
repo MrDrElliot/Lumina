@@ -282,7 +282,7 @@ namespace Lumina::Reflection
 
                     for (const FReflectedProperty* Prop : Class->Props)
                     {
-                        SS << "\tstatic const Lumina::FPropertyParams " << Prop->Name.c_str() << ";\n";
+                        SS << "\tstatic const Lumina::" << Prop->GetPropertyParamType() << " " << Prop->Name.c_str() << ";\n";
                     }
                     SS << "\t//...\n\n";
                     
@@ -295,11 +295,11 @@ namespace Lumina::Reflection
 
                     SS << "Lumina::CClass* Construct_CClass_" << Type->Namespace << "_" << Type->DisplayName.c_str() << "()\n";
                     SS << "{\n";
-                    SS << "\tif (!Registration_Info_CClass_" << Type->Namespace << "_" << Type->DisplayName.c_str() << ".Singleton)\n";
+                    SS << "\tif (!Registration_Info_CClass_" << Type->Namespace << "_" << Type->DisplayName.c_str() << ".OuterSingleton)\n";
                     SS << "\t{\n";
-                    SS << "\t\tLumina::ConstructCClass(&Registration_Info_CClass_" << Type->Namespace << "_" << Type->DisplayName.c_str() << ".Singleton, Construct_CClass_" << Type->Namespace << "_" << Type->DisplayName.c_str() << "_Statics::ClassParams);\n";
+                    SS << "\t\tLumina::ConstructCClass(&Registration_Info_CClass_" << Type->Namespace << "_" << Type->DisplayName.c_str() << ".OuterSingleton, Construct_CClass_" << Type->Namespace << "_" << Type->DisplayName.c_str() << "_Statics::ClassParams);\n";
                     SS << "\t}\n";
-                    SS << "\treturn Registration_Info_CClass_" << Type->Namespace << "_" << Type->DisplayName.c_str() << ".Singleton;\n";
+                    SS << "\treturn Registration_Info_CClass_" << Type->Namespace << "_" << Type->DisplayName.c_str() << ".OuterSingleton;\n";
                     SS << "}\n\n";
 
                     if (!Class->Props.empty())
@@ -307,7 +307,7 @@ namespace Lumina::Reflection
                         bHasParams = true;
                         for (const FReflectedProperty* Prop : Class->Props)
                         {
-                            SS << "const Lumina::FPropertyParams Construct_CClass_" << Type->Namespace << "_" << Type->DisplayName.c_str() << "_Statics::" << Prop->Name.c_str() << " = ";
+                            SS << "const Lumina::" << Prop->GetPropertyParamType() << " Construct_CClass_" << Type->Namespace << "_" << Type->DisplayName.c_str() << "_Statics::" << Prop->Name.c_str() << " = ";
                             Prop->AppendDefinition(SS);
                         }
                         
@@ -316,7 +316,7 @@ namespace Lumina::Reflection
                     
                         for (const FReflectedProperty* Prop : Class->Props)
                         {
-                            SS << "\t&Construct_CClass_" << Type->Namespace << "_" << Type->DisplayName.c_str() << "_Statics::" << Prop->Name.c_str() << ",\n";
+                            SS << "\t(const Lumina::FPropertyParams*)&Construct_CClass_" << Type->Namespace << "_" << Type->DisplayName.c_str() << "_Statics::" << Prop->Name.c_str() << ",\n";
                         }
                     
                         SS << "};\n\n";
@@ -376,11 +376,11 @@ namespace Lumina::Reflection
                     
                     SS << "Lumina::CEnum* Construct_CEnum_" << Type->DisplayName << "()\n";
                     SS << "{\n";
-                    SS << "\tif(!Registration_Info_CEnum_" << Type->DisplayName << ".Singleton)" << "\n";
+                    SS << "\tif(!Registration_Info_CEnum_" << Type->DisplayName << ".OuterSingleton)" << "\n";
                     SS << "\t{\n";
-                    SS << "\t\tLumina::ConstructCEnum(&Registration_Info_CEnum_" << Type->DisplayName << ".Singleton, Construct_CEnum_" << Type->DisplayName << "_Statics::EnumParams);" << "\n";
+                    SS << "\t\tLumina::ConstructCEnum(&Registration_Info_CEnum_" << Type->DisplayName << ".OuterSingleton, Construct_CEnum_" << Type->DisplayName << "_Statics::EnumParams);" << "\n";
                     SS << "\t}\n";
-                    SS << "\treturn Registration_Info_CEnum_" << Type->DisplayName << ".Singleton;" << "\n";
+                    SS << "\treturn Registration_Info_CEnum_" << Type->DisplayName << ".OuterSingleton;" << "\n";
                     SS << "}\n";
 
                     SS << "\n";

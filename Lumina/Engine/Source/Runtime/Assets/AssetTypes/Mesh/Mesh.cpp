@@ -6,4 +6,9 @@
 
 namespace Lumina
 {
+    void CMesh::Bind()
+    {
+        
+    }
+
 }

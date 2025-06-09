@@ -130,7 +130,6 @@ namespace Lumina::ClangUtils
         {
             const clang::NamedDecl* pNamedDecl = pType->getAs<clang::EnumType>()->getDecl();
             QualifiedName = pNamedDecl->getQualifiedNameAsString().c_str();
-            std::cout << QualifiedName.c_str() << "\n";
         }
         else if (pType->getTypeClass() == clang::Type::Typedef)
         {

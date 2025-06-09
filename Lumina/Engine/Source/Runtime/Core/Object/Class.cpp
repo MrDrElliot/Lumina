@@ -6,7 +6,7 @@ namespace Lumina
     
     LUMINA_API void AllocateStaticClass(const TCHAR* Package, const TCHAR* Name, CClass** OutClass, uint32 Size, uint32 Alignment, CClass* (*SuperClassFn)(), CClass::ClassConstructorType InClassConstructor)
     {
-        Assert(*OutClass == nullptr);
+        Assert(*OutClass == nullptr)
         
         *OutClass = (CClass*)FMemory::Malloc(sizeof(CClass), alignof(CClass));
         *OutClass = ::new (*OutClass) CClass(Package, FName(Name), Size, Alignment, EObjectFlags::OF_None, InClassConstructor);
@@ -40,7 +40,6 @@ namespace Lumina
         FString DefaultObjectName = GetName().c_str();
         DefaultObjectName += "_CDO";
         
-        LOG_ERROR("WTF: {}", DefaultObjectName);
         FConstructCObjectParams Params(this);
         Params.Flags |= EObjectFlags::OF_DefaultObject;
         Params.Name = FName(DefaultObjectName);

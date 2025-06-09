@@ -6,6 +6,7 @@
 #include "Paths/Paths.h"
 #include "Core/Object/Class.h"
 #include "Core/Reflection/Type/LuminaTypes.h"
+#include "Core/Reflection/Type/Properties/EnumProperty.h"
 #include "Platform/Filesystem/FileHelper.h"
 
 namespace Lumina
@@ -32,9 +33,16 @@ namespace Lumina
         FString Name = Paths::FileName(AssetPath);
         PendingObject = NewObject<CObject>(Class, UTF8_TO_WIDE(AssetPath).c_str(), FName(Name));
 
-        Class->ForEachProperty([this](FProperty* Prop)
+        
+        Class->ForEachProperty<FEnumProperty>([this](FEnumProperty* Prop)
         {
-            LOG_ERROR("{}", Prop->Name.c_str());
+            LOG_ERROR("THIS IS A PROPERTY {}", Prop->Name.c_str());
+
+            CEnum* Enum = Prop->GetEnum();
+            Enum->ForEachEnum([] (const TPair<FName, uint64>& Pair)
+            {
+                LOG_ERROR("ENUMS: {}", Pair.first.c_str());
+            });
         });
         
         return true;

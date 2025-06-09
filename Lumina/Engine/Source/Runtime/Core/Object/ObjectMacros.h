@@ -97,18 +97,18 @@ public: \
     Lumina::FClassRegistrationInfo CONCAT3(Registration_Info_CClass_, TNamespace, _##TClass); \
     NO_API Lumina::CClass* TNamespace::TClass::GetPrivateStaticClass() \
     { \
-        if (CONCAT3(Registration_Info_CClass_, TNamespace, _##TClass).Singleton == nullptr) \
+        if (CONCAT3(Registration_Info_CClass_, TNamespace, _##TClass).InnerSingleton == nullptr) \
         { \
             Lumina::AllocateStaticClass( \
                 TNamespace::TClass::StaticPackage(), \
                 TEXT(#TClass), \
-                &CONCAT3(Registration_Info_CClass_, TNamespace, _##TClass).Singleton, \
+                &CONCAT3(Registration_Info_CClass_, TNamespace, _##TClass).InnerSingleton, \
                 sizeof(TNamespace::TClass), \
                 alignof(TNamespace::TClass), \
                 &TNamespace::TClass::Super::StaticClass, \
                 (Lumina::CClass::ClassConstructorType)Lumina::InternalConstructor<TNamespace::TClass>); \
         } \
-        return CONCAT4(Registration_Info_CClass_, TNamespace, _, ##TClass).Singleton; \
+        return CONCAT4(Registration_Info_CClass_, TNamespace, _, ##TClass).InnerSingleton; \
     }
 
 
@@ -129,11 +129,11 @@ public: \
     }; \
     Lumina::CClass* Construct_CClass_Lumina_##TClass() \
     { \
-        if(!Registration_Info_CClass_Lumina_##TClass.Singleton) \
+        if(!Registration_Info_CClass_Lumina_##TClass.OuterSingleton) \
         { \
-            Registration_Info_CClass_Lumina_##TClass.Singleton = Construct_CClass_Lumina_##TClass##_Statics::Construct(); \
+            Registration_Info_CClass_Lumina_##TClass.OuterSingleton = Construct_CClass_Lumina_##TClass##_Statics::Construct(); \
         } \
-        return Registration_Info_CClass_Lumina_##TClass.Singleton; \
+        return Registration_Info_CClass_Lumina_##TClass.OuterSingleton; \
     } \
     IMPLEMENT_CLASS(Lumina, TClass) \
     static Lumina::FRegisterCompiledInInfo AutoInitialize_##TClass(&Construct_CClass_Lumina_##TClass, Lumina::TClass::StaticPackage(), TEXT(#TClass));

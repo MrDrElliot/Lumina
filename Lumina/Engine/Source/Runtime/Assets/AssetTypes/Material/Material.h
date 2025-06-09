@@ -23,8 +23,7 @@ namespace Lumina
         GENERATED_BODY()
         
     public:
-
-
+        
         CMaterial()
         {
             MaterialType = EMaterialType::None;
@@ -32,11 +31,8 @@ namespace Lumina
 
         TVector<uint8>          GraphData;
         
-    private:
-
         LUM_PROPERTY()
         EMaterialType           MaterialType;
-
         
         FRHIVertexShaderRef     VertexShader;
         FRHIPixelShaderRef      PixelShader;

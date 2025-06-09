@@ -62,6 +62,7 @@ namespace Lumina
         {}
         
     };
+    
 
     template<typename TCPPType>
     class TPropertyTypeLayout
@@ -125,9 +126,10 @@ namespace Lumina
         TProperty_Numeric(FFieldOwner InOwner)
             :Super(InOwner)
         {}
-        
-        
     };
+
+
+    
 
 
     //-------------------------------------------------------------------------------

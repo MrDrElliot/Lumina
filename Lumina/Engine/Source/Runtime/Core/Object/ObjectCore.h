@@ -108,7 +108,7 @@ namespace Lumina
 
     ENUM_CLASS_FLAGS(EPropertyFlags);
 
-    enum class EPropertyTypeFlags : uint16_t
+    enum class EPropertyTypeFlags : uint64_t
     {
         None = 0,
 
@@ -134,6 +134,7 @@ namespace Lumina
         Class               = 1 << 13,
         Name                = 1 << 14,
         String              = 1 << 15,
+        Enum                = 1 << 16,
     };
 
     ENUM_CLASS_FLAGS(EPropertyTypeFlags);
@@ -142,8 +143,13 @@ namespace Lumina
     struct TRegistrationInfo
     {
         using TType = T;
+        
+        /** Is the first object to be constructed, and internally allocates the classes memory */
+        TType* InnerSingleton = nullptr;
 
-        TType* Singleton = nullptr;
+        /** After the InnerSingleton stage, this pointer is used to track and initialize the classes internal data, such as properties and function reflection */
+        TType* OuterSingleton = nullptr;
+
     };
 
     using FClassRegistrationInfo = TRegistrationInfo<CClass>;
@@ -156,6 +162,15 @@ namespace Lumina
         EPropertyFlags      PropertyFlags;
         EPropertyTypeFlags  TypeFlags;
         uint16              Offset;
+    };
+
+    struct FEnumPropertyParams
+    {
+        const char*         Name;
+        EPropertyFlags      PropertyFlags;
+        EPropertyTypeFlags  TypeFlags;
+        uint16              Offset;
+        CEnum*              (*EnumFunc)();
     };
     
     struct FClassParams

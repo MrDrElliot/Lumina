@@ -9,7 +9,8 @@ namespace Lumina
     class FReflectedProperty;
 }
 
-enum class EPropertyTypeFlags : uint16_t
+/** This must reflect EPropertyTypeFlags found in ObjectCore.h */
+enum class EPropertyTypeFlags : uint64_t
 {
     None = 0,
 
@@ -35,6 +36,7 @@ enum class EPropertyTypeFlags : uint16_t
     Class               = 1 << 13,
     Name                = 1 << 14,
     String              = 1 << 15,
+    Enum                = 1 << 16,
 };
 
 namespace Lumina::Reflection
