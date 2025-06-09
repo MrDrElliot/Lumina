@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Core/Assertions/Assert.h"
 #include "Core/Serialization/Archiver.h"
 #include "Core/Templates/CanBulkSerialize.h"
 #include "Platform/GenericPlatform.h"
@@ -329,3 +328,5 @@ namespace Lumina
         }
     }
 }
+
+#undef InvalidIndex

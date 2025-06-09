@@ -26,11 +26,7 @@ namespace Lumina
         DEFINE_DEFAULT_CONSTRUCTOR_CALL(CField)
         
         CField() = default;
-
-        // Begin Internal Use Only Constructors 
-        CField(ENoInit)
-            :CObject(NoInit)
-        {}
+        
         
         CField(const TCHAR* Package, FName InName, uint32 InSize, uint32 InAlignment, EObjectFlags InFlags)
             : CObject(nullptr, InFlags, Package, InName)
@@ -59,13 +55,6 @@ namespace Lumina
 
         CEnum()
         {}
-        
-        // Begin Internal Use Only Constructors 
-        CEnum(ENoInit)
-            :CField(NoInit)
-        {}
-        //~ End Internal Use Only Constructors
-
 
         LUMINA_API uint64 GetEnumValueByName(FName Name);
         void AddEnum(FName Name, uint64 Value);

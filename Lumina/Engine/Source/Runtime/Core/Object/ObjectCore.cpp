@@ -112,6 +112,17 @@ namespace Lumina
         
     }
 
+    CObject* NewObject(CClass* InClass, const TCHAR* Package, FName Name, EObjectFlags Flags)
+    {
+        FConstructCObjectParams Params(InClass);
+        Params.Name = Name;
+        Params.Flags = Flags;
+        Params.Package = Package;
+
+        return StaticAllocateObject(Params);
+        
+    }
+
     template<typename TPropertyType>
     TPropertyType* NewProperty(FFieldOwner Owner, const FPropertyParams* Param)
     {
@@ -178,8 +189,13 @@ namespace Lumina
                 {
                     const FEnumPropertyParams* EnumParams = (const FEnumPropertyParams*)Param;
                     auto EnumProp = NewProperty<FEnumProperty>(FieldOwner, Param);
-                    CEnum* NewEnum = EnumParams->EnumFunc();
-                    Assert(NewEnum != nullptr)
+                    
+                    FFieldOwner UnderlyingOwner;
+                    UnderlyingOwner.Variant.emplace<FField*>(EnumProp);
+                    auto UnderlyingProp = NewProperty<FUInt64Property>(UnderlyingOwner, Param);
+
+                    EnumProp->AddProperty(UnderlyingProp);
+                    CEnum* NewEnum = EnumParams->EnumFunc ? EnumParams->EnumFunc() : nullptr;
                     
                     EnumProp->SetEnum(NewEnum);
                 }

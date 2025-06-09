@@ -1,6 +1,10 @@
 #pragma once
-#include "Array.h"
 
+#include "String.h"
+#include "EASTL/hash_map.h"
+#include "EASTL/hash_set.h"
+#include "Module/API.h"
+#include "Platform/GenericPlatform.h"
 
 namespace Lumina
 {
@@ -41,6 +45,7 @@ namespace Lumina
 
         FORCEINLINE bool operator==(const FName& Other) const { return ID == Other.ID; }
         FORCEINLINE bool operator!=(const FName& Other) const { return ID != Other.ID; }
+    
         
     private:
 

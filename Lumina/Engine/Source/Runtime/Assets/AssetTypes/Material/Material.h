@@ -4,7 +4,14 @@
 #include "Core/Object/Object.h"
 #include "Core/Object/ObjectMacros.h"
 #include "Renderer/RHIFwd.h"
+#include "Core/Object/ObjectPtr.h"
 #include "Material.generated.h"
+
+
+namespace Lumina
+{
+    class CEdGraphNode;
+}
 
 namespace Lumina
 {
@@ -29,7 +36,9 @@ namespace Lumina
             MaterialType = EMaterialType::None;
         }
 
-        TVector<uint8>          GraphData;
+
+        LUM_PROPERTY()
+        TVector<uint64> Nodes;
         
         LUM_PROPERTY()
         EMaterialType           MaterialType;

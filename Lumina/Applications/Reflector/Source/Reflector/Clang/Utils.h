@@ -9,7 +9,7 @@
 
 namespace Lumina::ClangUtils
 {
-    inline eastl::string GetString(CXString&& string)
+    inline eastl::string GetString(const CXString& string)
     {
         eastl::string str = clang_getCString(string);
         clang_disposeString(string);
@@ -47,14 +47,22 @@ namespace Lumina::ClangUtils
 
     inline clang::QualType GetQualType(CXType type) 
     {
-        return clang::QualType::getFromOpaquePtr( type.data[0] ); 
+        return clang::QualType::getFromOpaquePtr(type.data[0]); 
     }
     
     inline bool GetQualifiedNameForType(clang::QualType Type, eastl::string& QualifiedName)
     {
         const clang::Type* pType = Type.getTypePtr();
 
-        if (pType->isBooleanType())
+        if (pType->isArrayType())
+        {
+            auto ElementType = pType->castAsArrayTypeUnsafe()->getElementType();
+            if (!GetQualifiedNameForType(ElementType, QualifiedName))
+            {
+                return false;
+            }
+        }
+        else if (pType->isBooleanType())
         {
             QualifiedName = "bool";
         }
@@ -119,6 +127,10 @@ namespace Lumina::ClangUtils
                 case clang::BuiltinType::Double:
                     QualifiedName = "double";
                     break;
+                default:
+                {
+                    return false;
+                }
             }
         }
         else if (pType->isRecordType())
@@ -131,16 +143,11 @@ namespace Lumina::ClangUtils
             const clang::NamedDecl* pNamedDecl = pType->getAs<clang::EnumType>()->getDecl();
             QualifiedName = pNamedDecl->getQualifiedNameAsString().c_str();
         }
-        else if (pType->getTypeClass() == clang::Type::Typedef)
+        else if (pType->getTypeClass() == clang::Type::Typedef || pType->getTypeClass() == clang::Type::Using)
         {
             const clang::NamedDecl* pNamedDecl = pType->getAs<clang::TypedefType>()->getDecl();
             QualifiedName = pNamedDecl->getQualifiedNameAsString().c_str();
         }
-        else
-        {
-            return false;
-        }
-        
         return true;
     }
 

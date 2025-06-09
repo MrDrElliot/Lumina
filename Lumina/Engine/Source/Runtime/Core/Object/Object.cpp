@@ -1,6 +1,6 @@
-﻿#include "Object.h"
-
-#include "Class.h"
+﻿#include "Class.h"
+#include "Object.h"
+#include "Core/Reflection/Type/LuminaTypes.h"
 
 /** Low level CObject registration. */
 extern Lumina::FClassRegistrationInfo Registration_Info_CClass_Lumina_CObject;
@@ -27,10 +27,20 @@ namespace Lumina
         Initializer->Object = this;
     };
 
-    CObject::CObject(ENoInit)
-        :CObjectBase(NoInit)
+    void CObject::Serialize(IStructuredArchive::FSlot Slot)
     {
-        //.. Zero init constructor.
+        CClass* Class = GetClass();
+        FName Name = GetName();
+
+        Slot.Serialize(Name);
+
+        Class->ForEachProperty([&](FProperty* Property)
+        {
+            Slot.GetStructuredArchive()->EnterField(Property->Name);
+            Property->SerializeItem(Slot, this, nullptr);
+            Slot.GetStructuredArchive()->LeaveField();
+        });
+        
     }
 
     void CObject::PostInitProperties()

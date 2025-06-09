@@ -2,6 +2,7 @@
 
 #include "Module/API.h"
 #include "ObjectFlags.h"
+#include "Containers/Array.h"
 #include "Core/LuminaMacros.h"
 #include "Platform/GenericPlatform.h"
 
@@ -14,7 +15,7 @@ namespace Lumina
     class CClass;
 }
 
-#define TRANSIENT_PACKAGE TEXT("Transient")
+#define TRANSIENT_PACKAGE L"Transient"
 
 namespace Lumina
 {
@@ -56,6 +57,7 @@ namespace Lumina
         return (T*)StaticLoadObject(T::StaticClass(), FullName);
     }
 
+    LUMINA_API CObject* NewObject(CClass* InClass, const TCHAR* Package = TRANSIENT_PACKAGE, FName Name = NAME_None, EObjectFlags Flags = OF_None);
     
 
     template<typename T>

@@ -114,7 +114,7 @@ namespace Lumina
                 Bytes.resize(NewArrayCount, 0);
             }
 
-            Assert((Offset + Num) <= Bytes.size());
+            Assert((Offset + Num) <= Bytes.size())
 
             if (Num > 0)
             {

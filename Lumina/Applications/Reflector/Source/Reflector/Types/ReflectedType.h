@@ -58,6 +58,7 @@ namespace Lumina::Reflection
         if (strcmp(Name, "CClass") == 0)    return EPropertyTypeFlags::Class;
         if (strcmp(Name, "FName") == 0)     return EPropertyTypeFlags::Name;
         if (strcmp(Name, "FString") == 0)   return EPropertyTypeFlags::String;
+        if (strcmp(Name, "TVector") == 0)   return EPropertyTypeFlags::Bool;
 
         return EPropertyTypeFlags::None;
     }

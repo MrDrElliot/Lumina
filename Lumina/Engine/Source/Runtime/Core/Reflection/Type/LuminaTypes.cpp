@@ -21,4 +21,11 @@ namespace Lumina
         void* PropertyPtr = (uint8*)ContainerPtr + Offset;
         return (uint8*)PropertyPtr + ArrayIndex * (size_t)ElementSize;
     }
+
+    void FNumericProperty::SerializeItem(IStructuredArchive::FSlot Slot, void* Value, void const* Defaults)
+    {
+        void* PropertyPtr = (uint8*)Value + Offset;
+        Slot.Serialize(PropertyPtr, ElementSize);
+    }
+    
 }

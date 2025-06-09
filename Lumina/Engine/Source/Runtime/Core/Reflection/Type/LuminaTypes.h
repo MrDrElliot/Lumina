@@ -1,7 +1,18 @@
 #pragma once
 #include "Core/Object/Field.h"
+#include "Core/Serialization/Structured/StructuredArchive.h"
 #include "Platform/GenericPlatform.h"
 
+
+namespace Lumina
+{
+    struct FPropertyParams;
+}
+
+namespace Lumina
+{
+    class IStructuredArchive;
+}
 
 namespace Lumina
 {
@@ -9,7 +20,7 @@ namespace Lumina
     {
     public:
 
-        FProperty(FFieldOwner InOwner)
+        FProperty(FFieldOwner InOwner, FPropertyParams* Params = nullptr)
             :FField(InOwner)
         {
             Init();
@@ -39,6 +50,8 @@ namespace Lumina
             return (ValueType*)GetValuePtrInternal(ContainerPtr, ArrayIndex);
         }
 
+        virtual void SerializeItem(IStructuredArchive::FSlot Slot, void* Value, void const* Defaults) { }
+
     private:
 
         LUMINA_API void* GetValuePtrInternal(void* ContainerPtr, int32 ArrayIndex) const;
@@ -61,6 +74,8 @@ namespace Lumina
             :FProperty(InOwner)
         {}
         
+    void SerializeItem(IStructuredArchive::FSlot Slot, void* Value, void const* Defaults) override;
+
     };
     
 
@@ -126,6 +141,8 @@ namespace Lumina
         TProperty_Numeric(FFieldOwner InOwner)
             :Super(InOwner)
         {}
+
+
     };
 
 

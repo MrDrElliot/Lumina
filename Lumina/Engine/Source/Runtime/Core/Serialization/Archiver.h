@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Containers/Name.h"
 #include "Core/Templates/IsSigned.h"
 #include "Core/Versioning/CoreVersion.h"
 #include "Log/Log.h"
@@ -130,10 +131,24 @@ namespace Lumina
 
         FORCEINLINE FArchive& operator<<(float& Value)
         {
-            static_assert(sizeof(float) == sizeof(uint32), "Expected float to be 4 bytes to swap as uint32");
-            ByteOrderSerialize(reinterpret_cast<uint32&>(Value));
+            static_assert(sizeof(float) == sizeof(uint32_t), "Unexpected float size");
+            uint32 Temp;
+            std::memcpy(&Temp, &Value, sizeof(Temp));
+            ByteOrderSerialize(Temp);
+            std::memcpy(&Value, &Temp, sizeof(Value));
             return *this;
         }
+
+        FORCEINLINE FArchive& operator<<(double& Value)
+        {
+            static_assert(sizeof(double) == sizeof(uint64), "Unexpected double size");
+            uint64 Temp;
+            std::memcpy(&Temp, &Value, sizeof(Temp));
+            ByteOrderSerialize(Temp);
+            std::memcpy(&Value, &Temp, sizeof(Value));
+            return *this;
+        }
+
 
         FORCEINLINE FArchive& operator<<(uint64& Value)
         {
@@ -196,12 +211,15 @@ namespace Lumina
             return *this;
         }
 
-        /*FArchive& operator<<(FString& str)
+        FORCEINLINE FArchive& operator<<(Lumina::FName& str)
         {
-            size_t size = str.Length();
-            Serialize(str.CStr(), size);
+            FString String(str.c_str());
+            *this << String;
+
             return *this;
-        }*/
+        }
+
+        
 
         template<typename EnumType>
         FORCEINLINE FArchive& operator<<(EnumType& Value)

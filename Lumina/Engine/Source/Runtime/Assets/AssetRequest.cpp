@@ -14,11 +14,12 @@ namespace Lumina
     bool FAssetRequest::Process()
     {
         FString FullPath = Paths::ResolveVirtualPath(AssetPath) + ".lasset";
+        FString Name = Paths::FileName(AssetPath);
 
         TVector<uint8> Blob;
         if (!FFileHelper::LoadFileToArray(Blob, FullPath))
         {
-            LOG_ERROR("Failed to find file at path: {}", FullPath);
+            LOG_ERROR("Cannot find asset file at: {}", FullPath);
             bFailed = true;
             return false;
         }
@@ -29,22 +30,16 @@ namespace Lumina
         Reader << Header;
         
         CClass* Class = FindObject<CClass>(UTF8_TO_WIDE(Header.ClassName).c_str());
+        Assert(Class != nullptr)
         
-        FString Name = Paths::FileName(AssetPath);
-        PendingObject = NewObject<CObject>(Class, UTF8_TO_WIDE(AssetPath).c_str(), FName(Name));
+        PendingObject = NewObject(Class, UTF8_TO_WIDE(AssetPath).c_str(), FName(Name));
 
-        
-        Class->ForEachProperty<FEnumProperty>([this](FEnumProperty* Prop)
-        {
-            LOG_ERROR("THIS IS A PROPERTY {}", Prop->Name.c_str());
+        FBinaryStructuredArchive BinaryArchive(Reader);
+        FArchiveSlot Slot = BinaryArchive.Open();
 
-            CEnum* Enum = Prop->GetEnum();
-            Enum->ForEachEnum([] (const TPair<FName, uint64>& Pair)
-            {
-                LOG_ERROR("ENUMS: {}", Pair.first.c_str());
-            });
-        });
+        PendingObject->Serialize(Slot);
         
         return true;
     }
 }
+ 

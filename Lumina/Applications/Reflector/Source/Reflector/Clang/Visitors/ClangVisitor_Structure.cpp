@@ -263,16 +263,11 @@ namespace Lumina::Reflection::Visitor
                     return CXChildVisit_Continue;
                 }
                 
-                
                 CXType FieldType = clang_getCursorType(Cursor);
                 clang::QualType FieldQualType = ClangUtils::GetQualType(FieldType);
 
-                if (FieldQualType->isTemplateTypeParmType() )
-                {
-                    Context->LogError("Cannot expose template argument member");
-                    return CXChildVisit_Break;
-                }
-
+                std::cout << ClangUtils::GetCursorDisplayName(Cursor).c_str() << " - " << FieldQualType.getAsString() << "\n";
+                
                 eastl::string TypeSpelling;
                 ClangUtils::GetQualifiedNameForType(FieldQualType, TypeSpelling);
                 

@@ -1,4 +1,7 @@
 ﻿#include "ClangParser.h"
+
+#include <fstream>
+#include <iostream>
 #include <clang-c/Index.h>
 
 #include "EASTL/fixed_vector.h"
@@ -7,14 +10,17 @@
 namespace Lumina::Reflection
 {
 
-    static char const* const g_includePaths[] =
+    static char const* const GIncludePaths[] =
     {
-        "\\Lumina\\Engine",
-        "\\Lumina\\Engine\\Source",
-        "\\Lumina\\Engine\\Source\\Runtime",
-        "\\Lumina\\Engine\\ThirdParty\\",
-        "\\Lumina\\Engine\\ThirdParty\\EA\\EABase\\include\\common\\",
-        "\\Lumina\\Engine\\ThirdParty\\EA\\EASTL\\include\\",
+        "/Lumina/Engine",
+        "/Lumina/Engine/Source",
+        "/Lumina/Engine/Source/Runtime",
+        "/Lumina/Engine/ThirdParty/",
+        "/Lumina/Engine/ThirdParty/imgui/",
+        "/Lumina/Engine/ThirdParty/rpmalloc/",
+        "/Lumina/Engine/ThirdParty/spdlog/include/",
+        "/Lumina/Engine/ThirdParty/EA/EABase/include/common/",
+        "/Lumina/Engine/ThirdParty/EA/EASTL/include/",
     };
 
     
@@ -23,14 +29,22 @@ namespace Lumina::Reflection
     {
     }
 
-    bool FClangParser::Parse(const eastl::string& SolutionPath, const FReflectedHeader& File, const FReflectedProject& Project)
+    bool FClangParser::Parse(const eastl::string& SolutionPath, const eastl::vector<FReflectedHeader>& Headers, const FReflectedProject& Project)
     {
         ParsingContext.Solution = FProjectSolution(SolutionPath.c_str());
-        ParsingContext.ReflectedHeader = File;
         ParsingContext.Project = Project;
-        
-        CXIndex ClangIndex = clang_createIndex(0, 1);
-        constexpr uint32_t ClangOptions = CXTranslationUnit_DetailedPreprocessingRecord | CXTranslationUnit_SkipFunctionBodies | CXTranslationUnit_IncludeBriefCommentsInCodeCompletion;
+
+        const eastl::string AmalgamationPath = ParsingContext.Solution.GetParentPath() + "/Intermediates/Reflection/" + Project.Name + "/ReflectHeaders.h";
+        std::ofstream AmalgamationFile(AmalgamationPath.c_str());
+
+        // Generate includes for each reflected header
+        for (const FReflectedHeader& Header : Headers)
+        {
+            AmalgamationFile << "#include \"" << Header.HeaderPath.c_str() << "\"\n";
+        }
+
+        AmalgamationFile.close();
+
         
         eastl::vector<eastl::string> FullIncludePaths;
         eastl::fixed_vector<const char*, 10> clangArgs;
@@ -39,15 +53,15 @@ namespace Lumina::Reflection
         FullIncludePaths.push_back("-I" + PrjPath);
         clangArgs.push_back(FullIncludePaths.back().c_str());
         
-        for (const char* Path : g_includePaths)
+        for (const char* Path : GIncludePaths)
         {
             eastl::string SlnPath = std::filesystem::path(SolutionPath.c_str()).parent_path().string().c_str();
             eastl::string FullPath = SlnPath + Path;
             FullIncludePaths.push_back("-I" + FullPath);
             clangArgs.push_back(FullIncludePaths.back().c_str());
-
             if (!std::filesystem::exists(FullPath.c_str()))
             {
+                ParsingContext.LogError("Invalid include path: %s", FullPath.c_str());
                 return false;
             }
         }
@@ -77,23 +91,37 @@ namespace Lumina::Reflection
 #endif
 
         clangArgs.push_back("-x");
-        clangArgs.push_back("c++-header");
+        clangArgs.push_back("c++");
         clangArgs.push_back("-std=c++20");
+        clangArgs.push_back( "-O0" );
+        
+        
+        clangArgs.push_back("-D REFLECTION_PARSER");
+        clangArgs.push_back("-D NDEBUG");
+        
         clangArgs.push_back("-fsyntax-only");
-        clangArgs.push_back("-DREFLECTION_PARSER");
-        clangArgs.push_back("-DNDEBUG");
         clangArgs.push_back("-fparse-all-comments");
         clangArgs.push_back("-fms-extensions");
         clangArgs.push_back("-fms-compatibility");
+
+        clangArgs.push_back("-w"); 
+        
+        clangArgs.push_back("-Wno-multichar");
+        clangArgs.push_back("-Wno-deprecated-builtins");
         clangArgs.push_back("-Wno-unknown-warning-option");
         clangArgs.push_back("-Wno-return-type-c-linkage");
         clangArgs.push_back("-Wno-c++98-compat-pedantic");
+        clangArgs.push_back("-Wno-gnu-folding-constant");
+        clangArgs.push_back("-Wno-vla-extension-static-assert");
 
 
         CXTranslationUnit TranslationUnit;
-        CXErrorCode Result = CXError_Failure;
+
+        CXIndex ClangIndex = clang_createIndex(0, 0);
+        constexpr uint32_t ClangOptions = CXTranslationUnit_DetailedPreprocessingRecord | CXTranslationUnit_SkipFunctionBodies | CXTranslationUnit_IncludeBriefCommentsInCodeCompletion | CXTranslationUnit_KeepGoing;
         
-        Result = clang_parseTranslationUnit2(ClangIndex, File.HeaderPath.c_str(), clangArgs.data(), clangArgs.size(), 0, 0, ClangOptions, &TranslationUnit);
+        CXErrorCode Result = CXError_Failure;
+        Result = clang_parseTranslationUnit2(ClangIndex, AmalgamationPath.c_str(), clangArgs.data(), clangArgs.size(), 0, 0, ClangOptions, &TranslationUnit);
         if (Result == CXError_Success)
         {
             CXCursor Cursor = clang_getTranslationUnitCursor(TranslationUnit);

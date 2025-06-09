@@ -3,7 +3,13 @@
 #include "ObjectBase.h"
 #include "ObjectMacros.h"
 #include "Core/Serialization/Archiver.h"
+#include "Core/Serialization/Structured/StructuredArchive.h"
 #include "Memory/Memory.h"
+
+namespace Lumina
+{
+    class IStructuredArchive;
+}
 
 namespace Lumina
 {
@@ -23,7 +29,6 @@ namespace Lumina
         DEFINE_DEFAULT_CONSTRUCTOR_CALL(CObject)
 
         LUMINA_API CObject();
-        LUMINA_API CObject(ENoInit);
         
         /** Internal constructor */
         LUMINA_API CObject(EObjectFlags InFlags)
@@ -42,6 +47,8 @@ namespace Lumina
 
         /** Serializes object data. Can be overridden by derived classes. */
         LUMINA_API virtual void Serialize(FArchive& Ar) {}
+
+        LUMINA_API virtual void Serialize(IStructuredArchive::FSlot Slot);
 
         /** Called after constructor and after properites have been initialized. */
         LUMINA_API virtual void PostInitProperties();

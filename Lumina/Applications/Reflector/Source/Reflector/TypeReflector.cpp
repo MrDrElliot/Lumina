@@ -80,14 +80,10 @@ namespace Lumina::Reflection
         for (FReflectedProject& Project : Projects)
         {
             Parser.ParsingContext.ReflectionDatabase.AddReflectedProject(Project);
-    
-            for (FReflectedHeader& Header : Project.Headers)
+            
+            if (!Parser.Parse(Project.SolutionPath, Project.Headers, Project))
             {
-                std::cout << "Parsing Header: " << Header.HeaderPath.c_str() << "\n";
-                
-                if (!Parser.Parse(Project.SolutionPath, Header.HeaderPath, Project))
-                {
-                }
+                std::cout << "Failed to parse\n";
             }
         }
 
@@ -99,11 +95,9 @@ namespace Lumina::Reflection
 
     bool FTypeReflector::WriteGeneratedFiles(const FClangParser& Parser)
     {
-
         FCodeGenerator Generator(Solution, Parser.ParsingContext.ReflectionDatabase);
 
         Generator.GenerateCodeForSolution();
-
         
         return true;
     }

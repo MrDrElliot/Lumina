@@ -1,5 +1,7 @@
 ﻿#include "ClangTranslationUnit.h"
 
+#include <complex.h>
+
 #include "ClangVisitor_Structure.h"
 #include "ClangVisitor_Enum.h"
 #include "ClangVisitor_Macro.h"
@@ -17,7 +19,7 @@ namespace Lumina::Reflection
         CXCursorKind CursorKind = clang_getCursorKind(Cursor);
         eastl::string CursorName = ClangUtils::GetCursorDisplayName(Cursor);
         eastl::string ParentCursorName = ClangUtils::GetCursorDisplayName(Parent);
-
+        
 
         // Get the source location of the cursor
         CXSourceLocation Location = clang_getCursorLocation(Cursor);
@@ -36,11 +38,14 @@ namespace Lumina::Reflection
         eastl::string FileNameStr = FileNameCStr ? FileNameCStr : "";
         clang_disposeString(CursorFileNameCX);
 
-        if (ParserContext->ReflectedHeader.HeaderPath != FileNameStr)
+        for (const auto& Header : ParserContext->Project.Headers)
         {
-            return CXChildVisit_Continue;
+            if (Header.HeaderPath == FileNameStr)
+            {
+                ParserContext->ReflectedHeader = Header;
+            }
         }
-
+        
         switch (CursorKind)
         {
             case (CXCursor_MacroExpansion):

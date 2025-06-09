@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include "Containers/Array.h"
 #include "Core/Assertions/Assert.h"
 #include "Core/Serialization/Archiver.h"
 
@@ -6,9 +7,64 @@ namespace Lumina
 {
     class FName;
 
-    class IStructuredArchive
+    class FArchiveElement
     {
     public:
+
+        FArchiveElement() = default;
+
+        FArchiveElement(uint32 InPos)
+            :Position(InPos)
+        {}
+
+        uint32 Position = 0;
+        
+    };
+
+    class FArchiveSlot
+    {
+        friend class IStructuredArchive;
+
+    public:
+
+        FArchiveSlot(IStructuredArchive* InAr, FArchiveElement InElem)
+            : StructuredArchive(InAr)
+            , Element(InElem)
+        {}
+
+        FArchiveElement GetElement() const { return Element; }
+
+        IStructuredArchive* GetStructuredArchive() const { return StructuredArchive; }
+        
+        void Serialize(uint8& Value);
+        void Serialize(uint16& Value);
+        void Serialize(uint32& Value);
+        void Serialize(uint64& Value);
+        void Serialize(int8& Value);
+        void Serialize(int16& Value);
+        void Serialize(int32& Value);
+        void Serialize(int64& Value);
+        void Serialize(float& Value);
+        void Serialize(double& Value);
+        void Serialize(bool& Value);
+        void Serialize(FString& Value);
+        void Serialize(FName& Value);
+        void Serialize(CObject*& Value);
+        void Serialize(void* Data, uint64 DataSize);
+
+    protected:
+
+        IStructuredArchive*     StructuredArchive = nullptr;
+        FArchiveElement         Element;
+    };
+
+    class IStructuredArchive
+    {
+        friend class FArchiveSlot;
+        
+    public:
+
+        using FSlot = FArchiveSlot;
         
         virtual ~IStructuredArchive() = default;
 
@@ -18,34 +74,21 @@ namespace Lumina
             Assert(InnerAr)
         }
 
+        LUMINA_API FArchiveSlot Open();
 
         virtual void EnterRecord() const = 0;
         virtual void LeaveRecord() const = 0;
         
-        virtual void EnterSlot() const = 0;
-        virtual void LeaveSlot() const = 0;
+        virtual void EnterSlot(FSlot Slot) = 0;
+        virtual void LeaveSlot() = 0;
 
-
-        
-
-        virtual void Serialize(uint8& Value) = 0;
-        virtual void Serialize(uint16& Value) = 0;
-        virtual void Serialize(uint32& Value) = 0;
-        virtual void Serialize(uint64& Value) = 0;
-        virtual void Serialize(int8& Value) = 0;
-        virtual void Serialize(int16& Value) = 0;
-        virtual void Serialize(int32& Value) = 0;
-        virtual void Serialize(int64& Value) = 0;
-        virtual void Serialize(float& Value) = 0;
-        virtual void Serialize(double& Value) = 0;
-        virtual void Serialize(bool& Value) = 0;
-        virtual void Serialize(FString& Value) = 0;
-        virtual void Serialize(FName& Value) = 0;
-        virtual void Serialize(CObject*& Value) = 0;
-        virtual void Serialize(void* Data, uint64 DataSize) = 0;
+        virtual void EnterField(FName& FieldName) = 0;
+        virtual void LeaveField() = 0;
 
     protected:
-        
+
+        FArchiveElement RootElement;
+        TVector<FArchiveElement> SlotStack;
         FArchive* InnerAr = nullptr;
     
     };
@@ -61,23 +104,13 @@ namespace Lumina
         void EnterRecord() const override;
         void LeaveRecord() const override;
         
-        void EnterSlot() const override;
-        void LeaveSlot() const override;
+        void EnterSlot(FSlot Slot) override;
+        void LeaveSlot() override;
+
+        void EnterField(FName& FieldName) override;
+        void LeaveField() override;
+
+    private:
         
-        void Serialize(uint8& Value) override;
-        void Serialize(uint16& Value) override;
-        void Serialize(uint32& Value) override;
-        void Serialize(uint64& Value) override;
-        void Serialize(int8& Value) override;
-        void Serialize(int16& Value) override;
-        void Serialize(int32& Value) override;
-        void Serialize(int64& Value) override;
-        void Serialize(float& Value) override;
-        void Serialize(double& Value) override;
-        void Serialize(bool& Value) override;
-        void Serialize(FString& Value) override;
-        void Serialize(FName& Value) override;
-        void Serialize(CObject*& Value) override;
-        void Serialize(void* Data, uint64 DataSize) override;
     };
 }
