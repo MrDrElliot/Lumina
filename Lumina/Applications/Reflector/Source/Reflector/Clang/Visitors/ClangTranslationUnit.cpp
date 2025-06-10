@@ -32,19 +32,23 @@ namespace Lumina::Reflection
             return CXChildVisit_Continue;
         }
 
-        // Get file name string from CXFile
-        CXString CursorFileNameCX = clang_getFileName(CursorFile);
-        const char* FileNameCStr = clang_getCString(CursorFileNameCX);
-        eastl::string FileNameStr = FileNameCStr ? FileNameCStr : "";
-        clang_disposeString(CursorFileNameCX);
+        eastl::string FilePath = ClangUtils::GetHeaderPathForCursor(Cursor);
 
+        bool bFound = false;
         for (const auto& Header : ParserContext->Project.Headers)
         {
-            if (Header.HeaderPath == FileNameStr)
+            if (Header.HeaderPath == FilePath)
             {
+                bFound = true;
                 ParserContext->ReflectedHeader = Header;
             }
         }
+
+        if (bFound == false)
+        {
+            return CXChildVisit_Continue;
+        }
+        
         
         switch (CursorKind)
         {

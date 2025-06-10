@@ -2,6 +2,7 @@
 #include "Assets/Factories/Factory.h"
 #include "Memory/RefCounted.h"
 #include "Renderer/RHIFwd.h"
+#include "TextureFactory.generated.h"
 
 
 namespace Lumina

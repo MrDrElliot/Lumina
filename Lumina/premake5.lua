@@ -100,7 +100,8 @@ project "Lumina"
 		defines { "LE_PLATFORM_LINUX" }
 
 
-	filter { "system:windows" }	
+	filter { "system:windows" }
+	    prebuildcommands { '"%LUMINA_DIR%/Binaries/Release-windows-x86_64/Reflector.exe"' }
 		defines { "LE_PLATFORM_WINDOWS", }
 		flags { "NoRuntimeChecks", "NoIncrementalLink" }
 		links { "Dbghelp", }

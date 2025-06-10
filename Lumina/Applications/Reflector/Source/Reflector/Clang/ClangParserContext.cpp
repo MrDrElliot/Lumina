@@ -1,5 +1,7 @@
 ﻿#include "ClangParserContext.h"
 
+#include <iostream>
+
 #include "xxhash.h"
 #include "EASTL/queue.h"
 
@@ -52,6 +54,7 @@ namespace Lumina::Reflection
 
         eastl::string FileNameChar = clang_getCString(FileName);
         FileNameChar.make_lower();
+        eastl::replace(FileNameChar.begin(), FileNameChar.end(), '/', '\\');
 
         clang_disposeString(FileName);
 

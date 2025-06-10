@@ -36,6 +36,23 @@ namespace Lumina::ClangUtils
         return str;
     }
 
+    inline eastl::string GetHeaderPathForCursor(CXCursor cr)
+    {
+        CXFile pFile;
+        const CXSourceRange cursorRange = clang_getCursorExtent(cr);
+        clang_getExpansionLocation(clang_getRangeStart(cursorRange), &pFile, nullptr, nullptr, nullptr);
+
+        eastl::string HeaderFilePath;
+        if (pFile != nullptr)
+        {
+            CXString clangFilePath = clang_File_tryGetRealPathName(pFile);
+            HeaderFilePath = eastl::string(clang_getCString(clangFilePath));
+            clang_disposeString(clangFilePath);
+        }
+
+        return HeaderFilePath;
+    }
+
     inline uint32_t GetLineNumberForCursor(const CXCursor& cr)
     {
         uint32_t line, column, offset;
@@ -150,23 +167,7 @@ namespace Lumina::ClangUtils
         }
         return true;
     }
-
-    inline std::filesystem::path GetHeaderPathForCursor(CXCursor cr)
-    {
-        CXFile pFile;
-        const CXSourceRange cursorRange = clang_getCursorExtent(cr);
-        clang_getExpansionLocation(clang_getRangeStart(cursorRange), &pFile, nullptr, nullptr, nullptr);
-
-        std::filesystem::path HeaderFilePath;
-        if (pFile != nullptr)
-        {
-            CXString clangFilePath = clang_File_tryGetRealPathName(pFile);
-            HeaderFilePath = std::filesystem::path(clang_getCString(clangFilePath));
-            clang_disposeString(clangFilePath);
-        }
-
-        return HeaderFilePath;
-    }
+    
 
     inline uint64_t HashString(const eastl::string& str)
     {

@@ -39,6 +39,7 @@ namespace Lumina::Reflection
         const eastl::string AmalgamationPath = ProjectReflectionDirectory + "/ReflectHeaders.h";
         
         std::ofstream AmalgamationFile(AmalgamationPath.c_str());
+        AmalgamationFile << "#pragma once\n\n";
 
 #if OPTIMIZE_HEADER_WRITES
         
@@ -88,10 +89,10 @@ namespace Lumina::Reflection
         }
         
 #else
-        
         for (const FReflectedHeader& Header : Headers)
         {
             AmalgamationFile << "#include \"" << Header.HeaderPath.c_str() << "\"\n";
+            ParsingContext.NumHeadersReflected++;
         }
         
 #endif

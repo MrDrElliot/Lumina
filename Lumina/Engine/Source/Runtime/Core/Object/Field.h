@@ -1,6 +1,7 @@
 #pragma once
 #include "Containers/String.h"
 #include "Core/LuminaMacros.h"
+#include "Core/Assertions/Assert.h"
 #include "Core/Variant/Variant.h"
 #include "Platform/GenericPlatform.h"
 
