@@ -116,7 +116,7 @@ Contributions are welcome! Whether you're adding features, fixing bugs, or impro
 
 ## Brackets and Indentation:
 - **Brackets** must be on their **own separate line** (e.g., the opening `{` starts a new line, not on the same line as the function signature).
-- **Indentation**: Use **4 spaces** per indentation level. **No tabs**.
+- **Indentation**: Use **tabs** per indentation level. **No spaces**.
 
 ## Templates:
 - Templates should be as **restrictive as possible**. **C++ concepts** should be used for template restrictions. Use of `static_assert` to enforce constraints on template parameters is **not permissible**.
