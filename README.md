@@ -89,7 +89,7 @@ Lumina is a lightweight and flexible game engine designed to simplify game devel
 
 ## License
 
-Lumina is licensed under the [MIT License](LICENSE), allowing free use, modification, and distribution of the engine's source code.
+Lumina is licensed under the [Apache License 2.0](LICENSE), which allows free use, modification, and distribution of the engine's source code for any purpose, including commercial projects. Use of the code requires proper attribution, including preservation of the license and copyright notices.
 
 ---
 
