@@ -55,11 +55,16 @@ Lumina is a lightweight and flexible game engine designed to simplify game devel
 
 ## Building Lumina
 
-1. Clone the repository and ensure all dependencies are included.
-2. Run the Python script `Win-GenProjects.py` located in the `Scripts` directory to set up the project.
-3. Open the generated Visual Studio solution.
-4. Set the **Editor** project as the default startup project.
-5. Build and run the solution.
+1. Clone the repository and ensure all dependencies are included.\
+2. Run Setup.py, this will extract External.zip into the appropriate place.
+3. The system should automatically add an enviorment variable for you at LUMINA_DIR to the install directory. If for some reason it does not, please add it. For example, mine is under User variables, "LUMINA_DIR" - "H:\Lumina"
+4. Run the Python script `Win-GenProjects.py` located in the `Scripts` directory to set up the project.
+5. Open the generated Visual Studio solution.
+6. Run the "Reflector" application under "Release" mode.
+7. Set the **Editor** project as the default startup project.
+8. Build and run the solution.
+
+**This process is currently temporary, and will improve once focus is shifted away from engine internals**.
 
 ---
 
