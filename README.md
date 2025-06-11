@@ -95,7 +95,7 @@ Lumina is licensed under the [Apache License 2.0](LICENSE), which allows free us
 
 ## Contributions
 
-Contributions are welcome! Whether you're adding features, fixing bugs, or improving documentation, your help is vital to Lumina's growth. Please refer to the [CONTRIBUTING](CONTRIBUTING.md) file for guidelines.
+Contributions are welcome! Whether you're adding features, fixing bugs, or improving documentation, your help is vital to Lumina's growth. Please refer to the Pull Request Checklist for guidelines.
 
 ---
 
