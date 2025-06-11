@@ -102,6 +102,63 @@ Contributions are welcome! Whether you're adding features, fixing bugs, or impro
 
 ---
 
+---
+## Coding Style
+
+## Naming Conventions:
+- **Non-reflection classes**: Prefixed with an **"F"** (e.g., `FMyClass`). This may be adjusted in the future, but all non-reflection classes will have some prefix.
+- **Reflection classes**: Prefixed with a **"C"** (e.g., `CMyClass`) to signify that they are tied to the reflection system.
+- **Functions and methods**: Use **PascalCase** (e.g., `MyFunctionName()`).
+- **Variables**: Use **PascalCase** for variables (e.g., `MyVariable`).
+- **Constants**: Use **UPPER_SNAKE_CASE** (e.g., `MY_CONSTANT`).
+- **Global variables**: Use a **"G"** prefix to indicate global scope (e.g., `GGlobalVariable`).
+- **Namespaces**: Use **PascalCase** (e.g., `MyNamespace`).
+- **No prefixes** like `p`, `m_`, or any other convention — only the **"G"** prefix for global variables.
+
+## Brackets and Indentation:
+- **Brackets** must be on their **own separate line** (e.g., the opening `{` starts a new line, not on the same line as the function signature).
+- **Indentation**: Use **4 spaces** per indentation level. **No tabs**.
+
+## Templates:
+- Templates should be as **restrictive as possible**. **C++ concepts** should be used for template restrictions. Use of `static_assert` to enforce constraints on template parameters is **not permissible**.
+
+## Code Structure:
+- **Class Declarations**: Member functions should be declared in header files and defined in source files. Avoid putting implementation details in the header unless it's small, inline, or templated code.
+    - All non-trivial member functions must be declared in the `.h` file.
+    - Implementations of functions that are trivial (single-line, one-liner) should be in the `.h` file.
+
+## Function and Variable Names:
+- **Function Names**: Must be descriptive, use **PascalCase** (e.g., `CalculateDamage()`, `GetPlayerName()`).
+- **Variable Names**: Use **PascalCase** (e.g., `PlayerHealth`, `EnemyPosition`).
+- **Avoid**: Using single-letter variables except in cases of short loop iterators (e.g., `i`, `j`).
+
+## Comments and Documentation:
+- **Class/Method comments**: For all non-trivial classes and methods, provide brief documentation about their purpose and behavior.
+- Use **inline comments** only when necessary, to clarify specific parts of the code.
+
+## Memory Management:
+- **Ownership** and **lifetime** should be clearly defined, ensuring there are no memory leaks or dangling pointers.
+
+## Error Handling:
+- Use **exceptions** sparingly and only in critical failure paths.
+- Prefer **error codes** or **result objects** for non-critical error handling.
+
+## Reflection:
+- Reflection classes are prefixed with **"C"** to distinguish them.
+- Reflection data should be **separated** into their own class or structure, but closely tied to the code they reflect.
+
+## Miscellaneous:
+- **No Magic Numbers**: Avoid hard-coding numbers or values directly. Instead, use **constants** or **enum classes**.
+- **Prefer `auto`** for variable declarations when the type is clear and self-evident. But do not use auto in times where the type is not readily apparently.
+- **Don't use `using namespace`** in header files. In source files, only use it in limited scopes where necessary.
+
+## Code Readability and Style:
+- Ensure **consistent naming** and formatting throughout the codebase.
+- **Avoid long functions** or functions that perform too many tasks. Keep functions small and focused on a single purpose.
+- **Modular design**: Classes should have clear responsibilities. Aim for **low coupling** and **high cohesion**.
+
+
+
 ## Pull Request Checklist
 
 Before submitting a pull request, ensure the following:
