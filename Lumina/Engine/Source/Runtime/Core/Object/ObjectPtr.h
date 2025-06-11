@@ -1,10 +1,9 @@
 ﻿#pragma once
-#include <atomic>
-
 #include "Core/Assertions/Assert.h"
-#include "Memory/Memory.h"
 #include "Platform/GenericPlatform.h"
-#include "Platform/WindowsPlatform.h"
+
+#include <type_traits>
+#include <memory>
 
 namespace Lumina
 {
@@ -95,14 +94,14 @@ namespace Lumina
 		template<typename T>
 		TObjectPtr<T> As()
 		{
-			Assert(GetRefCount() > 0);
+			Assert(GetRefCount() > 0)
 			return TRefCountPtr<T>(static_cast<T*>(Reference));
 		}
 
 		template<typename T>
 		const TObjectPtr<T> As() const
 		{
-			Assert(GetRefCount() > 0);
+			Assert(GetRefCount() > 0)
 			return TRefCountPtr<T>(static_cast<T*>(Reference));
 		}
 	
@@ -188,7 +187,7 @@ namespace Lumina
 			if (Reference)
 			{
 				Result = Reference->GetRefCount();
-				Assert(Result > 0);
+				Assert(Result > 0)
 			}
 			return Result;
 		}

@@ -18,10 +18,10 @@ namespace Lumina::Reflection
         "/Lumina/Engine",
         "/Lumina/Engine/Source",
         "/Lumina/Engine/Source/Runtime",
-        "/Lumina/Engine/ThirdParty",
-        "/Lumina/Engine/ThirdParty/spdlog/include",
+        "/Lumina/Engine/ThirdParty/EA/",
         "/Lumina/Engine/ThirdParty/EA/EABase/include/common",
-        "/Lumina/Engine/ThirdParty/EA/EASTL/include",
+        "/Lumina/Engine/ThirdParty/EA/EASTL/include/",
+        "/Lumina/Engine/ThirdParty/spdlog/include/", // @TODO Some really weird clang voodoo going on here where TVector won't parse without this.
     };
 
     
@@ -151,7 +151,7 @@ namespace Lumina::Reflection
         
         clangArgs.push_back("-D REFLECTION_PARSER");
         clangArgs.push_back("-D NDEBUG");
-        
+
         clangArgs.push_back("-fsyntax-only");
         clangArgs.push_back("-fparse-all-comments");
         clangArgs.push_back("-fms-extensions");
@@ -171,7 +171,10 @@ namespace Lumina::Reflection
         CXTranslationUnit TranslationUnit;
 
         CXIndex ClangIndex = clang_createIndex(0, 0);
-        constexpr uint32_t ClangOptions = CXTranslationUnit_DetailedPreprocessingRecord | CXTranslationUnit_SkipFunctionBodies | CXTranslationUnit_IncludeBriefCommentsInCodeCompletion | CXTranslationUnit_KeepGoing;
+        constexpr uint32_t ClangOptions = CXTranslationUnit_DetailedPreprocessingRecord
+        | CXTranslationUnit_SkipFunctionBodies
+        | CXTranslationUnit_IncludeBriefCommentsInCodeCompletion
+        | CXTranslationUnit_KeepGoing;
         
         CXErrorCode Result = CXError_Failure;
         Result = clang_parseTranslationUnit2(ClangIndex, AmalgamationPath.c_str(), clangArgs.data(), clangArgs.size(), 0, 0, ClangOptions, &TranslationUnit);

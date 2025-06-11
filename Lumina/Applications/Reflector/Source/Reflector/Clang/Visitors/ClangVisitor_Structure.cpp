@@ -203,7 +203,7 @@ namespace Lumina::Reflection::Visitor
         case(CXCursor_FieldDecl):
             {
                 FReflectionMacro Macro;
-                if(!Context->TryFindMacroForCursor(Context->ReflectedHeader.HeaderID, Cursor, Macro))
+                if(!Context->TryFindMacroForCursor(Context->ReflectedHeader.HeaderPath, Cursor, Macro))
                 {
                     return CXChildVisit_Continue;
                 }
@@ -241,7 +241,7 @@ namespace Lumina::Reflection::Visitor
             {
                 
                 FReflectionMacro Macro;
-                if(!Context->TryFindMacroForCursor(Context->ReflectedHeader.HeaderID, Cursor, Macro))
+                if(!Context->TryFindMacroForCursor(Context->ReflectedHeader.HeaderPath, Cursor, Macro))
                 {
                     return CXChildVisit_Continue;
                 }
@@ -271,13 +271,13 @@ namespace Lumina::Reflection::Visitor
         }
         
         FReflectionMacro Macro;
-        if (!Context->TryFindMacroForCursor(Context->ReflectedHeader.HeaderID, Cursor, Macro))
+        if (!Context->TryFindMacroForCursor(Context->ReflectedHeader.HeaderPath, Cursor, Macro))
         {
             return CXChildVisit_Continue;
         }
 
         FReflectionMacro GeneratedBody;
-        if (!Context->TryFindGeneratedBodyMacro(Context->ReflectedHeader.HeaderID, Cursor, GeneratedBody))
+        if (!Context->TryFindGeneratedBodyMacro(Context->ReflectedHeader.HeaderPath, Cursor, GeneratedBody))
         {
             return CXChildVisit_Break;
         }
@@ -289,7 +289,7 @@ namespace Lumina::Reflection::Visitor
         ReflectedClass->LineNumber = ClangUtils::GetCursorLineNumber(Cursor);
         ReflectedClass->DisplayName = CursorName;
         ReflectedClass->ID = CursorName;
-        ReflectedClass->HeaderID = Context->ReflectedHeader.HeaderID;
+        ReflectedClass->HeaderID = Context->ReflectedHeader.HeaderPath;
 
         Context->LastReflectedType = ReflectedClass;
         
@@ -318,13 +318,13 @@ namespace Lumina::Reflection::Visitor
         }
         
         FReflectionMacro Macro;
-        if (!Context->TryFindMacroForCursor(Context->ReflectedHeader.HeaderID, Cursor, Macro))
+        if (!Context->TryFindMacroForCursor(Context->ReflectedHeader.HeaderPath, Cursor, Macro))
         {
             return CXChildVisit_Continue;
         }
 
         FReflectionMacro GeneratedBody;
-        if (!Context->TryFindGeneratedBodyMacro(Context->ReflectedHeader.HeaderID, Cursor, GeneratedBody))
+        if (!Context->TryFindGeneratedBodyMacro(Context->ReflectedHeader.HeaderPath, Cursor, GeneratedBody))
         {
             return CXChildVisit_Break;
         }
@@ -343,7 +343,7 @@ namespace Lumina::Reflection::Visitor
     
         ReflectedClass->DisplayName = CursorName;
         ReflectedClass->ID = CursorName;
-        ReflectedClass->HeaderID = Context->ReflectedHeader.HeaderID;
+        ReflectedClass->HeaderID = Context->ReflectedHeader.HeaderPath;
 
         FReflectedType* PreviousType = Context->ParentReflectedType;
         Context->ParentReflectedType = ReflectedClass;

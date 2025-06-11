@@ -2,7 +2,6 @@
 
 #include <iostream>
 #include <cstdlib>
-#include "Platform/Platform.h"
 #include <fstream>
 #include "Log/Log.h"
 

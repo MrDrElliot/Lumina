@@ -4,6 +4,7 @@
 #include <fstream>
 
 #include "ReflectedHeader.h"
+#include "Reflector/Clang/Utils.h"
 
 namespace Lumina::Reflection
 {
@@ -48,18 +49,22 @@ namespace Lumina::Reflection
                     {
                         const eastl::string HeaderPath = Line.substr(FirstIndex, SecondIndex - FirstIndex);
                         eastl::string HeaderFileFullPath = ParentPath + "\\" + HeaderPath;
-
+                        
                         // Skip files that contain ".generated." in their name
                         if (HeaderFileFullPath.find(".generated.") != eastl::string::npos)
                         {
                             continue;
                         }
 
+                        eastl::replace(HeaderFileFullPath.begin(), HeaderFileFullPath.end(), '\\', '/');
+                        HeaderFileFullPath.make_lower();
                         FReflectedHeader Header(HeaderFileFullPath);
 
                         if (Header.Parse())
                         {
                             Headers.push_back(Header);
+                            uint64_t Hash = ClangUtils::HashString(Header.HeaderPath);
+                            HeaderHashMap.insert_or_assign(Hash, Header);
                         }
                     }
                 }

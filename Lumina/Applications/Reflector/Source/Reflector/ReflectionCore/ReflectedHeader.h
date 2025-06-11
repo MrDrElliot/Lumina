@@ -21,7 +21,6 @@ namespace Lumina::Reflection
         
 
         eastl::string             FileName;
-        eastl::string             HeaderID;
         eastl::string             HeaderPath;
         uint8_t                   bSkip:1;
 

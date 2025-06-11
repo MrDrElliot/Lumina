@@ -50,6 +50,9 @@ namespace Lumina::ClangUtils
             clang_disposeString(clangFilePath);
         }
 
+        eastl::replace(HeaderFilePath.begin(), HeaderFilePath.end(), '\\', '/');
+        HeaderFilePath.make_lower();
+        
         return HeaderFilePath;
     }
 

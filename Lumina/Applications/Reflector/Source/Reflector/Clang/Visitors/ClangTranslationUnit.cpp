@@ -11,15 +11,30 @@
 namespace Lumina::Reflection
 {
 
+    static uint32_t TestNum = 0;
+    static uint32_t Processed = 0;
+    
     eastl::hash_map<eastl::string, std::filesystem::path> CanonicalPathCache;
     
     CXChildVisitResult VisitTranslationUnit(CXCursor Cursor, CXCursor Parent, CXClientData ClientData)
     {
         FClangParserContext* ParserContext = (FClangParserContext*)ClientData;
+        
+        eastl::string FilePath = ClangUtils::GetHeaderPathForCursor(Cursor);
+        uint64_t Hash = ClangUtils::HashString(FilePath);
+
+        if (ParserContext->Project.HeaderHashMap.find(Hash) == ParserContext->Project.HeaderHashMap.end())
+        {
+            TestNum++;
+            return CXChildVisit_Continue;
+        }
+
+        ParserContext->ReflectedHeader = ParserContext->Project.HeaderHashMap.at(Hash);
+
+        
         CXCursorKind CursorKind = clang_getCursorKind(Cursor);
         eastl::string CursorName = ClangUtils::GetCursorDisplayName(Cursor);
         eastl::string ParentCursorName = ClangUtils::GetCursorDisplayName(Parent);
-        
 
         // Get the source location of the cursor
         CXSourceLocation Location = clang_getCursorLocation(Cursor);
@@ -27,28 +42,7 @@ namespace Lumina::Reflection
         unsigned Line, Column, Offset;
         clang_getSpellingLocation(Location, &CursorFile, &Line, &Column, &Offset);
 
-        if (!CursorFile)
-        {
-            return CXChildVisit_Continue;
-        }
-
-        eastl::string FilePath = ClangUtils::GetHeaderPathForCursor(Cursor);
-
-        bool bFound = false;
-        for (const auto& Header : ParserContext->Project.Headers)
-        {
-            if (Header.HeaderPath == FilePath)
-            {
-                bFound = true;
-                ParserContext->ReflectedHeader = Header;
-            }
-        }
-
-        if (bFound == false)
-        {
-            return CXChildVisit_Continue;
-        }
-        
+        Processed++;
         
         switch (CursorKind)
         {

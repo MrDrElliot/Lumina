@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "ReflectedHeader.h"
 
+#include "EASTL/hash_map.h"
 
 namespace Lumina::Reflection
 {
@@ -12,11 +13,12 @@ namespace Lumina::Reflection
 
         bool Parse();
         
-        eastl::string Name;
-        eastl::string Path;
-        eastl::string SolutionPath;
-        eastl::string ParentPath;
-        eastl::vector<FReflectedHeader> Headers;
+        eastl::string                                   Name;
+        eastl::string                                   Path;
+        eastl::string                                   SolutionPath;
+        eastl::string                                   ParentPath;
+        eastl::vector<FReflectedHeader>                 Headers;
+        eastl::hash_map<uint64_t, FReflectedHeader>     HeaderHashMap;
     
     };
 }

@@ -7,7 +7,7 @@ namespace Lumina::Reflection
 {
     FReflectionMacro::FReflectionMacro(FReflectedHeader* ReflectedHeader, const CXCursor& Cursor, const CXSourceRange& Range, EReflectionMacro InType)
         : Type(InType)
-        , HeaderID(ReflectedHeader->HeaderID)
+        , HeaderID(ReflectedHeader->HeaderPath)
         , Position(Range.begin_int_data)
     {
         clang_getExpansionLocation(clang_getRangeStart(Range), nullptr, &LineNumber, nullptr, nullptr);

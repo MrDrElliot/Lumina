@@ -12,10 +12,6 @@ namespace Lumina::Reflection
         : HeaderPath(Path)
         , bSkip(false)
     {
-        eastl::string LowercasePath = HeaderPath;
-        LowercasePath.make_lower();
-        HeaderID = LowercasePath.c_str();
-
         std::filesystem::path FilesystemPath = Path.c_str();
         FileName = FilesystemPath.stem().string().c_str();
     }

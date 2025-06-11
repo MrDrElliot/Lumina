@@ -55,16 +55,14 @@ namespace Lumina::Reflection
     {
         for (const FReflectedHeader& Header : Project.Headers)
         {
-            uint64_t Hash = ClangUtils::HashString(Header.HeaderID);        
+            uint64_t Hash = ClangUtils::HashString(Header.HeaderPath);        
             if (ReflectionDatabase->ReflectedTypes.find(Hash) == ReflectionDatabase->ReflectedTypes.end())
             {
                 continue;
             }
-            if (!Header.bSkip)
-            {
-                GenerateReflectionCodeForHeader(Header);
-                GenerateReflectionCodeForSource(Header);
-            }
+            
+            GenerateReflectionCodeForHeader(Header);
+            GenerateReflectionCodeForSource(Header);
         }
     }
 
@@ -111,7 +109,7 @@ namespace Lumina::Reflection
     void FCodeGenerator::GenerateCodeHeader(eastl::string& Stream, const FReflectedHeader& Header)
     {
 
-        uint64_t Hash = ClangUtils::HashString(Header.HeaderID);        
+        uint64_t Hash = ClangUtils::HashString(Header.HeaderPath);        
         const eastl::vector<FReflectedType*>& ReflectedTypes = ReflectionDatabase->ReflectedTypes.at(Hash);
 
         
@@ -168,7 +166,7 @@ namespace Lumina::Reflection
     {
         Stream.clear();
         
-        const uint64_t Hash = ClangUtils::HashString(Header.HeaderID);
+        const uint64_t Hash = ClangUtils::HashString(Header.HeaderPath);
         auto TypeIt = ReflectionDatabase->ReflectedTypes.find(Hash);
         const eastl::vector<FReflectedType*>& ReflectedTypes = TypeIt->second;
     

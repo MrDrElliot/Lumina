@@ -18,7 +18,7 @@ namespace Lumina::Reflection
         /** Deletes all previously generated files */
         bool Clean();
 
-        /** Builds generated files from reflected projects */
+        /** Builds the reflection database */
         bool Build(FClangParser& Parser);
 
         /** Creates and generates reflection code files */

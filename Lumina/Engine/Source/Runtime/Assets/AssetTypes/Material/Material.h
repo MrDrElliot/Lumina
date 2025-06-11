@@ -26,9 +26,9 @@ namespace Lumina
         
     public:
         
-
+        
         LUM_PROPERTY()
-        TVector<uint8> Nodes;
+        TVector<uint8> Nodesss;
 
         LUM_PROPERTY()
         TObjectPtr<CObject> TestObject;

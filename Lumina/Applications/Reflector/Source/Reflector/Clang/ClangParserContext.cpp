@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+#include "Utils.h"
 #include "xxhash.h"
 #include "EASTL/queue.h"
 
@@ -22,7 +23,7 @@ namespace Lumina::Reflection
 
     void FClangParserContext::AddGeneratedBodyMacro(FReflectionMacro&& Macro)
     {
-        uint64 Hash = XXH64(Macro.HeaderID.c_str(), strlen(Macro.HeaderID.c_str()), 0);
+        uint64 Hash = ClangUtils::HashString(Macro.HeaderID);
         
         eastl::queue<FReflectionMacro>& Macros = GeneratedBodyMacros[Hash];
         Macros.push(eastl::move(Macro));
@@ -30,7 +31,7 @@ namespace Lumina::Reflection
 
     bool FClangParserContext::TryFindMacroForCursor(eastl::string HeaderID, const CXCursor& Cursor, FReflectionMacro& Macro)
     {
-        uint64 Hash = XXH64(HeaderID.c_str(), strlen(HeaderID.c_str()), 0);
+        uint64 Hash = ClangUtils::HashString(HeaderID);
 
         auto headerIter = ReflectionMacros.find(Hash);
         if (headerIter == ReflectionMacros.end())
@@ -54,7 +55,7 @@ namespace Lumina::Reflection
 
         eastl::string FileNameChar = clang_getCString(FileName);
         FileNameChar.make_lower();
-        eastl::replace(FileNameChar.begin(), FileNameChar.end(), '/', '\\');
+        eastl::replace(FileNameChar.begin(), FileNameChar.end(), '\\', '/');
 
         clang_disposeString(FileName);
 
