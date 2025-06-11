@@ -102,7 +102,6 @@ Contributions are welcome! Whether you're adding features, fixing bugs, or impro
 
 ---
 
----
 ## Coding Style
 
 ## Naming Conventions:
