@@ -112,13 +112,6 @@ Before submitting a pull request, ensure the following:
 
 ---
 
-## Getting Started
-
-To begin developing with Lumina:
-
-1. Run the **Editor** application from the provided Visual Studio solution.
-2. Explore the engine's features and start building your project.
-
 Stay tuned for additional documentation and tutorials as the engine evolves.
 
 ---
