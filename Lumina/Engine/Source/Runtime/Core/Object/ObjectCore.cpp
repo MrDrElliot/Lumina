@@ -7,6 +7,7 @@
 #include "Core/Engine/Engine.h"
 #include "Core/Math/Math.h"
 #include "Core/Reflection/Type/LuminaTypes.h"
+#include "Core/Reflection/Type/Properties/ArrayProperty.h"
 #include "Core/Reflection/Type/Properties/EnumProperty.h"
 
 namespace Lumina
@@ -124,7 +125,7 @@ namespace Lumina
     }
 
     template<typename TPropertyType>
-    TPropertyType* NewProperty(FFieldOwner Owner, const FPropertyParams* Param)
+    TPropertyType* NewFProperty(FFieldOwner Owner, const FPropertyParams* Param)
     {
         TPropertyType* Type = FMemory::New<TPropertyType>(Owner);
         Type->Name = Param->Name;
@@ -133,79 +134,106 @@ namespace Lumina
 
         return Type;
     }
-
-    void ConstructProperties(CStruct* Owner, const FPropertyParams* const* Properties, uint32 NumProperties)
+    
+    
+    void ConstructProperties(FFieldOwner FieldOwner, const FPropertyParams* const*& Properties, uint32& NumProperties)
     {
-        for (uint32 i = 0; i < NumProperties; ++i)
-        {
-            FFieldOwner FieldOwner;
-            FieldOwner.Variant.emplace<CStruct*>(Owner);
-    
-            const FPropertyParams* Param = Properties[i];
-    
-            switch (Param->TypeFlags)
-            {
-            case EPropertyTypeFlags::Int8:
-                NewProperty<FInt8Property>(FieldOwner, Param);
-                break;
-            case EPropertyTypeFlags::Int16:
-                NewProperty<FInt16Property>(FieldOwner, Param);
-                break;
-            case EPropertyTypeFlags::Int32:
-                NewProperty<FInt32Property>(FieldOwner, Param);
-                break;
-            case EPropertyTypeFlags::Int64:
-                NewProperty<FInt64Property>(FieldOwner, Param);
-                break;
-            case EPropertyTypeFlags::UInt8:
-                NewProperty<FUInt8Property>(FieldOwner, Param);
-                break;
-            case EPropertyTypeFlags::UInt16:
-                NewProperty<FUInt16Property>(FieldOwner, Param);
-                break;
-            case EPropertyTypeFlags::UInt32:
-                NewProperty<FUInt32Property>(FieldOwner, Param);
-                break;
-            case EPropertyTypeFlags::UInt64:
-                NewProperty<FUInt64Property>(FieldOwner, Param);
-                break;
-            case EPropertyTypeFlags::Float:
-                NewProperty<FFloatProperty>(FieldOwner, Param);
-                break;
-            case EPropertyTypeFlags::Double:
-                NewProperty<FDoubleProperty>(FieldOwner, Param);
-                break;
-            case EPropertyTypeFlags::Bool:
-                break;
-            case EPropertyTypeFlags::Object:
-                break;
-            case EPropertyTypeFlags::Class:
-                break;
-            case EPropertyTypeFlags::Name:
-                break;
-            case EPropertyTypeFlags::String:
-                break;
-            case EPropertyTypeFlags::Enum:
-                {
-                    const FEnumPropertyParams* EnumParams = (const FEnumPropertyParams*)Param;
-                    auto EnumProp = NewProperty<FEnumProperty>(FieldOwner, Param);
-                    
-                    FFieldOwner UnderlyingOwner;
-                    UnderlyingOwner.Variant.emplace<FField*>(EnumProp);
-                    auto UnderlyingProp = NewProperty<FUInt64Property>(UnderlyingOwner, Param);
+        const FPropertyParams* Param = *--Properties;
+        uint32 ReadMore = 0;
 
-                    EnumProp->AddProperty(UnderlyingProp);
-                    CEnum* NewEnum = EnumParams->EnumFunc ? EnumParams->EnumFunc() : nullptr;
-                    
-                    EnumProp->SetEnum(NewEnum);
-                }
-                break;
-            default:
-                break;
+        LOG_ERROR("Constructing Properties For: {}", Param->Name);
+        
+        FProperty* NewProperty = nullptr;
+    
+        switch (Param->TypeFlags)
+        {
+        case EPropertyTypeFlags::Int8:
+            NewFProperty<FInt8Property>(FieldOwner, Param);
+            break;
+        case EPropertyTypeFlags::Int16:
+            NewFProperty<FInt16Property>(FieldOwner, Param);
+            break;
+        case EPropertyTypeFlags::Int32:
+            NewFProperty<FInt32Property>(FieldOwner, Param);
+            break;
+        case EPropertyTypeFlags::Int64:
+            NewFProperty<FInt64Property>(FieldOwner, Param);
+            break;
+        case EPropertyTypeFlags::UInt8:
+            NewFProperty<FUInt8Property>(FieldOwner, Param);
+            break;
+        case EPropertyTypeFlags::UInt16:
+            NewFProperty<FUInt16Property>(FieldOwner, Param);
+            break;
+        case EPropertyTypeFlags::UInt32:
+            NewFProperty<FUInt32Property>(FieldOwner, Param);
+            break;
+        case EPropertyTypeFlags::UInt64:
+            NewFProperty<FUInt64Property>(FieldOwner, Param);
+            break;
+        case EPropertyTypeFlags::Float:
+            NewFProperty<FFloatProperty>(FieldOwner, Param);
+            break;
+        case EPropertyTypeFlags::Double:
+            NewFProperty<FDoubleProperty>(FieldOwner, Param);
+            break;
+        case EPropertyTypeFlags::Bool:
+            break;
+        case EPropertyTypeFlags::Object:
+            break;
+        case EPropertyTypeFlags::Class:
+            break;
+        case EPropertyTypeFlags::Name:
+            break;
+        case EPropertyTypeFlags::String:
+            break;
+        case EPropertyTypeFlags::Enum:
+            {
+                const FEnumPropertyParams* EnumParams = (const FEnumPropertyParams*)Param;
+                auto EnumProp = NewFProperty<FEnumProperty>(FieldOwner, Param);
+                
+                FFieldOwner UnderlyingOwner;
+                UnderlyingOwner.Variant.emplace<FField*>(EnumProp);
+                auto UnderlyingProp = NewFProperty<FUInt64Property>(UnderlyingOwner, Param);
+
+                EnumProp->AddProperty(UnderlyingProp);
+                CEnum* NewEnum = EnumParams->EnumFunc ? EnumParams->EnumFunc() : nullptr;
+                
+                EnumProp->SetEnum(NewEnum);
             }
+            break;
+        case EPropertyTypeFlags::Vector:
+            {
+                NewProperty = NewFProperty<FArrayProperty>(FieldOwner, Param);
+
+                ReadMore = 1;
+            }
+            break;
+        default:
+            break;
+        }
+
+        --NumProperties;
+        
+        for (; ReadMore; --ReadMore)
+        {
+            FFieldOwner Owner;
+            Owner.Variant.emplace<FField*>(NewProperty);
+            ConstructProperties(Owner, Properties, NumProperties);
         }
     }
-    
+
+    void InitializeAndCreateFProperties(CStruct* Outer, const FPropertyParams* const* PropertyArray, uint32 NumProperties)
+    {
+        // Move to iterate backwards.
+        PropertyArray += NumProperties;
+        while (NumProperties)
+        {
+            FFieldOwner Owner;
+            Owner.Variant.emplace<CStruct*>(Outer);
+            ConstructProperties(Owner, PropertyArray, NumProperties);
+        }
+    }
 
     void ConstructCClass(CClass** OutClass, const FClassParams& Params)
     {
@@ -221,8 +249,7 @@ namespace Lumina
 
         CObjectForceRegistration(FinalClass);
         
-        LOG_ERROR("Constructing Properties For: {}", FinalClass->GetName());
-        ConstructProperties(FinalClass, Params.Params, Params.NumProperties);
+        InitializeAndCreateFProperties(FinalClass, Params.Params, Params.NumProperties);
 
         // Link this class to it's parent. (if it has one).
         FinalClass->Link();

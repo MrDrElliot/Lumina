@@ -158,13 +158,26 @@ namespace Lumina::ClangUtils
         else if (pType->isEnumeralType())
         {
             const clang::NamedDecl* pNamedDecl = pType->getAs<clang::EnumType>()->getDecl();
-            QualifiedName = pNamedDecl->getQualifiedNameAsString().c_str();
+            QualifiedName = pNamedDecl->getNameAsString().c_str();
         }
         else if (pType->getTypeClass() == clang::Type::Typedef || pType->getTypeClass() == clang::Type::Using)
         {
             const clang::NamedDecl* pNamedDecl = pType->getAs<clang::TypedefType>()->getDecl();
             QualifiedName = pNamedDecl->getQualifiedNameAsString().c_str();
         }
+
+        if (QualifiedName == "eastl::vector")
+        {
+            QualifiedName = "Lumina::TVector";
+        }
+
+        if (QualifiedName == "TObjectPtr")
+        {
+            QualifiedName = "Lumina::TObjectPtr";
+        }
+
+        
+        QualifiedName.erase(eastl::remove(QualifiedName.begin(), QualifiedName.end(), ' '), QualifiedName.end());
         return true;
     }
     

@@ -2,7 +2,6 @@
 #include "AssetRequest.h"
 
 #include "Core/Serialization/MemoryArchiver.h"
-#include "Factories/Factory.h"
 #include "Paths/Paths.h"
 #include "Core/Object/Class.h"
 #include "Core/Reflection/Type/LuminaTypes.h"

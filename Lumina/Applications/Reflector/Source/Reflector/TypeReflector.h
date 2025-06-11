@@ -19,7 +19,10 @@ namespace Lumina::Reflection
         bool Clean();
 
         /** Builds generated files from reflected projects */
-        bool Build();
+        bool Build(FClangParser& Parser);
+
+        /** Creates and generates reflection code files */
+        bool Generate(FClangParser& Parser);
 
     private:
 

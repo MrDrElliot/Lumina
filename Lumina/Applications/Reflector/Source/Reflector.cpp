@@ -1,17 +1,12 @@
 
 
-#include <clang-c/Index.h>
 #include <iostream>
-
-#include "Reflector/TypeReflector.h"
-
-
-using namespace Lumina;
-
 #include <chrono>
-#include <iostream>
 #include <filesystem>
-#include <cstdlib> // for std::getenv
+#include <cstdlib>
+#include "Reflector/TypeReflector.h"
+#include "Reflector/Clang/ClangParser.h"
+
 
 int main(int argc, char* argv[])
 {
@@ -40,7 +35,7 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    Reflection::FTypeReflector TypeReflector(LuminaEditor);
+    Lumina::Reflection::FTypeReflector TypeReflector(LuminaEditor);
 
     double parseTime = 0.0;
     {
@@ -62,12 +57,14 @@ int main(int argc, char* argv[])
 
     std::cout << "\n";
     
+    Lumina::Reflection::FClangParser Parser;
+    
     double buildTime = 0.0;
     {
         std::cout << "[Reflection] Starting Build...\n";
         auto start = std::chrono::high_resolution_clock::now();
 
-        TypeReflector.Build();
+        TypeReflector.Build(Parser);
 
         auto end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> duration = end - start;
@@ -77,9 +74,25 @@ int main(int argc, char* argv[])
     }
 
     std::cout << "\n";
+
+    double GenTime = 0.0;
+    {
+        std::cout << "[Reflection] Starting Code Generation...\n";
+        auto start = std::chrono::high_resolution_clock::now();
+
+        TypeReflector.Generate(Parser);
+
+        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> duration = end - start;
+        GenTime = duration.count();
+
+        std::cout << "[Reflection] Code Generation completed in " << GenTime << " seconds.\n";
+    }
+
+    std::cout << "\n";
     
     std::cout << "===============================================\n";
-    std::cout << "Total Time: " << (parseTime + buildTime) << " seconds\n";
+    std::cout << "Total Time: " << (parseTime + buildTime + GenTime) << " seconds\n";
     std::cout << "===============================================\n";
 
     return 0;

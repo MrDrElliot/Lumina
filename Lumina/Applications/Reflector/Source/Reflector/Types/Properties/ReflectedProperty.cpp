@@ -3,8 +3,15 @@
 namespace Lumina
 {
 
-    void FReflectedProperty::AppendPropertyDef(std::stringstream& SS, const char* PropertyFlags, const char* TypeFlags) const
+    void FReflectedProperty::AppendPropertyDef(eastl::string& Stream, const char* PropertyFlags, const char* TypeFlags) const
     {
-        SS << "{ " << "\"" <<  Name.c_str() << "\"" << ", " << PropertyFlags << ", " << TypeFlags << ", offsetof(" << Outer.c_str() << ", " << Name.c_str() << "), };\n";
+        if (bInner)
+        {
+            Stream += "{ \"" +  Name + "\"" + ", " + PropertyFlags + ", " + TypeFlags + ", 0, };\n";
+        }
+        else
+        {
+            Stream += "{ \"" +  Name + "\"" + ", " + PropertyFlags + ", " + TypeFlags + ", offsetof(" + Outer + ", " + Name + "), };\n";
+        }
     }
 }

@@ -20,8 +20,8 @@ namespace Lumina::Reflection
 
     private:
 
-        void GenerateCodeHeader(std::stringstream& SS, const FReflectedHeader& Header);
-        void GenerateCodeSource(std::stringstream& SS, const FReflectedHeader& Header);
+        void GenerateCodeHeader(eastl::string& Stream, const FReflectedHeader& Header);
+        void GenerateCodeSource(eastl::string& Stream, const FReflectedHeader& Header);
 
 
     private:

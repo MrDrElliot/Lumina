@@ -26,17 +26,18 @@ namespace Lumina
         
     public:
         
-        CMaterial()
-        {
-            MaterialType = EMaterialType::None;
-        }
-
 
         LUM_PROPERTY()
         TVector<uint8> Nodes;
+
+        LUM_PROPERTY()
+        TObjectPtr<CObject> TestObject;
+
+        LUM_PROPERTY()
+        TVector<TObjectPtr<CObject>> NestedTest;
         
         LUM_PROPERTY()
-        EMaterialType           MaterialType;
+        EMaterialType           MaterialType = EMaterialType::None;
         
         FRHIVertexShaderRef     VertexShader;
         FRHIPixelShaderRef      PixelShader;

@@ -70,12 +70,8 @@ namespace Lumina::Reflection
         return false;
     }
 
-    bool FTypeReflector::Build()
+    bool FTypeReflector::Build(FClangParser& Parser)
     {
-        FClangParser Parser;
-        eastl::vector<FReflectedHeader*> HeadersToRemove;
-        HeadersToRemove.reserve(14);
-    
         for (FReflectedProject& Project : Projects)
         {
             Parser.ParsingContext.ReflectionDatabase.AddReflectedProject(Project);
@@ -92,7 +88,14 @@ namespace Lumina::Reflection
         {
             std::cout << Parser.ParsingContext.ErrorMessage.c_str() << "\n";
         }
+        
+        return true;
+    }
+
+    bool FTypeReflector::Generate(FClangParser& Parser)
+    {
         WriteGeneratedFiles(Parser);
+
         return true;
     }
 

@@ -8,7 +8,7 @@
 #include "Visitors/ClangTranslationUnit.h"
 
 
-#define OPTIMIZE_HEADER_WRITES 1
+#define OPTIMIZE_HEADER_WRITES 0
 
 namespace Lumina::Reflection
 {

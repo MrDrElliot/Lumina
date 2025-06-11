@@ -31,10 +31,6 @@ bool FSandbox::ApplicationLoop()
 
 bool FSandbox::Initialize(int argc, char** argv)
 {
-	COtherClass* TestClass = NewObject<COtherClass>();
-
-	FString Path = TestClass->GetPathName();
-	
 	return true;
 }
 

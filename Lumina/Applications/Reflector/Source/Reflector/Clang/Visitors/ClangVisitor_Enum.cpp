@@ -68,9 +68,9 @@ namespace Lumina::Reflection::Visitor
         }
         
         const clang::EnumDecl* pEnumDecl = (const clang::EnumDecl*) Cursor.data[0];
-        clang::QualType integerType = pEnumDecl->getIntegerType();
+        clang::QualType IntegerType = pEnumDecl->getIntegerType();
 
-        if (integerType.isNull())
+        if (IntegerType.isNull())
         {
             return CXChildVisit_Break;
         }

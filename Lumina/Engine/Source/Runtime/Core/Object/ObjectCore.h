@@ -106,10 +106,12 @@ namespace Lumina
         PF_Const,
         PF_Private,
         PF_Protected,
+        PF_SubField,
     };
 
     ENUM_CLASS_FLAGS(EPropertyFlags);
 
+    /** This must reflect EPropertyTypeFlags found in ReflectedType.h */
     enum class EPropertyTypeFlags : uint64_t
     {
         None = 0,
@@ -137,6 +139,7 @@ namespace Lumina
         Name                = 1 << 14,
         String              = 1 << 15,
         Enum                = 1 << 16,
+        Vector              = 1 << 17,
     };
 
     ENUM_CLASS_FLAGS(EPropertyTypeFlags);
@@ -166,6 +169,15 @@ namespace Lumina
         uint16              Offset;
     };
 
+    struct FObjectPropertyParams
+    {
+        const char*         Name;
+        EPropertyFlags      PropertyFlags;
+        EPropertyTypeFlags  TypeFlags;
+        uint16              Offset;
+        CClass*            (*ClassFunc)();
+    };
+
     struct FEnumPropertyParams
     {
         const char*         Name;
@@ -173,6 +185,14 @@ namespace Lumina
         EPropertyTypeFlags  TypeFlags;
         uint16              Offset;
         CEnum*              (*EnumFunc)();
+    };
+
+    struct FArrayPropertyParams
+    {
+        const char*         Name;
+        EPropertyFlags      PropertyFlags;
+        EPropertyTypeFlags  TypeFlags;
+        uint16              Offset;
     };
     
     struct FClassParams

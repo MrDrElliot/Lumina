@@ -1,8 +1,13 @@
 ﻿#pragma once
-#include <sstream>
+#include <clang-c/Index.h>
 
 #include "EASTL/string.h"
 #include "EASTL/vector.h"
+
+namespace Lumina::Reflection
+{
+    class FReflectedProject;
+}
 
 namespace Lumina
 {
@@ -37,28 +42,30 @@ enum class EPropertyTypeFlags : uint64_t
     Name                = 1 << 14,
     String              = 1 << 15,
     Enum                = 1 << 16,
+    Vector              = 1 << 17,
 };
 
 namespace Lumina::Reflection
 {
     inline EPropertyTypeFlags GetCoreTypeFromName(const char* Name)
     {
-        if (strcmp(Name, "bool") == 0)      return EPropertyTypeFlags::Bool;
-        if (strcmp(Name, "uint8") == 0)     return EPropertyTypeFlags::UInt8;
-        if (strcmp(Name, "uint16") == 0)    return EPropertyTypeFlags::UInt16;
-        if (strcmp(Name, "uint32") == 0)    return EPropertyTypeFlags::UInt32;
-        if (strcmp(Name, "uint64") == 0)    return EPropertyTypeFlags::UInt64;
-        if (strcmp(Name, "int8") == 0)      return EPropertyTypeFlags::Int8;
-        if (strcmp(Name, "int16") == 0)     return EPropertyTypeFlags::Int16;
-        if (strcmp(Name, "int32") == 0)     return EPropertyTypeFlags::Int32;
-        if (strcmp(Name, "int64") == 0)     return EPropertyTypeFlags::Int64;
-        if (strcmp(Name, "float") == 0)     return EPropertyTypeFlags::Float;
-        if (strcmp(Name, "double") == 0)    return EPropertyTypeFlags::Double;
-        if (strcmp(Name, "CObject") == 0)   return EPropertyTypeFlags::Object;
-        if (strcmp(Name, "CClass") == 0)    return EPropertyTypeFlags::Class;
-        if (strcmp(Name, "FName") == 0)     return EPropertyTypeFlags::Name;
-        if (strcmp(Name, "FString") == 0)   return EPropertyTypeFlags::String;
-        if (strcmp(Name, "TVector") == 0)   return EPropertyTypeFlags::Bool;
+        if (strcmp(Name, "bool") == 0)                  return EPropertyTypeFlags::Bool;
+        if (strcmp(Name, "uint8") == 0)                 return EPropertyTypeFlags::UInt8;
+        if (strcmp(Name, "uint16") == 0)                return EPropertyTypeFlags::UInt16;
+        if (strcmp(Name, "uint32") == 0)                return EPropertyTypeFlags::UInt32;
+        if (strcmp(Name, "uint64") == 0)                return EPropertyTypeFlags::UInt64;
+        if (strcmp(Name, "int8") == 0)                  return EPropertyTypeFlags::Int8;
+        if (strcmp(Name, "int16") == 0)                 return EPropertyTypeFlags::Int16;
+        if (strcmp(Name, "int32") == 0)                 return EPropertyTypeFlags::Int32;
+        if (strcmp(Name, "int64") == 0)                 return EPropertyTypeFlags::Int64;
+        if (strcmp(Name, "float") == 0)                 return EPropertyTypeFlags::Float;
+        if (strcmp(Name, "double") == 0)                return EPropertyTypeFlags::Double;
+        if (strcmp(Name, "CClass") == 0)                return EPropertyTypeFlags::Class;
+        if (strcmp(Name, "FName") == 0)                 return EPropertyTypeFlags::Name;
+        if (strcmp(Name, "FString") == 0)               return EPropertyTypeFlags::String;
+        if (strcmp(Name, "Lumina::TVector") == 0)       return EPropertyTypeFlags::Vector;
+        if (strcmp(Name, "Lumina::CObject") == 0)       return EPropertyTypeFlags::Object;
+        if (strcmp(Name, "Lumina::TObjectPtr") == 0)    return EPropertyTypeFlags::Object;
 
         return EPropertyTypeFlags::None;
     }
@@ -76,16 +83,23 @@ namespace Lumina::Reflection
         };
         
         virtual ~FReflectedType() = default;
-        virtual void DefineConstructionStatics(std::stringstream& SS) = 0;
 
-        uint32_t        GeneratedBodyLineNumber;
-        uint32_t        LineNumber;
-        eastl::string   ID;
-        eastl::string   HeaderID;
-        eastl::string   DisplayName;
-        eastl::string   QualifiedName;
-        eastl::string   Namespace;
-        EType           Type;
+        virtual eastl::string GetTypeName() const = 0;
+        virtual void DefineConstructionStatics(eastl::string& Stream) = 0;
+        virtual void DefineInitialHeader(eastl::string& Stream, const eastl::string& FileID) = 0;
+        virtual void DefineSecondaryHeader(eastl::string& Stream, const eastl::string& FileID) = 0;
+        virtual void DeclareImplementation(eastl::string& Stream) = 0;
+        virtual void DeclareStaticRegistration(eastl::string& Stream) = 0;
+
+        eastl::string       Project;
+        uint32_t            GeneratedBodyLineNumber;
+        uint32_t            LineNumber;
+        eastl::string       ID;
+        eastl::string       HeaderID;
+        eastl::string       DisplayName;
+        eastl::string       QualifiedName;
+        eastl::string       Namespace;
+        EType               Type;
         
     };
     
@@ -107,13 +121,18 @@ namespace Lumina::Reflection
         {
             Type = EType::Enum;
         }
-        
-        void DefineConstructionStatics(std::stringstream& SS) override;
+
+        eastl::string GetTypeName() const override { return "CEnum"; }
+        void DefineConstructionStatics(eastl::string& Stream) override;
+        void DefineInitialHeader(eastl::string& Stream, const eastl::string& FileID) override;
+        void DefineSecondaryHeader(eastl::string& Stream, const eastl::string& FileID) override;
+        void DeclareImplementation(eastl::string& Stream) override;
+        void DeclareStaticRegistration(eastl::string& Stream) override;
 
         void AddConstant(const FConstant& Constant) { Constants.push_back(Constant); }
 
-        eastl::vector<FConstant> Constants;
-        
+        eastl::vector<FConstant>    Constants;
+        CXType                      EnumIntegralType;
         
     };
 
@@ -123,22 +142,21 @@ namespace Lumina::Reflection
     {
     public:
 
-        virtual ~FReflectedStruct();
+        virtual ~FReflectedStruct() override;
         
         FReflectedStruct()
         {
             Type = EType::Structure;
         }
 
-        template<typename T>
-        T* PushProperty()
-        {
-            T* New = new T;
-            Props.push_back(New);
-            return New;
-        }
+        void PushProperty(FReflectedProperty* NewProperty);
 
-        void DefineConstructionStatics(std::stringstream& SS) override;
+        eastl::string GetTypeName() const override { return "CStruct"; }
+        void DefineConstructionStatics(eastl::string& Stream) override;
+        void DefineInitialHeader(eastl::string& Stream, const eastl::string& FileID) override;
+        void DefineSecondaryHeader(eastl::string& Stream, const eastl::string& FileID) override;
+        void DeclareImplementation(eastl::string& Stream) override;
+        void DeclareStaticRegistration(eastl::string& Stream) override;
         
         eastl::vector<const FReflectedProperty*>      Props;
 
@@ -154,8 +172,14 @@ namespace Lumina::Reflection
         {
             Type = EType::Class;
         }
-        
-        void DefineConstructionStatics(std::stringstream& SS) override;
+
+        eastl::string GetTypeName() const override { return "CClass"; }
+        void DefineConstructionStatics(eastl::string& Stream) override;
+        void DefineInitialHeader(eastl::string& Stream, const eastl::string& FileID) override;
+        void DefineSecondaryHeader(eastl::string& Stream, const eastl::string& FileID) override;
+        void DeclareImplementation(eastl::string& Stream) override;
+        void DeclareStaticRegistration(eastl::string& Stream) override;
 
     };
+    
 }

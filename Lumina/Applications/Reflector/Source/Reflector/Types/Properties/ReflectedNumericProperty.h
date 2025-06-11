@@ -9,9 +9,9 @@ namespace Lumina
     { \
     public: \
         virtual ~ClassName() = default; \
-        void AppendDefinition(std::stringstream& SS) const override \
+        void AppendDefinition(eastl::string& Stream) const override \
         { \
-            AppendPropertyDef(SS, "Lumina::EPropertyFlags::None", #TypeFlag); \
+            AppendPropertyDef(Stream, "Lumina::EPropertyFlags::None", #TypeFlag); \
         } \
         const char* GetTypeName() override { return TypeNameStr; } \
     };

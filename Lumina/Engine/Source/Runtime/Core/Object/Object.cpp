@@ -34,12 +34,16 @@ namespace Lumina
 
         Slot.Serialize(Name);
 
-        Class->ForEachProperty([&](FProperty* Property)
+        FProperty* Current = Class->LinkedProperty;
+        while (Current != nullptr)
         {
-            Slot.GetStructuredArchive()->EnterField(Property->Name);
-            Property->SerializeItem(Slot, this, nullptr);
+            Slot.GetStructuredArchive()->EnterField(Current->Name);
+            Current->SerializeItem(Slot, this, nullptr);
             Slot.GetStructuredArchive()->LeaveField();
-        });
+
+            Current = (FProperty*)Current->Next;
+        }
+
         
     }
 

@@ -11,13 +11,14 @@ namespace Lumina
     class IStructuredArchive;
 }
 
+LUMINA_API Lumina::CClass* Construct_CClass_Lumina_CObject();
+
 namespace Lumina
 {
     class CClass;
     class CObject;
     
 
-    LUMINA_API CClass* Construct_CClass_Lumina_CObject();
 
     class CObject : public CObjectBase
     {
@@ -48,6 +49,7 @@ namespace Lumina
         /** Serializes object data. Can be overridden by derived classes. */
         LUMINA_API virtual void Serialize(FArchive& Ar) {}
 
+        /** Used during serialization to and from a structured archive (Packaging, Network, etc). */
         LUMINA_API virtual void Serialize(IStructuredArchive::FSlot Slot);
 
         /** Called after constructor and after properites have been initialized. */

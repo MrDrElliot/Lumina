@@ -13,10 +13,9 @@ namespace Lumina
             return "Enum";
         }
         
-        void AppendDefinition(std::stringstream& SS) const override
+        void AppendDefinition(eastl::string& Stream) const override
         {
-            SS << "{ " << "\"" <<  Name.c_str() << "\"" << ", Lumina::EPropertyFlags::None, " << "Lumina::EPropertyTypeFlags::Enum," <<  " offsetof(" << Outer.c_str() << ", " << Name.c_str() << "), Construct_CEnum_" << TypeName.c_str()  << " };\n";
-
+            Stream += "{ \"" +  Name + "\"" + ", Lumina::EPropertyFlags::None, " + "Lumina::EPropertyTypeFlags::Enum," +  " offsetof(" + Outer + ", " + Name + "), Construct_CEnum_" + TypeName + " };\n";
         }
 
         const char* GetPropertyParamType() const override { return "FEnumPropertyParams"; }
