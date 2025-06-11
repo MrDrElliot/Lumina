@@ -58,6 +58,8 @@ namespace Lumina::Reflection
         eastl::string                                               CurrentNamespace;
                                                                     
         uint32                                                      NumHeadersReflected = 0;
+
+        bool                                                        bInitialPass = true;
         
     };
 

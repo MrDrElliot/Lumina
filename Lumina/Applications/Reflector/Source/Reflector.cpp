@@ -4,12 +4,16 @@
 #include <chrono>
 #include <filesystem>
 #include <cstdlib>
+
+#include "StringHash.h"
 #include "Reflector/TypeReflector.h"
 #include "Reflector/Clang/ClangParser.h"
 
 
 int main(int argc, char* argv[])
 {
+    Lumina::FStringHash::Initialize();
+    
     const char* LuminaDirectory = std::getenv("LUMINA_DIR");
     if (!LuminaDirectory)
     {
@@ -95,6 +99,8 @@ int main(int argc, char* argv[])
     std::cout << "Total Time: " << (parseTime + buildTime + GenTime) << " seconds\n";
     std::cout << "===============================================\n";
 
+    Lumina::FStringHash::Shutdown();
+    
     return 0;
 }
 

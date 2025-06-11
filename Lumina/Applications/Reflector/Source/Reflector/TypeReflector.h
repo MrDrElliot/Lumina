@@ -6,6 +6,8 @@ namespace Lumina::Reflection
 {
     class FClangParser;
 
+    extern uint64_t GFilesLookedAt;
+
     class FTypeReflector
     {
     public:

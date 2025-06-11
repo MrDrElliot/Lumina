@@ -75,18 +75,19 @@ namespace Lumina::Reflection::Visitor
             return CXChildVisit_Break;
         }
         
-        FReflectedEnum* Enum = Context->ReflectionDatabase.CreateReflectedType<FReflectedEnum>();
+        FReflectedEnum* Enum = Context->ReflectionDatabase.GetOrCreateReflectedType<FReflectedEnum>(FStringHash(CursorName));
         Enum->LineNumber = ClangUtils::GetCursorLineNumber(Cursor);
-        Enum->DisplayName = CursorName;
-        Enum->ID = eastl::string(FullyQualifiedName);
         Enum->HeaderID = Context->ReflectedHeader.HeaderPath;
 
         FReflectedType* PreviousParentType = Context->ParentReflectedType;
+        
         Context->ParentReflectedType = Enum;
+        if (!Context->bInitialPass)
         {
             clang_visitChildren(Cursor, VisitEnumContents, Context);
         }
         Context->ParentReflectedType = PreviousParentType;
+        
         
         Context->ReflectionDatabase.AddReflectedType(Enum);
         

@@ -63,7 +63,7 @@ namespace Lumina::Reflection
                         if (Header.Parse())
                         {
                             Headers.push_back(Header);
-                            uint64_t Hash = ClangUtils::HashString(Header.HeaderPath);
+                            FStringHash Hash = FStringHash(Header.HeaderPath);
                             HeaderHashMap.insert_or_assign(Hash, Header);
                         }
                     }

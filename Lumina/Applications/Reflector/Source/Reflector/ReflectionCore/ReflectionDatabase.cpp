@@ -2,8 +2,6 @@
 
 #include <iostream>
 
-#include "xxhash.h"
-#include "Reflector/Clang/Utils.h"
 
 namespace Lumina::Reflection
 {
@@ -27,15 +25,23 @@ namespace Lumina::Reflection
 
     void FReflectionDatabase::AddReflectedType(FReflectedType* Type)
     {
-        if(Type == nullptr || Type->ID.empty())
+        if(Type == nullptr || Type->DisplayName.empty())
         {
             return;
         }
 
-        uint64_t Hash = ClangUtils::HashString(Type->HeaderID);        
-        eastl::vector<FReflectedType*>* TypeVector = &ReflectedTypes[Hash];
+        FStringHash NameHash = FStringHash(Type->DisplayName);
+        FStringHash PathHash = FStringHash(Type->HeaderID);
+
+        if (IsTypeRegistered(NameHash))
+        {
+            return;
+        }
+        
+        eastl::vector<FReflectedType*>* TypeVector = &ReflectedTypes[PathHash];
         TypeVector->push_back(Type);
         
-        TypeHashMap.insert_or_assign(Type->ID, Type);
+        TypeHashMap.insert_or_assign(NameHash, Type);
+        
     }
 }

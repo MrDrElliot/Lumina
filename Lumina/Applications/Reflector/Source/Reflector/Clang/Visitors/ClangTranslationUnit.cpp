@@ -11,21 +11,22 @@
 namespace Lumina::Reflection
 {
 
-    static uint32_t TestNum = 0;
-    static uint32_t Processed = 0;
+    uint64_t GFilesLookedAt;
     
     eastl::hash_map<eastl::string, std::filesystem::path> CanonicalPathCache;
     
     CXChildVisitResult VisitTranslationUnit(CXCursor Cursor, CXCursor Parent, CXClientData ClientData)
     {
+        
+        GFilesLookedAt++;
+        
         FClangParserContext* ParserContext = (FClangParserContext*)ClientData;
         
         eastl::string FilePath = ClangUtils::GetHeaderPathForCursor(Cursor);
-        uint64_t Hash = ClangUtils::HashString(FilePath);
+        FStringHash Hash = FStringHash(FilePath);
 
         if (ParserContext->Project.HeaderHashMap.find(Hash) == ParserContext->Project.HeaderHashMap.end())
         {
-            TestNum++;
             return CXChildVisit_Continue;
         }
 
@@ -42,7 +43,6 @@ namespace Lumina::Reflection
         unsigned Line, Column, Offset;
         clang_getSpellingLocation(Location, &CursorFile, &Line, &Column, &Offset);
 
-        Processed++;
         
         switch (CursorKind)
         {

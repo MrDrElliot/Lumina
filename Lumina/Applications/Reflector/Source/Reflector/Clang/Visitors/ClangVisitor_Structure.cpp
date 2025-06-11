@@ -209,6 +209,12 @@ namespace Lumina::Reflection::Visitor
                 }
 
                 FFieldInfo FieldInfo = CreateFieldInfo(Cursor);
+
+                if (!Context->ReflectionDatabase.IsTypeRegistered(FStringHash(FieldInfo.TypeName)))
+                {
+                    std::cout << "Type not yet registered: " << FieldInfo.TypeName.c_str() << "\n";
+                }
+                
                 FReflectedProperty* NewProperty = nullptr;
                 CreatePropertyForType(Struct, &NewProperty, FieldInfo);
                 
@@ -281,14 +287,12 @@ namespace Lumina::Reflection::Visitor
         {
             return CXChildVisit_Break;
         }
-        
-        FReflectedStruct* ReflectedClass = Context->ReflectionDatabase.CreateReflectedType<FReflectedClass>();
+
+        FReflectedStruct* ReflectedClass = Context->ReflectionDatabase.GetOrCreateReflectedType<FReflectedClass>(FStringHash(CursorName));
         ReflectedClass->Project = Context->Project.Name;
         ReflectedClass->Type = FReflectedType::EType::Structure;
         ReflectedClass->GeneratedBodyLineNumber = GeneratedBody.LineNumber;
         ReflectedClass->LineNumber = ClangUtils::GetCursorLineNumber(Cursor);
-        ReflectedClass->DisplayName = CursorName;
-        ReflectedClass->ID = CursorName;
         ReflectedClass->HeaderID = Context->ReflectedHeader.HeaderPath;
 
         Context->LastReflectedType = ReflectedClass;
@@ -296,7 +300,10 @@ namespace Lumina::Reflection::Visitor
         FReflectedType* PreviousType = Context->ParentReflectedType;
         Context->ParentReflectedType = ReflectedClass;
 
-        clang_visitChildren(Cursor, VisitStructureContents, Context);
+        if (!Context->bInitialPass)
+        {
+            clang_visitChildren(Cursor, VisitStructureContents, Context);
+        }
         
         Context->ParentReflectedType = PreviousType;
         Context->ReflectionDatabase.AddReflectedType(ReflectedClass);
@@ -329,7 +336,7 @@ namespace Lumina::Reflection::Visitor
             return CXChildVisit_Break;
         }
         
-        FReflectedClass* ReflectedClass = Context->ReflectionDatabase.CreateReflectedType<FReflectedClass>();
+        FReflectedClass* ReflectedClass = Context->ReflectionDatabase.GetOrCreateReflectedType<FReflectedClass>(FStringHash(CursorName));
         ReflectedClass->Project = Context->Project.Name;
         ReflectedClass->Type = FReflectedType::EType::Class;
         ReflectedClass->GeneratedBodyLineNumber = GeneratedBody.LineNumber;
@@ -341,15 +348,16 @@ namespace Lumina::Reflection::Visitor
             ReflectedClass->Namespace = Context->CurrentNamespace;
         }
     
-        ReflectedClass->DisplayName = CursorName;
-        ReflectedClass->ID = CursorName;
         ReflectedClass->HeaderID = Context->ReflectedHeader.HeaderPath;
 
         FReflectedType* PreviousType = Context->ParentReflectedType;
         Context->ParentReflectedType = ReflectedClass;
         Context->LastReflectedType = ReflectedClass;
-        
-        clang_visitChildren(Cursor, VisitClassContents, Context);
+
+        if (!Context->bInitialPass)
+        {
+            clang_visitChildren(Cursor, VisitClassContents, Context);
+        }
         
         Context->ParentReflectedType = PreviousType;
         Context->ReflectionDatabase.AddReflectedType(ReflectedClass);

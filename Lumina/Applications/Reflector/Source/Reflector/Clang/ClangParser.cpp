@@ -1,9 +1,6 @@
 ﻿#include "ClangParser.h"
-
 #include <fstream>
-#include <iostream>
 #include <clang-c/Index.h>
-
 #include "EASTL/fixed_vector.h"
 #include "Visitors/ClangTranslationUnit.h"
 
@@ -18,7 +15,6 @@ namespace Lumina::Reflection
         "/Lumina/Engine",
         "/Lumina/Engine/Source",
         "/Lumina/Engine/Source/Runtime",
-        "/Lumina/Engine/ThirdParty/EA/",
         "/Lumina/Engine/ThirdParty/EA/EABase/include/common",
         "/Lumina/Engine/ThirdParty/EA/EASTL/include/",
         "/Lumina/Engine/ThirdParty/spdlog/include/", // @TODO Some really weird clang voodoo going on here where TVector won't parse without this.
@@ -41,7 +37,7 @@ namespace Lumina::Reflection
         std::ofstream AmalgamationFile(AmalgamationPath.c_str());
         AmalgamationFile << "#pragma once\n\n";
 
-#if OPTIMIZE_HEADER_WRITES
+#if OPTIMIZE_HEADER_WRITES // Only parse recently modified headers.
         
         for (const FReflectedHeader& Header : Headers)
         {
@@ -51,7 +47,10 @@ namespace Lumina::Reflection
 
             if (!std::filesystem::exists(ReflectionCounterpart.c_str()))
             {
-                bNeedsReflection = true;
+                if (Header.HeaderPath.find(".generated.h") != eastl::string::npos)
+                {
+                    bNeedsReflection = true;
+                }
             }
             else
             {
@@ -68,7 +67,10 @@ namespace Lumina::Reflection
             if (bNeedsReflection)
             {
                 AmalgamationFile << "#include \"" << Header.HeaderPath.c_str() << "\"\n";
-                ParsingContext.NumHeadersReflected++;
+                if (ParsingContext.bInitialPass)
+                {
+                    ParsingContext.NumHeadersReflected++;
+                }
             }
             else
             {
@@ -94,7 +96,6 @@ namespace Lumina::Reflection
             AmalgamationFile << "#include \"" << Header.HeaderPath.c_str() << "\"\n";
             ParsingContext.NumHeadersReflected++;
         }
-        
 #endif
         AmalgamationFile.close();
 
@@ -148,7 +149,6 @@ namespace Lumina::Reflection
         clangArgs.push_back("-std=c++20");
         clangArgs.push_back( "-O0" );
         
-        
         clangArgs.push_back("-D REFLECTION_PARSER");
         clangArgs.push_back("-D NDEBUG");
 
@@ -157,7 +157,9 @@ namespace Lumina::Reflection
         clangArgs.push_back("-fms-extensions");
         clangArgs.push_back("-fms-compatibility");
 
-        clangArgs.push_back("-w"); 
+        clangArgs.push_back("-w");
+
+        clangArgs.push_back("-ast-dump=json");
         
         clangArgs.push_back("-Wno-multichar");
         clangArgs.push_back("-Wno-deprecated-builtins");
@@ -208,7 +210,6 @@ namespace Lumina::Reflection
         clang_disposeTranslationUnit(TranslationUnit);
         clang_disposeIndex(ClangIndex);
         
-
         return true;
     }
     

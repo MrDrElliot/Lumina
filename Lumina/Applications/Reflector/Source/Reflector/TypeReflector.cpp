@@ -75,7 +75,18 @@ namespace Lumina::Reflection
         for (FReflectedProject& Project : Projects)
         {
             Parser.ParsingContext.ReflectionDatabase.AddReflectedProject(Project);
+
+            // Initial Pass. Register Types and create types only.
+            Parser.ParsingContext.bInitialPass = true;
             
+            if (!Parser.Parse(Project.SolutionPath, Project.Headers, Project))
+            {
+                std::cout << "Failed to parse\n";
+            }
+
+            Parser.ParsingContext.bInitialPass = false;
+
+            // Second Pass. Traverse children and finish building types.
             if (!Parser.Parse(Project.SolutionPath, Project.Headers, Project))
             {
                 std::cout << "Failed to parse\n";
@@ -83,6 +94,7 @@ namespace Lumina::Reflection
         }
 
         std::cout << "[Reflection] Number of headers reflected: " << Parser.ParsingContext.NumHeadersReflected << "\n";
+        std::cout << "[Reflection] Number of files looked at: " << GFilesLookedAt << "\n";
 
         if (Parser.ParsingContext.HasError())
         {

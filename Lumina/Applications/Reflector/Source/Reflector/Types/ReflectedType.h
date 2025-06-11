@@ -1,6 +1,8 @@
 ﻿#pragma once
 #include <clang-c/Index.h>
 
+#include "StringHash.h"
+#include "EASTL/hash_map.h"
 #include "EASTL/string.h"
 #include "EASTL/vector.h"
 
@@ -94,7 +96,6 @@ namespace Lumina::Reflection
         eastl::string       Project;
         uint32_t            GeneratedBodyLineNumber;
         uint32_t            LineNumber;
-        eastl::string       ID;
         eastl::string       HeaderID;
         eastl::string       DisplayName;
         eastl::string       QualifiedName;

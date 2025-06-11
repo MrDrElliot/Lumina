@@ -5,3 +5,4 @@
 [ ] - Remove the disgusting dependency on visual studio solutions and projects.
 [ ] - Fix issue with including macro decls rather then just expansions.
 [ ] - Add a pending queue of types that are waiting on other types to be registered so we can query extra information about that type... such as it's namespace.
+[ ] - Better reflection errors.
