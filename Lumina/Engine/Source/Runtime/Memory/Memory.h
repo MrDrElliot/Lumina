@@ -8,11 +8,14 @@
 #include "Platform/WindowsPlatform.h"
 #include <Core/Assertions/Assert.h>
 
+#include "Core/Math/Math.h"
+#include "Platform/Platform.h"
+
 static bool GIsMemorySystemInitialized = false;
 static rpmalloc_config_t GrpmallocConfig;
 
-#define DEFAULT_ALIGNMENT 8
-
+constexpr uint16 DEFAULT_ALIGNMENT = 0;
+constexpr uint16 MIN_ALIGNMENT = 8;
 
 class LUMINA_API FMemory
 {
@@ -62,7 +65,7 @@ public:
     
     static void CustomAssert( char const* pMessage )
     {
-        std::cerr << pMessage << "\n";
+        std::cout << pMessage << "\n";
     }
 
     static void Initialize()
@@ -114,19 +117,37 @@ public:
         return stats.mapped_total;
     }
 
+    static SIZE_T GetActualAlignment(size_t size, size_t alignment)
+    {
+        // If alignment is 0 (DEFAULT_ALIGNMENT), pick based on size:
+        // 8-byte alignment for small blocks (<16), otherwise 16-byte
+        if (alignment == DEFAULT_ALIGNMENT)
+        {
+            return (size < 16) ? 8 : 16;
+        }
+
+        // Ensure minimum alignment rules
+        SIZE_T defaultAlignment = (size < 16) ? 8 : 16;
+        SIZE_T Align = (alignment < defaultAlignment) ? defaultAlignment : static_cast<SIZE_T>(alignment);
+
+        return Lumina::Math::Max<SIZE_T>(Align, alignment);
+    }
 
     NODISCARD static void* Malloc(size_t size, size_t alignment = DEFAULT_ALIGNMENT)
     {
-        Assert(size != 0);
-        
+        Assert(size != 0)
+
         if (UNLIKELY(!GIsMemorySystemInitialized))
         {
             FMemory::Initialize();
         }
+
+        SIZE_T ActualAlignment = GetActualAlignment(size, alignment);
+        Assert(ActualAlignment >= MIN_ALIGNMENT)
         
-        void* pMemory = nullptr;
-        pMemory = rpaligned_alloc(alignment, size);
-        Assert(IsAligned(pMemory, alignment));
+        void* pMemory = rpaligned_alloc(ActualAlignment, size);
+
+        Assert(IsAligned(pMemory, ActualAlignment))
 
         return pMemory;
     }
@@ -134,7 +155,7 @@ public:
     NODISCARD static void Memcpy(void* Destination, void* Source, uint64 SrcSize)
     {
         memcpy(Destination, Source, SrcSize);
-        Assert(Destination != nullptr);
+        Assert(Destination != nullptr)
     }
     
 

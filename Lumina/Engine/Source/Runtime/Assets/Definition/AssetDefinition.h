@@ -38,14 +38,14 @@ namespace Lumina
     public:
 
         static CAssetDefinitionRegistry* Get();
-
+        
         void RegisterDefinition(CAssetDefinition* InDef);
 
         void GetAssetDefinitions(TVector<CAssetDefinition*>& Definitions);
         
     private:
 
-        THashMap<CClass*, TObjectPtr<CAssetDefinition>> AssetDefinitions;
+        THashMap<CClass*, CAssetDefinition*> AssetDefinitions;
         
         static CAssetDefinitionRegistry* Singleton;
     };

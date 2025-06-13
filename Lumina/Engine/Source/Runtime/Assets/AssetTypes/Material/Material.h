@@ -18,6 +18,7 @@ namespace Lumina
         PostProcess,
         UI,
     };
+    
 
     LUM_CLASS()
     class CMaterial : public CObject
@@ -26,18 +27,12 @@ namespace Lumina
         
     public:
         
+        LUM_PROPERTY()
+        TVector<CObject*> MaterialNodes;
         
         LUM_PROPERTY()
-        TVector<uint8> Nodes;
-
-        LUM_PROPERTY()
-        TObjectPtr<CObject> TestObject;
-
-        LUM_PROPERTY()
-        TVector<TObjectPtr<CObject>> NestedTest;
+        EMaterialType MaterialType;
         
-        LUM_PROPERTY()
-        EMaterialType           MaterialType = EMaterialType::None;
         
         FRHIVertexShaderRef     VertexShader;
         FRHIPixelShaderRef      PixelShader;

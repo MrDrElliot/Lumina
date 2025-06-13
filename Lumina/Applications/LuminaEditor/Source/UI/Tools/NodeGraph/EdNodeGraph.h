@@ -41,6 +41,7 @@ namespace Lumina
         virtual ~CEdNodeGraph();
 
         virtual void Initialize();
+        virtual void Shutdown();
         void Serialize(FArchive& Ar) override;
 
         void DrawGraph();

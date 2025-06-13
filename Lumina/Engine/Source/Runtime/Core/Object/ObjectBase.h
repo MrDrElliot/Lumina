@@ -1,12 +1,10 @@
 ﻿#pragma once
 
-#include <utility>
-#include "ObjectFlags.h"
-#include "Module/API.h"
 #include "Initializer/ObjectInitializer.h"
 #include "Memory/RefCounted.h"
-
-enum ENoInit : int;
+#include "Module/API.h"
+#include "ObjectFlags.h"
+#include <utility>
 
 namespace Lumina
 {
@@ -22,8 +20,7 @@ namespace Lumina
     public:
 
         LUMINA_API CObjectBase();
-        LUMINA_API CObjectBase(ENoInit);
-        LUMINA_API virtual ~CObjectBase() override = default;
+        LUMINA_API virtual ~CObjectBase() override;
         
         LUMINA_API CObjectBase(EObjectFlags InFlags);
         LUMINA_API CObjectBase(CClass* InClass, EObjectFlags InFlags, const TCHAR* Package, FName InName);
@@ -147,24 +144,36 @@ namespace Lumina
         const TCHAR* Name;
     };
 
+    struct FStructRegisterCompiledInInfo
+    {
+        class CStruct* (*RegisterFn)();
+        const TCHAR* Name;
+    };
+
     struct FEnumRegisterCompiledInInfo
     {
         class CEnum* (*RegisterFn)();
         const TCHAR* Name;
         
     };
-    
+
+
+    LUMINA_API void ShutdownCObjectSystem();
 
     /** Involked from static constructor in generated code */
     LUMINA_API void RegisterCompiledInInfo(CClass* (*RegisterFn)(), const TCHAR* Package, const TCHAR* Name);
 
     LUMINA_API void RegisterCompiledInInfo(CEnum* (*RegisterFn)(), const FEnumRegisterCompiledInInfo& Info);
 
+    LUMINA_API void RegisterCompiledInInfo(CStruct* (*RegisterFn)(), const FStructRegisterCompiledInInfo& Info);
+
     LUMINA_API CEnum* GetStaticEnum(CEnum* (*RegisterFn)(), const TCHAR* Name);
     
     LUMINA_API void RegisterCompiledInInfo(const FClassRegisterCompiledInInfo* Info, SIZE_T NumClassInfo);
 
     LUMINA_API void RegisterCompiledInInfo(const FEnumRegisterCompiledInInfo* EnumInfo, SIZE_T NumEnumInfo, const FClassRegisterCompiledInInfo* ClassInfo, SIZE_T NumClassInfo);
+
+    LUMINA_API void RegisterCompiledInInfo(const FEnumRegisterCompiledInInfo* EnumInfo, SIZE_T NumEnumInfo, const FClassRegisterCompiledInInfo* ClassInfo, SIZE_T NumClassInfo, const FStructRegisterCompiledInInfo* StructInfo, SIZE_T NumStructInfo);
 
     
     LUMINA_API void CObjectForceRegistration(CObjectBase* Object);

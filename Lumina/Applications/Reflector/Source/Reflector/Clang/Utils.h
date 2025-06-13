@@ -28,6 +28,32 @@ namespace Lumina::ClangUtils
         return Line;
     }
 
+    inline eastl::string StripNamespace(const eastl::string& Input)
+    {
+        size_t Pos = Input.rfind("::");
+        if (Pos != eastl::string::npos)
+        {
+            return Input.substr(Pos + 2); // skip past the last "::"
+        }
+        return Input; // return unchanged if no "::" found
+    }
+
+    inline eastl::string MakeCodeFriendlyNamespace(eastl::string Input)
+    {
+        const eastl::string from = "::";
+        const eastl::string to = "_";
+
+        size_t start_pos = 0;
+        while ((start_pos = Input.find(from, start_pos)) != eastl::string::npos)
+        {
+            Input.replace(start_pos, from.length(), to);
+            start_pos += to.length(); // Move past the replacement
+        }
+
+        return Input;
+    }
+
+    
     inline eastl::string GetCursorDisplayName(const CXCursor& cr)
     {
         CXString displayName = clang_getCursorDisplayName(cr);
@@ -153,6 +179,11 @@ namespace Lumina::ClangUtils
                 }
             }
         }
+        else if (pType->isPointerType())
+        {
+            const clang::QualType QualType = pType->getAs<clang::PointerType>()->getPointeeType();
+            QualifiedName = QualType.getAsString().c_str();
+        }
         else if (pType->isRecordType())
         {
             const clang::RecordDecl* pRecordDecl = pType->getAs<clang::RecordType>()->getDecl();
@@ -161,7 +192,7 @@ namespace Lumina::ClangUtils
         else if (pType->isEnumeralType())
         {
             const clang::NamedDecl* pNamedDecl = pType->getAs<clang::EnumType>()->getDecl();
-            QualifiedName = pNamedDecl->getNameAsString().c_str();
+            QualifiedName = pNamedDecl->getQualifiedNameAsString().c_str();
         }
         else if (pType->getTypeClass() == clang::Type::Typedef || pType->getTypeClass() == clang::Type::Using)
         {
@@ -174,14 +205,32 @@ namespace Lumina::ClangUtils
             QualifiedName = "Lumina::TVector";
         }
 
+        if (QualifiedName == "eastl::basic_string")
+        {
+            QualifiedName = "Lumina::FString";
+        }
+        
+        if (QualifiedName == "eastl::fixed_string")
+        {
+            QualifiedName = "Lumina::FString";
+        }
+
+        if (QualifiedName == "FString")
+        {
+            QualifiedName = "Lumina::FString";
+        }
+
         if (QualifiedName == "TObjectPtr")
         {
             QualifiedName = "Lumina::TObjectPtr";
         }
 
-        
-        QualifiedName.erase(eastl::remove(QualifiedName.begin(), QualifiedName.end(), ' '), QualifiedName.end());
-        return true;
+        if (QualifiedName == "CObject")
+        {
+            QualifiedName = "Lumina::CObject";
+        }
+
+        return !QualifiedName.empty();
     }
     
 

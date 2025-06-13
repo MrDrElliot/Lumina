@@ -101,7 +101,7 @@ namespace Lumina::Reflection
 
         
         eastl::vector<eastl::string> FullIncludePaths;
-        eastl::fixed_vector<const char*, 10> clangArgs;
+        eastl::fixed_vector<const char*, 24> clangArgs;
 
         eastl::string PrjPath = Project.ParentPath + "/Source/";
         FullIncludePaths.push_back("-I" + PrjPath);
@@ -111,63 +111,39 @@ namespace Lumina::Reflection
         {
             eastl::string SlnPath = std::filesystem::path(SolutionPath.c_str()).parent_path().string().c_str();
             eastl::string FullPath = SlnPath + Path;
-            FullIncludePaths.push_back("-I" + FullPath);
-            clangArgs.push_back(FullIncludePaths.back().c_str());
+            FullIncludePaths.emplace_back("-I" + FullPath);
+            clangArgs.emplace_back(FullIncludePaths.back().c_str());
             if (!std::filesystem::exists(FullPath.c_str()))
             {
                 ParsingContext.LogError("Invalid include path: %s", FullPath.c_str());
                 return false;
             }
         }
-
-#if 0
-        clangArgs.push_back( "-x" );
-        clangArgs.push_back( "c++" );
-        clangArgs.push_back( "-std=c++20" );
-        clangArgs.push_back( "-O0" );
-        clangArgs.push_back( "-D" );
-        clangArgs.push_back( "NDEBUG" );
-        clangArgs.push_back( "-D" );
-        clangArgs.push_back( "REFLECTION_PARSER" );
-        clangArgs.push_back( "-Wno-return-type-c-linkage" );
-        clangArgs.push_back( "-Wno-unknown-warning-option" );
-        clangArgs.push_back( "-Wno-c++98-compat-pedantic" );
-        clangArgs.push_back( "-Wno-gnu-folding-constant" );
-        clangArgs.push_back( "-Wno-vla-extension-static-assert" );
-        clangArgs.push_back( "-fparse-all-comments" );
-        clangArgs.push_back( "-fms-extensions" );
-        clangArgs.push_back( "-fms-compatibility" );
-        clangArgs.push_back( "-fretain-comments-from-system-headers" );
-        clangArgs.push_back( "-fno-spell-checking" );
-        clangArgs.push_back( "-fmacro-backtrace-limit=0" );
-        clangArgs.push_back("-Xclang");
-        clangArgs.push_back("-ast-dump");
-#endif
-
-        clangArgs.push_back("-x");
-        clangArgs.push_back("c++");
-        clangArgs.push_back("-std=c++20");
-        clangArgs.push_back( "-O0" );
         
-        clangArgs.push_back("-D REFLECTION_PARSER");
-        clangArgs.push_back("-D NDEBUG");
-
-        clangArgs.push_back("-fsyntax-only");
-        clangArgs.push_back("-fparse-all-comments");
-        clangArgs.push_back("-fms-extensions");
-        clangArgs.push_back("-fms-compatibility");
-
-        clangArgs.push_back("-w");
-
-        clangArgs.push_back("-ast-dump=json");
+        clangArgs.emplace_back("-x");
+        clangArgs.emplace_back("c++");
+        clangArgs.emplace_back("-std=c++20");
+        clangArgs.emplace_back( "-O0" );
         
-        clangArgs.push_back("-Wno-multichar");
-        clangArgs.push_back("-Wno-deprecated-builtins");
-        clangArgs.push_back("-Wno-unknown-warning-option");
-        clangArgs.push_back("-Wno-return-type-c-linkage");
-        clangArgs.push_back("-Wno-c++98-compat-pedantic");
-        clangArgs.push_back("-Wno-gnu-folding-constant");
-        clangArgs.push_back("-Wno-vla-extension-static-assert");
+        clangArgs.emplace_back("-D REFLECTION_PARSER");
+        clangArgs.emplace_back("-D NDEBUG");
+
+        clangArgs.emplace_back("-fsyntax-only");
+        clangArgs.emplace_back("-fparse-all-comments");
+        clangArgs.emplace_back("-fms-extensions");
+        clangArgs.emplace_back("-fms-compatibility");
+
+        clangArgs.emplace_back("-w");
+
+        clangArgs.emplace_back("-ast-dump=json");
+        
+        clangArgs.emplace_back("-Wno-multichar");
+        clangArgs.emplace_back("-Wno-deprecated-builtins");
+        clangArgs.emplace_back("-Wno-unknown-warning-option");
+        clangArgs.emplace_back("-Wno-return-type-c-linkage");
+        clangArgs.emplace_back("-Wno-c++98-compat-pedantic");
+        clangArgs.emplace_back("-Wno-gnu-folding-constant");
+        clangArgs.emplace_back("-Wno-vla-extension-static-assert");
 
 
         CXTranslationUnit TranslationUnit;

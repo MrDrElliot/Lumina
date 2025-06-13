@@ -9,6 +9,7 @@
 
 namespace Lumina
 {
+    class CStruct;
     class CObjectBase;
     class CEnum;
     class CObject;
@@ -38,7 +39,7 @@ namespace Lumina
     };
 
     LUMINA_API FName MakeUniqueObjectName(const CClass* Class, FName InBaseName = NAME_None);
-    LUMINA_API CObject* StaticAllocateObject(const FConstructCObjectParams& Params);
+    LUMINA_API CObject* StaticAllocateObject(FConstructCObjectParams& Params);
 
     LUMINA_API CObject* FindObjectFast(const CClass* InClass, FName QualifiedName);
     LUMINA_API CObject* StaticLoadObject(const CClass* InClass, const TCHAR* QualifiedName);
@@ -140,6 +141,7 @@ namespace Lumina
         String              = 1 << 15,
         Enum                = 1 << 16,
         Vector              = 1 << 17,
+        Struct              = 1 << 18,
     };
 
     ENUM_CLASS_FLAGS(EPropertyTypeFlags);
@@ -157,6 +159,7 @@ namespace Lumina
 
     };
 
+    using FStructRegistrationInfo = TRegistrationInfo<CStruct>;
     using FClassRegistrationInfo = TRegistrationInfo<CClass>;
     using FEnumRegistrationInfo = TRegistrationInfo<CEnum>;
 
@@ -176,6 +179,15 @@ namespace Lumina
         EPropertyTypeFlags  TypeFlags;
         uint16              Offset;
         CClass*            (*ClassFunc)();
+    };
+
+    struct FStructPropertyParams
+    {
+        const char*         Name;
+        EPropertyFlags      PropertyFlags;
+        EPropertyTypeFlags  TypeFlags;
+        uint16              Offset;
+        CStruct*            (*StructFunc)();
     };
 
     struct FEnumPropertyParams
@@ -202,6 +214,15 @@ namespace Lumina
         uint32                          NumProperties;
     };
 
+    struct FStructParams
+    {
+        CStruct*                        (*SuperFunc)();
+        const char*                     Name;
+        const FPropertyParams* const*   Params;
+        uint32                          NumProperties;
+        uint16                          SizeOf;
+        uint16                          AlignOf;
+    };
     
     struct FEnumeratorParam
     {
@@ -215,11 +236,12 @@ namespace Lumina
         const FEnumeratorParam*     Params;
         int16                       NumParams;
     };
+    
 
     
 
     LUMINA_API void ConstructCClass(CClass** OutClass, const FClassParams& Params);
     LUMINA_API void ConstructCEnum(CEnum** OutEnum, const FEnumParams& Params);
-    
+    LUMINA_API void ConstructCStruct(CStruct** OutStruct, const FStructParams& Params);
     
 }

@@ -9,11 +9,14 @@
 #include "Core/Reflection/Type/LuminaTypes.h"
 #include "Core/Reflection/Type/Properties/ArrayProperty.h"
 #include "Core/Reflection/Type/Properties/EnumProperty.h"
+#include "Core/Reflection/Type/Properties/ObjectProperty.h"
+#include "Core/Reflection/Type/Properties/StringProperty.h"
+#include "Core/Reflection/Type/Properties/StructProperty.h"
 
 namespace Lumina
 {
     /** Allocates a section of memory for the new object, does not place anything into the memory */
-    CObjectBase* AllocateCObjectMemory(const CClass* InClass, FName InName, EObjectFlags InFlags)
+    CObjectBase* AllocateCObjectMemory(const CClass* InClass, EObjectFlags InFlags)
     {
         // Force 16-byte minimal alignment for cache friendliness.
         uint32 Alignment = Math::Max<uint32>(16, InClass->GetAlignment());
@@ -56,16 +59,16 @@ namespace Lumina
     }
 
 
-    CObject* StaticAllocateObject(const FConstructCObjectParams& Params)
+    CObject* StaticAllocateObject(FConstructCObjectParams& Params)
     {
-        const CClass* Class = Params.Class;
-        FName Name = MakeUniqueObjectName(Class, Params.Name);
+        FName UniqueName = MakeUniqueObjectName(Params.Class, Params.Name);
+        Params.Name = UniqueName;
         EObjectFlags Flags = Params.Flags;
-        
-        CObjectBase* Object = AllocateCObjectMemory(Class, Name, Flags);
+
+        CObjectBase* Object = AllocateCObjectMemory(Params.Class, Flags);
 
         FMemory::MemsetZero(Object, Params.Class->GetSize());
-        new (Object) CObjectBase(const_cast<CClass*>(Params.Class), Params.Flags, Params.Package, Params.Name);
+        new (Object) CObjectBase(const_cast<CClass*>(Params.Class), Params.Flags, Params.Package, UniqueName);
 
         CObject* Obj = (CObject*)Object;
         Params.Class->ClassConstructor(FObjectInitializer(Obj, Params));
@@ -79,7 +82,7 @@ namespace Lumina
     {
         CObject* ReturnObject = nullptr;
         
-        if (ObjectNameHash.find(FName(QualifiedName)) != ObjectNameHash.end())
+        if (ObjectNameHash.find(QualifiedName) != ObjectNameHash.end())
         {
             ReturnObject = (CObject*)ObjectNameHash.at(QualifiedName);
         }
@@ -127,7 +130,7 @@ namespace Lumina
     template<typename TPropertyType>
     TPropertyType* NewFProperty(FFieldOwner Owner, const FPropertyParams* Param)
     {
-        TPropertyType* Type = FMemory::New<TPropertyType>(Owner);
+        TPropertyType* Type = FMemory::New<TPropertyType>(Owner, Param);
         Type->Name = Param->Name;
         Type->Offset = Param->Offset;
         Type->Owner = Owner;
@@ -139,9 +142,10 @@ namespace Lumina
     void ConstructProperties(FFieldOwner FieldOwner, const FPropertyParams* const*& Properties, uint32& NumProperties)
     {
         const FPropertyParams* Param = *--Properties;
+
+        // Indicates the property has an assosicated inner property, which would be next in the Properties list.
         uint32 ReadMore = 0;
 
-        LOG_ERROR("Constructing Properties For: {}", Param->Name);
         
         FProperty* NewProperty = nullptr;
     
@@ -178,28 +182,27 @@ namespace Lumina
             NewFProperty<FDoubleProperty>(FieldOwner, Param);
             break;
         case EPropertyTypeFlags::Bool:
+            NewFProperty<FBoolProperty>(FieldOwner, Param);
             break;
         case EPropertyTypeFlags::Object:
+            NewFProperty<FObjectProperty>(FieldOwner, Param);
             break;
         case EPropertyTypeFlags::Class:
             break;
         case EPropertyTypeFlags::Name:
+            NewFProperty<FNameProperty>(FieldOwner, Param);
             break;
         case EPropertyTypeFlags::String:
+            NewFProperty<FStringProperty>(FieldOwner, Param);
+            break;
+        case EPropertyTypeFlags::Struct:
+            NewFProperty<FStructProperty>(FieldOwner, Param);
             break;
         case EPropertyTypeFlags::Enum:
             {
-                const FEnumPropertyParams* EnumParams = (const FEnumPropertyParams*)Param;
-                auto EnumProp = NewFProperty<FEnumProperty>(FieldOwner, Param);
+                NewProperty = NewFProperty<FEnumProperty>(FieldOwner, Param);
                 
-                FFieldOwner UnderlyingOwner;
-                UnderlyingOwner.Variant.emplace<FField*>(EnumProp);
-                auto UnderlyingProp = NewFProperty<FUInt64Property>(UnderlyingOwner, Param);
-
-                EnumProp->AddProperty(UnderlyingProp);
-                CEnum* NewEnum = EnumParams->EnumFunc ? EnumParams->EnumFunc() : nullptr;
-                
-                EnumProp->SetEnum(NewEnum);
+                ReadMore = 1;
             }
             break;
         case EPropertyTypeFlags::Vector:
@@ -210,6 +213,9 @@ namespace Lumina
             }
             break;
         default:
+            {
+                LOG_CRITICAL("Unsupported property type found while creating: {}", Param->Name);
+            }
             break;
         }
 
@@ -243,7 +249,6 @@ namespace Lumina
             return;
         }
         
-
         FinalClass = Params.RegisterFunc();
         *OutClass = FinalClass;
 
@@ -270,5 +275,25 @@ namespace Lumina
             const FEnumeratorParam* Param = &Params.Params[i];
             NewEnum->AddEnum(Param->NameUTF8, Param->Value);
         }
+    }
+
+    void ConstructCStruct(CStruct** OutStruct, const FStructParams& Params)
+    {
+        CStruct* FinalClass = *OutStruct;
+        if (FinalClass != nullptr)
+        {
+            return;
+        }
+
+        FinalClass = (CStruct*)FMemory::Malloc(Params.SizeOf, Params.AlignOf);
+        FinalClass = ::new (FinalClass) CStruct(TEXT(""), FName(Params.Name), Params.SizeOf, Params.AlignOf, EObjectFlags::OF_None);
+        *OutStruct = FinalClass;
+
+        CObjectForceRegistration(FinalClass);
+        
+        InitializeAndCreateFProperties(FinalClass, Params.Params, Params.NumProperties);
+
+        // Link this class to it's parent. (if it has one).
+        FinalClass->Link();
     }
 }

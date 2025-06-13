@@ -1,5 +1,6 @@
 ﻿#include "ClangVisitor_Structure.h"
 
+#include "EASTL/shared_ptr.h"
 #include "Reflector/Clang/ClangParserContext.h"
 #include "Reflector/Clang/Utils.h"
 #include "Reflector/ReflectionCore/ReflectionMacro.h"
@@ -8,6 +9,8 @@
 #include "Reflector/Types/Properties/ReflectedEnumProperty.h"
 #include "Reflector/Types/Properties/ReflectedNumericProperty.h"
 #include "Reflector/Types/Properties/ReflectedObjectProperty.h"
+#include "Reflector/Types/Properties/ReflectedStringProperty.h"
+#include "Reflector/Types/Properties/ReflectedStructProperty.h"
 
 namespace Lumina::Reflection::Visitor
 {
@@ -22,7 +25,6 @@ namespace Lumina::Reflection::Visitor
 
         eastl::string TypeSpelling;
         ClangUtils::GetQualifiedNameForType(FieldQualType, TypeSpelling);
-        
         EPropertyTypeFlags PropFlags = GetCoreTypeFromName(TypeSpelling.c_str());
 
         // Is not a core type.
@@ -31,6 +33,10 @@ namespace Lumina::Reflection::Visitor
             if (FieldQualType->isEnumeralType())
             {
                 PropFlags = EPropertyTypeFlags::Enum;
+            }
+            else if (FieldQualType->isStructureType())
+            {
+                PropFlags = EPropertyTypeFlags::Struct;
             }
         }
 
@@ -59,6 +65,10 @@ namespace Lumina::Reflection::Visitor
             {
                 PropFlags = EPropertyTypeFlags::Enum;
             }
+            else if (FieldQualType->isStructureType())
+            {
+                PropFlags = EPropertyTypeFlags::Struct;
+            }
         }
         
 
@@ -71,103 +81,132 @@ namespace Lumina::Reflection::Visitor
     }
     
     template<typename T>
-    T* CreateProperty(const eastl::string& Name, const eastl::string& TypeName)
+    eastl::shared_ptr<T> CreateProperty(const eastl::string& Name, const eastl::string& TypeName)
     {
-        T* New = new T;
+        eastl::shared_ptr<T> New = eastl::make_shared<T>();
         New->Name = Name;
         New->TypeName = TypeName;
         return New;
     }
 
-    static void CreatePropertyForType(FReflectedStruct* Struct, FReflectedProperty** NewProperty, const FFieldInfo& FieldInfo)
+    static void CreatePropertyForType(FClangParserContext* Context, FReflectedStruct* Struct, eastl::shared_ptr<FReflectedProperty>& NewProperty, const FFieldInfo& FieldInfo)
     {
-        if (NewProperty == nullptr)
-        {
-            return;
-        }
-
-        if (*NewProperty != nullptr)
-        {
-            return;
-        }
-        
         switch (FieldInfo.Flags)
         {
         case EPropertyTypeFlags::UInt8:
             {
-                *NewProperty = CreateProperty<FReflectedUInt8Property>(FieldInfo.Name, FieldInfo.TypeName);
+                NewProperty = CreateProperty<FReflectedUInt8Property>(FieldInfo.Name, FieldInfo.TypeName);
             }
             break;
         case EPropertyTypeFlags::UInt16:
             {
-                *NewProperty = CreateProperty<FReflectedUInt16Property>(FieldInfo.Name, FieldInfo.TypeName);
+                NewProperty = CreateProperty<FReflectedUInt16Property>(FieldInfo.Name, FieldInfo.TypeName);
             }
             break;
         case EPropertyTypeFlags::UInt32:
             {
-                *NewProperty = CreateProperty<FReflectedUInt32Property>(FieldInfo.Name, FieldInfo.TypeName);
+                NewProperty = CreateProperty<FReflectedUInt32Property>(FieldInfo.Name, FieldInfo.TypeName);
             }
             break;
         case EPropertyTypeFlags::UInt64:
             {
-                *NewProperty = CreateProperty<FReflectedUInt64Property>(FieldInfo.Name, FieldInfo.TypeName);
+                NewProperty = CreateProperty<FReflectedUInt64Property>(FieldInfo.Name, FieldInfo.TypeName);
             }
             break;
         case EPropertyTypeFlags::Int8:
             {
-                *NewProperty = CreateProperty<FReflectedInt8Property>(FieldInfo.Name, FieldInfo.TypeName);
+                NewProperty = CreateProperty<FReflectedInt8Property>(FieldInfo.Name, FieldInfo.TypeName);
             }
             break;
         case EPropertyTypeFlags::Int16:
             {
-                *NewProperty = CreateProperty<FReflectedInt16Property>(FieldInfo.Name, FieldInfo.TypeName);
+                NewProperty = CreateProperty<FReflectedInt16Property>(FieldInfo.Name, FieldInfo.TypeName);
             }
             break;
         case EPropertyTypeFlags::Int32:
             {
-                *NewProperty = CreateProperty<FReflectedInt32Property>(FieldInfo.Name, FieldInfo.TypeName);
+                NewProperty = CreateProperty<FReflectedInt32Property>(FieldInfo.Name, FieldInfo.TypeName);
             }
             break;
         case EPropertyTypeFlags::Int64:
             {
-                *NewProperty = CreateProperty<FReflectedInt64Property>(FieldInfo.Name, FieldInfo.TypeName);
+                NewProperty = CreateProperty<FReflectedInt64Property>(FieldInfo.Name, FieldInfo.TypeName);
             }
             break;
         case EPropertyTypeFlags::Float:
             {
-                *NewProperty = CreateProperty<FReflectedFloatProperty>(FieldInfo.Name, FieldInfo.TypeName);
+                NewProperty = CreateProperty<FReflectedFloatProperty>(FieldInfo.Name, FieldInfo.TypeName);
             }
             break;
         case EPropertyTypeFlags::Double:
             {
-                *NewProperty = CreateProperty<FReflectedDoubleProperty>(FieldInfo.Name, FieldInfo.TypeName);
+                NewProperty = CreateProperty<FReflectedDoubleProperty>(FieldInfo.Name, FieldInfo.TypeName);
+            }
+            break;
+        case EPropertyTypeFlags::Bool:
+            {
+                NewProperty = CreateProperty<FReflectedBoolProperty>(FieldInfo.Name, FieldInfo.TypeName);
+            }
+            break;
+        case EPropertyTypeFlags::String:
+            {
+                NewProperty = CreateProperty<FReflectedStringProperty>(FieldInfo.Name, FieldInfo.TypeName);
+            }
+            break;
+        case EPropertyTypeFlags::Name:
+            {
+                NewProperty = CreateProperty<FReflectedNameProperty>(FieldInfo.Name, FieldInfo.TypeName);
+            }
+            break;
+        case EPropertyTypeFlags::Struct:
+            {
+                NewProperty = CreateProperty<FReflectedStructProperty>(FieldInfo.Name, FieldInfo.TypeName);
             }
             break;
         case EPropertyTypeFlags::Enum:
             {
-                *NewProperty = CreateProperty<FReflectedEnumProperty>(FieldInfo.Name, FieldInfo.TypeName);
+                NewProperty = CreateProperty<FReflectedEnumProperty>(FieldInfo.Name, FieldInfo.TypeName);
+                const CXCursor EnumCursor = clang_getTypeDeclaration(FieldInfo.Type);
+
+                if (clang_getCursorKind(EnumCursor) == CXCursor_EnumDecl)
+                {
+                    CXType UnderlyingType = clang_getEnumDeclIntegerType(EnumCursor);
+                    FFieldInfo SubType = CreateSubFieldInfo(UnderlyingType);
+                    if (!SubType.Validate(Context))
+                    {
+                        return;
+                    }
+
+                    SubType.Name = FieldInfo.Name + "_Inner";
+                    SubType.PropertyFlags.emplace_back("PF_SubField");
+
+                    eastl::shared_ptr<FReflectedProperty> FieldProperty;
+                    CreatePropertyForType(Context, Struct, FieldProperty, SubType);
+                    FieldProperty->bInner = true;
+                }
             }
             break;
         case EPropertyTypeFlags::Object:
             {
-                const CXType ArgType = clang_Type_getTemplateArgumentAsType(FieldInfo.Type, 0);
-                FFieldInfo ParamFieldInfo = CreateSubFieldInfo(ArgType);
-                
-                *NewProperty = CreateProperty<FReflectedObjectProperty>(FieldInfo.Name, ParamFieldInfo.TypeName);
+                NewProperty = CreateProperty<FReflectedObjectProperty>(FieldInfo.Name, FieldInfo.TypeName);
             }
             break;
         case EPropertyTypeFlags::Vector:
             {
-                auto ArrayProperty = CreateProperty<FReflectedArrayProperty>(FieldInfo.Name, FieldInfo.TypeName);
+                NewProperty = CreateProperty<FReflectedArrayProperty>(FieldInfo.Name, FieldInfo.TypeName);
                 const CXType ArgType = clang_Type_getTemplateArgumentAsType(FieldInfo.Type, 0);
                 FFieldInfo ParamFieldInfo = CreateSubFieldInfo(ArgType);
+                if (!ParamFieldInfo.Validate(Context))
+                {
+                    return;
+                }
+                
                 ParamFieldInfo.Name = FieldInfo.Name + "_Inner";
                 ParamFieldInfo.PropertyFlags.emplace_back("PF_SubField");
                 
-                FReflectedProperty* FieldProperty = nullptr;
-                CreatePropertyForType(Struct, &FieldProperty, ParamFieldInfo);
+                eastl::shared_ptr<FReflectedProperty> FieldProperty = nullptr;
+                CreatePropertyForType(Context, Struct, FieldProperty, ParamFieldInfo);
                 FieldProperty->bInner = true; // This property "belongs" to the array.
-                *NewProperty = ArrayProperty;
             }
             break;
         default:
@@ -177,9 +216,9 @@ namespace Lumina::Reflection::Visitor
             break;
         }
 
-        if (*NewProperty != nullptr)
+        if (NewProperty != nullptr)
         {
-            Struct->PushProperty(*NewProperty);
+            Struct->PushProperty(NewProperty);
         }
     }
     
@@ -209,14 +248,13 @@ namespace Lumina::Reflection::Visitor
                 }
 
                 FFieldInfo FieldInfo = CreateFieldInfo(Cursor);
-
-                if (!Context->ReflectionDatabase.IsTypeRegistered(FStringHash(FieldInfo.TypeName)))
+                if (!FieldInfo.Validate(Context))
                 {
-                    std::cout << "Type not yet registered: " << FieldInfo.TypeName.c_str() << "\n";
+                    return CXChildVisit_Continue;
                 }
                 
-                FReflectedProperty* NewProperty = nullptr;
-                CreatePropertyForType(Struct, &NewProperty, FieldInfo);
+                eastl::shared_ptr<FReflectedProperty> NewProperty;
+                CreatePropertyForType(Context, Struct, NewProperty, FieldInfo);
                 
             }
             break;
@@ -251,10 +289,15 @@ namespace Lumina::Reflection::Visitor
                 {
                     return CXChildVisit_Continue;
                 }
-
+                
                 FFieldInfo FieldInfo = CreateFieldInfo(Cursor);
-                FReflectedProperty* NewProperty = nullptr;
-                CreatePropertyForType(Class, &NewProperty, FieldInfo);
+                if (!FieldInfo.Validate(Context))
+                {
+                    return CXChildVisit_Continue;
+                }
+                
+                eastl::shared_ptr<FReflectedProperty> NewProperty;
+                CreatePropertyForType(Context, Class, NewProperty, FieldInfo);
                 
             }
             break;
@@ -288,17 +331,24 @@ namespace Lumina::Reflection::Visitor
             return CXChildVisit_Break;
         }
 
-        FReflectedStruct* ReflectedClass = Context->ReflectionDatabase.GetOrCreateReflectedType<FReflectedClass>(FStringHash(CursorName));
-        ReflectedClass->Project = Context->Project.Name;
-        ReflectedClass->Type = FReflectedType::EType::Structure;
-        ReflectedClass->GeneratedBodyLineNumber = GeneratedBody.LineNumber;
-        ReflectedClass->LineNumber = ClangUtils::GetCursorLineNumber(Cursor);
-        ReflectedClass->HeaderID = Context->ReflectedHeader.HeaderPath;
+        FReflectedStruct* ReflectedStruct = Context->ReflectionDatabase.GetOrCreateReflectedType<FReflectedStruct>(FStringHash(FullyQualifiedCursorName));
+        ReflectedStruct->DisplayName = CursorName;
+        ReflectedStruct->Project = Context->Project.Name;
+        ReflectedStruct->Type = FReflectedType::EType::Structure;
+        ReflectedStruct->GeneratedBodyLineNumber = GeneratedBody.LineNumber;
+        ReflectedStruct->LineNumber = ClangUtils::GetCursorLineNumber(Cursor);
+        ReflectedStruct->HeaderID = Context->ReflectedHeader.HeaderPath;
 
-        Context->LastReflectedType = ReflectedClass;
+        if (!Context->CurrentNamespace.empty())
+        {
+            ReflectedStruct->Namespace = Context->CurrentNamespace;
+        }
+        
+        Context->LastReflectedType = ReflectedStruct;
         
         FReflectedType* PreviousType = Context->ParentReflectedType;
-        Context->ParentReflectedType = ReflectedClass;
+        Context->ParentReflectedType = ReflectedStruct;
+        Context->LastReflectedType = ReflectedStruct;
 
         if (!Context->bInitialPass)
         {
@@ -306,7 +356,7 @@ namespace Lumina::Reflection::Visitor
         }
         
         Context->ParentReflectedType = PreviousType;
-        Context->ReflectionDatabase.AddReflectedType(ReflectedClass);
+        Context->ReflectionDatabase.AddReflectedType(ReflectedStruct);
         
         return CXChildVisit_Recurse;
     }
@@ -336,19 +386,19 @@ namespace Lumina::Reflection::Visitor
             return CXChildVisit_Break;
         }
         
-        FReflectedClass* ReflectedClass = Context->ReflectionDatabase.GetOrCreateReflectedType<FReflectedClass>(FStringHash(CursorName));
+        FReflectedClass* ReflectedClass = Context->ReflectionDatabase.GetOrCreateReflectedType<FReflectedClass>(FStringHash(FullyQualifiedCursorName));
+        ReflectedClass->DisplayName = CursorName;
         ReflectedClass->Project = Context->Project.Name;
         ReflectedClass->Type = FReflectedType::EType::Class;
         ReflectedClass->GeneratedBodyLineNumber = GeneratedBody.LineNumber;
         ReflectedClass->LineNumber = ClangUtils::GetCursorLineNumber(Cursor);
+        ReflectedClass->HeaderID = Context->ReflectedHeader.HeaderPath;
     
         if (!Context->CurrentNamespace.empty())
         {
-            ReflectedClass->QualifiedName = Context->CurrentNamespace + CursorName;
             ReflectedClass->Namespace = Context->CurrentNamespace;
         }
     
-        ReflectedClass->HeaderID = Context->ReflectedHeader.HeaderPath;
 
         FReflectedType* PreviousType = Context->ParentReflectedType;
         Context->ParentReflectedType = ReflectedClass;

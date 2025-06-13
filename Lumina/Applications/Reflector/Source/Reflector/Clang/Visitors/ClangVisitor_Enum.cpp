@@ -43,13 +43,13 @@ namespace Lumina::Reflection::Visitor
     {
         eastl::string CursorName = ClangUtils::GetCursorDisplayName(Cursor);
 
-        eastl::string FullyQualifiedName;
         void* Data = clang_getCursorType(Cursor).data[0];
         if(Data == nullptr)
         {
             return CXChildVisit_Break;
         }
         
+        eastl::string FullyQualifiedName;
         if (!ClangUtils::GetQualifiedNameForType(clang::QualType::getFromOpaquePtr(Data), FullyQualifiedName))
         {
             return CXChildVisit_Break;
@@ -75,7 +75,8 @@ namespace Lumina::Reflection::Visitor
             return CXChildVisit_Break;
         }
         
-        FReflectedEnum* Enum = Context->ReflectionDatabase.GetOrCreateReflectedType<FReflectedEnum>(FStringHash(CursorName));
+        FReflectedEnum* Enum = Context->ReflectionDatabase.GetOrCreateReflectedType<FReflectedEnum>(FStringHash(FullyQualifiedName));
+        Enum->DisplayName = CursorName;
         Enum->LineNumber = ClangUtils::GetCursorLineNumber(Cursor);
         Enum->HeaderID = Context->ReflectedHeader.HeaderPath;
 

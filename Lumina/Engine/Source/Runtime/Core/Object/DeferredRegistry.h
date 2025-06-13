@@ -58,4 +58,5 @@ namespace Lumina
 
     using FClassDeferredRegistry = TDeferredRegistry<FClassRegistrationInfo>;
     using FEnumDeferredRegistry = TDeferredRegistry<FEnumRegistrationInfo>;
+    using FStructDeferredRegistry = TDeferredRegistry<FStructRegistrationInfo>;
 }

@@ -101,7 +101,7 @@ project "Lumina"
 
 
 	filter { "system:windows" }
-	    prebuildcommands { '"%LUMINA_DIR%/Binaries/Release-windows-x86_64/Reflector.exe"' }
+	    --prebuildcommands { '"%LUMINA_DIR%/Binaries/Release-windows-x86_64/Reflector.exe"' }
 		defines { "LE_PLATFORM_WINDOWS", }
 		flags { "NoRuntimeChecks", "NoIncrementalLink" }
 		links { "Dbghelp", }

@@ -98,8 +98,9 @@ namespace Lumina::Reflection
 
         if (Parser.ParsingContext.HasError())
         {
-            std::cout << Parser.ParsingContext.ErrorMessage.c_str() << "\n";
+            std::cout << "\033[31m" << Parser.ParsingContext.ErrorMessage.c_str() << "\033[0m\n";
         }
+
         
         return true;
     }

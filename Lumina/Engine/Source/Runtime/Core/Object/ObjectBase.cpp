@@ -34,35 +34,43 @@ namespace Lumina
 
 
     //-----------------------------------------------------------------------------------------------
-
-
+    
     /** Reinitialize properties because they were already set, and we don't want to clear them. */
     CObjectBase::CObjectBase()
         : ObjectFlags()
-        , InternalIndex(0)
+        , InternalIndex(INDEX_NONE)
     {
         FObjectInitializer* Initializer = FObjectInitializer::Get();
         NamePrivate = Initializer->Params.Name;
         ClassPrivate = const_cast<CClass*>(Initializer->Params.Class);
         PackagePrivate = Initializer->Params.Package;
 
-        ObjectNameHash.insert_or_assign(NamePrivate, this);
-        GObjectVector.push_back(this);
+        AddObject(NamePrivate, (int32)GObjectVector.size());
+
     }
 
-    CObjectBase::CObjectBase(ENoInit)
-        : ObjectFlags()
-        , PackagePrivate(nullptr)
-        , InternalIndex(0)
+    CObjectBase::~CObjectBase()
     {
-        //.. Internal use zero-init constructor.
+        LOG_INFO("Deleting Object: {}", GetName());
+
+        ObjectNameHash.erase(NamePrivate);
+        if (InternalIndex < (int32)GObjectVector.size() - 1)
+        {
+            eastl::swap(GObjectVector[InternalIndex], GObjectVector.back());
+
+            // Fix the InternalIndex of the moved object
+            GObjectVector[InternalIndex]->InternalIndex = InternalIndex;
+        }
+
+        GObjectVector.pop_back();
+
     }
 
     CObjectBase::CObjectBase(EObjectFlags InFlags)
         : ObjectFlags(InFlags)
         , ClassPrivate(nullptr)
         , PackagePrivate(nullptr)
-        , NamePrivate("")
+        , NamePrivate(NAME_None)
         , InternalIndex(0)
     {
     }
@@ -74,8 +82,6 @@ namespace Lumina
         , NamePrivate(InName)
         , InternalIndex(0)
     {
-        ObjectNameHash.insert_or_assign(NamePrivate, this);
-        GObjectVector.push_back(this);
     }
 
     uint32 CObjectBase::AddRef() const
@@ -86,11 +92,12 @@ namespace Lumina
     uint32 CObjectBase::Release() const
     {
         uint32 NewRefCount = --RefCount;
-    
-        if (NewRefCount == 0)
+
+        // We use one, because the last element is in the object array.
+        if (NewRefCount == 1)
         {
-            ObjectFlags |= OF_PendingDelete;
-            PendingDeletes.push_back(const_cast<CObjectBase*>(this));
+            CObjectBase* MutableThis =const_cast<CObjectBase*>(this);
+            FMemory::Delete(MutableThis);
         }
 
         return NewRefCount;
@@ -118,11 +125,16 @@ namespace Lumina
     {
         Assert(ClassPrivate == nullptr)
         ClassPrivate = InClass;
+
+        AddObject(NamePrivate, (int32)GObjectVector.size());
     }
 
     void CObjectBase::AddObject(FName Name, int32 InInternalIndex)
     {
-        
+        LOG_INFO("Adding CObject - {}", Name);
+        InternalIndex = InInternalIndex;
+        ObjectNameHash.insert_or_assign(Name, this);
+        GObjectVector.push_back(this);
     }
 
     void CObjectBase::GetPath(FString& OutPath)
@@ -195,22 +207,47 @@ namespace Lumina
         NewClass->GetDefaultObject();
     }
 
+    static void LoadAllCompiledInDefaultProperties(CStruct* NewClass)
+    {
+        
+    }
+
+    static void LoadAllCompiledInDefaultProperties(CEnum* NewClass)
+    {
+        
+    }
+    
     void ProcessNewlyLoadedCObjects()
     {
         FClassDeferredRegistry& ClassRegistry = FClassDeferredRegistry::Get();
         FEnumDeferredRegistry& EnumRegistry = FEnumDeferredRegistry::Get();
+        FStructDeferredRegistry& StructRegistry = FStructDeferredRegistry::Get();
 
         while (GFirstPendingRegistrant 
             || ClassRegistry.HasPendingRegistrations()
-            || EnumRegistry.HasPendingRegistrations())
+            || EnumRegistry.HasPendingRegistrations()
+            || StructRegistry.HasPendingRegistrations())
         {
             ProcessRegistrants();
             ClassRegistry.ProcessRegistrations(LoadAllCompiledInDefaultProperties);
-            EnumRegistry.ProcessRegistrations();
+            StructRegistry.ProcessRegistrations(LoadAllCompiledInDefaultProperties);
+            EnumRegistry.ProcessRegistrations(LoadAllCompiledInDefaultProperties);
         }
         
     }
-    
+
+    void ShutdownCObjectSystem()
+    {
+        while (!GObjectVector.empty())
+        {
+            CObjectBase* Base = GObjectVector.back();
+            FMemory::Delete(Base);
+        }
+
+        ObjectNameHash.clear();
+
+    }
+
 
     void RegisterCompiledInInfo(CClass* (*RegisterFn)(), const TCHAR* Package, const TCHAR* Name)
     {
@@ -220,6 +257,11 @@ namespace Lumina
     void RegisterCompiledInInfo(CEnum*(* RegisterFn)(), const FEnumRegisterCompiledInInfo& Info)
     {
         FEnumDeferredRegistry::Get().AddRegistration(RegisterFn);
+    }
+
+    void RegisterCompiledInInfo(CStruct*(* RegisterFn)(), const FStructRegisterCompiledInInfo& Info)
+    {
+        FStructDeferredRegistry::Get().AddRegistration(RegisterFn);
     }
 
     CEnum* GetStaticEnum(CEnum*(* RegisterFn)(), const TCHAR* Name)
@@ -243,6 +285,24 @@ namespace Lumina
         }
 
         for (const FEnumRegisterCompiledInInfo* It = EnumInfo; It != EnumInfo + NumEnumInfo; ++It)
+        {
+            RegisterCompiledInInfo(It->RegisterFn, *It);
+        }
+    }
+
+    void RegisterCompiledInInfo(const FEnumRegisterCompiledInInfo* EnumInfo, SIZE_T NumEnumInfo, const FClassRegisterCompiledInInfo* ClassInfo, SIZE_T NumClassInfo, const FStructRegisterCompiledInInfo* StructInfo, SIZE_T NumStructInfo)
+    {
+        for (const FClassRegisterCompiledInInfo* It = ClassInfo; It != ClassInfo + NumClassInfo; ++It)
+        {
+            RegisterCompiledInInfo(It->RegisterFn, ClassInfo->Package, ClassInfo->Name);
+        }
+
+        for (const FEnumRegisterCompiledInInfo* It = EnumInfo; It != EnumInfo + NumEnumInfo; ++It)
+        {
+            RegisterCompiledInInfo(It->RegisterFn, *It);
+        }
+
+        for (const FStructRegisterCompiledInInfo* It = StructInfo; It != StructInfo + NumStructInfo; ++It)
         {
             RegisterCompiledInInfo(It->RegisterFn, *It);
         }

@@ -103,6 +103,12 @@ namespace Lumina
         LUMINA_API virtual void AddProperty(FProperty* Property);
 
         template<typename PropertyType>
+        PropertyType* GetProperty(const FName& Name)
+        {
+            return (PropertyType*)GetProperty(Name);
+        }
+
+        template<typename PropertyType>
         requires std::is_base_of_v<FProperty, PropertyType>
         void ForEachProperty(TMoveOnlyFunction<void(PropertyType*)> Callback)
         {

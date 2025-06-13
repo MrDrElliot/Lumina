@@ -83,6 +83,8 @@ namespace Lumina
         FModuleManager::Get()->UnloadAllModules();
 
         delete Window;
+
+        ShutdownCObjectSystem();
         
         return 0;
     }

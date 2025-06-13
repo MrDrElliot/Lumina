@@ -20,7 +20,7 @@ namespace Lumina
     {
     public:
 
-        FProperty(FFieldOwner InOwner, FPropertyParams* Params = nullptr)
+        FProperty(FFieldOwner InOwner, const FPropertyParams* Params)
             :FField(InOwner)
         {
             Init();
@@ -70,8 +70,8 @@ namespace Lumina
     {
     public:
 
-        FNumericProperty(FFieldOwner InOwner)
-            :FProperty(InOwner)
+        FNumericProperty(FFieldOwner InOwner, const FPropertyParams* Params)
+            :FProperty(InOwner, Params)
         {}
         
     void SerializeItem(IStructuredArchive::FSlot Slot, void* Value, void const* Defaults) override;
@@ -115,8 +115,8 @@ namespace Lumina
     {
     public:
 
-        TProperty(FFieldOwner InOwner)
-            :TBacking(InOwner)
+        TProperty(FFieldOwner InOwner, const FPropertyParams* Params)
+            :TBacking(InOwner, Params)
         {
             this->ElementSize = TPropertyTypeLayout<TCPPType>::Size;
         }
@@ -138,8 +138,8 @@ namespace Lumina
 
         using Super = TProperty<FNumericProperty, TCPPType>;
 
-        TProperty_Numeric(FFieldOwner InOwner)
-            :Super(InOwner)
+        TProperty_Numeric(FFieldOwner InOwner, const FPropertyParams* Params)
+            :Super(InOwner, Params)
         {}
 
 
@@ -150,15 +150,24 @@ namespace Lumina
 
 
     //-------------------------------------------------------------------------------
-    
+
+    class FBoolProperty : public TProperty_Numeric<bool>
+    {
+    public:
+        using Super = TProperty_Numeric<bool>;
+
+        FBoolProperty(FFieldOwner InOwner, const FPropertyParams* Params)
+            : Super(InOwner, Params)
+        {}
+    };
     
     class FInt8Property : public TProperty_Numeric<int8>
     {
     public:
         using Super = TProperty_Numeric<int8>;
 
-        FInt8Property(FFieldOwner InOwner)
-            : Super(InOwner)
+        FInt8Property(FFieldOwner InOwner, const FPropertyParams* Params)
+            : Super(InOwner, Params)
         {}
     };
 
@@ -167,8 +176,8 @@ namespace Lumina
     public:
         using Super = TProperty_Numeric<int16>;
 
-        FInt16Property(FFieldOwner InOwner)
-            : Super(InOwner)
+        FInt16Property(FFieldOwner InOwner, const FPropertyParams* Params)
+            : Super(InOwner, Params)
         {}
     };
 
@@ -177,8 +186,8 @@ namespace Lumina
     public:
         using Super = TProperty_Numeric<int32>;
 
-        FInt32Property(FFieldOwner InOwner)
-            : Super(InOwner)
+        FInt32Property(FFieldOwner InOwner, const FPropertyParams* Params)
+            : Super(InOwner, Params)
         {}
     };
 
@@ -187,8 +196,8 @@ namespace Lumina
     public:
         using Super = TProperty_Numeric<int64>;
 
-        FInt64Property(FFieldOwner InOwner)
-            : Super(InOwner)
+        FInt64Property(FFieldOwner InOwner, const FPropertyParams* Params)
+            : Super(InOwner, Params)
         {}
     };
 
@@ -197,8 +206,8 @@ namespace Lumina
     public:
         using Super = TProperty_Numeric<uint8>;
 
-        FUInt8Property(FFieldOwner InOwner)
-            : Super(InOwner)
+        FUInt8Property(FFieldOwner InOwner, const FPropertyParams* Params)
+            : Super(InOwner, Params)
         {}
     };
 
@@ -207,8 +216,8 @@ namespace Lumina
     public:
         using Super = TProperty_Numeric<uint16>;
 
-        FUInt16Property(FFieldOwner InOwner)
-            : Super(InOwner)
+        FUInt16Property(FFieldOwner InOwner, const FPropertyParams* Params)
+            : Super(InOwner, Params)
         {}
     };
 
@@ -217,8 +226,8 @@ namespace Lumina
     public:
         using Super = TProperty_Numeric<uint32>;
 
-        FUInt32Property(FFieldOwner InOwner)
-            : Super(InOwner)
+        FUInt32Property(FFieldOwner InOwner, const FPropertyParams* Params)
+            : Super(InOwner, Params)
         {}
     };
 
@@ -227,8 +236,8 @@ namespace Lumina
     public:
         using Super = TProperty_Numeric<uint64>;
 
-        FUInt64Property(FFieldOwner InOwner)
-            : Super(InOwner)
+        FUInt64Property(FFieldOwner InOwner, const FPropertyParams* Params)
+            : Super(InOwner, Params)
         {}
     };
 
@@ -237,8 +246,8 @@ namespace Lumina
     public:
         using Super = TProperty_Numeric<float>;
 
-        FFloatProperty(FFieldOwner InOwner)
-            : Super(InOwner)
+        FFloatProperty(FFieldOwner InOwner, const FPropertyParams* Params)
+            : Super(InOwner, Params)
         {}
     };
 
@@ -247,8 +256,8 @@ namespace Lumina
     public:
         using Super = TProperty_Numeric<double>;
 
-        FDoubleProperty(FFieldOwner InOwner)
-            : Super(InOwner)
+        FDoubleProperty(FFieldOwner InOwner, const FPropertyParams* Params)
+            : Super(InOwner, Params)
         {}
     };
 

@@ -32,11 +32,7 @@ namespace Lumina
 
     CObject* CClass::CreateDefaultObject()
     {
-        if (ClassDefaultObject != nullptr)
-        {
-            return ClassDefaultObject;
-        }
-
+        Assert(ClassDefaultObject == nullptr)
         FString DefaultObjectName = GetName().c_str();
         DefaultObjectName += "_CDO";
         

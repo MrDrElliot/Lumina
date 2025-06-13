@@ -106,17 +106,39 @@ namespace Lumina::Reflection
         return true;
     }
 
-    void FClangParserContext::LogError(char const* pErrorFormat, ...) const
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wformat-nonliteral"
+    void FClangParserContext::LogError(const char* ErrorFormat, ...) const
     {
-        char buffer[1024];
+        char MessageBuffer[1024];
+        char FinalBuffer[1100];
 
         va_list args;
-        va_start( args, pErrorFormat );
-        vsnprintf(buffer, 1024, pErrorFormat, args);
-        va_end( args );
+        va_start(args, ErrorFormat);
+        (void)vsnprintf(MessageBuffer, sizeof(MessageBuffer), ErrorFormat, args);
+        va_end(args);
 
-        ErrorMessage = buffer;
+        (void)snprintf(FinalBuffer, sizeof(FinalBuffer), "[Reflection] [ERROR]: %s", MessageBuffer);
+
+        ErrorMessage = FinalBuffer;
     }
+
+    void FClangParserContext::LogWarning(char const* ErrorFormat, ...) const
+    {
+        char MessageBuffer[1024];
+        char FinalBuffer[1100];
+
+        va_list args;
+        va_start(args, ErrorFormat);
+        (void)vsnprintf(MessageBuffer, sizeof(MessageBuffer), ErrorFormat, args);
+        va_end(args);
+
+        (void)snprintf(FinalBuffer, sizeof(FinalBuffer), "[Reflection] - WARN: %s", MessageBuffer);
+
+        WarningMessage = FinalBuffer;
+    }
+#pragma clang diagnostic pop
+
 
 
     void FClangParserContext::PushNamespace(const eastl::string& Namespace)

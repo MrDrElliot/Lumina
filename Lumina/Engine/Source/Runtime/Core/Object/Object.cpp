@@ -1,6 +1,7 @@
 ﻿#include "Class.h"
 #include "Object.h"
 #include "Core/Reflection/Type/LuminaTypes.h"
+#include "Core/Reflection/Type/Properties/ArrayProperty.h"
 
 /** Low level CObject registration. */
 extern Lumina::FClassRegistrationInfo Registration_Info_CClass_Lumina_CObject;
@@ -33,7 +34,7 @@ namespace Lumina
         FName Name = GetName();
 
         Slot.Serialize(Name);
-
+        
         FProperty* Current = Class->LinkedProperty;
         while (Current != nullptr)
         {

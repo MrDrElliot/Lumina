@@ -9,9 +9,13 @@ namespace Lumina
     {
     public:
 
-        FEnumProperty(FFieldOwner InOwner, FPropertyParams* Params = nullptr)
+        FEnumProperty(FFieldOwner InOwner, const FPropertyParams* Params)
             :FProperty(InOwner, Params)
         {
+            auto* EnumParams = (const FEnumPropertyParams*) Params;
+            CEnum* InternalEnum = EnumParams->EnumFunc();
+            Assert(InternalEnum)
+            SetEnum(InternalEnum);
         }
 
         ~FEnumProperty() override;
@@ -29,10 +33,10 @@ namespace Lumina
     private:
 
         /** Numeric property which represents the current value of this enum */
-        FNumericProperty*   InnerProperty = nullptr;
+        FNumericProperty* InnerProperty = nullptr;
 
         /** The actual enum class object this property represents */
-        TObjectPtr<CEnum>   Enum;
+        CEnum* Enum = nullptr;
     
     };
 }

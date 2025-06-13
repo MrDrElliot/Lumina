@@ -18,12 +18,6 @@ namespace Lumina
     
     CEdNodeGraph::~CEdNodeGraph()
     {
-        for (CEdGraphNode* Node : Nodes)
-        {
-            FMemory::Delete(Node);            
-        }
-        
-        ImNodes::EditorContextFree(ImNodesContext);
     }
 
     void CEdNodeGraph::Initialize()
@@ -73,6 +67,11 @@ namespace Lumina
         style.Colors[ImNodesCol_GridLinePrimary] = IM_COL32(60, 60, 60, 255);
     
         style.GridSpacing = 20.0f;
+    }
+
+    void CEdNodeGraph::Shutdown()
+    {
+        ImNodes::EditorContextFree(ImNodesContext);
     }
 
     void CEdNodeGraph::Serialize(FArchive& Ar)

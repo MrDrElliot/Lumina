@@ -35,13 +35,12 @@ namespace Lumina
 
         NodeGraph = NewObject<CMaterialNodeGraph>();
         NodeGraph->Initialize();
-
     }
 
 
     void FMaterialEditorTool::OnDeinitialize(const FUpdateContext& UpdateContext)
     {
-        FMemory::Delete(NodeGraph);
+        NodeGraph->Shutdown();
     }
 
     void FMaterialEditorTool::OnAssetLoadFinished()

@@ -30,7 +30,7 @@ namespace Lumina::Reflection
             return;
         }
 
-        FStringHash NameHash = FStringHash(Type->DisplayName);
+        FStringHash NameHash = FStringHash(Type->QualifiedName);
         FStringHash PathHash = FStringHash(Type->HeaderID);
 
         if (IsTypeRegistered(NameHash))
@@ -43,5 +43,17 @@ namespace Lumina::Reflection
         
         TypeHashMap.insert_or_assign(NameHash, Type);
         
+    }
+
+    bool FReflectionDatabase::IsTypeRegistered(const FStringHash& Str)
+    {
+        return TypeHashMap.find(Str) != TypeHashMap.end() || IsCoreType(Str);
+    }
+
+    bool FReflectionDatabase::IsCoreType(const FStringHash& Hash)
+    {
+        EPropertyTypeFlags Flags = GetCoreTypeFromName(Hash.c_str());
+
+        return Flags != EPropertyTypeFlags::None;
     }
 }

@@ -39,7 +39,6 @@ namespace Lumina::Reflection
         , Solution(SlnPath)
         , ReflectionDatabase(&Database)
     {
-        
     }
 
     void FCodeGenerator::GenerateCodeForSolution()
@@ -225,15 +224,26 @@ namespace Lumina::Reflection
     
         // EnumInfo block
         bool bHasEnums = false;
+        bool bHasClass = false;
+        bool bHasStruct = false;
         for (FReflectedType* Type : ReflectedTypes)
         {
             if (Type->Type == FReflectedType::EType::Enum)
             {
                 bHasEnums = true;
-                break;
+            }
+
+            if (Type->Type == FReflectedType::EType::Class)
+            {
+                bHasClass = true;
+            }
+
+            if (Type->Type == FReflectedType::EType::Structure)
+            {
+                bHasStruct = true;
             }
         }
-    
+        
         if (bHasEnums)
         {
             Stream += "\tstatic constexpr Lumina::FEnumRegisterCompiledInInfo EnumInfo[] = {\n";
@@ -244,19 +254,35 @@ namespace Lumina::Reflection
                     Type->DeclareStaticRegistration(Stream);
                 }
             }
-            Stream += "\t};\n\n";
+            Stream += "\t};\n";
         }
-    
-        // ClassInfo block
-        Stream += "\tstatic constexpr Lumina::FClassRegisterCompiledInInfo ClassInfo[] = {\n";
-        for (FReflectedType* Type : ReflectedTypes)
+
+        if (bHasClass)
         {
-            if (Type->Type == FReflectedType::EType::Class || Type->Type == FReflectedType::EType::Structure)
+            Stream += "\tstatic constexpr Lumina::FClassRegisterCompiledInInfo ClassInfo[] = {\n";
+            for (FReflectedType* Type : ReflectedTypes)
             {
-                Type->DeclareStaticRegistration(Stream);
+                if (Type->Type == FReflectedType::EType::Class)
+                {
+                    Type->DeclareStaticRegistration(Stream);
+                }
             }
+            Stream += "\t};\n";
         }
-        Stream += "\t};\n";
+
+        if (bHasStruct)
+        {
+            Stream += "\tstatic constexpr Lumina::FStructRegisterCompiledInInfo StructInfo[] = {\n";
+            for (FReflectedType* Type : ReflectedTypes)
+            {
+                if (Type->Type == FReflectedType::EType::Structure)
+                {
+                    Type->DeclareStaticRegistration(Stream);
+                }
+            }
+            Stream += "\t};\n";
+        }
+        
         Stream += "};\n";
 
         Stream += "static Lumina::FRegisterCompiledInInfo Register_Static_Initializer(\n";
@@ -271,9 +297,29 @@ namespace Lumina::Reflection
             Stream += "\tnullptr,\n";
             Stream += "\t0,\n";
         }
+
+        if (bHasClass)
+        {
+            Stream += "\tRegistration_" + FileID + "::ClassInfo" + ",\n";
+            Stream += "\tstd::size(Registration_" + FileID + "::ClassInfo" + "),\n";
+        }
+        else
+        {
+            Stream += "\tnullptr,\n";
+            Stream += "\t0,\n";
+        }
+
+        if (bHasStruct)
+        {
+            Stream += "\tRegistration_" + FileID + "::StructInfo" + ",\n";
+            Stream += "\tstd::size(Registration_" + FileID + "::StructInfo" + ")\n";
+        }
+        else
+        {
+            Stream += "\tnullptr,\n";
+            Stream += "\t0\n";
+        }
         
-        Stream += "\tRegistration_" + FileID + "::ClassInfo" + ",\n";
-        Stream += "\tstd::size(Registration_" + FileID + "::ClassInfo" + ")\n";
         Stream += ");\n\n";
 
         Stream += "// ** End Static Registration **\n\n";

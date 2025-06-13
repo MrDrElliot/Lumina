@@ -3,6 +3,7 @@
 
 #include "StringHash.h"
 #include "EASTL/hash_map.h"
+#include "EASTL/shared_ptr.h"
 #include "EASTL/string.h"
 #include "EASTL/vector.h"
 
@@ -45,6 +46,7 @@ enum class EPropertyTypeFlags : uint64_t
     String              = 1 << 15,
     Enum                = 1 << 16,
     Vector              = 1 << 17,
+    Struct              = 1 << 18,
 };
 
 namespace Lumina::Reflection
@@ -63,12 +65,12 @@ namespace Lumina::Reflection
         if (strcmp(Name, "float") == 0)                 return EPropertyTypeFlags::Float;
         if (strcmp(Name, "double") == 0)                return EPropertyTypeFlags::Double;
         if (strcmp(Name, "CClass") == 0)                return EPropertyTypeFlags::Class;
-        if (strcmp(Name, "FName") == 0)                 return EPropertyTypeFlags::Name;
-        if (strcmp(Name, "FString") == 0)               return EPropertyTypeFlags::String;
+        if (strcmp(Name, "Lumina::FName") == 0)         return EPropertyTypeFlags::Name;
+        if (strcmp(Name, "Lumina::FString") == 0)       return EPropertyTypeFlags::String;
         if (strcmp(Name, "Lumina::TVector") == 0)       return EPropertyTypeFlags::Vector;
         if (strcmp(Name, "Lumina::CObject") == 0)       return EPropertyTypeFlags::Object;
         if (strcmp(Name, "Lumina::TObjectPtr") == 0)    return EPropertyTypeFlags::Object;
-
+        
         return EPropertyTypeFlags::None;
     }
     
@@ -150,18 +152,19 @@ namespace Lumina::Reflection
             Type = EType::Structure;
         }
 
-        void PushProperty(FReflectedProperty* NewProperty);
+        void PushProperty(eastl::shared_ptr<FReflectedProperty> NewProperty);
 
         eastl::string GetTypeName() const override { return "CStruct"; }
+        
         void DefineConstructionStatics(eastl::string& Stream) override;
         void DefineInitialHeader(eastl::string& Stream, const eastl::string& FileID) override;
         void DefineSecondaryHeader(eastl::string& Stream, const eastl::string& FileID) override;
         void DeclareImplementation(eastl::string& Stream) override;
         void DeclareStaticRegistration(eastl::string& Stream) override;
         
-        eastl::vector<const FReflectedProperty*>      Props;
+        eastl::vector<eastl::shared_ptr<FReflectedProperty>>        Props;
 
-        eastl::string                                 Parent;
+        eastl::string                                               Parent;
     };
 
     

@@ -31,6 +31,7 @@ namespace Lumina
     // Floating point properties
     DEFINE_REFLECTED_NUMERIC_PROPERTY(FReflectedFloatProperty,  Lumina::EPropertyTypeFlags::Float,  "Float")
     DEFINE_REFLECTED_NUMERIC_PROPERTY(FReflectedDoubleProperty, Lumina::EPropertyTypeFlags::Double, "Double")
+    DEFINE_REFLECTED_NUMERIC_PROPERTY(FReflectedBoolProperty,   Lumina::EPropertyTypeFlags::Bool,   "Bool")
 
     #undef DEFINE_REFLECTED_NUMERIC_PROPERTY
     
