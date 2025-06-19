@@ -4,6 +4,19 @@
 IMPLEMENT_INTRINSIC_CLASS(CEnum, CField, LUMINA_API)
 namespace Lumina
 {
+    FName CEnum::GetNameAtValue(uint64 Value)
+    {
+        for (const auto& Pair : Names)
+        {
+            if (Pair.second == Value)
+            {
+                return Pair.first;
+            }
+        }
+
+        return NAME_None;
+    }
+
     uint64 CEnum::GetEnumValueByName(FName Name)
     {
         for (const auto& Pair : Names)
@@ -14,7 +27,7 @@ namespace Lumina
             }
         }
 
-        return INDEX_NONE;
+        return 0;
     }
 
     void CEnum::AddEnum(FName FullName, uint64 Value)

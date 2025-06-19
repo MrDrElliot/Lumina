@@ -31,9 +31,9 @@ namespace Lumina
 
         friend class CEdNodeGraph;
 
-        CEdGraphNode() = default;
+        void PostCreateCDO() override;
         
-        virtual ~CEdGraphNode();
+        virtual ~CEdGraphNode() override;
 
         virtual void BuildNode() { }
 
@@ -56,24 +56,36 @@ namespace Lumina
         CEdNodeGraphPin* GetPin(uint32 ID, ENodePinDirection Direction);
         CEdNodeGraphPin* GetPinByIndex(uint32 Index, ENodePinDirection Direction);
         
+        uint64 GetNodeID() const { return NodeID; }
+
+        void SetGridPos(float X, float Y) { GridX = X; GridY = Y; }
+        float GetNodeX() const { return GridX; }
+        float GetNodeY() const { return GridY; }
 
         const TVector<CEdNodeGraphPin*>& GetInputPins() const { return NodePins[uint32(ENodePinDirection::Input)]; }
         const TVector<CEdNodeGraphPin*>& GetOutputPins() const { return NodePins[uint32(ENodePinDirection::Output)]; }
 
         CEdNodeGraphPin* CreatePin(CClass* InClass, const FString& Name, ENodePinDirection Direction, EMaterialInputType Type);
-    
+
+        LUM_PROPERTY()
+        float GridX;
+
+        LUM_PROPERTY()
+        float GridY;
+
     protected:
 
         TArray<TVector<CEdNodeGraphPin*>, uint32(ENodePinDirection::Count)> NodePins;
 
         uint32 DebugExecutionOrder;
 
-        FName       FactoryID;
+
+        uint64      NodeID;
         FString     FullName;
         uint16      GUID;
         FString     Error;
         bool        bHasError;
-        
+        bool        bInitialPosSet = false;
     };
     
 }

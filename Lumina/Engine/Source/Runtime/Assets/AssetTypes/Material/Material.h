@@ -27,6 +27,7 @@ namespace Lumina
         
     public:
         
+        
         LUM_PROPERTY()
         TVector<CObject*> MaterialNodes;
         

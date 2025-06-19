@@ -1,7 +1,7 @@
 ﻿#include "MaterialOutputNode.h"
 
-#include "UI/Tools/NodeGraph/Material/MaterialCompiler.h"
 #include "UI/Tools/NodeGraph/Material/MaterialInput.h"
+#include "UI/Tools/NodeGraph/Material/MaterialCompiler.h"
 
 namespace Lumina
 {
@@ -18,7 +18,37 @@ namespace Lumina
 
     void CMaterialOutputNode::BuildNode()
     {
+        // Base Color (Albedo)
+        BaseColorPin = CreatePin(CMaterialInput::StaticClass(), "Base Color", ENodePinDirection::Input, EMaterialInputType::Float3);
+        BaseColorPin->SetPinName("Base Color (RGBA)");
+    
+        // Metallic (Determines if the material is metal or non-metal)
+        MetallicPin = CreatePin(CMaterialInput::StaticClass(), "Metallic", ENodePinDirection::Input, EMaterialInputType::Float);
+        MetallicPin->SetPinName("Metallic");
         
+        // Roughness (Controls how smooth or rough the surface is)
+        RoughnessPin = CreatePin(CMaterialInput::StaticClass(), "Rougness", ENodePinDirection::Input, EMaterialInputType::Float);
+        RoughnessPin->SetPinName("Roughness");
+
+        // Specular (Affects intensity of reflections for non-metals)
+        SpecularPin = CreatePin(CMaterialInput::StaticClass(), "Specular", ENodePinDirection::Input, EMaterialInputType::Float);
+        SpecularPin->SetPinName("Specular");
+
+        // Emissive (Self-illumination, for glowing objects)
+        EmissivePin = CreatePin(CMaterialInput::StaticClass(), "Emissive", ENodePinDirection::Input, EMaterialInputType::Float3);
+        EmissivePin->SetPinName("Emissive (RGB)");
+
+        // Ambient Occlusion (Shadows in crevices to add realism)
+        AOPin = CreatePin(CMaterialInput::StaticClass(), "Ambient Occlusion", ENodePinDirection::Input, EMaterialInputType::Float);
+        AOPin->SetPinName("Ambient Occlusion");
+
+        // Normal Map (For surface detail)
+        NormalPin = CreatePin(CMaterialInput::StaticClass(), "Normal Map (XYZ)", ENodePinDirection::Input, EMaterialInputType::Float3);
+        NormalPin->SetPinName("Normal Map (XYZ)");
+        
+        // Opacity (For transparent materials)
+        OpacityPin = CreatePin(CMaterialInput::StaticClass(), "Opacity", ENodePinDirection::Input, EMaterialInputType::Float);
+        OpacityPin->SetPinName("Opacity");
     }
 
     void CMaterialOutputNode::GenerateDefinition(FMaterialCompiler* Compiler)

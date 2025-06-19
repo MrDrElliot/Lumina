@@ -5,7 +5,7 @@
 
 namespace Lumina
 {
-    FArchive& FObjectArchiver::operator<<(CObject*& Obj)
+    FArchive& FObjectProxyArchiver::operator<<(CObject*& Obj)
     {
         if (IsWriting())
         {

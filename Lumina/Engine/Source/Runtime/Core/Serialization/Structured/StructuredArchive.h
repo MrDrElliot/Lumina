@@ -85,6 +85,8 @@ namespace Lumina
         virtual void EnterField(FName& FieldName) = 0;
         virtual void LeaveField() = 0;
 
+        FArchive* GetInnerAr() const { return InnerAr; }
+
     protected:
 
         FArchiveElement RootElement;
@@ -97,18 +99,18 @@ namespace Lumina
     {
     public:
 
-        FBinaryStructuredArchive(FArchive& InAr)
+        LUMINA_API FBinaryStructuredArchive(FArchive& InAr)
             :IStructuredArchive(InAr)
         {}
         
-        void EnterRecord() const override;
-        void LeaveRecord() const override;
+        LUMINA_API void EnterRecord() const override;
+        LUMINA_API void LeaveRecord() const override;
         
-        void EnterSlot(FSlot Slot) override;
-        void LeaveSlot() override;
+        LUMINA_API void EnterSlot(FSlot Slot) override;
+        LUMINA_API void LeaveSlot() override;
 
-        void EnterField(FName& FieldName) override;
-        void LeaveField() override;
+        LUMINA_API void EnterField(FName& FieldName) override;
+        LUMINA_API void LeaveField() override;
 
     private:
         

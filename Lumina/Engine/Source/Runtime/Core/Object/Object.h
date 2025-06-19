@@ -26,7 +26,7 @@ namespace Lumina
 
         friend CObject* StaticAllocateObject();
 
-        DECLARE_CLASS(Lumina, CObject, CObject, TEXT("Script/Engine"), LUMINA_API)
+        DECLARE_CLASS(Lumina, CObject, CObject, "script://Lumina", LUMINA_API)
         DEFINE_DEFAULT_CONSTRUCTOR_CALL(CObject)
 
         LUMINA_API CObject();
@@ -51,7 +51,7 @@ namespace Lumina
 
         /** Used during serialization to and from a structured archive (Packaging, Network, etc). */
         LUMINA_API virtual void Serialize(IStructuredArchive::FSlot Slot);
-
+        
         /** Called after constructor and after properites have been initialized. */
         LUMINA_API virtual void PostInitProperties();
 

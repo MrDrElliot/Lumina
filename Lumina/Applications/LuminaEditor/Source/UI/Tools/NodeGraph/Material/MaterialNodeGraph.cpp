@@ -1,6 +1,10 @@
 ﻿#include "MaterialNodeGraph.h"
 
+#include "Core/Object/Class.h"
+#include "Core/Object/Cast.h"
+#include "Renderer/RHIIncl.h"
 #include "MaterialCompiler.h"
+#include "Assets/AssetTypes/Material/Material.h"
 #include "Nodes/MaterialNodeExpression.h"
 #include "Nodes/MaterialOutputNode.h"
 #include "UI/Tools/NodeGraph/EdNodeGraphPin.h"
@@ -16,6 +20,26 @@ namespace Lumina
     void CMaterialNodeGraph::Initialize()
     {
         Super::Initialize();
+
+        TVector<CObject*> NewNodes = Material->MaterialNodes;
+        for (CObject* Object : NewNodes)
+        {
+            CEdGraphNode* Node = Cast<CEdGraphNode>(Object);
+            AddNode(Node);
+            ImNodes::SetNodeGridSpacePos(Node->GetNodeID(), { (float)Node->GetNodeX(), (float)Node->GetNodeY() });
+        }
+
+        CreateNode(CMaterialOutputNode::StaticClass());
+
+        RegisterGraphNode(CMaterialExpression_Addition::StaticClass());
+        RegisterGraphNode(CMaterialExpression_Subtraction::StaticClass());
+        RegisterGraphNode(CMaterialExpression_Division::StaticClass());
+        RegisterGraphNode(CMaterialExpression_Multiplication::StaticClass());
+        RegisterGraphNode(CMaterialExpression_ConstantFloat::StaticClass());
+        RegisterGraphNode(CMaterialExpression_ConstantFloat2::StaticClass());
+        RegisterGraphNode(CMaterialExpression_ConstantFloat3::StaticClass());
+        RegisterGraphNode(CMaterialExpression_ConstantFloat4::StaticClass());
+
     }
 
     void CMaterialNodeGraph::OnDrawGraph()
@@ -76,7 +100,14 @@ namespace Lumina
 
     void CMaterialNodeGraph::ValidateGraph()
     {
-        
+        Material->MaterialNodes.clear();
+        for (CEdGraphNode* Node : Nodes)
+        {
+            if (Cast<CMaterialOutputNode>(Node) == nullptr)
+            {
+                Material->MaterialNodes.push_back(Node);
+            }
+        }
     }
 
     CEdGraphNode* CMaterialNodeGraph::TopologicalSort(const TVector<CEdGraphNode*>& NodesToSort, TVector<CEdGraphNode*>& SortedNodes)

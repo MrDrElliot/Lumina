@@ -45,7 +45,10 @@ namespace Lumina
 
     void CStruct::Link()
     {
-        if (SuperStruct != nullptr)
+        if (bLinked) return;
+        bLinked = true;
+
+        if (SuperStruct)
         {
             SuperStruct->Link();
         }

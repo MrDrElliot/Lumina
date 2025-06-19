@@ -17,6 +17,7 @@ namespace Lumina
             CStruct* InternalStruct = StructParams->StructFunc();
             Assert(InternalStruct)
             SetStruct(InternalStruct);
+            SetElementSize(Struct->GetSize(), Struct->GetAlignment());
         }
 
         void SetStruct(CStruct* InStruct) { Struct = InStruct; }

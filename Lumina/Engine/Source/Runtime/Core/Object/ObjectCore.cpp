@@ -95,9 +95,7 @@ namespace Lumina
         FString FullPath = WIDE_TO_UTF8(QualifiedName);
         FName ObjectName = FName(GetObjectNameFromPath(FullPath));
         
-        CObject* FoundObject = nullptr;
-        
-        FoundObject = FindObjectFast(InClass, ObjectName);
+        CObject* FoundObject = FindObjectFast(InClass, ObjectName);
 
         if (FoundObject == nullptr)
         {

@@ -71,17 +71,17 @@ namespace Lumina
     {
         if (ImGui::MenuItem(LE_ICON_FILE_PLUS_OUTLINE"##New"))
         {
-            
+            OnNew();
         }
 
         if (ImGui::MenuItem(LE_ICON_CONTENT_SAVE"##Save"))
         {
-            
+            OnSave();
         }
 
         if (ImGui::MenuItem(LE_ICON_UNDO_VARIANT"##Undo"))
         {
-            
+            OnUndo();
         }
         ImGuiX::ItemTooltip( "Undo" );
 

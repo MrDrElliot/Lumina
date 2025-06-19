@@ -39,6 +39,7 @@ namespace Lumina
         FConstructCObjectParams Params(this);
         Params.Flags |= EObjectFlags::OF_DefaultObject;
         Params.Name = FName(DefaultObjectName);
+        Params.Package = UTF8_TO_WIDE(GetPackage()).c_str();
         
         ClassDefaultObject = StaticAllocateObject(Params);
 

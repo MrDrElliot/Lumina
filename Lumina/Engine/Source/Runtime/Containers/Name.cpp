@@ -1,5 +1,6 @@
 #include "Name.h"
 
+#include "Core/LuminaMacros.h"
 #include "Core/Math/Hash/Hash.h"
 #include "Memory/Memory.h"
 
@@ -11,19 +12,24 @@ namespace Lumina
         eastl::hash_node<value_type, false> const* const* GetBuckets() const { return mpBucketArray; }
     };
 
-    FNameHashMap* gNameCache = nullptr;
+    FNameHashMap* GNameCache = nullptr;
     
-
     void FName::Initialize()
     {
-        gNameCache = FMemory::New<FNameHashMap>();
+        GNameCache = FMemory::New<FNameHashMap>();
     }
 
     void FName::Shutdown()
     {
-        FMemory::Delete(gNameCache);
-        gNameCache = nullptr;
+        FMemory::Delete(GNameCache);
+        GNameCache = nullptr;
     }
+
+    FName::FName()
+        :FName(NAME_None)
+    {
+    }
+
 
     FName::FName(const char* Char)
     {
@@ -31,14 +37,14 @@ namespace Lumina
         {
             ID = Hash::GetHash64(Char);
 
-            auto Itr = gNameCache->find(ID);
-            if (Itr == gNameCache->end())
+            auto Itr = GNameCache->find(ID);
+            if (Itr == GNameCache->end())
             {
-                (*gNameCache)[ID] = FString(Char);
+                (*GNameCache)[ID] = FString(Char);
             }
         }
 #if _DEBUG
-        StringView = (*gNameCache)[ID];
+        StringView = (*GNameCache)[ID];
 #endif
     }
 
@@ -57,11 +63,12 @@ namespace Lumina
     {
     }
 
-    bool FName::IsNone() const
+    bool FName::IsValid() const
     {
-        auto Itr = gNameCache->find(ID);
-        return Itr == gNameCache->end();
+        auto Itr = GNameCache->find(ID);
+        return Itr == GNameCache->end() && ID != 0;
     }
+
 
     FString FName::ToString() const
     {
@@ -75,8 +82,8 @@ namespace Lumina
             return nullptr;
         }
 
-        auto Itr = gNameCache->find(ID);
-        if (Itr != gNameCache->end())
+        auto Itr = GNameCache->find(ID);
+        if (Itr != GNameCache->end())
         {
             return Itr->second.c_str();
         }

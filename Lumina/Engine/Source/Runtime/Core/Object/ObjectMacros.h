@@ -67,13 +67,13 @@ public: \
     using ThisClass = TNamespace::TClass; \
     using Super = TBaseClass; \
     inline static Lumina::CClass* StaticClass() { return GetPrivateStaticClass(); } \
-    inline static const TCHAR* StaticPackage() { return TEXT(#TPackage); } \
+    inline static const TCHAR* StaticPackage() { return TEXT(TPackage); } \
     inline void* operator new(const size_t InSize, EInternal InMem, Lumina::FName InName = Lumina::NAME_None, Lumina::EObjectFlags InSetFlags = Lumina::OF_None) \
     { \
         Lumina::FConstructCObjectParams Params(StaticClass()); \
         Params.Name = InName; \
         Params.Flags = InSetFlags; \
-        Params.Package = TEXT(#TPackage); \
+        Params.Package = StaticPackage(); \
         return Lumina::StaticAllocateObject(Params); \
     } \
     inline void* operator new(const size_t InSize, EInternal* InMem) \

@@ -25,16 +25,15 @@ namespace Lumina
 
     public:
 
-        FName() = default;
-        explicit FName(nullptr_t) : ID(0) {}
+        FName();
         FName(const char* Char);
         FName(const TCHAR* Char);
         explicit FName(uint64 InID) :ID(InID) {}
         explicit FName(const FString& Str);
         explicit FName(const FInlineString& Str);
 
-        FORCEINLINE bool IsValid() const { return ID != 0; }
-        bool IsNone() const;
+        FORCEINLINE bool IsValid() const;
+        bool IsNone() const { return *this != FName("NAME_None"); }
         FORCEINLINE uint64 GetID() const { return ID; }
         FORCEINLINE operator uint64() const { return ID; }
 

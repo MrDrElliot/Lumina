@@ -38,7 +38,7 @@ namespace Lumina
 
         
         CEdNodeGraph();
-        virtual ~CEdNodeGraph();
+        virtual ~CEdNodeGraph() override;
 
         virtual void Initialize();
         virtual void Shutdown();
@@ -49,17 +49,18 @@ namespace Lumina
         
         void RegisterGraphAction(const FString& ActionName, const TFunction<void()>& ActionCallback);
 
-        virtual void ValidateGraph()  { };
+        virtual void ValidateGraph()  { }
         
         CEdGraphNode* CreateNode(CClass* NodeClass);
     
         
     protected:
 
-        uint32 AddNode(CEdGraphNode* InNode);
+        void RegisterGraphNode(CClass* InClass) { SupportedNodes.push_back(InClass); }
         
+        uint64 AddNode(CEdGraphNode* InNode);
         
-        THashMap<FName, FNodeFactory>                   NodeFactories;
+        TVector<CClass*>                                SupportedNodes;
         TVector<CEdGraphNode*>                          Nodes;
         TVector<FAction>                                Actions;
 

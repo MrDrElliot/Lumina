@@ -4,6 +4,8 @@
 #include "EdNodeGraphPin.h"
 #include "imnodes/imnodes.h"
 #include "Core/Math/Math.h"
+#include "Core/Object/Class.h"
+#include <Core/Reflection/Type/LuminaTypes.h>
 
 #define SHOW_DEBUG 1
 
@@ -76,13 +78,7 @@ namespace Lumina
 
     void CEdNodeGraph::Serialize(FArchive& Ar)
     {
-        uint32 NumNodes = Ar.IsReading() ? 0 : Nodes.size();
-        Ar << NumNodes;
         
-        for (CEdGraphNode* Node : Nodes)
-        {
-            Node->Serialize(Ar);
-        }
     }
 
     void CEdNodeGraph::DrawGraph()
@@ -103,13 +99,15 @@ namespace Lumina
             
             if (ImGui::BeginMenu("New Node"))
             {
-                for (const auto& KVP : NodeFactories)
+                for (CClass* NodeClass : SupportedNodes)
                 {
-                    if (ImGui::MenuItem(KVP.first.c_str()))
+                    if (ImGui::MenuItem(NodeClass->GetName().c_str()))
                     {
-                        CEdGraphNode* NewNode = KVP.second.CreationCallback();
-                        uint32 NodeID = AddNode(NewNode);
+                        CEdGraphNode* NewNode = CreateNode(NodeClass);
+                        uint32 NodeID = NewNode->NodeID;
                         ImNodes::SetNodeScreenSpacePos(NodeID, MousePos);
+                        ImVec2 NodePos = ImNodes::GetNodeGridSpacePos(NodeID);
+                        NewNode->SetGridPos(NodePos.x, NodePos.y);
                     }
                 }
                 ImGui::EndMenu();
@@ -133,7 +131,17 @@ namespace Lumina
 
             ImNodes::BeginNode(i);
             ImNodes::BeginNodeTitleBar();
-        
+
+            uint64 NodeID = Node->GetNodeID();
+            if (!Node->bInitialPosSet)
+            {
+                LOG_DEBUG("Setting Node Pos: {} - {}", Node->GetNodeX(), Node->GetNodeY());
+                ImNodes::SetNodeGridSpacePos(NodeID, { Node->GetNodeX(), Node->GetNodeY() });
+                Node->bInitialPosSet = true;
+            }
+
+            ImVec2 NodePos = ImNodes::GetNodeGridSpacePos(NodeID);
+            Node->SetGridPos(NodePos.x, NodePos.y);
 
             #if SHOW_DEBUG
             ImGui::TextColored(ImVec4(1.0f, 1.0f, 1.0f, 1.0f), "%s - %i", Node->GetNodeFullName().c_str(), Node->GetDebugExecutionOrder());
@@ -335,17 +343,17 @@ namespace Lumina
         return NewNode;
     }
 
-    uint32 CEdNodeGraph::AddNode(CEdGraphNode* InNode)
+    uint64 CEdNodeGraph::AddNode(CEdGraphNode* InNode)
     {
         Nodes.push_back(InNode);
         
         InNode->BuildNode();
         InNode->GUID = Math::RandRange<uint16>(0, UINT16_MAX);
         InNode->FullName = InNode->GetNodeDisplayName() + "_" + eastl::to_string(InNode->GUID);
-
+        InNode->NodeID = Nodes.size() - 1;
         ValidateGraph();
         
-        return Nodes.size() - 1;
+        return InNode->NodeID;
     }
 }
 

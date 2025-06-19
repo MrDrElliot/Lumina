@@ -61,8 +61,13 @@ namespace Lumina
         FORCEINLINE void SetFlag(EArchiverFlags flag) { Flags = Flags | flag; }
         FORCEINLINE void RemoveFlag(EArchiverFlags flag) { Flags = Flags & ~flag; }
         FORCEINLINE bool HasFlag(EArchiverFlags flag) const { return (Flags & flag) != EArchiverFlags::None; }
-    
+
+        /** Is this archiver writing to a buffer */
         FORCEINLINE bool IsWriting() const { return HasFlag(EArchiverFlags::Writing); }
+
+        /** Is this archiver reading from a buffer, not to be mistaken with reading from a class.
+         * As this is used to write to a class, whilst reading from a buffer.
+         * */
         FORCEINLINE bool IsReading() const { return HasFlag(EArchiverFlags::Reading); }
 
         FORCEINLINE void SetHasError(bool bIsError) { bHasError = bIsError; }
@@ -79,11 +84,13 @@ namespace Lumina
         
         virtual FArchive& operator<<(CObject*& Value)
         {
+            LOG_ERROR("Serializing objects is not supported by this archive.");
             return *this;
         }
 
         virtual FArchive& operator<<(FField*& Value)
         {
+            LOG_ERROR("Serializing fields is not supported by this archive.");
             return *this;
         }
     
@@ -215,6 +222,7 @@ namespace Lumina
         {
             FString String(str.c_str());
             *this << String;
+            str = FName(String);
 
             return *this;
         }

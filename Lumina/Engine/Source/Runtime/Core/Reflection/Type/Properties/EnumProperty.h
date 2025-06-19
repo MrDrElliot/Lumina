@@ -21,6 +21,7 @@ namespace Lumina
         ~FEnumProperty() override;
 
         void AddProperty(FProperty* Property) override { InnerProperty = static_cast<FNumericProperty*>(Property); }
+        LUMINA_API FNumericProperty* GetInnerProperty() const { return InnerProperty; }
         
         void SetEnum(CEnum* InEnum);
 
@@ -29,6 +30,9 @@ namespace Lumina
 
         
         void SerializeItem(IStructuredArchive::FSlot Slot, void* Value, void const* Defaults) override;
+        
+        void DrawProperty(void* Object) override;
+        
         
     private:
 

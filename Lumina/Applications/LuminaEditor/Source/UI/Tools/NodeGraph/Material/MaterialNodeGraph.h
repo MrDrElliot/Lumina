@@ -5,6 +5,7 @@
 
 namespace Lumina
 {
+    class CMaterial;
     class FMaterialCompiler;
 }
 
@@ -26,9 +27,13 @@ namespace Lumina
 
         void ValidateGraph() override;
 
+        void SetMaterial(CMaterial* InMaterial) { Material = InMaterial;}
+        CMaterial* GetMaterial() const { return Material; }
+        
     private:
 
         static CEdGraphNode* TopologicalSort(const TVector<CEdGraphNode*>& Nodes, TVector<CEdGraphNode*>& SortedNodes);
-    
+
+        CMaterial* Material = nullptr;
     };
 }

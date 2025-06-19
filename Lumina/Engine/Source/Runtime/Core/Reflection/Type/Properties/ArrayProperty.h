@@ -19,7 +19,11 @@ namespace Lumina
 
         void AddProperty(FProperty* Property) override { Inner = Property; }
 
+        void SerializeItem(IStructuredArchive::FSlot Slot, void* Value, void const* Defaults) override;
+
         FProperty* GetInternalProperty() const { return Inner; }
+
+        void DrawProperty(void* Object) override;
     
     private:
 
@@ -27,55 +31,89 @@ namespace Lumina
     
     };
 
-    template<typename T>
+    /**
+     * Mininal type-erased vector view.
+     */
     class FReflectArrayHelper
     {
     public:
-        FReflectArrayHelper(FArrayProperty* InArrayProperty, void* ContainerPtr)
+        
+        /**
+         * 
+         * @param InArrayProperty Property associated.
+         * @param ContainerPtr Pointer to the raw vector memory.
+         */
+        FReflectArrayHelper(const FArrayProperty* InArrayProperty, void* ContainerPtr)
             : Property(InArrayProperty)
         {
-            TVectorPtr = (TVector<T>*)Property->GetValuePtr<void>(ContainerPtr);
+            VectorPtr = ContainerPtr;
         }
 
-        T* GetData() const
+        void* GetData() const
         {
-            return TVectorPtr->data();
+            return VectorPtr;
         }
 
-        TVector<T>* GetVectorPointer() const
+        void* GetVectorPointer() const
         {
-            return TVectorPtr;
+            return VectorPtr;
         }
 
-        int32 Num() const
+        SIZE_T Num() const
         {
-            return TVectorPtr->size();
+            const uint8* b = begin();
+            const uint8* e = end();
+            return (e - b) / Property->GetInternalProperty()->ElementSize;
         }
 
-        T GetAt(int32 Index) const
+        void* GetRawAt(SIZE_T Index) const
         {
-            if (Index >= 0 && Index < Num())
+            SIZE_T count = Num();
+            if (Index >= count)
             {
-                return GetData()[Index];
+                return nullptr;
             }
-            return T();
+
+            return (void*)(begin() + Index * Property->GetInternalProperty()->ElementSize);
         }
 
-        T* begin() const
+        void Resize(SIZE_T NewElementCount)
         {
-            return TVectorPtr->begin();
+            if (NewElementCount <= 0)
+            {
+                return;
+            }
+            
+            uint8* OldData = begin();
+            if (OldData)
+            {
+                FMemory::Free(OldData);
+            }
+
+            SIZE_T ElementSize = Property->GetInternalProperty()->ElementSize;
+            SIZE_T TotalBytes = NewElementCount * ElementSize;
+
+            uint8* NewData = (uint8*)FMemory::Malloc(TotalBytes);
+            FMemory::MemsetZero(NewData, TotalBytes);
+
+            *reinterpret_cast<uint8**>(VectorPtr) = NewData;
+            *reinterpret_cast<uint8**>((uint8*)VectorPtr + sizeof(void*)) = NewData + TotalBytes;
+        }
+        
+        uint8* begin() const
+        {
+            return *reinterpret_cast<uint8**>(VectorPtr);
         }
 
-        T* end() const
+        uint8* end() const
         {
-            return TVectorPtr->end();
+           return *reinterpret_cast<uint8**>(reinterpret_cast<uint8*>(VectorPtr) + sizeof(void*));
         }
 
 
     private:
         
-        TVector<T>*     TVectorPtr;
-        FArrayProperty* Property;
+        void*                   VectorPtr;
+        const FArrayProperty*   Property;
     };
-    
 }

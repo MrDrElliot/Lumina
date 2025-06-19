@@ -2,7 +2,6 @@
 
 #include "Assets/AssetManager/AssetManager.h"
 #include "Core/Object/Object.h"
-#include "Core/Object/ObjectPtr.h"
 #include "UI/Tools/EditorTool.h"
 
 namespace Lumina
@@ -18,6 +17,8 @@ namespace Lumina
             Asset = InAsset;
         }
 
+        void Deinitialize(const FUpdateContext& UpdateContext) override;
+
         void Update(const FUpdateContext& UpdateContext) override
         {
             if (!bAssetLoadBroadcasted && Asset != nullptr)
@@ -29,9 +30,11 @@ namespace Lumina
         
         virtual void OnAssetLoadFinished() = 0;
 
+        void OnSave() override;
+
     protected:
 
-        TObjectPtr<CObject>         Asset;
+        CObject*                    Asset;
         uint8                       bAssetLoadBroadcasted:1;
 
     };

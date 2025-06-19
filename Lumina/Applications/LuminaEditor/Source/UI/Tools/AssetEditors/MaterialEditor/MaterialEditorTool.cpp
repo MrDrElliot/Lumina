@@ -1,6 +1,9 @@
 ﻿#include "MaterialEditorTool.h"
 #include "imnodes/imnodes.h"
 #include "Assets/AssetTypes/Material/Material.h"
+#include "Core/Object/Cast.h"
+#include "Core/Object/Class.h"
+#include "Core/Reflection/Type/Properties/EnumProperty.h"
 #include "UI/Tools/NodeGraph/Material/MaterialCompiler.h"
 #include "UI/Tools/NodeGraph/Material/MaterialNodeGraph.h"
 
@@ -34,6 +37,7 @@ namespace Lumina
         });
 
         NodeGraph = NewObject<CMaterialNodeGraph>();
+        NodeGraph->SetMaterial(static_cast<CMaterial*>(Asset));
         NodeGraph->Initialize();
     }
 
@@ -74,10 +78,6 @@ namespace Lumina
                 
             }
         }
-        if (ImGui::MenuItem(Asset->GetName().c_str()))
-        {
-            
-        }
     }
 
     void FMaterialEditorTool::DrawMaterialGraph(const FUpdateContext& UpdateContext)
@@ -91,6 +91,17 @@ namespace Lumina
 
     void FMaterialEditorTool::DrawMaterialPreview(const FUpdateContext& UpdateContext)
     {
+        if (Asset == nullptr)
+        {
+            return;
+        }
+        
+        CClass* Class = Asset->GetClass();
+        Class->ForEachProperty([&] (FProperty* Property)
+        {
+            ImGui::SeparatorText(Property->Name.c_str());
+            Property->DrawProperty(Asset);
+        });
     }
 
     void FMaterialEditorTool::DrawCompilationLog(const FUpdateContext& UpdateContext)

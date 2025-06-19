@@ -62,13 +62,14 @@ namespace Lumina
             return NamePrivate;
         }
 
-        FORCEINLINE const TCHAR* GetPackage() const
+        FORCEINLINE const FString GetPackage() const
         {
             return PackagePrivate;    
         }
 
         LUMINA_API void GetPath(FString& OutPath);
         LUMINA_API FString GetPathName() const;
+        LUMINA_API FString GetFullyQualifiedName() const;
     
     private:
         
@@ -115,7 +116,7 @@ namespace Lumina
         FName                   NamePrivate;
 
         /** Package to represent on disk */
-        const TCHAR*            PackagePrivate;
+        FString                 PackagePrivate;
         
         /** Internal index into the global object array. */
         int32                   InternalIndex;

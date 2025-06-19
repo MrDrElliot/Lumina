@@ -4,11 +4,22 @@
 
 namespace Lumina
 {
-    class FObjectArchiver : public FProxyArchive
+
+    class FObjectArchive : public FArchive
+    {
+    public:
+        
+        virtual FArchive& operator<<(CObject*& Value) override
+        {
+            return *this;
+        }
+    };
+    
+    class FObjectProxyArchiver : public FProxyArchive
     {
     public:
 
-        FObjectArchiver(FArchive& InInnerAr, bool bInLoadIfFindFails)
+        FObjectProxyArchiver(FArchive& InInnerAr, bool bInLoadIfFindFails)
             : FProxyArchive(InInnerAr)
             , bLoadIfFindFails(bInLoadIfFindFails)
         {}

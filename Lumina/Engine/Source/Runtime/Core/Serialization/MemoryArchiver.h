@@ -32,9 +32,9 @@ namespace Lumina
     {
     public:
 
-        explicit FMemoryReader(const TVector<uint8>& InBytes, bool bIsPersistent = false )
-        : Bytes    (InBytes)
-        , LimitSize(INT64_MAX)
+        explicit FMemoryReader(const TVector<uint8>& InBytes, bool bIsPersistent = false)
+            : Bytes    (InBytes)
+            , LimitSize(INT64_MAX)
         {
             this->SetFlag(EArchiverFlags::Reading);
         }

@@ -22,7 +22,7 @@ namespace Lumina
     {
     public:
 
-        DECLARE_CLASS(Lumina, CField, CObject, TEXT("Script/Engine"), LUMINA_API)
+        DECLARE_CLASS(Lumina, CField, CObject, "script://Lumina", LUMINA_API)
         DEFINE_DEFAULT_CONSTRUCTOR_CALL(CField)
         
         CField() = default;
@@ -50,12 +50,13 @@ namespace Lumina
     {
     public:
         
-        DECLARE_CLASS(Lumina, CEnum, CField, TEXT("Script/Engine"), LUMINA_API)
+        DECLARE_CLASS(Lumina, CEnum, CField, "script://lumina", LUMINA_API)
         DEFINE_DEFAULT_CONSTRUCTOR_CALL(CEnum)
 
         CEnum()
         {}
 
+        LUMINA_API FName GetNameAtValue(uint64 Value);
         LUMINA_API uint64 GetEnumValueByName(FName Name);
         void AddEnum(FName Name, uint64 Value);
 
@@ -77,7 +78,7 @@ namespace Lumina
     class CStruct : public CField
     {
 
-        DECLARE_CLASS(Lumina, CStruct, CField, TEXT("Script/Engine"), LUMINA_API)
+        DECLARE_CLASS(Lumina, CStruct, CField, "script://Lumina", LUMINA_API)
         DEFINE_DEFAULT_CONSTRUCTOR_CALL(CStruct)
 
         CStruct() = default;
@@ -141,6 +142,7 @@ namespace Lumina
         /** Parent struct */
         CStruct* SuperStruct = nullptr;
         
+        bool bLinked = false;
     };
 
 
@@ -155,7 +157,7 @@ namespace Lumina
     {
     public:
 
-        DECLARE_CLASS(Lumina, CClass, CStruct, TEXT("Script/Engine"), LUMINA_API)
+        DECLARE_CLASS(Lumina, CClass, CStruct, "script://Lumina", LUMINA_API)
         DEFINE_DEFAULT_CONSTRUCTOR_CALL(CClass)
 
         typedef void (*ClassConstructorType) (const FObjectInitializer&);

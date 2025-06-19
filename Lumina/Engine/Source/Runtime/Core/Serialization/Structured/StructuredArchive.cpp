@@ -90,7 +90,7 @@ namespace Lumina
     void FArchiveSlot::Serialize(FName& Value)
     {
         StructuredArchive->EnterSlot(*this);
-        //*StructuredArchive->InnerAr << Value;
+        *StructuredArchive->InnerAr << Value;
         StructuredArchive->LeaveSlot();
     }
 

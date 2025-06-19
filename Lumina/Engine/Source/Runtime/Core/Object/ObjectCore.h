@@ -4,6 +4,7 @@
 #include "ObjectFlags.h"
 #include "Containers/Array.h"
 #include "Core/LuminaMacros.h"
+#include "Core/Functional/Function.h"
 #include "Platform/GenericPlatform.h"
 
 
@@ -16,7 +17,7 @@ namespace Lumina
     class CClass;
 }
 
-#define TRANSIENT_PACKAGE L"Transient"
+#define TRANSIENT_PACKAGE L"transient://"
 
 namespace Lumina
 {
@@ -57,7 +58,8 @@ namespace Lumina
     {
         return (T*)StaticLoadObject(T::StaticClass(), FullName);
     }
-
+    
+    
     LUMINA_API CObject* NewObject(CClass* InClass, const TCHAR* Package = TRANSIENT_PACKAGE, FName Name = NAME_None, EObjectFlags Flags = OF_None);
     
 
@@ -172,39 +174,24 @@ namespace Lumina
         uint16              Offset;
     };
 
-    struct FObjectPropertyParams
+    struct FObjectPropertyParams : public FPropertyParams
     {
-        const char*         Name;
-        EPropertyFlags      PropertyFlags;
-        EPropertyTypeFlags  TypeFlags;
-        uint16              Offset;
         CClass*            (*ClassFunc)();
     };
 
-    struct FStructPropertyParams
+    struct FStructPropertyParams : public FPropertyParams
     {
-        const char*         Name;
-        EPropertyFlags      PropertyFlags;
-        EPropertyTypeFlags  TypeFlags;
-        uint16              Offset;
         CStruct*            (*StructFunc)();
     };
 
-    struct FEnumPropertyParams
+    struct FEnumPropertyParams : public FPropertyParams
     {
-        const char*         Name;
-        EPropertyFlags      PropertyFlags;
-        EPropertyTypeFlags  TypeFlags;
-        uint16              Offset;
         CEnum*              (*EnumFunc)();
     };
 
-    struct FArrayPropertyParams
+    struct FArrayPropertyParams : public FPropertyParams
     {
-        const char*         Name;
-        EPropertyFlags      PropertyFlags;
-        EPropertyTypeFlags  TypeFlags;
-        uint16              Offset;
+        
     };
     
     struct FClassParams

@@ -11,7 +11,9 @@ namespace Lumina
     class FField;
     class CStruct;
     class FProperty;
+    
 
+    
     enum class EFieldFlags : uint32
     {
         None      = 0,

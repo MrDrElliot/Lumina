@@ -124,6 +124,15 @@ namespace Lumina
         /** Optional title bar icon override */
         virtual const char* GetTitlebarIcon() const { return LE_ICON_CAR_WRENCH; }
 
+        /** Called when the save icon is pressed. */
+        virtual void OnSave() { }
+
+        /** Called when the new icon is pressed */
+        virtual void OnNew() { }
+
+        /** Called when the undo button is pressed */
+        virtual void OnUndo() { }
+        
         
         FToolWindow* CreateToolWindow(const FString& InName, const TFunction<void(const FUpdateContext&, bool)>& DrawFunction, const ImVec2& WindowPadding = ImVec2( -1, -1 ), bool DisableScrolling = false);
 

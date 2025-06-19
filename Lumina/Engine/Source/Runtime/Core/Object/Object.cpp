@@ -38,14 +38,17 @@ namespace Lumina
         FProperty* Current = Class->LinkedProperty;
         while (Current != nullptr)
         {
+            LOG_WARN("Serializing Property: {}", Current->Name);
             Slot.GetStructuredArchive()->EnterField(Current->Name);
-            Current->SerializeItem(Slot, this, nullptr);
+
+            // Gets the address of the actual property.
+            void* ValuePtr = Current->GetValuePtr<void>(this);
+            Current->SerializeItem(Slot, ValuePtr, nullptr);
+            
             Slot.GetStructuredArchive()->LeaveField();
 
             Current = (FProperty*)Current->Next;
         }
-
-        
     }
 
     void CObject::PostInitProperties()

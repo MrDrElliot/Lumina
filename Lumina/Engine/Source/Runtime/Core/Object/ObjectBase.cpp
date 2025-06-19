@@ -43,7 +43,7 @@ namespace Lumina
         FObjectInitializer* Initializer = FObjectInitializer::Get();
         NamePrivate = Initializer->Params.Name;
         ClassPrivate = const_cast<CClass*>(Initializer->Params.Class);
-        PackagePrivate = Initializer->Params.Package;
+        PackagePrivate = StringUtils::FromWideString(Initializer->Params.Package);
 
         AddObject(NamePrivate, (int32)GObjectVector.size());
 
@@ -69,7 +69,6 @@ namespace Lumina
     CObjectBase::CObjectBase(EObjectFlags InFlags)
         : ObjectFlags(InFlags)
         , ClassPrivate(nullptr)
-        , PackagePrivate(nullptr)
         , NamePrivate(NAME_None)
         , InternalIndex(0)
     {
@@ -78,7 +77,7 @@ namespace Lumina
     CObjectBase::CObjectBase(CClass* InClass, EObjectFlags InFlags, const TCHAR* Package, FName InName)
         : ObjectFlags(InFlags)
         , ClassPrivate(InClass)
-        , PackagePrivate(Package)
+        , PackagePrivate( StringUtils::FromWideString(Package))
         , NamePrivate(InName)
         , InternalIndex(0)
     {
@@ -144,14 +143,15 @@ namespace Lumina
 
     FString CObjectBase::GetPathName() const
     {
-        TInlineString<256> Path;
-        Path.append(StringUtils::FromWideString(GetPackage()).c_str())
-        .append("/")
-        .append(GetClass()->GetName().c_str())
-        .append(".")
-        .append(GetName().c_str());
+        return GetPackage();
+    }
 
-        
+    FString CObjectBase::GetFullyQualifiedName() const
+    {
+        TInlineString<256> Path;
+        Path.append(GetPathName().c_str())
+        .append("/")
+        .append(GetName().c_str());
         return Path.c_str();
     }
 

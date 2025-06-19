@@ -1,16 +1,13 @@
 #pragma once
 #include "Core/Object/Field.h"
 #include "Core/Serialization/Structured/StructuredArchive.h"
+#include "Core/Templates/Align.h"
 #include "Platform/GenericPlatform.h"
 
 
 namespace Lumina
 {
     struct FPropertyParams;
-}
-
-namespace Lumina
-{
     class IStructuredArchive;
 }
 
@@ -29,11 +26,13 @@ namespace Lumina
         // Adds self to owner.
         void Init();
 
+        LUMINA_API SIZE_T GetElementSize() const { return ElementSize; }
+        LUMINA_API void SetElementSize(SIZE_T Size, SIZE_T Align) { ElementSize = Lumina::Align(ElementSize, Align); }
 
         template<typename ValueType>
         ValueType* SetValuePtr(void* ContainerPtr, const ValueType& Value, int32 ArrayIndex = 0)
         {
-            if (sizeof(Value) != Size)
+            if (sizeof(Value) != ElementSize)
             {
                 return nullptr;
             }
@@ -45,12 +44,23 @@ namespace Lumina
 
         /** Gets the casted internal value type by an offset, UB if type is not correct */
         template<typename ValueType>
+        requires !eastl::is_pointer_v<ValueType>
         ValueType* GetValuePtr(void* ContainerPtr, int32 ArrayIndex = 0) const
         {
             return (ValueType*)GetValuePtrInternal(ContainerPtr, ArrayIndex);
         }
 
-        virtual void SerializeItem(IStructuredArchive::FSlot Slot, void* Value, void const* Defaults) { }
+        /** Gets the casted internal value type by an offset, UB if type is not correct */
+        template<typename ValueType>
+        requires !eastl::is_pointer_v<ValueType>
+        const ValueType* GetValuePtr(const void* ContainerPtr, int32 ArrayIndex = 0) const
+        {
+            return (ValueType*)GetValuePtrInternal(const_cast<void*>(ContainerPtr), ArrayIndex);
+        }
+
+        virtual void SerializeItem(IStructuredArchive::FSlot Slot, void* Value, void const* Defaults = nullptr) { }
+
+        virtual void DrawProperty(void* Object) { }
 
     private:
 
@@ -58,8 +68,7 @@ namespace Lumina
         
     public:
         
-        uint32 Size;
-        uint32 ElementSize;
+        SIZE_T ElementSize;
 
         /** Linked list of properties from most-derived to base */
         FProperty* PropertyLinkNext;
@@ -73,12 +82,18 @@ namespace Lumina
         FNumericProperty(FFieldOwner InOwner, const FPropertyParams* Params)
             :FProperty(InOwner, Params)
         {}
+
+        LUMINA_API virtual void SetIntPropertyValue(void* Data, uint64 Value) const { }
+        LUMINA_API virtual void SetIntPropertyValue(void* Data, int64 Value) const { }
         
-    void SerializeItem(IStructuredArchive::FSlot Slot, void* Value, void const* Defaults) override;
+        LUMINA_API virtual int64 GetSignedIntPropertyValue(void const* Data) const { return 0; }
+        LUMINA_API virtual int64 GetSignedIntPropertyValue_InContainer(void const* Container) const { return 0; }
+        
+        LUMINA_API virtual uint64 GetUnsignedIntPropertyValue(void const* Data) const { return 0; }
+        LUMINA_API virtual uint64 GetUnsignedIntPropertyValue_InContainer(void const* Container) const { return 0; }
 
     };
     
-
     template<typename TCPPType>
     class TPropertyTypeLayout
     {
@@ -102,6 +117,12 @@ namespace Lumina
             return (TCPPType*)Ptr;
         }
 
+        /** Get the value of the property from an address */
+        static FORCEINLINE TCPPType const& GetPropertyValue(void const* A)
+        {
+            return *GetPropertyValuePtr(A);
+        }
+
         /** Set the value of a property at an address */
         static FORCEINLINE void SetPropertyValue(void* Ptr, const TCPPType& Value)
         {
@@ -111,22 +132,23 @@ namespace Lumina
     };
     
     template<typename TBacking, typename TCPPType>
-    class TProperty : public TBacking, public TPropertyTypeLayout<TCPPType>
+    class TProperty : public TBacking
     {
     public:
 
+        using TTypeInfo = TPropertyTypeLayout<TCPPType>;
+        
         TProperty(FFieldOwner InOwner, const FPropertyParams* Params)
             :TBacking(InOwner, Params)
         {
-            this->ElementSize = TPropertyTypeLayout<TCPPType>::Size;
+            this->ElementSize = TTypeInfo::Size;
+        }
+
+        virtual void SerializeItem(IStructuredArchive::FSlot Slot, void* Value, void const* Defaults = nullptr) override
+        {
+            Slot.Serialize(*TTypeInfo::GetPropertyValuePtr(Value));
         }
         
-        void SetValue(void* OwnerPtr, const TCPPType& Value)
-        {
-            void* PropertyPtr = (uint8*)OwnerPtr + this->Offset;
-
-            TPropertyTypeLayout<TCPPType>::SetPropertyValue(PropertyPtr, Value);
-        }
     };
 
 
@@ -135,22 +157,71 @@ namespace Lumina
     class TProperty_Numeric : public TProperty<FNumericProperty, TCPPType>
     {
     public:
-
+        
+        using TTypeInfo = TPropertyTypeLayout<TCPPType>;
         using Super = TProperty<FNumericProperty, TCPPType>;
 
         TProperty_Numeric(FFieldOwner InOwner, const FPropertyParams* Params)
             :Super(InOwner, Params)
         {}
 
+        virtual void SetIntPropertyValue(void* Data, uint64 Value) const override;
+        virtual void SetIntPropertyValue(void* Data, int64 Value) const override;
 
+        
+        
+        virtual int64 GetSignedIntPropertyValue(void const* Data) const override;
+        virtual int64 GetSignedIntPropertyValue_InContainer(void const* Container) const override;
+        
+        virtual uint64 GetUnsignedIntPropertyValue(void const* Data) const override;
+        virtual uint64 GetUnsignedIntPropertyValue_InContainer(void const* Container) const override;
+
+        
     };
+
+    template <typename TCPPType> requires std::is_arithmetic_v<TCPPType>
+    void TProperty_Numeric<TCPPType>::SetIntPropertyValue(void* Data, uint64 Value) const
+    {
+        TTypeInfo::SetPropertyValue(Data, (TCPPType)Value); 
+    }
+
+    template <typename TCPPType> requires std::is_arithmetic_v<TCPPType>
+    void TProperty_Numeric<TCPPType>::SetIntPropertyValue(void* Data, int64 Value) const
+    {
+        TTypeInfo::SetPropertyValue(Data, (TCPPType)Value); 
+    }
+
+    template <typename TCPPType> requires std::is_arithmetic_v<TCPPType>
+    int64 TProperty_Numeric<TCPPType>::GetSignedIntPropertyValue(void const* Data) const
+    {
+        return (int64)TTypeInfo::GetPropertyValue(Data);
+    }
+
+    template <typename TCPPType> requires std::is_arithmetic_v<TCPPType>
+    int64 TProperty_Numeric<TCPPType>::GetSignedIntPropertyValue_InContainer(void const* Container) const
+    {
+        return (int64)TTypeInfo::GetPropertyValue(Container);
+    }
+
+    template <typename TCPPType> requires std::is_arithmetic_v<TCPPType>
+    uint64 TProperty_Numeric<TCPPType>::GetUnsignedIntPropertyValue(void const* Data) const
+    {
+        return (uint64)TTypeInfo::GetPropertyValue(Data);
+    }
+
+    template <typename TCPPType> requires std::is_arithmetic_v<TCPPType>
+    uint64 TProperty_Numeric<TCPPType>::GetUnsignedIntPropertyValue_InContainer(void const* Container) const
+    {
+        return (uint64)TTypeInfo::GetPropertyValue(Container);
+    }
 
 
     
 
 
     //-------------------------------------------------------------------------------
-
+    
+    
     class FBoolProperty : public TProperty_Numeric<bool>
     {
     public:

@@ -5,6 +5,11 @@
 
 namespace Lumina
 {
+    void CEdGraphNode::PostCreateCDO()
+    {
+        CObject::PostCreateCDO();
+    }
+
     CEdGraphNode::~CEdGraphNode()
     {
         for (auto& Vector : NodePins)
@@ -18,13 +23,7 @@ namespace Lumina
 
     void CEdGraphNode::Serialize(FArchive& Ar)
     {
-        for (const TVector<CEdNodeGraphPin*>& Vector : NodePins)
-        {
-            for (CEdNodeGraphPin* Pin : Vector)
-            {
-                Pin->Serialize(Ar);
-            }
-        }
+       
     }
 
     CEdNodeGraphPin* CEdGraphNode::GetPin(uint32 ID, ENodePinDirection Direction)
@@ -42,7 +41,7 @@ namespace Lumina
 
     CEdNodeGraphPin* CEdGraphNode::GetPinByIndex(uint32 Index, ENodePinDirection Direction)
     {
-        return  NodePins[uint32(Direction)][Index];
+        return NodePins[uint32(Direction)][Index];
     }
 
     CEdNodeGraphPin* CEdGraphNode::CreatePin(CClass* InClass, const FString& Name, ENodePinDirection Direction, EMaterialInputType Type)

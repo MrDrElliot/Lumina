@@ -7605,6 +7605,6 @@ namespace Lumina::Fonts::MaterialDesignIcons
 {
     uint8 const* GetData()
     {
-        return (uint8*) MD_compressed_data_base85;
+        return (const uint8*) MD_compressed_data_base85;
     }
 }
