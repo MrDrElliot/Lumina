@@ -61,10 +61,10 @@ namespace Lumina
         {
             for (auto* Child : Item->Children)
             {
-                FMemory::Delete(Child);
+                Memory::Delete(Child);
             }
             
-            FMemory::Delete(Item);
+            Memory::Delete(Item);
         }
         
         ListItems.clear();

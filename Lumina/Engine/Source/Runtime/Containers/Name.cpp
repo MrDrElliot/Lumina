@@ -16,12 +16,12 @@ namespace Lumina
     
     void FName::Initialize()
     {
-        GNameCache = FMemory::New<FNameHashMap>();
+        GNameCache = Memory::New<FNameHashMap>();
     }
 
     void FName::Shutdown()
     {
-        FMemory::Delete(GNameCache);
+        Memory::Delete(GNameCache);
         GNameCache = nullptr;
     }
 

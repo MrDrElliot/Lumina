@@ -8,7 +8,7 @@ namespace Lumina
     {
         Assert(*OutClass == nullptr)
         
-        *OutClass = (CClass*)FMemory::Malloc(sizeof(CClass), alignof(CClass));
+        *OutClass = (CClass*)Memory::Malloc(sizeof(CClass), alignof(CClass));
         *OutClass = ::new (*OutClass) CClass(Package, FName(Name), Size, Alignment, EObjectFlags::OF_None, InClassConstructor);
         
         CClass* NewClass = *OutClass;

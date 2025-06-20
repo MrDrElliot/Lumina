@@ -16,7 +16,7 @@ namespace Lumina
     {
         Assert(!bGlobalStateInitialize);
         
-        FMemory::Initialize();
+        Memory::Initialize();
         Threading::Initialize(MainThreadName == nullptr ? "Main Thread" : MainThreadName);
         FName::Initialize();
         FLog::Init();
@@ -32,6 +32,6 @@ namespace Lumina
         FLog::Shutdown();
         FName::Shutdown();
         Threading::Shutdown();
-        FMemory::Shutdown();
+        Memory::Shutdown();
     }
 }

@@ -50,7 +50,7 @@ namespace Lumina
 
         
         FScene* NewScene = SceneManager->CreateScene(ESceneType::Tool);
-        NewScene->RegisterSystem(FMemory::New<FDebugCameraEntitySystem>());
+        NewScene->RegisterSystem(Memory::New<FDebugCameraEntitySystem>());
         
         SceneEditorTool = CreateTool<FEntitySceneEditorTool>(this, NewScene);
         ConsoleLogTool = CreateTool<FConsoleLogEditorTool>(this);
@@ -230,7 +230,7 @@ namespace Lumina
 
         
         Tool->Deinitialize(UpdateContext);
-        FMemory::Delete(Tool);
+        Memory::Delete(Tool);
         EditorTools.erase(Itr);
     }
 
@@ -728,7 +728,7 @@ namespace Lumina
 
         
         ImGui::SameLine();
-        float const allocatedMemory = FMemory::GetTotalAllocatedMemory() / 1024.0f / 1024.0f;
+        float const allocatedMemory = Memory::GetTotalAllocatedMemory() / 1024.0f / 1024.0f;
         TInlineString<100> const memStats( TInlineString<100>::CtorSprintf(), "MEM: %.2fMB", allocatedMemory );
         ImGui::Text(memStats.c_str());
     }

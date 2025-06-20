@@ -13,8 +13,8 @@
     DECLARE_MODULE_ALLOCATOR_OVERRIDES() \
     extern "C" __declspec(dllexport) Lumina::IModuleInterface* InitializeModule() \
     { \
-        FMemory::InitializeThreadHeap(); \
-        return FMemory::New<ModuleClass>(); \
+        Lumina::Memory::InitializeThreadHeap(); \
+        return Lumina::Memory::New<ModuleClass>(); \
     } \
 
 

@@ -18,8 +18,6 @@ namespace eastl
 
     allocator* SetDefaultAllocator(allocator* pAllocator)
     {
-        // Typically, you'd want to set the default allocator here
-        // We're assuming you might want a getter/setter pattern, but this is just for the default.
         return &g_defaultAllocator;
     }
 
@@ -63,17 +61,17 @@ namespace eastl
 
     void* allocator::allocate(size_t n, int flags)
     {
-        return FMemory::Malloc(n, EASTL_ALLOCATOR_MIN_ALIGNMENT);
+        return Lumina::Memory::Malloc(n, EASTL_ALLOCATOR_MIN_ALIGNMENT);
     }
 
     void* allocator::allocate(size_t n, size_t alignment, size_t offset, int flags)
     {
-        return FMemory::Malloc(n, alignment);
+        return Lumina::Memory::Malloc(n, alignment);
     }
 
     void allocator::deallocate(void* p, size_t)
     {
-        FMemory::Free(p);
+        Lumina::Memory::Free(p);
     }
 
     bool operator==(allocator const&, allocator const&) { return true; }
@@ -83,14 +81,14 @@ namespace eastl
 // Required for EASTL debug operator new[]
 void* operator new[](size_t size, const char* pName, int flags, unsigned int debugFlags, const char* file, int line) 
 {
-    return FMemory::Malloc(size);
+    return Lumina::Memory::Malloc(size);
 }
 
 // Custom definition of aligned new[] operator for EASTL
 void* operator new[](size_t size, size_t alignment, size_t /*alignmentOffset*/, const char* /*pName*/, int /*flags*/, unsigned /*debugFlags*/, const char* /*file*/, int /*line*/)
 {
     EASTL_ASSERT(alignment <= 8); // Ensure alignment is within supported limits
-    return FMemory::Malloc(size, alignment); // Using system new for the aligned allocation
+    return Lumina::Memory::Malloc(size, alignment); // Using system new for the aligned allocation
 }
 
 #if !EASTL_EASTDC_VSNPRINTF

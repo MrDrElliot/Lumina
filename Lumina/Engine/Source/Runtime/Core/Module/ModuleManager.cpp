@@ -98,7 +98,7 @@ namespace Lumina
         FModuleInfo NewInfo;
         NewInfo.ModuleName = ModuleFName;
 
-        auto [insertIt, inserted] = ModuleHashMap.insert(eastl::make_pair(ModuleFName, FMemory::Move(NewInfo)));
+        auto [insertIt, inserted] = ModuleHashMap.insert(eastl::make_pair(ModuleFName, Memory::Move(NewInfo)));
         return &insertIt->second;
     }
 

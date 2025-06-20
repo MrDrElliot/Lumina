@@ -15,7 +15,7 @@ using namespace Lumina;
 
 void FSandbox::CreateEngine()
 {
-	Engine = FMemory::New<FSandboxEngine>();
+	Engine = Memory::New<FSandboxEngine>();
 	Engine->Initialize(this);
 	Engine->SetUpdateCallback(std::bind(&FSandbox::EngineLoopCallback, this, std::placeholders::_1));
 }

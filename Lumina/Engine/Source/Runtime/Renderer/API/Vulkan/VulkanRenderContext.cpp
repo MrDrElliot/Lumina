@@ -171,7 +171,7 @@ namespace Lumina
 
     void FQueue::RetireCommandBuffers()
     {
-        TVector<TRefCountPtr<FTrackedCommandBufer>> Submissions = FMemory::Move(CommandBuffersInFlight);
+        TVector<TRefCountPtr<FTrackedCommandBufer>> Submissions = Memory::Move(CommandBuffersInFlight);
         
         for (auto& Submission : Submissions)
         {
@@ -326,11 +326,11 @@ namespace Lumina
 
         CommandList = CreateCommandList({ECommandQueue::Graphics});
         
-        Swapchain = FMemory::New<FVulkanSwapchain>();
+        Swapchain = Memory::New<FVulkanSwapchain>();
         Swapchain->CreateSwapchain(VulkanInstance, this, Windowing::GetPrimaryWindowHandle(), Windowing::GetPrimaryWindowHandle()->GetExtent());
 
         ShaderLibrary = MakeRefCount<FShaderLibrary>();
-        ShaderCompiler = FMemory::New<FSpirVShaderCompiler>();
+        ShaderCompiler = Memory::New<FSpirVShaderCompiler>();
 
         CompileEngineShaders();
         
@@ -348,12 +348,12 @@ namespace Lumina
         ShaderLibrary.SafeRelease();
         PipelineCache.ReleasePipelines();
         
-        FMemory::Delete(Swapchain);
+        Memory::Delete(Swapchain);
         
 
         for (FQueue* Queue : Queues)
         {
-            FMemory::Delete(Queue);
+            Memory::Delete(Queue);
         }
         
         auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(VulkanInstance, "vkDestroyDebugUtilsMessengerEXT");
@@ -361,7 +361,7 @@ namespace Lumina
         
         FlushPendingDeletes();
         
-        FMemory::Delete(VulkanDevice);
+        Memory::Delete(VulkanDevice);
         vkDestroyInstance(VulkanInstance, nullptr);
     }
 
@@ -477,27 +477,27 @@ namespace Lumina
         
         VkDevice Device = vkbDevice.device;
         VkPhysicalDevice PhysicalDevice = physicalDevice.physical_device;
-        VulkanDevice = FMemory::New<FVulkanDevice>(VulkanInstance, PhysicalDevice, Device);
+        VulkanDevice = Memory::New<FVulkanDevice>(VulkanInstance, PhysicalDevice, Device);
 
         if (vkbDevice.get_queue(vkb::QueueType::graphics).has_value())
         {
             VkQueue Queue = vkbDevice.get_queue(vkb::QueueType::graphics).value();
             uint32 Index = vkbDevice.get_queue_index(vkb::QueueType::graphics).value();
-            Queues[uint32(ECommandQueue::Graphics)] = FMemory::New<FQueue>(VulkanDevice, Queue, Index);
+            Queues[uint32(ECommandQueue::Graphics)] = Memory::New<FQueue>(VulkanDevice, Queue, Index);
         }
 
         if (vkbDevice.get_queue(vkb::QueueType::compute).has_value())
         {
             VkQueue Queue = vkbDevice.get_queue(vkb::QueueType::compute).value();
             uint32 Index = vkbDevice.get_queue_index(vkb::QueueType::compute).value();
-            Queues[uint32(ECommandQueue::Compute)] = FMemory::New<FQueue>(VulkanDevice, Queue, Index);
+            Queues[uint32(ECommandQueue::Compute)] = Memory::New<FQueue>(VulkanDevice, Queue, Index);
         }
 
         if (vkbDevice.get_queue(vkb::QueueType::transfer).has_value())
         {
             VkQueue Queue = vkbDevice.get_queue(vkb::QueueType::transfer).value();
             uint32 Index = vkbDevice.get_queue_index(vkb::QueueType::transfer).value();
-            Queues[uint32(ECommandQueue::Transfer)] = FMemory::New<FQueue>(VulkanDevice, Queue, Index);
+            Queues[uint32(ECommandQueue::Transfer)] = Memory::New<FQueue>(VulkanDevice, Queue, Index);
         }
     }
 
@@ -590,7 +590,7 @@ namespace Lumina
             PendingDeletes.pop();
             if (Resource->Deleting())
             {
-                FMemory::Delete(Resource);
+                Memory::Delete(Resource);
             }
         }
     }

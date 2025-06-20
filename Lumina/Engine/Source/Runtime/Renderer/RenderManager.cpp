@@ -8,12 +8,12 @@ namespace Lumina
 {
     void FRenderManager::Initialize(FSubsystemManager& Manager)
     {
-        RenderContext = FMemory::New<FVulkanRenderContext>();
+        RenderContext = Memory::New<FVulkanRenderContext>();
         RenderContext->Initialize();
 
 
         #if WITH_DEVELOPMENT_TOOLS
-        ImGuiRenderer = FMemory::New<FVulkanImGuiRender>();
+        ImGuiRenderer = Memory::New<FVulkanImGuiRender>();
         ImGuiRenderer->Initialize(Manager);
         #endif
     }
@@ -22,11 +22,11 @@ namespace Lumina
     {
         #if WITH_DEVELOPMENT_TOOLS
         ImGuiRenderer->Deinitialize();
-        FMemory::Delete(ImGuiRenderer);
+        Memory::Delete(ImGuiRenderer);
         #endif
         
         RenderContext->Deinitialize();
-        FMemory::Delete(RenderContext);
+        Memory::Delete(RenderContext);
     }
 
     void FRenderManager::FrameStart(const FUpdateContext& UpdateContext)

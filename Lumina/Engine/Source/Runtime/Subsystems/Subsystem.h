@@ -38,7 +38,7 @@ namespace Lumina
             uint32_t typeHash = typeid(T).hash_code();
             RemoveSubsystem<T>();
 
-            T* pSubsystem = FMemory::New<T>(std::forward<Args>(args)...);
+            T* pSubsystem = Memory::New<T>(std::forward<Args>(args)...);
             
             FlatUpdateList.push_back(pSubsystem);
             SubsystemLookup[typeHash] = pSubsystem;
@@ -61,7 +61,7 @@ namespace Lumina
                 FlatUpdateList.erase(std::remove(FlatUpdateList.begin(), FlatUpdateList.end(), pSubsystem), FlatUpdateList.end());
             
                 pSubsystem->Deinitialize();
-                FMemory::Delete(pSubsystem);
+                Memory::Delete(pSubsystem);
                 SubsystemLookup.erase(typeHash);
 
                 LOG_TRACE("Subsystems: Removed Type: {0}", typeid(T).name());

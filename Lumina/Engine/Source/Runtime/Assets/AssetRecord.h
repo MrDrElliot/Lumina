@@ -35,7 +35,7 @@ namespace Lumina
         FORCEINLINE void SetLoadingState(EAssetLoadState NewState) { LoadState.store(NewState, eastl::memory_order_relaxed); }
         FORCEINLINE void SetAssetPtr(IAsset* InPtr) { Assert(AssetPtr == nullptr); AssetPtr = InPtr; }
 
-        FORCEINLINE void SetDependencies(TVector<FAssetHandle>&& InDependences) { AssetDependencies = FMemory::Move(InDependences); }
+        FORCEINLINE void SetDependencies(TVector<FAssetHandle>&& InDependences) { AssetDependencies = Memory::Move(InDependences); }
         
         FORCEINLINE EAssetLoadState GetLoadState() const    { return LoadState; }
         FORCEINLINE IAsset* GetAssetPtr() const             { return AssetPtr; }

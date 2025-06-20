@@ -96,7 +96,7 @@ namespace Lumina
         if (NewRefCount == 1)
         {
             CObjectBase* MutableThis =const_cast<CObjectBase*>(this);
-            FMemory::Delete(MutableThis);
+            Memory::Delete(MutableThis);
         }
 
         return NewRefCount;
@@ -168,7 +168,7 @@ namespace Lumina
             FPendingRegistrant* PendingRegistrant = NextPendingRegistrant;
             OutPending.push_back(*PendingRegistrant);
             NextPendingRegistrant = PendingRegistrant->Next;
-            FMemory::Delete(PendingRegistrant);
+            Memory::Delete(PendingRegistrant);
         }
     }
 
@@ -241,7 +241,7 @@ namespace Lumina
         while (!GObjectVector.empty())
         {
             CObjectBase* Base = GObjectVector.back();
-            FMemory::Delete(Base);
+            Memory::Delete(Base);
         }
 
         ObjectNameHash.clear();

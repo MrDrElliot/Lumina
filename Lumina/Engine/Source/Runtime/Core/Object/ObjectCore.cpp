@@ -21,7 +21,7 @@ namespace Lumina
         // Force 16-byte minimal alignment for cache friendliness.
         uint32 Alignment = Math::Max<uint32>(16, InClass->GetAlignment());
         
-        return (CObjectBase*)FMemory::Malloc(InClass->GetSize(), Alignment);
+        return (CObjectBase*)Memory::Malloc(InClass->GetSize(), Alignment);
     }
 
     FString GetObjectNameFromPath(const FString& InPath)
@@ -67,7 +67,7 @@ namespace Lumina
 
         CObjectBase* Object = AllocateCObjectMemory(Params.Class, Flags);
 
-        FMemory::MemsetZero(Object, Params.Class->GetSize());
+        Memory::MemsetZero(Object, Params.Class->GetSize());
         new (Object) CObjectBase(const_cast<CClass*>(Params.Class), Params.Flags, Params.Package, UniqueName);
 
         CObject* Obj = (CObject*)Object;
@@ -128,7 +128,7 @@ namespace Lumina
     template<typename TPropertyType>
     TPropertyType* NewFProperty(FFieldOwner Owner, const FPropertyParams* Param)
     {
-        TPropertyType* Type = FMemory::New<TPropertyType>(Owner, Param);
+        TPropertyType* Type = Memory::New<TPropertyType>(Owner, Param);
         Type->Name = Param->Name;
         Type->Offset = Param->Offset;
         Type->Owner = Owner;
@@ -283,7 +283,7 @@ namespace Lumina
             return;
         }
 
-        FinalClass = (CStruct*)FMemory::Malloc(Params.SizeOf, Params.AlignOf);
+        FinalClass = (CStruct*)Memory::Malloc(Params.SizeOf, Params.AlignOf);
         FinalClass = ::new (FinalClass) CStruct(TEXT(""), FName(Params.Name), Params.SizeOf, Params.AlignOf, EObjectFlags::OF_None);
         *OutStruct = FinalClass;
 

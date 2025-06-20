@@ -85,7 +85,7 @@ namespace Lumina
             static_assert(std::is_base_of_v<FTileViewItem, T>, "T must inherit from FTreeListView");
             static_assert(std::is_constructible_v<T, Args...>, "T is not constructible using Args");
 
-            T* New = FMemory::New<T>(TForward<Args>(args)...);
+            T* New = Memory::New<T>(TForward<Args>(args)...);
             ListItems.push_back(New);
         }
 

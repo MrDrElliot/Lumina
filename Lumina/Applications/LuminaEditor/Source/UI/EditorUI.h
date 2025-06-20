@@ -51,7 +51,7 @@ namespace Lumina
         requires std::is_base_of_v<FEditorTool, T>
         T* CreateTool(Args&&... args)
         {
-            T* NewTool = FMemory::New<T>(TForward<Args>(args)...);
+            T* NewTool = Memory::New<T>(TForward<Args>(args)...);
             NewTool->Initialize();
             EditorTools.emplace_back(NewTool);
             return NewTool;

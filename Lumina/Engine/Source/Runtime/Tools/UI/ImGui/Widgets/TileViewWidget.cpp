@@ -58,7 +58,7 @@ namespace Lumina
     {
         for (FTileViewItem* Item : ListItems)
         {
-            FMemory::Delete(Item);
+            Memory::Delete(Item);
         }
         
         ListItems.clear();

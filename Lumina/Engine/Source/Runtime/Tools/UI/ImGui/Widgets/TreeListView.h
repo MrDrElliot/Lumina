@@ -44,7 +44,7 @@ namespace Lumina
         requires (std::is_base_of_v<FTreeListViewItem, T> && std::is_constructible_v<T, Args...>)
         T* AddChild(Args&&... args)
         {
-            T* New = FMemory::New<T>(eastl::forward<Args>(args)...);
+            T* New = Memory::New<T>(eastl::forward<Args>(args)...);
             Children.push_back(New);
 
             return New;
@@ -112,7 +112,7 @@ namespace Lumina
         requires (std::is_base_of_v<FTreeListViewItem, T> && std::is_constructible_v<T, Args...>)
         T* AddItemToTree(Args&&... args)
         {
-            T* New = FMemory::New<T>(eastl::forward<Args>(args)...);
+            T* New = Memory::New<T>(eastl::forward<Args>(args)...);
             ListItems.push_back(New);
 
             return New;

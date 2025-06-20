@@ -56,7 +56,7 @@ namespace Lumina
         
         for (FToolWindow* Window : ToolWindows)
         {
-            FMemory::Delete(Window);
+            Memory::Delete(Window);
         }
         
         if (HasScene())
@@ -152,7 +152,7 @@ namespace Lumina
             Assert(Window->Name != InName);
         }
 
-        auto pToolWindow = ToolWindows.emplace_back(FMemory::New<FToolWindow>(InName, DrawFunction, WindowPadding, DisableScrolling));
+        auto pToolWindow = ToolWindows.emplace_back(Memory::New<FToolWindow>(InName, DrawFunction, WindowPadding, DisableScrolling));
         eastl::sort(ToolWindows.begin(), ToolWindows.end(), [] (const FToolWindow* pLHS, const FToolWindow* pRHS)
         {
             return pLHS->Name < pRHS->Name;

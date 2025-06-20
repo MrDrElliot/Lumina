@@ -6,7 +6,7 @@ namespace Lumina
 {
     FEnumProperty::~FEnumProperty()
     {
-        FMemory::Delete(InnerProperty);
+        Memory::Delete(InnerProperty);
     }
 
     void FEnumProperty::SetEnum(CEnum* InEnum)

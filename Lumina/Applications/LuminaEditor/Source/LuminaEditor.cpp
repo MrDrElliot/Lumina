@@ -12,13 +12,13 @@ namespace Lumina
 
     void FEditorEngine::CreateDevelopmentTools()
     {
-        DeveloperToolUI = FMemory::New<FEditorUI>();
+        DeveloperToolUI = Memory::New<FEditorUI>();
     }
 
     
     FApplication* CreateApplication(int argc, char** argv)
     {
-        return FMemory::New<LuminaEditor>();
+        return Memory::New<LuminaEditor>();
     }
     
     LuminaEditor::LuminaEditor()
@@ -40,7 +40,7 @@ namespace Lumina
 
     void LuminaEditor::CreateEngine()
     {
-        GEditor = FMemory::New<FEditorEngine>();
+        GEditor = Memory::New<FEditorEngine>();
         Engine = GEditor;
         Engine->SetUpdateCallback([] (const FUpdateContext&) { });
     }

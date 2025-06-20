@@ -12,7 +12,7 @@ namespace Lumina
     {
         FEditorTool::Deinitialize(UpdateContext);
 
-        FMemory::Delete(Asset);
+        Memory::Delete(Asset);
     }
 
     void FAssetEditorTool::OnSave()

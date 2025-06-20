@@ -8,22 +8,22 @@ namespace Lumina
 
     static void OnStartThread(uint32 threadNum)
     {
-        FMemory::InitializeThreadHeap();
+        Memory::InitializeThreadHeap();
     }
 
     static void OnStopThread( uint32_t threadNum )
     {
-        FMemory::ShutdownThreadHeap();
+        Memory::ShutdownThreadHeap();
     }
 
     static void* CustomAllocFunc(size_t alignment, size_t size, void* userData_, const char* file_, int line_)
     {
-        return FMemory::Malloc(size, alignment);
+        return Memory::Malloc(size, alignment);
     }
 
     static void CustomFreeFunc(void* ptr, size_t size, void* userData_, const char* file_, int line_)
     {
-        FMemory::Free(ptr);
+        Memory::Free(ptr);
     }
     
     void FTaskSystem::Initialize()

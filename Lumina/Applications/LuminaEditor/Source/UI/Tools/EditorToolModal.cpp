@@ -6,7 +6,7 @@ namespace Lumina
     {
         if (ActiveModal != nullptr)
         {
-            FMemory::Delete(ActiveModal);
+            Memory::Delete(ActiveModal);
         }
     }
 
@@ -17,7 +17,7 @@ namespace Lumina
             return;
         }
         
-        ActiveModal = FMemory::New<FEditorToolModal>(Title, Size);
+        ActiveModal = Memory::New<FEditorToolModal>(Title, Size);
         ActiveModal->DrawFunction = DrawFunction;
         
     }
@@ -49,7 +49,7 @@ namespace Lumina
             if (ActiveModal->DrawModal(UpdateContext))
             {
                 ImGui::CloseCurrentPopup();
-                FMemory::Delete(ActiveModal);
+                Memory::Delete(ActiveModal);
                 ActiveModal = nullptr;
             }
 

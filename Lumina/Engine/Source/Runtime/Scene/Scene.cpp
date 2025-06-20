@@ -16,7 +16,7 @@ namespace Lumina
     FScene::FScene(ESceneType InType)
         : SceneType(InType)
     {
-        SceneSubsystemManager = FMemory::New<FSubsystemManager>();
+        SceneSubsystemManager = Memory::New<FSubsystemManager>();
         SceneSubsystemManager->AddSubsystem<FCameraManager>();
     }
 

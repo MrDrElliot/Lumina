@@ -87,14 +87,14 @@ namespace Lumina
             uint8* OldData = begin();
             if (OldData)
             {
-                FMemory::Free(OldData);
+                Memory::Free(OldData);
             }
 
             SIZE_T ElementSize = Property->GetInternalProperty()->ElementSize;
             SIZE_T TotalBytes = NewElementCount * ElementSize;
 
-            uint8* NewData = (uint8*)FMemory::Malloc(TotalBytes);
-            FMemory::MemsetZero(NewData, TotalBytes);
+            uint8* NewData = (uint8*)Memory::Malloc(TotalBytes);
+            Memory::MemsetZero(NewData, TotalBytes);
 
             *reinterpret_cast<uint8**>(VectorPtr) = NewData;
             *reinterpret_cast<uint8**>((uint8*)VectorPtr + sizeof(void*)) = NewData + TotalBytes;

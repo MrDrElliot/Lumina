@@ -13,7 +13,7 @@ namespace Lumina
     {
         void operator()(T* p) const
         {
-            FMemory::Delete(p);
+            Memory::Delete(p);
         }
     };
 

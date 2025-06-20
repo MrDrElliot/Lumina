@@ -18,7 +18,7 @@ namespace Lumina
 {
     FSceneRenderer* FSceneRenderer::Create()
     {
-        return FMemory::New<FSceneRenderer>();
+        return Memory::New<FSceneRenderer>();
     }
 
     FSceneRenderer::FSceneRenderer()

@@ -42,7 +42,7 @@ namespace Lumina
 			{
 				eastl::atomic_thread_fence(eastl::memory_order_acquire);
 				FRefCounted* MutableThis = const_cast<FRefCounted*>(this);
-				FMemory::Delete(MutableThis);
+				Memory::Delete(MutableThis);
 			}
 		}
 
@@ -289,5 +289,5 @@ template<typename T, typename... TArgs>
 requires std::is_constructible_v<T, TArgs...> && (!eastl::is_array_v<T>)
 FORCEINLINE Lumina::TRefCountPtr<T> MakeRefCount(TArgs&&... Args)
 {
-	return Lumina::TRefCountPtr<T>(FMemory::New<T>(TForward<TArgs>(Args)...));
+	return Lumina::TRefCountPtr<T>(Lumina::Memory::New<T>(TForward<TArgs>(Args)...));
 }

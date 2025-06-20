@@ -48,7 +48,7 @@ namespace Lumina
 
     void FAssetManager::NotifyAssetRequestCompleted(FAssetRequest* Request)
     {
-        FMemory::Delete(Request);
+        Memory::Delete(Request);
     }
 
     void FAssetManager::FlushAsyncLoading()
@@ -81,7 +81,7 @@ namespace Lumina
             return *It;
         }
         
-        FAssetRequest* NewRequest = FMemory::New<FAssetRequest>(InAssetPath);
+        FAssetRequest* NewRequest = Memory::New<FAssetRequest>(InAssetPath);
         ActiveRequests.push_back(NewRequest);
         return NewRequest;
         

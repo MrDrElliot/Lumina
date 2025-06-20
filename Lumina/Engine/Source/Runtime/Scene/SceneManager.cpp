@@ -16,8 +16,8 @@ namespace Lumina
             Scene.Scene->Shutdown();
             Scene.SceneRenderer->Deinitialize();
 
-            FMemory::Delete(Scene.Scene);
-            FMemory::Delete(Scene.SceneRenderer);
+            Memory::Delete(Scene.Scene);
+            Memory::Delete(Scene.SceneRenderer);
         }
         
         Scenes.clear();
@@ -57,8 +57,8 @@ namespace Lumina
             AssertMsg(GameScene == nullptr, "Only one game scene is allowed"); 
         }
 
-        FScene* NewScene = FMemory::New<FScene>(InType);
-        FSceneRenderer* SceneRenderer = FMemory::New<FSceneRenderer>();
+        FScene* NewScene = Memory::New<FScene>(InType);
+        FSceneRenderer* SceneRenderer = Memory::New<FSceneRenderer>();
         SceneRenderer->Initialize();
 
         Scenes.emplace_back(NewScene, SceneRenderer);
@@ -86,8 +86,8 @@ namespace Lumina
         }
 
         
-        FMemory::Delete(Scene);
-        FMemory::Delete(SceneRenderer);
+        Memory::Delete(Scene);
+        Memory::Delete(SceneRenderer);
         
         Scenes.erase(Itr);
     }

@@ -46,6 +46,6 @@ namespace Lumina
         
         FFileHelper::SaveArrayToFile(Buffer, FullPath);
 
-        FMemory::Delete(Temp);
+        Memory::Delete(Temp);
     }
 }

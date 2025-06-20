@@ -56,12 +56,12 @@ namespace Lumina
             vkGetPhysicalDeviceMemoryProperties(PhysicalDevice, &PhysicalDeviceMemoryProperties);
             vkGetPhysicalDeviceProperties(PhysicalDevice, &PhysicalDeviceProperties);
 
-            Allocator = FMemory::New<FVulkanMemoryAllocator>(Instance, PhysicalDevice, Device);
+            Allocator = Memory::New<FVulkanMemoryAllocator>(Instance, PhysicalDevice, Device);
         }
 
         ~FVulkanDevice()
         {
-            FMemory::Delete(Allocator);
+            Memory::Delete(Allocator);
             vkDestroyDevice(Device, nullptr);
         }
 

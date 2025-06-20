@@ -24,7 +24,7 @@ namespace Lumina
         // A reference count of 1 means the asset manager is the only remaining reference to the asset, so we can safely delete it.
         if (ReferenceCount == 1)
         {
-            FMemory::Delete(AssetPtr);
+            Memory::Delete(AssetPtr);
             LoadState = EAssetLoadState::Unloaded;
             AssetPtr = nullptr;
         }
@@ -33,7 +33,7 @@ namespace Lumina
         else if (ReferenceCount == 0)
         {
             FAssetRecord* MutableThis = const_cast<FAssetRecord*>(this);
-            FMemory::Delete(MutableThis);
+            Memory::Delete(MutableThis);
         }
 
         return uint32(ReferenceCount);

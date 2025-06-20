@@ -215,7 +215,7 @@ namespace Lumina
             VmaAllocation Allocation = MemoryAllocator->GetAllocation(StagingBuffer->GetBuffer());
             void* SourceData = const_cast<void*>(Data);
             void* StagingData = MemoryAllocator->MapMemory(Allocation);
-            FMemory::Memcpy(StagingData, SourceData, Size);
+            Memory::Memcpy(StagingData, SourceData, Size);
             MemoryAllocator->UnmapMemory(Allocation);
 
             CopyBuffer(StagingBuffer, 0, Buffer, 0, Size);
