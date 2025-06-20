@@ -38,7 +38,6 @@ namespace Lumina
         FProperty* Current = Class->LinkedProperty;
         while (Current != nullptr)
         {
-            LOG_WARN("Serializing Property: {}", Current->Name);
             Slot.GetStructuredArchive()->EnterField(Current->Name);
 
             // Gets the address of the actual property.

@@ -7,7 +7,7 @@
 #include "Core/Object/Class.h"
 #include <Core/Reflection/Type/LuminaTypes.h>
 
-#define SHOW_DEBUG 1
+#define SHOW_DEBUG 0
 
 namespace Lumina
 {
@@ -104,7 +104,7 @@ namespace Lumina
                     if (ImGui::MenuItem(NodeClass->GetName().c_str()))
                     {
                         CEdGraphNode* NewNode = CreateNode(NodeClass);
-                        uint32 NodeID = NewNode->NodeID;
+                        uint64 NodeID = NewNode->NodeID;
                         ImNodes::SetNodeScreenSpacePos(NodeID, MousePos);
                         ImVec2 NodePos = ImNodes::GetNodeGridSpacePos(NodeID);
                         NewNode->SetGridPos(NodePos.x, NodePos.y);
@@ -135,7 +135,6 @@ namespace Lumina
             uint64 NodeID = Node->GetNodeID();
             if (!Node->bInitialPosSet)
             {
-                LOG_DEBUG("Setting Node Pos: {} - {}", Node->GetNodeX(), Node->GetNodeY());
                 ImNodes::SetNodeGridSpacePos(NodeID, { Node->GetNodeX(), Node->GetNodeY() });
                 Node->bInitialPosSet = true;
             }
@@ -162,12 +161,13 @@ namespace Lumina
     
                 ImNodesPinShape Shape = (Pin->HasConnection()) ? ImNodesPinShape_QuadFilled : ImNodesPinShape_Quad;
     
-                ImNodes::BeginOutputAttribute(Pin->GUID, Shape);
+                ImNodes::BeginOutputAttribute(Pin->GetGUID(), Shape);
 
-                ImGui::TextUnformatted(Pin->GetPinName().c_str());
+                FString DebugString = Pin->GetPinName() + " - " + eastl::to_string(Pin->GetGUID());
+                ImGui::TextUnformatted(DebugString.c_str());
                 
                 ImGui::SameLine();
-
+            
                 if (Pin->HasConnection() && Pin->ShouldHideDuringConnection())
                 {
                     ImGui::Dummy(ImVec2(1.0f, 1.0f));
@@ -183,7 +183,7 @@ namespace Lumina
     
                 ImGui::Spacing();
     
-                PinMap.insert_or_assign(Pin->GUID, Pin);
+                PinMap.insert_or_assign(Pin->GetGUID(), Pin);
             }
 
             const TVector<CEdNodeGraphPin*>& InputPins = Node->GetInputPins();
@@ -195,7 +195,12 @@ namespace Lumina
                 
                 ImNodesPinShape Shape = (Pin->HasConnection()) ? ImNodesPinShape_CircleFilled : ImNodesPinShape_Circle;
                 
-                ImNodes::BeginInputAttribute(Pin->GUID, Shape);
+                ImNodes::BeginInputAttribute(Pin->GetGUID(), Shape);
+
+                FString DebugString = Pin->GetPinName() + " - " + eastl::to_string(Pin->GetGUID());
+                ImGui::TextUnformatted(DebugString.c_str());
+                
+                ImGui::SameLine();
                 
                 if (Pin->HasConnection() && Pin->ShouldHideDuringConnection())
                 {
@@ -216,14 +221,14 @@ namespace Lumina
                 
                 ImGui::Spacing();
                 
-                PinMap.insert_or_assign(Pin->GUID, Pin);
+                PinMap.insert_or_assign(Pin->GetGUID(), Pin);
             }
             
             for (uint64 j = 0; j < InputPins.size(); ++j)
             {
                 CEdNodeGraphPin* InputPin = InputPins[j];
                 
-                Assert(InputPin->GetConnections().size() <= 1);
+                Assert(InputPin->GetConnections().size() <= 1)
 
                 for (CEdNodeGraphPin* Connection : InputPin->GetConnections())
                 {
@@ -254,12 +259,12 @@ namespace Lumina
             ImNodes::PopColorStyle();
 
         }
-    
+
         for (int i = 0; i < Links.size(); ++i)
         {
             const TPair<CEdNodeGraphPin*, CEdNodeGraphPin*>& Pair = Links[i];
         
-            ImNodes::Link(i, Pair.first->GUID, Pair.second->GUID);
+            ImNodes::Link(i, Pair.first->GetGUID(), Pair.second->GetGUID());
         }
     
         ImNodes::MiniMap(0.2f, ImNodesMiniMapLocation_BottomRight);
@@ -345,15 +350,16 @@ namespace Lumina
 
     uint64 CEdNodeGraph::AddNode(CEdGraphNode* InNode)
     {
+        uint64 NewID = Nodes.size();
+        InNode->FullName = InNode->GetNodeDisplayName() + "_" + eastl::to_string(NewID);
+        InNode->NodeID = NewID;
+
         Nodes.push_back(InNode);
-        
+
         InNode->BuildNode();
-        InNode->GUID = Math::RandRange<uint16>(0, UINT16_MAX);
-        InNode->FullName = InNode->GetNodeDisplayName() + "_" + eastl::to_string(InNode->GUID);
-        InNode->NodeID = Nodes.size() - 1;
         ValidateGraph();
-        
-        return InNode->NodeID;
+
+        return NewID;
     }
 }
 

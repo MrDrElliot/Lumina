@@ -28,8 +28,11 @@ namespace Lumina
     public:
         
         
-        LUM_PROPERTY()
+        LUM_PROPERTY(Editable, Category = "Graph")
         TVector<CObject*> MaterialNodes;
+
+        LUM_PROPERTY()
+        TVector<uint16> Connections;
         
         LUM_PROPERTY()
         EMaterialType MaterialType;

@@ -165,6 +165,11 @@ namespace Lumina
     using FClassRegistrationInfo = TRegistrationInfo<CClass>;
     using FEnumRegistrationInfo = TRegistrationInfo<CEnum>;
 
+    struct FMetaDataPairParam
+    {
+        const char* NameUTF8;
+        const char* ValueUTF8;
+    };
 
     struct FPropertyParams
     {

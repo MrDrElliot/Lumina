@@ -32,6 +32,8 @@ enum EInternal { EC_InternalUseOnlyConstructor };
 #define FRIEND_STRUCT_NAME(ns, cls) CONCAT3(Construct_CClass_, CONCAT_WITH_UNDERSCORE(ns, cls), _Statics)
 
 
+
+
 // =====================================================================================================
 // NOTE: Clang has a known limitation where it struggles to properly expand variadic macros
 // during parsing (especially when using libclang or Clang tooling).
@@ -137,6 +139,15 @@ public: \
     } \
     IMPLEMENT_CLASS(Lumina, TClass) \
     static Lumina::FRegisterCompiledInInfo AutoInitialize_##TClass(&Construct_CClass_Lumina_##TClass, Lumina::TClass::StaticPackage(), TEXT(#TClass));
+
+
+
+enum
+{
+    DisplayName,
+    Editable,
+    
+};
 
 
 namespace LuminaAsserts_Private

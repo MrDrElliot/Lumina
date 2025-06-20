@@ -7,6 +7,12 @@
 
 namespace Lumina::Reflection
 {
+    void FReflectedType::GenerateMetadata(const eastl::string& InMetadata)
+    {
+        FMetadataParser Parser(InMetadata);
+        Metadata = eastl::move(Parser.Metadata);
+    }
+
     void FReflectedEnum::DefineConstructionStatics(eastl::string& Stream)
     {
     }
@@ -232,11 +238,31 @@ namespace Lumina::Reflection
         Stream += "// Begin " + DisplayName + "\n";
         Stream += "IMPLEMENT_CLASS(" + Namespace + ", " + DisplayName + ")\n";
         DefineConstructionStatics(Stream);
+
+        for (const eastl::shared_ptr<FReflectedProperty>& Prop : Props)
+        {
+            if (Prop->Metadata.empty())
+            {
+                continue;
+            }
+            
+            Stream += "\tstatic constexpr Lumina::FMetaDataPairParam " + Prop->Name + "_Metadata[] = {\n";
+
+            for (const FMetadataPair& Metadata : Prop->Metadata)
+            {
+                Stream += "\t\t{ \"" + Metadata.Key + "\", \"" + Metadata.Value + "\" },\n";    
+            }
+            
+            Stream += "\n\t};\n";
+        }
+
+        Stream += "\n";
         
         for (const eastl::shared_ptr<FReflectedProperty>& Prop : Props)
         {
             Stream += "\tstatic const Lumina::" + eastl::string(Prop->GetPropertyParamType()) + " " + Prop->Name + ";\n";
         }
+        
         Stream += "\t//...\n\n";
         
         Stream += "\tstatic const Lumina::FClassParams ClassParams;\n";

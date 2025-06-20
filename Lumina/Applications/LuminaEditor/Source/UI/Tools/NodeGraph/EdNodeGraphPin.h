@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include "EdGraphNode.h"
 #include "imgui.h"
 #include "Containers/Array.h"
 #include "Containers/String.h"
@@ -15,6 +16,7 @@ namespace Lumina
         GENERATED_BODY()
     public:
 
+        friend struct Construct_CClass_Lumina_CEdNodeGraphPin_Statics;
         friend class CEdNodeGraph;
         friend class CEdGraphNode;
 
@@ -46,7 +48,7 @@ namespace Lumina
 
         FORCEINLINE bool IsSingleInput() const { return bSingleInput; }
         FORCEINLINE bool HasConnection() const { return !Connections.empty(); }
-        FORCEINLINE uint32 GetGUID() const { return GUID; }
+        FORCEINLINE uint16 GetGUID() const { return PinID; }
         FORCEINLINE CEdGraphNode* GetOwningNode() const { return OwningNode; }
 
         FORCEINLINE bool ShouldDrawEditor() const { return bDrawPinEditor; }
@@ -60,13 +62,16 @@ namespace Lumina
         }
         
     
-    protected:
+    public:
 
         FString                         PinName;
         uint32                          PinColor = IM_COL32(255, 255, 255, 255);
-        uint16                          GUID = 0;
+
+        /** Index of the pin relative to the owning node */
+        uint16                          PinID;
         
         TVector<CEdNodeGraphPin*>       Connections;
+        
         CEdGraphNode*                   OwningNode = nullptr;
         uint8                           bSingleInput:1;
         uint8                           bInputPin:1;

@@ -19,7 +19,7 @@ namespace Lumina::Reflection
         eastl::string                                   SolutionPath;
         eastl::string                                   ParentPath;
         eastl::vector<FReflectedHeader>                 Headers;
-        eastl::hash_map<FStringHash, FReflectedHeader>     HeaderHashMap;
+        eastl::hash_map<FStringHash, FReflectedHeader>  HeaderHashMap;
     
     };
 }

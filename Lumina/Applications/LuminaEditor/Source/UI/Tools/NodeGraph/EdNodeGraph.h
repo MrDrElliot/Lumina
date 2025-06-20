@@ -43,7 +43,7 @@ namespace Lumina
         virtual void Initialize();
         virtual void Shutdown();
         void Serialize(FArchive& Ar) override;
-
+        
         void DrawGraph();
         virtual void OnDrawGraph();
         
@@ -59,9 +59,10 @@ namespace Lumina
         void RegisterGraphNode(CClass* InClass) { SupportedNodes.push_back(InClass); }
         
         uint64 AddNode(CEdGraphNode* InNode);
+
+        TVector<CEdGraphNode*>                          Nodes;
         
         TVector<CClass*>                                SupportedNodes;
-        TVector<CEdGraphNode*>                          Nodes;
         TVector<FAction>                                Actions;
 
     private:

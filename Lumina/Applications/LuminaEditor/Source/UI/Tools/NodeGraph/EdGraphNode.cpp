@@ -1,10 +1,18 @@
 ﻿#include "EdGraphNode.h"
 
 #include "EdNodeGraphPin.h"
+#include "Core/Math/Hash/Hash.h"
 #include "Material/MaterialGraphTypes.h"
 
 namespace Lumina
 {
+
+    static uint16 HashPinID(const FString& NodeName, const FString& PinName, ENodePinDirection Direction)
+    {
+        FString Composite = NodeName + "_" + PinName + "_" + eastl::to_string((uint8)Direction);
+        return (uint16)Hash::GetHash(Composite);
+    }
+    
     void CEdGraphNode::PostCreateCDO()
     {
         CObject::PostCreateCDO();
@@ -12,25 +20,19 @@ namespace Lumina
 
     CEdGraphNode::~CEdGraphNode()
     {
-        for (auto& Vector : NodePins)
-        {
-            for (CEdNodeGraphPin* Pin : Vector)
-            {
-               FMemory::Delete(Pin); 
-            }
-        }
+        
     }
 
     void CEdGraphNode::Serialize(FArchive& Ar)
     {
-       
+        
     }
-
-    CEdNodeGraphPin* CEdGraphNode::GetPin(uint32 ID, ENodePinDirection Direction)
+    
+    CEdNodeGraphPin* CEdGraphNode::GetPin(uint16 ID, ENodePinDirection Direction)
     {
         for (CEdNodeGraphPin* Pin : NodePins[uint32(Direction)])
         {
-            if (Pin->GUID == ID)
+            if (Pin->PinID == ID)
             {
                 return Pin;
             }
@@ -47,8 +49,8 @@ namespace Lumina
     CEdNodeGraphPin* CEdGraphNode::CreatePin(CClass* InClass, const FString& Name, ENodePinDirection Direction, EMaterialInputType Type)
     {
         CEdNodeGraphPin* NewPin = NewObject<CEdNodeGraphPin>(InClass);
-        NewPin->GUID = Math::RandRange<uint16>(0, UINT16_MAX);
-        NewPin->bInputPin = Direction == ENodePinDirection::Input;
+        NewPin->PinID = HashPinID(FullName, Name, Direction);
+        NewPin->bInputPin = (Direction == ENodePinDirection::Input);
         NewPin->OwningNode = this;
         
         NodePins[uint32(Direction)].push_back(NewPin);

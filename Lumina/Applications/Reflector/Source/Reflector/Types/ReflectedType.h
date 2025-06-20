@@ -6,6 +6,7 @@
 #include "EASTL/shared_ptr.h"
 #include "EASTL/string.h"
 #include "EASTL/vector.h"
+#include "Reflector/Utils/MetadataUtils.h"
 
 namespace Lumina::Reflection
 {
@@ -94,16 +95,17 @@ namespace Lumina::Reflection
         virtual void DefineSecondaryHeader(eastl::string& Stream, const eastl::string& FileID) = 0;
         virtual void DeclareImplementation(eastl::string& Stream) = 0;
         virtual void DeclareStaticRegistration(eastl::string& Stream) = 0;
+        void GenerateMetadata(const eastl::string& InMetadata);
 
-        eastl::string       Project;
-        uint32_t            GeneratedBodyLineNumber;
-        uint32_t            LineNumber;
-        eastl::string       HeaderID;
-        eastl::string       DisplayName;
-        eastl::string       QualifiedName;
-        eastl::string       Namespace;
-        EType               Type;
-        
+        eastl::string                   Project;
+        uint32_t                        GeneratedBodyLineNumber;
+        uint32_t                        LineNumber;
+        eastl::string                   HeaderID;
+        eastl::string                   DisplayName;
+        eastl::string                   QualifiedName;
+        eastl::string                   Namespace;
+        EType                           Type;
+        eastl::vector<FMetadataPair>    Metadata;
     };
     
 
@@ -135,7 +137,6 @@ namespace Lumina::Reflection
         void AddConstant(const FConstant& Constant) { Constants.push_back(Constant); }
 
         eastl::vector<FConstant>    Constants;
-        CXType                      EnumIntegralType;
         
     };
 

@@ -1,4 +1,5 @@
 #pragma once
+#include "imgui.h"
 #include "Core/Object/Field.h"
 #include "Core/Serialization/Structured/StructuredArchive.h"
 #include "Core/Templates/Align.h"
@@ -91,7 +92,7 @@ namespace Lumina
         
         LUMINA_API virtual uint64 GetUnsignedIntPropertyValue(void const* Data) const { return 0; }
         LUMINA_API virtual uint64 GetUnsignedIntPropertyValue_InContainer(void const* Container) const { return 0; }
-
+        
     };
     
     template<typename TCPPType>
@@ -148,6 +149,8 @@ namespace Lumina
         {
             Slot.Serialize(*TTypeInfo::GetPropertyValuePtr(Value));
         }
+
+        void DrawProperty(void* Object) override;
         
     };
 
@@ -178,6 +181,17 @@ namespace Lumina
 
         
     };
+
+    template <typename TBacking, typename TCPPType>
+    void TProperty<TBacking, TCPPType>::DrawProperty(void* Object)
+    {
+        ImGui::PushID(this);
+        TCPPType* Type = (TCPPType*)Object;
+
+        ImGui::Text("%i", *Type);
+
+        ImGui::PopID();
+    }
 
     template <typename TCPPType> requires std::is_arithmetic_v<TCPPType>
     void TProperty_Numeric<TCPPType>::SetIntPropertyValue(void* Data, uint64 Value) const

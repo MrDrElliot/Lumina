@@ -255,6 +255,7 @@ namespace Lumina::Reflection::Visitor
                 
                 eastl::shared_ptr<FReflectedProperty> NewProperty;
                 CreatePropertyForType(Context, Struct, NewProperty, FieldInfo);
+                NewProperty->GenerateMetadata(Macro.MacroContents);
                 
             }
             break;
@@ -298,7 +299,8 @@ namespace Lumina::Reflection::Visitor
                 
                 eastl::shared_ptr<FReflectedProperty> NewProperty;
                 CreatePropertyForType(Context, Class, NewProperty, FieldInfo);
-                
+                NewProperty->GenerateMetadata(Macro.MacroContents);
+
             }
             break;
         }
@@ -338,6 +340,7 @@ namespace Lumina::Reflection::Visitor
         ReflectedStruct->GeneratedBodyLineNumber = GeneratedBody.LineNumber;
         ReflectedStruct->LineNumber = ClangUtils::GetCursorLineNumber(Cursor);
         ReflectedStruct->HeaderID = Context->ReflectedHeader.HeaderPath;
+        ReflectedStruct->GenerateMetadata(Macro.MacroContents);
 
         if (!Context->CurrentNamespace.empty())
         {
@@ -379,7 +382,7 @@ namespace Lumina::Reflection::Visitor
         {
             return CXChildVisit_Continue;
         }
-
+        
         FReflectionMacro GeneratedBody;
         if (!Context->TryFindGeneratedBodyMacro(Context->ReflectedHeader.HeaderPath, Cursor, GeneratedBody))
         {
@@ -393,7 +396,8 @@ namespace Lumina::Reflection::Visitor
         ReflectedClass->GeneratedBodyLineNumber = GeneratedBody.LineNumber;
         ReflectedClass->LineNumber = ClangUtils::GetCursorLineNumber(Cursor);
         ReflectedClass->HeaderID = Context->ReflectedHeader.HeaderPath;
-    
+        ReflectedClass->GenerateMetadata(Macro.MacroContents);
+        
         if (!Context->CurrentNamespace.empty())
         {
             ReflectedClass->Namespace = Context->CurrentNamespace;

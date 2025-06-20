@@ -27,8 +27,7 @@ namespace Lumina
         GENERATED_BODY()
         
     public:
-
-
+        
         friend class CEdNodeGraph;
 
         void PostCreateCDO() override;
@@ -38,7 +37,7 @@ namespace Lumina
         virtual void BuildNode() { }
 
         void Serialize(FArchive& Ar) override;
-
+        
         FString GetNodeFullName() { return FullName; }
         virtual FString GetNodeDisplayName() const { return "Node"; }
         virtual FString GetNodeTooltip() const { return "No Tooltip"; }
@@ -53,7 +52,7 @@ namespace Lumina
         bool HasError() const { return bHasError; }
         void ClearError() { Error = FString(); bHasError = false; }
         
-        CEdNodeGraphPin* GetPin(uint32 ID, ENodePinDirection Direction);
+        CEdNodeGraphPin* GetPin(uint16 ID, ENodePinDirection Direction);
         CEdNodeGraphPin* GetPinByIndex(uint32 Index, ENodePinDirection Direction);
         
         uint64 GetNodeID() const { return NodeID; }
@@ -80,9 +79,8 @@ namespace Lumina
         uint32 DebugExecutionOrder;
 
 
-        uint64      NodeID;
+        uint64      NodeID = 0;
         FString     FullName;
-        uint16      GUID;
         FString     Error;
         bool        bHasError;
         bool        bInitialPosSet = false;

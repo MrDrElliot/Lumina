@@ -21,7 +21,10 @@ namespace Lumina
     {
         Super::Initialize();
 
+        
         TVector<CObject*> NewNodes = Material->MaterialNodes;
+        TVector<uint16> NewConnections = Material->Connections;
+        
         for (CObject* Object : NewNodes)
         {
             CEdGraphNode* Node = Cast<CEdGraphNode>(Object);
@@ -30,7 +33,54 @@ namespace Lumina
         }
 
         CreateNode(CMaterialOutputNode::StaticClass());
+        
+        if (!NewConnections.empty())
+        {
+            for (SIZE_T i = 0; i < NewConnections.size(); i += 2)
+            {
+                uint16 FirstConnection = NewConnections[i];
+                uint16 SecondConnection = NewConnections[i + 1];
 
+                LOG_INFO("Links: {} - {}", FirstConnection, SecondConnection);
+                
+                CEdNodeGraphPin* StartPin = nullptr;
+                CEdNodeGraphPin* EndPin = nullptr;
+
+                for (CEdGraphNode* Node : Nodes)
+                {
+                    EndPin = Node->GetPin(FirstConnection, ENodePinDirection::Input);
+                    if (EndPin)
+                    {
+                        break;
+                    }
+                }
+                
+                for (CEdGraphNode* Node : Nodes)
+                {
+                    StartPin = Node->GetPin(SecondConnection, ENodePinDirection::Output);
+                    if (StartPin)
+                    {
+                        break;
+                    }
+                }
+
+                if (!StartPin || !EndPin || StartPin == EndPin || StartPin->OwningNode == EndPin->OwningNode)
+                {
+                    continue;
+                }
+
+                if (EndPin->HasConnection())
+                {
+                    continue; // Disallow connection if the input pin is already occupied
+                }
+
+                // Allow the connection
+                StartPin->AddConnection(EndPin);
+                EndPin->AddConnection(StartPin);
+            }
+        }
+        
+        
         RegisterGraphNode(CMaterialExpression_Addition::StaticClass());
         RegisterGraphNode(CMaterialExpression_Subtraction::StaticClass());
         RegisterGraphNode(CMaterialExpression_Division::StaticClass());
@@ -40,6 +90,7 @@ namespace Lumina
         RegisterGraphNode(CMaterialExpression_ConstantFloat3::StaticClass());
         RegisterGraphNode(CMaterialExpression_ConstantFloat4::StaticClass());
 
+        ValidateGraph();
     }
 
     void CMaterialNodeGraph::OnDrawGraph()
@@ -101,11 +152,26 @@ namespace Lumina
     void CMaterialNodeGraph::ValidateGraph()
     {
         Material->MaterialNodes.clear();
+        Material->Connections.clear();
+        
         for (CEdGraphNode* Node : Nodes)
         {
             if (Cast<CMaterialOutputNode>(Node) == nullptr)
             {
                 Material->MaterialNodes.push_back(Node);
+            }
+
+            for (uint64 j = 0; j < Node->GetInputPins().size(); ++j)
+            {
+                CEdNodeGraphPin* InputPin = Node->GetInputPins()[j];
+                
+                Assert(InputPin->GetConnections().size() <= 1)
+
+                for (CEdNodeGraphPin* Connection : InputPin->GetConnections())
+                {
+                    Material->Connections.push_back(InputPin->PinID);
+                    Material->Connections.push_back(Connection->PinID);
+                }
             }
         }
     }

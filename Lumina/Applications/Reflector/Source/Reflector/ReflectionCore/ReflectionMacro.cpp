@@ -22,11 +22,11 @@ namespace Lumina::Reflection
         }
         clang_disposeTokens(translationUnit, tokens, numTokens);
 
-        const size_t startIdx = MacroContents.find_first_of("(");
-        const size_t endIdx = MacroContents.find_last_of(')');
-        if (startIdx != eastl::string::npos && endIdx != eastl::string::npos && endIdx > startIdx)
+        const size_t StartIdx = MacroContents.find_first_of("(");
+        const size_t EndIdx = MacroContents.find_last_of(')');
+        if (StartIdx != eastl::string::npos && EndIdx != eastl::string::npos && EndIdx > StartIdx)
         {
-            
+            MacroContents = MacroContents.substr(StartIdx + 1, EndIdx - StartIdx - 1);
         }
         else
         {
