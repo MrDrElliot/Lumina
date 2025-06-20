@@ -105,8 +105,9 @@ Contributions are welcome! Whether you're adding features, fixing bugs, or impro
 ## Coding Style
 
 ## Naming Conventions:
-- **Non-reflection classes**: Prefixed with an **"F"** (e.g., `FMyClass`). This may be adjusted in the future, but all non-reflection classes will have some prefix.
+- **Non-reflection classes/structures**: Prefixed with an **"F"** (e.g., `FMyClass`). This may be adjusted in the future, but all non-reflection classes will have some prefix.
 - **Reflection classes**: Prefixed with a **"C"** (e.g., `CMyClass`) to signify that they are tied to the reflection system.
+- **Reflection Structures**: Prefixed with a **S** (e.g., `SMyStruct`) to signify that they are tied to the reflection system. 
 - **Functions and methods**: Use **PascalCase** (e.g., `MyFunctionName()`).
 - **Variables**: Use **PascalCase** for variables (e.g., `MyVariable`).
 - **Constants**: Use **UPPER_SNAKE_CASE** (e.g., `MY_CONSTANT`).
