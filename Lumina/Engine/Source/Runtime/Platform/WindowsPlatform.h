@@ -3,7 +3,9 @@
 // Function type macros.
 #define VARARGS     __cdecl											/* Functions with variable arguments */
 #define STDCALL		__stdcall										/* Standard calling convention */
-#define FORCEINLINE __forceinline									/* Force code to be inline */
+
+#define INLINE inline                                               /* Inline */
+#define FORCEINLINE inline									        /* We no longer support __forceinline */
 #define FORCENOINLINE __declspec(noinline)							/* Force code to NOT be inline */
 
 

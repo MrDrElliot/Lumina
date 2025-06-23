@@ -1,7 +1,7 @@
 ﻿#include "MaterialEditorTool.h"
 #include "imnodes/imnodes.h"
 #include "Assets/AssetTypes/Material/Material.h"
-#include "Core/Object/Cast.h"
+#include "Renderer/RHIIncl.h"
 #include "Core/Object/Class.h"
 #include "Core/Reflection/Type/Properties/EnumProperty.h"
 #include "UI/Tools/NodeGraph/Material/MaterialCompiler.h"
@@ -45,6 +45,7 @@ namespace Lumina
     void FMaterialEditorTool::OnDeinitialize(const FUpdateContext& UpdateContext)
     {
         NodeGraph->Shutdown();
+        NodeGraph->MarkGarbage();
     }
 
     void FMaterialEditorTool::OnAssetLoadFinished()

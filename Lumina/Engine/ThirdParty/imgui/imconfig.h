@@ -30,6 +30,7 @@
     #define IMGUI_API __declspec(dllimport)
 #endif
 
+
 //#define IMGUI_IMPL_VULKAN_NO_PROTOTYPES
 
 //---- Don't define obsolete functions/enums/behaviors. Consider enabling from time to time after updating to clean your code of obsolete function/names.

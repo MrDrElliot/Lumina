@@ -11,14 +11,13 @@ namespace Lumina
     class CObjectBase;
     class CClass;
 
-    extern LUMINA_API TVector<CObjectBase*> PendingDeletes;
     extern LUMINA_API TFixedVector<CObjectBase*, 2024> GObjectVector;
     
     /** Low level implementation of a CObject */
     class CObjectBase : public IRefCountedObject
     {
     public:
-
+        
         LUMINA_API CObjectBase();
         LUMINA_API virtual ~CObjectBase() override;
         
@@ -27,7 +26,7 @@ namespace Lumina
 
         // Begin IRefCountedObject
         LUMINA_API uint32 AddRef() const override;
-        LUMINA_API uint32 Release() const override;
+        LUMINA_API uint32 Release() override;
         LUMINA_API uint32 GetRefCount() const override { return RefCount; }
         //~ End IRefCountedObject
         
@@ -39,12 +38,28 @@ namespace Lumina
         LUMINA_API void SetFlag(EObjectFlags Flags) { ObjectFlags = Flags; }
         LUMINA_API bool HasAnyFlag(EObjectFlags Flag) const { return EnumHasAnyFlags(ObjectFlags, Flag); }
         LUMINA_API bool HasAllFlags(EObjectFlags Flags) const { return EnumHasAllFlags(ObjectFlags, Flags); }
+        
 
-        LUMINA_API bool IsPendingDelete() const { return HasAnyFlag(OF_PendingDelete); }
+        LUMINA_API void Rename(TCHAR* NewName);
+        
+        /** Adds this object to the pending deletion queue, recommended to manually null the memory to avoid stale access */
+        LUMINA_API void MarkGarbage();
 
+        /** Forcefully destroys this object now, without adding to the queue. Recommended to manually null the memory to avoid stale access */
+        LUMINA_API void DestroyNow();
+
+        /** Has this object previously been marked for desctruction? */
+        LUMINA_API bool IsMarkedGarbage() const { return HasAnyFlag(OF_MarkedGarbage); }
+
+        /** Called just before the destructor is called and the memory is freed */
+        LUMINA_API virtual void OnDestroy() { }
+
+        /** Called when the object is initially marked as garbage */
+        LUMINA_API virtual void OnMarkedGarbage() { }
+        
     private:
 
-        LUMINA_API void AddObject(FName Name, int32 InInternalIndex = -1);
+        LUMINA_API void AddObject(FName Name, SIZE_T InInternalIndex = -1);
         
     public:
         
@@ -57,11 +72,13 @@ namespace Lumina
             return ClassPrivate;
         }
 
+        /** Get the internal low level name of this object */
         FORCEINLINE FName GetName() const
         {
             return NamePrivate;
         }
 
+        /** Get the internal package this object came from (script, plugin, package, etc). */
         FORCEINLINE const FString GetPackage() const
         {
             return PackagePrivate;    
@@ -119,7 +136,7 @@ namespace Lumina
         FString                 PackagePrivate;
         
         /** Internal index into the global object array. */
-        int32                   InternalIndex;
+        SIZE_T                  InternalIndex;
 
         /** Internal reference count to this object */
         mutable uint32          RefCount = 0;

@@ -133,7 +133,7 @@ namespace Lumina
             }
         }
         
-        //ImGui::Image(ViewportTexture, ViewportSize);
+        ImGui::Image(ViewportTexture, ViewportSize);
         
         if (ImGuiDockNode* pDockNode = ImGui::GetWindowDockNode())
         {
@@ -149,7 +149,7 @@ namespace Lumina
     {
         for (FToolWindow* Window : ToolWindows)
         {
-            Assert(Window->Name != InName);
+            Assert(Window->Name != InName)
         }
 
         auto pToolWindow = ToolWindows.emplace_back(Memory::New<FToolWindow>(InName, DrawFunction, WindowPadding, DisableScrolling));
@@ -183,7 +183,7 @@ namespace Lumina
     
     void FEditorTool::SetDisplayName(FString NewName)
     {
-        Assert(!NewName.empty());
+        Assert(!NewName.empty())
         
         ToolName.sprintf("%s %s", GetTitlebarIcon(), NewName.data());
     }

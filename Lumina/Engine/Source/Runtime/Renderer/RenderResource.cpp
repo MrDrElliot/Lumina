@@ -7,6 +7,24 @@
 namespace Lumina
 {
 
+    // DLL Template specialization exports.
+    template class LUMINA_API TRefCountPtr<IRHIResource>;
+    template class LUMINA_API TRefCountPtr<FRHIBuffer>;
+    template class LUMINA_API TRefCountPtr<FRHIImage>;
+    template class LUMINA_API TRefCountPtr<FRHISampler>;
+    template class LUMINA_API TRefCountPtr<FRHIShader>;
+    template class LUMINA_API TRefCountPtr<FRHIVertexShader>;
+    template class LUMINA_API TRefCountPtr<FRHIPixelShader>;
+    template class LUMINA_API TRefCountPtr<FRHIComputeShader>;
+    template class LUMINA_API TRefCountPtr<ICommandList>;
+    template class LUMINA_API TRefCountPtr<FRHIViewport>;
+    template class LUMINA_API TRefCountPtr<FRHIGraphicsPipeline>;
+    template class LUMINA_API TRefCountPtr<FRHIComputePipeline>;
+    template class LUMINA_API TRefCountPtr<FRHIBindingLayout>;
+    template class LUMINA_API TRefCountPtr<FRHIBindingSet>;
+    template class LUMINA_API TRefCountPtr<IRHIInputLayout>;
+    template class LUMINA_API TRefCountPtr<FShaderLibrary>;
+
     TStack<IRHIResource*> PendingDeletes;
     
     void IRHIResource::Destroy() const
@@ -31,7 +49,7 @@ namespace Lumina
     {
         FRHIImageDesc Desc;
         Desc.Format = EImageFormat::BGRA32_UNORM;
-        Desc.Flags.SetFlag(EImageCreateFlags::RenderTarget);
+        Desc.Flags.SetMultipleFlags(EImageCreateFlags::RenderTarget, EImageCreateFlags::ShaderResource);
         Desc.Extent = InSize;
 
         RenderTarget = RenderContext->CreateImage(Desc);

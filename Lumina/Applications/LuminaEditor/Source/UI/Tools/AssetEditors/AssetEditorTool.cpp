@@ -5,14 +5,16 @@
 #include "Core/Serialization/Package/PackageSaver.h"
 #include "Paths/Paths.h"
 #include "Platform/Filesystem/FileHelper.h"
+#include <Assets/AssetHeader.h>
 
 namespace Lumina
 {
     void FAssetEditorTool::Deinitialize(const FUpdateContext& UpdateContext)
     {
         FEditorTool::Deinitialize(UpdateContext);
-
-        Memory::Delete(Asset);
+        
+        Asset->MarkGarbage();
+        Asset = nullptr;
     }
 
     void FAssetEditorTool::OnSave()

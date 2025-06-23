@@ -76,10 +76,13 @@ namespace Lumina
         LUMINA_SINGLETON_EDITOR_TOOL(FContentBrowserEditorTool)
 
         FContentBrowserEditorTool(IEditorToolContext* Context)
-            :FEditorTool(Context, "Content Browser", nullptr)
+            : FEditorTool(Context, "Content Browser", nullptr)
             , OutlinerListView()
             , OutlinerContext()
-        {}
+            , ContentBrowserTileView()
+            , ContentBrowserTileViewContext()
+        {
+        }
 
         void RefreshContentBrowser();
         bool IsSingleWindowTool() const override { return true; }

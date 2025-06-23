@@ -2,7 +2,7 @@
 
 #include <vulkan/vulkan_core.h>
 
-#include "Scene/SceneRenderer.h"
+#include "GUID/GUID.h"
 #include "Tools/UI/ImGui/ImGuiRenderer.h"
 
 namespace Lumina
@@ -19,15 +19,16 @@ namespace Lumina
         
         void OnStartFrame(const FUpdateContext& UpdateContext) override;
         void OnEndFrame(const FUpdateContext& UpdateContext) override;
-    
-
-    private:
 
         /** An ImTextureID in this context is castable to a VkDescriptorset. */
-        void RegisterNewImage(FGuid Guid, ImTextureID NewImage, const FString& DebugName);
+        ImTextureID GetOrCreateImTexture(FRHIImageRef Image) override;
+
+    private:
         
         VkDescriptorPool DescriptorPool = VK_NULL_HANDLE;
         FVulkanRenderContext* VulkanRenderContext = nullptr;
+
+        THashMap<VkImage, VkDescriptorSet> ImageCache;
     };
     
 }

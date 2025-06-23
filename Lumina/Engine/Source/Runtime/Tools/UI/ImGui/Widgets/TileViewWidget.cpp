@@ -64,13 +64,22 @@ namespace Lumina
         ListItems.clear();
     }
 
-    void FTileViewWidget::RebuildTree(FTileViewContext Context)
+    void FTileViewWidget::RebuildTree(FTileViewContext Context, bool bKeepSelections)
     {
-        Assert(bCurrentlyDrawing == false);
-        Assert(bDirty);
+        Assert(bDirty)
 
+        TVector<FTileViewItem*> CachedSelections = Selections;
+        
         ClearSelection();
         ClearTree();
+
+        if (bKeepSelections)
+        {
+            for (FTileViewItem* Select : CachedSelections)
+            {
+                SetSelection(Select, Context);
+            }
+        }
         
         Context.RebuildTreeFunction(this);
 
@@ -79,14 +88,14 @@ namespace Lumina
 
     void FTileViewWidget::DrawItem(FTileViewItem* ItemToDraw, FTileViewContext Context)
     {
-        if (ImGui::Button("", ImVec2(125.0f, 125.0f)))
+        if (ImGui::Button("##", ImVec2(125.0f, 125.0f)))
         {
             SetSelection(ItemToDraw, Context);
         }
 
         if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Right))
         {
-            SetSelection(ItemToDraw, Context);
+            ImGui::OpenPopup("ItemContextMenu");
         }
         
         if (ItemToDraw->HasContextMenu())
@@ -129,7 +138,7 @@ namespace Lumina
     {
         for (FTileViewItem* Item : Selections)
         {
-            Assert(Item->bSelected);
+            Assert(Item->bSelected)
             
             Item->bSelected = false;
             Item->OnSelectionStateChanged();    

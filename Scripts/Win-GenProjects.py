@@ -1,74 +1,55 @@
 import os
 import subprocess
-import urllib.request
-import zipfile
 import platform
 import CheckPython
-
-# Make sure everything we need is installed
-CheckPython.ValidatePackages()
-
-import time
-import Utils
 import colorama
 
 from colorama import Fore, Back, Style
 
+# === Initialization ===
 colorama.init()
+os.chdir('../')  # Move from Scripts/ to root
+print(f"{Style.BRIGHT}Generating Project Files for Lumina\n{Style.RESET_ALL}")
 
-# Change from Scripts directory to root
-os.chdir('../')
-
-# Set LUMINA_DIR environment variable to current root directory
-print(f"{Style.BRIGHT}{Back.GREEN}Setting LUMINA_DIR to {os.getcwd()}{Style.RESET_ALL}")
-subprocess.call(["setx", "LUMINA_DIR", os.getcwd()])
-os.environ['LUMINA_DIR'] = os.getcwd()
-
-
-### 🚀 Vulkan SDK Auto-Installer ###
-VULKAN_SDK_URL = "https://sdk.lunarg.com/sdk/home"
-VULKAN_INSTALL_DIR = os.path.join(os.getcwd(), "Dependencies", "Vulkan")
+# === Constants ===
+VULKAN_SDK_URL = "https://vulkan.lunarg.com/sdk/home"
 VULKAN_ENV_VAR = "VULKAN_SDK"
+VULKAN_INSTALL_DIR = os.path.join(os.getcwd(), "Dependencies", "Vulkan")
 
+# === Set Environment Variable ===
+current_dir = os.getcwd()
+print(f"{Style.BRIGHT}Setting LUMINA_DIR to {current_dir}{Style.RESET_ALL}")
+subprocess.call(["setx", "LUMINA_DIR", current_dir])
+os.environ['LUMINA_DIR'] = current_dir
+
+# === Check Python Requirements ===
+try:
+    CheckPython.ValidatePackages()
+except Exception as e:
+    print(f"{Fore.RED}Error: Required Python packages not installed. {e}{Style.RESET_ALL}")
+    input("\nPress Enter to exit...")
+    exit(1)
+
+# === Check Vulkan SDK ===
 def is_vulkan_installed():
     return os.environ.get(VULKAN_ENV_VAR) is not None or os.path.exists(VULKAN_INSTALL_DIR)
 
-def download_and_install_vulkan():
-    print(f"{Style.BRIGHT}{Back.YELLOW}Vulkan SDK not found! Downloading...{Style.RESET_ALL}")
-
-    system = platform.system()
-
-    if system == "Windows":
-        vulkan_download_url = "https://sdk.lunarg.com/sdk/download/1.4.304.1/windows/VulkanSDK-1.4.304.1-Installer.exe"
-        vulkan_installer_path = os.path.join(VULKAN_INSTALL_DIR, "VulkanSDK-Installer.exe")
-
-        os.makedirs(VULKAN_INSTALL_DIR, exist_ok=True)
-        urllib.request.urlretrieve(vulkan_download_url, vulkan_installer_path)
-
-        print(f"{Style.BRIGHT}{Fore.CYAN}Installing Vulkan SDK...{Style.RESET_ALL}")
-        subprocess.run([vulkan_installer_path, "/S"], check=True)  # Silent installation
-
-    elif system == "Linux":
-        print(f"{Style.BRIGHT}{Fore.RED}Vulkan installation must be done manually on Linux!{Style.RESET_ALL}")
-        print(f"{Fore.CYAN}Visit {VULKAN_SDK_URL} to install Vulkan.{Style.RESET_ALL}")
-        return
-
-    elif system == "Darwin":
-        print(f"{Style.BRIGHT}{Fore.RED}Vulkan for macOS requires MoltenVK. Please install it manually.{Style.RESET_ALL}")
-        return
-
-    print(f"{Style.BRIGHT}{Back.GREEN}Vulkan SDK installed successfully! Restart your terminal.{Style.RESET_ALL}")
-
-# Check Vulkan SDK
 if not is_vulkan_installed():
-    download_and_install_vulkan()
+    print(f"{Fore.RED}Vulkan SDK not found!{Style.RESET_ALL}")
+    print(f"{Fore.CYAN}Please install it from: {VULKAN_SDK_URL}{Style.RESET_ALL}")
+    input("\nPress Enter to exit...")
+    exit(1)
 else:
-    print(f"{Style.BRIGHT}{Back.GREEN}Vulkan SDK is already installed!{Style.RESET_ALL}")
+    vk_path = os.environ.get(VULKAN_ENV_VAR, VULKAN_INSTALL_DIR)
+    print(f"{Fore.GREEN}Vulkan SDK found at: {vk_path}{Style.RESET_ALL}")
 
-### 🚀 Generate Visual Studio Solution ###
-print(f"{Style.BRIGHT}{Back.GREEN}Generating Visual Studio 2022 solution.{Style.RESET_ALL}")
-subprocess.call(["Tools/premake5.exe", "vs2022"])
+# === Generate Visual Studio Solution ===
+print(f"\n{Style.BRIGHT}{Back.GREEN}Generating Visual Studio 2022 solution...{Style.RESET_ALL}")
+premake_result = subprocess.call(["Tools/premake5.exe", "vs2022"])
 
-input("\n✅ Press Enter to exit...")
-exit(0)
+if premake_result != 0:
+    print(f"{Fore.RED}Premake generation failed. Please check your setup.{Style.RESET_ALL}")
+else:
+    print(f"{Fore.GREEN}Solution generated successfully!{Style.RESET_ALL}")
 
+input("\nPress Enter to exit...")

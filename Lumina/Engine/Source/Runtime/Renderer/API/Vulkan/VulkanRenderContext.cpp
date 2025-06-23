@@ -523,6 +523,11 @@ namespace Lumina
         return MakeRefCount<FVulkanImage>(VulkanDevice, ImageSpec);
     }
 
+    FRHISamplerRef FVulkanRenderContext::CreateSampler(const FSamplerDesc& SamplerDesc)
+    {
+        return MakeRefCount<FVulkanSampler>(VulkanDevice, SamplerDesc);
+    }
+
     FRHIVertexShaderRef FVulkanRenderContext::CreateVertexShader(const TVector<uint32>& ByteCode)
     {
         return MakeRefCount<FVulkanVertexShader>(VulkanDevice, ByteCode);
@@ -555,8 +560,7 @@ namespace Lumina
 
     FRHIBindingSetRef FVulkanRenderContext::CreateBindingSet(const FBindingSetDesc& Desc, FRHIBindingLayout* InLayout)
     {
-        FVulkanBindingLayout* VulkanLayout = static_cast<FVulkanBindingLayout*>(InLayout);
-        return MakeRefCount<FVulkanBindingSet>(VulkanDevice, Desc, VulkanLayout);
+        return MakeRefCount<FVulkanBindingSet>(VulkanDevice, Desc, static_cast<FVulkanBindingLayout*>(InLayout));
     }
 
     FRHIComputePipelineRef FVulkanRenderContext::CreateComputePipeline(const FComputePipelineDesc& Desc)

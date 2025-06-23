@@ -24,8 +24,7 @@ namespace Lumina
 
     void CEdNodeGraph::Initialize()
     {
-         ImNodesContext = ImNodes::EditorContextCreate();
-        //ImNodes::PushAttributeFlag(ImNodesAttributeFlags_EnableLinkDetachWithDragClick);
+        ImNodesContext = ImNodes::EditorContextCreate();
     
         ImNodesIO& io = ImNodes::GetIO();
         io.LinkDetachWithModifierClick.Modifier = &ImGui::GetIO().KeyCtrl;
@@ -73,6 +72,11 @@ namespace Lumina
 
     void CEdNodeGraph::Shutdown()
     {
+        for (CEdGraphNode* Node : Nodes)
+        {
+            Node->MarkGarbage();
+        }
+
         ImNodes::EditorContextFree(ImNodesContext);
     }
 
@@ -83,7 +87,7 @@ namespace Lumina
 
     void CEdNodeGraph::DrawGraph()
     {
-        ImNodes::EditorContextSet(ImNodesContext);
+        //ImNodes::EditorContextSet(ImNodesContext);
 
         ImNodes::BeginNodeEditor();
 
@@ -269,7 +273,7 @@ namespace Lumina
     
         ImNodes::MiniMap(0.2f, ImNodesMiniMapLocation_BottomRight);
         ImNodes::EndNodeEditor();
-    
+        
         int Start, End;
         if (ImNodes::IsLinkCreated(&Start, &End))
         {

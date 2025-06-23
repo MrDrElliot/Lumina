@@ -29,7 +29,6 @@ namespace Lumina
             AssetRequestThread.join();
         }
         
-        AssetRecord.clear();
     }
 
     void FAssetManager::Update()
@@ -55,18 +54,6 @@ namespace Lumina
     {
         std::unique_lock<std::mutex> lock(FlushMutex);
         FlushCV.wait(lock, [this] { return RequestQueue.empty(); });
-    }
-
-
-    FAssetRecord* FAssetManager::FindAssetRecord(const FAssetHandle& InHandle)
-    {
-        Assert(InHandle.IsSet())
-        FRecursiveScopeLock ScopeLock(RecursiveMutex);
-
-        auto const Itr = AssetRecord.find(InHandle.GetAssetPath());
-        Assert(Itr != AssetRecord.end())
-
-        return Itr->second;
     }
 
     FAssetRequest* FAssetManager::TryFindActiveRequest(const FString& InAssetPath)

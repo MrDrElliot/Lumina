@@ -1,8 +1,11 @@
 #include "RenderManager.h"
 
+#if LUMINA_RENDERER_VULKAN
 #include "API/Vulkan/VulkanRenderContext.h"
-#include "Tools/UI/ImGui/ImGuiRenderer.h"
 #include "Tools/UI/ImGui/Vulkan/VulkanImGuiRender.h"
+#endif
+
+#include "Tools/UI/ImGui/ImGuiRenderer.h"
 
 namespace Lumina
 {
@@ -11,6 +14,16 @@ namespace Lumina
         RenderContext = Memory::New<FVulkanRenderContext>();
         RenderContext->Initialize();
 
+        FSamplerDesc SamplerDesc; SamplerDesc
+        .SetAllFilters(false)
+        .SetAllAddressModes(ESamplerAddressMode::Clamp);
+        
+        NearestSampler = RenderContext->CreateSampler(SamplerDesc);
+
+        SamplerDesc.SetAllFilters(true)
+        .SetAllAddressModes(ESamplerAddressMode::Clamp);
+        
+        LinearSampler = RenderContext->CreateSampler(SamplerDesc);
 
         #if WITH_DEVELOPMENT_TOOLS
         ImGuiRenderer = Memory::New<FVulkanImGuiRender>();
@@ -24,6 +37,9 @@ namespace Lumina
         ImGuiRenderer->Deinitialize();
         Memory::Delete(ImGuiRenderer);
         #endif
+
+        NearestSampler.SafeRelease();
+        LinearSampler.SafeRelease();
         
         RenderContext->Deinitialize();
         Memory::Delete(RenderContext);

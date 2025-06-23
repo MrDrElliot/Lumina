@@ -13,7 +13,8 @@ project "Editor"
 	 {
 		"Lumina",
 		"DbgHelp",
-		"EA",
+    	"EA",
+		"ImGui"
 	 }
 	 
 	files

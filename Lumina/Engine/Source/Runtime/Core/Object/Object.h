@@ -26,7 +26,7 @@ namespace Lumina
 
         friend CObject* StaticAllocateObject();
 
-        DECLARE_CLASS(Lumina, CObject, CObject, "script://Lumina", LUMINA_API)
+        DECLARE_CLASS(Lumina, CObject, CObject, "script://lumina", LUMINA_API)
         DEFINE_DEFAULT_CONSTRUCTOR_CALL(CObject)
 
         LUMINA_API CObject();
@@ -34,14 +34,12 @@ namespace Lumina
         /** Internal constructor */
         LUMINA_API CObject(EObjectFlags InFlags)
             : CObjectBase(InFlags)
-        {
-        }
+        {}
 
         /** Internal constructor */
         LUMINA_API CObject(CClass* InClass, EObjectFlags InFlags, const TCHAR* Package, FName InName)
             :CObjectBase(InClass, InFlags, Package, InName)
-        {
-        }
+        {}
 
         /** Virtual destructor to allow proper cleanup in derived classes. */
         LUMINA_API virtual ~CObject() = default;
@@ -56,7 +54,7 @@ namespace Lumina
         LUMINA_API virtual void PostInitProperties();
 
         /** Called after classes Class Default Object has been created */
-        LUMINA_API virtual void PostCreateCDO() { }
+        LUMINA_API virtual void PostCreateCDO() {}
         
     private:
 

@@ -4,13 +4,13 @@
 #include "Class.h"
 #include "DeferredRegistry.h"
 #include "Lumina.h"
+#include "GarbageCollection/GarbageCollector.h"
 #include "Log/Log.h"
 #include "Memory/Memory.h"
 
 namespace Lumina
 {
 
-    TVector<CObjectBase*> PendingDeletes;
     THashMap<FName, CObjectBase*> ObjectNameHash;
     TFixedVector<CObjectBase*, 2024> GObjectVector;
 
@@ -45,16 +45,16 @@ namespace Lumina
         ClassPrivate = const_cast<CClass*>(Initializer->Params.Class);
         PackagePrivate = StringUtils::FromWideString(Initializer->Params.Package);
 
-        AddObject(NamePrivate, (int32)GObjectVector.size());
+        AddObject(NamePrivate, GObjectVector.size());
 
     }
 
     CObjectBase::~CObjectBase()
     {
-        LOG_INFO("Deleting Object: {}", GetName());
+        Assert(IsMarkedGarbage())
 
         ObjectNameHash.erase(NamePrivate);
-        if (InternalIndex < (int32)GObjectVector.size() - 1)
+        if (InternalIndex < GObjectVector.size() - 1)
         {
             eastl::swap(GObjectVector[InternalIndex], GObjectVector.back());
 
@@ -88,18 +88,14 @@ namespace Lumina
         return ++RefCount;
     }
 
-    uint32 CObjectBase::Release() const
+    uint32 CObjectBase::Release()
     {
-        uint32 NewRefCount = --RefCount;
-
-        // We use one, because the last element is in the object array.
-        if (NewRefCount == 1)
+        if (--RefCount == 0)
         {
-            CObjectBase* MutableThis =const_cast<CObjectBase*>(this);
-            Memory::Delete(MutableThis);
+            MarkGarbage();
         }
 
-        return NewRefCount;
+        return RefCount;
     }
 
     void CObjectBase::BeginRegister()
@@ -128,9 +124,29 @@ namespace Lumina
         AddObject(NamePrivate, (int32)GObjectVector.size());
     }
 
-    void CObjectBase::AddObject(FName Name, int32 InInternalIndex)
+    void CObjectBase::Rename(TCHAR* NewName)
     {
-        LOG_INFO("Adding CObject - {}", Name);
+        
+    }
+
+    void CObjectBase::MarkGarbage()
+    {
+        GarbageCollection::AddGarbage(this);
+    }
+
+    void CObjectBase::DestroyNow()
+    {
+        Assert(!IsMarkedGarbage())
+        SetFlag(OF_MarkedGarbage);
+        OnMarkedGarbage();
+        OnDestroy();
+
+        CObjectBase* MutableThis = const_cast<CObjectBase*>(this);
+        Memory::Delete(MutableThis);
+    }
+
+    void CObjectBase::AddObject(FName Name, SIZE_T InInternalIndex)
+    {
         InternalIndex = InInternalIndex;
         ObjectNameHash.insert_or_assign(Name, this);
         GObjectVector.push_back(this);
@@ -241,11 +257,13 @@ namespace Lumina
         while (!GObjectVector.empty())
         {
             CObjectBase* Base = GObjectVector.back();
-            Memory::Delete(Base);
+            Base->MarkGarbage();
+            GarbageCollection::CollectGarbage();
         }
 
         ObjectNameHash.clear();
 
+        
     }
 
 

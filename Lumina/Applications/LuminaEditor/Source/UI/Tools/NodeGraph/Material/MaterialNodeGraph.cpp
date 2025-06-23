@@ -20,19 +20,27 @@ namespace Lumina
     void CMaterialNodeGraph::Initialize()
     {
         Super::Initialize();
+        
+        TVector<CObject*> NewNodes = Memory::Move(Material->MaterialNodes);
+        TVector<uint16> NewConnections = Memory::Move(Material->Connections);
 
-        
-        TVector<CObject*> NewNodes = Material->MaterialNodes;
-        TVector<uint16> NewConnections = Material->Connections;
-        
+        bool bHasOutputNode = false;
         for (CObject* Object : NewNodes)
         {
             CEdGraphNode* Node = Cast<CEdGraphNode>(Object);
+            if (Node->IsA<CMaterialOutputNode>())
+            {
+                bHasOutputNode = true;
+            }
+            
             AddNode(Node);
-            ImNodes::SetNodeGridSpacePos(Node->GetNodeID(), { (float)Node->GetNodeX(), (float)Node->GetNodeY() });
+            ImNodes::SetNodeGridSpacePos((int)Node->GetNodeID(), { Node->GetNodeX(), Node->GetNodeY() });
         }
 
-        CreateNode(CMaterialOutputNode::StaticClass());
+        if (!bHasOutputNode)
+        {
+            CreateNode(CMaterialOutputNode::StaticClass());
+        }
         
         if (!NewConnections.empty())
         {
@@ -40,8 +48,6 @@ namespace Lumina
             {
                 uint16 FirstConnection = NewConnections[i];
                 uint16 SecondConnection = NewConnections[i + 1];
-
-                LOG_INFO("Links: {} - {}", FirstConnection, SecondConnection);
                 
                 CEdNodeGraphPin* StartPin = nullptr;
                 CEdNodeGraphPin* EndPin = nullptr;
@@ -91,6 +97,11 @@ namespace Lumina
         RegisterGraphNode(CMaterialExpression_ConstantFloat4::StaticClass());
 
         ValidateGraph();
+    }
+
+    void CMaterialNodeGraph::Shutdown()
+    {
+        CEdNodeGraph::Shutdown();
     }
 
     void CMaterialNodeGraph::OnDrawGraph()
@@ -156,17 +167,10 @@ namespace Lumina
         
         for (CEdGraphNode* Node : Nodes)
         {
-            if (Cast<CMaterialOutputNode>(Node) == nullptr)
+            Material->MaterialNodes.push_back(Node);
+            
+            for (CEdNodeGraphPin* InputPin : Node->GetInputPins())
             {
-                Material->MaterialNodes.push_back(Node);
-            }
-
-            for (uint64 j = 0; j < Node->GetInputPins().size(); ++j)
-            {
-                CEdNodeGraphPin* InputPin = Node->GetInputPins()[j];
-                
-                Assert(InputPin->GetConnections().size() <= 1)
-
                 for (CEdNodeGraphPin* Connection : InputPin->GetConnections())
                 {
                     Material->Connections.push_back(InputPin->PinID);

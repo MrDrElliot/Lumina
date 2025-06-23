@@ -13,7 +13,7 @@ namespace Lumina
 
         OF_DefaultObject        = 1 << 2,
 
-        OF_PendingDelete        = 1 << 3,
+        OF_MarkedGarbage        = 1 << 3,
 
         OF_CompiledInNative     = 1 << 4,
 

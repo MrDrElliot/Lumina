@@ -267,7 +267,7 @@ namespace Lumina
             case ERHIBindingResourceType::Buffer_SRV:   return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
             case ERHIBindingResourceType::Buffer_UAV:   return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
             case ERHIBindingResourceType::Buffer_CBV:   return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-            default:                                    Assert(0);
+            default:                                    NO_ENTRY()
         }
     }
 
@@ -346,7 +346,7 @@ namespace Lumina
         
         Device->GetAllocator()->AllocateBuffer(&BufferCreateInfo, VmaFlags, &Buffer, "");
         
-        Assert(Buffer != VK_NULL_HANDLE);
+        Assert(Buffer != VK_NULL_HANDLE)
     }
 
     FVulkanBuffer::~FVulkanBuffer()
@@ -357,7 +357,6 @@ namespace Lumina
     FVulkanSampler::FVulkanSampler(FVulkanDevice* InDevice, const FSamplerDesc& InDesc)
         : IDeviceChild(InDevice)
     {
-        // Initialize VkSamplerCreateInfo with default values
         VkSamplerCreateInfo Info = {};
         Info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 

@@ -10,6 +10,7 @@
 #include "glm/gtc/type_ptr.hpp"
 #include "Renderer/RHIIncl.h"
 #include "Scene.h"
+#include "Core/Engine/Engine.h"
 #include "Renderer/RenderContext.h"
 #include "Renderer/RenderManager.h"
 #include "Subsystems/FCameraManager.h"
@@ -46,7 +47,7 @@ namespace Lumina
         
         FCameraManager* CameraManager = Scene->GetSceneSubsystem<FCameraManager>();
         FCameraComponent& CameraComponent = CameraManager->GetActiveCameraEntity().GetComponent<FCameraComponent>();
-        
+
         SceneGlobalData.CameraData.Location =   glm::vec4(CameraComponent.GetPosition(), 1.0f);
         SceneGlobalData.CameraData.View =       CameraComponent.GetViewMatrix();
         SceneGlobalData.CameraData.Projection = CameraComponent.GetProjectionMatrix();
@@ -54,22 +55,20 @@ namespace Lumina
         SceneGlobalData.DeltaTime =             (float)Scene->GetSceneDeltaTime();
 
         SceneViewport->SetViewVolume(CameraComponent.GetViewVolume());
-        
 
+        FColor Color;
+        Color.B = glm::sin(SceneGlobalData.Time);
+        Color.R = glm::cos(SceneGlobalData.Time);
         
+        GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext()->GetCommandList()->ClearImageColor(SceneViewport->GetRenderTarget(), Color);
+
         
     }
 
     void FSceneRenderer::EndScene(const FScene* Scene)
     {
-        PROFILE_SCOPE(StartFrame)
-
-
         ForwardRenderPass(Scene);
-        
         FullScreenPass(Scene);
-        
-        
     }
 
     void FSceneRenderer::OnSwapchainResized()

@@ -5,11 +5,8 @@
 namespace Lumina
 {
     class CClass;
-}
-
-namespace Lumina
-{
     class FSubsystemManager;
+    class FAssetRegistry;
 }
 
 namespace Lumina

@@ -14,7 +14,8 @@ project "Sandbox"
 	links
 	{
 		"Lumina",
-		"EA",
+    	"EA",
+		"GLFW",
 	}
 
 

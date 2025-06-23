@@ -1,19 +1,46 @@
 #version 450
 #pragma shader_stage(compute)
 
-layout(set = 0, binding = 0, rgba8) uniform image2D img;
-
+layout(set = 0, binding = 0, rgba8) uniform image2D img;  // Output image
 layout(set = 0, binding = 1) uniform UBO
 {
-    vec4 Color;
+    vec2 iResolution;  // Resolution of the image
+    float iTime;       // Time passed since the start
 };
 
-layout(local_size_x = 16, local_size_y = 16) in;
-
+layout(local_size_x = 16, local_size_y = 16) in;  // Local size for compute shader
 
 void main()
 {
-    ivec2 pixel = ivec2(gl_GlobalInvocationID.xy);
+    ivec2 pixel = ivec2(gl_GlobalInvocationID.xy);  // Get the pixel coordinate
+    ivec2 size = imageSize(img);                    // Get the size of the image
+    vec2 uv = (vec2(pixel) - 0.5 * vec2(size)) / float(size.y);  // Normalize UV coordinates based on aspect ratio
 
-    imageStore(img, pixel, vec4(Color.rgb, 1.0));
+    float time = iTime * 0.5;  // Speed up time for more dynamic effect
+
+    // Generate complex noise for a psychedelic effect
+    float noise = 0.0;
+    vec2 shift = vec2(time * 0.1, time * 0.1);
+    float freq = 1.0;
+
+    for (int i = 0; i < 5; i++) {
+        noise += (1.0 / freq) * sin(10.0 * freq * (uv.x + shift.x) * cos(time + uv.y * freq) + shift.y);
+        freq *= 3.0; // Increase frequency for more complexity
+    }
+
+    noise = 0.5 + 0.5 * noise;
+
+    // Neon color palette cycling over time
+    vec3 neonColor = vec3(sin(time + noise), cos(time + noise), sin(time + noise + 1.57));
+
+    neonColor = pow(neonColor, vec3(2.0));  // Enhance vibrancy with gamma correction
+
+    // Apply the noise pattern to modulate the neon colors
+    vec3 color = neonColor * noise;
+
+    // Full screen effect, adjust brightness with a simple function
+    color *= 0.75 + 0.25 * sin(time);
+
+    // Store the final color in the output image
+    imageStore(img, pixel, vec4(color, 1.0));
 }

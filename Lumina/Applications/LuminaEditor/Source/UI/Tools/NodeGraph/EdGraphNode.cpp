@@ -20,7 +20,13 @@ namespace Lumina
 
     CEdGraphNode::~CEdGraphNode()
     {
-        
+        for (auto& PinVector : NodePins)
+        {
+            for (CEdNodeGraphPin* Pin : PinVector)
+            {
+                Pin->MarkGarbage();
+            }
+        }
     }
 
     void CEdGraphNode::Serialize(FArchive& Ar)

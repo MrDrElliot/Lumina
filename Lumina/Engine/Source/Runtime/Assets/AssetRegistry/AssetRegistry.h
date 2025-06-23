@@ -1,46 +1,40 @@
 #pragma once
 
 #include <filesystem>
+
+#include "Assets/AssetHeader.h"
 #include "Subsystems/Subsystem.h"
-#include "Assets/AssetHandle.h"
 #include "Core/Delegates/Delegate.h"
 #include "Core/Serialization/MemoryArchiver.h"
+#include "EASTL/internal/atomic/atomic.h"
 
-#define FILE_EXTENSION ".lum"
+#define FILE_EXTENSION ".lasset"
+
 
 
 DECLARE_MULTICAST_DELEGATE(FAssetRegistryUpdatedDelegate);
 
 namespace Lumina
 {
-	struct FAssetHeader;
-
-	class LUMINA_API FAssetRegistry : public ISubsystem
+	class LUMINA_API FAssetRegistry final : public ISubsystem
 	{
 	public:
-
-		FAssetRegistry() = default;
-		~FAssetRegistry() override = default;
 
 		void Initialize(FSubsystemManager& Manager) override;
 		void Deinitialize() override;
 
-		void LoadRegistry(const FString& File);
-		void SaveRegistry();
+		void StopDiscoveryThread();
+		void UpdateAssetDictionary();
+		void UpdateAssetPath(const FName& AssetName, const FString& NewPath);
+		FAssetHeader GetAssetHeader(const FName& AssetName);
 		
-		void CreateAssetHeader(const FAssetPath& InPath);
-
-		void RenameAsset(FAssetPath& InAsset, const FString& NewName);
-
-		void AssetCreated(const FAssetPath& InPath, const FAssetHeader& Header);
+	protected:
 		
-		FAssetHeader FindAssetHeader(const FAssetPath& InPath, bool* bSuccess = nullptr);
+		void BeginAssetInitialDiscovery();
+		void BuildAssetDictionary(const TVector<FString>& DiscoveredAssets);
 
-		void GetAllAssetHeaders(TVector<FAssetHeader>& Headers);
-	
-	private:
-		
-		THashMap<FAssetPath, FAssetHeader>			Registry;
-		FAssetRegistryUpdatedDelegate				OnAssetRegistryUpdated;
+		std::thread							DiscoveryThread;
+		eastl::atomic<bool> 				bDiscoveryThreadRunning;
+		THashMap<FName, FAssetHeader> 		AssetDictionary;
 	};
 }

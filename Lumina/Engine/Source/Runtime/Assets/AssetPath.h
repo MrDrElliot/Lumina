@@ -51,10 +51,10 @@ namespace Lumina
         
     private:
 
-        /** Full path to an asset on disk. */
+        /** Virtualized path to an asset.. */
         FString AssetPath = {};
 
-        /** May or may not be valid, looking to the original raw asset on disk.*/
+        /** May or may not be valid, looking to the original raw asset on disk. (E.g. ".fbx, .png")*/
         FString RawPath = {};
     };
 }

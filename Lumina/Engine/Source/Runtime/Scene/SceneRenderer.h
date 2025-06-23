@@ -3,6 +3,7 @@
 #include "Scene.h"
 #include "ScenePrimitives.h"
 #include "SceneRenderTypes.h"
+#include "Renderer/RenderResource.h"
 #include "Renderer/RenderTypes.h"
 
 namespace Lumina
@@ -43,8 +44,11 @@ namespace Lumina
         void StartScene(const FScene* Scene);
         void EndScene(const FScene* Scene);
     
-    protected:
+        INLINE FRHIImageRef GetRenderTarget() const { return SceneViewport->GetRenderTarget(); }
+        INLINE FSceneGlobalData* GetSceneGlobalData() { return &SceneGlobalData; }
 
+    protected:
+        
         void ForwardRenderPass(const FScene* Scene);
         void FullScreenPass(const FScene* Scene);
 
@@ -54,8 +58,8 @@ namespace Lumina
         void CreateImages();
         void OnSwapchainResized();
 
-        FORCEINLINE FSceneGlobalData* GetSceneGlobalData() { return &SceneGlobalData; }
 
+        
         
     private:
 

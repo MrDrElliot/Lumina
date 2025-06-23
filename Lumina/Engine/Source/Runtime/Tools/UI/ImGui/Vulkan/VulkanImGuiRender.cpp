@@ -3,7 +3,9 @@
 #include "Assets/Factories/TextureFactory/TextureFactory.h"
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_vulkan.h"
+#include "Core/Engine/Engine.h"
 #include "Core/Windows/Window.h"
+#include "GUID/GUID.h"
 #include "Renderer/RenderManager.h"
 #include "Renderer/API/Vulkan/VulkanMacros.h"
 #include "Renderer/API/Vulkan/VulkanRenderContext.h"
@@ -38,9 +40,9 @@ namespace Lumina
 		
 		FRenderManager* RenderManager = Manager.GetSubsystem<FRenderManager>();
 
-		FVulkanRenderContext* VulkanBackend = RenderManager->GetRenderContext<FVulkanRenderContext>();
+		VulkanRenderContext = RenderManager->GetRenderContext<FVulkanRenderContext>();
 		
-        VK_CHECK(vkCreateDescriptorPool(VulkanBackend->GetDevice()->GetDevice(), &PoolInfo, nullptr, &DescriptorPool));
+        VK_CHECK(vkCreateDescriptorPool(VulkanRenderContext->GetDevice()->GetDevice(), &PoolInfo, nullptr, &DescriptorPool));
 
         
     	VkDebugUtilsObjectNameInfoEXT NameInfo = {};
@@ -52,7 +54,7 @@ namespace Lumina
 		
         Assert(ImGui_ImplGlfw_InitForVulkan(Windowing::GetPrimaryWindowHandle()->GetWindow(), true));
 
-		VkFormat Format = VulkanBackend->GetSwapchain()->GetSwapchainFormat();
+		VkFormat Format = VulkanRenderContext->GetSwapchain()->GetSwapchainFormat();
 		
         VkPipelineRenderingCreateInfo RenderPipeline = {};
         RenderPipeline.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
@@ -62,10 +64,10 @@ namespace Lumina
     	
         ImGui_ImplVulkan_InitInfo InitInfo = {};
         InitInfo.PipelineRenderingCreateInfo = RenderPipeline;
-        InitInfo.Instance = VulkanBackend->GetVulkanInstance();
-        InitInfo.PhysicalDevice = VulkanBackend->GetDevice()->GetPhysicalDevice();
-        InitInfo.Device = VulkanBackend->GetDevice()->GetDevice();
-        InitInfo.Queue = VulkanBackend->GetQueue(ECommandQueue::Graphics)->Queue;
+        InitInfo.Instance = VulkanRenderContext->GetVulkanInstance();
+        InitInfo.PhysicalDevice = VulkanRenderContext->GetDevice()->GetPhysicalDevice();
+        InitInfo.Device = VulkanRenderContext->GetDevice()->GetDevice();
+        InitInfo.Queue = VulkanRenderContext->GetQueue(ECommandQueue::Graphics)->Queue;
         InitInfo.DescriptorPool = DescriptorPool;
         InitInfo.MinImageCount = 2;
         InitInfo.ImageCount = 2;
@@ -81,10 +83,10 @@ namespace Lumina
 
     void FVulkanImGuiRender::Deinitialize()
     {
-    	/*for (auto& KVP : ImageCache)
+    	for (auto& KVP : ImageCache)
     	{
-    		ImGui_ImplVulkan_RemoveTexture(static_cast<VkDescriptorSet>(KVP.second.ID));
-    	}*/
+    		ImGui_ImplVulkan_RemoveTexture(KVP.second);
+    	}
     	
     	ImGui_ImplVulkan_Shutdown();
     	
@@ -101,16 +103,11 @@ namespace Lumina
         ImGui::NewFrame();
     }
 	
-
-
     void FVulkanImGuiRender::OnEndFrame(const FUpdateContext& UpdateContext)
     {
 		if(ImDrawData* DrawData = ImGui::GetDrawData())
 		{
-			VulkanRenderContext = UpdateContext.GetSubsystem<FRenderManager>()->GetRenderContext<FVulkanRenderContext>();
-			
 			FRHICommandListRef CommandList = VulkanRenderContext->GetCommandList(ECommandQueue::Graphics);
-
 			
 			FRenderPassBeginInfo RenderPass; RenderPass
 			.AddColorAttachment(GEngine->GetEngineViewport()->GetRenderTarget())
@@ -118,7 +115,6 @@ namespace Lumina
 			.SetColorStoreOp(ERenderLoadOp::Store)
 			.SetColorClearColor(FColor(1.0f))
 			.SetRenderArea(GEngine->GetEngineViewport()->GetRenderTarget()->GetDescription().Extent);
-
 			
 			CommandList->BeginRenderPass(RenderPass);
 			
@@ -130,7 +126,24 @@ namespace Lumina
 		}
     }
 
-    void FVulkanImGuiRender::RegisterNewImage(FGuid Guid, ImTextureID NewImage, const FString& DebugName)
+    ImTextureID FVulkanImGuiRender::GetOrCreateImTexture(FRHIImageRef Image)
     {
+	    VkImage VulkanImage = Image->GetAPIResource<VkImage>();
+    	VkImageView VulkanImageView = Image->GetAPIResource<VkImageView, EAPIResourceType::ImageView>();
+    	auto It = ImageCache.find(VulkanImage);
+
+    	if (It != ImageCache.end())
+    	{
+    		return It->second;
+    	}
+
+    	FRHISamplerRef Sampler = GEngine->GetEngineSubsystem<FRenderManager>()->GetLinearSampler();
+    	VkSampler VulkanSampler = Sampler->GetAPIResource<VkSampler>();
+    	
+    	VkDescriptorSet DescriptorSet = ImGui_ImplVulkan_AddTexture(VulkanSampler, VulkanImageView, VK_IMAGE_LAYOUT_GENERAL);
+    	ImageCache.insert_or_assign(VulkanImage, DescriptorSet);
+
+    	return DescriptorSet;
+    	
     }
 }

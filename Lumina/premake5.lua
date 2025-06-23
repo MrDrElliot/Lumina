@@ -46,7 +46,9 @@ project "Lumina"
             
 	   
 	    "Engine/ThirdParty/imgui/backends/imgui_impl_glfw.h",
-	    "Engine/ThirdParty/imgui/backends/imgui_impl_glfw.cpp",
+    	"Engine/ThirdParty/imgui/backends/imgui_impl_glfw.cpp",
+	    
+	    "Engine/ThirdParty/imgui/imgui_demo.cpp",
 	    
 	    "Engine/ThirdParty/imgui/backends/imgui_impl_vulkan.h",
 	    "Engine/ThirdParty/imgui/backends/imgui_impl_vulkan.cpp",
@@ -101,10 +103,10 @@ project "Lumina"
 
 
 	filter { "system:windows" }
-	    --prebuildcommands { '"%LUMINA_DIR%/Binaries/Release-windows-x86_64/Reflector.exe"' }
 		defines { "LE_PLATFORM_WINDOWS", }
 		flags { "NoRuntimeChecks", "NoIncrementalLink" }
 		links { "Dbghelp", }
+	    --prebuildcommands { '"%LUMINA_DIR%/Binaries/Release-windows-x86_64/Reflector.exe"' }
 
 	filter "configurations:Debug"
 		links { "%{VULKAN_SDK}/lib/shaderc_combinedd.lib", }

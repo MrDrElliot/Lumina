@@ -31,6 +31,7 @@ namespace Lumina
 
     void FScene::StartFrame()
     {
+        
     }
     
     void FScene::Update(const FUpdateContext& UpdateContext)

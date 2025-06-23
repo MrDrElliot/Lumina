@@ -50,7 +50,7 @@ namespace Lumina
             {
                 FString ElementLabel = "Element " + eastl::to_string(i);
 
-                if (ImGui::CollapsingHeader(ElementLabel.c_str(), ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanAvailWidth))
+                if (ImGui::CollapsingHeader(ElementLabel.c_str(), ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth))
                 {
                     ImGui::PushID(static_cast<int>(i));
 

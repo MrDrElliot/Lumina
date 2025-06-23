@@ -50,7 +50,7 @@ inline void PrintCallStack()
             else
             {
                 std::cout << i << ": " << symbol->Name << " - " << symbol->Address
-                          << " (File: " << line.FileName << ", Line: " << line.LineNumber << ")" << std::endl;
+                          << " (File: " << line.FileName << ", Line: " << line.LineNumber << ")" << "\n";
             }
         }
         else
@@ -61,7 +61,7 @@ inline void PrintCallStack()
             }
             else
             {
-                std::cout << i << ": " << symbol->Name << " - " << symbol->Address << " (No Line Info)" << std::endl;
+                std::cout << i << ": " << symbol->Name << " - " << symbol->Address << " (No Line Info)" << "\n";
             }
         }
     }
@@ -75,13 +75,18 @@ inline void PrintCallStack()
 inline LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS* exceptionInfo)
 {
     std::ofstream logFile("Logs/crash_log.txt", std::ios::app);
-    logFile << "Unhandled Exception Occurred!" << std::endl;
+    logFile << "Unhandled Exception Occurred!\n";
     PrintCallStack();
     logFile.close();
 
     return EXCEPTION_EXECUTE_HANDLER;
 }
 #endif
+
+#define NO_ENTRY() \
+    LOG_ERROR("No Entry Hit in {0} at line {1}", __FILE__, __LINE__); \
+    __debugbreak(); \
+    std::unreachable(); \
 
 // Macro for assertion, triggering a breakpoint if the condition fails
 #define Assert(condition)                               \

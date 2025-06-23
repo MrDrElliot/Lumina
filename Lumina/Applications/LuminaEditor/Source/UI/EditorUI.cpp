@@ -20,6 +20,11 @@
 #include "Tools/UI/ImGui/imfilebrowser.h"
 #include "imnodes/imnodes.h"
 #include "Paths/Paths.h"
+#include <Assets/AssetHeader.h>
+
+#include "Renderer/RenderManager.h"
+#include "Scene/SceneRenderer.h"
+#include "Tools/UI/ImGui/ImGuiRenderer.h"
 
 namespace Lumina
 {
@@ -34,7 +39,7 @@ namespace Lumina
     void FEditorUI::Initialize(const FUpdateContext& UpdateContext)
     {
         ImNodes::CreateContext();
-
+        
         EditorWindowClass.ClassId = ImHashStr("EditorWindowClass");
         EditorWindowClass.DockingAllowUnclassed = false;
         EditorWindowClass.ViewportFlagsOverrideSet = ImGuiViewportFlags_NoAutoMerge;
@@ -74,7 +79,7 @@ namespace Lumina
 
     void FEditorUI::OnStartFrame(const FUpdateContext& UpdateContext)
     {
-        Assert(UpdateContext.GetUpdateStage() == EUpdateStage::FrameStart);
+        Assert(UpdateContext.GetUpdateStage() == EUpdateStage::FrameStart)
 
         auto TitleBarLeftContents = [this, &UpdateContext] ()
         {
@@ -86,7 +91,7 @@ namespace Lumina
             DrawTitleBarInfoStats(UpdateContext);
         };
 
-        TitleBar.Draw(TitleBarLeftContents, 250, TitleBarRightContents, 290);
+        TitleBar.Draw(TitleBarLeftContents, 400, TitleBarRightContents, 290);
 
         const ImGuiID DockspaceID = ImGui::GetID("EditorDockSpace");
 
@@ -169,17 +174,52 @@ namespace Lumina
 
         if (bDearImGuiDemoWindowOpen)
         {
-            //ImGui::ShowDemoWindow(&bDearImGuiDemoWindowOpen);
+            ImGui::ShowDemoWindow(&bDearImGuiDemoWindowOpen);
+        }
+
+        if (bShowObjectDebug)
+        {
+            ImGui::SetNextWindowSize({400.0f, 600.0f});
+            FString Name = "CObject List - Num: " + eastl::to_string(GObjectVector.size());
+            ImGui::Begin(Name.c_str(), &bShowObjectDebug, ImGuiWindowFlags_NoResize);
+            for (CObjectBase* Object : GObjectVector)
+            {
+                ImGui::Text("%s", Object->GetName().c_str());
+            }
+            ImGui::End();
+        }
+
+        FEditorTool* ToolToClose = nullptr;
+        
+        for (FEditorTool* Tool : EditorTools)
+        {
+            if (!SubmitToolMainWindow(UpdateContext, Tool, DockspaceID))
+            {
+                ToolToClose = Tool;
+            }
         }
 
         for (FEditorTool* Tool : EditorTools)
         {
-            SubmitToolMainWindow(UpdateContext, Tool, DockspaceID);
-        }
-
-        for (FEditorTool* Tool : EditorTools)
-        {
+            if (Tool == ToolToClose)
+            {
+                continue;
+            }
+            
             DrawToolContents(UpdateContext, Tool);
+        }
+
+        if (ToolToClose)
+        {
+            DestroyTool(UpdateContext, ToolToClose);
+        }
+
+        while (!ToolsPendingAdd.empty())
+        {
+            FEditorTool* NewTool = ToolsPendingAdd.front();
+            ToolsPendingAdd.pop();
+
+            EditorTools.push_back(NewTool);
         }
 
         if (!FProject::Get()->HasLoadedProject() && !FileBrowser.IsOpened())
@@ -220,7 +260,7 @@ namespace Lumina
 
     void FEditorUI::OnEndFrame(const FUpdateContext& UpdateContext)
     {
-
+        
     }
     
     void FEditorUI::DestroyTool(const FUpdateContext& UpdateContext, FEditorTool* Tool)
@@ -228,10 +268,18 @@ namespace Lumina
         auto Itr = eastl::find(EditorTools.begin(), EditorTools.end(), Tool);
         Assert(Itr != EditorTools.end())
 
+        EditorTools.erase(Itr);
+        for (auto MapItr = ActiveAssetTools.begin(); MapItr != ActiveAssetTools.end(); ++MapItr)
+        {
+            if (MapItr->second == Tool)
+            {
+                ActiveAssetTools.erase(MapItr);
+                break;
+            }
+        }
         
         Tool->Deinitialize(UpdateContext);
         Memory::Delete(Tool);
-        EditorTools.erase(Itr);
     }
 
     void FEditorUI::PushModal(const FString& Title, ImVec2 Size, TFunction<bool(const FUpdateContext&)> DrawFunction)
@@ -306,13 +354,13 @@ namespace Lumina
         }
     }
 
-    void FEditorUI::SubmitToolMainWindow(const FUpdateContext& UpdateContet, FEditorTool* EditorTool, ImGuiID TopLevelDockspaceID)
+    bool FEditorUI::SubmitToolMainWindow(const FUpdateContext& UpdateContext, FEditorTool* EditorTool, ImGuiID TopLevelDockspaceID)
     {
-        Assert(EditorTool != nullptr);
-        Assert(TopLevelDockspaceID != 0);
+        Assert(EditorTool != nullptr)
+        Assert(TopLevelDockspaceID != 0)
 
-        bool isToolStillOpen = true;
-        bool* pIsToolOpen = ( EditorTool == SceneEditorTool ) ? nullptr : &isToolStillOpen; // Prevent closing the map-editor editor tool
+        bool bIsToolStillOpen = true;
+        bool* bIsToolOpen = (EditorTool == SceneEditorTool) ? nullptr : &bIsToolStillOpen; // Prevent closing the map-editor editor tool
         
         // Top level editors can only be docked with each others
         ImGui::SetNextWindowClass(&EditorWindowClass);
@@ -327,16 +375,21 @@ namespace Lumina
         }
         
         ImGuiWindowFlags WindowFlags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_MenuBar;
+
+        ImGuiWindow* CurrentWindow = ImGui::FindWindowByName(EditorTool->GetToolName().c_str());
+        const bool bVisible = CurrentWindow != nullptr && !CurrentWindow->Hidden;
         
-       // ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(255, 0, 0, 255));
+        ImVec4 VisibleColor   = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
+        ImVec4 NotVisibleColor = ImVec4(0.5f, 0.5f, 0.5f, 1.0f);
+
+        ImGui::PushStyleColor(ImGuiCol_Text, bVisible ? VisibleColor : NotVisibleColor);
         ImGui::SetNextWindowSizeConstraints(ImVec2(128, 128), ImVec2(FLT_MAX, FLT_MAX));
         ImGui::SetNextWindowSize(ImVec2(1024, 768), ImGuiCond_FirstUseEver);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 1.0f);
-        ImGui::Begin(EditorTool->GetToolName().c_str(), pIsToolOpen, WindowFlags);
+        ImGui::Begin(EditorTool->GetToolName().c_str(), bIsToolOpen, WindowFlags);
         ImGui::PopStyleVar();
-      //  ImGui::PopStyleColor();
-
-        ImGuiWindow* pCurrentWindow = ImGui::FindWindowByName(EditorTool->GetToolName().c_str());
+        ImGui::PopStyleColor();
+        
 
         if (ImGui::IsWindowFocused(ImGuiFocusedFlags_ChildWindows | ImGuiFocusedFlags_DockHierarchy))
         {
@@ -361,11 +414,12 @@ namespace Lumina
         // We will also use this value as a suffix to create window titles, but we could perfectly have an indirection to allocate and use nicer names for window names (e.g. 0001, 0002).
         EditorTool->PrevDockspaceID = EditorTool->CurrDockspaceID;
         EditorTool->CurrDockspaceID = EditorTool->CalculateDockspaceID();
-        Assert(EditorTool->CurrDockspaceID != 0);
+        Assert(EditorTool->CurrDockspaceID != 0)
         
 
         ImGui::End();
 
+        return bIsToolStillOpen;
     }
 
     void FEditorUI::DrawToolContents(const FUpdateContext& UpdateContext, FEditorTool* Tool)
@@ -374,7 +428,7 @@ namespace Lumina
         // (Therefore only the p_open and flags of the first call to Begin() applies)
         ImGui::Begin(Tool->ToolName.c_str());
         
-        Assert(ImGui::GetCurrentWindow()->BeginCount == 2);
+        Assert(ImGui::GetCurrentWindow()->BeginCount == 2)
         
         const ImGuiID dockspaceID = Tool->GetCurrentDockspaceID();
         const ImVec2 DockspaceSize = ImGui::GetContentRegionAvail();
@@ -407,7 +461,7 @@ namespace Lumina
                 // Delete settings of old windows
                 // Rely on window name to ditch their .ini settings forever..
                 char windowSuffix[16];
-                ImFormatString( windowSuffix, IM_ARRAYSIZE( windowSuffix ), "##%08X", Tool->PrevDockspaceID);
+                ImFormatString(windowSuffix, IM_ARRAYSIZE(windowSuffix), "##%08X", Tool->PrevDockspaceID);
                 size_t windowSuffixLength = strlen( windowSuffix );
                 ImGuiContext& g = *GImGui;
                 for (ImGuiWindowSettings* settings = g.SettingsWindows.begin(); settings != nullptr; settings = g.SettingsWindows.next_chunk(settings))
@@ -525,13 +579,6 @@ namespace Lumina
 
                     //-- Setup viewport for scene.
                     
-                    FScene* Scene = Tool->GetScene();
-                    Assert(Scene != nullptr);
-                    
-                    FSceneRenderer* SceneRenderer = UpdateContext.GetSubsystem<FSceneManager>()->GetSceneRendererForScene(Scene);
-                    Assert(SceneRenderer != nullptr);
-                    
-                    
                     ImGui::SetNextWindowSizeConstraints(ImVec2(128, 128), ImVec2(FLT_MAX, FLT_MAX));
                     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
                     bool const DrawViewportWindow = ImGui::Begin(ToolWindowName.c_str(), nullptr, viewportWindowFlags);
@@ -539,9 +586,19 @@ namespace Lumina
                 
                     if (DrawViewportWindow)
                     {
+                        FScene* Scene = Tool->GetScene();
+                        FSceneRenderer* SceneRenderer = UpdateContext.GetSubsystem<FSceneManager>()->GetSceneRendererForScene(Scene);
+
+                        FRHIImageRef RenderTarget = SceneRenderer->GetRenderTarget();
+
+                        FRenderManager* RenderManager = UpdateContext.GetSubsystem<FRenderManager>();
+                        IImGuiRenderer* ImGuiRenderer = RenderManager->GetImGuiRenderer();
+
+                        ImTextureID ViewportTexture = ImGuiRenderer->GetOrCreateImTexture(RenderTarget);
+                        
                         Tool->bViewportFocused = ImGui::IsWindowFocused();
                         Tool->bViewportHovered = ImGui::IsWindowHovered();
-                        Tool->DrawViewport(UpdateContext, nullptr);
+                        Tool->DrawViewport(UpdateContext, ViewportTexture);
                     }
                     
                     ImGui::End();
@@ -564,6 +621,7 @@ namespace Lumina
                     
                     ImGui::End();
                 }
+                
             }
         }
 
@@ -571,6 +629,7 @@ namespace Lumina
         {
             Tool->SetEditorCameraEnabled(Tool->bViewportFocused);
         }
+        
     }
 
     void FEditorUI::CreateGameViewportTool(const FUpdateContext& UpdateContext)
@@ -625,44 +684,11 @@ namespace Lumina
             {
                 ModalManager.CreateModalDialogue("Asset Registry", ImVec2(1400, 800), [this] (const FUpdateContext& Ctx) -> bool
                 {
-                    FAssetRegistry* AssetRegistry = Ctx.GetSubsystem<FAssetRegistry>();
-                    TVector<FAssetHeader> Assets;
-                    AssetRegistry->GetAllAssetHeaders(Assets);
-
-                    ImGui::Text("Asset Registry");
-                    ImGui::Separator();
-
-                    if (Assets.empty())
-                    {
-                        ImGui::Text("No assets found.");
-                    }
-                    else
-                    {
-                        ImGui::Columns(5, "asset_columns", false);
-                        ImGui::Text("Path"); ImGui::NextColumn();
-                        ImGui::Text("Guid"); ImGui::NextColumn();
-                        ImGui::Text("Version"); ImGui::NextColumn();
-                        ImGui::Text("Type"); ImGui::NextColumn();
-                        ImGui::Separator();
-
-                        for (const FAssetHeader& Asset : Assets)
-                        {
-                            ImGui::Text("%s", Asset.Path.GetPathAsString().c_str()); ImGui::NextColumn();
-                            ImGui::Text("%s", Asset.Guid.String().c_str()); ImGui::NextColumn();
-                            ImGui::Text("%d", Asset.Version); ImGui::NextColumn();
-                            ImGui::Text("%s", AssetTypeToString(Asset.Type).c_str()); ImGui::NextColumn();
-                        }
-
-                        ImGui::Columns(1);
-
-                        ImGui::Spacing();
-                    }
-
                     if (ImGui::Button("Close"))
                     {
                         return true;
                     }
-
+                    
                     return false;
                 });
             }
@@ -698,9 +724,10 @@ namespace Lumina
             ImGui::EndMenu();
         }
         
-        if (ImGui::BeginMenu("Editor"))
+        if (ImGui::BeginMenu("Tools"))
         {
             ImGui::MenuItem("ImGui Demo Window", nullptr, &bDearImGuiDemoWindowOpen, !bDearImGuiDemoWindowOpen);
+            ImGui::MenuItem("CObject List", nullptr, &bShowObjectDebug, !bShowObjectDebug);
             ImGui::EndMenu();
         }
         
@@ -716,19 +743,19 @@ namespace Lumina
     void FEditorUI::DrawTitleBarInfoStats(const FUpdateContext& UpdateContext)
     {
         ImGui::SameLine();
-        float const currentFPS = 1.0f / UpdateContext.GetDeltaTime();
+        float const currentFPS = 1.0f / (float)UpdateContext.GetDeltaTime();
         TInlineString<100> const perfStats( TInlineString<100>::CtorSprintf(),  "FPS: %3.0f", currentFPS );
         ImGui::Text(perfStats.c_str());
 
         
         ImGui::SameLine();
-        uint32 CObjectCount = GObjectVector.size();
+        SIZE_T CObjectCount = GObjectVector.size();
         TInlineString<100> const ObjectStats(TInlineString<100>::CtorSprintf(),  "CObject Count: %i", CObjectCount);
         ImGui::Text(ObjectStats.c_str());
 
         
         ImGui::SameLine();
-        float const allocatedMemory = Memory::GetTotalAllocatedMemory() / 1024.0f / 1024.0f;
+        float const allocatedMemory = (float)Memory::GetTotalRequestedMemory() / 1024.0f / 1024.0f;
         TInlineString<100> const memStats( TInlineString<100>::CtorSprintf(), "MEM: %.2fMB", allocatedMemory );
         ImGui::Text(memStats.c_str());
     }

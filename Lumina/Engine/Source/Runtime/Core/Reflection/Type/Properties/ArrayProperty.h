@@ -94,7 +94,7 @@ namespace Lumina
             SIZE_T TotalBytes = NewElementCount * ElementSize;
 
             uint8* NewData = (uint8*)Memory::Malloc(TotalBytes);
-            Memory::MemsetZero(NewData, TotalBytes);
+            Memory::Memzero(NewData, TotalBytes);
 
             *reinterpret_cast<uint8**>(VectorPtr) = NewData;
             *reinterpret_cast<uint8**>((uint8*)VectorPtr + sizeof(void*)) = NewData + TotalBytes;

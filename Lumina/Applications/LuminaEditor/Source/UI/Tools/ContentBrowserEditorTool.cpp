@@ -5,6 +5,7 @@
 #include "Assets/AssetRegistry/AssetRegistry.h"
 #include "Assets/Definition/AssetDefinition.h"
 #include "Assets/Factories/Factory.h"
+#include "Core/Engine/Engine.h"
 #include "Paths/Paths.h"
 #include "Project/Project.h"
 #include "Tools/UI/ImGui/ImGuiX.h"
@@ -16,6 +17,7 @@ namespace Lumina
     {
         ContentBrowserTileView.MarkTreeDirty();
         OutlinerListView.MarkTreeDirty();
+        //GEngine->GetEngineSubsystem<FAssetRegistry>()->UpdateAssetDictionary();
     }
 
     void FContentBrowserEditorTool::OnInitialize()
@@ -74,14 +76,19 @@ namespace Lumina
             
                             try
                             {
+                                if (std::filesystem::exists(NewPath))
+                                {
+                                    throw std::filesystem::filesystem_error(
+                                        "Destination path already exists",
+                                        std::make_error_code(std::errc::file_exists)
+                                    );
+                                }
+                                
                                 std::filesystem::rename(OldPath, NewPath);
-                                FAssetRegistry* Registry = Context.GetSubsystem<FAssetRegistry>();
 
                                 if (!std::filesystem::is_directory(OldPath))
                                 {
-                                    FAssetPath Path("");
-
-                                    Registry->RenameAsset(Path, Buf);
+                                    
                                 }
                                 
                                 memset(Buf, 0, sizeof(Buf));
@@ -91,6 +98,7 @@ namespace Lumina
                             catch (const std::filesystem::filesystem_error& e)
                             {
                                 LOG_ERROR("Failed to rename file: {0}", e.what());
+                                return true;
                             }
                             
                         }
@@ -132,7 +140,6 @@ namespace Lumina
             {
                 FContentBrowserListViewItem* ContentItem = static_cast<FContentBrowserListViewItem*>(Item);
                 
-                
             }
         };
         
@@ -142,14 +149,16 @@ namespace Lumina
             Path = Path.parent_path() / "Game/";
 
             if (!std::filesystem::exists(Path))
+            {
                 return;
+            }
 
-            // Recursive lambda for traversing directories
-            auto AddChildrenRecursive = [&](auto& AddChildrenRecursive, FContentBrowserListViewItem* ParentItem, const std::filesystem::path& ParentPath) -> void
+            auto AddChildrenRecursive = [&](auto& AddChildrenRecursive,
+                FContentBrowserListViewItem* ParentItem, const std::filesystem::path& ParentPath) -> void
             {
                 for (auto& Entry : std::filesystem::directory_iterator(ParentPath))
                 {
-                    if (!std::filesystem::is_directory(Entry))  // Skip files
+                    if (!std::filesystem::is_directory(Entry))
                         continue;
 
                     auto* ChildItem = ParentItem->AddChild<FContentBrowserListViewItem>(ParentItem, Entry.path());
@@ -159,17 +168,16 @@ namespace Lumina
                 }
             };
 
-            // Process root directories
             for (auto& Directory : std::filesystem::directory_iterator(Path))
             {
-                if (!std::filesystem::is_directory(Directory))  // Skip files
+                if (!std::filesystem::is_directory(Directory))
                     continue;
 
                 auto* RootItem = OutlinerListView.AddItemToTree<FContentBrowserListViewItem>(nullptr, Directory.path());
 
-                // Start recursion for subdirectories
                 AddChildrenRecursive(AddChildrenRecursive, RootItem, Directory.path());
             }
+            
         };
 
 
@@ -216,8 +224,8 @@ namespace Lumina
     void FContentBrowserEditorTool::DrawContentBrowser(const FUpdateContext& Context, bool bIsFocused, ImVec2 Size)
     {
         std::filesystem::path Path = Paths::GetEngineResourceDirectory();
-
         constexpr float Padding = 10.0f;
+        bool bWroteSomething = false;
 
         ImVec2 AdjustedSize = ImVec2(Size.x - 2 * Padding, Size.y - 2 * Padding);
 
@@ -237,20 +245,72 @@ namespace Lumina
             ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(10.0f, 5.0f));
             ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(8.0f, 5.0f));
 
+            auto MakeUniquePath = [this](FString& InPath)
+            {
+                using namespace std::filesystem;
+
+                FString BaseName = InPath;
+                FString Extension;
+
+                // Separate extension if it exists (optional)
+                size_t DotIndex = InPath.find_last_of('.');
+                if (DotIndex != FString::npos && is_regular_file(InPath.c_str()))
+                {
+                    Extension = InPath.substr(DotIndex);
+                    BaseName = InPath.substr(0, DotIndex);
+                }
+
+                // Extract numeric suffix if it exists
+                int SuffixNumber = 1;
+                size_t UnderscorePos = BaseName.find_last_of('_');
+                if (UnderscorePos != FString::npos)
+                {
+                    FString SuffixPart = BaseName.substr(UnderscorePos + 1);
+                    char* EndPtr = nullptr;
+                    long ParsedNumber = std::strtol(SuffixPart.c_str(), &EndPtr, 10);
+
+                    if (EndPtr != SuffixPart.c_str() && *EndPtr == '\0') // Valid number
+                    {
+                        SuffixNumber = static_cast<int>(ParsedNumber) + 1;
+                        BaseName = BaseName.substr(0, UnderscorePos); // Strip old suffix
+                    }
+                }
+
+                FString CandidatePath = BaseName + "_" + eastl::to_string(SuffixNumber) + Extension;
+
+                while (exists(CandidatePath.c_str()))
+                {
+                    ++SuffixNumber;
+                    CandidatePath = BaseName + "_" + eastl::to_string(SuffixNumber) + Extension;
+                }
+
+                InPath = CandidatePath;
+            };
+
+            
             {
                 const char* FolderIcon = LE_ICON_FOLDER;
-                const char* Folder = "New Folder";
-            
-                FString MenuItemName = FString(FolderIcon) + " " + Folder;
+                FString MenuItemName = FString(FolderIcon) + " " + "New Folder";
                 if (ImGui::MenuItem(MenuItemName.c_str()))
                 {
                     std::filesystem::path NewPath = SelectedPath / "NewFolder";
                     std::filesystem::create_directory(NewPath);
-                    RefreshContentBrowser();
+                    bWroteSomething = true;
                 }
             }
 
             ImGui::Separator();
+
+            {
+                const char* ImportIcon = LE_ICON_FILE_IMPORT;
+                FString MenuItemName = FString(ImportIcon) + " " + "Import Asset";
+                if (ImGui::MenuItem(MenuItemName.c_str()))
+                {
+
+                    bWroteSomething = true;
+                }
+            }
+            
             
             const char* FileIcon = LE_ICON_FILE;
             const char* File = "New Asset";
@@ -267,10 +327,13 @@ namespace Lumina
                     if (ImGui::MenuItem(DisplayName.c_str()))
                     {
                         CFactory* Factory = Definition->GetFactory();
-                        FString PathString = Paths::Combine(SelectedPath.string().c_str(), Factory->GetDefaultAssetCreationName(PathString).c_str());
+                        FString PathString = Paths::Combine(SelectedPath.string().c_str(), Factory->GetDefaultAssetCreationName(PathString).c_str()) + ".lasset";
+                        MakeUniquePath(PathString);
+                        PathString = Paths::RemoveExtension(PathString);
+                        
                         Factory->CreateAssetFile(PathString);
                         ToolContext->OpenAssetEditor(PathString);
-                        RefreshContentBrowser();
+
                     }
                 }
                 
@@ -281,32 +344,13 @@ namespace Lumina
             ImGui::EndPopup();
         }
 
+        if (bWroteSomething)
+        {
+            RefreshContentBrowser();
+        }
+
         ContentBrowserTileView.Draw(ContentBrowserTileViewContext);
         ImGui::EndChild();
-
-
-#if 0
-                    FFactoryRegistry* Registry = Context.GetSubsystem<FAssetManager>()->GetFactoryRegistry();
-
-                    for (FFactory* Factory : Registry->GetFactories())
-                    {
-                        if (ImGui::MenuItem(Factory->GetAssetName().c_str()))
-                        {
-                            FString VirtualizedPath = Paths::ConvertToVirtualPath(SelectedPath.string().c_str());
-                            
-                            if (FAssetPath NewPath = Factory->CreateNew(VirtualizedPath); NewPath != FAssetPath())
-                            {
-                                ToolContext->OpenAssetPath(NewPath);
-                                RefreshContentBrowser();
-                            }
-                        }
-                    }
-
-                    ImGui::EndMenu();
-                }
-                ImGui::PopStyleVar(2);
-                ImGui::EndPopup();
-#endif
     
     }
 }

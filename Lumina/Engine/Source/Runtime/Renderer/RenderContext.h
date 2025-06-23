@@ -88,6 +88,7 @@ namespace Lumina
 
         
         NODISCARD virtual FRHIImageRef CreateImage(const FRHIImageDesc& ImageSpec) = 0;
+        NODISCARD virtual FRHISamplerRef CreateSampler(const FSamplerDesc& SamplerDesc) = 0;
         
 
         //-------------------------------------------------------------------------------------

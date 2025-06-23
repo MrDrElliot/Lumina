@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Assets/AssetHandle.h"
+#include "EASTL/atomic.h"
 #include "Assets/AssetRequest.h"
 #include "Containers/Array.h"
 #include "Core/Threading/Thread.h"
@@ -31,7 +31,6 @@ namespace Lumina
 		
 	private:
 
-		FAssetRecord* FindAssetRecord(const FAssetHandle& InHandle);
 		FAssetRequest* TryFindActiveRequest(const FString& InAssetPath);
 
 		void ProcessAssetRequests();
@@ -43,8 +42,6 @@ namespace Lumina
 		eastl::atomic<bool>										bAssetThreadRunning = true;
 		mutable FRecursiveMutex									RecursiveMutex;
 		
-		THashMap<FAssetPath, TRefCountPtr<FAssetRecord>>		AssetRecord;
-
 		TQueue<FAssetRequest*>									RequestQueue;
 		TVector<FAssetRequest*>									ActiveRequests;
 		

@@ -16,10 +16,6 @@
 namespace Lumina
 {
     class FSpirVShaderCompiler;
-}
-
-namespace Lumina
-{
     class FVulkanCommandList;
     class FVulkanSwapchain;
     class FVulkanDevice;
@@ -186,6 +182,7 @@ namespace Lumina
         
 
         NODISCARD FRHIImageRef CreateImage(const FRHIImageDesc& ImageSpec) override;
+        NODISCARD FRHISamplerRef CreateSampler(const FSamplerDesc& SamplerDesc) override;
         
         
         //-------------------------------------------------------------------------------------

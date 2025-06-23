@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "Assets/Asset.h"
+
 #include "Containers/Array.h"
 #include "Core/Object/Object.h"
 #include "Core/Object/ObjectMacros.h"

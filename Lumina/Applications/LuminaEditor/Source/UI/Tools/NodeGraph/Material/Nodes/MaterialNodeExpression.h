@@ -48,8 +48,8 @@ namespace Lumina
         uint32 GenerateExpression(FMaterialCompiler* Compiler) override { return 0; }
         void GenerateDefinition(FMaterialCompiler* Compiler) override;
         
-        CMaterialInput* A;
-        CMaterialInput* B;
+        CMaterialInput* A = nullptr;
+        CMaterialInput* B = nullptr;
 
         float ConstA;
         float ConstB;
@@ -70,8 +70,8 @@ namespace Lumina
         uint32 GenerateExpression(FMaterialCompiler* Compiler) override { return 0; }
         void GenerateDefinition(FMaterialCompiler* Compiler) override;
         
-        CMaterialInput* A;
-        CMaterialInput* B;
+        CMaterialInput* A = nullptr;
+        CMaterialInput* B = nullptr;
 
         float ConstA;
         float ConstB;
@@ -91,8 +91,8 @@ namespace Lumina
         uint32 GenerateExpression(FMaterialCompiler* Compiler) override { return 0; }
         void GenerateDefinition(FMaterialCompiler* Compiler) override;
 
-        CMaterialInput* A;
-        CMaterialInput* B;
+        CMaterialInput* A = nullptr;
+        CMaterialInput* B = nullptr;
 
         float ConstA;
         float ConstB;
@@ -112,8 +112,8 @@ namespace Lumina
         uint32 GenerateExpression(FMaterialCompiler* Compiler) override { return 0; }
         void GenerateDefinition(FMaterialCompiler* Compiler) override;
 
-        CMaterialInput* A;
-        CMaterialInput* B;
+        CMaterialInput* A = nullptr;
+        CMaterialInput* B = nullptr;
 
         float ConstA;
         float ConstB;

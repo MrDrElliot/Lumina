@@ -44,14 +44,21 @@ namespace Lumina::Paths
         return InPath;
     }
     
-    inline FString FileName(const FString& InPath)
+    inline FString FileName(const FString& InPath, bool bRemoveExtension = false)
     {
         size_t LastSlash = InPath.find_last_of("/\\");
-        if (LastSlash != FString::npos)
+        FString FilePart = (LastSlash != FString::npos) ? InPath.substr(LastSlash + 1) : InPath;
+
+        if (bRemoveExtension)
         {
-            return InPath.substr(LastSlash + 1);
+            size_t DotPos = FilePart.find_last_of('.');
+            if (DotPos != FString::npos)
+            {
+                return FilePart.substr(0, DotPos);
+            }
         }
-        return InPath;
+
+        return FilePart;
     }
 
     inline FString RemoveExtension(const FString& InPath)

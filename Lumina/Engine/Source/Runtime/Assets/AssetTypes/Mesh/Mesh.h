@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Assets/Asset.h"
-#include "Assets/AssetHandle.h"
 #include "Core/Object/Object.h"
 #include "Renderer/MeshData.h"
 #include "Mesh.generated.h"

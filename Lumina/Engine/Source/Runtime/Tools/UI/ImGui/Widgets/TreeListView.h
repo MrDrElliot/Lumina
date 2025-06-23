@@ -118,13 +118,14 @@ namespace Lumina
             return New;
         }
         
+        void SetSelection(FTreeListViewItem* Item, FTreeListViewContext Context);
+        
     private:
 
         void RebuildTree(FTreeListViewContext Context);
         
         void DrawListItem(FTreeListViewItem* ItemToDraw, FTreeListViewContext Context);
 
-        void SetSelection(FTreeListViewItem* Item, FTreeListViewContext Context);
         void ClearSelection();
 
     private:

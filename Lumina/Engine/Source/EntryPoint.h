@@ -1,5 +1,6 @@
 #pragma once
 
+
 #ifdef _DEBUG
 #ifdef LE_PLATFORM_WINDOWS
 #define _CRTDBG_MAP_ALLOC

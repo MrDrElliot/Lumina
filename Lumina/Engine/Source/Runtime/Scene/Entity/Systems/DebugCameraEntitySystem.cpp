@@ -1,5 +1,6 @@
 ﻿#include "DebugCameraEntitySystem.h"
 #include "Lumina.h"
+#include "Core/Application/Application.h"
 #include "Events/MouseCodes.h"
 #include "Input/Input.h"
 #include "Input/InputSubsystem.h"

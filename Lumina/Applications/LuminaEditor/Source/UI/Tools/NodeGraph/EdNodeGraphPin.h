@@ -28,8 +28,6 @@ namespace Lumina
         {}
 
         
-        virtual ~CEdNodeGraphPin() = default;
-
         virtual void DrawPin() { }
         
         FORCEINLINE void SetPinName(const FString& Name) { PinName = Name; }

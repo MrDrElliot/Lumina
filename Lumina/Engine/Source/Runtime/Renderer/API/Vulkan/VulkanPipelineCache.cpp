@@ -14,7 +14,8 @@ namespace Lumina
             return GraphicsPipelines.at(Hash);
         }
         
-        auto NewPipeline = MakeRefCount<FVulkanGraphicsPipeline>(Device, InDesc);
+        auto NewPipeline = TRefCountPtr<FVulkanGraphicsPipeline>::Create(Device, InDesc);
+        
 
         GraphicsPipelines.emplace(Hash, NewPipeline);
 

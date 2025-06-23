@@ -1,5 +1,7 @@
 
 #include "AssetRequest.h"
+
+#include "AssetHeader.h"
 #include "Core/Object/Class.h"
 #include "Core/Reflection/Type/LuminaTypes.h"
 #include "Core/Reflection/Type/Properties/EnumProperty.h"

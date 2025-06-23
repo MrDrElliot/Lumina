@@ -2,6 +2,7 @@
 
 #include "imgui.h"
 #include "ImGuiX.h"
+#include "Renderer/RHIFwd.h"
 #include "Subsystems/Subsystem.h"
 
 namespace Lumina
@@ -25,6 +26,8 @@ namespace Lumina
         
         virtual void OnStartFrame(const FUpdateContext& UpdateContext) = 0;
         virtual void OnEndFrame(const FUpdateContext& UpdateContext) = 0;
+
+        virtual ImTextureID GetOrCreateImTexture(FRHIImageRef Image) = 0;
     
     protected:
 

@@ -13,9 +13,9 @@ namespace Lumina
 	class LUMINA_API IRefCountedObject
 	{
 	public:
-		virtual ~IRefCountedObject() { }
+		virtual ~IRefCountedObject() = default;
 		virtual uint32 AddRef() const = 0;
-		virtual uint32 Release() const = 0;
+		virtual uint32 Release() = 0;
 		virtual uint32 GetRefCount() const = 0;
 	};
 
@@ -25,7 +25,7 @@ namespace Lumina
 	public:
 
 		FRefCounted() :RefCount(0) {}
-		virtual ~FRefCounted() { Assert(RefCount == 0); }
+		virtual ~FRefCounted() { Assert(RefCount == 0) }
 		FRefCounted(const FRefCounted&) = delete;
 		FRefCounted& operator = (const FRefCounted&) = delete;
 
@@ -142,10 +142,16 @@ namespace Lumina
 			return *this;
 		}
 
+		template<typename... Args>
+		static TRefCountPtr<ReferencedType> Create(Args&&... args)
+		{
+			return TRefCountPtr<ReferencedType>(Memory::New<ReferencedType>(std::forward<Args>(args)...));
+		}
+		
 		template<typename T>
 		TRefCountPtr<T> As()
 		{
-			Assert(GetRefCount() > 0);
+			Assert(GetRefCount() > 0)
 			return TRefCountPtr<T>(static_cast<T*>(Reference));
 		}
 
@@ -238,7 +244,7 @@ namespace Lumina
 			if (Reference)
 			{
 				Result = Reference->GetRefCount();
-				Assert(Result > 0); // you should never have a zero ref count if there is a live ref counted pointer (*this is live)
+				Assert(Result > 0) // you should never have a zero ref count if there is a live ref counted pointer (*this is live)
 			}
 			return Result;
 		}
@@ -289,5 +295,5 @@ template<typename T, typename... TArgs>
 requires std::is_constructible_v<T, TArgs...> && (!eastl::is_array_v<T>)
 FORCEINLINE Lumina::TRefCountPtr<T> MakeRefCount(TArgs&&... Args)
 {
-	return Lumina::TRefCountPtr<T>(Lumina::Memory::New<T>(TForward<TArgs>(Args)...));
+	return Lumina::TRefCountPtr<T>(Lumina::Memory::New<T>(std::forward<TArgs>(Args)...));
 }

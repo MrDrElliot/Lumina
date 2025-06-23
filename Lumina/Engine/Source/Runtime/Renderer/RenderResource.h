@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include <vulkan/vulkan_core.h>
+#include <vulkan/vulkan.h>
 
 #include "RenderTypes.h"
 #include "StateTracking.h"
@@ -265,7 +265,7 @@ namespace Lumina
     		return uint32(NewValue);
     	}
         
-    	FORCEINLINE uint32 Release() const
+    	FORCEINLINE uint32 Release()
     	{
     		int32 NewValue = AtomicFlags.Release(std::memory_order_release);
     		Assert(NewValue >= 0);
@@ -449,7 +449,7 @@ namespace Lumina
 
 	
 
-	struct FRHIBufferDesc
+	struct LUMINA_API FRHIBufferDesc
 	{
 		uint32 Size = 0;
 		uint32 Stride = 0;
@@ -481,7 +481,7 @@ namespace Lumina
 	};
 
 	
-	class FRHIBuffer : public IRHIResource, public IAccessableRHIResource
+	class LUMINA_API FRHIBuffer : public IRHIResource, public IAccessableRHIResource
 	{
 	public:
 
@@ -568,7 +568,7 @@ namespace Lumina
 		MirrorClampToEdge = MirrorOnce
 	};
 
-	enum class ESamplerReductionType : uint8_t
+	enum class LUMINA_API ESamplerReductionType : uint8_t
 	{
 		Standard,
 		Comparison,
@@ -576,7 +576,7 @@ namespace Lumina
 		Max
 	};
 
-	struct FSamplerDesc
+	struct LUMINA_API FSamplerDesc
 	{
 		FColor BorderColor = 1.f;
 		float MaxAnisotropy = 1.f;
@@ -604,7 +604,7 @@ namespace Lumina
 		FSamplerDesc& SetReductionType(ESamplerReductionType type) { ReductionType = type; return *this; }
 	};
 
-	class FRHISampler : public IRHIResource
+	class LUMINA_API FRHISampler : public IRHIResource
 	{
 	public:
 
@@ -615,7 +615,7 @@ namespace Lumina
 		
 	};
 	
-	class FRHIImage : public IRHIResource, public IAccessableRHIResource
+	class LUMINA_API FRHIImage : public IRHIResource, public IAccessableRHIResource
 	{
 	public:
 
@@ -641,7 +641,7 @@ namespace Lumina
 
 	//-------------------------------------------------------------------------------------------------------------------
 
-	class FRHIShader : public IRHIResource
+	class LUMINA_API FRHIShader : public IRHIResource
 	{
 	public:
 
@@ -656,7 +656,7 @@ namespace Lumina
 		FName Key;
 	};
 
-	class FRHIVertexShader : public FRHIShader
+	class LUMINA_API FRHIVertexShader : public FRHIShader
 	{
 	public:
 
@@ -664,7 +664,7 @@ namespace Lumina
 		
 	};
 
-	class FRHIPixelShader : public FRHIShader
+	class LUMINA_API FRHIPixelShader : public FRHIShader
 	{
 	public:
 
@@ -672,7 +672,7 @@ namespace Lumina
 		
 	};
 	
-	class FRHIComputeShader : public FRHIShader
+	class LUMINA_API FRHIComputeShader : public FRHIShader
 	{
 	public:
 
@@ -680,7 +680,7 @@ namespace Lumina
 		
 	};
 
-	class FShaderLibrary : public IRHIResource
+	class LUMINA_API FShaderLibrary : public IRHIResource
 	{
 	public:
 
@@ -705,7 +705,7 @@ namespace Lumina
 	
 	//-------------------------------------------------------------------------------------------------------------------
 
-	enum class ERasterFillMode : uint8_t
+	enum class LUMINA_API ERasterFillMode : uint8_t
 	{
 		Solid,
 		Wireframe,
@@ -715,14 +715,14 @@ namespace Lumina
 		Line = Wireframe
 	};
 
-	enum class ERasterCullMode : uint8
+	enum class LUMINA_API ERasterCullMode : uint8
 	{
 		Back,
 		Front,
 		None
 	};
 
-	enum class EBlendFactor : uint8
+	enum class LUMINA_API EBlendFactor : uint8
 	{
 		Zero = 1,
 		One = 2,
@@ -773,7 +773,7 @@ namespace Lumina
 
 	ENUM_CLASS_FLAGS(EColorMask)
 
-	struct FVertexAttributeDesc
+	struct LUMINA_API FVertexAttributeDesc
 	{
 		EFormat Format = EFormat::UNKNOWN;
 		uint32 ArraySize = 1;
@@ -789,7 +789,7 @@ namespace Lumina
 		constexpr FVertexAttributeDesc& SetIsInstanced(bool value) { bInstanced = value; return *this; }
 	};
 
-	class IRHIInputLayout : public IRHIResource
+	class LUMINA_API IRHIInputLayout : public IRHIResource
 	{
 	public:
 		
@@ -797,7 +797,7 @@ namespace Lumina
 		NODISCARD virtual const FVertexAttributeDesc* GetAttributeDesc(uint32 index) const = 0;
 	};
 	
-	struct FBlendState
+	struct LUMINA_API FBlendState
     {
         struct RenderTarget
         {
@@ -873,7 +873,7 @@ namespace Lumina
 	//-------------------------------------------------------------------------------------------------------------------
 
 	
-	struct FRasterState
+	struct LUMINA_API FRasterState
     {
         ERasterFillMode FillMode = ERasterFillMode::Solid;
         ERasterCullMode CullMode = ERasterCullMode::Back;
@@ -930,7 +930,7 @@ namespace Lumina
         constexpr FRasterState& SetSamplePositions(const char* x, const char* y, int count) { for (int i = 0; i < count; i++) { SamplePositionsX[i] = x[i]; SamplePositionsY[i] = y[i]; } return *this; }
     };
 
-	enum class EStencilOp : uint8
+	enum class LUMINA_API EStencilOp : uint8
 	{
 		Keep = 1,
 		Zero = 2,
@@ -942,7 +942,7 @@ namespace Lumina
 		DecrementAndWrap = 8
 	};
 
-	enum class EComparisonFunc : uint8
+	enum class LUMINA_API EComparisonFunc : uint8
 	{
 		Never = 1,
 		Less = 2,
@@ -954,7 +954,7 @@ namespace Lumina
 		Always = 8
 	};
 	
-	struct FDepthStencilState
+	struct LUMINA_API FDepthStencilState
     {
         struct StencilOpDesc
         {
@@ -1009,7 +1009,7 @@ namespace Lumina
         
     };
 
-	struct FSinglePassStereoState
+	struct LUMINA_API FSinglePassStereoState
 	{
 		bool bEnabled = false;
 		bool bIndependentViewportMask = false;
@@ -1029,7 +1029,7 @@ namespace Lumina
 		constexpr FSinglePassStereoState& SetRenderTargetIndexOffset(uint16 value) { RenderTargetIndexOffset = value; return *this; }
 	};
 	
-	struct FRenderState
+	struct LUMINA_API FRenderState
 	{
 		FBlendState				BlendState;
 		FDepthStencilState		DepthStencilState;
@@ -1042,7 +1042,7 @@ namespace Lumina
 		constexpr FRenderState& SetSinglePassStereoState(const FSinglePassStereoState& value) { SinglePassStereo = value; return *this; }
 	};
 
-	struct FBindingLayoutItem
+	struct LUMINA_API FBindingLayoutItem
 	{
 		uint32 Slot;
 		
@@ -1050,7 +1050,7 @@ namespace Lumina
 		uint16 Size						: 16;
 	};
 
-	struct FBindingLayoutDesc
+	struct LUMINA_API FBindingLayoutDesc
 	{
 		TBitFlags<ERHIShaderType> StageFlags;
 		uint32 Index = 0;
@@ -1063,7 +1063,7 @@ namespace Lumina
 		FBindingLayoutDesc& AddItem(const FBindingLayoutItem& Item) { Bindings.push_back(Item); return *this; }
 	};
 
-	struct FBindingSetItem
+	struct LUMINA_API FBindingSetItem
 	{
 		IRHIResource* ResourceHandle;
 		uint32 Slot;
@@ -1148,7 +1148,7 @@ namespace Lumina
 
 	};
 	
-	struct FBindingSetDesc
+	struct LUMINA_API FBindingSetDesc
 	{
 		TFixedVector<FBindingSetItem, MaxBindingsPerLayout> Bindings;
 		
@@ -1177,14 +1177,14 @@ namespace Lumina
 	};
 
 	
-	class FRHIBindingLayout : public IRHIResource
+	class LUMINA_API FRHIBindingLayout : public IRHIResource
 	{
 	public:
 		
 		NODISCARD virtual const FBindingLayoutDesc* GetDesc() const = 0;
 	};
 
-	class FRHIBindingSet : public IRHIResource
+	class LUMINA_API FRHIBindingSet : public IRHIResource
 	{
 	public:
 		
@@ -1193,7 +1193,7 @@ namespace Lumina
 		
 	};
 
-	enum class EVariableShadingRate : uint8
+	enum class LUMINA_API EVariableShadingRate : uint8
 	{
 		e1x1,
 		e1x2,
@@ -1204,7 +1204,7 @@ namespace Lumina
 		e4x4
 	};
 
-	enum class EShadingRateCombiner : uint8
+	enum class LUMINA_API EShadingRateCombiner : uint8
 	{
 		Passthrough,
 		Override,
@@ -1213,7 +1213,7 @@ namespace Lumina
 		ApplyRelative
 	};
 
-	struct FVariableRateShadingState
+	struct LUMINA_API FVariableRateShadingState
 	{
 		bool bEnabled = false;
 		EVariableShadingRate ShadingRate = EVariableShadingRate::e1x1;
@@ -1259,7 +1259,7 @@ namespace Lumina
     };
 
 	
-	class FRHIGraphicsPipeline : public IRHIResource
+	class LUMINA_API FRHIGraphicsPipeline : public IRHIResource
 	{
 	public:
 
@@ -1273,7 +1273,7 @@ namespace Lumina
 	//-------------------------------------------------------------------------------------------------------------------
 
 
-	struct FComputePipelineDesc
+	struct LUMINA_API FComputePipelineDesc
 	{
 		FRHIComputeShaderRef			CS;
 		TVector<FRHIBindingLayoutRef>	BindingLayouts;
@@ -1282,7 +1282,7 @@ namespace Lumina
 		FComputePipelineDesc& AddBindingLayout(FRHIBindingLayout* layout) { BindingLayouts.push_back(layout); return *this; }
 	};
 	
-	class FRHIComputePipeline : public IRHIResource
+	class LUMINA_API FRHIComputePipeline : public IRHIResource
 	{
 	public:
 
@@ -1293,7 +1293,7 @@ namespace Lumina
 	};
 
 
-	struct FGraphicsState
+	struct LUMINA_API FGraphicsState
 	{
 
 		FRHIGraphicsPipeline*	Pipeline;
@@ -1304,7 +1304,7 @@ namespace Lumina
 		
 	};
 
-	struct FComputeState
+	struct LUMINA_API FComputeState
 	{
 		FRHIComputePipeline*	Pipeline;
 

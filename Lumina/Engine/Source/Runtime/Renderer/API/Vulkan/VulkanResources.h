@@ -81,7 +81,7 @@ namespace Lumina
 
     private:
 
-        bool                        bImageManagedExternal = false; // Mostly for swapchain.
+        bool                        bImageManagedExternal = false;  // Mostly for swapchain.
         VkImageAspectFlags          FullAspectMask =        VK_IMAGE_ASPECT_NONE;
         VkImageAspectFlags          PartialAspectMask =     VK_IMAGE_ASPECT_NONE;
         VkImage                     Image =                 VK_NULL_HANDLE;

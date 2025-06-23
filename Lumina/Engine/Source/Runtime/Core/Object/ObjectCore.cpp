@@ -38,19 +38,23 @@ namespace Lumina
     
     FName MakeUniqueObjectName(const CClass* Class, FName InBaseName)
     {
-        // Default the base name to the class name if none is provided
-        const FName BaseName = (InBaseName == NAME_None) ? Class->GetName() : InBaseName;
+        FName BaseName = (InBaseName == NAME_None) ? Class->GetName() : InBaseName;
 
-        FName TestName = BaseName;
+        // First, try the base name directly
+        if (FindObjectFast(Class, BaseName) == nullptr)
+        {
+            return BaseName;
+        }
+
+        // If it's taken, start appending an increasing index
+        FName TestName;
         CObject* FoundObj = nullptr;
+
         do
         {
             int32_t Index = ++Class->ClassUnique;
-            if (Index > 1)
-            {
-                FString String = BaseName.ToString() + "_" + eastl::to_string(Index);
-                TestName = FName(String);
-            }
+            FString String = BaseName.ToString() + "_" + eastl::to_string(Index);
+            TestName = FName(String);
             FoundObj = FindObjectFast(Class, TestName);
         }
         while (FoundObj != nullptr);
@@ -67,7 +71,7 @@ namespace Lumina
 
         CObjectBase* Object = AllocateCObjectMemory(Params.Class, Flags);
 
-        Memory::MemsetZero(Object, Params.Class->GetSize());
+        Memory::Memzero(Object, Params.Class->GetSize());
         new (Object) CObjectBase(const_cast<CClass*>(Params.Class), Params.Flags, Params.Package, UniqueName);
 
         CObject* Obj = (CObject*)Object;

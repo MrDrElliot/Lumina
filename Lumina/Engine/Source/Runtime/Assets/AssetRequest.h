@@ -1,9 +1,6 @@
 ﻿#pragma once
 
-#include <EASTL/atomic.h>
-#include "AssetHandle.h"
 #include "Core/Object/ObjectPtr.h"
-#include "Platform/GenericPlatform.h"
 
 namespace Lumina
 {
@@ -18,6 +15,7 @@ namespace Lumina
         
         FAssetRequest(const FString& InPath)
             : AssetPath(InPath)
+            , PendingObject(nullptr)
             , bFailed(false)
         {
         }

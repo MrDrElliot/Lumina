@@ -72,8 +72,8 @@ namespace Lumina
 
     void FTreeListView::RebuildTree(FTreeListViewContext Context)
     {
-        Assert(bCurrentlyDrawing == false);
-        Assert(bDirty);
+        Assert(bCurrentlyDrawing == false)
+        Assert(bDirty)
 
         ClearSelection();
         ClearTree();

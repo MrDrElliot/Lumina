@@ -14,21 +14,21 @@ namespace Lumina
 namespace Lumina
 {
     
-    struct FImageBarrier
+    struct LUMINA_API FImageBarrier
     {
         FRHIImageRef Image;
         ERHIAccess AccessBefore = ERHIAccess::None;
         ERHIAccess AccessAfter = ERHIAccess::None;
     };
 
-    struct FBufferBarrier
+    struct LUMINA_API FBufferBarrier
     {
         FRHIBufferRef Buffer;
         ERHIAccess AccessBefore = ERHIAccess::None;
         ERHIAccess AccessAfter = ERHIAccess::None;
     };
 
-    class IAccessableRHIResource
+    class LUMINA_API IAccessableRHIResource
     {
     public:
 
@@ -48,19 +48,19 @@ namespace Lumina
         ERHIAccess DefaultState = ERHIAccess::None;
     };
 
-    struct IBufferState
+    struct LUMINA_API IBufferState
     {
         bool bInitialized = false;
         ERHIAccess State = ERHIAccess::None;
     };
 
-    struct IImageState
+    struct LUMINA_API IImageState
     {
         bool bInitialized = false;
         ERHIAccess State = ERHIAccess::None;
     };
 
-    class FCommandListStateTracker
+    class LUMINA_API FCommandListStateTracker
     {
     public:
 

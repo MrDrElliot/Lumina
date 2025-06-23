@@ -19,30 +19,30 @@ namespace Lumina::Memory
     template <typename T>
     constexpr typename eastl::remove_reference<T>::type&& Move(T&& x) noexcept
     {
-        return static_cast<typename eastl::remove_reference<T>::type&&>(x);
+        return static_cast<typename eastl::remove_reference<T>::type&&>(std::forward<T>(x));
     }
 
     template <typename T>
-    constexpr typename eastl::enable_if<std::is_move_constructible_v<T> && !eastl::is_trivially_copyable_v<T>, eastl::remove_reference_t<T>&&>::type
-    MoveIfAble(T&& x) noexcept
+    constexpr auto MoveIfAble(T&& x) noexcept -> decltype(auto)
+    requires (std::is_move_constructible_v<std::remove_reference_t<T>> && !eastl::is_trivially_copyable_v<std::remove_reference_t<T>>)
     {
-        return static_cast<typename eastl::remove_reference<T>::type&&>(x);
+        return static_cast<std::remove_reference_t<T>&&>(std::forward<T>(x));
     }
 
     template <typename T>
-    constexpr eastl::enable_if_t<!std::is_move_constructible_v<T> || eastl::is_trivially_copyable_v<T>, T&>
-    MoveIfAble(T& x) noexcept
+    constexpr auto MoveIfAble(T& x) noexcept -> decltype(auto)
+    requires (!std::is_move_constructible_v<T> || eastl::is_trivially_copyable_v<T>)
     {
         return x;
     }
 
-    LUMINA_API inline void MemsetZero(void* ptr, size_t size)
+    LUMINA_API inline void Memzero(void* ptr, size_t size)
     {
         memset(ptr, 0, size);
     }
     
     template <typename T>
-    inline void MemsetZero(T* ptr)
+    inline void Memzero(T* ptr)
     {
         memset(ptr, 0, sizeof(T));
     }
@@ -55,7 +55,7 @@ namespace Lumina::Memory
     template <typename T>
     inline bool IsAligned(T const* p)
     {
-        return ( reinterpret_cast<uintptr_t>(p) % alignof( T )) == 0;
+        return (reinterpret_cast<uintptr_t>(p) % alignof( T )) == 0;
     }
 
     LUMINA_API inline void CustomAssert( char const* pMessage )
@@ -135,8 +135,6 @@ namespace Lumina::Memory
         }
 
         SIZE_T ActualAlignment = GetActualAlignment(size, alignment);
-        Assert(ActualAlignment >= MIN_ALIGNMENT)
-        
         void* pMemory = rpaligned_alloc(ActualAlignment, size);
 
         Assert(IsAligned(pMemory, ActualAlignment))

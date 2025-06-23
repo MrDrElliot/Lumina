@@ -18,8 +18,10 @@ namespace Lumina
 
         LUMINA_EDITOR_TOOL(FMaterialEditorTool)
 
-        FMaterialEditorTool(IEditorToolContext* Context, CObject* Asset)
-            : FAssetEditorTool(Context, "Material", Asset)
+        FMaterialEditorTool(IEditorToolContext* Context, CObject* InAsset)
+            : FAssetEditorTool(Context, InAsset->GetName().c_str(), InAsset)
+            , CompilationResult()
+            , NodeGraph(nullptr)
         {
         }
 

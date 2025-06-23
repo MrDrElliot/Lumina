@@ -3,6 +3,8 @@
 #include "Core/Windows/Window.h"
 #include "glfw/glfw3.h"
 #include "Assets/AssetRegistry/AssetRegistry.h"
+#include "Core/Application/Application.h"
+#include "Core/Object/GarbageCollection/GarbageCollector.h"
 #include "Input/InputSubsystem.h"
 #include "Renderer/RenderContext.h"
 #include "Scene/Scene.h"
@@ -189,7 +191,7 @@ namespace Lumina
             }
         }
         
-        
+        GarbageCollection::CollectGarbage();
         UpdateContext.MarkFrameEnd(glfwGetTime());
         
         return true;
