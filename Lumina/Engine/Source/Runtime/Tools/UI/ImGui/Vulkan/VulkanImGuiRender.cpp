@@ -76,9 +76,6 @@ namespace Lumina
 
 
         Assert(ImGui_ImplVulkan_Init(&InitInfo));
-        Assert(ImGui_ImplVulkan_CreateFontsTexture());
-
-		
     }
 
     void FVulkanImGuiRender::Deinitialize()
@@ -134,7 +131,7 @@ namespace Lumina
 
     	if (It != ImageCache.end())
     	{
-    		return It->second;
+    		return (intptr_t)It->second;
     	}
 
     	FRHISamplerRef Sampler = GEngine->GetEngineSubsystem<FRenderManager>()->GetLinearSampler();
@@ -143,7 +140,7 @@ namespace Lumina
     	VkDescriptorSet DescriptorSet = ImGui_ImplVulkan_AddTexture(VulkanSampler, VulkanImageView, VK_IMAGE_LAYOUT_GENERAL);
     	ImageCache.insert_or_assign(VulkanImage, DescriptorSet);
 
-    	return DescriptorSet;
+    	return (intptr_t)DescriptorSet;
     	
     }
 }

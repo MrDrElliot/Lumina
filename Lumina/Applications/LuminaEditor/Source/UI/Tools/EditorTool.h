@@ -175,7 +175,7 @@ namespace Lumina
         
         FScene*                         Scene = nullptr;
         Entity                          EditorEntity;
-        ImTextureID                     SceneViewportTexture = nullptr;
+        ImTextureID                     SceneViewportTexture = 0;
 
         EEditorToolFlags                ToolFlags = EEditorToolFlags::Tool_WantsToolbar;
 

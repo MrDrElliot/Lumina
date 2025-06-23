@@ -30,7 +30,7 @@ namespace Lumina
         {
             ImGui::TableSetupColumn("Label", ImGuiTableColumnFlags_WidthStretch);
 
-            for (int i = 0; i < ListItems.size(); ++i)
+            for (SIZE_T i = 0; i < ListItems.size(); ++i)
             {
                 DrawListItem(ListItems[i], Context);
             }
@@ -86,28 +86,39 @@ namespace Lumina
     void FTreeListView::DrawListItem(FTreeListViewItem* ItemToDraw, FTreeListViewContext Context)
     {
         bool bSelectedItem = VectorContains(Selections, ItemToDraw);
-        Assert(bSelectedItem == ItemToDraw->bSelected);
+        Assert(bSelectedItem == ItemToDraw->bSelected)
         
-        ImGui::PushID(ItemToDraw);
         ImGui::TableNextRow();
-        
         ImGui::TableSetColumnIndex(0);
+        ImGui::PushID(ItemToDraw);
 
-        ImGuiTreeNodeFlags Flags = ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_FramePadding;
+        ImGuiTreeNodeFlags Flags = ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_FramePadding | ImGuiTreeNodeFlags_DrawLinesFull;
 
         if (!ItemToDraw->HasChildren())
         {
             Flags |= ImGuiTreeNodeFlags_Leaf;
+        }
+        else
+        {
+            Flags |= ImGuiTreeNodeFlags_OpenOnArrow;
         }
 
         if (bSelectedItem)
         {
             Flags |= ImGuiTreeNodeFlags_Selected;
         }
-
+        
         const FInlineString DisplayName = ItemToDraw->GetDisplayName();
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(ItemToDraw->GetDisplayColor()));
-        if (ImGui::TreeNodeEx(ItemToDraw, Flags, "%s", DisplayName.c_str()))
+        bool bOpen = ImGui::TreeNodeEx("##TreeNode", Flags, "%s", DisplayName.c_str());
+
+        if (ImGui::IsItemClicked(ImGuiMouseButton_Left))
+        {
+            SetSelection(ItemToDraw, Context);
+        }
+        
+        
+        if (bOpen)
         {
             for (FTreeListViewItem* Child : ItemToDraw->Children)
             {
@@ -117,11 +128,6 @@ namespace Lumina
             ImGui::TreePop();
         }
         ImGui::PopStyleColor();
-
-        if (ImGui::IsItemClicked(ImGuiMouseButton_Left))
-        {
-            SetSelection(ItemToDraw, Context);
-        }
         
         const char* TooltipText = ItemToDraw->GetTooltipText();
         if (TooltipText != nullptr)

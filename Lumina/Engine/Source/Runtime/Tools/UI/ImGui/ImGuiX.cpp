@@ -39,8 +39,8 @@ namespace Lumina::ImGuiX
     {
          bool wasPressed = false;
 
-        ImU32 const hoveredColor = backgroundColor * 1.15f;
-        ImU32 const activeColor = backgroundColor * 1.25f;
+        const ImU32 hoveredColor = 0;// = backgroundColor * 1.15f;
+        const ImU32 activeColor = 0;// backgroundColor * 1.25f;
 
         //-------------------------------------------------------------------------
 

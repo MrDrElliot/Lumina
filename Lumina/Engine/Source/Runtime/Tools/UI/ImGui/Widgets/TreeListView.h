@@ -104,7 +104,6 @@ namespace Lumina
         void ClearTree();
 
         FORCEINLINE void MarkTreeDirty() { bDirty = true; }
-
         FORCEINLINE bool IsCurrentlyDrawing() const { return bCurrentlyDrawing; }
         FORCEINLINE bool IsDirty() const { return bDirty; }
         

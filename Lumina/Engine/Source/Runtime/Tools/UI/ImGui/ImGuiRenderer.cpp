@@ -4,7 +4,7 @@
 #include "ImGuiFonts.h"
 #include "Core/Engine/Engine.h"
 #include "Core/Performance/PerformanceTracker.h"
-#include "imgui/imgui_freetype.h"
+#include "imgui/misc/freetype/imgui_freetype.h"
 #include "Renderer/RHIIncl.h"
 #include "TaskSystem/TaskSystem.h"
 #include "Tools/UI/Fonts/FontData_Lexend.h"
@@ -36,7 +36,7 @@ namespace Lumina
 
     	ImFontConfig iconFontConfig;
     	iconFontConfig.FontDataOwnedByAtlas = false;
-    	iconFontConfig.FontBuilderFlags = ImGuiFreeTypeBuilderFlags_LoadColor | ImGuiFreeTypeBuilderFlags_Bitmap;
+    	iconFontConfig.FontLoaderFlags = ImGuiFreeTypeLoaderFlags_LoadColor | ImGuiFreeTypeLoaderFlags_Bitmap;
     	iconFontConfig.MergeMode = true;
     	iconFontConfig.PixelSnapH = true;
     	iconFontConfig.RasterizerMultiply = 1.5f;
@@ -71,8 +71,8 @@ namespace Lumina
     	CreateFont(FontData, size24, size24, ImGuiX::Font::EFont::Large, "Large", ImVec2( 0, 2 ) );
     	CreateFont(BoldFontData, size24, size24, ImGuiX::Font::EFont::LargeBold, "Large Bold", ImVec2( 0, 2 ) );
 
-    	io.Fonts->TexDesiredWidth = 4096;
-    	io.Fonts->Build();
+    	io.Fonts->TexMinWidth = 4096;
+    	//io.Fonts->GetTx
 
     	io.FontDefault = ImGuiX::Font::FSystemFonts::s_fonts[static_cast<uint8_t>(ImGuiX::Font::EFont::Medium)];
     	
@@ -131,9 +131,9 @@ namespace Lumina
         style.Colors[ImGuiCol_ResizeGripActive] =       ImVec4(0.26f, 0.59f, 0.98f, 0.95f);
         style.Colors[ImGuiCol_Tab] =                    ImVec4(0.08f, 0.08f, 0.09f, 0.83f);
         style.Colors[ImGuiCol_TabHovered] =             ImVec4(0.33f, 0.34f, 0.36f, 0.83f);
-        style.Colors[ImGuiCol_TabActive] =              ImVec4(0.23f, 0.23f, 0.24f, 1.00f);
-        style.Colors[ImGuiCol_TabUnfocused] =           ImVec4(0.08f, 0.08f, 0.09f, 1.00f);
-        style.Colors[ImGuiCol_TabUnfocusedActive] =     ImVec4(0.13f, 0.14f, 0.15f, 1.00f);
+        style.Colors[ImGuiCol_TabSelected] =              ImVec4(0.23f, 0.23f, 0.24f, 1.00f);
+        style.Colors[ImGuiCol_TabDimmed] =           ImVec4(0.08f, 0.08f, 0.09f, 1.00f);
+        style.Colors[ImGuiCol_TabDimmedSelected] =     ImVec4(0.13f, 0.14f, 0.15f, 1.00f);
         style.Colors[ImGuiCol_DockingPreview] =         ImVec4(0.26f, 0.49f, 0.28f, 0.70f);
         style.Colors[ImGuiCol_DockingEmptyBg] =         ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
         style.Colors[ImGuiCol_PlotLines] =              ImVec4(0.61f, 0.61f, 0.61f, 1.00f);
@@ -142,7 +142,7 @@ namespace Lumina
         style.Colors[ImGuiCol_PlotHistogramHovered] =   ImVec4(1.00f, 0.60f, 0.00f, 1.00f);
         style.Colors[ImGuiCol_TextSelectedBg] =         ImVec4(0.26f, 0.59f, 0.98f, 0.35f);
         style.Colors[ImGuiCol_DragDropTarget] =         ImVec4(0.11f, 0.64f, 0.92f, 1.00f);
-        style.Colors[ImGuiCol_NavHighlight] =           ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+        style.Colors[ImGuiCol_NavCursor] =           ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
         style.Colors[ImGuiCol_NavWindowingHighlight] =  ImVec4(1.00f, 1.00f, 1.00f, 0.70f);
         style.Colors[ImGuiCol_NavWindowingDimBg] =      ImVec4(0.80f, 0.80f, 0.80f, 0.20f);
         style.Colors[ImGuiCol_ModalWindowDimBg] =       ImVec4(0.80f, 0.80f, 0.80f, 0.35f);

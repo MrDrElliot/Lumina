@@ -165,6 +165,11 @@ namespace Lumina
 
                     // Recurse into the subdirectory
                     AddChildrenRecursive(AddChildrenRecursive, ChildItem, Entry.path());
+                    LOG_INFO("Entry : {}", Entry.path().generic_string());
+                    if (Entry.path() == SelectedPath)
+                    {
+                        OutlinerListView.SetSelection(ChildItem, OutlinerContext);
+                    }
                 }
             };
 
@@ -190,7 +195,6 @@ namespace Lumina
             SelectedPath = Path;
 
             ContentBrowserTileView.MarkTreeDirty();
-            
         };
 
         OutlinerListView.MarkTreeDirty();
@@ -294,7 +298,9 @@ namespace Lumina
                 if (ImGui::MenuItem(MenuItemName.c_str()))
                 {
                     std::filesystem::path NewPath = SelectedPath / "NewFolder";
-                    std::filesystem::create_directory(NewPath);
+                    FString PathString = NewPath.generic_string().c_str();
+                    MakeUniquePath(PathString);
+                    std::filesystem::create_directory(PathString.c_str());
                     bWroteSomething = true;
                 }
             }
@@ -306,7 +312,6 @@ namespace Lumina
                 FString MenuItemName = FString(ImportIcon) + " " + "Import Asset";
                 if (ImGui::MenuItem(MenuItemName.c_str()))
                 {
-
                     bWroteSomething = true;
                 }
             }
@@ -333,6 +338,8 @@ namespace Lumina
                         
                         Factory->CreateAssetFile(PathString);
                         ToolContext->OpenAssetEditor(PathString);
+
+                        bWroteSomething = true;
 
                     }
                 }
