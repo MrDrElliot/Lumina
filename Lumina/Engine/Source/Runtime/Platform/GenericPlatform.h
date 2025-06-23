@@ -1,47 +1,49 @@
 #pragma once
 
+// Yes, we do define these types just to remove the "_t" from stdint.h... get over it.
 
-//--------------------------------- Un-Signed base types.
-	
+//--------------------------------- Unsigned base types
+
 // 8-bit unsigned integer
-typedef unsigned char 		uint8;
-	
+using uint8  = unsigned char;
+
 // 16-bit unsigned integer
-typedef unsigned short int	uint16;
-	
+using uint16 = unsigned short int;
+
 // 32-bit unsigned integer
-typedef unsigned int		uint32;
-	
+using uint32 = unsigned int;
+
 // 64-bit unsigned integer
-typedef unsigned long long	uint64;
+using uint64 = unsigned long long;
 
-//--------------------------------- Signed base types.
-	
+// 64-bit pointer.
+using UINTPTR = uint64;
+
+//--------------------------------- Signed base types
+
 // 8-bit signed integer
-typedef	signed char			int8;
-	
+using int8   = signed char;
+
 // 16-bit signed integer
-typedef signed short int	int16;
-	
+using int16  = signed short int;
+
 // 32-bit signed integer
-typedef signed int	 		int32;
-	
+using int32  = signed int;
+
 // 64-bit signed integer
-typedef signed long long	int64;
+using int64  = signed long long;
 
-using SIZE_T	=			size_t;
+// Size type. Leave _t to not interfere with SIZE in windef.h
+using SIZE_T = size_t;
 
 
+//--------------------------------- Character types
 
 // An ANSI character. 8-bit fixed-width representation of 7-bit characters.
-typedef char				ANSICHAR;
-	
-// A wide character. In-memory only. ?-bit fixed-width representation of the platform's natural wide character set. Could be different sizes on different platforms.
-typedef wchar_t				WIDECHAR;
-	
-// An 8-bit character type. In-memory only. 8-bit representation. Should really be char8_t but making this the generic option is easier for compilers which don't fully support C++20 yet.
-enum UTF8CHAR : unsigned char {};
-	
-// A switchable character. In-memory only. Either ANSICHAR or WIDECHAR, depending on a licensee's requirements.
-typedef WIDECHAR			TCHAR;
+using ANSICHAR = char;
 
+// A wide character. In-memory only. ?-bit fixed-width representation of the platform's natural wide character set.
+using WIDECHAR = wchar_t;
+
+// A switchable character. In-memory only. Either ANSICHAR or WIDECHAR.
+using TCHAR = WIDECHAR;

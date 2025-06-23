@@ -10,7 +10,7 @@ namespace Lumina
     static uint16 HashPinID(const FString& NodeName, const FString& PinName, ENodePinDirection Direction)
     {
         FString Composite = NodeName + "_" + PinName + "_" + eastl::to_string((uint8)Direction);
-        return (uint16)Hash::GetHash(Composite);
+        return (uint16)Hash::GetHash32(Composite);
     }
     
     void CEdGraphNode::PostCreateCDO()

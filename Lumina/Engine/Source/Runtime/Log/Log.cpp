@@ -16,11 +16,7 @@ namespace Lumina
 	FLog::FLog()
 	{
 	}
-
-	FLog::~FLog()
-	{
-	}
-
+	
 	void FLog::Init()
 	{
 		

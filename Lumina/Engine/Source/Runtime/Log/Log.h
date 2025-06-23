@@ -12,7 +12,6 @@ namespace Lumina
 	public:
 
 		FLog();
-		~FLog();
 
 		static bool IsInitialized() { return Logger != nullptr; }
 		static void Init();

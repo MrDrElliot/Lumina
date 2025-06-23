@@ -303,8 +303,8 @@ namespace Lumina
     
     void FEditorUI::EditorToolLayoutCopy(FEditorTool* SourceTool)
     {
-        ImGuiID sourceToolID = SourceTool->PrevDockspaceID;
-        ImGuiID destinationToolID = SourceTool->CurrDockspaceID;
+        ImGuiID sourceToolID = SourceTool->GetPrevDockspaceID();
+        ImGuiID destinationToolID = SourceTool->GetCurrDockspaceID();
         Assert(sourceToolID != 0 && destinationToolID != 0)
         
         // Helper to build an array of strings pointer into the same contiguous memory buffer.
@@ -334,7 +334,7 @@ namespace Lumina
 
         ContiguousStringArrayBuilder namePairsBuilder;
 
-        for (FEditorTool::FToolWindow* Window : SourceTool->ToolWindows)
+        for (FEditorTool::FToolWindow* Window : SourceTool->GetToolWindows())
         {
             const FInlineString sourceToolWindowName = FEditorTool::GetToolWindowName(Window->Name.c_str(), sourceToolID);
             const FInlineString destinationToolWindowName = FEditorTool::GetToolWindowName(Window->Name.c_str(), destinationToolID);
@@ -364,9 +364,9 @@ namespace Lumina
         
         // Top level editors can only be docked with each others
         ImGui::SetNextWindowClass(&EditorWindowClass);
-        if (EditorTool->DesiredDockID != 0)
+        if (EditorTool->GetDesiredDockID() != 0)
         {
-            ImGui::SetNextWindowDockID(EditorTool->DesiredDockID);
+            ImGui::SetNextWindowDockID(EditorTool->GetDesiredDockID());
             EditorTool->DesiredDockID = 0;
         }
         else
@@ -398,7 +398,7 @@ namespace Lumina
         
         // Set WindowClass based on per-document ID, so tabs from Document A are not dockable in Document B etc. We could be using any ID suiting us, e.g. &doc
         // We also set ParentViewportId to request the platform back-end to set parent/child relationship at the windowing level
-        EditorTool->ToolWindowsClass.ClassId = EditorTool->ID;
+        EditorTool->ToolWindowsClass.ClassId = EditorTool->GetID();
         EditorTool->ToolWindowsClass.ViewportFlagsOverrideSet = ImGuiViewportFlags_NoTaskBarIcon | ImGuiViewportFlags_NoDecoration;
         EditorTool->ToolWindowsClass.ParentViewportId = ImGui::GetWindowViewport()->ID;
         EditorTool->ToolWindowsClass.DockingAllowUnclassed = true;
@@ -407,7 +407,7 @@ namespace Lumina
         // LocationID ~~ (DockId != 0 ? DockId : DocumentID) // When we are in a loose floating window we use our own document id instead of the dock id
         EditorTool->CurrDockID = ImGui::GetWindowDockID();
         EditorTool->PrevLocationID = EditorTool->CurrLocationID;
-        EditorTool->CurrLocationID = EditorTool->CurrDockID != 0 ? EditorTool->CurrDockID : EditorTool->ID;
+        EditorTool->CurrLocationID = EditorTool->CurrDockID != 0 ? EditorTool->CurrDockID : EditorTool->GetID();
 
         // Dockspace ID ~~ Hash of LocationID + DocType
         // So all editors of a same type inside a same tab-bar will share the same layout.
@@ -426,7 +426,7 @@ namespace Lumina
     {
         // This is the second Begin(), as MyEditor_UpdateDocLocationAndLayout() has already done one
         // (Therefore only the p_open and flags of the first call to Begin() applies)
-        ImGui::Begin(Tool->ToolName.c_str());
+        ImGui::Begin(Tool->GetToolName().c_str());
         
         Assert(ImGui::GetCurrentWindow()->BeginCount == 2)
         

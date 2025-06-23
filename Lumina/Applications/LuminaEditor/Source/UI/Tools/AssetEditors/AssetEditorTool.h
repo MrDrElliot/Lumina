@@ -18,6 +18,7 @@ namespace Lumina
         }
 
         void Deinitialize(const FUpdateContext& UpdateContext) override;
+        FString GetToolName() const override { return Asset->GetName().c_str(); }
 
         void Update(const FUpdateContext& UpdateContext) override
         {

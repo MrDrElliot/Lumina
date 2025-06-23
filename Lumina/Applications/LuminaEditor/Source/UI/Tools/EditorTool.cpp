@@ -14,7 +14,6 @@ namespace Lumina
     FEditorTool::FEditorTool(IEditorToolContext* Context, const FString& DisplayName, FScene* InScene)
         : ToolContext(Context)
         , ToolName(DisplayName)
-        , ID(Hash::GetHash32(DisplayName))
         , Scene(InScene)
         , EditorEntity()
     {

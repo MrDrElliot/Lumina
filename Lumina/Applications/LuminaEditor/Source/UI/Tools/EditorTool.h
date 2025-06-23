@@ -26,7 +26,7 @@ namespace Lumina
     class FEditorTool
     {
     public:
-
+        
         friend class FEditorUI;
         virtual ~FEditorTool() = default;
 
@@ -66,14 +66,14 @@ namespace Lumina
         virtual void Initialize();
         virtual void Deinitialize(const FUpdateContext& UpdateContext);
         
-        FORCEINLINE const FString& GetToolName() const { return ToolName; }
+        FORCEINLINE virtual FString GetToolName() const { return ToolName; }
         
 
         FORCEINLINE ImGuiID CalculateDockspaceID() const
         {
-            int32_t dockspaceID = CurrLocationID;
+            uint32 dockspaceID = CurrLocationID;
             char const* const pEditorToolTypeName = GetUniqueTypeName();
-            dockspaceID = ImHashData( pEditorToolTypeName, strlen( pEditorToolTypeName ), dockspaceID );
+            dockspaceID = ImHashData(pEditorToolTypeName, strlen(pEditorToolTypeName), dockspaceID);
             return dockspaceID;
         }
 
@@ -132,15 +132,28 @@ namespace Lumina
 
         /** Called when the undo button is pressed */
         virtual void OnUndo() { }
-        
-        
-        FToolWindow* CreateToolWindow(const FString& InName, const TFunction<void(const FUpdateContext&, bool)>& DrawFunction, const ImVec2& WindowPadding = ImVec2( -1, -1 ), bool DisableScrolling = false);
 
+        /** @TODO Cache and compare */
+        INLINE uint32 GetID() { return Hash::GetHash32(GetToolName()); }
+
+        ImGuiID GetCurrDockID() const        { return CurrDockID; }
+        ImGuiID GetDesiredDockID() const     { return DesiredDockID; }
+        ImGuiID GetCurrLocationID() const    { return CurrLocationID; }
+        ImGuiID GetPrevLocationID() const    { return PrevLocationID; }
+        ImGuiID GetCurrDockspaceID() const   { return CurrDockspaceID; }
+        ImGuiID GetPrevDockspaceID() const   { return PrevDockspaceID; }
+
+        const ImGuiWindowClass& GetToolWindowsClass() const { return ToolWindowsClass; }
+
+        TVector<FToolWindow*>& GetToolWindows() { return ToolWindows; }
+        
+
+
+        FToolWindow* CreateToolWindow(const FString& InName, const TFunction<void(const FUpdateContext&, bool)>& DrawFunction, const ImVec2& WindowPadding = ImVec2( -1, -1 ), bool DisableScrolling = false);
 
         /** Changes the movability of the editor camera */
         void SetEditorCameraEnabled(bool bNewEnable);
         
-    protected:
 
         static FInlineString GetToolWindowName(char const* ToolWindowName, ImGuiID InDockspaceID)
         {
@@ -148,6 +161,8 @@ namespace Lumina
             return { FInlineString::CtorSprintf(), "%s##%08X", ToolWindowName, InDockspaceID };
         }
 
+    protected:
+        
         /** Draw a help menu for this tool */
         virtual void DrawHelpMenu(const FUpdateContext& UpdateContext) { DrawHelpTextRow("No Help Available", ""); }
         
@@ -157,8 +172,6 @@ namespace Lumina
         void SetDisplayName(FString NewName);
 
     protected:
-
-        ImGuiID                         ID = 0;                 // Document identifier (unique)
         
         ImGuiID                         CurrDockID = 0;
         ImGuiID                         DesiredDockID = 0;      // The dock we wish to be in
@@ -187,17 +200,17 @@ namespace Lumina
 
 #define LUMINA_EDITOR_TOOL( TypeName ) \
 constexpr static char const* const s_uniqueTypeName = #TypeName;\
-constexpr static uint32_t const s_toolTypeID = Lumina::Hash::FNV1a::GetHash32( #TypeName );\
+constexpr static uint32 const s_toolTypeID = Lumina::Hash::FNV1a::GetHash32( #TypeName );\
 constexpr static bool const s_isSingleton = false; \
 virtual char const* GetUniqueTypeName() const override { return s_uniqueTypeName; }\
-virtual uint32_t GetUniqueTypeID() const override final { return TypeName::s_toolTypeID; }
+virtual uint32 GetUniqueTypeID() const override final { return TypeName::s_toolTypeID; }
 
 //-------------------------------------------------------------------------
 
 #define LUMINA_SINGLETON_EDITOR_TOOL( TypeName ) \
 constexpr static char const* const s_uniqueTypeName = #TypeName;\
-constexpr static uint32_t const s_toolTypeID = Lumina::Hash::FNV1a::GetHash32( #TypeName ); \
+constexpr static uint32 const s_toolTypeID = Lumina::Hash::FNV1a::GetHash32( #TypeName ); \
 constexpr static bool const s_isSingleton = true; \
 virtual char const* GetUniqueTypeName() const { return s_uniqueTypeName; }\
-virtual uint32_t GetUniqueTypeID() const override final { return TypeName::s_toolTypeID; }\
+virtual uint32 GetUniqueTypeID() const override final { return TypeName::s_toolTypeID; }\
 virtual bool IsSingleton() const override final { return true; }
