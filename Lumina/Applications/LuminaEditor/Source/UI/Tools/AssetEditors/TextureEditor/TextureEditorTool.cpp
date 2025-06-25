@@ -16,22 +16,78 @@ namespace Lumina
     {
         CreateToolWindow(TexturePreviewName, [this](const FUpdateContext& Cxt, bool bFocused)
         {
-            ImGui::Text("Test");
             CTexture* Texture = Cast<CTexture>(Asset);
             FRenderManager* RenderManager = Cxt.GetSubsystem<FRenderManager>();
             ImTextureID TextureID = RenderManager->GetImGuiRenderer()->GetOrCreateImTexture(Texture->RHIImage);
-            ImGui::Image(TextureID, {(float)Texture->ImageDescription.Extent.X, (float)Texture->ImageDescription.Extent.Y});
-            ImGui::Text("Test");
+    
+            static float ZoomFactor = 1.0f;
+            static ImVec2 ImageSize = {512, 512};
+    
+            if (ImGui::IsWindowHovered())
+            {
+                float Wheel = ImGui::GetIO().MouseWheel;
+                if (ImGui::GetIO().KeyCtrl)
+                {
+                    ZoomFactor += Wheel * 0.025f;
+                }
+                else
+                {
+                    ZoomFactor += Wheel * 0.25f;
+                }
+            }
+    
+            ZoomFactor = ImClamp(ZoomFactor, 1.0f, 5.0f);
+    
+            ImageSize = { 512 * ZoomFactor, 512 * ZoomFactor };
+    
+            ImVec2 WindowSize = ImGui::GetWindowSize();
+    
+            ImVec2 ImagePos = {(WindowSize.x - ImageSize.x) * 0.5f, (WindowSize.y - ImageSize.y) * 0.5f};
+            
+            ImGui::SetCursorPos(ImagePos);
+            
+            ImGui::Image(TextureID, ImageSize);
+            
         });
-
+    
         CreateToolWindow(TexturePropertiesName, [this](const FUpdateContext& Cxt, bool bFocused)
         {
             CTexture* Texture = Cast<CTexture>(Asset);
-
-            ImGui::Text("Texture: %s", Texture->GetName().c_str());
-            ImGui::Text("Num Pixels: %i", Texture->Pixels.size());
-        });
         
+            ImGui::Text("Texture: %s", Texture->GetName().c_str());
+            ImGui::Text("Num Pixels: %zu", Texture->Pixels.size());
+            
+            const FRHIImageDesc& ImageDesc = Texture->ImageDescription;
+        
+            ImGui::Text("Extent: %dx%d", ImageDesc.Extent.X, ImageDesc.Extent.Y);
+            ImGui::Text("Depth: %d", ImageDesc.Depth);
+            ImGui::Text("Array Size: %d", ImageDesc.ArraySize);
+            ImGui::Text("Num Mips: %d", ImageDesc.NumMips);
+            ImGui::Text("Num Samples: %d", ImageDesc.NumSamples);
+            ImGui::Text("Dimension: %s", (ImageDesc.Dimension == EImageDimension::Texture2D) ? "2D" :
+                                                    (ImageDesc.Dimension == EImageDimension::Texture3D) ? "3D" :
+                                                    (ImageDesc.Dimension == EImageDimension::TextureCube) ? "Cube" : "Unknown");
+            ImGui::Text("Format: %hhu", static_cast<uint8>(ImageDesc.Format));
+
+            std::string flagsText;
+            if (ImageDesc.Flags.IsFlagSet(EImageCreateFlags::ShaderResource)) flagsText += "ShaderResource ";
+            if (ImageDesc.Flags.IsFlagSet(EImageCreateFlags::RenderTarget)) flagsText += "RenderTarget ";
+            if (ImageDesc.Flags.IsFlagSet(EImageCreateFlags::DepthStencil)) flagsText += "DepthStencil ";
+            if (ImageDesc.Flags.IsFlagSet(EImageCreateFlags::Storage)) flagsText += "Storage ";
+            if (ImageDesc.Flags.IsFlagSet(EImageCreateFlags::InputAttachment)) flagsText += "InputAttachment ";
+            if (ImageDesc.Flags.IsFlagSet(EImageCreateFlags::UnorderedAccess)) flagsText += "UnorderedAccess ";
+            if (ImageDesc.Flags.IsFlagSet(EImageCreateFlags::CubeCompatible)) flagsText += "CubeCompatible ";
+            if (ImageDesc.Flags.IsFlagSet(EImageCreateFlags::Aliasable)) flagsText += "Aliasable ";
+        
+            if (!flagsText.empty())
+            {
+                ImGui::Text("Flags: %s", flagsText.c_str());
+            }
+            else
+            {
+                ImGui::Text("Flags: None");
+            }
+        });
     }
 
     void FTextureEditorTool::OnDeinitialize(const FUpdateContext& UpdateContext)

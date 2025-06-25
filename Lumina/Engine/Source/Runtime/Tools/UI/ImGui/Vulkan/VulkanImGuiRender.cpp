@@ -75,7 +75,7 @@ namespace Lumina
         InitInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 
 
-        Assert(ImGui_ImplVulkan_Init(&InitInfo));
+        Assert(ImGui_ImplVulkan_Init(&InitInfo))
     }
 
     void FVulkanImGuiRender::Deinitialize()
@@ -118,8 +118,6 @@ namespace Lumina
 			ImGui_ImplVulkan_RenderDrawData(DrawData, CommandList->GetAPIResource<VkCommandBuffer>());
 
 			CommandList->EndRenderPass();
-           
-
 		}
     }
 
@@ -129,7 +127,7 @@ namespace Lumina
     	VkImageView VulkanImageView = Image->GetAPIResource<VkImageView, EAPIResourceType::ImageView>();
     	
     	auto It = ImageCache.find(VulkanImage);
-
+		
     	if (It != ImageCache.end())
     	{
     		return (intptr_t)It->second;

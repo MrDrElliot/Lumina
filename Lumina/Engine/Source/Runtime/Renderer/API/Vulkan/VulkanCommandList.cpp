@@ -126,7 +126,7 @@ namespace Lumina
 
     void FVulkanCommandList::WriteToImage(FRHIImage* Dst, uint32 ArraySlice, uint32 MipLevel, const void* Data, SIZE_T RowPitch, SIZE_T DepthPitch)
     {
-        Assert(Dst != nullptr && Data != nullptr);
+        Assert(Dst != nullptr && Data != nullptr)
 
         CurrentCommandBuffer->AddReferencedResource(Dst);
         
@@ -136,7 +136,7 @@ namespace Lumina
         TRefCountPtr<FVulkanBuffer> StagingBuffer = nullptr;
         RenderContext->GetStagingManager().GetStagingBuffer(StagingBuffer);
     
-        Assert(StagingBuffer != nullptr);
+        Assert(StagingBuffer != nullptr)
     
         FVulkanMemoryAllocator* MemoryAllocator = RenderContext->GetDevice()->GetAllocator();
         VmaAllocation Allocation = MemoryAllocator->GetAllocation(StagingBuffer->GetBuffer());

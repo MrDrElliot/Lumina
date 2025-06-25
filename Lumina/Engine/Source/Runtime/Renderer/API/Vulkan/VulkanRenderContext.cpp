@@ -279,7 +279,7 @@ namespace Lumina
         const uint32 vkCmdUpdateBufferLimit = Context->GetDevice()->GetPhysicalDeviceProperties().limits.maxUniformBufferRange;
 
         FRHIBufferDesc Desc;
-        Desc.Size = vkCmdUpdateBufferLimit;
+        Desc.Size = 1024 * 1024 * 100; //100MiB temp.
         Desc.Stride = 0;
         Desc.Usage.SetMultipleFlags(EBufferUsageFlags::StagingBuffer, EBufferUsageFlags::CPUWritable);
         FRHIBufferRef Buffer = Context->CreateBuffer(Desc);

@@ -29,7 +29,6 @@ namespace Lumina
         FVulkanRenderContext* VulkanRenderContext = nullptr;
 
         THashMap<VkImage, VkDescriptorSet> ImageCache;
-        ImTextureID Test = 0;
     };
     
 }
