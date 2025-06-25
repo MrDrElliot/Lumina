@@ -10,11 +10,6 @@
 
 namespace Lumina
 {
-    
-    CObject* CMaterialFactory::CreateNew(const FString& Path)
-    {
-        return NewObject<CMaterial>(UTF8_TO_WIDE(Path).c_str());
-    }
 
     void CMaterialFactory::CreateAssetFile(const FString& Path)
     {
@@ -32,19 +27,18 @@ namespace Lumina
         Header.ClassName = "CMaterial";
         Header.Type = EAssetType::Material;
         Header.Version = 1;
-        Header.Guid = FGuid::Generate();
 
         TVector<uint8> Buffer;
 
         FPackageSaver Saver(Buffer);
         Saver << Header;
 
-        CObject* Temp = CreateNew(VirtualPath);
+        CObject* Temp = NewObject<CMaterial>(UTF8_TO_WIDE(VirtualPath).c_str());
 
         FBinaryStructuredArchive BinaryAr(Saver);
         Temp->Serialize(BinaryAr.Open());
         
-        FFileHelper::SaveArrayToFile(Buffer, FullPath);
+        Assert(FFileHelper::SaveArrayToFile(Buffer, FullPath))
 
         Temp->DestroyNow();
     }

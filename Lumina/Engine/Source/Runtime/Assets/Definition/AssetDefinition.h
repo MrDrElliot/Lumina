@@ -1,6 +1,6 @@
 ﻿#pragma once
+#include "Core/Object/Class.h"
 #include "Core/Object/Object.h"
-#include "Core/Object/ObjectPtr.h"
 #include "AssetDefinition.generated.h"
 
 
@@ -27,7 +27,9 @@ namespace Lumina
 
         virtual CFactory* GetFactory() const { return nullptr; }
 
-        
+        virtual bool CanImport() { return false; }
+
+        virtual FString GetImportFileExtension() { return ""; }
     };
 
     

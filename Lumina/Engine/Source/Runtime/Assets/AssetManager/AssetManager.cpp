@@ -89,10 +89,6 @@ namespace Lumina
                 {
                     NotifyAssetRequestCompleted(Request);
                 }
-                else if (!Request->bFailed)
-                {
-                    RequestQueue.push(Request);
-                }
 
                 FlushCV.notify_all();
 

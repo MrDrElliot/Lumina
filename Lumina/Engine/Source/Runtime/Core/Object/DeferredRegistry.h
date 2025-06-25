@@ -29,18 +29,27 @@ namespace Lumina
             Registrations.emplace_back(RegisterFunc);
         }
 
-        void ProcessRegistrations(void (*InvokeFunc)(TType*) = nullptr)
+        template<typename FuncType>
+        void ProcessRegistrations(FuncType&& OnRegistration)
         {
             SIZE_T Num = Registrations.size();
-            for (FRegistrant& Registrant : Registrations)
+            for (SIZE_T Index = ProcessedRegistrations; Index < Num; ++Index)
             {
-                TType* NewType = Registrant.RegisterFunc();
-                if (InvokeFunc)
-                {
-                    InvokeFunc(NewType);
-                }
+                TType* Object = Registrations[Index].RegisterFunc();
+                OnRegistration(*Object);
             }
-
+            
+            ProcessedRegistrations = Num;
+        }
+        
+        void ProcessRegistrations()
+        {
+            SIZE_T Num = Registrations.size();
+            for (SIZE_T Index = ProcessedRegistrations; Index < Num; ++Index)
+            {
+                Registrations[Index].RegisterFunc();
+            }
+            
             ProcessedRegistrations = Num;
         }
 

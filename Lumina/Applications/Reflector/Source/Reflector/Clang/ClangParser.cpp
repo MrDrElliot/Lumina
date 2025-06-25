@@ -33,7 +33,8 @@ namespace Lumina::Reflection
 
         const eastl::string ProjectReflectionDirectory = ParsingContext.Solution.GetParentPath() + "/Intermediates/Reflection/" + Project.Name;
         const eastl::string AmalgamationPath = ProjectReflectionDirectory + "/ReflectHeaders.h";
-        
+        std::filesystem::create_directories(ProjectReflectionDirectory.c_str());
+
         std::ofstream AmalgamationFile(AmalgamationPath.c_str());
         AmalgamationFile << "#pragma once\n\n";
 

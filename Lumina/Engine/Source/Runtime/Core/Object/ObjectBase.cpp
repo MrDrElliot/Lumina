@@ -214,25 +214,18 @@ namespace Lumina
             // Remove here so it doesn't happen twice.
             Pending.erase(Pending.begin() + Index);
             Object->FinishRegister(CClass::StaticClass(), TEXT(""));
-            
         }
     }
-
-    static void LoadAllCompiledInDefaultProperties(CClass* NewClass)
-    {
-        NewClass->GetDefaultObject();
-    }
-
-    static void LoadAllCompiledInDefaultProperties(CStruct* NewClass)
-    {
-        
-    }
-
-    static void LoadAllCompiledInDefaultProperties(CEnum* NewClass)
-    {
-        
-    }
     
+    static void LoadAllCompiledInEnumsAndStructs()
+    {
+        FEnumDeferredRegistry& EnumRegistry = FEnumDeferredRegistry::Get();
+        FStructDeferredRegistry& StructRegistry = FStructDeferredRegistry::Get();
+
+        EnumRegistry.ProcessRegistrations();
+        StructRegistry.ProcessRegistrations();
+    }
+
     void ProcessNewlyLoadedCObjects()
     {
         FClassDeferredRegistry& ClassRegistry = FClassDeferredRegistry::Get();
@@ -245,9 +238,15 @@ namespace Lumina
             || StructRegistry.HasPendingRegistrations())
         {
             ProcessRegistrants();
-            ClassRegistry.ProcessRegistrations(LoadAllCompiledInDefaultProperties);
-            StructRegistry.ProcessRegistrations(LoadAllCompiledInDefaultProperties);
-            EnumRegistry.ProcessRegistrations(LoadAllCompiledInDefaultProperties);
+            LoadAllCompiledInEnumsAndStructs();
+
+            if (ClassRegistry.HasPendingRegistrations())
+            {
+                ClassRegistry.ProcessRegistrations([] (CClass& Class)
+                {
+                    Class.GetDefaultObject();
+                });
+            }
         }
         
     }

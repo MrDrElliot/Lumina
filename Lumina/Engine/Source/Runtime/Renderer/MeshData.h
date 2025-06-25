@@ -12,6 +12,7 @@ namespace Lumina
     public:
 
         friend class CMesh;
+        friend class FMeshImporter;
         
         FMeshResource() = default;
         

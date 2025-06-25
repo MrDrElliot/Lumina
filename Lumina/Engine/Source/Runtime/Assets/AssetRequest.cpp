@@ -36,7 +36,11 @@ namespace Lumina
         }
         
         CClass* Class = FindObject<CClass>(UTF8_TO_WIDE(Header.ClassName).c_str());
-        Assert(Class != nullptr)
+        if (Class == nullptr)
+        {
+            LOG_CRITICAL("Faild to find class with name {}", Header.ClassName);
+            return false;
+        }
         
         PendingObject = NewObject(Class, UTF8_TO_WIDE(AssetPath).c_str(), FName(Name));
 
@@ -44,7 +48,8 @@ namespace Lumina
         FArchiveSlot Slot = BinaryArchive.Open();
 
         PendingObject->Serialize(Slot);
-        
+        PendingObject->UpdateStreamableResource();
+
         return true;
     }
 }

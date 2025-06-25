@@ -3,9 +3,14 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <ThirdParty/stb_image/stb_image.h>
 
+#include "Assets/AssetHeader.h"
+#include "Assets/AssetPath.h"
 #include "Assets/AssetTypes/Textures/Texture.h"
+#include "Core/Object/Cast.h"
 #include "Core/Performance/PerformanceTracker.h"
 #include "Core/Serialization/MemoryArchiver.h"
+#include "Core/Serialization/Package/PackageSaver.h"
+#include "Paths/Paths.h"
 #include "Platform/Filesystem/FileHelper.h"
 #include "Renderer/RenderContext.h"
 #include "Renderer/RenderManager.h"
@@ -13,47 +18,103 @@
 
 namespace Lumina
 {
-    /*ATexture FTextureFactory::ImportFromSource(std::filesystem::path Path)
+    static uint8 CalculateMipCount(uint32 width, uint32 height)
     {
-        PROFILE_SCOPE_LOG(FTextureFactory::ImportFromSource)
+        uint32 levels = 1;
+        while (width > 1 || height > 1)
+        {
+            width = std::max(width >> 1, 1u);
+            height = std::max(height >> 1, 1u);
+            ++levels;
+        }
+        return static_cast<uint8>(levels);
+    }
+    
+    void CTextureFactory::CreateAssetFile(const FString& Path)
+    {
+        FString FullPath = Path + ".lasset";
+        if (!FFileHelper::CreateNewFile(FullPath, true))
+        {
+            LOG_INFO("Failed to created New Texture: {}", FullPath);
+            return;
+        }
 
-        FImageSpecification ImageSpec;
-        ImageSpec.Usage = EImageUsage::TEXTURE;
-        ImageSpec.Format = EImageFormat::RGBA32_UNORM;
-        ImageSpec.MipLevels = 1;
+        FString VirtualPath = Paths::ConvertToVirtualPath(Path);
+
+        FAssetHeader Header;
+        Header.Path = VirtualPath;
+        Header.ClassName = "CTexture";
+        Header.Type = EAssetType::Texture;
+        Header.Version = 1;
+
+        TVector<uint8> Buffer;
+        FPackageSaver Saver(Buffer);
+        Saver << Header;
+
+        CObject* Temp = NewObject<CTexture>(UTF8_TO_WIDE(VirtualPath).c_str());
+
+        FBinaryStructuredArchive BinaryAr(Saver);
+        Temp->Serialize(BinaryAr.Open());
+        
+        FFileHelper::SaveArrayToFile(Buffer, FullPath);
+
+        Temp->DestroyNow();
+        
+    }
+
+    void CTextureFactory::TryImport(const FString& RawPath, const FString& DestinationPath)
+    {
+        FString FullPath = DestinationPath + ".lasset";
+        FString VirtualPath = Paths::ConvertToVirtualPath(DestinationPath);
+
+        std::filesystem::path FilePath = RawPath.c_str();
+        Assert(FilePath.extension() == ".png")
+
+        CTexture* Temp = NewObject<CTexture>(UTF8_TO_WIDE(DestinationPath).c_str());
+        
+        CreateAssetFile(DestinationPath);
+
 
         stbi_set_flip_vertically_on_load(true);
 
         int x, y, c;
-        stbi_uc* data = stbi_load(Path.string().c_str(), &x, &y, &c, STBI_rgb_alpha);
+        stbi_uc* data = stbi_load(RawPath.c_str(), &x, &y, &c, STBI_rgb_alpha);
         if (data == nullptr)
         {
-            LOG_WARN("Failed to import texture from source path: {0}", Path.string());
-            return FRHIImageHandle();
+            LOG_WARN("Failed to import texture from source path: {0}", RawPath);
+            return;
         }
 
         FIntVector2D Extent;
         Extent.X = x;
         Extent.Y = y;
         
-        FRHIImageHandle ImageHandle = Manager->GetRenderContext()->CreateTexture(Extent);
+        FRHIImageDesc ImageDescription;
+        ImageDescription.Extent = Extent;
+        ImageDescription.Format = EImageFormat::RGBA32_UNORM;
+        ImageDescription.Flags.SetFlag(EImageCreateFlags::ShaderResource);
+        ImageDescription.NumMips = CalculateMipCount(Extent.X, Extent.Y);
 
-        ImageSpec.Extent = Extent;
-        ImageSpec.SourceChannels = c;
-        ImageSpec..assign(data, data + (x * y * STBI_rgb_alpha));
-
+        Temp->ImageDescription = ImageDescription;
+        Temp->Pixels.assign(data, data + static_cast<size_t>(x) * static_cast<size_t>(y) * STBI_rgb_alpha);
+        
         stbi_image_free(data);
-
-        return ImageHandle;
-    }*/
-    
-    CObject* CTextureFactory::CreateNew(const FString& Path)
-    {
-        return {};
-    }
-
-    void CTextureFactory::CreateAssetFile(const FString& Path)
-    {
-        CFactory::CreateAssetFile(Path);
+        
+        FAssetHeader Header;
+        Header.Path = VirtualPath;
+        Header.ClassName = "CTexture";
+        Header.Type = EAssetType::Texture;
+        Header.Version = 1;
+        
+        TVector<uint8> Buffer;
+        FPackageSaver Saver(Buffer);
+        Saver << Header;
+        
+        FBinaryStructuredArchive BinaryAr(Saver);
+        Temp->Serialize(BinaryAr.Open());
+        
+        FFileHelper::SaveArrayToFile(Buffer, FullPath);
+        
+        Temp->DestroyNow();
     }
 }

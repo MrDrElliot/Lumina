@@ -549,6 +549,21 @@ namespace Lumina
 
 		/** The format of the image (e.g., RGBA8, BC7 compressed, etc.). */
 		EImageFormat Format = EImageFormat::None;
+
+		friend FArchive& operator << (FArchive& Ar, FRHIImageDesc& Data)
+		{
+			Ar << Data.Flags;
+			Ar << Data.ExtraData;
+			Ar << Data.Extent;
+			Ar << Data.Depth;
+			Ar << Data.ArraySize;
+			Ar << Data.NumMips;
+			Ar << Data.NumSamples;
+			Ar << Data.Dimension;
+			Ar << Data.Format;
+
+			return Ar;
+		}
 		
 	};
 

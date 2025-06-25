@@ -32,11 +32,13 @@ namespace Lumina
 
     bool FFileHelper::LoadFileToArray(TVector<uint8>& Result, const FString& Path, uint32 ReadFlags)
     {
+        Result.clear();
         std::filesystem::path FilePath = Path.c_str();
         
         std::ifstream inFile(FilePath, std::ios::binary | std::ios::ate);
         if (!inFile)
         {
+            Result.clear();
             LOG_ERROR("Failed to open file for reading: {0}", FilePath.string());
             return false;
         }
@@ -44,6 +46,7 @@ namespace Lumina
         std::streamsize fileSize = inFile.tellg();
         if (fileSize == -1)
         {
+            Result.clear();
             LOG_ERROR("Failed to get the file size: {0}", FilePath.string());
             return false;
         }
@@ -54,6 +57,7 @@ namespace Lumina
 
         if (!inFile.read(reinterpret_cast<char*>(Result.data()), fileSize))
         {
+            Result.clear();
             LOG_ERROR("Failed to read data from file: {0}", FilePath.string());
             return false;
         }

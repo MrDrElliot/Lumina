@@ -22,7 +22,6 @@ namespace Lumina
         if (Object)
         {
             Object->Serialize(Slot);
-            Object->Serialize(*InnerAr);
         }
 
     }

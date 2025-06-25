@@ -45,7 +45,7 @@ namespace Lumina
 
         void PushModal(const FString& Title, ImVec2 Size, TFunction<bool(const FUpdateContext&)> DrawFunction) override;
 
-        void OpenAssetEditor(const FString& InPath) override;
+        void OpenAssetEditor(CObject* InAsset) override;
         
         template<typename T, typename... Args>
         requires std::is_base_of_v<FEditorTool, T>

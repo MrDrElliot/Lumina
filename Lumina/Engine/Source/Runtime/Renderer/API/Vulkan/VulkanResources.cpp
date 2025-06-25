@@ -465,7 +465,7 @@ namespace Lumina
         VmaAllocationCreateFlags AllocationFlags = VK_NO_FLAGS;
         Device->GetAllocator()->AllocateImage(&ImageCreateInfo, AllocationFlags, &Image, "");
     
-        Assert(Image != VK_NULL_HANDLE);
+        Assert(Image != VK_NULL_HANDLE)
     
         VkImageViewCreateInfo ImageViewCreateInfo = {};
         ImageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -484,7 +484,7 @@ namespace Lumina
     
         VK_CHECK(vkCreateImageView(Device->GetDevice(), &ImageViewCreateInfo, nullptr, &ImageView));
     
-        Assert(ImageView != VK_NULL_HANDLE);
+        Assert(ImageView != VK_NULL_HANDLE)
     }
 
 

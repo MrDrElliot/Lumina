@@ -12,14 +12,10 @@
 
 namespace Lumina
 {
-
-    CObject* CStaticMeshFactory::CreateNew(const FString& Path)
-    {
-        return {};
-    }
-
+    
     void CStaticMeshFactory::CreateAssetFile(const FString& Path)
     {
-        CFactory::CreateAssetFile(Path);
+        FString FullPath = Path + ".lasset";
+ 
     }
 }

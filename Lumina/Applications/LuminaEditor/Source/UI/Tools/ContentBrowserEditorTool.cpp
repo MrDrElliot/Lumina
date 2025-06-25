@@ -45,7 +45,8 @@ namespace Lumina
             }
             else
             {
-                ToolContext->OpenAssetEditor(ContentItem->GetVirtualPath());
+                CObject* Asset = LoadObject<CObject>(UTF8_TO_WIDE(ContentItem->GetVirtualPath()).c_str());
+                ToolContext->OpenAssetEditor(Asset);
             }
         };
         
@@ -172,9 +173,8 @@ namespace Lumina
 
                     auto* ChildItem = ParentItem->AddChild<FContentBrowserListViewItem>(ParentItem, Entry.path());
 
-                    // Recurse into the subdirectory
                     AddChildrenRecursive(AddChildrenRecursive, ChildItem, Entry.path());
-                    LOG_INFO("Entry : {}", Entry.path().generic_string());
+                    
                     if (Entry.path() == SelectedPath)
                     {
                         OutlinerListView.SetSelection(ChildItem, OutlinerContext);
@@ -253,53 +253,52 @@ namespace Lumina
 
         ImGui::SetNextWindowSizeConstraints(ImVec2(200.0f, 100.0f), ImVec2(0.0f, 0.0f));
 
+        auto MakeUniquePath = [this](FString& InPath)
+        {
+            using namespace std::filesystem;
+
+            FString BaseName = InPath;
+            FString Extension;
+
+            // Separate extension if it exists (optional)
+            size_t DotIndex = InPath.find_last_of('.');
+            if (DotIndex != FString::npos && is_regular_file(InPath.c_str()))
+            {
+                Extension = InPath.substr(DotIndex);
+                BaseName = InPath.substr(0, DotIndex);
+            }
+
+            // Extract numeric suffix if it exists
+            int SuffixNumber = 1;
+            size_t UnderscorePos = BaseName.find_last_of('_');
+            if (UnderscorePos != FString::npos)
+            {
+                FString SuffixPart = BaseName.substr(UnderscorePos + 1);
+                char* EndPtr = nullptr;
+                long ParsedNumber = std::strtol(SuffixPart.c_str(), &EndPtr, 10);
+
+                if (EndPtr != SuffixPart.c_str() && *EndPtr == '\0') // Valid number
+                {
+                    SuffixNumber = static_cast<int>(ParsedNumber) + 1;
+                    BaseName = BaseName.substr(0, UnderscorePos); // Strip old suffix
+                }
+            }
+
+            FString CandidatePath = BaseName + "_" + eastl::to_string(SuffixNumber) + Extension;
+
+            while (exists(CandidatePath.c_str()))
+            {
+                ++SuffixNumber;
+                CandidatePath = BaseName + "_" + eastl::to_string(SuffixNumber) + Extension;
+            }
+
+            InPath = CandidatePath;
+        };
+        
         if (ImGui::BeginPopup("ContentContextMenu"))
         {
             ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(10.0f, 5.0f));
             ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(8.0f, 5.0f));
-
-            auto MakeUniquePath = [this](FString& InPath)
-            {
-                using namespace std::filesystem;
-
-                FString BaseName = InPath;
-                FString Extension;
-
-                // Separate extension if it exists (optional)
-                size_t DotIndex = InPath.find_last_of('.');
-                if (DotIndex != FString::npos && is_regular_file(InPath.c_str()))
-                {
-                    Extension = InPath.substr(DotIndex);
-                    BaseName = InPath.substr(0, DotIndex);
-                }
-
-                // Extract numeric suffix if it exists
-                int SuffixNumber = 1;
-                size_t UnderscorePos = BaseName.find_last_of('_');
-                if (UnderscorePos != FString::npos)
-                {
-                    FString SuffixPart = BaseName.substr(UnderscorePos + 1);
-                    char* EndPtr = nullptr;
-                    long ParsedNumber = std::strtol(SuffixPart.c_str(), &EndPtr, 10);
-
-                    if (EndPtr != SuffixPart.c_str() && *EndPtr == '\0') // Valid number
-                    {
-                        SuffixNumber = static_cast<int>(ParsedNumber) + 1;
-                        BaseName = BaseName.substr(0, UnderscorePos); // Strip old suffix
-                    }
-                }
-
-                FString CandidatePath = BaseName + "_" + eastl::to_string(SuffixNumber) + Extension;
-
-                while (exists(CandidatePath.c_str()))
-                {
-                    ++SuffixNumber;
-                    CandidatePath = BaseName + "_" + eastl::to_string(SuffixNumber) + Extension;
-                }
-
-                InPath = CandidatePath;
-            };
-
             
             {
                 const char* FolderIcon = LE_ICON_FOLDER;
@@ -319,9 +318,13 @@ namespace Lumina
             {
                 const char* ImportIcon = LE_ICON_FILE_IMPORT;
                 FString MenuItemName = FString(ImportIcon) + " " + "Import Asset";
-                if (ImGui::MenuItem(MenuItemName.c_str()))
+                if (ImGui::MenuItem(MenuItemName.c_str()) &&  !FileBrowser.IsOpened())
                 {
-                    bWroteSomething = true;
+                    FileBrowser = ImGui::FileBrowser(ImGuiFileBrowserFlags_CloseOnEsc);
+                    FileBrowser.SetTitle("Select a file to import.");
+                    FileBrowser.SetTypeFilters({".png", ".jpg", ".fbx", ".gltf"});
+
+                    FileBrowser.Open();
                 }
             }
             
@@ -337,17 +340,22 @@ namespace Lumina
                 CAssetDefinitionRegistry::Get()->GetAssetDefinitions(Definitions);
                 for (CAssetDefinition* Definition : Definitions)
                 {
+                    if (Definition->CanImport())
+                    {
+                        continue;
+                    }
+                    
                     FString DisplayName = Definition->GetAssetDisplayName();
                     if (ImGui::MenuItem(DisplayName.c_str()))
                     {
                         CFactory* Factory = Definition->GetFactory();
-                        FString PathString = Paths::Combine(SelectedPath.string().c_str(), Factory->GetDefaultAssetCreationName(PathString).c_str()) + ".lasset";
+                        FString PathString = Paths::Combine(SelectedPath.generic_string().c_str(), Factory->GetDefaultAssetCreationName(PathString).c_str()) + ".lasset";
                         MakeUniquePath(PathString);
                         PathString = Paths::RemoveExtension(PathString);
                         
                         Factory->CreateAssetFile(PathString);
-                        ToolContext->OpenAssetEditor(PathString);
-
+                        CObject* Asset = LoadObject<CObject>(UTF8_TO_WIDE(PathString).c_str());
+                        ToolContext->OpenAssetEditor(Asset);
                         bWroteSomething = true;
 
                     }
@@ -360,6 +368,40 @@ namespace Lumina
             ImGui::EndPopup();
         }
 
+        FileBrowser.Display();
+        if (FileBrowser.HasSelected())
+        {
+            std::filesystem::path FilePath = FileBrowser.GetSelected();
+            FileBrowser.ClearSelected();
+            FileBrowser.Close();
+            
+            TVector<CAssetDefinition*> Definitions;
+            CAssetDefinitionRegistry::Get()->GetAssetDefinitions(Definitions);
+            for (CAssetDefinition* Definition : Definitions)
+            {
+                if (!Definition->CanImport())
+                {
+                    continue;
+                }
+
+                if (Definition->GetImportFileExtension() != FilePath.extension().generic_string().c_str())
+                {
+                    continue;
+                }
+                
+                CFactory* Factory = Definition->GetFactory();
+                FString PathString = Paths::Combine(SelectedPath.generic_string().c_str(), Factory->GetDefaultAssetCreationName(PathString).c_str()) + ".lasset";
+                MakeUniquePath(PathString);
+                PathString = Paths::RemoveExtension(PathString);
+                        
+                Factory->TryImport(FilePath.generic_string().c_str(), PathString);
+                
+            }
+            
+            
+            bWroteSomething = true;
+        }
+        
         if (bWroteSomething)
         {
             RefreshContentBrowser();

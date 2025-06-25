@@ -21,7 +21,7 @@ namespace Lumina
     
 
     LUM_CLASS()
-    class CMaterial : public CObject
+    class LUMINA_API CMaterial : public CObject
     {
         GENERATED_BODY()
         

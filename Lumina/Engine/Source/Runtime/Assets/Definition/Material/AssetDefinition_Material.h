@@ -2,19 +2,15 @@
 
 #include "Assets/Definition/AssetDefinition.h"
 #include "Assets/AssetTypes/Material/Material.h"
-#include "Core/Object/Class.h"
 #include "Assets/Factories/MaterialFactory/MaterialFactory.h"
 #include "AssetDefinition_Material.generated.h"
+
 
 namespace Lumina
 {
     class CMaterialFactory;
     class CMaterial;
 }
-
-
-
-
 
 namespace Lumina
 {

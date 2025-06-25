@@ -48,6 +48,8 @@ namespace Lumina
 
             Current = (FProperty*)Current->Next;
         }
+
+        Serialize(*Slot.GetStructuredArchive()->GetInnerAr());
     }
 
     void CObject::PostInitProperties()

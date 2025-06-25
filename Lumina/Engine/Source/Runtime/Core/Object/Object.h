@@ -56,6 +56,9 @@ namespace Lumina
 
         /** Called after classes Class Default Object has been created */
         LUMINA_API virtual void PostCreateCDO() {}
+
+        /** Allows any streamable resource to load in anything it needs, (e.g. an RHI Image). */
+        LUMINA_API virtual void UpdateStreamableResource() {}
         
     private:
 

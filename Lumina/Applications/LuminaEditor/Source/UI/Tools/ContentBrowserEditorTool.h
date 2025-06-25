@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "EditorTool.h"
 #include "Paths/Paths.h"
+#include "Tools/UI/ImGui/imfilebrowser.h"
 #include "Tools/UI/ImGui/Widgets/TileViewWidget.h"
 #include "Tools/UI/ImGui/Widgets/TreeListView.h"
 
@@ -107,6 +108,8 @@ namespace Lumina
         FTileViewContext            ContentBrowserTileViewContext;
 
         std::filesystem::path       SelectedPath;
+        ImGui::FileBrowser          FileBrowser;
+
     
     };
 }

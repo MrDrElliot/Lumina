@@ -16,7 +16,6 @@ namespace Lumina
         
         int32                       Version = -1;
         FString                     ClassName;
-        FGuid                       Guid;
         EAssetType                  Type;
         FAssetPath                  Path;
 
@@ -24,7 +23,6 @@ namespace Lumina
         {
             Ar << Data.Version;
             Ar << Data.ClassName;
-            Ar << Data.Guid;
             Ar << Data.Type;
             Ar << Data.Path;
 

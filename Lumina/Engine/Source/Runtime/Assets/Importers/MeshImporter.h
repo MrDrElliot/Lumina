@@ -18,8 +18,6 @@ namespace Lumina
 
         bool Import(FArchive& Ar, void* ImportData, const FString& AssetPath) override
         {
-            PROFILE_SCOPE_LOG(MeshImporter::Import)
-
             //TFastVector<TSharedPtr<AStaticMesh>> ReturnMeshes;
             
             fastgltf::Asset Asset;
@@ -28,7 +26,7 @@ namespace Lumina
             //ReturnMeshes.reserve((uint32)Asset.meshes.size());
             for (fastgltf::Mesh& Mesh : Asset.meshes)
             {
-                FMeshAsset NewAsset;
+                FMeshResource NewAsset;
     
                 for (auto& Primitive : Mesh.primitives)
                 {
@@ -87,19 +85,13 @@ namespace Lumina
                     
                     NewAsset.Name = Mesh.name.c_str();
                 }
-    
-                std::random_device rd;  // Obtain a random number from hardware
-                std::mt19937 gen(rd()); // Seed the generator
-                std::uniform_real_distribution<> dis(0.0, 1.0); 
+                
                 constexpr bool OverrideColors = true;
                 if (OverrideColors)
                 {
                     for (FVertex& vtx : NewAsset.Vertices)
                     {
-                        float r = dis(gen);  // Generate a random red component
-                        float g = dis(gen);  // Generate a random green component
-                        float b = dis(gen);  // Generate a random blue component
-                        vtx.Color = glm::vec4(r, g, b, 1.0f);  // Set the vertex color
+                        vtx.Color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);  // Set the vertex color
                     }
                 }
                 

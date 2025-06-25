@@ -127,6 +127,7 @@ namespace Lumina
     {
 	    VkImage VulkanImage = Image->GetAPIResource<VkImage>();
     	VkImageView VulkanImageView = Image->GetAPIResource<VkImageView, EAPIResourceType::ImageView>();
+    	
     	auto It = ImageCache.find(VulkanImage);
 
     	if (It != ImageCache.end())

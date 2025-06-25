@@ -6,6 +6,7 @@
 
 namespace Lumina::Paths
 {
+    
     /** Gets the directory where the Lumina engine is installed. */
     LUMINA_API std::filesystem::path GetEngineDirectory();
 

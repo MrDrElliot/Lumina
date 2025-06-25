@@ -24,7 +24,6 @@ namespace Lumina
 
         FAssetHeader Header;
         Header.ClassName = Asset->GetClass()->GetName().c_str();
-        Header.Guid = FGuid::Generate();
         Header.Version = 1;
         Header.Path = Asset->GetPathName();
         

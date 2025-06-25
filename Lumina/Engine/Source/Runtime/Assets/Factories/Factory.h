@@ -14,13 +14,13 @@ namespace Lumina
 
     public:
         
-        virtual CObject* CreateNew(const FString& Path) { return nullptr; }
-        
         virtual FString GetAssetName() const { return ""; }
         
         virtual void CreateAssetFile(const FString& Path) { }
 
         virtual FString GetDefaultAssetCreationName(const FString& InPath) { return "New_Asset"; }
+
+        virtual void TryImport(const FString& RawPath, const FString& DestinationPath) { }
         
     };
 }

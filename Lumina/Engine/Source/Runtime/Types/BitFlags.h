@@ -1,7 +1,7 @@
 #pragma once
 
 #include <type_traits>
-
+#include "Core/Serialization/Archiver.h"
 #include "Core/Assertions/Assert.h"
 #include "Platform/WindowsPlatform.h"
 
@@ -144,6 +144,13 @@ namespace Lumina
             return *this;
         }
 
+        friend FArchive& operator << (FArchive& Ar, FBitFlags& Data)
+        {
+            Ar << Data.m_flags;
+            return Ar;
+        }
+
+
     protected:
 
         uint32 m_flags = 0;
@@ -229,6 +236,7 @@ namespace Lumina
             m_flags &= GetFlagMask( flag );
             return *this;
         }
+        
     };
 
     //-------------------------------------------------------------------------

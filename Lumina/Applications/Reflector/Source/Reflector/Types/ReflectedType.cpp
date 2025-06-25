@@ -213,7 +213,7 @@ namespace Lumina::Reflection
     void FReflectedClass::DefineInitialHeader(eastl::string& Stream, const eastl::string& FileID)
     {
         eastl::string PackageName = "script://" + Project;
-                
+        
         Stream += "#define " + FileID + "_" + eastl::to_string(LineNumber) + "_CLASS \\\n";
         Stream += "private: \\\n";
         Stream += "\\\n";

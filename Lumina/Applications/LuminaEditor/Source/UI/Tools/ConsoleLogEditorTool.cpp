@@ -40,7 +40,7 @@ namespace Lumina
         Logging::GetConsoleLogs(OutputMessages);
     
         ImGuiListClipper Clipper;
-        Clipper.Begin(OutputMessages.size());
+        Clipper.Begin((int)OutputMessages.size());
         while (Clipper.Step())
         {
             for (int i = Clipper.DisplayStart; i < Clipper.DisplayEnd; ++i)

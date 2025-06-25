@@ -22,7 +22,7 @@ namespace Lumina
 
         virtual void PushModal(const FString& Title, ImVec2 Size, TFunction<bool(const FUpdateContext&)> DrawFunction) = 0;
 
-        virtual void OpenAssetEditor(const FString& InPath) = 0;
+        virtual void OpenAssetEditor(CObject* InAsset) = 0;
 
     protected:
     

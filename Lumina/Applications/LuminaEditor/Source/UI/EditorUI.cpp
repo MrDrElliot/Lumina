@@ -19,11 +19,13 @@
 #include "Tools/AssetEditors/MaterialEditor/MaterialEditorTool.h"
 #include "Tools/UI/ImGui/imfilebrowser.h"
 #include "imnodes/imnodes.h"
-#include "Paths/Paths.h"
 #include <Assets/AssetHeader.h>
 
+#include "Assets/AssetTypes/Material/Material.h"
+#include "Assets/AssetTypes/Textures/Texture.h"
 #include "Renderer/RenderManager.h"
 #include "Scene/SceneRenderer.h"
+#include "Tools/AssetEditors/TextureEditor/TextureEditorTool.h"
 #include "Tools/UI/ImGui/ImGuiRenderer.h"
 
 namespace Lumina
@@ -288,16 +290,21 @@ namespace Lumina
     }
 
     
-    void FEditorUI::OpenAssetEditor(const FString& InPath)
+    void FEditorUI::OpenAssetEditor(CObject* InAsset)
     {
-        CObject* Asset = LoadObject<CObject>(UTF8_TO_WIDE(InPath).c_str());
-        
-        if (Asset != nullptr && ActiveAssetTools.find(Asset) == ActiveAssetTools.end())
+        if (InAsset != nullptr && ActiveAssetTools.find(InAsset) == ActiveAssetTools.end())
         {
-            FEditorTool* NewTool = CreateTool<FMaterialEditorTool>(this, Asset);
-            Assert(NewTool != nullptr)
+            FEditorTool* NewTool = nullptr;
+            if (InAsset->IsA<CMaterial>())
+            {
+                NewTool = CreateTool<FMaterialEditorTool>(this, InAsset);
+            }
+            else if (InAsset->IsA<CTexture>())
+            {
+                NewTool = CreateTool<FTextureEditorTool>(this, InAsset);
+            }
             
-            ActiveAssetTools.insert_or_assign(Asset, NewTool);
+            ActiveAssetTools.insert_or_assign(InAsset, NewTool);
         }
     }
     
