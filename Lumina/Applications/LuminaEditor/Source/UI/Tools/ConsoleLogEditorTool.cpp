@@ -37,7 +37,7 @@ namespace Lumina
     
         ImGui::BeginChild("LogMessages", ImVec2(0, -ImGui::GetFrameHeightWithSpacing()), true, ImGuiWindowFlags_HorizontalScrollbar);
     
-        FLog::GetConsoleLogs(OutputMessages);
+        Logging::GetConsoleLogs(OutputMessages);
     
         ImGuiListClipper Clipper;
         Clipper.Begin(OutputMessages.size());

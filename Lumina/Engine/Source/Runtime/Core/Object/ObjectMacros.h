@@ -81,8 +81,16 @@ public: \
     inline void* operator new(const size_t InSize, EInternal* InMem) \
     { \
         return (void*)InMem; \
-    }
-
+    } \
+    /* Eliminate C4291 warning */ \
+    inline void operator delete(void* InMem) \
+    { \
+        ::operator delete(InMem); \
+    } \
+    inline void operator delete(void* InMem, EInternal* InMemTag) \
+    { \
+        ::operator delete(InMem); \
+    } \
 
 #define DECLARE_SERIALIZER(TNamespace, TClass) \
     friend FArchive& operator << (FArchive& Ar, TNamespace::TClass*& Res) \

@@ -3,8 +3,6 @@
 
 #ifdef _DEBUG
 #ifdef LE_PLATFORM_WINDOWS
-#define _CRTDBG_MAP_ALLOC
-#define _CRTDBG_MAP_ALLOC_NEW
 #include <crtdbg.h>
 #endif
 #endif
@@ -21,7 +19,6 @@ inline int GuardedMain(int argc, char** argv)
 {
 #if LE_PLATFORM_WINDOWS
 	SetUnhandledExceptionFilter(ExceptionHandler);
-	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 #endif
 	
 	int Result = 0;
@@ -31,9 +28,6 @@ inline int GuardedMain(int argc, char** argv)
 		Result = App->Run(argc, argv);
 	}
 	
-#ifdef LE_PLATFORM_WINDOWS
-	_CrtDumpMemoryLeaks();
-#endif
 	
 	return Result;
 }

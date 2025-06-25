@@ -28,20 +28,21 @@ namespace Lumina
     {
     public:
         
-        ~FSubsystemManager() { }
+        ~FSubsystemManager()
+        {
+            Assert(SubsystemLookup.empty())
+        }
 
         template<typename T, typename... Args>
+        requires std::is_base_of_v<ISubsystem, T>
         T* AddSubsystem(Args&&... args)
         {
-            static_assert(std::is_base_of_v<ISubsystem, T>, "T must inherit from ISubsystem!");
-
-            uint32_t typeHash = typeid(T).hash_code();
-            RemoveSubsystem<T>();
+            uint32 typeHash = (uint32)typeid(T).hash_code();
+            Assert(GetSubsystem<T>() == nullptr);
 
             T* pSubsystem = Memory::New<T>(std::forward<Args>(args)...);
             
-            FlatUpdateList.push_back(pSubsystem);
-            SubsystemLookup[typeHash] = pSubsystem;
+            SubsystemLookup.insert_or_assign(typeHash, pSubsystem);
             
             pSubsystem->Initialize(*this);
             LOG_TRACE("Subsystems: Created Type: {0}", typeid(T).name());
@@ -49,16 +50,14 @@ namespace Lumina
         }
 
         template<typename T>
+        requires std::is_base_of_v<ISubsystem, T>
         void RemoveSubsystem()
         {
-            static_assert(std::is_base_of_v<ISubsystem, T>, "T must inherit from ISubsystem!");
-
-            uint32_t typeHash = typeid(T).hash_code();
+            uint32 typeHash = (uint32)typeid(T).hash_code();
             auto it = SubsystemLookup.find(typeHash);
             if (it != SubsystemLookup.end())
             {
                 ISubsystem* pSubsystem = it->second;
-                FlatUpdateList.erase(std::remove(FlatUpdateList.begin(), FlatUpdateList.end(), pSubsystem), FlatUpdateList.end());
             
                 pSubsystem->Deinitialize();
                 Memory::Delete(pSubsystem);
@@ -69,11 +68,10 @@ namespace Lumina
         }
 
         template<typename T>
+        requires std::is_base_of_v<ISubsystem, T>
         T* GetSubsystem()
         {
-            static_assert(std::is_base_of_v<ISubsystem, T>, "T must inherit from ISubsystem!");
-
-            uint32_t typeHash = typeid(T).hash_code();
+            uint32 typeHash = (uint32)typeid(T).hash_code();
             auto it = SubsystemLookup.find(typeHash);
             return (it != SubsystemLookup.end()) ? static_cast<T*>(it->second) : nullptr;
         }

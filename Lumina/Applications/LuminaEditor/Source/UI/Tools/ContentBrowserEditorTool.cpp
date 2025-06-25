@@ -37,7 +37,16 @@ namespace Lumina
         ContentBrowserTileViewContext.ItemSelectedFunction = [this] (FTileViewItem* Item)
         {
             FContentBrowserTileViewItem* ContentItem = static_cast<FContentBrowserTileViewItem*>(Item);
-            ToolContext->OpenAssetEditor(ContentItem->GetVirtualPath());
+            std::filesystem::path FSPath = ContentItem->GetPath();
+            if (is_directory(FSPath))
+            {
+                SelectedPath = FSPath;
+                RefreshContentBrowser();
+            }
+            else
+            {
+                ToolContext->OpenAssetEditor(ContentItem->GetVirtualPath());
+            }
         };
         
         ContentBrowserTileViewContext.DrawItemContextMenuFunction = [this] (const TVector<FTileViewItem*> Items)

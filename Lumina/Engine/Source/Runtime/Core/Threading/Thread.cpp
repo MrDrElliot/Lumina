@@ -33,6 +33,11 @@ namespace Lumina
             Assert(gRenderThreadID != gMainThreadID);
         }
 
+        void Sleep(uint64 Miliseconds)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(Miliseconds));
+        }
+
         void Initialize(const char* MainThreadName)
         {
             gMainThreadID = std::this_thread::get_id();

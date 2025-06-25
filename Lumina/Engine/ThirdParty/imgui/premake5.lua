@@ -10,6 +10,11 @@ project "ImGui"
     {
         "LUMINA_ENGINE",
     }
+	
+	buildoptions
+	{
+		"/W2",
+	}
 
 	files
 	{

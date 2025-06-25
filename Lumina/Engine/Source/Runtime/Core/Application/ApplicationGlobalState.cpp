@@ -14,22 +14,22 @@ namespace Lumina
     
     FApplicationGlobalState::FApplicationGlobalState(char const* MainThreadName)
     {
-        Assert(!bGlobalStateInitialize);
+        Assert(!bGlobalStateInitialize)
         
         Memory::Initialize();
         Threading::Initialize(MainThreadName == nullptr ? "Main Thread" : MainThreadName);
         FName::Initialize();
-        FLog::Init();
+        Logging::Init();
 
         bGlobalStateInitialize = true;
     }
 
     FApplicationGlobalState::~FApplicationGlobalState()
     {
-        Assert(bGlobalStateInitialize);
+        Assert(bGlobalStateInitialize)
         bGlobalStateInitialize = false;
 
-        FLog::Shutdown();
+        Logging::Shutdown();
         FName::Shutdown();
         Threading::Shutdown();
         Memory::Shutdown();

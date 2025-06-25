@@ -1,8 +1,13 @@
 #pragma once
 
 #include "String.h"
+#include "Core/DisableAllWarnings.h"
+
+PRAGMA_DISABLE_ALL_WARNINGS
 #include "EASTL/hash_map.h"
 #include "EASTL/hash_set.h"
+PRAGMA_ENABLE_ALL_WARNINGS
+
 #include "Module/API.h"
 #include "Platform/GenericPlatform.h"
 
@@ -10,9 +15,7 @@ namespace Lumina
 {
     class FNameHashMap;
     using FNameHashNode = eastl::hash_node<eastl::pair<const uint64, FString>, false>;
-
-    LUMINA_API extern FNameHashMap* gNameCache;
-
+    
     class LUMINA_API FName
     {
     public:
@@ -47,11 +50,7 @@ namespace Lumina
     
         
     private:
-
-        #if _DEBUG
-        FString     StringView;
-        #endif
-        
+        const char* StringView = nullptr;
         uint64      ID = 0;
     };
     

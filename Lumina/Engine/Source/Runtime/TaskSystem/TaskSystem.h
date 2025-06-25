@@ -35,19 +35,19 @@ namespace Lumina
 
         FORCEINLINE void ScheduleTask(ITaskSet* pTask)
         {
-            Assert(bInitialized);
-            Scheduler.AddTaskSetToPipe( pTask );
+            Assert(bInitialized)
+            Scheduler.AddTaskSetToPipe(pTask);
         }
 
         FORCEINLINE void ScheduleTask(IPinnedTask* pTask)
         {
-            Assert(bInitialized);
-            Scheduler.AddPinnedTask( pTask );
+            Assert(bInitialized)
+            Scheduler.AddPinnedTask(pTask);
         }
 
         FORCEINLINE void WaitForTask(ITaskSet* pTask)
         {
-            Scheduler.WaitforTask( pTask );
+            Scheduler.WaitforTask(pTask);
         }
 
         FORCEINLINE void WaitForTask(IPinnedTask* pTask)

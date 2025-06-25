@@ -1,6 +1,7 @@
 #pragma once
-#include <mutex>
 
+#include <mutex>
+#include "Module/API.h"
 #include "Platform/GenericPlatform.h"
 
 
@@ -26,18 +27,20 @@ namespace Lumina
         };
         
 
-        bool IsMainThread();
-        bool IsRenderThread();
+        LUMINA_API bool IsMainThread();
+        LUMINA_API bool IsRenderThread();
 
-        uint32 GetNumThreads();
+        LUMINA_API uint32 GetNumThreads();
 
-        void SetRenderThread(std::thread::id ID);
+        LUMINA_API void SetRenderThread(std::thread::id ID);
+
+        LUMINA_API void Sleep(uint64 Miliseconds);
         
-        void Initialize(const char* MainThreadName);
-        void Shutdown();
+        LUMINA_API void Initialize(const char* MainThreadName);
+        LUMINA_API void Shutdown();
 
-        void InitializeThreadHeap();
-        void ShutdownThreadHeap();
+        LUMINA_API void InitializeThreadHeap();
+        LUMINA_API void ShutdownThreadHeap();
     }
     
 

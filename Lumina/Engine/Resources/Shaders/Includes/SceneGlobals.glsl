@@ -13,7 +13,7 @@ struct FCameraView
     mat4 CameraProjection;  // Projection matrix
 };
 
-layout(set = 0) readonly uniform SceneGlobals
+layout(set = 0, binding = 0) readonly uniform SceneGlobals
 {
     FCameraView CameraView;
     float Time;

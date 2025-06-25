@@ -206,7 +206,7 @@ namespace Lumina
             }
             else
             {
-                int32 SaveNum = str.size();
+                int64 SaveNum = (int64)str.size();
                 *this << SaveNum;
 
                 if (SaveNum)

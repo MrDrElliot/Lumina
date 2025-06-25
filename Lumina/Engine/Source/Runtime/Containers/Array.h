@@ -4,6 +4,7 @@
 #include "Core/Templates/CanBulkSerialize.h"
 #include "Platform/GenericPlatform.h"
 
+PRAGMA_DISABLE_ALL_WARNINGS
 #include "EASTL/hash_map.h"
 #include "EASTL/unordered_map.h"
 #include "EASTL/vector.h"
@@ -14,7 +15,7 @@
 #include "EASTL/set.h"
 #include "EASTL/stack.h"
 #include "EASTL/unordered_set.h"
-
+PRAGMA_ENABLE_ALL_WARNINGS
 
 
 //-------------------------------------------------------------------------
@@ -52,7 +53,7 @@ namespace Lumina
     template<typename ValueType>
     FArchive& operator << (FArchive& Ar, TVector<ValueType>& Array)
     {
-		eastl_size_t SerializeNum = Ar.IsReading() ? 0 : Array.size();
+		SIZE_T SerializeNum = Ar.IsReading() ? 0 : Array.size();
         Ar << SerializeNum;
         
         if (SerializeNum == 0)
@@ -66,7 +67,7 @@ namespace Lumina
             return Ar;
         }
         
-        if (Ar.HasError() || SerializeNum > Ar.GetMaxSerializeSize())
+        if (Ar.HasError() || (int64)SerializeNum > Ar.GetMaxSerializeSize())
         {
             return Ar;
         }
@@ -88,14 +89,14 @@ namespace Lumina
                 Array.clear();
                 Array.resize(SerializeNum);
 
-                for (eastl_size_t i = 0; i < SerializeNum; i++)
+                for (SIZE_T i = 0; i < SerializeNum; i++)
                 {
                     Ar << Array.emplace_back();
                 }
             }
             else
             {
-                for (eastl_size_t i = 0; i < SerializeNum; i++)
+                for (SIZE_T i = 0; i < SerializeNum; i++)
                 {
                     Ar << Array[i];
                 }

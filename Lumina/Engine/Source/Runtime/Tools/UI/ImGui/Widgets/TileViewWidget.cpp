@@ -93,7 +93,7 @@ namespace Lumina
             SetSelection(ItemToDraw, Context);
         }
 
-        if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Right))
+        if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Right) && ItemToDraw->HasContextMenu())
         {
             ImGui::OpenPopup("ItemContextMenu");
         }
@@ -103,14 +103,7 @@ namespace Lumina
             if (ImGui::BeginPopupContextItem("ItemContextMenu"))
             {
                 TVector<FTileViewItem*> SelectionsToDraw;
-                for (FTileViewItem* Selection : Selections)
-                {
-                    if (Selection->HasContextMenu())
-                    {
-                        SelectionsToDraw.push_back(Selection);
-                    }
-                }
-                
+                SelectionsToDraw.push_back(ItemToDraw);
                 Context.DrawItemContextMenuFunction(SelectionsToDraw);
                 
                 ImGui::EndPopup();

@@ -9,6 +9,8 @@ project "Editor"
     targetdir ("%{wks.location}/Binaries/" .. outputdir)
     objdir ("%{wks.location}/Intermediates/Obj/" .. outputdir .. "/%{prj.name}")   
 	
+	defines { "_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS", }
+
 	links
 	 {
 		"Lumina",

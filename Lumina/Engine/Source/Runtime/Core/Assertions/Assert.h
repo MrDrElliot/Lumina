@@ -42,7 +42,7 @@ inline void PrintCallStack()
 
         if (SymGetLineFromAddr64(process, (DWORD64)(stack[i]), &displacement, &line))
         {
-            if (Lumina::FLog::IsInitialized())
+            if (Lumina::Logging::IsInitialized())
             {
                 LOG_ERROR("{0}: {1} - {2} (File: {3}, Line: {4})",
                           i, symbol->Name, symbol->Address, line.FileName, line.LineNumber);
@@ -55,7 +55,7 @@ inline void PrintCallStack()
         }
         else
         {
-            if (Lumina::FLog::IsInitialized())
+            if (Lumina::Logging::IsInitialized())
             {
                 LOG_ERROR("{0}: {1} - {2} (No Line Info)", i, symbol->Name, symbol->Address);
             }

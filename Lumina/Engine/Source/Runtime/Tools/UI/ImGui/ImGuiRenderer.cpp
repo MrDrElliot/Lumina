@@ -179,8 +179,8 @@ namespace Lumina
     {
 
     	ImGuiIO& Io = ImGui::GetIO();
-    	Io.DisplaySize.x = (int)GEngine->GetEngineViewport()->GetSize().X;
-    	Io.DisplaySize.y = (int)GEngine->GetEngineViewport()->GetSize().Y;
+    	Io.DisplaySize.x = (float)GEngine->GetEngineViewport()->GetSize().X;
+    	Io.DisplaySize.y = (float)GEngine->GetEngineViewport()->GetSize().Y;
     	
 		ImGui::Render();
 

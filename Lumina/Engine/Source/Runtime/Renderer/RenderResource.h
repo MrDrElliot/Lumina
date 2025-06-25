@@ -75,7 +75,7 @@ enum class EFormat : uint8
 	RGBA32_UINT,
 	RGBA32_SINT,
 	RGBA32_FLOAT,
-        
+	
 	D16,
 	D24S8,
 	X24G8_UINT,
@@ -113,8 +113,8 @@ struct FFormatInfo
 {
 	EFormat Format;
 	const char* Name;
-	uint8_t BytesPerBlock;
-	uint8_t BlockSize;
+	uint8 BytesPerBlock;
+	uint8 BlockSize;
 	EFormatKind Kind;
 	uint8 bHasRed : 1;
 	uint8 bHasGreen : 1;
@@ -135,6 +135,7 @@ enum ERHIResourceType : uint8
 	RRT_None,
 
 	RRT_SamplerState,
+	RTT_InputLayout,
 	RRT_BindingLayout,
 	RRT_BindingSet,
 	RRT_DepthStencilState,
@@ -472,7 +473,7 @@ namespace Lumina
 			if (Usage.IsFlagSet(BUF_NullResource))
 			{
 				// The null resource descriptor should have its other fields zeroed, and no additional flags.
-				Assert(Size == 0 && Stride == 0 && Usage.IsFlagSet(BUF_NullResource));
+				Assert(Size == 0 && Stride == 0 && Usage.IsFlagSet(BUF_NullResource))
 				return true;
 			}
 
@@ -1076,6 +1077,8 @@ namespace Lumina
 			uint64		RawData[2];
 		};
 
+		// Creates a Shader Resource View (SRV) binding for a buffer.
+		// Typically used for read-only access to structured or byte-address buffers.
 		static FBindingSetItem BufferSRV(uint32 Slot, FRHIBuffer* Buffer)
 		{
 			FBindingSetItem Result;
@@ -1088,6 +1091,8 @@ namespace Lumina
 			return Result;
 		}
 
+		// Creates an Unordered Access View (UAV) binding for a buffer.
+		// Used for read-write access in shaders (e.g. compute shaders).
 		static FBindingSetItem BufferUAV(uint32 Slot, FRHIBuffer* Buffer)
 		{
 			FBindingSetItem Result;
@@ -1099,7 +1104,9 @@ namespace Lumina
 			
 			return Result;
 		}
-		
+
+		// Creates a Constant Buffer View (CBV) binding for a buffer.
+		// Used to bind uniform buffers (read-only, small constant data).
 		static FBindingSetItem BufferCBV(uint32 Slot, FRHIBuffer* Buffer)
 		{
 			FBindingSetItem Result;
@@ -1112,7 +1119,8 @@ namespace Lumina
 			return Result;
 		}
 
-		
+		// Creates a Shader Resource View (SRV) binding for a texture/image.
+		// Used to read from a texture in shaders (e.g. sampling or texel fetch).
 		static FBindingSetItem TextureSRV(uint32 Slot, FRHIImage* Image)
 		{
 			FBindingSetItem Result;
@@ -1125,6 +1133,9 @@ namespace Lumina
 			return Result;
 		}
 
+		
+		// Creates an Unordered Access View (UAV) binding for a texture/image.
+		// Used for read-write access to a texture (e.g. compute shader writes).
 		static FBindingSetItem TextureUAV(uint32 Slot, FRHIImage* Image)
 		{
 			FBindingSetItem Result;

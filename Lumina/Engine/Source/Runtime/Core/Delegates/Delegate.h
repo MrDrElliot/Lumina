@@ -46,7 +46,7 @@ namespace Lumina
                 }
             }
 
-            for (int i = RemovalList.size() - 1; i >= 0; --i)
+            for (SIZE_T i = RemovalList.size(); i-- > 0;)
             {
                 uint32 Removal = RemovalList[i];
                 InvokationList.erase(InvokationList.begin() + Removal);

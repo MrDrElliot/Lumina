@@ -8,8 +8,8 @@
 #include "Platform/Platform.h"
 #include "Platform/WindowsPlatform.h"
 
-static bool GIsMemorySystemInitialized = false;
-static rpmalloc_config_t GrpmallocConfig;
+inline bool GIsMemorySystemInitialized = false;
+inline rpmalloc_config_t GrpmallocConfig;
 
 constexpr uint16 DEFAULT_ALIGNMENT = 0;
 constexpr uint16 MIN_ALIGNMENT = 8;
@@ -58,7 +58,7 @@ namespace Lumina::Memory
         return (reinterpret_cast<uintptr_t>(p) % alignof( T )) == 0;
     }
 
-    LUMINA_API inline void CustomAssert( char const* pMessage )
+    LUMINA_API inline void CustomAssert(const char* pMessage)
     {
         std::cout << pMessage << "\n";
     }
@@ -73,6 +73,7 @@ namespace Lumina::Memory
             rpmalloc_initialize_config(&GrpmallocConfig);
 
             GIsMemorySystemInitialized = true;
+            std::cout << "[Lumina] - Memory System Initialized\n";
         }
     }
 
@@ -88,6 +89,11 @@ namespace Lumina::Memory
         // as we can not guarantee that we have freed everything that may have been allocated from this thread.
         // This is not a problem since on application shutdown, we call rpmalloc_finalize, which will release the thread heaps
         rpmalloc_thread_initialize();
+    }
+
+    LUMINA_API inline bool IsThreadHeapInitialized()
+    {
+        return rpmalloc_is_thread_initialized();
     }
 
     LUMINA_API inline void ShutdownThreadHeap()
@@ -132,6 +138,11 @@ namespace Lumina::Memory
         if (UNLIKELY(!GIsMemorySystemInitialized))
         {
             Memory::Initialize();
+        }
+
+        if (UNLIKELY(!IsThreadHeapInitialized()))
+        {
+            InitializeThreadHeap();
         }
 
         SIZE_T ActualAlignment = GetActualAlignment(size, alignment);

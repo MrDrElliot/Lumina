@@ -6,6 +6,7 @@
 #include "Core/Serialization/Structured/StructuredArchive.h"
 #include "Memory/Memory.h"
 
+
 namespace Lumina
 {
     class IStructuredArchive;

@@ -140,7 +140,7 @@ namespace Lumina
     #define BUF_NullResource    EBufferUsageFlags::NullResource
     #define BUF_Dynamic         EBufferUsageFlags::Dynamic
     #define BUF_SourceCopy      EBufferUsageFlags::SourceCopy
-    #define BUF_VetexBuffer     EBufferUsageFlags::VertexBuffer
+    #define BUF_VertexBuffer    EBufferUsageFlags::VertexBuffer
     #define BUF_IndexBuffer     EBufferUsageFlags::IndexBuffer
     #define BUF_UniformBuffer   EBufferUsageFlags::UniformBuffer
     #define BUF_StorageBuffer   EBufferUsageFlags::StorageBuffer

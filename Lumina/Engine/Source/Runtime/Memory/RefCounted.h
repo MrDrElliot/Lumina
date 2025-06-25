@@ -3,8 +3,10 @@
 #include "Core/Templates/Forward.h"
 #include "Memory.h"
 #include "Core/Assertions/Assert.h"
+PRAGMA_DISABLE_ALL_WARNINGS
 #include "EASTL/internal/atomic/atomic.h"
 #include "EASTL/internal/atomic/atomic_standalone.h"
+PRAGMA_ENABLE_ALL_WARNINGS
 #include "Log/Log.h"
 
 namespace Lumina

@@ -1,5 +1,4 @@
 
-#include "Source/pch.h"
 #include "AssetManager.h"
 #include "Core/Math/Hash/Hash.h"
 #include "Core/Performance/PerformanceTracker.h"
@@ -96,9 +95,12 @@ namespace Lumina
                 }
 
                 FlushCV.notify_all();
+
+                Threading::Sleep(10);
+
             }
             
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            Threading::Sleep(100);
         }
 
         Threading::ShutdownThreadHeap();

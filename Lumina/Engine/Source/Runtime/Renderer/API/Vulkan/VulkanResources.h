@@ -6,6 +6,32 @@
 
 namespace Lumina
 {
+
+    // ----------------------------------------------------------------------------------
+    // GLSL / GLM Type       | Vulkan VkFormat Equivalent         | Size (Bytes) | Notes
+    // ----------------------------------------------------------------------------------
+    // float                 | VK_FORMAT_R32_SFLOAT               | 4            | 1 × 32-bit float
+    // vec2 / glm::vec2      | VK_FORMAT_R32G32_SFLOAT            | 8            | 2 × 32-bit floats
+    // vec3 / glm::vec3      | VK_FORMAT_R32G32B32_SFLOAT         | 12           | 3 × 32-bit floats (no padding in VkFormat)
+    // vec4 / glm::vec4      | VK_FORMAT_R32G32B32A32_SFLOAT      | 16           | 4 × 32-bit floats
+    // int                   | VK_FORMAT_R32_SINT                 | 4            | 1 × 32-bit signed integer
+    // ivec2 / glm::ivec2    | VK_FORMAT_R32G32_SINT              | 8            | 2 × 32-bit signed integers
+    // ivec3 / glm::ivec3    | VK_FORMAT_R32G32B32_SINT           | 12           | 3 × 32-bit signed integers
+    // ivec4 / glm::ivec4    | VK_FORMAT_R32G32B32A32_SINT        | 16           | 4 × 32-bit signed integers
+    // uint                  | VK_FORMAT_R32_UINT                 | 4            | 1 × 32-bit unsigned integer
+    // uvec2 / glm::uvec2    | VK_FORMAT_R32G32_UINT              | 8            | 2 × 32-bit unsigned integers
+    // uvec3 / glm::uvec3    | VK_FORMAT_R32G32B32_UINT           | 12           | 3 × 32-bit unsigned integers
+    // uvec4 / glm::uvec4    | VK_FORMAT_R32G32B32A32_UINT        | 16           | 4 × 32-bit unsigned integers
+    // ----------------------------------------------------------------------------------
+    // Note:
+    // - There is no VK_FORMAT for 3-element types with alignment padding like GLSL's std140 vec3.
+    //   In vertex formats, VK_FORMAT_R32G32B32_* is valid and used, but memory alignment should
+    //   still be handled carefully when packing structs in C++.
+    // - Avoid using vec3 in UBOs unless you pad to vec4 alignment manually.
+    // ----------------------------------------------------------------------------------
+
+
+    
     class FVulkanSwapchain;
 
     class FVulkanViewport : public FRHIViewport
@@ -202,7 +228,7 @@ namespace Lumina
     {
     public:
     
-        RENDER_RESOURCE(RRT_None);
+        RENDER_RESOURCE(RTT_InputLayout)
 
         FVulkanInputLayout(const FVertexAttributeDesc* InAttributeDesc, uint32 AttributeCount);
         void* GetAPIResourceImpl(EAPIResourceType Type) override;

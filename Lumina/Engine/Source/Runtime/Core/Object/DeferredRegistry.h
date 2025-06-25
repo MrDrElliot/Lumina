@@ -51,8 +51,8 @@ namespace Lumina
 
     private:
         
-        TVector<FRegistrant>    Registrations;
-        SIZE_T                  ProcessedRegistrations = 0;
+        TFixedVector<FRegistrant, 2024>     Registrations;
+        SIZE_T                              ProcessedRegistrations = 0;
         
     };
 

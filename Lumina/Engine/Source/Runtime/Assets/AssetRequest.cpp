@@ -28,6 +28,12 @@ namespace Lumina
 
         FPackageLoader Loader(Buffer);
         Loader << Header;
+
+        if (Header.ClassName.empty())
+        {
+            LOG_ERROR("Corrupted Asset: {}", Header.Path);
+            return false;
+        }
         
         CClass* Class = FindObject<CClass>(UTF8_TO_WIDE(Header.ClassName).c_str());
         Assert(Class != nullptr)

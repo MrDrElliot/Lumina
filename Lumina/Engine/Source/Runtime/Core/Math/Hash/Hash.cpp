@@ -4,13 +4,13 @@
 
 namespace Lumina::Hash
 {
-    uint32_t XXHash::GetHash32( void const* pData, size_t size )
+    uint32 XXHash::GetHash32(const void* Data, SIZE_T size)
     {
-        return XXH32( pData, size, 0 );
+        return XXH32(Data, size, 0);
     }
 
-    uint64_t XXHash::GetHash64( void const* pData, size_t size )
+    uint64 XXHash::GetHash64(const void* Data, SIZE_T size)
     {
-        return XXH64( pData, size, 0 );
+        return XXH64(Data, size, 0);
     }
 }

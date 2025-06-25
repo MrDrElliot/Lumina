@@ -27,7 +27,7 @@ namespace Lumina
         std::vector<ConsoleMessage> OutputMessages;
         TDeque<std::string> CommandHistory;
         std::string CurrentCommand;
-        int HistoryIndex;
+        uint64 HistoryIndex;
         bool ScrollToBottom = false;
     };
 }

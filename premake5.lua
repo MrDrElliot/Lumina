@@ -27,6 +27,7 @@ workspace "Lumina"
 		architecture "x86_64"
 
 	filter "configurations:Debug"
+		buildoptions "/MDd"
 		runtime "Debug"
 		optimize "Off"
 		symbols "On"
@@ -42,14 +43,19 @@ workspace "Lumina"
 		symbols "Off"
 
 	filter "system:windows"
+		linkoptions { "/IGNORE:4099", }
 		buildoptions 
 		{
             "/EHsc",
             "/Zc:preprocessor",
             "/Zc:__cplusplus",
-            "/W2",
             "/MP",
+			"/W2",
             "/Zm2000",
+			"/wd4251", -- Disable 'needs to have dll-interface' warning
+			"/wd4291",  -- Disable warning C4291
+			"/wd4297",
+			"/wd4297",
         }
 
 	group "Dependencies"

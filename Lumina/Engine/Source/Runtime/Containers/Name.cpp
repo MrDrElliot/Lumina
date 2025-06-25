@@ -12,11 +12,12 @@ namespace Lumina
         eastl::hash_node<value_type, false> const* const* GetBuckets() const { return mpBucketArray; }
     };
 
-    FNameHashMap* GNameCache = nullptr;
+    LUMINA_API FNameHashMap* GNameCache = nullptr;
     
     void FName::Initialize()
     {
         GNameCache = Memory::New<FNameHashMap>();
+        std::cout << "[Lumina] - String ID (FName) System Initialized\n";
     }
 
     void FName::Shutdown()
@@ -44,7 +45,7 @@ namespace Lumina
             }
         }
 #if _DEBUG
-        StringView = (*GNameCache)[ID];
+        StringView = (*GNameCache)[ID].c_str();
 #endif
     }
 

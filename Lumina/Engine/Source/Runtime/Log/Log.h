@@ -1,43 +1,35 @@
 #pragma once
 
+#include "Core/DisableAllWarnings.h"
+PRAGMA_DISABLE_ALL_WARNINGS
 #include <spdlog/spdlog.h>
+PRAGMA_ENABLE_ALL_WARNINGS
+
 #include "Module/API.h"
 #include "Sinks/ConsoleSink.h"
 
 
-namespace Lumina
+namespace Lumina::Logging
 {
-	class LUMINA_API FLog
-	{
-	public:
-
-		FLog();
-
-		static bool IsInitialized() { return Logger != nullptr; }
-		static void Init();
-		static std::shared_ptr<spdlog::sinks::sink> GetSink();
-		static void GetConsoleLogs(std::vector<ConsoleMessage>& OutLogs) { OutLogs = Logs; }
-		static void Shutdown();
+	LUMINA_API bool IsInitialized();
+	LUMINA_API void Init();
+	LUMINA_API std::shared_ptr<spdlog::sinks::sink> GetSink();
+	LUMINA_API void GetConsoleLogs(std::vector<ConsoleMessage>& OutLogs);
+	LUMINA_API void Shutdown();
+	LUMINA_API std::shared_ptr<spdlog::logger> GetLogger();
 
 
-		inline static std::shared_ptr<spdlog::logger> GetLogger() { return Logger; }
-
-	private:
-
-		static std::shared_ptr<spdlog::logger> Logger;
-		static std::vector<ConsoleMessage> Logs;
-	};
 }
 
 /* Core Logging Macros */
 
-#define LOG_CRITICAL(...) ::Lumina::FLog::GetLogger()->critical(__VA_ARGS__)
-#define LOG_ERROR(...) ::Lumina::FLog::GetLogger()->error(__VA_ARGS__)
-#define LOG_WARN(...) ::Lumina::FLog::GetLogger()->warn(__VA_ARGS__)
-#define LOG_TRACE(...) ::Lumina::FLog::GetLogger()->trace(__VA_ARGS__)
+#define LOG_CRITICAL(...) ::Lumina::Logging::GetLogger()->critical(__VA_ARGS__)
+#define LOG_ERROR(...) ::Lumina::Logging::GetLogger()->error(__VA_ARGS__)
+#define LOG_WARN(...) ::Lumina::Logging::GetLogger()->warn(__VA_ARGS__)
+#define LOG_TRACE(...) ::Lumina::Logging::GetLogger()->trace(__VA_ARGS__)
 #ifdef LE_DEBUG
-#define LOG_DEBUG(...) ::Lumina::FLog::GetLogger()->debug(__VA_ARGS__)
+#define LOG_DEBUG(...) ::Lumina::Logging::GetLogger()->debug(__VA_ARGS__)
 #else
 #define LOG_DEBUG(...) // Empty definition; does nothing if LE_DEBUG is not defined
 #endif
-#define LOG_INFO(...) ::Lumina::FLog::GetLogger()->info(__VA_ARGS__)
+#define LOG_INFO(...) ::Lumina::Logging::GetLogger()->info(__VA_ARGS__)

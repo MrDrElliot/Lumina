@@ -10,6 +10,11 @@ project "GLFW"
     targetdir ("%{wks.location}/Binaries/" .. outputdir)
     objdir ("%{wks.location}/Intermediates/Obj/" .. outputdir .. "/%{prj.name}")    
 
+	buildoptions
+	{
+		"/W2",
+	}
+
 	files
 	{
 		"include/GLFW/glfw3.h",

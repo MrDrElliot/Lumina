@@ -76,14 +76,13 @@ namespace Lumina
 				int monitorX, monitorY, monitorWidth, monitorHeight;
 				glfwGetMonitorWorkarea(currentMonitor, &monitorX, &monitorY, &monitorWidth, &monitorHeight);
 
-				// Check if Specs.Width or Specs.Height is 0 and set them to the monitor size - 1
 				if (Specs.Extent.X == 0 || Specs.Extent.X >= monitorWidth)
 				{
-					Specs.Extent.X = monitorWidth/1.15;
+					Specs.Extent.X = static_cast<decltype(Specs.Extent.X)>(static_cast<float>(monitorWidth) / 1.15f);
 				}
 				if (Specs.Extent.Y == 0 || Specs.Extent.Y >= monitorHeight)
 				{
-					Specs.Extent.Y = monitorHeight/1.15;
+					Specs.Extent.Y = static_cast<decltype(Specs.Extent.Y)>(static_cast<float>(monitorHeight) / 1.15f);
 				}
 				
 

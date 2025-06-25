@@ -16,6 +16,7 @@ namespace Lumina
         virtual ~IShaderCompiler() = default;
 
         virtual bool CompileShader(const FString& ShaderPath, const FShaderCompileOptions& CompileOptions, TVector<uint32>& OutBinaries) = 0;
+
         
     };
 
@@ -25,7 +26,6 @@ namespace Lumina
     public:
 
         
-        
     };
     
     class FSpirVShaderCompiler : public IShaderCompiler
@@ -33,6 +33,8 @@ namespace Lumina
     public:
 
         bool CompileShader(const FString& ShaderPath, const FShaderCompileOptions& CompileOptions, TVector<uint32>& OutBinaries) override;
+
+        
         
     };
 }

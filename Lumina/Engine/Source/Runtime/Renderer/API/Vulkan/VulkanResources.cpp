@@ -86,8 +86,8 @@ namespace Lumina
 
     VkFormat ConvertFormat(EFormat format)
     {
-        Assert(format < EFormat::COUNT);
-        Assert(FormatMap[uint32_t(format)].Format == format);
+        Assert(format < EFormat::COUNT)
+        Assert(FormatMap[uint32_t(format)].Format == format)
 
         return FormatMap[uint32_t(format)].vkFormat;
     }
@@ -556,21 +556,21 @@ namespace Lumina
         AttributeDesc.resize(TotalSize);
 
         uint32 AttributeLocation = 0;
-        for (int i = 0; i < AttributeCount; ++i)
+        for (uint32 i = 0; i < AttributeCount; ++i)
         {
-            const FVertexAttributeDesc& In = InAttributeDesc[i];
-            InputDesc[i] = In;
+            const FVertexAttributeDesc& VertexAttribute = InAttributeDesc[i];
+            InputDesc[i] = VertexAttribute;
 
-            uint32 ElementSizeBytes = GetFormatInfo(In.Format).BytesPerBlock;
+            uint32 ElementSizeBytes = GetFormatInfo(VertexAttribute.Format).BytesPerBlock;
             uint32 BufferOffset = 0;
 
-            for (uint32 i = 0; i < In.ArraySize; ++i)
+            for (uint32 j = 0; j < VertexAttribute.ArraySize; ++j)
             {
-                auto& OutAttribute = AttributeDesc[AttributeLocation];
+                VkVertexInputAttributeDescription& OutAttribute = AttributeDesc[AttributeLocation];
                 OutAttribute.location = AttributeLocation;
-                OutAttribute.format = ConvertFormat(In.Format);
-                OutAttribute.binding = In.BufferIndex;
-                OutAttribute.offset= BufferOffset;
+                OutAttribute.format = ConvertFormat(VertexAttribute.Format);
+                OutAttribute.binding = VertexAttribute.BufferIndex;
+                OutAttribute.offset = BufferOffset + VertexAttribute.Offset;
                 BufferOffset += ElementSizeBytes;
 
                 ++AttributeLocation;
@@ -625,7 +625,7 @@ namespace Lumina
         VkDescriptorSetLayoutCreateInfo CreateInfo = {};
         CreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
         CreateInfo.pBindings = Bindings.data();
-        CreateInfo.bindingCount = Bindings.size();
+        CreateInfo.bindingCount = (uint32)Bindings.size();
         CreateInfo.flags = VK_NO_FLAGS;
         
         
@@ -648,13 +648,13 @@ namespace Lumina
         , Layout(InLayout)
     {
 
-        Assert(InLayout->DescriptorSetLayout);
-        Assert(!InLayout->PoolSizes.empty());
+        Assert(InLayout->DescriptorSetLayout)
+        Assert(!InLayout->PoolSizes.empty())
 
         VkDescriptorPoolCreateInfo CreateInfo = {};
         CreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
         CreateInfo.pPoolSizes = InLayout->PoolSizes.data();
-        CreateInfo.poolSizeCount = InLayout->PoolSizes.size();
+        CreateInfo.poolSizeCount = (uint32)InLayout->PoolSizes.size();
         CreateInfo.maxSets = 1;
         
         VK_CHECK(vkCreateDescriptorPool(InDevice->GetDevice(), &CreateInfo, nullptr, &DescriptorPool));
@@ -703,7 +703,7 @@ namespace Lumina
             {
             case ERHIBindingResourceType::Texture_SRV:
                 {
-                    BindingsRequiringTransitions.push_back(BindingIndex);
+                    BindingsRequiringTransitions.push_back((uint32)BindingIndex);
                     
                     FVulkanImage* Image = static_cast<FVulkanImage*>(Item.ResourceHandle);
                     VkDescriptorImageInfo& ImageInfo = ImageInfos.emplace_back();
@@ -717,7 +717,7 @@ namespace Lumina
                 break;
             case ERHIBindingResourceType::Texture_UAV:
                 {
-                    BindingsRequiringTransitions.push_back(BindingIndex);
+                    BindingsRequiringTransitions.push_back((uint32)BindingIndex);
                     
                     FVulkanImage* Image = static_cast<FVulkanImage*>(Item.ResourceHandle);
                     VkDescriptorImageInfo& ImageInfo = ImageInfos.emplace_back();
@@ -758,7 +758,7 @@ namespace Lumina
             Writes.push_back(Write);
         }
 
-        vkUpdateDescriptorSets(Device->GetDevice(), Writes.size(), Writes.data(), 0, nullptr);
+        vkUpdateDescriptorSets(Device->GetDevice(), (uint32)Writes.size(), Writes.data(), 0, nullptr);
         
     }
 
@@ -790,7 +790,7 @@ namespace Lumina
         VkPipelineLayoutCreateInfo CreateInfo = {};
         CreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
         CreateInfo.pSetLayouts = Layouts.data();
-        CreateInfo.setLayoutCount = Layouts.size();
+        CreateInfo.setLayoutCount = (uint32)Layouts.size();
         
         VK_CHECK(vkCreatePipelineLayout(Device->GetDevice(), &CreateInfo, nullptr, &PipelineLayout));
     }
@@ -799,6 +799,7 @@ namespace Lumina
         :FVulkanPipeline(InDevice)
     {
         Desc = InDesc;
+        AssertMsg(InDesc.InputLayout, "No input layout given, did you forget to add one?");
         
         FVulkanInputLayout* InputLayout = InDesc.InputLayout.As<FVulkanInputLayout>();
 
@@ -833,16 +834,16 @@ namespace Lumina
 
         VkPipelineDynamicStateCreateInfo DynamicState = {};
         DynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-        DynamicState.dynamicStateCount = std::size(DynamicStates);
+        DynamicState.dynamicStateCount = (uint32)std::size(DynamicStates);
         DynamicState.pDynamicStates = DynamicStates;
         
         
         VkPipelineVertexInputStateCreateInfo VertexInputState = {};
         VertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
         VertexInputState.pVertexAttributeDescriptions = InputLayout->AttributeDesc.data();
-        VertexInputState.vertexAttributeDescriptionCount = InputLayout->AttributeDesc.size();
+        VertexInputState.vertexAttributeDescriptionCount = (uint32)InputLayout->AttributeDesc.size();
         VertexInputState.pVertexBindingDescriptions = InputLayout->BindingDesc.data();
-        VertexInputState.vertexBindingDescriptionCount = InputLayout->BindingDesc.size();
+        VertexInputState.vertexBindingDescriptionCount = (uint32)InputLayout->BindingDesc.size();
         
         
         VkPipelineInputAssemblyStateCreateInfo InputAssemblyState = {};
@@ -895,7 +896,7 @@ namespace Lumina
         VkPipelineRenderingCreateInfo RenderingCreateInfo = {};
         RenderingCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
         RenderingCreateInfo.colorAttachmentCount = 1;
-        VkFormat ColorFormat = VK_FORMAT_R8G8B8A8_UNORM;
+        VkFormat ColorFormat = VK_FORMAT_B8G8R8A8_UNORM;
         RenderingCreateInfo.pColorAttachmentFormats = &ColorFormat;
         VkFormat DepthFormat = VK_FORMAT_D32_SFLOAT;
         RenderingCreateInfo.depthAttachmentFormat = DepthFormat;
@@ -912,7 +913,7 @@ namespace Lumina
         CreateInfo.pDepthStencilState = &DepthStencilState;
         CreateInfo.pColorBlendState = &ColorBlendState;
         CreateInfo.pDynamicState = &DynamicState;
-        CreateInfo.stageCount = ShaderStages.size();
+        CreateInfo.stageCount = (uint32)ShaderStages.size();
         CreateInfo.pStages = ShaderStages.data();
         CreateInfo.layout = PipelineLayout;
         CreateInfo.renderPass = VK_NULL_HANDLE;

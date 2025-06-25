@@ -3,10 +3,14 @@
 #include <filesystem>
 
 #include "Assets/AssetHeader.h"
+#include "Core/DisableAllWarnings.h"
 #include "Subsystems/Subsystem.h"
 #include "Core/Delegates/Delegate.h"
 #include "Core/Serialization/MemoryArchiver.h"
+
+PRAGMA_DISABLE_ALL_WARNINGS
 #include "EASTL/internal/atomic/atomic.h"
+PRAGMA_ENABLE_ALL_WARNINGS
 
 #define FILE_EXTENSION ".lasset"
 

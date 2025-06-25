@@ -1,9 +1,15 @@
 #pragma once
 
+
+#include "Core/DisableAllWarnings.h"
+
+PRAGMA_DISABLE_ALL_WARNINGS
 #include <spdlog/fmt/fmt.h>
 #include "EASTL/fixed_string.h"
 #include "EASTL/string.h"
 #include <ostream>
+PRAGMA_ENABLE_ALL_WARNINGS
+
 #include "Platform/WindowsPlatform.h"
 #include "Platform/GenericPlatform.h"
 

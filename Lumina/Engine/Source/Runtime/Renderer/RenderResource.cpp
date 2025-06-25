@@ -142,6 +142,6 @@ const FFormatInfo& GetFormatInfo(EFormat format)
     }
 
     const FFormatInfo& info = c_FormatInfo[uint32(format)];
-    Assert(info.Format == format);
+    Assert(info.Format == format)
     return info;
 }

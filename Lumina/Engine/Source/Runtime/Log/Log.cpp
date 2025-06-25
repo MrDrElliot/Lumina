@@ -7,19 +7,20 @@
 #include "Sinks/ConsoleSink.h"
 #include "spdlog/sinks/ringbuffer_sink.h"
 
-namespace Lumina
+namespace Lumina::Logging
 {
-
-	std::shared_ptr<spdlog::logger> FLog::Logger;
-	std::vector<ConsoleMessage> FLog::Logs;
-
-	FLog::FLog()
-	{
-	}
 	
-	void FLog::Init()
+	LUMINA_API std::shared_ptr<spdlog::logger> Logger;
+	LUMINA_API std::vector<ConsoleMessage> Logs;
+	
+	bool IsInitialized()
 	{
-		
+		return Logger != nullptr;
+	}
+
+	void Init()
+	{
+				
 		spdlog::set_pattern("%^[%T] %n: %v%$");
 		Logger = spdlog::stdout_color_mt("Lumina");
 		Logger->sinks().push_back(std::make_shared<ConsoleSink>(Logs));
@@ -29,15 +30,25 @@ namespace Lumina
 
 	}
 
-	std::shared_ptr<spdlog::sinks::sink> FLog::GetSink()
+	std::shared_ptr<spdlog::sinks::sink> GetSink()
 	{
 		return Logger->sinks().front();
 	}
 
-	void FLog::Shutdown()
+	void Shutdown()
 	{
 		LOG_TRACE("------- Log Shutdown -------");
 		spdlog::shutdown();
 		Logger = nullptr;
+	}
+
+	std::shared_ptr<spdlog::logger> GetLogger()
+	{
+		return Logger;
+	}
+
+	void GetConsoleLogs(std::vector<ConsoleMessage>& OutLogs)
+	{
+		OutLogs = Logs;
 	}
 }
