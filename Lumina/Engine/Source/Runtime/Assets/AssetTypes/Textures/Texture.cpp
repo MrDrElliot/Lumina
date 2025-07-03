@@ -18,7 +18,7 @@ namespace Lumina
         CObject::Serialize(Slot);
     }
 
-    void CTexture::UpdateStreamableResource()
+    void CTexture::PostLoad()
     {
         FRenderManager* RenderManager = GEngine->GetEngineSubsystem<FRenderManager>();
         IRenderContext* RenderContext = RenderManager->GetRenderContext();

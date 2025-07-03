@@ -17,7 +17,7 @@ namespace Lumina
 
         void Serialize(FArchive& Ar) override;
         void Serialize(IStructuredArchive::FSlot Slot) override;
-        void UpdateStreamableResource() override;
+        void PostLoad() override;
         
         
         FRHIImageDesc   ImageDescription;

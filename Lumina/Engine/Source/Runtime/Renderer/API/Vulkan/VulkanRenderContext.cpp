@@ -28,7 +28,7 @@
 
 namespace Lumina
 {
-    extern TStack<IRHIResource*> PendingDeletes;
+    extern TStack<IRHIResource*, TFixedVector<IRHIResource*, 100>> PendingDeletes;
 
     VkBool32 VKAPI_PTR VkDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
     {
@@ -210,7 +210,9 @@ namespace Lumina
     void FQueue::RetireCommandBuffers()
     {
         LUMINA_PROFILE_SCOPE();
-        TVector<TRefCountPtr<FTrackedCommandBufer>> Submissions = Memory::Move(CommandBuffersInFlight);
+        
+        auto Submissions = Memory::Move(CommandBuffersInFlight);
+        CommandBuffersInFlight.clear();
         
         for (auto& Submission : Submissions)
         {
@@ -223,8 +225,7 @@ namespace Lumina
     {
         LUMINA_PROFILE_SCOPE();
         
-        TVector<VkCommandBuffer> CommandBuffers(NumCommandLists);
-        CommandBuffersInFlight.reserve(NumCommandLists);
+        TFixedVector<VkCommandBuffer, 4> CommandBuffers(NumCommandLists);
         
         for (uint32 i = 0; i < NumCommandLists; ++i)
         {
@@ -355,7 +356,7 @@ namespace Lumina
         LUMINA_PROFILE_SCOPE();
         
         AssertMsg(glfwVulkanSupported(), "Vulkan Is Not Supported!");
-
+        
         vkb::InstanceBuilder Builder;
         auto InstBuilder = Builder
         .set_app_name("Lumina Engine")

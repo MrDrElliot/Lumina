@@ -50,20 +50,18 @@ namespace Lumina
 
     struct LUMINA_API IBufferState
     {
-        bool bInitialized = false;
         ERHIAccess State = ERHIAccess::None;
     };
 
     struct LUMINA_API IImageState
     {
-        bool bInitialized = false;
         ERHIAccess State = ERHIAccess::None;
     };
 
     class LUMINA_API FCommandListStateTracker
     {
     public:
-
+        
         void ClearBarriers();
 
         void RequireImageAccess(FRHIImageRef Image, ERHIAccess Access);

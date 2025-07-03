@@ -89,8 +89,6 @@ namespace Lumina
         Assert(ImageBarriers.empty())
         Assert(BufferBarriers.empty())
         
-        ImageStates.clear();
-        BufferStates.clear();
         
     }
 

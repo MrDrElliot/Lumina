@@ -25,7 +25,7 @@ namespace Lumina
     template class LUMINA_API TRefCountPtr<IRHIInputLayout>;
     template class LUMINA_API TRefCountPtr<FShaderLibrary>;
 
-    TStack<IRHIResource*> PendingDeletes;
+    TStack<IRHIResource*, TFixedVector<IRHIResource*, 100>> PendingDeletes;
     
     void IRHIResource::Destroy() const
     {

@@ -5,6 +5,7 @@
 #include "SceneRenderTypes.h"
 #include "Renderer/RenderResource.h"
 #include "Renderer/RenderTypes.h"
+#include "Renderer/RenderGraph/RenderGraph.h"
 
 namespace Lumina
 {
@@ -25,7 +26,7 @@ namespace Lumina
     };
     
     /**
-     * Scene renderer's are stateful renderes that interface with the state-less renderer.
+     * Scene renderers are stateful renderers that interface with the state-less renderer.
      * Responsible for managing all low-level scene rendering.
      */
     class FSceneRenderer
@@ -73,7 +74,8 @@ namespace Lumina
         FSceneLightData                     SceneLightData;
         TVector<FModelData>                 ModelData;
         TVector<FMaterialTexturesData>      TexturesData;
-        
+
+        FRenderGraph                        RenderGraph;
     };
     
 }

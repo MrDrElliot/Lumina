@@ -2,77 +2,65 @@
 
 #include "Memory/Memory.h"
 
-
-template <typename T>
-class PoolAllocator
+namespace Lumina
 {
-private:
-    struct Block {
-        Block* next; // Pointer to the next free block
+
+    class IAllocator
+    {
+    public:
+        virtual ~IAllocator() = default;
+
+        // Allocates memory of specified size and alignment.
+        virtual void* Allocate(SIZE_T Size, SIZE_T Alignment = alignof(std::max_align_t)) = 0;
+
+        // Clears or resets the allocator (depending on strategy).
+        virtual void Reset() = 0;
     };
 
-    Block* m_FreeList;          // The free list of blocks
-    size_t m_BlockSize;         // Size of the objects being allocated
-    size_t m_BlockCount;        // Total number of blocks available
-    void* m_Memory;            // Pointer to the memory pool
-
-public:
-    // Constructor: Allocates memory for the pool
-    PoolAllocator(size_t blockCount = 1024)
-        : m_FreeList(nullptr), m_BlockSize(sizeof(T)), m_BlockCount(blockCount) {
-        // Allocate a block of memory large enough to hold all objects
-        m_Memory = ::operator new(m_BlockSize * m_BlockCount);
-
-        // Initialize free list
-        Block* currentBlock = reinterpret_cast<Block*>(m_Memory);
-        for (size_t i = 0; i < m_BlockCount - 1; ++i) {
-            currentBlock->next = reinterpret_cast<Block*>(reinterpret_cast<uint8_t*>(currentBlock) + m_BlockSize);
-            currentBlock = currentBlock->next;
-        }
-        currentBlock->next = nullptr;  // Last block points to null
-        m_FreeList = reinterpret_cast<Block*>(m_Memory); // Set free list to the first block
-    }
-
-    // Destructor: Frees the memory pool
-    ~PoolAllocator() {
-        ::operator delete(m_Memory);
-    }
-
-    // Allocate memory for a new object of type T, forwarding arguments to the constructor of T
-    template <typename... Args>
-    T* Allocate(Args&&... args) {
-        if (!m_FreeList) {
-            return nullptr;  // No more memory available
+    
+    class FFrameAllocator : public IAllocator
+    {
+    public:
+        explicit FFrameAllocator(SIZE_T CapacityBytes)
+            : Capacity(CapacityBytes)
+        {
+            Base = (uint8*)Memory::Malloc(Capacity);
+            Offset = 0;
         }
 
-        // Get a free block from the free list
-        Block* block = m_FreeList;
-        m_FreeList = m_FreeList->next; // Move the free list pointer to the next block
+        ~FFrameAllocator()
+        {
+            Memory::Free(Base);
+            Base = nullptr;
+        }
 
-        // Return the memory pointer for the allocated object
-        return new (reinterpret_cast<void*>(block)) T(std::forward<Args>(args)...);  // Forward arguments to the constructor
-    }
+        void* Allocate(SIZE_T Size, SIZE_T Alignment = DEFAULT_ALIGNMENT) override
+        {
+            SIZE_T CurrentPtr = reinterpret_cast<SIZE_T>(Base + Offset);
+            SIZE_T AlignedPtr = (CurrentPtr + Alignment - 1) & ~(Alignment - 1);
+            SIZE_T NextOffset = AlignedPtr - reinterpret_cast<SIZE_T>(Base) + Size;
 
-    // Deallocate memory for an object of type T
-    void Deallocate(T* ptr) {
-        if (!ptr) return;
+            assert(NextOffset <= Capacity && "FFrameAllocator out of memory");
 
-        // Destroy the object by calling its destructor
-        ptr->~T();
+            void* Result = Base + (AlignedPtr - reinterpret_cast<SIZE_T>(Base));
+            Offset = NextOffset;
+            return Result;
+        }
 
-        // Return the block back to the free list
-        Block* block = reinterpret_cast<Block*>(ptr);
-        block->next = m_FreeList;  // Link the block to the free list
-        m_FreeList = block;        // Set the free list to the newly deallocated block
-    }
+        void Reset() override
+        {
+            Offset = 0;
+        }
 
-    // Get the total number of blocks in the pool
-    size_t GetBlockCount() const {
-        return m_BlockCount;
-    }
+        SIZE_T GetUsed() const { return Offset; }
+        SIZE_T GetCapacity() const { return Capacity; }
+        SIZE_T GetRemaining() const { return Capacity - Offset; }
 
-    // Get the size of each block (size of T)
-    size_t GetBlockSize() const {
-        return m_BlockSize;
-    }
-};
+    private:
+        
+        uint8* Base = nullptr;
+        SIZE_T Offset = 0;
+        SIZE_T Capacity = 0;
+    };
+
+}

@@ -18,7 +18,7 @@ namespace Lumina
         CObject::Serialize(Slot);
     }
 
-    void CMesh::UpdateStreamableResource()
+    void CMesh::PostLoad()
     {
         FRenderManager* RenderManager = GEngine->GetEngineSubsystem<FRenderManager>();
         IRenderContext* RenderContext = RenderManager->GetRenderContext();

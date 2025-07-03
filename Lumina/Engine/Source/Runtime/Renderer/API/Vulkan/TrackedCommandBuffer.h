@@ -24,22 +24,20 @@ namespace Lumina
             CommandBuffer)
         }
 
-        ~FTrackedCommandBufer()
+        ~FTrackedCommandBufer() override
         {
             TracyVkDestroy(TracyContext)
             vkDestroyCommandPool(Device->GetDevice(), CommandPool, nullptr);
         }
 
-        void AddReferencedResource(TRefCountPtr<IRHIResource> InResource)
+        void AddReferencedResource(const TRefCountPtr<IRHIResource>& InResource)
         {
             ReferencedResources.push_back(InResource);
         }
 
         void ClearReferencedResources()
         {
-            SIZE_T LastSize = ReferencedResources.size();
             ReferencedResources.clear();
-            ReferencedResources.reserve(LastSize);
         }
 
         VkCommandBuffer             CommandBuffer;
@@ -51,7 +49,7 @@ namespace Lumina
 
         
         /** Here we keep alive any resources that this current command buffer needs/uses */
-        TVector<TRefCountPtr<IRHIResource>> ReferencedResources;
+        TFixedVector<TRefCountPtr<IRHIResource>, 20> ReferencedResources;
         
     };
 }

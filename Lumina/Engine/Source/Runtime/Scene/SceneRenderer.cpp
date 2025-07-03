@@ -15,11 +15,21 @@
 #include "Paths/Paths.h"
 #include "Renderer/RenderContext.h"
 #include "Renderer/RenderManager.h"
+#include "Rendering/ClearColorRenderPass.h"
+#include "Rendering/SkyboxRenderPass.h"
 #include "Subsystems/FCameraManager.h"
 #include "Tools/Import/ImportHelpers.h"
 
 namespace Lumina
 {
+    namespace
+    {
+        const char* SkyboxPassName      = "Skybox";
+        const char* ClearColorPassName  = "ClearColor";
+
+    }
+    
+    
     FSceneRenderer::FSceneRenderer()
         : SceneGlobalData()
     {
@@ -34,11 +44,14 @@ namespace Lumina
     {
         InitBuffers();
         CreateImages();
+
+        RenderGraph.AddRenderPass<FClearColorRenderPass>(ClearColorPassName);
+        RenderGraph.AddRenderPass<FSkyboxRenderPass>(SkyboxPassName);
     }
 
     void FSceneRenderer::Deinitialize()
     {
-        
+        RenderGraph.ClearPasses();
     }
 
     void FSceneRenderer::StartScene(const FScene* Scene)
@@ -67,6 +80,14 @@ namespace Lumina
 
     void FSceneRenderer::EndScene(const FScene* Scene)
     {
+        
+        IRenderContext* RenderContext = GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext();
+        ICommandList* CommandList = RenderContext->GetCommandList();
+
+        RenderGraph.Compile();
+        RenderGraph.Execute(CommandList);
+        
+        
         //FullScreenPass(Scene);
         DrawSkybox(Scene);
         ForwardRenderPass(Scene);

@@ -19,6 +19,15 @@ namespace Lumina
     //  In the Lumina engine, a package is the authoritative root for any CObject path. All objects 
     //  exist *within* a package, and all object references begin with their owning package.
     //
+    //  Objects are generally lazy-loaded. That means when a package is loaded, all objects listed as
+    //  exports inside of that package have their initial memory allocated and are referencable.
+    //  The actual object still remains in a "needs loading" state, indicated by the "OF_NeedsLoad" flag.
+    //
+    //  When an object inside the package is requested, it starts a chain that can recursively load
+    //  multiple other assets across different packages. Objects serialized inside of this package are
+    //  stored within the export table, objects referenced that live outside of this package are stored
+    //  in the import table.
+    //
     //  There are two types of packages:
     //  
     //      - "script://"  → Indicates the package is defined in native C++ source code. These packages
@@ -29,8 +38,8 @@ namespace Lumina
     //                        editor-authored asset data.
     //
     //  Each package maintains an internal Import Table and Export Table:
-    //      - The **Export Table** lists all CObjects defined in this package (name, class, offset, etc).
     //      - The **Import Table** lists all external CObject references used by this package.
+    //      - The **Export Table** lists all CObjects defined in this package (name, class, offset, etc).
     //
     //  Import and export entries allow the system to resolve object dependencies across package
     //  boundaries in a lazy and memory-efficient way.
@@ -43,6 +52,8 @@ namespace Lumina
     //      - project://Characters/HeroMesh.HeroMesh
     //      - script://Engine/Pipelines.DefaultPipeline
     //
+    //==================================================================================================
+    
     /*
     ====================================================================================================
     //  Lumina Serialized Package Layout

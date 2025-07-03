@@ -34,7 +34,7 @@ namespace Lumina
         INLINE const FRHIBufferRef GetVertexBuffer() const { return VertexBuffer; }
         INLINE const FRHIBufferRef GetIndexBuffer() const { return IndexBuffer; }
         
-        void UpdateStreamableResource() override;
+        void PostLoad() override;
         
 
         LUM_PROPERTY()

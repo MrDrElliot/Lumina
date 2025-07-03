@@ -1,6 +1,7 @@
 ﻿#include "Package.h"
 
 #include "Core/Object/Class.h"
+#include "Core/Profiler/Profile.h"
 #include "Paths/Paths.h"
 #include "Platform/Filesystem/FileHelper.h"
 
@@ -60,6 +61,8 @@ namespace Lumina
 
     CPackage* CPackage::LoadPackage(const FName& FileName)
     {
+        LUMINA_PROFILE_SCOPE();
+
         FString FullName = FileName.ToString();
         Paths::AddPackageExtension(FullName);
 
@@ -123,6 +126,8 @@ namespace Lumina
 
     bool CPackage::SavePackage(CPackage* Package, CObject* Asset, const FName& FileName)
     {
+        LUMINA_PROFILE_SCOPE();
+
         Package->ExportTable.clear();
         Package->ImportTable.clear();
         
@@ -237,6 +242,8 @@ namespace Lumina
     
     void CPackage::LoadObject(CObject* Object)
     {
+        LUMINA_PROFILE_SCOPE();
+        
         if (!Object || !Object->HasAnyFlag(OF_NeedsLoad))
         {
             return;
@@ -281,6 +288,10 @@ namespace Lumina
         // Seek to the data offset
         Loader->Seek(DataPos);
 
+        
+        Object->PreLoad();
+
+        
         // Deserialize object
         Object->Serialize(*Loader);
 
@@ -292,10 +303,11 @@ namespace Lumina
             LOG_WARN("Mismatched size when loading object {}: expected {}, got {}", Object->GetName().ToString(), ExpectedSize, ActualSize);
         }
 
-        Object->UpdateStreamableResource();
 
         Object->ClearFlags(OF_NeedsLoad);
 
+        Object->PostLoad();
+        
         // Reset the state of the loader to the previous object.
         Loader->Seek(SavedPos);
         

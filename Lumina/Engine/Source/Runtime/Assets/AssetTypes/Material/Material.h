@@ -27,7 +27,7 @@ namespace Lumina
         
     public:
 
-        void UpdateStreamableResource() override;
+        void PostLoad() override;
         
         LUM_PROPERTY(Editable, Category = "Graph")
         TVector<CObject*> MaterialNodes;

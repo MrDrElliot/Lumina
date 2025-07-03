@@ -5,7 +5,7 @@
 namespace Lumina
 {
 
-    void CMaterial::UpdateStreamableResource()
+    void CMaterial::PostLoad()
     {
         for (const CObject* Node : MaterialNodes)
         {

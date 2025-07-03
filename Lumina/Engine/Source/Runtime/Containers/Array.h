@@ -40,7 +40,7 @@ namespace Lumina
                                                                                         
     template<typename T> using TQueue =                                                 eastl::queue<T>;
     template<typename T> using TDeque =                                                 eastl::deque<T>;
-    template<typename T> using TStack =                                                 eastl::stack<T>;
+    template<typename T, typename C = TVector<T>> using TStack =                        eastl::stack<T, C>;
     
 
     using Blob = TVector<uint8>;

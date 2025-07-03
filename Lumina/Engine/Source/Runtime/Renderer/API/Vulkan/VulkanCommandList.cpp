@@ -42,6 +42,7 @@ namespace Lumina
 
     void FVulkanCommandList::Open()
     {
+        LUMINA_PROFILE_SCOPE();
         CurrentCommandBuffer = RenderContext->GetQueue(Info.CommandQueue)->GetOrCreateCommandBuffer();
         
         VkCommandBufferBeginInfo BeginInfo = {};
@@ -56,6 +57,7 @@ namespace Lumina
 
     void FVulkanCommandList::Close()
     {
+        LUMINA_PROFILE_SCOPE();
         TracyVkCollect(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer)
         
         // Reset any images or buffers to their default desired layouts.
@@ -70,6 +72,7 @@ namespace Lumina
 
     void FVulkanCommandList::Executed(FQueue* Queue)
     {
+        LUMINA_PROFILE_SCOPE();
         CommandListTracker.CommandListExecuted(this);
         
         PushConstantVisibility =    VK_SHADER_STAGE_FLAG_BITS_MAX_ENUM;
@@ -80,6 +83,7 @@ namespace Lumina
 
     void FVulkanCommandList::CopyImage(FRHIImage* Src, FRHIImage* Dst)
     {
+        LUMINA_PROFILE_SCOPE();
         TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "CopyImage")        
         Assert(Src != nullptr && Dst != nullptr)
         
@@ -129,6 +133,7 @@ namespace Lumina
 
     void FVulkanCommandList::WriteToImage(FRHIImage* Dst, uint32 ArraySlice, uint32 MipLevel, const void* Data, SIZE_T RowPitch, SIZE_T DepthPitch)
     {
+        LUMINA_PROFILE_SCOPE();
         TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "WriteToImage")        
         Assert(Dst != nullptr && Data != nullptr)
 
@@ -182,6 +187,7 @@ namespace Lumina
 
     void FVulkanCommandList::CopyBuffer(FRHIBuffer* Source, uint64 SrcOffset, FRHIBuffer* Destination, uint64 DstOffset, uint64 CopySize)
     {
+        LUMINA_PROFILE_SCOPE();
         TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "CopyImage")        
         Assert(PendingState.IsRecording())
         Assert(Source != nullptr)
@@ -205,6 +211,7 @@ namespace Lumina
 
     void FVulkanCommandList::UploadToBuffer(FRHIBuffer* Buffer, const void* Data, uint32 Offset, uint32 Size)
     {
+        LUMINA_PROFILE_SCOPE();
         TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "UploadToBuffer")        
         Assert(Size > 0 && Size <= Buffer->GetSize())
         Assert(PendingState.IsRecording())
@@ -236,6 +243,7 @@ namespace Lumina
 
     void FVulkanCommandList::SetRequiredImageAccess(FRHIImage* Image, ERHIAccess Access)
     {
+        LUMINA_PROFILE_SCOPE();
         TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "SetRequiredImageAccess")        
 
         CommandListTracker.RequireImageAccess(Image, Access);
@@ -248,6 +256,7 @@ namespace Lumina
 
     void FVulkanCommandList::SetRequiredBufferAccess(FRHIBuffer* Buffer, ERHIAccess Access)
     {
+        LUMINA_PROFILE_SCOPE();
         TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "SetRequiredBufferAccess")        
 
         CommandListTracker.RequireBufferAccess(Buffer, Access);
@@ -260,6 +269,7 @@ namespace Lumina
 
     void FVulkanCommandList::CommitBarriers()
     {
+        LUMINA_PROFILE_SCOPE();
         TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "CommitBarriers")        
 
         FVulkanPipelineBarrier Barrier;
@@ -278,6 +288,7 @@ namespace Lumina
 
     void FVulkanCommandList::SetResourceStatesForBindingSet(FRHIBindingSet* BindingSet)
     {
+        LUMINA_PROFILE_SCOPE();
         TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "SetResourceStatesForBindingSet")        
 
         FVulkanBindingSet* VkBindingSet = static_cast<FVulkanBindingSet*>(BindingSet);
@@ -332,9 +343,10 @@ namespace Lumina
 
     void FVulkanCommandList::BeginRenderPass(const FRenderPassBeginInfo& PassInfo)
     {
+        LUMINA_PROFILE_SCOPE();
         TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "BeginRenderPass")        
 
-        TVector<VkRenderingAttachmentInfo> ColorAttachments;
+        TFixedVector<VkRenderingAttachmentInfo, 4> ColorAttachments(PassInfo.ColorAttachments.size());
         VkRenderingAttachmentInfo DepthAttachment = {};
 
         for (SIZE_T i = 0; i < PassInfo.ColorAttachments.size(); ++i)
@@ -360,7 +372,7 @@ namespace Lumina
             }
             
             SetRequiredImageAccess(Image, ERHIAccess::ColorAttachmentWrite);
-            ColorAttachments.push_back(Attachment);
+            ColorAttachments[i] = Attachment;
         }
         
         CommitBarriers();
@@ -401,6 +413,7 @@ namespace Lumina
 
     void FVulkanCommandList::EndRenderPass()
     {
+        LUMINA_PROFILE_SCOPE();
         TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "EndRenderPass")        
 
         vkCmdEndRendering(CurrentCommandBuffer->CommandBuffer);
@@ -409,6 +422,7 @@ namespace Lumina
 
     void FVulkanCommandList::ClearImageColor(FRHIImage* Image, const FColor& Color)
     {
+        LUMINA_PROFILE_SCOPE();
         TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "ClearImageColor")        
         Assert(Image != nullptr)
         
@@ -435,6 +449,7 @@ namespace Lumina
 
     void FVulkanCommandList::BindBindingSets(TVector<FRHIBindingSet*> BindingSets, ERHIBindingPoint BindPoint)
     {
+        LUMINA_PROFILE_SCOPE();
         TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "BindBindingSet")        
         
         VkPipelineBindPoint BindingPoint = (BindPoint == ERHIBindingPoint::Graphics) ? VK_PIPELINE_BIND_POINT_GRAPHICS : VK_PIPELINE_BIND_POINT_COMPUTE;
@@ -460,11 +475,13 @@ namespace Lumina
 
     void FVulkanCommandList::SetPushConstants(const void* Data, SIZE_T ByteSize)
     {
+        LUMINA_PROFILE_SCOPE();
         vkCmdPushConstants(CurrentCommandBuffer->CommandBuffer, CurrentPipelineLayout, PushConstantVisibility, 0, (uint32)ByteSize, Data);
     }
 
     void FVulkanCommandList::BindVertexBuffer(FRHIBuffer* Buffer, uint32 Index, uint32 Offset)
     {
+        LUMINA_PROFILE_SCOPE();
         TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "BindVertexBuffer")        
 
         GraphicsState.SetVertexStream(Buffer, Index, Offset);
@@ -472,6 +489,7 @@ namespace Lumina
 
     void FVulkanCommandList::SetGraphicsPipeline(FRHIGraphicsPipeline* InPipeline)
     {
+        LUMINA_PROFILE_SCOPE();
         TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "SetGraphicsPipeline")        
 
         FVulkanGraphicsPipeline* PSO = static_cast<FVulkanGraphicsPipeline*>(InPipeline);
@@ -486,6 +504,7 @@ namespace Lumina
 
     void FVulkanCommandList::SetViewport(float MinX, float MinY, float MinZ, float MaxX, float MaxY, float MaxZ)
     {
+        LUMINA_PROFILE_SCOPE();
         TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "SetViewport")        
 
         VkViewport Viewport = {};
@@ -501,6 +520,7 @@ namespace Lumina
     
     void FVulkanCommandList::SetScissorRect(uint32 MinX, uint32 MinY, uint32 MaxX, uint32 MaxY)
     {
+        LUMINA_PROFILE_SCOPE();
         TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "SetScissorRect")        
 
         VkRect2D Scissor = {};
@@ -514,6 +534,7 @@ namespace Lumina
     
     void FVulkanCommandList::Draw(uint32 VertexCount, uint32 InstanceCount, uint32 FirstVertex, uint32 FirstInstance)
     {
+        LUMINA_PROFILE_SCOPE();
         TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "Draw")        
         Assert(GraphicsState.Pipeline != nullptr)
 
@@ -523,6 +544,7 @@ namespace Lumina
 
     void FVulkanCommandList::DrawIndexed(FRHIBuffer* IndexBuffer, uint32 IndexCount, uint32 InstanceCount, uint32 FirstIndex, int32 VertexOffset, uint32 FirstInstance)
     {
+        LUMINA_PROFILE_SCOPE();
         TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "DrawIndexed")        
         Assert(GraphicsState.Pipeline != nullptr)
         Assert(IndexBuffer != nullptr)
@@ -538,6 +560,7 @@ namespace Lumina
 
     void FVulkanCommandList::SetComputePipeline(FRHIComputePipeline* InPipeline)
     {
+        LUMINA_PROFILE_SCOPE();
         TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "SetComputePipeline")        
 
         FVulkanComputePipeline* PSO = static_cast<FVulkanComputePipeline*>(InPipeline);
@@ -553,6 +576,7 @@ namespace Lumina
 
     void FVulkanCommandList::Dispatch(uint32 GroupCountX, uint32 GroupCountY, uint32 GroupCountZ)
     {
+        LUMINA_PROFILE_SCOPE();
         TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "Dispatch")        
 
         Assert(ComputeState.Pipeline != nullptr)

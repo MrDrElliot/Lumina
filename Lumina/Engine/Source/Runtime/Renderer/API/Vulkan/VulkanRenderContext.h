@@ -85,7 +85,8 @@ namespace Lumina
             , Queue(InQueue)
             , QueueFamilyIndex(InQueueFamilyIndex)
             , FencePool(InDevice)
-        {}
+        {
+        }
 
         ~FQueue();
         
@@ -109,8 +110,8 @@ namespace Lumina
         TVector<VkSemaphore>        SignalSemaphores;
         FFencePool                  FencePool;
         
-        TVector<TRefCountPtr<FTrackedCommandBufer>> CommandBuffersInFlight;
-        TStack<TRefCountPtr<FTrackedCommandBufer>>  CommandBufferPool;
+        TFixedVector<TRefCountPtr<FTrackedCommandBufer>, 4> CommandBuffersInFlight;
+        TStack<TRefCountPtr<FTrackedCommandBufer>, TFixedVector<TRefCountPtr<FTrackedCommandBufer>, 4>> CommandBufferPool;
     };
 
     class FVulkanStagingManager
