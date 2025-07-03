@@ -1,11 +1,6 @@
 
 #include "AssetRequest.h"
-
-#include "AssetHeader.h"
-#include "Core/Object/Class.h"
-#include "Core/Reflection/Type/LuminaTypes.h"
-#include "Core/Reflection/Type/Properties/EnumProperty.h"
-#include "Core/Serialization/Package/PackageLoader.h"
+#include "Core/Object/Package/Package.h"
 #include "Paths/Paths.h"
 #include "Platform/Filesystem/FileHelper.h"
 
@@ -13,43 +8,15 @@ namespace Lumina
 {
     bool FAssetRequest::Process()
     {
-        FAssetHeader Header;
-        
-        FString FullPath = Paths::ResolveVirtualPath(AssetPath) + ".lasset";
+        FString FullPath = Paths::ResolveVirtualPath(AssetPath);
         FString Name = Paths::FileName(AssetPath);
 
-        TVector<uint8> Buffer;
-        if (!FFileHelper::LoadFileToArray(Buffer, FullPath))
-        {
-            LOG_ERROR("Cannot find asset file at: {}", FullPath);
-            bFailed = true;
-            return false;
-        }
+        CPackage* Package = CPackage::LoadPackage(FullPath.c_str());
+        FName QualifiedName = MakeFullyQualifiedObjectName(Package, Name.c_str());
+        PendingObject = FindObject<CObject>(QualifiedName);
 
-        FPackageLoader Loader(Buffer);
-        Loader << Header;
-
-        if (Header.ClassName.empty())
-        {
-            LOG_ERROR("Corrupted Asset: {}", Header.Path);
-            return false;
-        }
+        Package->LoadObject(PendingObject);
         
-        CClass* Class = FindObject<CClass>(UTF8_TO_WIDE(Header.ClassName).c_str());
-        if (Class == nullptr)
-        {
-            LOG_CRITICAL("Faild to find class with name {}", Header.ClassName);
-            return false;
-        }
-        
-        PendingObject = NewObject(Class, UTF8_TO_WIDE(AssetPath).c_str(), FName(Name));
-
-        FBinaryStructuredArchive BinaryArchive(Loader);
-        FArchiveSlot Slot = BinaryArchive.Open();
-
-        PendingObject->Serialize(Slot);
-        PendingObject->UpdateStreamableResource();
-
         return true;
     }
 }

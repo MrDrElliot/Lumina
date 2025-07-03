@@ -32,6 +32,7 @@ namespace Lumina
         virtual void OnAssetLoadFinished() = 0;
 
         void OnSave() override;
+        
 
     protected:
 

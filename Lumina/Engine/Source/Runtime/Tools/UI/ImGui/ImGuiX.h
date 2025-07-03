@@ -1,12 +1,14 @@
 #pragma once
 #include "imgui.h"
+#include "Assets/AssetPath.h"
 #include "Core/Functional/Function.h"
 #include "glm/glm.hpp"
 #include "Platform/GenericPlatform.h"
-#include "Platform/WindowsPlatform.h"
-#include <filesystem>
+
 
 #include "Containers/Array.h"
+#include "Module/API.h"
+#include "Platform/WindowsPlatform.h"
 
 namespace Lumina::ImGuiX
 {
@@ -37,7 +39,7 @@ namespace Lumina::ImGuiX
 
     LUMINA_API void SameLineSeparator( float width = 0, const ImColor& color = ImColor(0));
 
-
+    LUMINA_API void DrawObjectProperties(CObject* Object);
 
     struct LUMINA_API ApplicationTitleBar
     {

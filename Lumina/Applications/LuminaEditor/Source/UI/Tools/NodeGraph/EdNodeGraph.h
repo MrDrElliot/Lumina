@@ -51,7 +51,7 @@ namespace Lumina
 
         virtual void ValidateGraph()  { }
         
-        CEdGraphNode* CreateNode(CClass* NodeClass);
+        virtual CEdGraphNode* CreateNode(CClass* NodeClass);
     
         
     protected:

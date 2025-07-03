@@ -1,7 +1,6 @@
 #pragma once
 
-#include "Core/Serialization/Archiver.h"
-#include "Core/Templates/CanBulkSerialize.h"
+#include "Core/DisableAllWarnings.h"
 #include "Platform/GenericPlatform.h"
 
 PRAGMA_DISABLE_ALL_WARNINGS
@@ -33,9 +32,10 @@ namespace Lumina
                                                                                         
     template<typename K, typename V> using TUnorderedMap =                              eastl::unordered_map<K, V>;
     template<typename K, typename V> using TOrderedMap =                                eastl::map<K, V>;
-    template<typename K, typename V> using THashMap =                                   eastl::hash_map<K, V, eastl::hash<K>, eastl::equal_to<K>>;
+    template<typename K, typename V> using THashMap =                                   eastl::hash_map<K, V>;
     template<typename K, typename V> using TPair =                                      eastl::pair<K, V>;
     template<typename T> using TSet =                                                   eastl::set<T>;
+    template<typename T> using THashSet =                                               eastl::hash_set<T>;
     template<typename T> using TUnorderedSet =                                          eastl::unordered_set<T>;
                                                                                         
     template<typename T> using TQueue =                                                 eastl::queue<T>;
@@ -44,67 +44,7 @@ namespace Lumina
     
 
     using Blob = TVector<uint8>;
-
-
-    //-------------------------------------------------------------------------
-    // Serialization for containers.
-    //-------------------------------------------------------------------------
-
-    template<typename ValueType>
-    FArchive& operator << (FArchive& Ar, TVector<ValueType>& Array)
-    {
-		SIZE_T SerializeNum = Ar.IsReading() ? 0 : Array.size();
-        Ar << SerializeNum;
-        
-        if (SerializeNum == 0)
-        {
-            // if we are loading, then we have to reset the size to 0, in case it isn't currently 0
-            if (Ar.IsReading())
-            {
-                Array.clear();
-            }
-            
-            return Ar;
-        }
-        
-        if (Ar.HasError() || (int64)SerializeNum > Ar.GetMaxSerializeSize())
-        {
-            return Ar;
-        }
-
-		// If we don't need to perform per-item serialization, just read it in bulk
-        if constexpr (sizeof(ValueType) == 1 || TCanBulkSerialize<ValueType>::Value)
-        {
-            if (Ar.IsReading())
-            {
-                Array.resize(SerializeNum);
-            }
-            
-            Ar.Serialize(Array.data(), SerializeNum * sizeof(ValueType));
-        }
-        else
-        {
-            if (Ar.IsReading())
-            {
-                Array.clear();
-                Array.resize(SerializeNum);
-
-                for (SIZE_T i = 0; i < SerializeNum; i++)
-                {
-                    Ar << Array.emplace_back();
-                }
-            }
-            else
-            {
-                for (SIZE_T i = 0; i < SerializeNum; i++)
-                {
-                    Ar << Array[i];
-                }
-            }
-        }
-
-        return Ar;
-    }
+    
     
     //-------------------------------------------------------------------------
     // Simple utility functions to improve syntactic usage of container types

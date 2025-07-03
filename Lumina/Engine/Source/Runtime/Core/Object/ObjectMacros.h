@@ -1,10 +1,6 @@
 ﻿#pragma once
 
-#include "Memory/Memory.h"
-#include "Core/Object/ObjectCore.h"
-
-
-class Lumina::CClass;
+#include "ObjectCore.h"
 
 enum EInternal { EC_InternalUseOnlyConstructor };
 

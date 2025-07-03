@@ -168,7 +168,8 @@ namespace Lumina
         for (CEdGraphNode* Node : Nodes)
         {
             Material->MaterialNodes.push_back(Node);
-            
+            Node->AddRef();
+
             for (CEdNodeGraphPin* InputPin : Node->GetInputPins())
             {
                 for (CEdNodeGraphPin* Connection : InputPin->GetConnections())
@@ -178,6 +179,13 @@ namespace Lumina
                 }
             }
         }
+    }
+
+    CEdGraphNode* CMaterialNodeGraph::CreateNode(CClass* NodeClass)
+    {
+        CEdGraphNode* NewNode = NewObject<CEdGraphNode>(NodeClass, Material->GetPackage());
+        AddNode(NewNode);
+        return NewNode;
     }
 
     CEdGraphNode* CMaterialNodeGraph::TopologicalSort(const TVector<CEdGraphNode*>& NodesToSort, TVector<CEdGraphNode*>& SortedNodes)

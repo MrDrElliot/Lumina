@@ -22,13 +22,13 @@ namespace Lumina
     {
     public:
 
-        DECLARE_CLASS(Lumina, CField, CObject, "script://Lumina", LUMINA_API)
+        DECLARE_CLASS(Lumina, CField, CObject, "script://lumina", LUMINA_API)
         DEFINE_DEFAULT_CONSTRUCTOR_CALL(CField)
         
         CField() = default;
         
         
-        CField(const TCHAR* Package, FName InName, uint32 InSize, uint32 InAlignment, EObjectFlags InFlags)
+        CField(CPackage* Package, FName InName, uint32 InSize, uint32 InAlignment, EObjectFlags InFlags)
             : CObject(nullptr, InFlags, Package, InName)
             , Size(InSize)
             , Alignment(InAlignment)
@@ -78,13 +78,13 @@ namespace Lumina
     class CStruct : public CField
     {
 
-        DECLARE_CLASS(Lumina, CStruct, CField, "script://Lumina", LUMINA_API)
+        DECLARE_CLASS(Lumina, CStruct, CField, "script://lumina", LUMINA_API)
         DEFINE_DEFAULT_CONSTRUCTOR_CALL(CStruct)
 
         CStruct() = default;
 
         // Begin Internal Use Only Constructors 
-        CStruct(const TCHAR* Package, FName InName, uint32 InSize, uint32 InAlignment, EObjectFlags InFlags)
+        CStruct(CPackage* Package, FName InName, uint32 InSize, uint32 InAlignment, EObjectFlags InFlags)
             : CField(Package, InName, InSize, InAlignment, InFlags)
         {}
         //~ End Internal Use Only Constructors
@@ -157,7 +157,7 @@ namespace Lumina
     {
     public:
 
-        DECLARE_CLASS(Lumina, CClass, CStruct, "script://Lumina", LUMINA_API)
+        DECLARE_CLASS(Lumina, CClass, CStruct, "script://lumina", LUMINA_API)
         DEFINE_DEFAULT_CONSTRUCTOR_CALL(CClass)
 
         typedef void (*ClassConstructorType) (const FObjectInitializer&);
@@ -167,11 +167,16 @@ namespace Lumina
         CClass() = default;
 
         // Begin Internal Use Only Constructors 
-        CClass(const TCHAR* Package, FName InName, uint32 InSize, uint32 InAlignment, EObjectFlags InFlags, ClassConstructorType InConstructor)
+        CClass(CPackage* Package, FName InName, uint32 InSize, uint32 InAlignment, EObjectFlags InFlags, ClassConstructorType InConstructor)
             : CStruct(Package, InName, InSize, InAlignment, InFlags)
             , ClassConstructor(InConstructor)
         {}
         //~ End Internal Use Only Constructors
+
+
+
+        LUMINA_API void SerializeClassProperties(FArchive& Ar, void* Data);
+        
 
         LUMINA_API CObject* GetDefaultObject() const
         {

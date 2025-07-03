@@ -3,7 +3,6 @@
 #include "Class.h"
 #include "Object.h"
 #include "Assets/AssetManager/AssetManager.h"
-#include "Assets/AssetTypes/Material/Material.h"
 #include "Core/Engine/Engine.h"
 #include "Core/Math/Math.h"
 #include "Core/Reflection/Type/LuminaTypes.h"
@@ -12,6 +11,7 @@
 #include "Core/Reflection/Type/Properties/ObjectProperty.h"
 #include "Core/Reflection/Type/Properties/StringProperty.h"
 #include "Core/Reflection/Type/Properties/StructProperty.h"
+#include "Package/Package.h"
 
 namespace Lumina
 {
@@ -36,12 +36,23 @@ namespace Lumina
     }
 
     
-    FName MakeUniqueObjectName(const CClass* Class, FName InBaseName)
+    FName MakeUniqueObjectName(const CClass* Class, const CPackage* Package, const FName& InBaseName)
     {
         FName BaseName = (InBaseName == NAME_None) ? Class->GetName() : InBaseName;
 
+        FName FullName;
+        if (Package)
+        {
+            TInlineString<256> Path;
+            Path.append(Package->GetName().c_str())
+            .append(".")
+            .append(BaseName.c_str());
+
+            FullName = Path.c_str();
+        }
+        
         // First, try the base name directly
-        if (FindObjectFast(Class, BaseName) == nullptr)
+        if (FindObjectFast(Class, FullName) == nullptr)
         {
             return BaseName;
         }
@@ -49,7 +60,7 @@ namespace Lumina
         // If it's taken, start appending an increasing index
         FName TestName;
         CObject* FoundObj = nullptr;
-
+        
         do
         {
             int32_t Index = ++Class->ClassUnique;
@@ -65,43 +76,50 @@ namespace Lumina
 
     CObject* StaticAllocateObject(FConstructCObjectParams& Params)
     {
-        FName UniqueName = MakeUniqueObjectName(Params.Class, Params.Name);
+        CPackage* Package = nullptr;
+        if (Params.Package != NAME_None)
+        {
+            Package = FindObject<CPackage>(Params.Package);
+            if (Package == nullptr)
+            {
+                Package = NewObject<CPackage>(nullptr, Params.Package);
+            }
+        }
+        
+        FName UniqueName = MakeUniqueObjectName(Params.Class, Package, Params.Name);
         Params.Name = UniqueName;
         EObjectFlags Flags = Params.Flags;
 
         CObjectBase* Object = AllocateCObjectMemory(Params.Class, Flags);
-
+        
         Memory::Memzero(Object, Params.Class->GetSize());
-        new (Object) CObjectBase(const_cast<CClass*>(Params.Class), Params.Flags, Params.Package, UniqueName);
+        new (Object) CObjectBase(const_cast<CClass*>(Params.Class), Params.Flags, Package, UniqueName);
 
         CObject* Obj = (CObject*)Object;
-        Params.Class->ClassConstructor(FObjectInitializer(Obj, Params));
+        Params.Class->ClassConstructor(FObjectInitializer(Obj, Package, Params));
         
         Obj->PostInitProperties();
         
         return Obj;
     }
     
-    CObject* FindObjectFast(const CClass* InClass, FName QualifiedName)
+    CObject* FindObjectFast(const CClass* InClass, const FName& QualifiedName)
     {
-        CObject* ReturnObject = nullptr;
+        FString PackageName = GetPackageFromQualifiedObjectName(QualifiedName.ToString());
+        FString ObjectName = GetObjectNameFromQualifiedName(QualifiedName.ToString());
         
-        if (ObjectNameHash.find(QualifiedName) != ObjectNameHash.end())
-        {
-            ReturnObject = (CObject*)ObjectNameHash.at(QualifiedName);
-        }
-        
+        CObject* ReturnObject = (CObject*)ObjectNameHashBucket.FindObject(PackageName.c_str(), ObjectName.c_str());
         return ReturnObject;
     }
-
-    CObject* StaticLoadObject(const CClass* InClass, const TCHAR* QualifiedName)
+    
+    CObject* StaticLoadObject(const CClass* InClass, const FName& QualifiedName)
     {
-        FString FullPath = WIDE_TO_UTF8(QualifiedName);
+        FString FullPath = QualifiedName.c_str();
         FName ObjectName = FName(GetObjectNameFromPath(FullPath));
         
         CObject* FoundObject = FindObjectFast(InClass, ObjectName);
 
-        if (FoundObject == nullptr)
+        if (FoundObject == nullptr || FoundObject->HasAnyFlag(OF_NeedsLoad))
         {
             FAssetManager* Manager = GEngine->GetEngineSubsystem<FAssetManager>();
             FAssetRequest* Request = Manager->LoadAsset(FullPath);
@@ -118,15 +136,120 @@ namespace Lumina
         
     }
 
-    CObject* NewObject(CClass* InClass, const TCHAR* Package, FName Name, EObjectFlags Flags)
+    FString GetPackageFromQualifiedObjectName(const FString& FullyQualifiedName)
+    {
+        size_t DotPos = FullyQualifiedName.rfind('.');
+        if (DotPos != eastl::string::npos)
+        {
+            return FullyQualifiedName.substr(0, DotPos);
+        }
+
+        // If there is no package, we don't want to return the object name.
+        return NAME_None.c_str();
+    }
+
+    LUMINA_API FString GetObjectNameFromQualifiedName(const FString& FullyQualifiedName)
+    {
+        size_t DotPos = FullyQualifiedName.rfind('.');
+        if (DotPos != FString::npos && DotPos + 1 < FullyQualifiedName.size())
+        {
+            return FullyQualifiedName.substr(DotPos + 1);
+        }
+
+        return FullyQualifiedName;
+    }
+
+    FString RemoveNumberSuffixFromObject(const FString& ObjectName)
+    {
+        FString MutableString = ObjectName;
+        
+        // Check if the object part ends with _<number> and strip it
+        size_t UnderscorePos = MutableString.find_last_of('_');
+        if (UnderscorePos != FString::npos && UnderscorePos + 1 < MutableString.size())
+        {
+            bool bAllDigits = true;
+            for (size_t i = UnderscorePos + 1; i < MutableString.size(); ++i)
+            {
+                if (!isdigit(MutableString[i]))
+                {
+                    bAllDigits = false;
+                    break;
+                }
+            }
+
+            if (bAllDigits)
+            {
+                MutableString = MutableString.substr(0, UnderscorePos);
+            }
+        }
+
+        return MutableString;
+    }
+
+    FName MakeFullyQualifiedObjectName(const CPackage* Package, const FName& ObjectName)
+    {
+        TInlineString<256> Path;
+        Path.append(Package->GetName().c_str())
+        .append(".")
+        .append(ObjectName.c_str());
+        return Path.c_str();
+    }
+
+
+    void ResolveObjectName(FName& Name)
+    {
+        FString MutableName;
+        
+        // Check if the base name ends with _<number> and remove it
+        size_t Pos = MutableName.find_last_of('_');
+        if (Pos != FString::npos && Pos + 1 < MutableName.size())
+        {
+            // Check if the part after '_' is numeric
+            bool bAllDigits = true;
+            for (size_t i = Pos + 1; i < MutableName.size(); ++i)
+            {
+                if (!isdigit(MutableName[i]))
+                {
+                    bAllDigits = false;
+                    break;
+                }
+            }
+
+            if (bAllDigits)
+            {
+                MutableName = MutableName.substr(0, Pos);
+            }
+        }
+
+        Name = FName(MutableName);
+    }
+
+    CObject* NewObject(CClass* InClass, const CPackage* Package, const FName& Name, EObjectFlags Flags)
     {
         FConstructCObjectParams Params(InClass);
         Params.Name = Name;
         Params.Flags = Flags;
-        Params.Package = Package;
+        
+        if (Package)
+        {
+            Params.Package = Package->GetName();
+        }
 
         return StaticAllocateObject(Params);
+    }
+
+    void GetObjectsWithPackage(CPackage* Package, TVector<CObject*>& OutObjects)
+    {
+        Assert(Package != nullptr);
         
+        for (SIZE_T i = 0; i < GObjectVector.size(); ++i)
+        {
+            CObjectBase* Object = GObjectVector[i];
+            if (Object->GetPackage() == Package)
+            {
+                OutObjects.push_back((CObject*)Object);
+            }
+        }
     }
 
     template<typename TPropertyType>
@@ -258,7 +381,7 @@ namespace Lumina
         
         InitializeAndCreateFProperties(FinalClass, Params.Params, Params.NumProperties);
 
-        // Link this class to it's parent. (if it has one).
+        // Link this class to its parent. (if it has one).
         FinalClass->Link();
     }
 
@@ -288,14 +411,14 @@ namespace Lumina
         }
 
         FinalClass = (CStruct*)Memory::Malloc(Params.SizeOf, Params.AlignOf);
-        FinalClass = ::new (FinalClass) CStruct(TEXT(""), FName(Params.Name), Params.SizeOf, Params.AlignOf, EObjectFlags::OF_None);
+        FinalClass = ::new (FinalClass) CStruct(nullptr, FName(Params.Name), Params.SizeOf, Params.AlignOf, EObjectFlags::OF_None);
         *OutStruct = FinalClass;
 
         CObjectForceRegistration(FinalClass);
         
         InitializeAndCreateFProperties(FinalClass, Params.Params, Params.NumProperties);
 
-        // Link this class to it's parent. (if it has one).
+        // Link this class to its parent. (if it has one).
         FinalClass->Link();
     }
 }

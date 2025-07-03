@@ -18,16 +18,25 @@ namespace Lumina
         const char* GetTitlebarIcon() const override { return LE_ICON_FORMAT_LIST_BULLETED_TYPE; }
         void OnInitialize() override;
         void OnDeinitialize(const FUpdateContext& UpdateContext) override;
-        
+
+        void DrawToolMenu(const FUpdateContext& UpdateContext) override;
         void DrawLogWindow(const FUpdateContext& UpdateContext, bool bIsFocused);
-        void ProcessCommand(const std::string& Command);
+        void ProcessCommand(const FString& Command);
 
     private:
 
-        std::vector<ConsoleMessage> OutputMessages;
-        TDeque<std::string> CommandHistory;
-        std::string CurrentCommand;
-        uint64 HistoryIndex;
-        bool ScrollToBottom = false;
+        TVector<FConsoleMessage>    OutputMessages;
+        TDeque<FString>             CommandHistory;
+        FString                     CurrentCommand;
+        uint64                      HistoryIndex;
+        bool                        ScrollToBottom = false;
+
+        bool bShowTrace = true;
+        bool bShowDebug = true;
+        bool bShowInfo  = true;
+        bool bShowWarn  = true;
+        bool bShowError = true;
+        bool bShowCritical = true;
+        bool bColorWholeRow = true;
     };
 }

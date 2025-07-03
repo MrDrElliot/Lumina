@@ -180,8 +180,7 @@ namespace Lumina::Reflection
         GenerateFileWarning(Stream);
         
         Stream += "#include \"";
-        Stream += Header.HeaderPath;
-        Stream += "\"\n";
+        Stream += Header.HeaderPath + "\"\n";
         Stream += "#include \"../../../Lumina/Engine/Source/Runtime/Core/Object/Class.h\"\n";
         Stream += "#include \"Renderer/RHIIncl.h\" //@TODO REMOVE THIS CRAP \n";
         Stream += "\n\n";

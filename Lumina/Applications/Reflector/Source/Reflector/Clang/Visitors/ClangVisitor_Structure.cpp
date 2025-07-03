@@ -22,11 +22,11 @@ namespace Lumina::Reflection::Visitor
         CXType FieldType = clang_getCursorType(Cursor);
         clang::QualType FieldQualType = ClangUtils::GetQualType(FieldType);
 
-
         eastl::string TypeSpelling;
         ClangUtils::GetQualifiedNameForType(FieldQualType, TypeSpelling);
         EPropertyTypeFlags PropFlags = GetCoreTypeFromName(TypeSpelling.c_str());
 
+        
         // Is not a core type.
         if (PropFlags == EPropertyTypeFlags::None)
         {
@@ -71,7 +71,6 @@ namespace Lumina::Reflection::Visitor
             }
         }
         
-
         FFieldInfo Info;
         Info.Flags = PropFlags;
         Info.Type = FieldType;
@@ -274,7 +273,7 @@ namespace Lumina::Reflection::Visitor
         CXCursorKind Kind = clang_getCursorKind(Cursor);
 
         FReflectedClass* Class = Context->GetParentReflectedType<FReflectedClass>();
-        
+
         switch (Kind)
         {
         case(CXCursor_CXXBaseSpecifier):
@@ -296,7 +295,6 @@ namespace Lumina::Reflection::Visitor
                 {
                     return CXChildVisit_Continue;
                 }
-                
                 eastl::shared_ptr<FReflectedProperty> NewProperty;
                 CreatePropertyForType(Context, Class, NewProperty, FieldInfo);
                 NewProperty->GenerateMetadata(Macro.MacroContents);

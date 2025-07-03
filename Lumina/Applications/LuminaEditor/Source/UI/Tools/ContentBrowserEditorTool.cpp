@@ -6,8 +6,10 @@
 #include "Assets/Definition/AssetDefinition.h"
 #include "Assets/Factories/Factory.h"
 #include "Core/Engine/Engine.h"
+#include "Core/Object/Package/Package.h"
 #include "Paths/Paths.h"
 #include "Project/Project.h"
+#include "Tools/UI/ImGui/ImGuiMemoryEditor.h"
 #include "Tools/UI/ImGui/ImGuiX.h"
 
 namespace Lumina
@@ -45,7 +47,7 @@ namespace Lumina
             }
             else
             {
-                CObject* Asset = LoadObject<CObject>(UTF8_TO_WIDE(ContentItem->GetVirtualPath()).c_str());
+                CObject* Asset = LoadObject<CObject>(ContentItem->GetVirtualPath().c_str());
                 ToolContext->OpenAssetEditor(Asset);
             }
         };
@@ -349,13 +351,13 @@ namespace Lumina
                     if (ImGui::MenuItem(DisplayName.c_str()))
                     {
                         CFactory* Factory = Definition->GetFactory();
-                        FString PathString = Paths::Combine(SelectedPath.generic_string().c_str(), Factory->GetDefaultAssetCreationName(PathString).c_str()) + ".lasset";
+                        FString PathString = Paths::Combine(SelectedPath.generic_string().c_str(), Factory->GetDefaultAssetCreationName(PathString).c_str());
+                        Paths::AddPackageExtension(PathString);
                         MakeUniquePath(PathString);
                         PathString = Paths::RemoveExtension(PathString);
                         
-                        Factory->CreateAssetFile(PathString);
-                        CObject* Asset = LoadObject<CObject>(UTF8_TO_WIDE(PathString).c_str());
-                        ToolContext->OpenAssetEditor(Asset);
+                        CObject* Object = Factory->TryCreateNew(PathString);
+                        ToolContext->OpenAssetEditor(Object);
                         bWroteSomething = true;
 
                     }
@@ -367,7 +369,7 @@ namespace Lumina
             ImGui::PopStyleVar(2);
             ImGui::EndPopup();
         }
-
+        
         FileBrowser.Display();
         if (FileBrowser.HasSelected())
         {
@@ -390,7 +392,11 @@ namespace Lumina
                 }
                 
                 CFactory* Factory = Definition->GetFactory();
-                FString PathString = Paths::Combine(SelectedPath.generic_string().c_str(), Factory->GetDefaultAssetCreationName(PathString).c_str()) + ".lasset";
+                
+                FString NoExtFileName = Paths::RemoveExtension(FilePath.filename().generic_string().c_str());
+                FString PathString = Paths::Combine(SelectedPath.generic_string().c_str(), NoExtFileName.c_str());
+                
+                Paths::AddPackageExtension(PathString);
                 MakeUniquePath(PathString);
                 PathString = Paths::RemoveExtension(PathString);
                         

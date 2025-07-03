@@ -86,8 +86,8 @@ namespace Lumina
 
     void FCommandListStateTracker::CommandListExecuted(ICommandList* CommandList)
     {
-        Assert(ImageBarriers.empty());
-        Assert(BufferBarriers.empty());
+        Assert(ImageBarriers.empty())
+        Assert(BufferBarriers.empty())
         
         ImageStates.clear();
         BufferStates.clear();

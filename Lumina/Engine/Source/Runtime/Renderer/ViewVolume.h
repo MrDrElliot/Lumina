@@ -14,13 +14,12 @@ namespace Lumina
     {
     public:
 
-        FViewVolume(float fov = 90.0f, float aspect = 16.0f / 9.0f, float nearPlane = 0.01f, float farPlane = 1000.0f);
+        FViewVolume(float fov = 90.0f, float aspect = 16.0f / 9.0f);
 
         void SetViewPosition(const glm::vec3& Position);
         void SetView(const glm::vec3& Position, const glm::vec3& ViewDirection, const glm::vec3& UpDirection);
-        void SetPerspective(float InFov, float InAspect, float InNearPlane, float InFarPlane);
+        void SetPerspective(float InFov, float InAspect);
         void SetAspectRatio(float InAspect);
-        void SetDepthRange(const glm::vec2& InRange);
         void SetFOV(float InFOV);
     
         FORCEINLINE const glm::vec3& GetViewPosition() const { return ViewPosition; }
@@ -32,8 +31,6 @@ namespace Lumina
 
         FORCEINLINE float GetFOV() const { return FOV; }
         FORCEINLINE float GetAspectRatio() const { return AspectRatio; }
-        FORCEINLINE float GetNearPlane() const { return DepthRange.x; }
-        FORCEINLINE float GetFarPlane() const { return DepthRange.y; }
         
     private:
 
@@ -48,8 +45,6 @@ namespace Lumina
         glm::mat4           InverseProjectionMatrix;
         glm::mat4           ViewMatrix;
         glm::mat4           ViewProjectionMatrix;
-
-        glm::vec2           DepthRange = {0.1f, 1000.0f};
         
         float               FOV = 90.0f;
         float               AspectRatio = 16.0f/9.0f;

@@ -158,25 +158,28 @@ namespace Lumina
     {
         Clear,      // Clear attachment to a specified color/depth
         Load,       // Load existing contents
-        Store,
-        DontCare,   // Contents are undefined after render pass start
     };
 
+    enum class ERenderStoreOp : uint8
+    {
+        Store,
+        DontCare,
+    };
     
     struct FRenderPassBeginInfo
     {
-        TVector<FRHIImageRef> ColorAttachments; // Color attachments
+        TVector<FRHIImageRef> ColorAttachments;    // Color attachments
         TVector<ERenderLoadOp> ColorLoadOps;       // One per color attachment
-        TVector<ERenderLoadOp> ColorStoreOps;      // How to handle color attachments at the end
+        TVector<ERenderStoreOp> ColorStoreOps;     // How to handle color attachments at the end
         TVector<FColor> ClearColorValues;          // Optional clear values for color attachments
         
-        FRHIImageRef DepthAttachment;           // Single depth attachment
-        ERenderLoadOp DepthLoadOp = ERenderLoadOp::Clear; // Default depth load operation
-        ERenderLoadOp DepthStoreOp = ERenderLoadOp::Store; // Default depth store operation
-        float ClearDepth = 1.0f;                   // Default depth clear value
-        uint32 ClearStencil = 0;                   // Default stencil clear value
+        FRHIImageRef DepthAttachment;                           // Single depth attachment
+        ERenderLoadOp DepthLoadOp = ERenderLoadOp::Clear;       // Default depth load operation
+        ERenderStoreOp DepthStoreOp = ERenderStoreOp::Store;    // Default depth store operation
+        float ClearDepth = 1.0f;                                // Default depth clear value
+        uint32 ClearStencil = 0;                                // Default stencil clear value
         
-        FIntVector2D RenderArea;                   // Defines the renderable area
+        FIntVector2D RenderArea;                                // Defines the renderable area
     
         // Fluent API for adding color attachments
         FRenderPassBeginInfo& AddColorAttachment(const FRHIImageRef& Attachment)
@@ -193,7 +196,7 @@ namespace Lumina
         }
     
         // Set a StoreOp for the most recently added color attachment
-        FRenderPassBeginInfo& SetColorStoreOp(ERenderLoadOp StoreOp)
+        FRenderPassBeginInfo& SetColorStoreOp(ERenderStoreOp StoreOp)
         {
             ColorStoreOps.push_back(StoreOp);
             return *this;
@@ -221,7 +224,7 @@ namespace Lumina
         }
     
         // Set a StoreOp for the depth attachment
-        FRenderPassBeginInfo& SetDepthStoreOp(ERenderLoadOp StoreOp)
+        FRenderPassBeginInfo& SetDepthStoreOp(ERenderStoreOp StoreOp)
         {
             DepthStoreOp = StoreOp;
             return *this;

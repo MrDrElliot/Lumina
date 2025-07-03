@@ -3,21 +3,16 @@
 
 namespace Lumina
 {
-    FViewVolume::FViewVolume(float fov, float aspect, float nearPlane, float farPlane)
-        : FOV(fov), AspectRatio(aspect), DepthRange(nearPlane, farPlane)
+    
+    FViewVolume::FViewVolume(float fov, float aspect)
+        : FOV(fov), AspectRatio(aspect)
     {
         ViewPosition =  glm::vec3(1.0f);
-        RightVector =   glm::vec3(1.0f, 0.0f, 0.0f);
         UpVector =      glm::vec3(0.0f, 1.0f, 0.0f);
         ForwardVector = glm::vec3(0.0f, 0.0f, -1.0f);
         RightVector =   glm::normalize(glm::cross(ForwardVector, UpVector));
-
-        if (DepthRange.x <= 0.0f || DepthRange.x >= DepthRange.y)
-        {
-            DepthRange = glm::vec2(0.1f, 1000.0f);
-        }
         
-        SetPerspective(fov, aspect, nearPlane, farPlane);
+        SetPerspective(fov, aspect);
     }
 
 
@@ -38,13 +33,13 @@ namespace Lumina
     }
 
 
-    void FViewVolume::SetPerspective(float fov, float aspect, float nearPlane, float farPlane)
+    void FViewVolume::SetPerspective(float fov, float aspect)
     {
         FOV = fov;
         AspectRatio = aspect;
-        DepthRange = glm::vec2(nearPlane, farPlane);
 
-        ProjectionMatrix = glm::perspective(glm::radians(FOV), AspectRatio, nearPlane, farPlane);
+        ProjectionMatrix = glm::perspective(glm::radians(FOV), AspectRatio, 1000.0f, 0.1f);
+        ProjectionMatrix[1][1] *= -1.0f; // Flip Y if needed
         UpdateMatrices();
     }
 
@@ -53,21 +48,16 @@ namespace Lumina
     {
         AspectRatio = InAspect;
 
-        ProjectionMatrix = glm::perspective(glm::radians(FOV), AspectRatio, GetNearPlane(), GetFarPlane());
+        ProjectionMatrix = glm::perspective(glm::radians(FOV), AspectRatio, 1000.0f, 0.1f);
+        ProjectionMatrix[1][1] *= -1.0f; // Flip Y if needed
         UpdateMatrices();
-    }
-
-    void FViewVolume::SetDepthRange(const glm::vec2& InRange)
-    {
-        DepthRange = InRange;
-        SetPerspective(FOV, AspectRatio, InRange.x, InRange.y);
     }
     
     void FViewVolume::SetFOV(float InFOV)
     {
         FOV = InFOV;
-
-        ProjectionMatrix = glm::perspective(glm::radians(FOV), AspectRatio, GetNearPlane(), GetFarPlane());
+        ProjectionMatrix = glm::perspective(glm::radians(FOV), AspectRatio, 1000.0f, 0.1f);
+        ProjectionMatrix[1][1] *= -1.0f; // Flip Y if needed
         UpdateMatrices();
     }
 

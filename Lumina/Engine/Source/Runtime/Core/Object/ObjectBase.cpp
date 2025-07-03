@@ -7,12 +7,13 @@
 #include "GarbageCollection/GarbageCollector.h"
 #include "Log/Log.h"
 #include "Memory/Memory.h"
+#include "Package/Package.h"
 
 namespace Lumina
 {
 
-    THashMap<FName, CObjectBase*> ObjectNameHash;
-    TFixedVector<CObjectBase*, 2024> GObjectVector;
+    LUMINA_API FObjectNameHashBucket               ObjectNameHashBucket;    
+    LUMINA_API TFixedVector<CObjectBase*, 2024>    GObjectVector;
 
     struct FPendingRegistrantInfo
     {
@@ -39,11 +40,12 @@ namespace Lumina
     CObjectBase::CObjectBase()
         : ObjectFlags()
         , InternalIndex(INDEX_NONE)
+        , LoaderIndex(0)
     {
         FObjectInitializer* Initializer = FObjectInitializer::Get();
         NamePrivate = Initializer->Params.Name;
         ClassPrivate = const_cast<CClass*>(Initializer->Params.Class);
-        PackagePrivate = StringUtils::FromWideString(Initializer->Params.Package);
+        PackagePrivate = Initializer->Package;
 
         AddObject(NamePrivate, GObjectVector.size());
 
@@ -53,7 +55,10 @@ namespace Lumina
     {
         Assert(IsMarkedGarbage())
 
-        ObjectNameHash.erase(NamePrivate);
+        FName PackageName = PackagePrivate ? PackagePrivate->GetName() : NAME_None;
+
+        ObjectNameHashBucket.RemoveObject(PackageName, NamePrivate);
+        
         if (InternalIndex < GObjectVector.size() - 1)
         {
             eastl::swap(GObjectVector[InternalIndex], GObjectVector.back());
@@ -68,18 +73,19 @@ namespace Lumina
 
     CObjectBase::CObjectBase(EObjectFlags InFlags)
         : ObjectFlags(InFlags)
-        , ClassPrivate(nullptr)
         , NamePrivate(NAME_None)
         , InternalIndex(0)
+        , LoaderIndex(0)
     {
     }
 
-    CObjectBase::CObjectBase(CClass* InClass, EObjectFlags InFlags, const TCHAR* Package, FName InName)
+    CObjectBase::CObjectBase(CClass* InClass, EObjectFlags InFlags, CPackage* Package, FName InName)
         : ObjectFlags(InFlags)
         , ClassPrivate(InClass)
-        , PackagePrivate( StringUtils::FromWideString(Package))
-        , NamePrivate(InName)
+        , NamePrivate(Memory::Move(InName))
+        , PackagePrivate(Package)
         , InternalIndex(0)
+        , LoaderIndex(0)
     {
     }
 
@@ -145,28 +151,35 @@ namespace Lumina
         Memory::Delete(MutableThis);
     }
 
-    void CObjectBase::AddObject(FName Name, SIZE_T InInternalIndex)
+    void CObjectBase::AddObject(const FName& Name, SIZE_T InInternalIndex)
     {
         InternalIndex = InInternalIndex;
-        ObjectNameHash.insert_or_assign(Name, this);
+
+        FName PackageName = PackagePrivate ? PackagePrivate->GetName() : NAME_None;
+        ObjectNameHashBucket.AddObject(PackageName, Name, this);
+        
         GObjectVector.push_back(this);
     }
 
-    void CObjectBase::GetPath(FString& OutPath)
+    void CObjectBase::GetPath(FString& OutPath) const
     {
         OutPath = GetPathName();
     }
 
     FString CObjectBase::GetPathName() const
     {
-        return GetPackage();
+        if (PackagePrivate == nullptr)
+        {
+            return ".";
+        }
+        return GetPackage()->GetName().ToString();
     }
 
-    FString CObjectBase::GetFullyQualifiedName() const
+    FName CObjectBase::GetFullyQualifiedName() const
     {
         TInlineString<256> Path;
         Path.append(GetPathName().c_str())
-        .append("/")
+        .append(".")
         .append(GetName().c_str());
         return Path.c_str();
     }
@@ -260,8 +273,7 @@ namespace Lumina
             GarbageCollection::CollectGarbage();
         }
 
-        ObjectNameHash.clear();
-
+        ObjectNameHashBucket.Clear();
         
     }
 

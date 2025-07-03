@@ -60,7 +60,9 @@ project "Lumina"
         "Engine/ThirdParty/rpmalloc/**.c",
         
         "Engine/ThirdParty/xxhash/**.h",
-        "Engine/ThirdParty/xxhash/**.c"
+    	"Engine/ThirdParty/xxhash/**.c",
+        
+        "Engine/ThirdParty/tracy/public/TracyClient.cpp",
 
 	}
 
@@ -95,7 +97,10 @@ project "Lumina"
 		 "GLFW_INCLUDE_NONE",
 		 "GLFW_STATIC",
 		 "_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS",
-		 "LUMINA_RENDERER_VULKAN"
+    	 "LUMINA_RENDERER_VULKAN",
+    	 "TRACY_ENABLE",
+    	 "TRACY_CALLSTACK",
+
 	}
 
 	filter "system:linux"

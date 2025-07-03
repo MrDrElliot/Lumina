@@ -5,11 +5,11 @@
 namespace Lumina
 {
     LUM_CLASS()
-    class CStaticMesh : public CMesh
+    class LUMINA_API CStaticMesh : public CMesh
     {
         GENERATED_BODY()
     public:
         
-        
+
     };
 }

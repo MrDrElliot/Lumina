@@ -50,7 +50,7 @@ namespace Lumina
     
         
     private:
-        const char* StringView = nullptr;
+        FString     StringView;
         uint64      ID = 0;
     };
     

@@ -16,7 +16,6 @@ namespace Lumina
         FString GetAssetName() const override { return "Texture"; }
         FString GetDefaultAssetCreationName(const FString& InPath) override { return "NewTexture"; }
 
-        void CreateAssetFile(const FString& Path) override;
         void TryImport(const FString& RawPath, const FString& DestinationPath) override;
         
     };

@@ -1,12 +1,15 @@
 #pragma once
 
+#include "LogMessage.h"
+#include "Containers/Array.h"
 #include "Core/DisableAllWarnings.h"
+
+
 PRAGMA_DISABLE_ALL_WARNINGS
 #include <spdlog/spdlog.h>
 PRAGMA_ENABLE_ALL_WARNINGS
 
 #include "Module/API.h"
-#include "Sinks/ConsoleSink.h"
 
 
 namespace Lumina::Logging
@@ -14,11 +17,10 @@ namespace Lumina::Logging
 	LUMINA_API bool IsInitialized();
 	LUMINA_API void Init();
 	LUMINA_API std::shared_ptr<spdlog::sinks::sink> GetSink();
-	LUMINA_API void GetConsoleLogs(std::vector<ConsoleMessage>& OutLogs);
+	LUMINA_API void GetConsoleLogs(TVector<FConsoleMessage>& OutLogs);
 	LUMINA_API void Shutdown();
 	LUMINA_API std::shared_ptr<spdlog::logger> GetLogger();
-
-
+	
 }
 
 /* Core Logging Macros */
@@ -33,3 +35,4 @@ namespace Lumina::Logging
 #define LOG_DEBUG(...) // Empty definition; does nothing if LE_DEBUG is not defined
 #endif
 #define LOG_INFO(...) ::Lumina::Logging::GetLogger()->info(__VA_ARGS__)
+#define LOG_INFO_TAGGED(Tag, ...) ::Lumina::Logging::GetLogger()->info("[{}] {}", Tag, __VA_ARGS__)

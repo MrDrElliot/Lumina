@@ -1,10 +1,10 @@
 ﻿#include "VulkanCommandList.h"
-
 #include "VulkanBarriers.h"
 #include "VulkanMacros.h"
 #include "VulkanRenderContext.h"
 #include "VulkanResources.h"
 #include "VulkanSwapchain.h"
+#include "Core/Profiler/Profile.h"
 #include "Renderer/RenderContext.h"
 
 namespace Lumina
@@ -40,8 +40,6 @@ namespace Lumina
         }
     }
 
-
-
     void FVulkanCommandList::Open()
     {
         CurrentCommandBuffer = RenderContext->GetQueue(Info.CommandQueue)->GetOrCreateCommandBuffer();
@@ -52,12 +50,14 @@ namespace Lumina
         BeginInfo.pInheritanceInfo = nullptr;
         
         VK_CHECK(vkBeginCommandBuffer(CurrentCommandBuffer->CommandBuffer, &BeginInfo));
-
+        
         PendingState.AddPendingState(EPendingCommandState::Recording);
     }
 
     void FVulkanCommandList::Close()
     {
+        TracyVkCollect(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer)
+        
         // Reset any images or buffers to their default desired layouts.
         CommandListTracker.ResetBufferDefaultStates();
         CommandListTracker.ResetImageDefaultStates();
@@ -71,15 +71,18 @@ namespace Lumina
     void FVulkanCommandList::Executed(FQueue* Queue)
     {
         CommandListTracker.CommandListExecuted(this);
-        ComputeState = {};
-        GraphicsState = {};
+        
+        PushConstantVisibility =    VK_SHADER_STAGE_FLAG_BITS_MAX_ENUM;
+        CurrentPipelineLayout =     VK_NULL_HANDLE;
+        ComputeState =           {};
+        GraphicsState =          {};
     }
 
     void FVulkanCommandList::CopyImage(FRHIImage* Src, FRHIImage* Dst)
     {
-        Assert(Src != nullptr && Dst != nullptr);
+        TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "CopyImage")        
+        Assert(Src != nullptr && Dst != nullptr)
         
-
         CurrentCommandBuffer->AddReferencedResource(Src);
         CurrentCommandBuffer->AddReferencedResource(Dst);
 
@@ -126,6 +129,7 @@ namespace Lumina
 
     void FVulkanCommandList::WriteToImage(FRHIImage* Dst, uint32 ArraySlice, uint32 MipLevel, const void* Data, SIZE_T RowPitch, SIZE_T DepthPitch)
     {
+        TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "WriteToImage")        
         Assert(Dst != nullptr && Data != nullptr)
 
         CurrentCommandBuffer->AddReferencedResource(Dst);
@@ -135,8 +139,9 @@ namespace Lumina
     
         TRefCountPtr<FVulkanBuffer> StagingBuffer = nullptr;
         RenderContext->GetStagingManager().GetStagingBuffer(StagingBuffer);
-    
+
         Assert(StagingBuffer != nullptr)
+        Assert(Dst->GetSizeY() * RowPitch <= StagingBuffer->GetSize());
     
         FVulkanMemoryAllocator* MemoryAllocator = RenderContext->GetDevice()->GetAllocator();
         VmaAllocation Allocation = MemoryAllocator->GetAllocation(StagingBuffer->GetBuffer());
@@ -172,16 +177,16 @@ namespace Lumina
             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
             1, &CopyRegion
         );
-    
     }
 
 
     void FVulkanCommandList::CopyBuffer(FRHIBuffer* Source, uint64 SrcOffset, FRHIBuffer* Destination, uint64 DstOffset, uint64 CopySize)
     {
-        Assert(PendingState.IsRecording());
-        Assert(Source != nullptr);
-        Assert(Destination != nullptr);
-        Assert(CopySize > 0);
+        TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "CopyImage")        
+        Assert(PendingState.IsRecording())
+        Assert(Source != nullptr)
+        Assert(Destination != nullptr)
+        Assert(CopySize > 0)
 
         CurrentCommandBuffer->AddReferencedResource(Source);
         CurrentCommandBuffer->AddReferencedResource(Destination);
@@ -200,8 +205,9 @@ namespace Lumina
 
     void FVulkanCommandList::UploadToBuffer(FRHIBuffer* Buffer, const void* Data, uint32 Offset, uint32 Size)
     {
-        Assert(Size > 0 && Size <= Buffer->GetSize());
-        Assert(PendingState.IsRecording());
+        TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "UploadToBuffer")        
+        Assert(Size > 0 && Size <= Buffer->GetSize())
+        Assert(PendingState.IsRecording())
         
         CurrentCommandBuffer->AddReferencedResource(Buffer);
         
@@ -209,7 +215,7 @@ namespace Lumina
         {
             TRefCountPtr<FVulkanBuffer> StagingBuffer;
             RenderContext->GetStagingManager().GetStagingBuffer(StagingBuffer);
-            Assert(StagingBuffer != nullptr);
+            Assert(StagingBuffer != nullptr)
 
             FVulkanMemoryAllocator* MemoryAllocator = RenderContext->GetDevice()->GetAllocator();
             VmaAllocation Allocation = MemoryAllocator->GetAllocation(StagingBuffer->GetBuffer());
@@ -230,6 +236,8 @@ namespace Lumina
 
     void FVulkanCommandList::SetRequiredImageAccess(FRHIImage* Image, ERHIAccess Access)
     {
+        TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "SetRequiredImageAccess")        
+
         CommandListTracker.RequireImageAccess(Image, Access);
 
         if (CurrentCommandBuffer)
@@ -240,6 +248,8 @@ namespace Lumina
 
     void FVulkanCommandList::SetRequiredBufferAccess(FRHIBuffer* Buffer, ERHIAccess Access)
     {
+        TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "SetRequiredBufferAccess")        
+
         CommandListTracker.RequireBufferAccess(Buffer, Access);
 
         if (CurrentCommandBuffer)
@@ -250,6 +260,8 @@ namespace Lumina
 
     void FVulkanCommandList::CommitBarriers()
     {
+        TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "CommitBarriers")        
+
         FVulkanPipelineBarrier Barrier;
 
         for (const FImageBarrier& ImageBarrier : CommandListTracker.GetImageBarriers())
@@ -266,6 +278,8 @@ namespace Lumina
 
     void FVulkanCommandList::SetResourceStatesForBindingSet(FRHIBindingSet* BindingSet)
     {
+        TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "SetResourceStatesForBindingSet")        
+
         FVulkanBindingSet* VkBindingSet = static_cast<FVulkanBindingSet*>(BindingSet);
 
         for (uint32 Binding : VkBindingSet->BindingsRequiringTransitions)
@@ -295,9 +309,11 @@ namespace Lumina
             }
         }
     }
-
+    
     void FVulkanCommandList::AddMarker(const char* Name, const FColor& Color)
     {
+        TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "AddMarker")        
+
         if (PendingState.IsRecording())
         {
             
@@ -306,6 +322,8 @@ namespace Lumina
 
     void FVulkanCommandList::PopMarker()
     {
+        TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "PopMarker")        
+
         if(PendingState.IsRecording())
         {
             
@@ -314,35 +332,42 @@ namespace Lumina
 
     void FVulkanCommandList::BeginRenderPass(const FRenderPassBeginInfo& PassInfo)
     {
+        TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "BeginRenderPass")        
+
         TVector<VkRenderingAttachmentInfo> ColorAttachments;
         VkRenderingAttachmentInfo DepthAttachment = {};
 
-        for (int i = 0; i < PassInfo.ColorAttachments.size(); ++i)
+        for (SIZE_T i = 0; i < PassInfo.ColorAttachments.size(); ++i)
         {
             FRHIImageRef Image = PassInfo.ColorAttachments[i];
+            CurrentCommandBuffer->AddReferencedResource(Image);
 
             TRefCountPtr<FVulkanImage> VulkanImage = Image.As<FVulkanImage>();
-            CurrentCommandBuffer->AddReferencedResource(VulkanImage);
-            
+
             VkRenderingAttachmentInfo Attachment = {};
             Attachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
             Attachment.imageView = VulkanImage->GetImageView();
             Attachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL; 
             Attachment.loadOp = (PassInfo.ColorLoadOps[i] == ERenderLoadOp::Clear) ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
-            Attachment.storeOp = PassInfo.ColorStoreOps[i] == ERenderLoadOp::DontCare ? VK_ATTACHMENT_STORE_OP_DONT_CARE : VK_ATTACHMENT_STORE_OP_STORE; 
-    
-            Attachment.clearValue.color.float32[0] = PassInfo.ClearColorValues[i].R;
-            Attachment.clearValue.color.float32[1] = PassInfo.ClearColorValues[i].G;
-            Attachment.clearValue.color.float32[2] = PassInfo.ClearColorValues[i].B;
-            Attachment.clearValue.color.float32[3] = PassInfo.ClearColorValues[i].A;
-    
+            Attachment.storeOp = PassInfo.ColorStoreOps[i] == ERenderStoreOp::DontCare ? VK_ATTACHMENT_STORE_OP_DONT_CARE : VK_ATTACHMENT_STORE_OP_STORE; 
+
+            if (!PassInfo.ClearColorValues.empty())
+            {
+                Attachment.clearValue.color.float32[0] = PassInfo.ClearColorValues[i].R;
+                Attachment.clearValue.color.float32[1] = PassInfo.ClearColorValues[i].G;
+                Attachment.clearValue.color.float32[2] = PassInfo.ClearColorValues[i].B;
+                Attachment.clearValue.color.float32[3] = PassInfo.ClearColorValues[i].A;
+            }
+            
+            SetRequiredImageAccess(Image, ERHIAccess::ColorAttachmentWrite);
             ColorAttachments.push_back(Attachment);
         }
+        
+        CommitBarriers();
         
         const FRHIImageRef& ImageHandle = PassInfo.DepthAttachment;
         if (ImageHandle.IsValid())
         {
-            
             TRefCountPtr<FVulkanImage> VulkanImage = PassInfo.DepthAttachment.As<FVulkanImage>();
             CurrentCommandBuffer->AddReferencedResource(VulkanImage);
             
@@ -351,12 +376,12 @@ namespace Lumina
             Attachment.imageView = VulkanImage->GetImageView();
             Attachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL; 
             Attachment.loadOp = (PassInfo.DepthLoadOp == ERenderLoadOp::Clear) ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
-            Attachment.storeOp = PassInfo.DepthStoreOp == ERenderLoadOp::DontCare ? VK_ATTACHMENT_STORE_OP_DONT_CARE : VK_ATTACHMENT_STORE_OP_STORE;
+            Attachment.storeOp = PassInfo.DepthStoreOp == ERenderStoreOp::DontCare ? VK_ATTACHMENT_STORE_OP_DONT_CARE : VK_ATTACHMENT_STORE_OP_STORE;
             
             DepthAttachment = Attachment;
             DepthAttachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-            DepthAttachment.clearValue.depthStencil.depth = 1.0f;
-            DepthAttachment.clearValue.depthStencil.stencil = 0;
+            DepthAttachment.clearValue.depthStencil.depth = PassInfo.ClearDepth;
+            DepthAttachment.clearValue.depthStencil.stencil = PassInfo.ClearStencil;
             
         }
         
@@ -376,13 +401,16 @@ namespace Lumina
 
     void FVulkanCommandList::EndRenderPass()
     {
+        TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "EndRenderPass")        
+
         vkCmdEndRendering(CurrentCommandBuffer->CommandBuffer);
         GraphicsState.CurrentRenderPassInfo = {};
     }
 
     void FVulkanCommandList::ClearImageColor(FRHIImage* Image, const FColor& Color)
     {
-        Assert(Image != nullptr);
+        TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "ClearImageColor")        
+        Assert(Image != nullptr)
         
         CurrentCommandBuffer->AddReferencedResource(Image);
         
@@ -405,31 +433,47 @@ namespace Lumina
         vkCmdClearColorImage(CurrentCommandBuffer->CommandBuffer, Image->GetAPIResource<VkImage, EAPIResourceType::Image>(), VK_IMAGE_LAYOUT_GENERAL, &Value, 1, &Range);
     }
 
-    void FVulkanCommandList::BindBindingSet(FRHIBindingSet* BindingSet, ERHIBindingPoint BindPoint)
+    void FVulkanCommandList::BindBindingSets(TVector<FRHIBindingSet*> BindingSets, ERHIBindingPoint BindPoint)
     {
-        Assert(BindingSet != nullptr);
-        CurrentCommandBuffer->AddReferencedResource(BindingSet);
-
-        SetResourceStatesForBindingSet(BindingSet);
-        CommitBarriers();
+        TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "BindBindingSet")        
         
         VkPipelineBindPoint BindingPoint = (BindPoint == ERHIBindingPoint::Graphics) ? VK_PIPELINE_BIND_POINT_GRAPHICS : VK_PIPELINE_BIND_POINT_COMPUTE;
-        FVulkanBindingSet* VkBindingSet = static_cast<FVulkanBindingSet*>(BindingSet);
 
-        VkPipelineLayout PipelineLayout = (BindPoint == ERHIBindingPoint::Graphics) ? GraphicsState.Pipeline->PipelineLayout : ComputeState.Pipeline->PipelineLayout;
+        CurrentPipelineLayout = (BindPoint == ERHIBindingPoint::Graphics) ? GraphicsState.Pipeline->PipelineLayout : ComputeState.Pipeline->PipelineLayout;
+        PushConstantVisibility = (BindPoint == ERHIBindingPoint::Graphics) ? GraphicsState.Pipeline->PushConstantVisibility : ComputeState.Pipeline->PushConstantVisibility;
+
+        TVector<VkDescriptorSet> DescriptorSets;
+        for (SIZE_T i = 0; i < BindingSets.size(); ++i)
+        {
+            FVulkanBindingSet* VkBindingSet = static_cast<FVulkanBindingSet*>(BindingSets[i]);
+            CurrentCommandBuffer->AddReferencedResource(VkBindingSet);
+
+            DescriptorSets.push_back(VkBindingSet->DescriptorSet);
+            
+            SetResourceStatesForBindingSet(VkBindingSet);
+            CommitBarriers();
+        }
         
         vkCmdBindDescriptorSets(CurrentCommandBuffer->CommandBuffer, BindingPoint,
-                    PipelineLayout, 0, 1, &VkBindingSet->DescriptorSet, 0, nullptr);
-        
+            CurrentPipelineLayout, 0, DescriptorSets.size(), DescriptorSets.data(), 0, nullptr);
+    }
+
+    void FVulkanCommandList::SetPushConstants(const void* Data, SIZE_T ByteSize)
+    {
+        vkCmdPushConstants(CurrentCommandBuffer->CommandBuffer, CurrentPipelineLayout, PushConstantVisibility, 0, (uint32)ByteSize, Data);
     }
 
     void FVulkanCommandList::BindVertexBuffer(FRHIBuffer* Buffer, uint32 Index, uint32 Offset)
     {
+        TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "BindVertexBuffer")        
+
         GraphicsState.SetVertexStream(Buffer, Index, Offset);
     }
 
     void FVulkanCommandList::SetGraphicsPipeline(FRHIGraphicsPipeline* InPipeline)
     {
+        TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "SetGraphicsPipeline")        
+
         FVulkanGraphicsPipeline* PSO = static_cast<FVulkanGraphicsPipeline*>(InPipeline);
 
         if (GraphicsState.Pipeline != InPipeline)
@@ -442,6 +486,8 @@ namespace Lumina
 
     void FVulkanCommandList::SetViewport(float MinX, float MinY, float MinZ, float MaxX, float MaxY, float MaxZ)
     {
+        TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "SetViewport")        
+
         VkViewport Viewport = {};
         Viewport.x = MinX;
         Viewport.y = MinY;
@@ -455,6 +501,8 @@ namespace Lumina
     
     void FVulkanCommandList::SetScissorRect(uint32 MinX, uint32 MinY, uint32 MaxX, uint32 MaxY)
     {
+        TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "SetScissorRect")        
+
         VkRect2D Scissor = {};
         Scissor.offset.x = (int32)MinX;
         Scissor.offset.y = (int32)MinY;
@@ -466,7 +514,8 @@ namespace Lumina
     
     void FVulkanCommandList::Draw(uint32 VertexCount, uint32 InstanceCount, uint32 FirstVertex, uint32 FirstInstance)
     {
-        Assert(GraphicsState.Pipeline != nullptr);
+        TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "Draw")        
+        Assert(GraphicsState.Pipeline != nullptr)
 
         GraphicsState.PrepareForDraw(CurrentCommandBuffer->CommandBuffer);
         vkCmdDraw(CurrentCommandBuffer->CommandBuffer, VertexCount, InstanceCount, FirstVertex, FirstInstance);
@@ -474,9 +523,10 @@ namespace Lumina
 
     void FVulkanCommandList::DrawIndexed(FRHIBuffer* IndexBuffer, uint32 IndexCount, uint32 InstanceCount, uint32 FirstIndex, int32 VertexOffset, uint32 FirstInstance)
     {
-        Assert(GraphicsState.Pipeline != nullptr);
-        Assert(IndexBuffer != nullptr);
-        Assert(IndexBuffer->GetUsage().IsFlagSet(EBufferUsageFlags::IndexBuffer));
+        TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "DrawIndexed")        
+        Assert(GraphicsState.Pipeline != nullptr)
+        Assert(IndexBuffer != nullptr)
+        Assert(IndexBuffer->GetUsage().IsFlagSet(EBufferUsageFlags::IndexBuffer))
 
         FVulkanBuffer* Buffer = static_cast<FVulkanBuffer*>(IndexBuffer);
         CurrentCommandBuffer->AddReferencedResource(Buffer);
@@ -488,6 +538,8 @@ namespace Lumina
 
     void FVulkanCommandList::SetComputePipeline(FRHIComputePipeline* InPipeline)
     {
+        TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "SetComputePipeline")        
+
         FVulkanComputePipeline* PSO = static_cast<FVulkanComputePipeline*>(InPipeline);
 
         if (ComputeState.Pipeline != InPipeline)
@@ -501,7 +553,9 @@ namespace Lumina
 
     void FVulkanCommandList::Dispatch(uint32 GroupCountX, uint32 GroupCountY, uint32 GroupCountZ)
     {
-        Assert(ComputeState.Pipeline != nullptr);
+        TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "Dispatch")        
+
+        Assert(ComputeState.Pipeline != nullptr)
         vkCmdDispatch(CurrentCommandBuffer->CommandBuffer, GroupCountX, GroupCountY, GroupCountZ);
     }
 

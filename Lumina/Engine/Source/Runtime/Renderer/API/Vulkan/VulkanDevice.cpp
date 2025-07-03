@@ -1,6 +1,7 @@
 ﻿#include "VulkanDevice.h"
 
 #include "VulkanMacros.h"
+#include "Core/Profiler/Profile.h"
 
 namespace Lumina
 {
@@ -141,6 +142,7 @@ namespace Lumina
 
     void* FVulkanMemoryAllocator::MapMemory(VmaAllocation Allocation)
     {
+        LUMINA_PROFILE_SCOPE();
         void* MappedMemory;
         VK_CHECK(vmaMapMemory(Allocator, Allocation, &MappedMemory));
         return MappedMemory;
@@ -148,6 +150,7 @@ namespace Lumina
 
     void FVulkanMemoryAllocator::UnmapMemory(VmaAllocation Allocation)
     {
+        LUMINA_PROFILE_SCOPE();
         vmaUnmapMemory(Allocator, Allocation);
     }
 }

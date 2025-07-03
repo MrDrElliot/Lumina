@@ -28,7 +28,7 @@ namespace Lumina
         /** Returns the pointer to the internal enum */
         FORCEINLINE CEnum* GetEnum() const { return Enum; }
 
-        
+        void Serialize(FArchive& Ar, void* Value) override;
         void SerializeItem(IStructuredArchive::FSlot Slot, void* Value, void const* Defaults) override;
         
         void DrawProperty(void* Object) override;

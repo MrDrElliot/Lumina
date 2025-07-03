@@ -4,7 +4,6 @@
 #include "ObjectMacros.h"
 #include "Core/Serialization/Archiver.h"
 #include "Core/Serialization/Structured/StructuredArchive.h"
-#include "Memory/Memory.h"
 
 
 namespace Lumina
@@ -38,7 +37,7 @@ namespace Lumina
         {}
 
         /** Internal constructor */
-        LUMINA_API CObject(CClass* InClass, EObjectFlags InFlags, const TCHAR* Package, FName InName)
+        LUMINA_API CObject(CClass* InClass, EObjectFlags InFlags, CPackage* Package, FName InName)
             :CObjectBase(InClass, InFlags, Package, InName)
         {}
 
@@ -46,7 +45,10 @@ namespace Lumina
         LUMINA_API virtual ~CObject() = default;
 
         /** Serializes object data. Can be overridden by derived classes. */
-        LUMINA_API virtual void Serialize(FArchive& Ar) {}
+        LUMINA_API virtual void Serialize(FArchive& Ar);
+
+        /** Serializes any reflected properties in this class */
+        LUMINA_API virtual void SerializeReflectedProperties(FArchive& Ar);
 
         /** Used during serialization to and from a structured archive (Packaging, Network, etc). */
         LUMINA_API virtual void Serialize(IStructuredArchive::FSlot Slot);

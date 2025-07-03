@@ -4,6 +4,7 @@
 #include "VulkanDevice.h"
 #include "Renderer/CommandList.h"
 #include "..\..\StateTracking.h"
+#include "Core/Profiler/Profile.h"
 #ifdef LUMINA_RENDERER_VULKAN
 
 #include "VulkanMacros.h"
@@ -49,6 +50,8 @@ namespace Lumina
 
     void FVulkanSwapchain::CreateSwapchain(VkInstance Instance, FVulkanRenderContext* InContext, FWindow* Window, FIntVector2D Extent, bool bFromResize)
     {
+    	LUMINA_PROFILE_SCOPE();
+
     	Context = InContext;
     	SwapchainExtent = Extent;
 
@@ -228,6 +231,7 @@ namespace Lumina
 
     void FVulkanSwapchain::RecreateSwapchain(const FIntVector2D& Extent)
     {
+    	LUMINA_PROFILE_SCOPE();
     	Context->WaitIdle();
 
     	CreateSwapchain(Context->GetVulkanInstance(), Context, Windowing::GetPrimaryWindowHandle(), Extent, true);
@@ -248,15 +252,22 @@ namespace Lumina
 
     void FVulkanSwapchain::AquireNextImage(uint32 NewFrameIndex)
     {
+    	LUMINA_PROFILE_SCOPE();
     	CurrentFrameIndex = NewFrameIndex;
 
     	VkFenceCreateInfo FenceInfo = {};
     	FenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-    	
-    	VkResult Result = vkAcquireNextImageKHR(Context->GetDevice()->GetDevice(), Swapchain, VULKAN_TIMEOUT_ONE_SECOND, AquireSemaphores[CurrentFrameIndex], Fences[CurrentFrameIndex], &CurrentImageIndex);
-    	
-    	VK_CHECK(vkWaitForFences(Context->GetDevice()->GetDevice(), 1, &Fences[CurrentFrameIndex], VK_TRUE, VULKAN_TIMEOUT_ONE_SECOND));
-    	VK_CHECK(vkResetFences(Context->GetDevice()->GetDevice(), 1, &Fences[CurrentFrameIndex]));
+
+    	VkResult Result;
+	    {
+    		LUMINA_PROFILE_SECTION("vkAcquireNextImageKHR");
+		    Result = vkAcquireNextImageKHR(Context->GetDevice()->GetDevice(), Swapchain, VULKAN_TIMEOUT_ONE_SECOND, AquireSemaphores[CurrentFrameIndex], Fences[CurrentFrameIndex], &CurrentImageIndex);
+	    }
+    	{
+    		LUMINA_PROFILE_SECTION("vkWaitForFences");
+    		VK_CHECK(vkWaitForFences(Context->GetDevice()->GetDevice(), 1, &Fences[CurrentFrameIndex], VK_TRUE, VULKAN_TIMEOUT_ONE_SECOND));
+    		VK_CHECK(vkResetFences(Context->GetDevice()->GetDevice(), 1, &Fences[CurrentFrameIndex]));
+    	}
     	
     	if (Result == VK_SUBOPTIMAL_KHR || Result == VK_ERROR_OUT_OF_DATE_KHR)
     	{
@@ -269,6 +280,8 @@ namespace Lumina
 
     void FVulkanSwapchain::Present()
     {
+	    LUMINA_PROFILE_SCOPE();
+    	
     	VkPresentInfoKHR PresentInfo = {};
     	PresentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
     	PresentInfo.pSwapchains = &Swapchain;
@@ -277,8 +290,11 @@ namespace Lumina
     	PresentInfo.waitSemaphoreCount = 1;
     	PresentInfo.pImageIndices = &CurrentImageIndex;
 
-    	VkResult Result = vkQueuePresentKHR(Context->GetQueue(ECommandQueue::Graphics)->Queue, &PresentInfo);
-
+    	VkResult Result;
+	    {
+	    	LUMINA_PROFILE_SECTION("vkQueuePresentKHR");
+		    Result = vkQueuePresentKHR(Context->GetQueue(ECommandQueue::Graphics)->Queue, &PresentInfo);
+	    }
     	if (Result == VK_SUBOPTIMAL_KHR || Result == VK_ERROR_OUT_OF_DATE_KHR || bNeedsResize)
     	{
     		RecreateSwapchain(Windowing::GetPrimaryWindowHandle()->GetExtent());

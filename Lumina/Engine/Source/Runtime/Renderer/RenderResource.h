@@ -7,6 +7,7 @@
 #include "ViewVolume.h"
 #include "Containers/String.h"
 #include "Core/LuminaMacros.h"
+#include "Core/Threading/Thread.h"
 #include "Memory/RefCounted.h"
 #include "Types/BitFlags.h"
 
@@ -173,6 +174,9 @@ enum class ERHIBindingResourceType : uint8
 	// Constant Buffer (could be a uniform buffer)
 	Buffer_CBV,
 	Buffer_Uniform = Buffer_CBV,
+
+	// Push Constant Ranges
+	PushConstants,
 };
 
 enum class ERHIBindingPoint : uint8
@@ -196,11 +200,31 @@ ENUM_CLASS_FLAGS(ERHIShaderType)
 
 enum class EAPIResourceType : uint8
 {
-	Default,
+	Default = 0,
+	Buffer,
 	Image,
 	ImageView,
-
+	Sampler,
+	ShaderModule,
+	Pipeline,
+	PipelineLayout,
+	RenderPass,
+	Framebuffer,
+	DescriptorSet,
+	DescriptorSetLayout,
+	DescriptorPool,
+	CommandPool,
 	CommandBuffer,
+	Semaphore,
+	Fence,
+	Event,
+	QueryPool,
+	DeviceMemory,
+	Swapchain,
+	Surface,
+	Device,
+	Instance,
+	Queue
 };
 
 enum class EPrimitiveType : uint8
@@ -242,6 +266,13 @@ namespace Lumina
     		void* Resource = GetAPIResourceImpl(Type);
     		return static_cast<T>(Resource);
     	}
+
+    	void* GetAPIResource(EAPIResourceType Type)
+    	{
+    		void* Resource = GetAPIResourceImpl(Type);
+    		return Resource;
+    	}
+
 
 		#if LE_DEBUG
 		void SetDebugName(const FString& InName) { DebugName = InName; }
@@ -706,15 +737,16 @@ namespace Lumina
 		void RemoveShader(FName Key);
 
 		template<typename T>
-		T GetShader(FName Key)
+		TRefCountPtr<T> GetShader(const FName& Key)
 		{
 			return GetShader(Key).As<T>();
 		}
 
-		FRHIShaderRef GetShader(FName Key);
+		FRHIShaderRef GetShader(const FName& Key);
 
 	private:
 
+		FMutex Mutex;
 		THashMap<FName, FRHIShaderRef> Shaders;
     
 	};
@@ -825,6 +857,7 @@ namespace Lumina
             EBlendFactor 	DestBlendAlpha = EBlendFactor::Zero;
             EBlendOp     	BlendOpAlpha = EBlendOp::Add;
             EColorMask   	ColorWriteMask = EColorMask::All;
+        	bool			bEnabled = false;
 
             constexpr RenderTarget& SetBlendEnable(bool enable) { bBlendEnable = enable; return *this; }
             constexpr RenderTarget& EnableBlend() { bBlendEnable = true; return *this; }
@@ -858,7 +891,7 @@ namespace Lumina
         RenderTarget Targets[MaxRenderTargets];
         bool AlphaToCoverageEnable = false;
 
-        constexpr FBlendState& SetRenderTarget(uint32 index, const RenderTarget& target) { Targets[index] = target; return *this; }
+        constexpr FBlendState& SetRenderTarget(uint32 index, const RenderTarget& target) { Targets[index] = target; Targets[index].bEnabled = true; return *this; }
         constexpr FBlendState& SetAlphaToCoverageEnable(bool enable) { AlphaToCoverageEnable = enable; return *this; }
         constexpr FBlendState& EnableAlphaToCoverage() { AlphaToCoverageEnable = true; return *this; }
         constexpr FBlendState& DisableAlphaToCoverage() { AlphaToCoverageEnable = false; return *this; }
@@ -893,7 +926,7 @@ namespace Lumina
     {
         ERasterFillMode FillMode = ERasterFillMode::Solid;
         ERasterCullMode CullMode = ERasterCullMode::Back;
-        bool FrontCounterClockwise = false;
+        bool FrontCounterClockwise = true; // true for vk.
         bool DepthClipEnable = false;
         bool ScissorEnable = false;
         bool MultisampleEnable = false;
@@ -1126,7 +1159,7 @@ namespace Lumina
 		{
 			FBindingSetItem Result;
 			Result.bUnused = false;
-			Result.Type = ERHIBindingResourceType::Buffer_Uniform;
+			Result.Type = ERHIBindingResourceType::Buffer_CBV;
 			Result.Slot = Slot;
 			Result.ResourceHandle = Buffer;
 			memset(Result.RawData, 0, std::size(Result.RawData));

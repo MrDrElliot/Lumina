@@ -1,11 +1,14 @@
 ﻿#include "ObjectInitializer.h"
 
+#include "Containers/Array.h"
+
 namespace Lumina
 {
     static TVector<FObjectInitializer*> InitializerStack;
 
-    FObjectInitializer::FObjectInitializer(CObject* Obj, const FConstructCObjectParams& InParams)
+    FObjectInitializer::FObjectInitializer(CObject* Obj, CPackage* InPackage, const FConstructCObjectParams& InParams)
         : Object(Obj)
+        , Package(InPackage)
         , Params(InParams)
     {
         Construct();

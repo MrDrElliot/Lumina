@@ -3,6 +3,7 @@
 #include "Archiver.h"
 #include "Containers/Array.h"
 #include "Core/Assertions/Assert.h"
+#include "Memory/Memory.h"
 
 namespace Lumina
 {
@@ -11,7 +12,7 @@ namespace Lumina
     {
     public:
 
-        void Seek( int64 InPos ) final
+        void Seek(int64 InPos) final
         {
             Offset = InPos;
         }
@@ -23,7 +24,10 @@ namespace Lumina
         
     protected:
 
-        FMemoryArchiver():FArchive(), Offset(0) {}
+        FMemoryArchiver()
+            : FArchive()
+            , Offset(0)
+        {}
         
         int64 Offset;
     };
@@ -78,6 +82,70 @@ namespace Lumina
         int64                   LimitSize;
     
     };
+
+    /**
+     * Similar to FMemoryReader but controls the data.
+     */
+    class FBufferReader : public FMemoryArchiver
+    {
+    public:
+        FBufferReader(void* InData, int64 InSize, bool bFreeAfterClose, bool bIsPersistent = false)
+            : Data(static_cast<uint8*>(InData))
+            , Size(InSize)
+            , bFreeOnClose(bFreeAfterClose)
+        {
+            this->SetFlag(EArchiverFlags::Reading);
+        }
+
+        ~FBufferReader() override
+        {
+            if (bFreeOnClose && Data)
+            {
+                Memory::Free(Data);
+                Data = nullptr;
+            }
+        }
+
+        int64 TotalSize() override
+        {
+            return std::min(Size, LimitSize);
+        }
+
+        void SetLimitSize(int64 NewLimitSize)
+        {
+            LimitSize = NewLimitSize;
+        }
+
+        void Serialize(void* V, int64 Length) override
+        {
+            if ((Length > 0) && !HasError())
+            {
+                if (Offset + Length <= TotalSize())
+                {
+                    memcpy(V, &Data[Offset], Length);
+                    Offset += Length;
+                }
+                else
+                {
+                    SetHasError(true);
+                    LOG_ERROR("FBufferReader: Tried to read past end of buffer.");
+                }
+            }
+            else if (Length <= 0)
+            {
+                SetHasError(true);
+                LOG_ERROR("FBufferReader: Invalid length requested for serialize: {}", Length);
+            }
+        }
+
+    private:
+        
+        uint8* Data = nullptr;
+        int64 Size = 0;
+        int64 LimitSize = INT64_MAX;
+        bool bFreeOnClose = false;
+    };
+    
 
     class FMemoryWriter : public FMemoryArchiver
     {

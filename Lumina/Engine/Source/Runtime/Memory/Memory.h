@@ -6,7 +6,9 @@
 #include "Core/Math/Math.h"
 #include "Module/API.h"
 #include "Platform/Platform.h"
-#include "Platform/WindowsPlatform.h"
+#include "tracy/TracyC.h"
+#define LUMINA_PROFILE_ALLOC(p, size) TracyCAllocS(p, size, 12)
+#define LUMINA_PROFILE_FREE(p) TracyCFreeS(p, 12)
 
 inline bool GIsMemorySystemInitialized = false;
 inline rpmalloc_config_t GrpmallocConfig;
@@ -60,6 +62,12 @@ namespace Lumina::Memory
 
     LUMINA_API inline void CustomAssert(const char* pMessage)
     {
+        const char* IgnorePrefix = "Memory leak detected";
+        if (std::strncmp(pMessage, IgnorePrefix, std::strlen(IgnorePrefix)) == 0)
+        {
+            return;
+        }
+
         std::cout << pMessage << "\n";
     }
 
@@ -150,6 +158,7 @@ namespace Lumina::Memory
 
         Assert(IsAligned(pMemory, ActualAlignment))
 
+        LUMINA_PROFILE_ALLOC(pMemory, size);
         return pMemory;
     }
 
@@ -169,6 +178,7 @@ namespace Lumina::Memory
 
     LUMINA_API inline void Free(void*& Memory)
     {
+        LUMINA_PROFILE_FREE(Memory);
         rpfree((uint8_t*)Memory);
         Memory = nullptr;
     }

@@ -23,9 +23,9 @@ namespace Lumina
 			, Semaphore(nullptr)
 		{}
 
-		using MemoryBarrierArrayType = TVector<VkMemoryBarrier2>;
-		using ImageBarrierArrayType = TVector<VkImageMemoryBarrier2>;
-		using BufferBarrierArrayType = TVector<VkBufferMemoryBarrier2>;
+		using MemoryBarrierArrayType = TFixedVector<VkMemoryBarrier2, 12>;
+		using ImageBarrierArrayType = TFixedVector<VkImageMemoryBarrier2, 12>;
+		using BufferBarrierArrayType = TFixedVector<VkBufferMemoryBarrier2, 12>;
 	
 		ERHIPipeline SrcPipelines, DstPipelines;
 		MemoryBarrierArrayType MemoryBarriers;

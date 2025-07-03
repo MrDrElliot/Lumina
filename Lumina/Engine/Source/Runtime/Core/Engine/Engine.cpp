@@ -5,6 +5,7 @@
 #include "Assets/AssetRegistry/AssetRegistry.h"
 #include "Core/Application/Application.h"
 #include "Core/Object/GarbageCollection/GarbageCollector.h"
+#include "Core/Profiler/Profile.h"
 #include "Input/InputSubsystem.h"
 #include "Renderer/RenderContext.h"
 #include "Scene/Scene.h"
@@ -24,6 +25,7 @@ namespace Lumina
         //-------------------------------------------------------------------------
         // Initialize core engine state.
         //-------------------------------------------------------------------------
+        LUMINA_PROFILE_SCOPE();
         
         GEngine = this;
         Application = App;
@@ -53,6 +55,8 @@ namespace Lumina
 
     bool FEngine::Shutdown()
     {
+        LUMINA_PROFILE_SCOPE();
+
         //-------------------------------------------------------------------------
         // Shutdown core engine state.
         //-------------------------------------------------------------------------
@@ -81,6 +85,8 @@ namespace Lumina
 
     bool FEngine::Update()
     {
+        LUMINA_PROFILE_SCOPE();
+
         //-------------------------------------------------------------------------
         // Update core engine state.
         //-------------------------------------------------------------------------
@@ -100,6 +106,7 @@ namespace Lumina
             // Frame Start
             //-------------------------------------------------------------------
             {
+                LUMINA_PROFILE_SECTION("FrameStart");
                 UpdateCallback(UpdateContext);
                 
                 SceneManager->StartFrame();
@@ -120,6 +127,7 @@ namespace Lumina
             // Pre Physics
             //-------------------------------------------------------------------
             {
+                LUMINA_PROFILE_SECTION("Pre-Physics");
                 UpdateContext.UpdateStage = EUpdateStage::PrePhysics;
 
 
@@ -133,6 +141,7 @@ namespace Lumina
             // During Physics
             //-------------------------------------------------------------------
             {
+                LUMINA_PROFILE_SECTION("During Physics");
                 UpdateContext.UpdateStage = EUpdateStage::DuringPhysics;
 
 
@@ -146,6 +155,7 @@ namespace Lumina
             // Post Phsyics
             //-------------------------------------------------------------------
             {
+                LUMINA_PROFILE_SECTION("Post Physics");
                 UpdateContext.UpdateStage = EUpdateStage::PostPhysics;
 
 
@@ -159,6 +169,7 @@ namespace Lumina
             // Paused
             //-------------------------------------------------------------------
             {
+                LUMINA_PROFILE_SECTION("Paused");
                 UpdateContext.UpdateStage = EUpdateStage::Paused;
 
                 #if WITH_DEVELOPMENT_TOOLS
@@ -171,6 +182,7 @@ namespace Lumina
             // Frame End
             //-------------------------------------------------------------------
             {
+                LUMINA_PROFILE_SECTION("Frame End");
                 UpdateContext.UpdateStage = EUpdateStage::FrameEnd;
 
                 #if WITH_DEVELOPMENT_TOOLS

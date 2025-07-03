@@ -191,6 +191,12 @@ namespace Lumina::Paths
         return GetEngineInstallDirectory() / relativePath;
     }
 
+    
+    void AddPackageExtension(FString& FileName)
+    {
+        FileName += ".lasset";
+    }
+    
     bool SetEnvVariable(const FString& name, const FString& value)
     {
 #ifdef _WIN32

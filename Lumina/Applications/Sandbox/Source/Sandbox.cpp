@@ -30,6 +30,12 @@ void FSandbox::EngineLoopCallback(const FUpdateContext& UpdateContext)
 	IRenderContext* RenderContext = RenderManager->GetRenderContext();
 	ICommandList* CommandList = RenderContext->GetCommandList();
 
+	FRHIComputeShaderRef Shader = RenderContext->GetShaderLibrary()->GetShader("Test.comp").As<FRHIComputeShader>();
+	if (Shader == nullptr)
+	{
+		return;
+	}
+	
 	struct Foo
 	{
 		glm::vec2 res;
@@ -76,7 +82,7 @@ void FSandbox::EngineLoopCallback(const FUpdateContext& UpdateContext)
 
 	// Here we finalize the compute pipeline, giving it the shader we want, and the final binding. 
 	FComputePipelineDesc Desc;
-	Desc.SetComputeShader(RenderContext->GetShaderLibrary()->GetShader("Test.comp").As<FRHIComputeShader>());
+	Desc.SetComputeShader(Shader);
 	Desc.AddBindingLayout(Layout);
 	FRHIComputePipelineRef Pipeline = RenderContext->CreateComputePipeline(Desc);
 	

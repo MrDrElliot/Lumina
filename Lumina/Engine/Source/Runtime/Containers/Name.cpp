@@ -2,6 +2,7 @@
 
 #include "Core/LuminaMacros.h"
 #include "Core/Math/Hash/Hash.h"
+#include "Core/Threading/Thread.h"
 #include "Memory/Memory.h"
 
 
@@ -13,6 +14,8 @@ namespace Lumina
     };
 
     LUMINA_API FNameHashMap* GNameCache = nullptr;
+
+    static FMutex HashMutex;
     
     void FName::Initialize()
     {
@@ -38,15 +41,12 @@ namespace Lumina
         {
             ID = Hash::GetHash64(Char);
 
-            auto Itr = GNameCache->find(ID);
-            if (Itr == GNameCache->end())
-            {
-                (*GNameCache)[ID] = FString(Char);
-            }
-        }
+            (*GNameCache).try_emplace(ID, Char);
+
 #if _DEBUG
-        StringView = (*GNameCache)[ID].c_str();
+            StringView = FString(Char);
 #endif
+        }
     }
 
     FName::FName(const TCHAR* Char)
@@ -73,7 +73,8 @@ namespace Lumina
 
     FString FName::ToString() const
     {
-        return FString(c_str());
+        const char* Ptr = c_str();
+        return Ptr ? Ptr : "NAME_None";
     }
 
     const char* FName::c_str() const

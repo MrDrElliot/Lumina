@@ -12,7 +12,7 @@ namespace Lumina
     public:
 
         friend class CMesh;
-        friend class FMeshImporter;
+        friend class CStaticMeshFactory;
         
         FMeshResource() = default;
         
@@ -21,11 +21,19 @@ namespace Lumina
             , Indices(std::move(Other.Indices))
         {}
 
+        FMeshResource& operator=(FMeshResource&& Other) noexcept
+        {
+            if (this != &Other)
+            {
+                Vertices = std::move(Other.Vertices);
+                Indices  = std::move(Other.Indices);
+            }
+            return *this;
+        }
 
-        /** This data is much to large to accept copying. */
         FMeshResource(const FMeshResource&) = delete;
         FMeshResource& operator=(const FMeshResource&) = delete;
-        
+
         
         friend FArchive& operator << (FArchive& Ar, FMeshResource& Data)
         {

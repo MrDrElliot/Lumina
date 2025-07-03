@@ -3,8 +3,30 @@
 
 namespace Lumina
 {
-    FArrayProperty::~FArrayProperty()
+    void FArrayProperty::Serialize(FArchive& Ar, void* Value)
     {
+        FReflectArrayHelper Helper(this, Value);
+        SIZE_T ElementCount = Helper.Num();
+        
+        if (Ar.IsWriting())
+        {
+            Ar << ElementCount;
+            for (SIZE_T i = 0; i < ElementCount; i++)
+            {
+                Inner->Serialize(Ar, Helper.GetRawAt(i));
+            }
+        }
+        else
+        {
+            Ar << ElementCount;
+            Helper.Resize(ElementCount);
+
+            for (SIZE_T i = 0; i < ElementCount; ++i)
+            {
+                Inner->Serialize(Ar, Helper.GetRawAt(i));
+            }
+        }
+        
     }
 
     void FArrayProperty::SerializeItem(IStructuredArchive::FSlot Slot, void* Value, void const* Defaults)
@@ -36,8 +58,7 @@ namespace Lumina
 
     void FArrayProperty::DrawProperty(void* Object)
     {
-        void* ValuePtr = GetValuePtr<void>(Object);
-        FReflectArrayHelper Helper(this, ValuePtr);
+        FReflectArrayHelper Helper(this, Object);
         SIZE_T ElementCount = Helper.Num();
 
         FString HeaderLabel = Name.c_str();

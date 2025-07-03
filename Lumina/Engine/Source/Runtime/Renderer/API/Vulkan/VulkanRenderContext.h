@@ -1,17 +1,14 @@
 #pragma once
+
 #include "TrackedCommandBuffer.h"
 #include "VulkanPipelineCache.h"
 #include "Core/Threading/Thread.h"
-
-#ifdef LUMINA_RENDERER_VULKAN
-
 #include "VulkanMacros.h"
 #include "VulkanResources.h"
 #include "Types/BitFlags.h"
 #include "src/VkBootstrap.h"
 #include "Renderer/RenderContext.h"
-#include <vma/vk_mem_alloc.h>
-
+#include <tracy/TracyVulkan.hpp>
 
 namespace Lumina
 {
@@ -90,7 +87,8 @@ namespace Lumina
             , FencePool(InDevice)
         {}
 
-
+        ~FQueue();
+        
         TRefCountPtr<FTrackedCommandBufer> GetOrCreateCommandBuffer();
 
         void RetireCommandBuffers();
@@ -206,10 +204,12 @@ namespace Lumina
         
 
         //-------------------------------------------------------------------------------------
-        
+
+        void SetObjectName(IRHIResource* Resource, const char* Name, EAPIResourceType Type) override;
 
         FORCEINLINE FVulkanStagingManager& GetStagingManager() { return StagingManager; }
-        
+
+        INLINE VkDescriptorPool GetDescriptorPool() const { return DescriptorPool[CurrentFrameIndex]; }
 
         void FlushPendingDeletes() override;
         
@@ -234,8 +234,8 @@ namespace Lumina
         
         FSpirVShaderCompiler*                           ShaderCompiler;
         FRHIShaderLibraryRef                            ShaderLibrary;
-        
+
+        TArray<VkDescriptorPool, FRAMES_IN_FLIGHT>      DescriptorPool;
     };
     
 }
-#endif

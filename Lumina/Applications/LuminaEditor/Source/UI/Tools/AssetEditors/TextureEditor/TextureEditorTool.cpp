@@ -19,36 +19,43 @@ namespace Lumina
             CTexture* Texture = Cast<CTexture>(Asset);
             FRenderManager* RenderManager = Cxt.GetSubsystem<FRenderManager>();
             ImTextureID TextureID = RenderManager->GetImGuiRenderer()->GetOrCreateImTexture(Texture->RHIImage);
-    
-            static float ZoomFactor = 1.0f;
-            static ImVec2 ImageSize = {512, 512};
-    
+            
+
+            ImVec2 WindowSize = ImGui::GetContentRegionAvail();
+            ImVec2 WindowPos = ImGui::GetCursorScreenPos();
+
             if (ImGui::IsWindowHovered())
             {
                 float Wheel = ImGui::GetIO().MouseWheel;
-                if (ImGui::GetIO().KeyCtrl)
+                ZoomFactor += Wheel * (ImGui::GetIO().KeyCtrl ? 0.025f : 0.25f);
+                ZoomFactor = ImClamp(ZoomFactor, 1.0f, 10.0f);
+
+                if (ImGui::IsMouseDragging(ImGuiMouseButton_Right))
                 {
-                    ZoomFactor += Wheel * 0.025f;
-                }
-                else
-                {
-                    ZoomFactor += Wheel * 0.25f;
+                    ImVec2 MouseDelta = ImGui::GetIO().MouseDelta;
+                    PanOffset.x += MouseDelta.x;
+                    PanOffset.y += MouseDelta.y;
                 }
             }
-    
-            ZoomFactor = ImClamp(ZoomFactor, 1.0f, 5.0f);
-    
-            ImageSize = { 512 * ZoomFactor, 512 * ZoomFactor };
-    
-            ImVec2 WindowSize = ImGui::GetWindowSize();
-    
-            ImVec2 ImagePos = {(WindowSize.x - ImageSize.x) * 0.5f, (WindowSize.y - ImageSize.y) * 0.5f};
-            
-            ImGui::SetCursorPos(ImagePos);
-            
-            ImGui::Image(TextureID, ImageSize);
-            
+
+            ImVec2 TextureSize = ImVec2(512.0f, 512.0f);
+            ImVec2 ScaledSize = ImVec2(TextureSize.x * ZoomFactor, TextureSize.y * ZoomFactor);
+            ImVec2 CenterPos = ImVec2(
+                WindowPos.x + (WindowSize.x - ScaledSize.x) * 0.5f + PanOffset.x,
+                WindowPos.y + (WindowSize.y - ScaledSize.y) * 0.5f + PanOffset.y
+            );
+
+            ImDrawList* DrawList = ImGui::GetWindowDrawList();
+            DrawList->AddImage(
+                TextureID,
+                CenterPos,
+                ImVec2(CenterPos.x + ScaledSize.x, CenterPos.y + ScaledSize.y)
+            );
+
+            ImGui::SetCursorScreenPos(ImVec2(WindowPos.x, WindowPos.y + WindowSize.y - 20));
+            ImGui::Text("Zoom: %.2fx", ZoomFactor);
         });
+
     
         CreateToolWindow(TexturePropertiesName, [this](const FUpdateContext& Cxt, bool bFocused)
         {

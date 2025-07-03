@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Object.h"
+#include "Class.h"
 #include "Platform/WindowsPlatform.h"
 
 

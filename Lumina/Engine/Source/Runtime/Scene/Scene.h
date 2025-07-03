@@ -49,7 +49,11 @@ namespace Lumina
         FCameraManager* GetSceneCameraManager() const;
 
         FORCEINLINE double GetSceneDeltaTime() const { return DeltaTime; }
+        FORCEINLINE double GetTimeSinceSceneCreation() const { return TimeSinceCreation; }
 
+        INLINE void SetPaused(bool bNewPause) { bPaused = bNewPause; }
+        INLINE bool IsPaused() const { return bPaused; }
+        
         template<typename T>
         T* GetSceneSubsystem() const;
         
@@ -64,6 +68,8 @@ namespace Lumina
         
         ESceneType                      SceneType;
         double                          DeltaTime = 0.0;
+        double                          TimeSinceCreation = 0.0;
+        bool                            bPaused = false;
         
         FSubsystemManager*              SceneSubsystemManager = nullptr;
 

@@ -84,6 +84,7 @@ namespace Lumina
         FString     Error;
         bool        bHasError;
         bool        bInitialPosSet = false;
+        bool        bWasBuild = false;
     };
     
 }

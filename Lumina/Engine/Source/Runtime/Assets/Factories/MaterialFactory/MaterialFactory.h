@@ -14,6 +14,6 @@ namespace Lumina
 		FString GetAssetName() const override { return "Material"; }
 		FString GetDefaultAssetCreationName(const FString& InPath) override { return "NewMaterial"; }
 
-		void CreateAssetFile(const FString& Path) override;
+		CObject* CreateNew(const FName& Name, CPackage* Package) override;
 	};
 }

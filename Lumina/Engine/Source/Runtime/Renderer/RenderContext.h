@@ -85,6 +85,7 @@ namespace Lumina
         
         //-------------------------------------------------------------------------------------
 
+        virtual void SetObjectName(IRHIResource* Resource, const char* Name, EAPIResourceType Type = EAPIResourceType::Default) = 0;
 
         
         NODISCARD virtual FRHIImageRef CreateImage(const FRHIImageDesc& ImageSpec) = 0;

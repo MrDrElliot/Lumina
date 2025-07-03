@@ -1,5 +1,6 @@
 ﻿#include "Project.h"
 
+#include "Log/Log.h"
 #include "Platform/Filesystem/FileHelper.h"
 #include <nlohmann/json.hpp>
 #include <string>
@@ -11,7 +12,7 @@ namespace Lumina
     void FProject::LoadProject(const FString& ProjectPath)
     {
         FString ProjectJson;
-        if (!FFileHelper::LoadFileIntoString(ProjectJson, ProjectPath))
+        if (!FileHelper::LoadFileIntoString(ProjectJson, ProjectPath))
         {
             LOG_ERROR("Failed to load project at location: {0}", ProjectPath);
             return;

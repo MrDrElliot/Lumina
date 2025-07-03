@@ -16,8 +16,10 @@ namespace Lumina
         
         virtual FString GetAssetName() const { return ""; }
         
-        virtual void CreateAssetFile(const FString& Path) { }
-
+        LUMINA_API CObject* TryCreateNew(const FString& Path);
+        
+        virtual CObject* CreateNew(const FName& Name, CPackage* Package) { return nullptr; }
+        
         virtual FString GetDefaultAssetCreationName(const FString& InPath) { return "New_Asset"; }
 
         virtual void TryImport(const FString& RawPath, const FString& DestinationPath) { }

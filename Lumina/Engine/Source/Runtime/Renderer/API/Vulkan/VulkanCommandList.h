@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+
 #include "TrackedCommandBuffer.h"
 #include "VulkanBarriers.h"
 #include "VulkanPipelineStates.h"
@@ -47,7 +48,9 @@ namespace Lumina
         void EndRenderPass() override;
         void ClearImageColor(FRHIImage* Image, const FColor& Color) override;
 
-        void BindBindingSet(FRHIBindingSet* BindingSet, ERHIBindingPoint BindPoint) override;
+        void BindBindingSets(TVector<FRHIBindingSet*> BindingSets, ERHIBindingPoint BindPoint) override;
+
+        void SetPushConstants(const void* Data, SIZE_T ByteSize) override;
 
         void BindVertexBuffer(FRHIBuffer* Buffer, uint32 Index, uint32 Offset) override;
         void SetGraphicsPipeline(FRHIGraphicsPipeline* InPipeline) override;
@@ -78,5 +81,8 @@ namespace Lumina
         FPendingCommandState            PendingState;
         FVulkanRenderContext*           RenderContext = nullptr;
         FCommandListInfo                Info;
+        VkShaderStageFlags              PushConstantVisibility;
+        VkPipelineLayout                CurrentPipelineLayout;
     };
+    
 }

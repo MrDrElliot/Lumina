@@ -20,6 +20,16 @@ layout(set = 0, binding = 0) readonly uniform SceneGlobals
     float DeltaTime;
 } SceneUBO;
 
+layout(set = 0, binding = 1) readonly buffer FModelData
+{
+    mat4 ModelMatrix[1000];
+} ModelData;
+
+layout(push_constant) uniform PushConstants 
+{
+    uint ModelIndex;
+} PC;
+
 float GetTime()
 {
     return SceneUBO.Time;
@@ -46,6 +56,10 @@ mat4 GetCameraProjection()
     return SceneUBO.CameraView.CameraProjection;
 }
 
+mat4 GetModelMatrix()
+{
+    return ModelData.ModelMatrix[PC.ModelIndex];
+}
 
 vec3 WorldToView(vec3 worldPos)
 {
@@ -66,3 +80,4 @@ float SineWave(float speed, float amplitude)
 {
     return amplitude * sin(float(GetTime()) * speed);
 }
+

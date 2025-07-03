@@ -4,6 +4,7 @@
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_vulkan.h"
 #include "Core/Engine/Engine.h"
+#include "Core/Profiler/Profile.h"
 #include "Core/Windows/Window.h"
 #include "GUID/GUID.h"
 #include "Renderer/RenderManager.h"
@@ -18,7 +19,8 @@ namespace Lumina
     void FVulkanImGuiRender::Initialize(FSubsystemManager& Manager)
     {
 		IImGuiRenderer::Initialize(Manager);
-		
+    	LUMINA_PROFILE_SCOPE();
+
         VkDescriptorPoolSize PoolSizes[] = { { VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
         { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
         { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
@@ -43,15 +45,9 @@ namespace Lumina
 		VulkanRenderContext = RenderManager->GetRenderContext<FVulkanRenderContext>();
 		
         VK_CHECK(vkCreateDescriptorPool(VulkanRenderContext->GetDevice()->GetDevice(), &PoolInfo, nullptr, &DescriptorPool));
-
-        
-    	VkDebugUtilsObjectNameInfoEXT NameInfo = {};
-    	NameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
-    	NameInfo.pObjectName = "ImGui Descriptor Pool";
-    	NameInfo.objectType = VK_OBJECT_TYPE_DESCRIPTOR_POOL;
-    	NameInfo.objectHandle = reinterpret_cast<uint64>(DescriptorPool);
-		
-		
+    	
+        VulkanRenderContext->SetVulkanObjectName("ImGui Descriptor Pool", VK_OBJECT_TYPE_DESCRIPTOR_POOL, reinterpret_cast<uint64>(DescriptorPool));
+    	
         Assert(ImGui_ImplGlfw_InitForVulkan(Windowing::GetPrimaryWindowHandle()->GetWindow(), true));
 
 		VkFormat Format = VulkanRenderContext->GetSwapchain()->GetSwapchainFormat();
@@ -95,6 +91,8 @@ namespace Lumina
 
     void FVulkanImGuiRender::OnStartFrame(const FUpdateContext& UpdateContext)
     {
+    	LUMINA_PROFILE_SCOPE();
+
         ImGui_ImplVulkan_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
@@ -102,15 +100,18 @@ namespace Lumina
 	
     void FVulkanImGuiRender::OnEndFrame(const FUpdateContext& UpdateContext)
     {
+    	LUMINA_PROFILE_SCOPE();
+    	
 		if(ImDrawData* DrawData = ImGui::GetDrawData())
 		{
 			FRHICommandListRef CommandList = VulkanRenderContext->GetCommandList(ECommandQueue::Graphics);
 			
+			
 			FRenderPassBeginInfo RenderPass; RenderPass
 			.AddColorAttachment(GEngine->GetEngineViewport()->GetRenderTarget())
 			.SetColorLoadOp(ERenderLoadOp::Clear)
-			.SetColorStoreOp(ERenderLoadOp::Store)
-			.SetColorClearColor(FColor(1.0f))
+			.SetColorStoreOp(ERenderStoreOp::Store)
+			.SetColorClearColor(FColor::White)
 			.SetRenderArea(GEngine->GetEngineViewport()->GetRenderTarget()->GetDescription().Extent);
 			
 			CommandList->BeginRenderPass(RenderPass);
@@ -123,6 +124,8 @@ namespace Lumina
 
     ImTextureID FVulkanImGuiRender::GetOrCreateImTexture(FRHIImageRef Image)
     {
+    	LUMINA_PROFILE_SCOPE();
+    	
 	    VkImage VulkanImage = Image->GetAPIResource<VkImage>();
     	VkImageView VulkanImageView = Image->GetAPIResource<VkImageView, EAPIResourceType::ImageView>();
     	
@@ -136,7 +139,7 @@ namespace Lumina
     	FRHISamplerRef Sampler = GEngine->GetEngineSubsystem<FRenderManager>()->GetLinearSampler();
     	VkSampler VulkanSampler = Sampler->GetAPIResource<VkSampler>();
     	
-    	VkDescriptorSet DescriptorSet = ImGui_ImplVulkan_AddTexture(VulkanSampler, VulkanImageView, VK_IMAGE_LAYOUT_GENERAL);
+    	VkDescriptorSet DescriptorSet = ImGui_ImplVulkan_AddTexture(VulkanSampler, VulkanImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     	ImageCache.insert_or_assign(VulkanImage, DescriptorSet);
 
     	return (intptr_t)DescriptorSet;

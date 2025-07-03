@@ -16,6 +16,6 @@ namespace Lumina
         FString GetAssetName() const override { return "Static Mesh"; }
         FString GetDefaultAssetCreationName(const FString& InPath) override { return "NewMesh"; }
 
-        void CreateAssetFile(const FString& Path) override;
+        void TryImport(const FString& RawPath, const FString& DestinationPath) override;
     };
 }

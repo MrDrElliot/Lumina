@@ -3,6 +3,9 @@
 #include "Renderer/RenderResource.h"
 #include "VulkanCommandList.h"
 #include "VulkanMacros.h"
+#include "VulkanRenderContext.h"
+#include "Core/Engine/Engine.h"
+#include "Renderer/RenderManager.h"
 
 namespace Lumina
 {
@@ -117,31 +120,31 @@ namespace Lumina
             case EImageFormat::BC6H_SFLOAT:     return VK_FORMAT_BC6H_SFLOAT_BLOCK;
             case EImageFormat::BC7_UNORM:       return VK_FORMAT_BC7_UNORM_BLOCK;
             case EImageFormat::BC7_SRGB:        return VK_FORMAT_BC7_SRGB_BLOCK;
-            default: return VK_FORMAT_UNDEFINED;
+            default:                            return VK_FORMAT_UNDEFINED;
         }
     }
 
     
     VkBufferUsageFlags ToVkBufferUsage(TBitFlags<EBufferUsageFlags> Usage) 
     {
-        VkBufferUsageFlags result = 0;
+        VkBufferUsageFlags result = VK_NO_FLAGS;
 
         // Always include TRANSFER_SRC since hardware vendors confirmed it wouldn't have any performance cost.
-        result |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+        result |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
         
         if (Usage.IsFlagSet(EBufferUsageFlags::VertexBuffer))
         {
-            result |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+            result |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
         }
     
         if (Usage.IsFlagSet(EBufferUsageFlags::IndexBuffer))
         {
-            result |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+            result |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
         }
     
         if (Usage.IsFlagSet(EBufferUsageFlags::UniformBuffer))
         {
-            result |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+            result |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
         }
 
         if (Usage.IsFlagSet(EBufferUsageFlags::StorageBuffer))
@@ -184,6 +187,31 @@ namespace Lumina
         }
     }
 
+    constexpr VkBlendFactor ToVkBlendFactor(EBlendFactor factor)
+    {
+        switch (factor)
+        {
+            case EBlendFactor::Zero:                  return VK_BLEND_FACTOR_ZERO;
+            case EBlendFactor::One:                   return VK_BLEND_FACTOR_ONE;
+            case EBlendFactor::SrcColor:              return VK_BLEND_FACTOR_SRC_COLOR;
+            case EBlendFactor::InvSrcColor:           return VK_BLEND_FACTOR_ONE_MINUS_SRC_COLOR;
+            case EBlendFactor::SrcAlpha:              return VK_BLEND_FACTOR_SRC_ALPHA;
+            case EBlendFactor::InvSrcAlpha:           return VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+            case EBlendFactor::DstAlpha:              return VK_BLEND_FACTOR_DST_ALPHA;
+            case EBlendFactor::InvDstAlpha:           return VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA;
+            case EBlendFactor::DstColor:              return VK_BLEND_FACTOR_DST_COLOR;
+            case EBlendFactor::InvDstColor:           return VK_BLEND_FACTOR_ONE_MINUS_DST_COLOR;
+            case EBlendFactor::SrcAlphaSaturate:      return VK_BLEND_FACTOR_SRC_ALPHA_SATURATE;
+            case EBlendFactor::ConstantColor:         return VK_BLEND_FACTOR_CONSTANT_COLOR;
+            case EBlendFactor::InvConstantColor:      return VK_BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR;
+            case EBlendFactor::Src1Color:             return VK_BLEND_FACTOR_SRC1_COLOR;
+            case EBlendFactor::InvSrc1Color:          return VK_BLEND_FACTOR_ONE_MINUS_SRC1_COLOR;
+            case EBlendFactor::Src1Alpha:             return VK_BLEND_FACTOR_SRC1_ALPHA;
+            case EBlendFactor::InvSrc1Alpha:          return VK_BLEND_FACTOR_ONE_MINUS_SRC1_ALPHA;
+            default:                                  return VK_BLEND_FACTOR_ZERO;
+        }
+    }
+    
     constexpr VkPolygonMode ToVkPolygonMode(ERasterFillMode FillMode)
     {
         switch (FillMode)
@@ -262,7 +290,7 @@ namespace Lumina
     {
         switch (Type)
         {
-            case ERHIBindingResourceType::Texture_SRV:  return VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+            case ERHIBindingResourceType::Texture_SRV:  return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
             case ERHIBindingResourceType::Texture_UAV:  return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
             case ERHIBindingResourceType::Buffer_SRV:   return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
             case ERHIBindingResourceType::Buffer_UAV:   return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
@@ -398,8 +426,9 @@ namespace Lumina
         VkImageCreateFlags ImageFlags = VK_NO_FLAGS;
         VkImageUsageFlags UsageFlags = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
         
+        Assert(InDescription.Format != EImageFormat::None);
         VkFormat VulkanFormat = GetVkFormat(InDescription.Format);
-    
+        
         if (InDescription.Flags.IsFlagSet(EImageCreateFlags::RenderTarget))
         {
             UsageFlags |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
@@ -454,8 +483,8 @@ namespace Lumina
         ImageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
         ImageCreateInfo.format = VulkanFormat;
         ImageCreateInfo.extent = { (uint32)GetExtent().X, (uint32)GetExtent().Y, 1 };
-        ImageCreateInfo.mipLevels = 1;
-        ImageCreateInfo.arrayLayers = 1;
+        ImageCreateInfo.mipLevels = 1;//GetDescription().NumMips;
+        ImageCreateInfo.arrayLayers = GetDescription().ArraySize;
         ImageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
         ImageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
         ImageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -470,7 +499,7 @@ namespace Lumina
         VkImageViewCreateInfo ImageViewCreateInfo = {};
         ImageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
         ImageViewCreateInfo.image = Image;
-        ImageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+        ImageViewCreateInfo.viewType = GetDescription().Flags.IsFlagSet(EImageCreateFlags::CubeCompatible) ? VK_IMAGE_VIEW_TYPE_CUBE : VK_IMAGE_VIEW_TYPE_2D;
         ImageViewCreateInfo.format = VulkanFormat;
         ImageViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
         ImageViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -478,9 +507,9 @@ namespace Lumina
         ImageViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
         ImageViewCreateInfo.subresourceRange.aspectMask = FullAspectMask;
         ImageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
-        ImageViewCreateInfo.subresourceRange.layerCount = 1;
+        ImageViewCreateInfo.subresourceRange.layerCount = GetDescription().ArraySize;
         ImageViewCreateInfo.subresourceRange.baseMipLevel = 0;
-        ImageViewCreateInfo.subresourceRange.levelCount = 1;
+        ImageViewCreateInfo.subresourceRange.levelCount = 1;//GetDescription().NumMips;
     
         VK_CHECK(vkCreateImageView(Device->GetDevice(), &ImageViewCreateInfo, nullptr, &ImageView));
     
@@ -605,20 +634,28 @@ namespace Lumina
     {
         Desc = InDesc;
 
+        Bindings.reserve(InDesc.Bindings.size());
+        PoolSizes.reserve(InDesc.Bindings.size());
+        
         for (const FBindingLayoutItem& Item : InDesc.Bindings)
         {
+            if (Item.Type == ERHIBindingResourceType::PushConstants)
+            {
+                continue;
+            }
+            
             VkDescriptorSetLayoutBinding Binding = {};
             Binding.descriptorType = ToVkDescriptorType(Item.Type);
             Binding.stageFlags = ToVkStageFlags(InDesc.StageFlags);
             Binding.descriptorCount = 1;
             Binding.binding = Item.Slot;
 
-            Bindings.push_back(Binding);
+            Bindings.push_back(Memory::Move(Binding));
 
             VkDescriptorPoolSize PoolSize = {};
             PoolSize.type = Binding.descriptorType;
             PoolSize.descriptorCount = 1;
-            PoolSizes.push_back(PoolSize);
+            PoolSizes.push_back(Memory::Move(PoolSize));
         }
 
 
@@ -639,27 +676,21 @@ namespace Lumina
 
     void* FVulkanBindingLayout::GetAPIResourceImpl(EAPIResourceType Type)
     {
+        (void)Type;
+        
         return DescriptorSetLayout;
     }
 
-    FVulkanBindingSet::FVulkanBindingSet(FVulkanDevice* InDevice, const FBindingSetDesc& InDesc, FVulkanBindingLayout* InLayout)
+    FVulkanBindingSet::FVulkanBindingSet(FVulkanRenderContext* RenderContext, FVulkanDevice* InDevice, const FBindingSetDesc& InDesc, FVulkanBindingLayout* InLayout)
         : IDeviceChild(InDevice)
         , Desc(InDesc)
         , Layout(InLayout)
+        , DescriptorPool(RenderContext->GetDescriptorPool())
     {
-
         Assert(InLayout->DescriptorSetLayout)
         Assert(!InLayout->PoolSizes.empty())
 
-        VkDescriptorPoolCreateInfo CreateInfo = {};
-        CreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-        CreateInfo.pPoolSizes = InLayout->PoolSizes.data();
-        CreateInfo.poolSizeCount = (uint32)InLayout->PoolSizes.size();
-        CreateInfo.maxSets = 1;
         
-        VK_CHECK(vkCreateDescriptorPool(InDevice->GetDevice(), &CreateInfo, nullptr, &DescriptorPool));
-
-
         VkDescriptorSetAllocateInfo AllocateInfo = {};
         AllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
         AllocateInfo.descriptorPool = DescriptorPool;
@@ -709,6 +740,7 @@ namespace Lumina
                     VkDescriptorImageInfo& ImageInfo = ImageInfos.emplace_back();
                     ImageInfo.imageView = Image->GetImageView();
                     ImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                    ImageInfo.sampler = GEngine->GetEngineSubsystem<FRenderManager>()->GetLinearSampler()->GetAPIResource<VkSampler>();
 
                     
                     Write.pImageInfo = &ImageInfo;
@@ -729,7 +761,6 @@ namespace Lumina
                 }
                 break;
             case ERHIBindingResourceType::Buffer_CBV:
-            case ERHIBindingResourceType::Buffer_SRV:
                 {
                     FVulkanBuffer* Buffer = static_cast<FVulkanBuffer*>(Item.ResourceHandle);
                     VkDescriptorBufferInfo& BufferInfo = BufferInfos.emplace_back();
@@ -739,6 +770,18 @@ namespace Lumina
                         
                     Write.pBufferInfo = &BufferInfo;
                     Write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                }
+                break;
+            case ERHIBindingResourceType::Buffer_SRV:
+                {
+                    FVulkanBuffer* Buffer = static_cast<FVulkanBuffer*>(Item.ResourceHandle);
+                    VkDescriptorBufferInfo& BufferInfo = BufferInfos.emplace_back();
+                    BufferInfo.buffer = Buffer->GetBuffer();
+                    BufferInfo.offset = 0;
+                    BufferInfo.range = Buffer->GetSize();
+                        
+                    Write.pBufferInfo = &BufferInfo;
+                    Write.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
                 }
                 break;
             case ERHIBindingResourceType::Buffer_UAV:
@@ -764,10 +807,10 @@ namespace Lumina
 
     FVulkanBindingSet::~FVulkanBindingSet()
     {
-        vkDestroyDescriptorPool(Device->GetDevice(), DescriptorPool, nullptr);
+        VK_CHECK(vkFreeDescriptorSets(Device->GetDevice(), DescriptorPool, 1, &DescriptorSet));
     }
 
-    void* FVulkanBindingSet::GetAPIResourceImpl(EAPIResourceType Type)
+    void* FVulkanBindingSet::GetAPIResourceImpl(EAPIResourceType InType)
     {
         return DescriptorSet;
     }
@@ -778,19 +821,37 @@ namespace Lumina
         vkDestroyPipelineLayout(Device->GetDevice(), PipelineLayout, nullptr);
     }
 
-    void FVulkanPipeline::CreatePipelineLayout(TVector<FRHIBindingLayoutRef> BindingLayouts)
+    void FVulkanPipeline::CreatePipelineLayout(TVector<FRHIBindingLayoutRef> BindingLayouts, VkShaderStageFlags& OutStageFlags)
     {
         TVector<VkDescriptorSetLayout> Layouts;
+        uint32 PushConstantSize = 0;
         for (const FRHIBindingLayoutRef& Binding : BindingLayouts)
         {
             FVulkanBindingLayout* VkBindingLayout = Binding.As<FVulkanBindingLayout>();
+            for (const FBindingLayoutItem& Item : VkBindingLayout->GetDesc()->Bindings)
+            {
+                if (Item.Type == ERHIBindingResourceType::PushConstants)
+                {
+                    PushConstantSize = Item.Size;
+                    OutStageFlags = ToVkStageFlags(VkBindingLayout->GetDesc()->StageFlags);
+
+                    break;
+                }
+            }
             Layouts.push_back(VkBindingLayout->DescriptorSetLayout);
         }
+
+        VkPushConstantRange Range = {};
+        Range.size = PushConstantSize;
+        Range.stageFlags = OutStageFlags;
+        Range.offset = 0;
         
         VkPipelineLayoutCreateInfo CreateInfo = {};
         CreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
         CreateInfo.pSetLayouts = Layouts.data();
         CreateInfo.setLayoutCount = (uint32)Layouts.size();
+        CreateInfo.pushConstantRangeCount = PushConstantSize ? 1 : 0;
+        CreateInfo.pPushConstantRanges = &Range;
         
         VK_CHECK(vkCreatePipelineLayout(Device->GetDevice(), &CreateInfo, nullptr, &PipelineLayout));
     }
@@ -799,12 +860,11 @@ namespace Lumina
         :FVulkanPipeline(InDevice)
     {
         Desc = InDesc;
-        AssertMsg(InDesc.InputLayout, "No input layout given, did you forget to add one?");
         
         FVulkanInputLayout* InputLayout = InDesc.InputLayout.As<FVulkanInputLayout>();
+        bool bHasInputLayout = (InputLayout != nullptr);
 
-        CreatePipelineLayout(InDesc.BindingLayouts);
-
+        CreatePipelineLayout(InDesc.BindingLayouts, PushConstantVisibility);
         
         VkDynamicState DynamicStates[] =
         {
@@ -837,14 +897,15 @@ namespace Lumina
         DynamicState.dynamicStateCount = (uint32)std::size(DynamicStates);
         DynamicState.pDynamicStates = DynamicStates;
         
-        
         VkPipelineVertexInputStateCreateInfo VertexInputState = {};
         VertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-        VertexInputState.pVertexAttributeDescriptions = InputLayout->AttributeDesc.data();
-        VertexInputState.vertexAttributeDescriptionCount = (uint32)InputLayout->AttributeDesc.size();
-        VertexInputState.pVertexBindingDescriptions = InputLayout->BindingDesc.data();
-        VertexInputState.vertexBindingDescriptionCount = (uint32)InputLayout->BindingDesc.size();
-        
+        if (bHasInputLayout)
+        {
+            VertexInputState.pVertexAttributeDescriptions = InputLayout->AttributeDesc.data();
+            VertexInputState.vertexAttributeDescriptionCount = (uint32)InputLayout->AttributeDesc.size();
+            VertexInputState.pVertexBindingDescriptions = InputLayout->BindingDesc.data();
+            VertexInputState.vertexBindingDescriptionCount = (uint32)InputLayout->BindingDesc.size();
+        }
         
         VkPipelineInputAssemblyStateCreateInfo InputAssemblyState = {};
         InputAssemblyState.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -883,16 +944,35 @@ namespace Lumina
         DepthStencilState.stencilTestEnable = DepthState.StencilEnable;
         ConvertStencilOps(DepthState.FrontFaceStencil, DepthStencilState);
         ConvertStencilOps(DepthState.BackFaceStencil, DepthStencilState);
-        
-        VkPipelineColorBlendAttachmentState ColorBlendAttachment = {};
-        ColorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-        ColorBlendAttachment.blendEnable = VK_FALSE;
+
+        FBlendState BlendState = InDesc.RenderState.BlendState;
+
+        TVector<VkPipelineColorBlendAttachmentState> ColorBlendAttachmentStates;
+        for (const FBlendState::RenderTarget& RenderTarget : BlendState.Targets)
+        {
+            if (!RenderTarget.bEnabled)
+            {
+                continue;
+            }
+            
+            VkPipelineColorBlendAttachmentState ColorBlendAttachment = {};
+            ColorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_FLAG_BITS_MAX_ENUM;
+            ColorBlendAttachment.colorBlendOp = (RenderTarget.BlendOp == EBlendOp::Add) ? VK_BLEND_OP_ADD : VK_BLEND_OP_MAX;
+            ColorBlendAttachment.alphaBlendOp = (RenderTarget.BlendOpAlpha == EBlendOp::Add) ? VK_BLEND_OP_ADD : VK_BLEND_OP_MAX;
+            ColorBlendAttachment.srcColorBlendFactor = ToVkBlendFactor(RenderTarget.SrcBlend);
+            ColorBlendAttachment.dstColorBlendFactor = ToVkBlendFactor(RenderTarget.DestBlend);
+            ColorBlendAttachment.srcAlphaBlendFactor = ToVkBlendFactor(RenderTarget.SrcBlendAlpha);
+            ColorBlendAttachment.dstAlphaBlendFactor = ToVkBlendFactor(RenderTarget.DestBlendAlpha);
+            ColorBlendAttachment.blendEnable = RenderTarget.bBlendEnable;
+
+            ColorBlendAttachmentStates.push_back(Memory::Move(ColorBlendAttachment));
+        }
         
         VkPipelineColorBlendStateCreateInfo ColorBlendState = {};
         ColorBlendState.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-        ColorBlendState.attachmentCount = 1;
-        ColorBlendState.pAttachments = &ColorBlendAttachment;
-        
+        ColorBlendState.attachmentCount = (uint32)ColorBlendAttachmentStates.size();
+        ColorBlendState.pAttachments = ColorBlendAttachmentStates.data();
+
         VkPipelineRenderingCreateInfo RenderingCreateInfo = {};
         RenderingCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
         RenderingCreateInfo.colorAttachmentCount = 1;
@@ -928,7 +1008,7 @@ namespace Lumina
     {
         Desc = InDesc;
 
-        CreatePipelineLayout(InDesc.BindingLayouts);
+        CreatePipelineLayout(InDesc.BindingLayouts, PushConstantVisibility);
         
         VkPipelineShaderStageCreateInfo StageInfo = {};
         StageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;

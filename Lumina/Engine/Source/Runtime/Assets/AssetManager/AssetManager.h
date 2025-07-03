@@ -44,7 +44,8 @@ namespace Lumina
 		
 		TQueue<FAssetRequest*>									RequestQueue;
 		TVector<FAssetRequest*>									ActiveRequests;
-		
+
+		FMutex													RequestMutex;
 		std::mutex												FlushMutex;
 		std::condition_variable									FlushCV;
 		

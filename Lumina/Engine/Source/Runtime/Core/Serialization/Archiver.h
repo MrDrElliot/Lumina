@@ -3,9 +3,9 @@
 #include "Containers/Name.h"
 #include "Core/Templates/IsSigned.h"
 #include "Core/Versioning/CoreVersion.h"
-#include "Log/Log.h"
-#include "Platform/WindowsPlatform.h"
 #include "Containers/String.h"
+#include "Core/Templates/CanBulkSerialize.h"
+#include "Log/Log.h"
 
 namespace Lumina
 {
@@ -14,11 +14,12 @@ namespace Lumina
 
 enum class EArchiverFlags : uint8
 {
-    None      = 0,
-    Reading   = 1 << 0,
-    Writing   = 1 << 1,
-    Compress  = 1 << 2,
-    Encrypt   = 1 << 3
+    None        = 0,
+    Reading     = 1 << 0,
+    Writing     = 1 << 1,
+    Compress    = 1 << 2,
+    Encrypt     = 1 << 3,
+    NoFields    = 1 << 4,
 };
 
 // Bitwise operators for EArchiverFlags
@@ -79,18 +80,18 @@ namespace Lumina
         }
     
         /** Returns the maximum size of data that this archive is allowed to serialize. */
-        FORCEINLINE int64 GetMaxSerializeSize() const { return ArMaxSerializeSize; }
+        FORCEINLINE SIZE_T GetMaxSerializeSize() const { return ArMaxSerializeSize; }
 
         
         virtual FArchive& operator<<(CObject*& Value)
         {
-            LOG_ERROR("Serializing objects is not supported by this archive.");
+            LOG_ERROR("Serializing CObjects is not supported by this archive.");
             return *this;
         }
 
         virtual FArchive& operator<<(FField*& Value)
         {
-            LOG_ERROR("Serializing fields is not supported by this archive.");
+            LOG_ERROR("Serializing FFields is not supported by this archive.");
             return *this;
         }
     
@@ -175,21 +176,13 @@ namespace Lumina
         {
             if (IsReading())
             {
-                int32 SaveNum = 0;
+                SIZE_T SaveNum = 0;
                 *this << SaveNum;
-
-                if (SaveNum < 0)
-                {
-                    SetHasError(true);
-                    LOG_ERROR("Archive is corrupt!");
-                    return *this;
-                }
             
-                int64 MaxSerializeSize = GetMaxSerializeSize();
-                if ((MaxSerializeSize > 0) && (SaveNum > MaxSerializeSize))
+                if (SaveNum > GetMaxSerializeSize())
                 {
                     SetHasError(true);
-                    LOG_ERROR("String is too large! (Size: {0}, Max: {1})", SaveNum, MaxSerializeSize);
+                    LOG_ERROR("Archiver is corrupted, string is too large! (Size: {0}, Max: {1})", SaveNum, GetMaxSerializeSize());
                     return *this;
                 }
             
@@ -197,7 +190,7 @@ namespace Lumina
                 {
                     str.clear();
                     str.resize(SaveNum);
-                    Serialize(str.data(), SaveNum);
+                    Serialize(str.data(), (int64)SaveNum);
                 }
                 else
                 {
@@ -206,12 +199,12 @@ namespace Lumina
             }
             else
             {
-                int32 SaveNum = (int32)str.size();
+                SIZE_T SaveNum = str.size();
                 *this << SaveNum;
 
                 if (SaveNum)
                 {
-                    Serialize(str.data(), SaveNum);
+                    Serialize(str.data(), (int64)SaveNum);
                 }
             }
         
@@ -227,8 +220,68 @@ namespace Lumina
             return *this;
         }
 
-        
+        //-------------------------------------------------------------------------
+        // Serialization for containers.
+        //-------------------------------------------------------------------------
 
+        template<typename ValueType>
+        FORCEINLINE FArchive& operator << (TVector<ValueType>& Array)
+        {
+            SIZE_T SerializeNum = IsReading() ? 0 : Array.size();
+            *this << SerializeNum;
+        
+            if (SerializeNum == 0)
+            {
+                // if we are loading, then we have to reset the size to 0, in case it isn't currently 0
+                if (IsReading())
+                {
+                    Array.clear();
+                }
+            
+                return *this;
+            }
+        
+            if (HasError() || SerializeNum > GetMaxSerializeSize())
+            {
+                SetHasError(true);
+                LOG_ERROR("Archiver is corrupted, attempted to serialize {} array elements. Max is: {}", SerializeNum, GetMaxSerializeSize());
+                return *this;
+            }
+
+            // If we don't need to perform per-item serialization, just read it in bulk
+            if constexpr (sizeof(ValueType) == 1 || TCanBulkSerialize<ValueType>::Value)
+            {
+                if (IsReading())
+                {
+                    Array.resize(SerializeNum);
+                }
+            
+                Serialize(Array.data(), SerializeNum * sizeof(ValueType));
+            }
+            else
+            {
+                if (IsReading())
+                {
+                    Array.clear();
+                    Array.resize(SerializeNum);
+
+                    for (SIZE_T i = 0; i < SerializeNum; i++)
+                    {
+                        *this << Array[i];
+                    }
+                }
+                else
+                {
+                    for (SIZE_T i = 0; i < SerializeNum; i++)
+                    {
+                        *this << Array[i];
+                    }
+                }
+            }
+
+            return *this;
+        }
+        
         template<typename EnumType>
         FORCEINLINE FArchive& operator<<(EnumType& Value)
         requires (std::is_enum_v<EnumType>)
@@ -254,7 +307,7 @@ namespace Lumina
 
         EArchiverFlags Flags;
         uint8 bHasError:1;
-        int64 ArMaxSerializeSize = INT32_MAX;
+        SIZE_T ArMaxSerializeSize = INT32_MAX;
 
     };
 

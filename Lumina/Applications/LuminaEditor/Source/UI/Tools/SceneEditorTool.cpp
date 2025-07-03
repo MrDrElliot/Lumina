@@ -9,10 +9,9 @@ namespace Lumina
 
     FSceneEditorTool::FSceneEditorTool(IEditorToolContext* Context, FScene* InScene)
         : FEditorTool(Context, "Scene Editor", InScene)
-        , OutlinerListView()
         , OutlinerContext()
     {
-        Assert(Scene != nullptr);
+        Assert(Scene != nullptr)
     }
 
     void FSceneEditorTool::OnInitialize()
@@ -32,6 +31,10 @@ namespace Lumina
             for (FTreeListViewItem* Item : Items)
             {
                 FEntityListViewItem* EntityListItem = static_cast<FEntityListViewItem*>(Item);
+                if (EntityListItem->GetEntity().HasComponent<FEditorComponent>())
+                {
+                    continue;
+                }
                 
                 if (ImGui::MenuItem("Rename"))
                 {
@@ -49,15 +52,12 @@ namespace Lumina
         {
             for (auto entity : Scene->GetConstEntityRegistry().view<FNameComponent>())
             {
-                if (Scene->GetConstEntityRegistry().any_of<FEditorComponent>(entity))
-                {
-                    continue;
-                }
-                
                 Entity NewEntity(entity, Scene);
                 OutlinerListView.AddItemToTree<FEntityListViewItem>(nullptr, eastl::move(NewEntity));
             }
         };
+
+        OutlinerListView.MarkTreeDirty();
     }
 
     void FSceneEditorTool::Update(const FUpdateContext& UpdateContext)

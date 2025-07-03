@@ -59,9 +59,10 @@ namespace Lumina
             return (ValueType*)GetValuePtrInternal(const_cast<void*>(ContainerPtr), ArrayIndex);
         }
 
+        virtual void Serialize(FArchive& Ar, void* Value) { }
         virtual void SerializeItem(IStructuredArchive::FSlot Slot, void* Value, void const* Defaults = nullptr) { }
 
-        virtual void DrawProperty(void* Object) { }
+        virtual void DrawProperty(void* ValuePtr) { }
 
     private:
 
@@ -145,6 +146,11 @@ namespace Lumina
             this->ElementSize = TTypeInfo::Size;
         }
 
+        virtual void Serialize(FArchive& Ar, void* Value) override
+        {
+            Ar << *TTypeInfo::GetPropertyValuePtr(Value);
+        }
+        
         virtual void SerializeItem(IStructuredArchive::FSlot Slot, void* Value, void const* Defaults = nullptr) override
         {
             Slot.Serialize(*TTypeInfo::GetPropertyValuePtr(Value));

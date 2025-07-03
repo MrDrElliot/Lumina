@@ -23,11 +23,12 @@ namespace Lumina
 
     void FDebugCameraEntitySystem::Update(FEntityRegistry& EntityRegistry, const FSceneUpdateContext& UpdateContext)
     {
+        
         double DeltaTime = UpdateContext.GetDeltaTime();
-        float Speed = 5.0f;
 
         for (auto CameraEntity : EntityRegistry.view<FEditorComponent, FCameraComponent>())
         {
+            float Speed = 5.0f;
             FTransformComponent& TransformComponent =    EntityRegistry.get<FTransformComponent>(CameraEntity);
             FCameraComponent& CameraComponent = EntityRegistry.get<FCameraComponent>(CameraEntity);
             FEditorComponent& EditorComponent = EntityRegistry.get<FEditorComponent>(CameraEntity);
@@ -66,12 +67,12 @@ namespace Lumina
                 TransformComponent.Transform.Location += Right * Speed * (float)DeltaTime;
             }
 
-            if (Input::IsKeyPressed(Key::Q)) // Move Down (world space)
+            if (Input::IsKeyPressed(Key::Q)) // Move Up (world space)
             {
                 TransformComponent.Transform.Location += glm::vec3(0.0f, -1.0f, 0.0f) * Speed * (float)DeltaTime;
             }
 
-            if (Input::IsKeyPressed(Key::E)) // Move Up (world space)
+            if (Input::IsKeyPressed(Key::E)) // Move Down (world space)
             {
                 TransformComponent.Transform.Location += glm::vec3(0.0f, 1.0f, 0.0f) * Speed * (float)DeltaTime;
             }
@@ -79,7 +80,7 @@ namespace Lumina
             if (Input::IsMouseButtonPressed(Mouse::ButtonRight))
             {
                 //@TODO Fixme, better interface for the application window without needing to access the application itself.
-                glfwSetInputMode(FApplication::Get().GetMainWindow()->GetWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+                glfwSetInputMode(Windowing::GetPrimaryWindowHandle()->GetWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
                 float MousePitchDelta = UpdateContext.GetSubsystem<FInputSubsystem>()->GetMouseDeltaPitch();
                 float MouseYawDelta = UpdateContext.GetSubsystem<FInputSubsystem>()->GetMouseDeltaYaw();
@@ -98,7 +99,7 @@ namespace Lumina
             }
             else
             {
-                glfwSetInputMode(FApplication::Get().GetMainWindow()->GetWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+                glfwSetInputMode(Windowing::GetPrimaryWindowHandle()->GetWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
             }
             
             glm::vec3 updatedForward = TransformComponent.Transform.Rotation * glm::vec3(0.0f, 0.0f, -1.0f);

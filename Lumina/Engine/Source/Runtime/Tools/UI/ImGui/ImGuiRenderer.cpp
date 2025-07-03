@@ -3,7 +3,6 @@
 #include "ImGuiDesignIcons.h"
 #include "ImGuiFonts.h"
 #include "Core/Engine/Engine.h"
-#include "Core/Performance/PerformanceTracker.h"
 #include "imgui/misc/freetype/imgui_freetype.h"
 #include "Renderer/RHIIncl.h"
 #include "TaskSystem/TaskSystem.h"

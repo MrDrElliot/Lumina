@@ -20,11 +20,15 @@
 #include "Tools/UI/ImGui/imfilebrowser.h"
 #include "imnodes/imnodes.h"
 #include <Assets/AssetHeader.h>
+#include <client/TracyProfiler.hpp>
 
 #include "Assets/AssetTypes/Material/Material.h"
+#include "Assets/AssetTypes/Mesh/StaticMesh/StaticMesh.h"
 #include "Assets/AssetTypes/Textures/Texture.h"
+#include "Core/Object/Package/Package.h"
 #include "Renderer/RenderManager.h"
 #include "Scene/SceneRenderer.h"
+#include "Tools/AssetEditors/MeshEditor/MeshEditorTool.h"
 #include "Tools/AssetEditors/TextureEditor/TextureEditorTool.h"
 #include "Tools/UI/ImGui/ImGuiRenderer.h"
 
@@ -181,13 +185,45 @@ namespace Lumina
 
         if (bShowObjectDebug)
         {
-            ImGui::SetNextWindowSize({400.0f, 600.0f});
+            ImGui::SetNextWindowSize({ 700.0f, 600.0f }, ImGuiCond_FirstUseEver);
             FString Name = "CObject List - Num: " + eastl::to_string(GObjectVector.size());
-            ImGui::Begin(Name.c_str(), &bShowObjectDebug, ImGuiWindowFlags_NoResize);
-            for (CObjectBase* Object : GObjectVector)
+
+            if (ImGui::Begin(Name.c_str(), &bShowObjectDebug))
             {
-                ImGui::Text("%s", Object->GetName().c_str());
+                THashMap<FString, TVector<CObjectBase*>> PackageToObjects;
+                for (CObjectBase* Object : GObjectVector)
+                {
+                    FString PackageName = Object->GetPackage() ? Object->GetPackage()->GetName().ToString() : "None";
+                    PackageToObjects[PackageName].push_back(Object);
+                }
+
+                for (const auto& Pair : PackageToObjects)
+                {
+                    const FString& PackageName = Pair.first;
+                    const TVector<CObjectBase*>& Objects = Pair.second;
+
+                    ImGuiTreeNodeFlags Flags = 0;
+                    if (ImGui::TreeNodeEx(PackageName.c_str(), Flags))
+                    {
+                        if (ImGui::BeginTable(PackageName.c_str(), 1, ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable))
+                        {
+                            ImGui::TableSetupColumn("Object Name");
+                            ImGui::TableHeadersRow();
+
+                            for (CObjectBase* Object : Objects)
+                            {
+                                ImGui::TableNextRow();
+                                ImGui::TableSetColumnIndex(0);
+                                ImGui::TextUnformatted(Object->GetName().ToString().c_str());
+                            }
+
+                            ImGui::EndTable();
+                        }
+                        ImGui::TreePop();
+                    }
+                }
             }
+
             ImGui::End();
         }
 
@@ -292,6 +328,7 @@ namespace Lumina
     
     void FEditorUI::OpenAssetEditor(CObject* InAsset)
     {
+        /** Temp garbage for now */
         if (InAsset != nullptr && ActiveAssetTools.find(InAsset) == ActiveAssetTools.end())
         {
             FEditorTool* NewTool = nullptr;
@@ -302,6 +339,10 @@ namespace Lumina
             else if (InAsset->IsA<CTexture>())
             {
                 NewTool = CreateTool<FTextureEditorTool>(this, InAsset);
+            }
+            else if (InAsset->IsA<CStaticMesh>())
+            {
+                NewTool = CreateTool<FMeshEditorTool>(this, InAsset);
             }
             
             ActiveAssetTools.insert_or_assign(InAsset, NewTool);
@@ -517,6 +558,11 @@ namespace Lumina
         Tool->Update(UpdateContext);
         Tool->bViewportFocused = false;
         Tool->bViewportHovered = false;
+
+        if (Tool->HasScene())
+        {
+            Tool->GetScene()->SetPaused(!bVisible);
+        }
         
         if (!bVisible)
         {
@@ -525,6 +571,7 @@ namespace Lumina
                 // Keep alive document dockspace so windows that are docked into it but which visibility are not linked to the dockspace visibility won't get undocked.
                 ImGui::DockSpace(dockspaceID, DockspaceSize, ImGuiDockNodeFlags_KeepAliveOnly, &Tool->ToolWindowsClass);
             }
+            
             ImGui::End();
             
             return;
@@ -595,17 +642,18 @@ namespace Lumina
                     {
                         FScene* Scene = Tool->GetScene();
                         FSceneRenderer* SceneRenderer = UpdateContext.GetSubsystem<FSceneManager>()->GetSceneRendererForScene(Scene);
-
+                        
                         FRHIImageRef RenderTarget = SceneRenderer->GetRenderTarget();
 
                         FRenderManager* RenderManager = UpdateContext.GetSubsystem<FRenderManager>();
                         IImGuiRenderer* ImGuiRenderer = RenderManager->GetImGuiRenderer();
-
+                        
                         ImTextureID ViewportTexture = ImGuiRenderer->GetOrCreateImTexture(RenderTarget);
                         
                         Tool->bViewportFocused = ImGui::IsWindowFocused();
                         Tool->bViewportHovered = ImGui::IsWindowHovered();
                         Tool->DrawViewport(UpdateContext, ViewportTexture);
+                        
                     }
                     
                     ImGui::End();
@@ -667,6 +715,11 @@ namespace Lumina
         if (ImGui::BeginMenu("File"))
         {
             ImGui::MenuItem("Save", nullptr);
+            
+            if (ImGui::MenuItem("Recompile Shaders", nullptr))
+            {
+                UpdateContext.GetSubsystem<FRenderManager>()->GetRenderContext()->CompileEngineShaders();    
+            }
             ImGui::EndMenu();
         }
 
@@ -734,7 +787,20 @@ namespace Lumina
         if (ImGui::BeginMenu("Tools"))
         {
             ImGui::MenuItem("ImGui Demo Window", nullptr, &bDearImGuiDemoWindowOpen, !bDearImGuiDemoWindowOpen);
+
+            bool bVSyncEnabled = UpdateContext.GetSubsystem<FRenderManager>()->GetRenderContext()->IsVSyncEnabled();
+            if (ImGui::MenuItem("Enable V-Sync", nullptr, bVSyncEnabled))
+            {
+                UpdateContext.GetSubsystem<FRenderManager>()->GetRenderContext()->SetVSyncEnabled(!bVSyncEnabled);
+            }
             ImGui::MenuItem("CObject List", nullptr, &bShowObjectDebug, !bShowObjectDebug);
+            if (ImGui::MenuItem("Profiler", nullptr))
+            {
+                FString LuminaDirEnv = std::getenv("LUMINA_DIR");
+                FString FullPath = LuminaDirEnv + "/External/Tracy/tracy-profiler.exe";
+                FString FullCommand = "start " + FullPath;
+                system(FullCommand.c_str());
+            }
             ImGui::EndMenu();
         }
         

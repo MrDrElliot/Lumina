@@ -11,7 +11,7 @@ namespace Lumina
     {
         std::filesystem::path ConfigPath = Paths::ResolveFromEngine("Applications/LuminaEditor/Config/EditorSettings.json");
 
-        if (!FFileHelper::DoesFileExist(ConfigPath.string().c_str()))
+        if (!FileHelper::DoesFileExist(ConfigPath.string().c_str()))
         {
             LOG_INFO("Could not find EditorSettings.json, creating default");
             
@@ -19,11 +19,11 @@ namespace Lumina
             DefaultJson["StartupProject"] = "NULL";
 
             FString DefaultJsonString = DefaultJson.dump(4).c_str();
-            FFileHelper::SaveStringToFile(DefaultJsonString, ConfigPath.string().c_str());
+            FileHelper::SaveStringToFile(DefaultJsonString, ConfigPath.string().c_str());
         }
         
         FString FileString;
-        if (!FFileHelper::LoadFileIntoString(FileString, ConfigPath.string().c_str()))
+        if (!FileHelper::LoadFileIntoString(FileString, ConfigPath.string().c_str()))
         {
             LOG_ERROR("Failed to load EditorSettings.json");
             return;
@@ -53,6 +53,6 @@ namespace Lumina
         JsonData["StartupProject"] = StartupProject.c_str();
 
         FString JsonString = JsonData.dump(4).c_str();
-        FFileHelper::SaveStringToFile(JsonString, ConfigPath.string().c_str());
+        FileHelper::SaveStringToFile(JsonString, ConfigPath.string().c_str());
     }
 }

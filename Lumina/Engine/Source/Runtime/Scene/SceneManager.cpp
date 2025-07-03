@@ -27,6 +27,11 @@ namespace Lumina
     {
         for (FManagedScene& Scene : Scenes)
         {
+            if (Scene.Scene->IsPaused())
+            {
+                continue;
+            }
+            
             Scene.SceneRenderer->StartScene(Scene.Scene);
             Scene.Scene->StartFrame();       
         }
@@ -36,6 +41,11 @@ namespace Lumina
     {
         for (const FManagedScene& Scene : Scenes)
         {
+            if (Scene.Scene->IsPaused())
+            {
+                continue;
+            }
+            
             Scene.Scene->Update(UpdateContext);       
         }
     }
@@ -45,6 +55,11 @@ namespace Lumina
     {
         for (const FManagedScene& Scene : Scenes)
         {
+            if (Scene.Scene->IsPaused())
+            {
+                continue;
+            }
+            
             Scene.Scene->EndFrame();
             Scene.SceneRenderer->EndScene(Scene.Scene);
         }

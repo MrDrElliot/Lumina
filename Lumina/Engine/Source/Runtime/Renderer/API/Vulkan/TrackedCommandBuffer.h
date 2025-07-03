@@ -1,7 +1,9 @@
 ﻿#pragma once
+
 #include "VulkanDevice.h"
 #include "Memory/RefCounted.h"
 #include "Renderer/RenderResource.h"
+#include <tracy/TracyVulkan.hpp>
 
 namespace Lumina
 {
@@ -9,16 +11,22 @@ namespace Lumina
     {
     public:
 
-        FTrackedCommandBufer(FVulkanDevice* InDevice, VkCommandBuffer InBuffer, VkCommandPool InPool)
+        FTrackedCommandBufer(FVulkanDevice* InDevice, VkCommandBuffer InBuffer, VkCommandPool InPool, VkQueue InQueue)
             : IDeviceChild(InDevice)
             , CommandBuffer(InBuffer)
             , CommandPool(InPool)
+            , Queue(InQueue)
         {
             ReferencedResources.reserve(24);
+            TracyContext = TracyVkContext(InDevice->GetPhysicalDevice(),
+            InDevice->GetDevice(),
+            InQueue,
+            CommandBuffer)
         }
 
         ~FTrackedCommandBufer()
         {
+            TracyVkDestroy(TracyContext)
             vkDestroyCommandPool(Device->GetDevice(), CommandPool, nullptr);
         }
 
@@ -34,9 +42,14 @@ namespace Lumina
             ReferencedResources.reserve(LastSize);
         }
 
-        VkCommandBuffer CommandBuffer;
-        VkCommandPool   CommandPool;
+        VkCommandBuffer             CommandBuffer;
+        VkCommandPool               CommandPool;
+        VkQueue                     Queue;
+        
 
+        TracyVkCtx                  TracyContext;
+
+        
         /** Here we keep alive any resources that this current command buffer needs/uses */
         TVector<TRefCountPtr<IRHIResource>> ReferencedResources;
         

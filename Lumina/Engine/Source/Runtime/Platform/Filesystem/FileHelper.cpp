@@ -6,9 +6,9 @@
 #include "Log/Log.h"
 #include "Paths/Paths.h"
 
-namespace Lumina
+namespace Lumina::FileHelper
 {
-    bool FFileHelper::SaveArrayToFile(const TVector<uint8>& Array, const FString& Path, uint32 WriteFlags)
+    bool SaveArrayToFile(const TVector<uint8>& Array, const FString& Path, uint32 WriteFlags)
     {
         std::filesystem::path FilePath = Path.c_str();
 
@@ -30,7 +30,7 @@ namespace Lumina
         return true;
     }
 
-    bool FFileHelper::LoadFileToArray(TVector<uint8>& Result, const FString& Path, uint32 ReadFlags)
+    bool LoadFileToArray(TVector<uint8>& Result, const FString& Path, uint32 ReadFlags)
     {
         Result.clear();
         std::filesystem::path FilePath = Path.c_str();
@@ -66,7 +66,7 @@ namespace Lumina
         return true;
     }
 
-    FString FFileHelper::FileFinder(const FString& FileName, const FString& IteratorPath, bool bRecursive)
+    FString FileFinder(const FString& FileName, const FString& IteratorPath, bool bRecursive)
     {
         std::filesystem::path Path = IteratorPath.c_str();
 
@@ -103,7 +103,7 @@ namespace Lumina
         return "";
     }
     
-    bool FFileHelper::LoadFileIntoString(FString& OutString, const FString& Path, uint32 ReadFlags)
+    bool LoadFileIntoString(FString& OutString, const FString& Path, uint32 ReadFlags)
     {
         std::ifstream file(Path.c_str(), std::ios::in);
         if (!file.is_open())
@@ -120,7 +120,7 @@ namespace Lumina
         return OutString.size();
     }
 
-    bool FFileHelper::SaveStringToFile(const FStringView& String, const FString& Path, uint32 WriteFlags)
+    bool SaveStringToFile(const FStringView& String, const FString& Path, uint32 WriteFlags)
     {
         std::ofstream file(Path.c_str(), std::ios::out | std::ios::trunc);
         if (!file.is_open())
@@ -135,12 +135,12 @@ namespace Lumina
         return true;
     }
 
-    bool FFileHelper::DoesFileExist(const FString& FilePath)
+    bool DoesFileExist(const FString& FilePath)
     {
         return std::filesystem::exists(FilePath.c_str());
     }
 
-    bool FFileHelper::CreateNewFile(const FString& FilePath, bool bBinary, uint32 Flags)
+    bool CreateNewFile(const FString& FilePath, bool bBinary, uint32 Flags)
     {
         if (std::filesystem::exists(FilePath.c_str())) 
         {
@@ -165,7 +165,7 @@ namespace Lumina
         return true;
     }
 
-    uint64 FFileHelper::GetFileSize(const FString& FilePath)
+    uint64 GetFileSize(const FString& FilePath)
     {
         if (std::filesystem::exists(FilePath.c_str()))
         {

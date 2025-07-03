@@ -1,6 +1,6 @@
 
 #include "Application.h"
-
+#include "tracy/Tracy.hpp"
 #include "ApplicationGlobalState.h"
 #include "Assets/AssetManager/AssetManager.h"
 #include "Core/Module/ModuleManager.h"
@@ -31,6 +31,7 @@ namespace Lumina
 
     int32 FApplication::Run(int argc, char** argv)
     {
+        FrameMarkNamed("main");
         LOG_TRACE("Initializing Application: {0}", ApplicationName.c_str());
 
         //---------------------------------------------------------------
@@ -92,11 +93,6 @@ namespace Lumina
     bool FApplication::HasAnyFlags(EApplicationFlags Flags)
     {
         return (ApplicationFlags & static_cast<uint32>(Flags)) != 0;
-    }
-    
-    FWindow* FApplication::GetMainWindow()
-    {
-        return Get().Window;
     }
 
     void FApplication::WindowResized(const FIntVector2D& Extent)

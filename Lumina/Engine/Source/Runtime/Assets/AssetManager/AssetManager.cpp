@@ -1,7 +1,6 @@
 
 #include "AssetManager.h"
 #include "Core/Math/Hash/Hash.h"
-#include "Core/Performance/PerformanceTracker.h"
 
 namespace Lumina
 {

@@ -32,15 +32,15 @@ namespace Lumina
         if (HasScene())
         {
             FTransform EditorEntityTransform = FTransform();
-            EditorEntityTransform.Location = {0.0f, 10.0f, 0.0f};
-            EditorEntity = Scene->CreateEntity(EditorEntityTransform, FName("Tool_Entity_" + ToolName));
+            EditorEntityTransform.Location = {0.0f, 1.0f, 6.0f};
+            EditorEntity = Scene->CreateEntity(EditorEntityTransform, FName("Editor Camera"));
             EditorEntity.AddComponent<FCameraComponent>();
             EditorEntity.AddComponent<FEditorComponent>();
             Scene->GetSceneCameraManager()->SetActiveCamera(EditorEntity);
             
             FToolWindow* NewWindow = CreateToolWindow(ViewportWindowName, [] (const FUpdateContext& Contxt, bool bIsFocused)
             {
-                //.. Intentially blank.
+                //.. Intentionally blank.
             });
 
             NewWindow->bViewport = true;
@@ -116,8 +116,9 @@ namespace Lumina
         t = glm::clamp(t, 0.0f, 1.0f);
         float NewFOV = glm::mix(120.0f, 50.0f, t);
 
-        EditorEntity.GetComponent<FCameraComponent>().SetAspectRatio(AspectRatio);
-        EditorEntity.GetComponent<FCameraComponent>().SetFOV(NewFOV);
+        FCameraComponent& CameraComponent = EditorEntity.GetComponent<FCameraComponent>();
+        CameraComponent.SetAspectRatio(AspectRatio);
+        CameraComponent.SetFOV(NewFOV);
         
         /** Mostly for debug, so we can easily see if there's some transparency issue */
         ImGui::GetWindowDrawList()->AddRectFilled(WindowPosition, WindowBottomRight, IM_COL32(255, 0, 0, 255));
@@ -131,8 +132,27 @@ namespace Lumina
                 bViewportFocused = true;
             }
         }
+
+        ImVec2 cursorScreenPos = ImGui::GetCursorScreenPos();
+        ImVec2 viewportSize = ImGui::GetContentRegionAvail();
         
-        ImGui::Image(ViewportTexture, ViewportSize);
+        ImGui::GetWindowDrawList()->AddImage(
+            ViewportTexture,
+            cursorScreenPos,
+            ImVec2(cursorScreenPos.x + viewportSize.x, cursorScreenPos.y + viewportSize.y),
+            ImVec2(0, 0), ImVec2(1, 1),
+            IM_COL32_WHITE
+        );
+
+        FString CameraString;
+        CameraString += "Camera Location: " + eastl::to_string(CameraComponent.GetPosition().x) + ", " + eastl::to_string(CameraComponent.GetPosition().y) + ", " + eastl::to_string(CameraComponent.GetPosition().z);
+        
+        ImGui::GetWindowDrawList()->AddText(
+            ImVec2(cursorScreenPos.x + 10, cursorScreenPos.y + 10),
+            IM_COL32(255, 255, 255, 255),
+            CameraString.begin(),
+            CameraString.end()
+        );
         
         if (ImGuiDockNode* pDockNode = ImGui::GetWindowDockNode())
         {

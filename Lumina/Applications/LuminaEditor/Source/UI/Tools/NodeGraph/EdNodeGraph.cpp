@@ -7,7 +7,7 @@
 #include "Core/Object/Class.h"
 #include <Core/Reflection/Type/LuminaTypes.h>
 
-#define SHOW_DEBUG 0
+#define SHOW_DEBUG 1
 
 namespace Lumina
 {
@@ -74,7 +74,7 @@ namespace Lumina
     {
         for (CEdGraphNode* Node : Nodes)
         {
-            Node->MarkGarbage();
+            Node->Release();
         }
 
         ImNodes::EditorContextFree(ImNodesContext);
@@ -82,7 +82,7 @@ namespace Lumina
 
     void CEdNodeGraph::Serialize(FArchive& Ar)
     {
-        
+        Super::Serialize(Ar);
     }
 
     void CEdNodeGraph::DrawGraph()
@@ -148,6 +148,7 @@ namespace Lumina
 
             #if SHOW_DEBUG
             ImGui::TextColored(ImVec4(1.0f, 1.0f, 1.0f, 1.0f), "%s - %i", Node->GetNodeFullName().c_str(), Node->GetDebugExecutionOrder());
+            ImGui::TextUnformatted(Node->GetName().c_str());
             #else
             ImGui::TextUnformatted(Node->GetNodeDisplayName().c_str());
             #endif
@@ -354,13 +355,19 @@ namespace Lumina
 
     uint64 CEdNodeGraph::AddNode(CEdGraphNode* InNode)
     {
-        uint64 NewID = Nodes.size();
+        InNode->AddRef();
+        SIZE_T NewID = Nodes.size();
         InNode->FullName = InNode->GetNodeDisplayName() + "_" + eastl::to_string(NewID);
         InNode->NodeID = NewID;
 
         Nodes.push_back(InNode);
 
-        InNode->BuildNode();
+        if (!InNode->bWasBuild)
+        {
+            InNode->BuildNode();
+            InNode->bWasBuild = true;
+        }
+        
         ValidateGraph();
 
         return NewID;

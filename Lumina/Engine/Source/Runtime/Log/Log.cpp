@@ -11,7 +11,7 @@ namespace Lumina::Logging
 {
 	
 	LUMINA_API std::shared_ptr<spdlog::logger> Logger;
-	LUMINA_API std::vector<ConsoleMessage> Logs;
+	LUMINA_API TVector<FConsoleMessage> Logs;
 	
 	bool IsInitialized()
 	{
@@ -20,7 +20,7 @@ namespace Lumina::Logging
 
 	void Init()
 	{
-				
+		Logs.reserve(2024);
 		spdlog::set_pattern("%^[%T] %n: %v%$");
 		Logger = spdlog::stdout_color_mt("Lumina");
 		Logger->sinks().push_back(std::make_shared<ConsoleSink>(Logs));
@@ -47,7 +47,7 @@ namespace Lumina::Logging
 		return Logger;
 	}
 
-	void GetConsoleLogs(std::vector<ConsoleMessage>& OutLogs)
+	void GetConsoleLogs(TVector<FConsoleMessage>& OutLogs)
 	{
 		OutLogs = Logs;
 	}

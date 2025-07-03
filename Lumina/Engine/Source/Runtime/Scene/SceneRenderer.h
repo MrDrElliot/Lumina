@@ -32,9 +32,7 @@ namespace Lumina
     {
     public:
         
-
-        static FSceneRenderer* Create();
-
+       
         FSceneRenderer();
         virtual ~FSceneRenderer();
 
@@ -48,7 +46,8 @@ namespace Lumina
         INLINE FSceneGlobalData* GetSceneGlobalData() { return &SceneGlobalData; }
 
     protected:
-        
+
+        void DrawSkybox(const FScene* Scene);
         void ForwardRenderPass(const FScene* Scene);
         void FullScreenPass(const FScene* Scene);
 
@@ -63,12 +62,18 @@ namespace Lumina
         
     private:
 
+        FRHIImageRef                        CubeMap;
+        FRHIImageRef                        DepthBuffer;
         FRHIViewportRef                     SceneViewport;
-
+        FRHIBufferRef                       SceneDataBuffer;
+        FRHIBufferRef                       ModelDataBuffer;
+        FRHIInputLayoutRef                  VertexLayoutInput;
+        
         FSceneGlobalData                    SceneGlobalData;
         FSceneLightData                     SceneLightData;
         TVector<FModelData>                 ModelData;
         TVector<FMaterialTexturesData>      TexturesData;
+        
     };
     
 }

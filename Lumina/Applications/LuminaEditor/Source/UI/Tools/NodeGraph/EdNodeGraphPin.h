@@ -16,26 +16,25 @@ namespace Lumina
         GENERATED_BODY()
     public:
 
-        friend struct Construct_CClass_Lumina_CEdNodeGraphPin_Statics;
         friend class CEdNodeGraph;
         friend class CEdGraphNode;
 
         CEdNodeGraphPin()
-            : bSingleInput(0)
+            : PinID(0)
+            , bSingleInput(0)
             , bInputPin(0)
             , bDrawPinEditor(false)
             , bHidePinDuringConnection(true)
         {}
-
         
         virtual void DrawPin() { }
         
-        FORCEINLINE void SetPinName(const FString& Name) { PinName = Name; }
-        FORCEINLINE const FString& GetPinName() const { return PinName; }
-        FORCEINLINE const FString& GetPinTooltip() const { return PinName; }
+        void SetPinName(const FString& Name) { PinName = Name; }
+        const FString& GetPinName() const { return PinName; }
+        const FString& GetPinTooltip() const { return PinName; }
 
-        FORCEINLINE bool ShouldHideDuringConnection() const { return bHidePinDuringConnection; }
-        FORCEINLINE void SetHideDuringConnection(bool bHide) { bHidePinDuringConnection = bHide; }
+        bool ShouldHideDuringConnection() const { return bHidePinDuringConnection; }
+        void SetHideDuringConnection(bool bHide) { bHidePinDuringConnection = bHide; }
         
         virtual uint32 GetPinColor() const { return PinColor; }
         void SetPinColor(uint32 Color) { PinColor = Color;}
@@ -44,13 +43,13 @@ namespace Lumina
         void RemoveConnection(CEdNodeGraphPin* Pin);
         TVector<CEdNodeGraphPin*> GetConnections() const { return Connections; }
 
-        FORCEINLINE bool IsSingleInput() const { return bSingleInput; }
-        FORCEINLINE bool HasConnection() const { return !Connections.empty(); }
-        FORCEINLINE uint16 GetGUID() const { return PinID; }
-        FORCEINLINE CEdGraphNode* GetOwningNode() const { return OwningNode; }
+        bool IsSingleInput() const { return bSingleInput; }
+        bool HasConnection() const { return !Connections.empty(); }
+        uint16 GetGUID() const { return PinID; }
+        CEdGraphNode* GetOwningNode() const { return OwningNode; }
 
-        FORCEINLINE bool ShouldDrawEditor() const { return bDrawPinEditor; }
-        FORCEINLINE void SetShouldDrawEditor(bool bNew) { bDrawPinEditor = bNew; }
+        bool ShouldDrawEditor() const { return bDrawPinEditor; }
+        void SetShouldDrawEditor(bool bNew) { bDrawPinEditor = bNew; }
         
         template<typename T>
         requires(std::is_base_of_v<CEdGraphNode, T>)

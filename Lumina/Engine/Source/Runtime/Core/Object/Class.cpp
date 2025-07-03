@@ -1,5 +1,6 @@
 ﻿#include "Class.h"
 #include "Core/Reflection/Type/LuminaTypes.h"
+#include "Package/Package.h"
 
 namespace Lumina
 {
@@ -8,8 +9,19 @@ namespace Lumina
     {
         Assert(*OutClass == nullptr)
         
+        CPackage* PackageObject = nullptr;
+
+        if (Package && Package[0] != '\0')
+        {
+            PackageObject = FindObject<CPackage>(Package);
+            if (PackageObject == nullptr)
+            {
+                PackageObject = NewObject<CPackage>(nullptr, Package);
+            }
+        }
+        
         *OutClass = (CClass*)Memory::Malloc(sizeof(CClass), alignof(CClass));
-        *OutClass = ::new (*OutClass) CClass(Package, FName(Name), Size, Alignment, EObjectFlags::OF_None, InClassConstructor);
+        *OutClass = ::new (*OutClass) CClass(PackageObject, FName(Name), Size, Alignment, EObjectFlags::OF_None, InClassConstructor);
         
         CClass* NewClass = *OutClass;
         CClass* SuperClass = SuperClassFn();
@@ -30,6 +42,18 @@ namespace Lumina
 
     //-----------------------------------------------------------------------------------------------
 
+    void CClass::SerializeClassProperties(FArchive& Ar, void* Data)
+    {
+        FProperty* Current = LinkedProperty;
+        while (Current != nullptr)
+        {
+            void* ValuePtr = Current->GetValuePtr<void>(Data);
+            Current->Serialize(Ar, ValuePtr);
+            
+            Current = (FProperty*)Current->Next;
+        }
+    }
+
     CObject* CClass::CreateDefaultObject()
     {
         Assert(ClassDefaultObject == nullptr)
@@ -39,7 +63,11 @@ namespace Lumina
         FConstructCObjectParams Params(this);
         Params.Flags |= EObjectFlags::OF_DefaultObject;
         Params.Name = FName(DefaultObjectName);
-        Params.Package = UTF8_TO_WIDE(GetPackage()).c_str();
+        
+        if (GetPackage())
+        {
+            Params.Package = GetPackage()->GetName();
+        }
         
         ClassDefaultObject = StaticAllocateObject(Params);
 

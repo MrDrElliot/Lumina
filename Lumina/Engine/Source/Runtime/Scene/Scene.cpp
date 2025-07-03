@@ -5,6 +5,7 @@
 #include "SceneRenderer.h"
 #include "SceneUpdateContext.h"
 #include "Containers/Name.h"
+#include "Core/Profiler/Profile.h"
 #include "Entity/Entity.h"
 #include "Entity/Components/NameComponent.h"
 #include "Entity/Components/TransformComponent.h"
@@ -36,7 +37,10 @@ namespace Lumina
     
     void FScene::Update(const FUpdateContext& UpdateContext)
     {
+        LUMINA_PROFILE_SCOPE();
+        
         DeltaTime = UpdateContext.GetDeltaTime();
+        TimeSinceCreation += DeltaTime;
         
         FSceneUpdateContext SceneContext(UpdateContext, this);
         for (FEntitySystem* System : SystemUpdateList[(uint32)UpdateContext.GetUpdateStage()])
@@ -51,7 +55,7 @@ namespace Lumina
 
     bool FScene::RegisterSystem(FEntitySystem* NewSystem)
     {
-        Assert(NewSystem != nullptr);
+        Assert(NewSystem != nullptr)
         
         NewSystem->Scene = this;
         NewSystem->Initialize(SceneSubsystemManager);

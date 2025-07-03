@@ -58,6 +58,10 @@ namespace Lumina
         FVulkanBuffer(FVulkanDevice* InDevice, const FRHIBufferDesc& InDescription);
         ~FVulkanBuffer() override;
 
+        void* GetAPIResourceImpl(EAPIResourceType Type) override
+        {
+            return Buffer;
+        }
 
         FORCEINLINE VkBuffer GetBuffer() const { return Buffer; }
         
@@ -261,13 +265,14 @@ namespace Lumina
         TVector<VkDescriptorPoolSize>           PoolSizes;
     };
 
+    // Contains a VkDescriptorSet
     class FVulkanBindingSet : public FRHIBindingSet, public IDeviceChild
     {
     public:
 
         RENDER_RESOURCE(RRT_BindingSet)
         
-        FVulkanBindingSet(FVulkanDevice* InDevice, const FBindingSetDesc& InDesc, FVulkanBindingLayout* InLayout);
+        FVulkanBindingSet(FVulkanRenderContext* RenderContext, FVulkanDevice* InDevice, const FBindingSetDesc& InDesc, FVulkanBindingLayout* InLayout);
         ~FVulkanBindingSet() override;
 
         const FBindingSetDesc* GetDesc() const override { return &Desc; }
@@ -297,10 +302,12 @@ namespace Lumina
 
         virtual void Bind(VkCommandBuffer CmdBuffer) = 0;
 
-        void CreatePipelineLayout(TVector<FRHIBindingLayoutRef> BindingLayouts);
+        void CreatePipelineLayout(TVector<FRHIBindingLayoutRef> BindingLayouts, VkShaderStageFlags& OutStageFlags);
         
-        VkPipelineLayout PipelineLayout;
-        VkPipeline Pipeline;
+        VkPipelineLayout            PipelineLayout;
+        VkPipeline                  Pipeline;
+        VkShaderStageFlags          PushConstantVisibility;
+
     };
     
     class FVulkanGraphicsPipeline : public FRHIGraphicsPipeline,  public FVulkanPipeline
@@ -321,7 +328,8 @@ namespace Lumina
 
     private:
 
-        FGraphicsPipelineDesc Desc;
+        FGraphicsPipelineDesc       Desc;
+        
     };
 
     class FVulkanComputePipeline : public FRHIComputePipeline,  public FVulkanPipeline

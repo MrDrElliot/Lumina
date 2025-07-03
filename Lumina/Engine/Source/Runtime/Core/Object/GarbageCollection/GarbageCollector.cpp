@@ -1,8 +1,11 @@
 ﻿#include "GarbageCollector.h"
 
+#include <tracy/Tracy.hpp>
+
 #include "Containers/Array.h"
 #include "Core/Assertions/Assert.h"
 #include "Core/Object/ObjectBase.h"
+#include "Core/Profiler/Profile.h"
 #include "Core/Threading/Thread.h"
 
 
@@ -15,9 +18,9 @@ namespace Lumina::GarbageCollection
     {
         FScopeLock Lock(DeletesLock);
 
+        // Object was already marked for garbage, no need to do it again.
         if (Obj->IsMarkedGarbage())
         {
-            LOG_ERROR("[GarbageCollection] Object \"{}\" has already been marked as garbage.", Obj->GetName());
             return;
         }
         
@@ -29,6 +32,7 @@ namespace Lumina::GarbageCollection
 
     void CollectGarbage()
     {
+        LUMINA_PROFILE_SECTION("Garbage Collection");
         while (!PendingDeletes.empty())
         {
             CObjectBase* Obj = PendingDeletes.front();

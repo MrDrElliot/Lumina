@@ -1,43 +1,28 @@
 ﻿#pragma once
 #include "Core/Object/Object.h"
-#include "Core/Object/Class.h"
-#include "Core/Object/ObjectCore.h"
 #include "Core/Serialization/MemoryArchiver.h"
 
 namespace Lumina
 {
-    class FPackageLoader : public FMemoryReader
+    class CPackage;
+    
+    class FPackageLoader : public FBufferReader
     {
     public:
 
-        explicit FPackageLoader(const TVector<uint8>& InBytes, bool bIsPersistent = false)
-            : FMemoryReader(InBytes, bIsPersistent)
+        using FArchive::operator<<;
+
+        explicit FPackageLoader(void* Data, int64 Size, CPackage* InPackage)
+            : FBufferReader(Data, Size, true, false)
+            , Package(InPackage)
         {
-        }
-
-
-        virtual FArchive& operator<<(CObject*& Value) override
-        {
-            FString LoadedString;
-            FArchive::operator<<(LoadedString);
-
-            if (LoadedString.empty())
-            {
-                Value = nullptr;
-                return *this;
-            }
-
-
-            FWString WString = UTF8_TO_WIDE(LoadedString);
-            CClass* Class = FindObject<CClass>(WString.c_str());
-
-            if (Class)
-            {
-                Value = NewObject(Class);
-            }
-            
-            return *this;
         }
         
+        virtual FArchive& operator<<(CObject*& Value) override;
+
+
+    private:
+
+        CPackage* Package;
     };
 }

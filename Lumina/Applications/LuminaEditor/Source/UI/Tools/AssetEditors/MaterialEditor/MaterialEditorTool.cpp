@@ -3,7 +3,7 @@
 #include "Assets/AssetTypes/Material/Material.h"
 #include "Renderer/RHIIncl.h"
 #include "Core/Object/Class.h"
-#include "Core/Reflection/Type/Properties/EnumProperty.h"
+#include "Tools/UI/ImGui/ImGuiX.h"
 #include "UI/Tools/NodeGraph/Material/MaterialCompiler.h"
 #include "UI/Tools/NodeGraph/Material/MaterialNodeGraph.h"
 
@@ -46,13 +46,13 @@ namespace Lumina
     {
         NodeGraph->Shutdown();
         NodeGraph->MarkGarbage();
+        NodeGraph = nullptr;
     }
 
     void FMaterialEditorTool::OnAssetLoadFinished()
     {
     }
-
-
+    
     void FMaterialEditorTool::DrawToolMenu(const FUpdateContext& UpdateContext)
     {
         if (ImGui::MenuItem(LE_ICON_RECEIPT_TEXT" Compile"))
@@ -97,12 +97,8 @@ namespace Lumina
             return;
         }
         
-        CClass* Class = Asset->GetClass();
-        Class->ForEachProperty([&] (FProperty* Property)
-        {
-            ImGui::SeparatorText(Property->Name.c_str());
-            Property->DrawProperty(Asset);
-        });
+        ImGuiX::DrawObjectProperties(Asset);
+
     }
 
     void FMaterialEditorTool::DrawCompilationLog(const FUpdateContext& UpdateContext)

@@ -153,14 +153,12 @@ namespace Lumina
 		template<typename T>
 		TRefCountPtr<T> As()
 		{
-			Assert(GetRefCount() > 0)
 			return TRefCountPtr<T>(static_cast<T*>(Reference));
 		}
 
 		template<typename T>
 		const TRefCountPtr<T> As() const
 		{
-			Assert(GetRefCount() > 0);
 			return TRefCountPtr<T>(static_cast<T*>(Reference));
 		}
 	

@@ -13,7 +13,7 @@ namespace Lumina
     {
         if (Singleton == nullptr)
         {
-            Singleton = NewObject<CAssetDefinitionRegistry>(TRANSIENT_PACKAGE, "AssetDefinitionRegistry_Singleton");
+            Singleton = NewObject<CAssetDefinitionRegistry>(nullptr, "AssetDefinitionRegistry_Singleton");
         }
          
         return Singleton;

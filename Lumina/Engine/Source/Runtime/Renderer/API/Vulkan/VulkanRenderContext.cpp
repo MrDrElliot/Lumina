@@ -1,9 +1,9 @@
 
 
 #include <random>
-
 #include "VulkanCommandList.h"
 #include "VulkanDevice.h"
+#include "Core/Profiler/Profile.h"
 #include "Paths/Paths.h"
 #include "Renderer/CommandList.h"
 #include "Renderer/ShaderCompiler.h"
@@ -22,7 +22,6 @@
 
 #include "VulkanMacros.h"
 #include "Core/Engine/Engine.h"
-#include "VulkanTypes.h"
 #include "Core/Math/Alignment.h"
 #include "VulkanRenderContext.h"
 #include "src/VkBootstrap.h"
@@ -53,6 +52,38 @@ namespace Lumina
         }
 
         return VK_FALSE;
+    }
+
+        constexpr VkObjectType ToVkObjectType(EAPIResourceType type)
+    {
+        switch (type)
+        {
+        case EAPIResourceType::Buffer: return VK_OBJECT_TYPE_BUFFER;
+        case EAPIResourceType::Image: return VK_OBJECT_TYPE_IMAGE;
+        case EAPIResourceType::ImageView: return VK_OBJECT_TYPE_IMAGE_VIEW;
+        case EAPIResourceType::Sampler: return VK_OBJECT_TYPE_SAMPLER;
+        case EAPIResourceType::ShaderModule: return VK_OBJECT_TYPE_SHADER_MODULE;
+        case EAPIResourceType::Pipeline: return VK_OBJECT_TYPE_PIPELINE;
+        case EAPIResourceType::PipelineLayout: return VK_OBJECT_TYPE_PIPELINE_LAYOUT;
+        case EAPIResourceType::RenderPass: return VK_OBJECT_TYPE_RENDER_PASS;
+        case EAPIResourceType::Framebuffer: return VK_OBJECT_TYPE_FRAMEBUFFER;
+        case EAPIResourceType::DescriptorSet: return VK_OBJECT_TYPE_DESCRIPTOR_SET;
+        case EAPIResourceType::DescriptorSetLayout: return VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT;
+        case EAPIResourceType::DescriptorPool: return VK_OBJECT_TYPE_DESCRIPTOR_POOL;
+        case EAPIResourceType::CommandPool: return VK_OBJECT_TYPE_COMMAND_POOL;
+        case EAPIResourceType::CommandBuffer: return VK_OBJECT_TYPE_COMMAND_BUFFER;
+        case EAPIResourceType::Semaphore: return VK_OBJECT_TYPE_SEMAPHORE;
+        case EAPIResourceType::Fence: return VK_OBJECT_TYPE_FENCE;
+        case EAPIResourceType::Event: return VK_OBJECT_TYPE_EVENT;
+        case EAPIResourceType::QueryPool: return VK_OBJECT_TYPE_QUERY_POOL;
+        case EAPIResourceType::DeviceMemory: return VK_OBJECT_TYPE_DEVICE_MEMORY;
+        case EAPIResourceType::Swapchain: return VK_OBJECT_TYPE_SWAPCHAIN_KHR;
+        case EAPIResourceType::Surface: return VK_OBJECT_TYPE_SURFACE_KHR;
+        case EAPIResourceType::Device: return VK_OBJECT_TYPE_DEVICE;
+        case EAPIResourceType::Instance: return VK_OBJECT_TYPE_INSTANCE;
+        case EAPIResourceType::Queue: return VK_OBJECT_TYPE_QUEUE;
+        default: return VK_OBJECT_TYPE_UNKNOWN;
+        }
     }
     
     constexpr VkPipelineStageFlagBits ToVkPipelineStage(EPipelineStage stage)
@@ -131,10 +162,16 @@ namespace Lumina
     //------------------------------------------------------------------------------------
 
 
+    FQueue::~FQueue()
+    {
+        
+    }
+
     TRefCountPtr<FTrackedCommandBufer> FQueue::GetOrCreateCommandBuffer()
     {
+        LUMINA_PROFILE_SCOPE();
+        
         FScopeLock Lock(Mutex);
-
         TRefCountPtr<FTrackedCommandBufer> Buf;
         
         if (CommandBufferPool.empty())
@@ -158,7 +195,8 @@ namespace Lumina
             VkCommandBuffer Buffer;
             VK_CHECK(vkAllocateCommandBuffers(Device->GetDevice(), &BufferInfo, &Buffer));
             
-            Buf = MakeRefCount<FTrackedCommandBufer>(Device, Buffer, CommandPool);    
+            Buf = MakeRefCount<FTrackedCommandBufer>(Device, Buffer, CommandPool, Queue);
+            
         }
         else
         {
@@ -171,6 +209,7 @@ namespace Lumina
 
     void FQueue::RetireCommandBuffers()
     {
+        LUMINA_PROFILE_SCOPE();
         TVector<TRefCountPtr<FTrackedCommandBufer>> Submissions = Memory::Move(CommandBuffersInFlight);
         
         for (auto& Submission : Submissions)
@@ -182,11 +221,14 @@ namespace Lumina
 
     void FQueue::Submit(ICommandList* CommandLists, uint32 NumCommandLists)
     {
-        TVector<VkCommandBuffer> CommandBuffers(NumCommandLists);
+        LUMINA_PROFILE_SCOPE();
         
-        for (int i = 0; i < NumCommandLists; ++i)
+        TVector<VkCommandBuffer> CommandBuffers(NumCommandLists);
+        CommandBuffersInFlight.reserve(NumCommandLists);
+        
+        for (uint32 i = 0; i < NumCommandLists; ++i)
         {
-            /** Static cast in this case if fine because CommandLists will only ever contain one type. */
+            /** Static cast in this case if fine because CommandLists will only ever contain one type specific to the RHI. */
             FVulkanCommandList* VulkanCommandList = static_cast<FVulkanCommandList*>(&CommandLists[i]);
 
             auto& TrackedBuffer = VulkanCommandList->CurrentCommandBuffer;
@@ -202,22 +244,31 @@ namespace Lumina
         SubmitInfo.pCommandBuffers = CommandBuffers.data();
         SubmitInfo.commandBufferCount = NumCommandLists;
         SubmitInfo.pWaitSemaphores = WaitSemaphores.data();
-        SubmitInfo.waitSemaphoreCount = WaitSemaphores.size();
+        SubmitInfo.waitSemaphoreCount = (uint32)WaitSemaphores.size();
         SubmitInfo.pSignalSemaphores = SignalSemaphores.data();
-        SubmitInfo.signalSemaphoreCount = SignalSemaphores.size();
+        SubmitInfo.signalSemaphoreCount = (uint32)SignalSemaphores.size();
 
         VkFence Fence = FencePool.Aquire();
-        VK_CHECK(vkQueueSubmit(Queue, NumCommandLists, &SubmitInfo, Fence));
-        VK_CHECK(vkWaitForFences(Device->GetDevice(), 1, &Fence, VK_TRUE, VULKAN_TIMEOUT_ONE_SECOND));
+        
+        {
+            LUMINA_PROFILE_SECTION("vkQueueSubmit");
+            VK_CHECK(vkQueueSubmit(Queue, NumCommandLists, &SubmitInfo, Fence));
+        }
+
+        {
+            LUMINA_PROFILE_SECTION("vkWaitForFences");
+            VK_CHECK(vkWaitForFences(Device->GetDevice(), 1, &Fence, VK_TRUE, VULKAN_TIMEOUT_ONE_SECOND));
+        }
+        
         FencePool.Release(Fence);
 
-        
         WaitSemaphores.clear();
         SignalSemaphores.clear();
     }
 
     void FQueue::WaitIdle()
     {
+        LUMINA_PROFILE_SCOPE();
         VK_CHECK(vkQueueWaitIdle(Queue));
     }
 
@@ -233,6 +284,7 @@ namespace Lumina
 
     bool FVulkanStagingManager::GetStagingBuffer(TRefCountPtr<FVulkanBuffer>& OutBuffer)
     {
+        LUMINA_PROFILE_SCOPE();
         if(!BufferPool.empty())
         {
             OutBuffer = BufferPool.top();
@@ -248,16 +300,13 @@ namespace Lumina
 
     void FVulkanStagingManager::FreeStagingBuffer(TRefCountPtr<FVulkanBuffer> InBuffer)
     {
-        VmaAllocation Allocation = Context->GetDevice()->GetAllocator()->GetAllocation(InBuffer->GetBuffer());
-        void* Memory = Context->GetDevice()->GetAllocator()->MapMemory(Allocation);
-        memset(Memory, 0, InBuffer->GetSize());
-        Context->GetDevice()->GetAllocator()->UnmapMemory(Allocation);
-
+        LUMINA_PROFILE_SCOPE();
         BufferPool.push(InBuffer);
     }
 
     void FVulkanStagingManager::ReturnAllStagingBuffers()
     {
+        LUMINA_PROFILE_SCOPE();
         for (auto& Buffer : InFlightBuffers)
         {
             FreeStagingBuffer(Buffer);
@@ -268,6 +317,7 @@ namespace Lumina
 
     void FVulkanStagingManager::FreeAllBuffers()
     {
+        LUMINA_PROFILE_SCOPE();
         while(!BufferPool.empty())
         {
             BufferPool.pop();
@@ -276,6 +326,7 @@ namespace Lumina
 
     bool FVulkanStagingManager::CreateNewStagingBuffer(TRefCountPtr<FVulkanBuffer>& OutBuffer)
     {
+        LUMINA_PROFILE_SCOPE();
         const uint32 vkCmdUpdateBufferLimit = Context->GetDevice()->GetPhysicalDeviceProperties().limits.maxUniformBufferRange;
 
         FRHIBufferDesc Desc;
@@ -290,16 +341,19 @@ namespace Lumina
 
     FVulkanRenderContext::FVulkanRenderContext()
         : CurrentFrameIndex(0)
-          , Queues{}
-    , VulkanInstance(nullptr)
-    , StagingManager(this)
-    , DebugUtils()
+        , Queues{}
+        , VulkanInstance(nullptr)
+        , StagingManager(this)
+        , DebugUtils()
+        , ShaderCompiler(nullptr)
+        , DescriptorPool()
     {
     }
 
     void FVulkanRenderContext::Initialize()
     {
-
+        LUMINA_PROFILE_SCOPE();
+        
         AssertMsg(glfwVulkanSupported(), "Vulkan Is Not Supported!");
 
         vkb::InstanceBuilder Builder;
@@ -331,12 +385,40 @@ namespace Lumina
 
         ShaderLibrary = MakeRefCount<FShaderLibrary>();
         ShaderCompiler = Memory::New<FSpirVShaderCompiler>();
+        ShaderCompiler->Initialize();
 
+        for (int i = 0; i < FRAMES_IN_FLIGHT; ++i)
+        {
+            VkDescriptorPoolSize PoolSizes[] =
+            {
+                { VK_DESCRIPTOR_TYPE_SAMPLER,                       1000 },
+                { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,        1000 },
+                { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,                 1000 },
+                { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,                 1000 },
+                { VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER,          1000 },
+                { VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER,          1000 },
+                { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,                1000 },
+                { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,                1000 },
+                { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC,        1000 },
+                { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC,        1000 },
+                { VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,              1000 }
+            };
+
+            VkDescriptorPoolCreateInfo PoolInfo =  {};
+            PoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+            PoolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+            PoolInfo.maxSets = 1000;
+            PoolInfo.poolSizeCount = (uint32)std::size(PoolSizes);
+            PoolInfo.pPoolSizes = PoolSizes;
+            
+            VK_CHECK(vkCreateDescriptorPool(GetDevice()->GetDevice(), &PoolInfo, nullptr, &DescriptorPool[i]));
+        }
+            
         CompileEngineShaders();
         
         WaitIdle();
         FlushPendingDeletes();
-        
+
     }
 
     void FVulkanRenderContext::Deinitialize()
@@ -347,9 +429,16 @@ namespace Lumina
         CommandList.SafeRelease();
         ShaderLibrary.SafeRelease();
         PipelineCache.ReleasePipelines();
-        
+
+        ShaderCompiler->Shutdown();
+        Memory::Delete(ShaderCompiler);
         Memory::Delete(Swapchain);
-        
+
+        for (VkDescriptorPool Pool : DescriptorPool)
+        {
+            vkDestroyDescriptorPool(VulkanDevice->GetDevice(), Pool, nullptr);
+            Pool = VK_NULL_HANDLE;
+        }
 
         for (FQueue* Queue : Queues)
         {
@@ -382,6 +471,7 @@ namespace Lumina
 
     void FVulkanRenderContext::FrameStart(const FUpdateContext& UpdateContext, uint8 InCurrentFrameIndex)
     {
+
         CurrentFrameIndex = InCurrentFrameIndex;
         Swapchain->AquireNextImage(CurrentFrameIndex);
         
@@ -408,6 +498,7 @@ namespace Lumina
 
     FRHICommandListRef FVulkanRenderContext::CreateCommandList(const FCommandListInfo& Info)
     {
+
         if (Queues[uint32(Info.CommandQueue)] == nullptr)
         {
             return nullptr;
@@ -418,6 +509,7 @@ namespace Lumina
     
     void FVulkanRenderContext::ExecuteCommandList(ICommandList* CommandLists, uint32 NumCommandLists, ECommandQueue QueueType)
     {
+
         FQueue* Queue = Queues[uint32(QueueType)];
 
         Queue->Submit(CommandLists, NumCommandLists);
@@ -436,6 +528,7 @@ namespace Lumina
 
     void FVulkanRenderContext::CreateDevice(vkb::Instance Instance)
     {
+
         VkPhysicalDeviceFeatures DeviceFeatures = {};
         DeviceFeatures.samplerAnisotropy = VK_TRUE;
         DeviceFeatures.sampleRateShading = VK_TRUE;
@@ -560,7 +653,7 @@ namespace Lumina
 
     FRHIBindingSetRef FVulkanRenderContext::CreateBindingSet(const FBindingSetDesc& Desc, FRHIBindingLayout* InLayout)
     {
-        return MakeRefCount<FVulkanBindingSet>(VulkanDevice, Desc, static_cast<FVulkanBindingLayout*>(InLayout));
+        return MakeRefCount<FVulkanBindingSet>(this, VulkanDevice, Desc, static_cast<FVulkanBindingLayout*>(InLayout));
     }
 
     FRHIComputePipelineRef FVulkanRenderContext::CreateComputePipeline(const FComputePipelineDesc& Desc)
@@ -573,6 +666,17 @@ namespace Lumina
         return PipelineCache.GetOrCreateGraphicsPipeline(VulkanDevice, Desc);
     }
 
+    void FVulkanRenderContext::SetObjectName(IRHIResource* Resource, const char* Name, EAPIResourceType Type)
+    {
+        VkDebugUtilsObjectNameInfoEXT NameInfo = {};
+        NameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+        NameInfo.pObjectName = Name;
+        NameInfo.objectType = ToVkObjectType(Type);
+        NameInfo.objectHandle = reinterpret_cast<uint64>(Resource->GetAPIResource(Type));
+
+        GetDebugUtils().DebugUtilsObjectNameEXT(GetDevice()->GetDevice(), &NameInfo);
+    }
+
     FRHIBufferRef FVulkanRenderContext::CreateBuffer(const FRHIBufferDesc& Description)
     {
         return MakeRefCount<FVulkanBuffer>(VulkanDevice, Description);
@@ -580,6 +684,8 @@ namespace Lumina
     
     void FVulkanRenderContext::FlushPendingDeletes()
     {
+        LUMINA_PROFILE_SCOPE();
+        
         for (FQueue* Queue : Queues)
         {
             if (Queue != nullptr)
@@ -609,37 +715,40 @@ namespace Lumina
                 if (Dir.path().extension() == ".frag" || Dir.path().extension() == ".vert" || Dir.path().extension() == ".comp")
                 {
                     FString StringPath = Dir.path().string().c_str();
-                    FString FileNameString = Dir.path().filename().string().c_str();
-                    TVector<uint32> Binaries;
-                    if (!ShaderCompiler->CompileShader(StringPath, {}, Binaries))
-                    {
-                        continue;
-                    }
 
-                    if (Dir.path().extension() == ".vert")
+                    bool bSuccess = ShaderCompiler->CompileShader(StringPath, {}, [&, Dir = Memory::Move(Dir)] (const TVector<uint32>& Binaries)
                     {
-                        FRHIVertexShaderRef Shader = CreateVertexShader(Binaries);
-                        Shader->SetKey(FileNameString.c_str());
-                        ShaderLibrary->AddShader(Shader);
-                    }
-                    if (Dir.path().extension() == ".frag")
+                        FString FileNameString = Dir.path().filename().string().c_str();
+                        
+                        if (Dir.path().extension() == ".vert")
+                        {
+                            FRHIVertexShaderRef Shader = CreateVertexShader(Binaries);
+                            Shader->SetKey(FileNameString.c_str());
+                            ShaderLibrary->AddShader(Shader);
+                        }
+                        else if (Dir.path().extension() == ".frag")
+                        {
+                            FRHIPixelShaderRef Shader = CreatePixelShader(Binaries);
+                            Shader->SetKey(FileNameString.c_str());
+                            ShaderLibrary->AddShader(Shader);
+                        }
+                        else if (Dir.path().extension() == ".comp")
+                        {
+                            FRHIComputeShaderRef Shader = CreateComputeShader(Binaries);
+                            Shader->SetKey(FileNameString.c_str());
+                            ShaderLibrary->AddShader(Shader);
+                        }
+                        
+                        PipelineCache.PostShaderRecompiled("");
+                    });
+
+                    if (!bSuccess)
                     {
-                        FRHIPixelShaderRef Shader = CreatePixelShader(Binaries);
-                        Shader->SetKey(FileNameString.c_str());
-                        ShaderLibrary->AddShader(Shader);
-                    }
-                    if (Dir.path().extension() == ".comp")
-                    {
-                        FRHIComputeShaderRef Shader = CreateComputeShader(Binaries);
-                        Shader->SetKey(FileNameString.c_str());
-                        ShaderLibrary->AddShader(Shader);
+                        
                     }
                 }
             }
         }
-
-        PipelineCache.PostShaderRecompiled("");
-        
     }
 
     FRHIInputLayoutRef FVulkanRenderContext::CreateInputLayout(const FVertexAttributeDesc* AttributeDesc, uint32 Count)

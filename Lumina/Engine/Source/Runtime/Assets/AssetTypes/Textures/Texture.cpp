@@ -32,6 +32,5 @@ namespace Lumina
         
         RenderContext->GetCommandList()->WriteToImage(RHIImage, 0, 0, Pixels.data(), RowPitch, DepthPitch);
         
-        RenderContext->GetCommandList()->SetRequiredImageAccess(RHIImage, ERHIAccess::All);
     }
 }

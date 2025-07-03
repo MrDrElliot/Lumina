@@ -107,7 +107,7 @@ namespace Lumina
         {
             TVector<uint8> AssetBinary;
 
-            if (!FFileHelper::LoadFileToArray(AssetBinary, AssetPath))
+            if (!FileHelper::LoadFileToArray(AssetBinary, AssetPath))
             {
                 LOG_ERROR("Failed to read asset at path: {}", AssetPath);
                 continue;

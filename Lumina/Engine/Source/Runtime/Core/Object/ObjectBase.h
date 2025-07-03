@@ -8,21 +8,66 @@
 
 namespace Lumina
 {
+    class CPackage;
     class CObjectBase;
     class CClass;
 
+    class FObjectNameHashBucket
+    {
+    public:
+
+        void AddObject(const FName& PackageName, const FName& ObjectName, CObjectBase* Object)
+        {
+            ObjectNameHash[PackageName][ObjectName] = Object;
+        }
+
+        void RemoveObject(const FName& PackageName, const FName& ObjectName)
+        {
+            if (ObjectNameHash.find(PackageName) != ObjectNameHash.end())
+            {
+                auto& Hash = ObjectNameHash.at(PackageName);
+                Hash.erase(ObjectName);
+            }
+        }
+
+        CObjectBase* FindObject(const FName& PackageName, const FName& ObjectName) const
+        {
+            auto OuterIt = ObjectNameHash.find(PackageName);
+            if (OuterIt != ObjectNameHash.end())
+            {
+                auto InnerIt = OuterIt->second.find(ObjectName);
+                if (InnerIt != OuterIt->second.end())
+                {
+                    return InnerIt->second;
+                }
+            }
+            return nullptr;
+        }
+
+        void Clear()
+        {
+            ObjectNameHash.clear();
+        }
+        
+        THashMap<FName, THashMap<FName, CObjectBase*>> ObjectNameHash;
+    };
+    
+    
+    extern LUMINA_API FObjectNameHashBucket ObjectNameHashBucket;
     extern LUMINA_API TFixedVector<CObjectBase*, 2024> GObjectVector;
     
     /** Low level implementation of a CObject */
     class CObjectBase : public IRefCountedObject
     {
     public:
+
+        friend class CPackage;
         
         LUMINA_API CObjectBase();
         LUMINA_API virtual ~CObjectBase() override;
         
         LUMINA_API CObjectBase(EObjectFlags InFlags);
-        LUMINA_API CObjectBase(CClass* InClass, EObjectFlags InFlags, const TCHAR* Package, FName InName);
+        LUMINA_API CObjectBase(CClass* InClass, EObjectFlags InFlags, CPackage* Package, FName InName);
 
         // Begin IRefCountedObject
         LUMINA_API uint32 AddRef() const override;
@@ -35,7 +80,9 @@ namespace Lumina
         LUMINA_API void FinishRegister(CClass* InClass, const TCHAR* InName);
 
         LUMINA_API EObjectFlags GetFlags() const { return ObjectFlags; }
-        LUMINA_API void SetFlag(EObjectFlags Flags) { ObjectFlags = Flags; }
+
+        LUMINA_API void ClearFlags(EObjectFlags Flags) { EnumRemoveFlags(ObjectFlags, Flags); }
+        LUMINA_API void SetFlag(EObjectFlags Flags) { EnumAddFlags(ObjectFlags, Flags); }
         LUMINA_API bool HasAnyFlag(EObjectFlags Flag) const { return EnumHasAnyFlags(ObjectFlags, Flag); }
         LUMINA_API bool HasAllFlags(EObjectFlags Flags) const { return EnumHasAllFlags(ObjectFlags, Flags); }
         
@@ -59,7 +106,7 @@ namespace Lumina
         
     private:
 
-        LUMINA_API void AddObject(FName Name, SIZE_T InInternalIndex = -1);
+        LUMINA_API void AddObject(const FName& Name, SIZE_T InInternalIndex = -1);
         
     public:
         
@@ -79,14 +126,16 @@ namespace Lumina
         }
 
         /** Get the internal package this object came from (script, plugin, package, etc). */
-        FORCEINLINE const FString GetPackage() const
+        FORCEINLINE CPackage* GetPackage() const
         {
-            return PackagePrivate;    
+            return PackagePrivate;
         }
 
-        LUMINA_API void GetPath(FString& OutPath);
+        LUMINA_API int64 GetLoaderIndex() const { return LoaderIndex; }
+
+        LUMINA_API void GetPath(FString& OutPath) const;
         LUMINA_API FString GetPathName() const;
-        LUMINA_API FString GetFullyQualifiedName() const;
+        LUMINA_API FName GetFullyQualifiedName() const;
     
     private:
         
@@ -133,10 +182,13 @@ namespace Lumina
         FName                   NamePrivate;
 
         /** Package to represent on disk */
-        FString                 PackagePrivate;
+        CPackage*               PackagePrivate = nullptr;
         
         /** Internal index into the global object array. */
         SIZE_T                  InternalIndex;
+
+        /** Index into this object's package export map */
+        int64                   LoaderIndex;
 
         /** Internal reference count to this object */
         mutable uint32          RefCount = 0;

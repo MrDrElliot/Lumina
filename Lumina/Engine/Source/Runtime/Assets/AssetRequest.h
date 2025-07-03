@@ -1,9 +1,10 @@
 ﻿#pragma once
 
-#include "Core/Object/ObjectPtr.h"
+#include "Containers/String.h"
 
 namespace Lumina
 {
+    class CObject;
     class CFactory;
     
     class FAssetRequest
@@ -16,7 +17,6 @@ namespace Lumina
         FAssetRequest(const FString& InPath)
             : AssetPath(InPath)
             , PendingObject(nullptr)
-            , bFailed(false)
         {
         }
 
@@ -34,7 +34,6 @@ namespace Lumina
 
         FString                         AssetPath;
         CObject*                        PendingObject;
-        bool                            bFailed;
     };
     
 }

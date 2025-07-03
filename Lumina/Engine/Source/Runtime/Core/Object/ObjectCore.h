@@ -1,15 +1,16 @@
 ﻿#pragma once
 
+#include "ConstructObjectParams.h"
 #include "Module/API.h"
 #include "ObjectFlags.h"
 #include "Containers/Array.h"
 #include "Core/LuminaMacros.h"
-#include "Core/Functional/Function.h"
 #include "Platform/GenericPlatform.h"
 
 
 namespace Lumina
 {
+    class CPackage;
     class CStruct;
     class CObjectBase;
     class CEnum;
@@ -17,79 +18,52 @@ namespace Lumina
     class CClass;
 }
 
-#define TRANSIENT_PACKAGE L"transient://"
-
 namespace Lumina
 {
-    extern THashMap<FName, CObjectBase*> ObjectNameHash;
-    
-    struct FConstructCObjectParams
-    {
-        
-        FConstructCObjectParams(const CClass* InClass)
-            : Class(InClass)
-            , Name()
-            , Package(nullptr)
-            , Flags(EObjectFlags::OF_None)
-        {}
-        
-        const CClass* Class;
-        FName Name;
-        const TCHAR* Package;
-        EObjectFlags Flags;
-    };
 
-    LUMINA_API FName MakeUniqueObjectName(const CClass* Class, FName InBaseName = NAME_None);
+    LUMINA_API FName MakeUniqueObjectName(const CClass* Class, const CPackage* Package, const FName& InBaseName = NAME_None);
     LUMINA_API CObject* StaticAllocateObject(FConstructCObjectParams& Params);
 
-    LUMINA_API CObject* FindObjectFast(const CClass* InClass, FName QualifiedName);
-    LUMINA_API CObject* StaticLoadObject(const CClass* InClass, const TCHAR* QualifiedName);
+    LUMINA_API CObject* FindObjectFast(const CClass* InClass, const FName& QualifiedName);
+    LUMINA_API CObject* StaticLoadObject(const CClass* InClass, const FName& QualifiedName);
     
     LUMINA_API void ResolveObjectPath(FString& OutPath, const FStringView& InPath);
     
+    LUMINA_API FString GetPackageFromQualifiedObjectName(const FString& FullyQualifiedName);
+    LUMINA_API FString GetObjectNameFromQualifiedName(const FString& FullyQualifiedName);
+    LUMINA_API FString RemoveNumberSuffixFromObject(const FString& ObjectName);
+
+    LUMINA_API FName MakeFullyQualifiedObjectName(const CPackage* Package, const FName& ObjectName);
+    LUMINA_API void ResolveObjectName(FName& Name);
+    
     template<typename T>
-    inline T* FindObject(const TCHAR* QualifiedName)
+    inline T* FindObject(const FName& QualifiedName)
     {
         return (T*)FindObjectFast(T::StaticClass(), QualifiedName);
     }
 
     template<typename T>
-    inline T* LoadObject(const TCHAR* FullName)
+    inline T* LoadObject(const FName& QualifiedName)
     {
-        return (T*)StaticLoadObject(T::StaticClass(), FullName);
+        return (T*)StaticLoadObject(T::StaticClass(), QualifiedName);
     }
     
     
-    LUMINA_API CObject* NewObject(CClass* InClass, const TCHAR* Package = TRANSIENT_PACKAGE, FName Name = NAME_None, EObjectFlags Flags = OF_None);
+    LUMINA_API CObject* NewObject(CClass* InClass, const CPackage* Package = nullptr, const FName& Name = NAME_None, EObjectFlags Flags = OF_None);
+    LUMINA_API void GetObjectsWithPackage(CPackage* Package, TVector<CObject*>& OutObjects);
     
-
     template<typename T>
-    T* NewObject(const TCHAR* Package = TRANSIENT_PACKAGE, FName Name = NAME_None, EObjectFlags Flags = OF_None)
+    T* NewObject(CPackage* Package = nullptr, FName Name = NAME_None, EObjectFlags Flags = OF_None)
     {
-        FConstructCObjectParams Params(T::StaticClass());
-        Params.Name = Name;
-        Params.Flags = Flags;
-        Params.Package = Package;
-
-        CObject* Obj = StaticAllocateObject(Params);
-        
-        return (T*)Obj;
-        
+        return static_cast<T*>(NewObject(T::StaticClass(), Package, Name, Flags));
     }
 
     template<typename T>
-    T* NewObject(CClass* InClass, const TCHAR* Package = TRANSIENT_PACKAGE, FName Name = NAME_None, EObjectFlags Flags = OF_None)
+    T* NewObject(CClass* InClass, CPackage* Package = nullptr, FName Name = NAME_None, EObjectFlags Flags = OF_None)
     {
-        FConstructCObjectParams Params(InClass);
-        Params.Name = Name;
-        Params.Flags = Flags;
-        Params.Package = Package;
-
-        CObject* Obj = StaticAllocateObject(Params);
-        
-        return (T*)Obj;
-        
+        return static_cast<T*>(NewObject(InClass, Package, Name, Flags));
     }
+    
 
     template<typename T>
     T* GetMutableDefault()

@@ -26,7 +26,8 @@ namespace Lumina
         GENERATED_BODY()
         
     public:
-        
+
+        void UpdateStreamableResource() override;
         
         LUM_PROPERTY(Editable, Category = "Graph")
         TVector<CObject*> MaterialNodes;

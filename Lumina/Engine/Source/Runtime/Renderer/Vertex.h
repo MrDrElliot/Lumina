@@ -10,17 +10,35 @@ namespace Lumina
 {
     struct FVertex
     {
-        FVector3D Position;
-        FColor    Color;
-        FVector3D Normal;
-        FVector2D UV;
+        glm::vec4       Position;
+        glm::vec4       Color;
+        glm::vec4       Normal;
+        glm::vec2       UV;
         
-        friend FArchive& operator << (FArchive& Ar, FVertex& data)
+        friend FArchive& operator<<(FArchive& Ar, FVertex& Data)
         {
-            Ar << data.Position;
-            Ar << data.Color;
-            Ar << data.Normal;
-            Ar << data.UV;
+            // Position
+            Ar << Data.Position.x;
+            Ar << Data.Position.y;
+            Ar << Data.Position.z;
+            Ar << Data.Position.w;
+
+            // Color
+            Ar << Data.Color.x;
+            Ar << Data.Color.y;
+            Ar << Data.Color.z;
+            Ar << Data.Color.w;
+
+            // Normal
+            Ar << Data.Normal.x;
+            Ar << Data.Normal.y;
+            Ar << Data.Normal.z;
+            Ar << Data.Normal.w;
+
+            // UV
+            Ar << Data.UV.x;
+            Ar << Data.UV.y;
+
             return Ar;
         }
     };

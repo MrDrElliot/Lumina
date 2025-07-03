@@ -13,9 +13,10 @@ namespace Lumina
             ElementSize = sizeof(void*);    
         }
 
+        void Serialize(FArchive& Ar, void* Value) override;
         void SerializeItem(IStructuredArchive::FSlot Slot, void* Value, void const* Defaults) override;
 
-        void DrawProperty(void* Object) override;
+        void DrawProperty(void* ValuePtr) override;
         
     };
 }

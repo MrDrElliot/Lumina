@@ -52,7 +52,7 @@ namespace Lumina
         virtual void SetRequiredBufferAccess(FRHIBuffer* Buffer, ERHIAccess Access) = 0;
         virtual void CommitBarriers() = 0;
         virtual void SetResourceStatesForBindingSet(FRHIBindingSet* BindingSet) = 0;
-        
+
         virtual void AddMarker(const char* Name, const FColor& Color = FColor::Red) = 0;
         virtual void PopMarker() = 0;
         
@@ -60,8 +60,10 @@ namespace Lumina
         virtual void EndRenderPass() = 0;
         virtual void ClearImageColor(FRHIImage* Image, const FColor& Color) = 0;
 
-        virtual void BindBindingSet(FRHIBindingSet* BindingSet, ERHIBindingPoint BindPoint) = 0;
+        virtual void BindBindingSets(TVector<FRHIBindingSet*> BindingSets, ERHIBindingPoint BindPoint) = 0;
 
+        virtual void SetPushConstants(const void* Data, SIZE_T ByteSize) = 0;
+        
         virtual void BindVertexBuffer(FRHIBuffer* Buffer, uint32 Index, uint32 Offset) = 0;
         virtual void SetGraphicsPipeline(FRHIGraphicsPipeline* InPipeline) = 0;
         virtual void SetViewport(float MinX, float MinY, float MinZ, float MaxX, float MaxY, float MaxZ) = 0;

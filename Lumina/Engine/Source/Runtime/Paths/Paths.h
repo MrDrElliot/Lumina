@@ -9,6 +9,7 @@ namespace Lumina::Paths
     
     /** Gets the directory where the Lumina engine is installed. */
     LUMINA_API std::filesystem::path GetEngineDirectory();
+    
 
     /** Returns the parent directory of the given path. */
     LUMINA_API FString Parent(const FString& Path);
@@ -79,6 +80,8 @@ namespace Lumina::Paths
     LUMINA_API bool SetEnvVariable(const FString& name, const FString& value);
 
 
+    LUMINA_API void AddPackageExtension(FString& FileName);
+    
     // -------------------------------------------------------------------
 
     /**

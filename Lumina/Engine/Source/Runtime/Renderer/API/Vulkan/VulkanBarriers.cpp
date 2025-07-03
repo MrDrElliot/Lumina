@@ -201,7 +201,7 @@ namespace Lumina
 
         VkImageMemoryBarrier2 ImgBarrier;
         SetupImageBarrier(ImgBarrier, Texture.GetImage(), SrcStageMask, DstStageMask, SrcAccessFlags, DstAccessFlags, SrcLayout, DstLayout, SubresourceRange);
-		ImageBarriers.push_back(ImgBarrier);
+		ImageBarriers.push_back(Memory::Move(ImgBarrier));
     }
 	
 

@@ -28,6 +28,20 @@ namespace Lumina
         Initializer->Object = this;
     };
 
+    void CObject::Serialize(FArchive& Ar)
+    {
+        CClass* Class = GetClass();
+        if (Class)
+        {
+            SerializeReflectedProperties(Ar);
+        }
+    }
+
+    void CObject::SerializeReflectedProperties(FArchive& Ar)
+    {
+        GetClass()->SerializeClassProperties(Ar, this);
+    }
+
     void CObject::Serialize(IStructuredArchive::FSlot Slot)
     {
         CClass* Class = GetClass();

@@ -1,10 +1,11 @@
 ﻿#pragma once
-#include "Core/Object/ObjectCore.h"
+#include "Core/Object/ConstructObjectParams.h"
 #include "Module/API.h"
 
 namespace Lumina
 {
     class CObject;
+    class CPackage;
 }
 
 namespace Lumina
@@ -16,10 +17,11 @@ namespace Lumina
 
         LUMINA_API FObjectInitializer()
             : Object(nullptr)
+            , Package(nullptr)
             , Params(nullptr)
         {}
         
-        LUMINA_API FObjectInitializer(CObject* Obj, const FConstructCObjectParams& InParams);
+        LUMINA_API FObjectInitializer(CObject* Obj, CPackage* InPackage, const FConstructCObjectParams& InParams);
         ~FObjectInitializer();
 
         static FObjectInitializer* Get();
@@ -29,8 +31,8 @@ namespace Lumina
         void Construct();
 
         CObject* Object;
+        CPackage* Package;
         FConstructCObjectParams Params;
-        
     };
     
 }

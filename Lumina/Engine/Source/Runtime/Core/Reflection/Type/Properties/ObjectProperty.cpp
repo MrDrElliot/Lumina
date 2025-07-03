@@ -5,15 +5,17 @@
 
 namespace Lumina
 {
+    void FObjectProperty::Serialize(FArchive& Ar, void* Value)
+    {
+        CObject* Object = *(CObject**)Value;
+        Ar << Object;
+        *(CObject**)Value = Object;
+
+    }
+
     void FObjectProperty::SerializeItem(IStructuredArchive::FSlot Slot, void* Value, void const* Defaults)
     {
-        FArchive* InnerAr = Slot.GetStructuredArchive()->GetInnerAr();
-        
         CObject* Object = *(CObject**)Value;
-        if (InnerAr->IsWriting() && Object == nullptr)
-        {
-            return;
-        }
         
         Slot.Serialize(Object);
 
@@ -23,12 +25,11 @@ namespace Lumina
         {
             Object->Serialize(Slot);
         }
-
     }
 
-    void FObjectProperty::DrawProperty(void* Object)
+    void FObjectProperty::DrawProperty(void* ValuePtr)
     {
-        CObject* Obj = *(CObject**)Object;
+        CObject* Obj = *(CObject**)ValuePtr;
 
         ImGui::PushID(this);
         
