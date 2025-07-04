@@ -98,7 +98,6 @@ namespace Lumina
         RenderGraph.Compile();
         RenderGraph.Execute(CommandList);
         
-        //FullScreenPass(Scene);
         ForwardRenderPass(Scene);
     }
 
@@ -112,13 +111,6 @@ namespace Lumina
     {
         IRenderContext* RenderContext = GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext();
         ICommandList* CommandList = RenderContext->GetCommandList(Q_Graphics);
-
-        FRHIVertexShaderRef VertexShader = RenderContext->GetShaderLibrary()->GetShader<FRHIVertexShader>("PrimitiveMesh.vert");
-        FRHIPixelShaderRef PixelShader = RenderContext->GetShaderLibrary()->GetShader<FRHIPixelShader>("PrimitiveMesh.frag");
-        if (!VertexShader || !PixelShader)
-        {
-            return;
-        }
         
         FBindingLayoutItem Item;
         Item.Size = sizeof(FSceneGlobalData);

@@ -10,6 +10,8 @@
 #include "Renderer/RenderContext.h"
 #include <tracy/TracyVulkan.hpp>
 
+#include "VulkanDescriptorCache.h"
+
 namespace Lumina
 {
     class FSpirVShaderCompiler;
@@ -223,6 +225,7 @@ namespace Lumina
     
     private:
 
+        FVulkanDescriptorCache                          DescriptorCache;
         FVulkanPipelineCache                            PipelineCache;
         uint8                                           CurrentFrameIndex;
         TArray<FQueue*, (uint32)ECommandQueue::Num>     Queues;

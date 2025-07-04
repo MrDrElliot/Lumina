@@ -14,7 +14,7 @@ namespace Lumina
             case EMaterialInputType::Float:
                 {
                     ImGui::SetNextItemWidth(100.0f);
-                    ImGui::DragFloat("##Value", NodeValue);
+                    ImGui::DragFloat("##Value", NodeValue + Index);
                 }
                 break;
             case EMaterialInputType::Float2:

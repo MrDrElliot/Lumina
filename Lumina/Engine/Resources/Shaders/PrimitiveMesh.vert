@@ -9,6 +9,8 @@ layout(location = 1) in vec4 inColor;
 layout(location = 0) out vec3 outColor;
 
 
+float time = GetTime();
+
 void main()
 {
     mat4 model = GetModelMatrix();

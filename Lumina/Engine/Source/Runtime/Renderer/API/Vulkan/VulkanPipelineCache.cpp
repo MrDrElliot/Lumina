@@ -37,10 +37,10 @@ namespace Lumina
         return NewPipeline;
     }
 
-    void FVulkanPipelineCache::PostShaderRecompiled(FName Shader)
+    void FVulkanPipelineCache::PostShaderRecompiled(const FName& Shader)
     {
-        GraphicsPipelines.clear();
-        ComputePipelines.clear();
+        //@TODO Proper, right now we're just clearing all the pipelines. Forcing them to be rebuilt.
+        ReleasePipelines();
     }
 
     void FVulkanPipelineCache::ReleasePipelines()

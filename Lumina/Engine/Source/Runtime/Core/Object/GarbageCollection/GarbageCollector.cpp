@@ -16,7 +16,6 @@ namespace Lumina::GarbageCollection
     
     void AddGarbage(CObjectBase* Obj)
     {
-        FScopeLock Lock(DeletesLock);
 
         // Object was already marked for garbage, no need to do it again.
         if (Obj->IsMarkedGarbage())
@@ -24,10 +23,12 @@ namespace Lumina::GarbageCollection
             return;
         }
         
-        PendingDeletes.push(Obj);
         
         Obj->SetFlag(OF_MarkedGarbage);
         Obj->OnMarkedGarbage();
+        
+        FScopeLock Lock(DeletesLock);
+        PendingDeletes.push(Obj);
     }
 
     void CollectGarbage()

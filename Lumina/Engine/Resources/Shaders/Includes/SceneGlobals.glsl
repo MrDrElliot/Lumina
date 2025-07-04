@@ -56,6 +56,11 @@ mat4 GetCameraProjection()
     return SceneUBO.CameraView.CameraProjection;
 }
 
+vec3 GetModelLocation()
+{
+    return vec3(ModelData.ModelMatrix[PC.ModelIndex][3]);
+}
+
 mat4 GetModelMatrix()
 {
     return ModelData.ModelMatrix[PC.ModelIndex];

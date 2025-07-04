@@ -2,6 +2,7 @@
 
 #include "imgui.h"
 #include "ImGuiX.h"
+#include "ImGuiColorTextEdit/TextEditor.h"
 #include "Renderer/RHIFwd.h"
 #include "Subsystems/Subsystem.h"
 
@@ -28,7 +29,13 @@ namespace Lumina
         virtual void OnEndFrame(const FUpdateContext& UpdateContext) = 0;
 
         virtual ImTextureID GetOrCreateImTexture(FRHIImageRef Image) = 0;
-    
+
+        static TextEditor& GetTextEditor()
+        {
+            static TextEditor TextEdit;
+            return TextEdit;
+        }
+        
     protected:
 
         

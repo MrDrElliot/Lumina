@@ -1388,6 +1388,54 @@ namespace eastl
 			Hash::HashCombine(hash, Item.bUnused);
 			Hash::HashCombine(hash, Item.Slot);
 			Hash::HashCombine(hash, Item.Type);
+
+			return hash;
+		}
+	};
+
+	template<>
+	struct hash<FBindingLayoutItem>
+	{
+		size_t operator()(const FBindingLayoutItem& Item) const
+		{
+			size_t hash = 0;
+			Hash::HashCombine(hash, Item.Size);
+			Hash::HashCombine(hash, Item.Slot);
+			Hash::HashCombine(hash, Item.Type);
+
+			return hash;
+		}
+	};
+
+	template<>
+	struct hash<FBindingLayoutDesc>
+	{
+		size_t operator()(const FBindingLayoutDesc& Item) const
+		{
+			size_t hash = 0;
+			Hash::HashCombine(hash, Item.Index);
+			Hash::HashCombine(hash, Item.StageFlags.Get());
+			for (const FBindingLayoutItem& LayoutItem : Item.Bindings)
+			{
+				Hash::HashCombine(hash, LayoutItem);
+			}
+
+			return hash;
+		}
+	};
+
+	template<>
+	struct hash<FBindingSetDesc>
+	{
+		size_t operator()(const FBindingSetDesc& Item) const
+		{
+			size_t hash = 0;
+			for (const FBindingSetItem& LayoutItem : Item.Bindings)
+			{
+				Hash::HashCombine(hash, LayoutItem);
+			}
+
+			return hash;
 		}
 	};
 

@@ -652,12 +652,12 @@ namespace Lumina
 
     FRHIBindingLayoutRef FVulkanRenderContext::CreateBindingLayout(const FBindingLayoutDesc& Desc)
     {
-        return MakeRefCount<FVulkanBindingLayout>(VulkanDevice, Desc);
+        return DescriptorCache.GetOrCreateLayout(VulkanDevice, Desc);
     }
 
     FRHIBindingSetRef FVulkanRenderContext::CreateBindingSet(const FBindingSetDesc& Desc, FRHIBindingLayout* InLayout)
     {
-        return MakeRefCount<FVulkanBindingSet>(this, VulkanDevice, Desc, static_cast<FVulkanBindingLayout*>(InLayout));
+        return DescriptorCache.GetOrCreateSet(this, Desc, InLayout);
     }
 
     FRHIComputePipelineRef FVulkanRenderContext::CreateComputePipeline(const FComputePipelineDesc& Desc)

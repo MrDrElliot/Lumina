@@ -30,7 +30,9 @@ namespace Lumina
         
         CMaterialInput* A;
         CMaterialInput* B;
-        
+
+        float ConstA = 0;
+        float ConstB = 0;
     };
 
     LUM_CLASS()
@@ -48,8 +50,6 @@ namespace Lumina
         uint32 GenerateExpression(FMaterialCompiler* Compiler) override { return 0; }
         void GenerateDefinition(FMaterialCompiler* Compiler) override;
         
-        CMaterialInput* A = nullptr;
-        CMaterialInput* B = nullptr;
 
         float ConstA;
         float ConstB;
@@ -69,12 +69,6 @@ namespace Lumina
         float* GetNodeDefaultValue() override { return &ConstA; }
         uint32 GenerateExpression(FMaterialCompiler* Compiler) override { return 0; }
         void GenerateDefinition(FMaterialCompiler* Compiler) override;
-        
-        CMaterialInput* A = nullptr;
-        CMaterialInput* B = nullptr;
-
-        float ConstA;
-        float ConstB;
     };
 
     LUM_CLASS()
@@ -90,15 +84,173 @@ namespace Lumina
         float* GetNodeDefaultValue() override { return &ConstA; }
         uint32 GenerateExpression(FMaterialCompiler* Compiler) override { return 0; }
         void GenerateDefinition(FMaterialCompiler* Compiler) override;
-
-        CMaterialInput* A = nullptr;
-        CMaterialInput* B = nullptr;
-
-        float ConstA;
-        float ConstB;
     };
     
 
+    LUM_CLASS()
+    class CMaterialExpression_Sin : public CMaterialExpression_Math
+    {
+        GENERATED_BODY()
+    public:
+        
+        
+        void BuildNode() override;
+
+        FString GetNodeDisplayName() const override { return "Sin"; }
+        float* GetNodeDefaultValue() override { return &ConstA; }
+        uint32 GenerateExpression(FMaterialCompiler* Compiler) override { return 0; }
+        void GenerateDefinition(FMaterialCompiler* Compiler) override;
+
+    };
+
+    LUM_CLASS()
+    class CMaterialExpression_Cosin : public CMaterialExpression_Math
+    {
+        GENERATED_BODY()
+    public:
+        
+        
+        void BuildNode() override;
+
+        FString GetNodeDisplayName() const override { return "Cosin"; }
+        float* GetNodeDefaultValue() override { return &ConstA; }
+        uint32 GenerateExpression(FMaterialCompiler* Compiler) override { return 0; }
+        void GenerateDefinition(FMaterialCompiler* Compiler) override;
+
+    };
+
+    LUM_CLASS()
+    class CMaterialExpression_Floor : public CMaterialExpression_Math
+    {
+        GENERATED_BODY()
+    public:
+        
+        
+        void BuildNode() override;
+
+        FString GetNodeDisplayName() const override { return "Floor"; }
+        float* GetNodeDefaultValue() override { return &ConstA; }
+        uint32 GenerateExpression(FMaterialCompiler* Compiler) override { return 0; }
+        void GenerateDefinition(FMaterialCompiler* Compiler) override;
+
+    };
+
+    LUM_CLASS()
+    class CMaterialExpression_Ceil : public CMaterialExpression_Math
+    {
+        GENERATED_BODY()
+    public:
+        
+        
+        void BuildNode() override;
+
+        FString GetNodeDisplayName() const override { return "Ceil"; }
+        float* GetNodeDefaultValue() override { return &ConstA; }
+        uint32 GenerateExpression(FMaterialCompiler* Compiler) override { return 0; }
+        void GenerateDefinition(FMaterialCompiler* Compiler) override;
+
+    };
+
+    LUM_CLASS()
+    class CMaterialExpression_Power : public CMaterialExpression_Math
+    {
+        GENERATED_BODY()
+    public:
+        
+        
+        void BuildNode() override;
+
+        FString GetNodeDisplayName() const override { return "Power"; }
+        float* GetNodeDefaultValue() override { return &ConstA; }
+        uint32 GenerateExpression(FMaterialCompiler* Compiler) override { return 0; }
+        void GenerateDefinition(FMaterialCompiler* Compiler) override;
+
+    };
+
+    LUM_CLASS()
+    class CMaterialExpression_Mod : public CMaterialExpression_Math
+    {
+        GENERATED_BODY()
+    public:
+        
+        
+        void BuildNode() override;
+
+        FString GetNodeDisplayName() const override { return "Mod"; }
+        float* GetNodeDefaultValue() override { return &ConstA; }
+        uint32 GenerateExpression(FMaterialCompiler* Compiler) override { return 0; }
+        void GenerateDefinition(FMaterialCompiler* Compiler) override;
+
+    };
+
+    LUM_CLASS()
+    class CMaterialExpression_Min : public CMaterialExpression_Math
+    {
+        GENERATED_BODY()
+    public:
+        
+        
+        void BuildNode() override;
+
+        FString GetNodeDisplayName() const override { return "Min"; }
+        float* GetNodeDefaultValue() override { return &ConstA; }
+        uint32 GenerateExpression(FMaterialCompiler* Compiler) override { return 0; }
+        void GenerateDefinition(FMaterialCompiler* Compiler) override;
+
+    };
+
+    LUM_CLASS()
+    class CMaterialExpression_Max : public CMaterialExpression_Math
+    {
+        GENERATED_BODY()
+    public:
+        
+        
+        void BuildNode() override;
+
+        FString GetNodeDisplayName() const override { return "Max"; }
+        float* GetNodeDefaultValue() override { return &ConstA; }
+        uint32 GenerateExpression(FMaterialCompiler* Compiler) override { return 0; }
+        void GenerateDefinition(FMaterialCompiler* Compiler) override;
+
+    };
+
+    LUM_CLASS()
+    class CMaterialExpression_Step : public CMaterialExpression_Math
+    {
+        GENERATED_BODY()
+    public:
+        
+        
+        void BuildNode() override;
+
+        FString GetNodeDisplayName() const override { return "Step"; }
+        float* GetNodeDefaultValue() override { return &ConstA; }
+        uint32 GenerateExpression(FMaterialCompiler* Compiler) override { return 0; }
+        void GenerateDefinition(FMaterialCompiler* Compiler) override;
+        
+    };
+    
+    LUM_CLASS()
+    class CMaterialExpression_Lerp : public CMaterialExpression_Math
+    {
+        GENERATED_BODY()
+    public:
+        
+        
+        void BuildNode() override;
+
+        FString GetNodeDisplayName() const override { return "Lerp"; }
+        float* GetNodeDefaultValue() override { return &ConstA; }
+        uint32 GenerateExpression(FMaterialCompiler* Compiler) override { return 0; }
+        void GenerateDefinition(FMaterialCompiler* Compiler) override;
+        
+        float ConstC = 0;
+        CMaterialInput* C = nullptr;
+
+    };
+    
+    
     LUM_CLASS()
     class CMaterialExpression_Division : public CMaterialExpression_Math
     {
@@ -111,16 +263,42 @@ namespace Lumina
         float* GetNodeDefaultValue() override { return &ConstA; }
         uint32 GenerateExpression(FMaterialCompiler* Compiler) override { return 0; }
         void GenerateDefinition(FMaterialCompiler* Compiler) override;
-
-        CMaterialInput* A = nullptr;
-        CMaterialInput* B = nullptr;
-
-        float ConstA;
-        float ConstB;
+        
     };
 
 
-    //---------------------------------------------------------------------------------------------------------
+    //============================================================================================
+
+    LUM_CLASS()
+    class CMaterialExpression_WorldPos : public CMaterialExpression
+    {
+        GENERATED_BODY()
+    public:
+        
+        void BuildNode() override;
+
+        FString GetNodeDisplayName() const override { return "WorldPosition"; }
+        float* GetNodeDefaultValue() override { return nullptr; }
+        uint32 GenerateExpression(FMaterialCompiler* Compiler) override { return 0; }
+        void GenerateDefinition(FMaterialCompiler* Compiler) override;
+    };
+
+    LUM_CLASS()
+    class CMaterialExpression_CameraPos : public CMaterialExpression
+    {
+        GENERATED_BODY()
+    public:
+        
+        void BuildNode() override;
+
+        FString GetNodeDisplayName() const override { return "CameraPosition"; }
+        float* GetNodeDefaultValue() override { return nullptr; }
+        uint32 GenerateExpression(FMaterialCompiler* Compiler) override { return 0; }
+        void GenerateDefinition(FMaterialCompiler* Compiler) override;
+    };
+
+    //============================================================================================
+
 
     LUM_CLASS()
     class CMaterialExpression_Constant : public CMaterialExpression

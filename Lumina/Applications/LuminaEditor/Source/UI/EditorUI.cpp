@@ -99,7 +99,7 @@ namespace Lumina
             DrawTitleBarInfoStats(UpdateContext);
         };
 
-        TitleBar.Draw(TitleBarLeftContents, 400, TitleBarRightContents, 290);
+        TitleBar.Draw(TitleBarLeftContents, 400, TitleBarRightContents, 200);
 
         const ImGuiID DockspaceID = ImGui::GetID("EditorDockSpace");
 
@@ -828,11 +828,6 @@ namespace Lumina
         SIZE_T CObjectCount = GObjectVector.size();
         TInlineString<100> const ObjectStats(TInlineString<100>::CtorSprintf(),  "CObject Count: %i", CObjectCount);
         ImGui::Text(ObjectStats.c_str());
-
         
-        ImGui::SameLine();
-        float const allocatedMemory = (float)Memory::GetTotalRequestedMemory() / 1024.0f / 1024.0f;
-        TInlineString<100> const memStats( TInlineString<100>::CtorSprintf(), "MEM: %.2fMB", allocatedMemory );
-        ImGui::Text(memStats.c_str());
     }
 }

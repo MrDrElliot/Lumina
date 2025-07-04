@@ -19,7 +19,7 @@ namespace Lumina
     void CMaterialOutputNode::BuildNode()
     {
         // Base Color (Albedo)
-        BaseColorPin = CreatePin(CMaterialInput::StaticClass(), "Base Color", ENodePinDirection::Input, EMaterialInputType::Float3);
+        BaseColorPin = CreatePin(CMaterialInput::StaticClass(), "Base Color (RGBA)", ENodePinDirection::Input, EMaterialInputType::Float3);
         BaseColorPin->SetPinName("Base Color (RGBA)");
     
         // Metallic (Determines if the material is metal or non-metal)

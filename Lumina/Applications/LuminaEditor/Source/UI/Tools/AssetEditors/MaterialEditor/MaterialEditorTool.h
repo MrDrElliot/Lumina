@@ -35,7 +35,7 @@ namespace Lumina
         void DrawMaterialGraph(const FUpdateContext& UpdateContext);
         void DrawMaterialProperties(const FUpdateContext& UpdateContext);
         void DrawMaterialPreview(const FUpdateContext& UpdateContext);
-        void DrawCompilationLog(const FUpdateContext& UpdateContext);
+        void DrawGLSLPreview(const FUpdateContext& UpdateContext);
 
         void InitializeDockingLayout(ImGuiID InDockspaceID, const ImVec2& InDockspaceSize) const override;
 
@@ -43,6 +43,7 @@ namespace Lumina
 
         FCompilationResultInfo CompilationResult;
         CMaterialNodeGraph* NodeGraph;
-        
+        bool bGLSLPreviewDirty = false;
+
     };
 }

@@ -20,6 +20,26 @@ namespace Lumina
         CMaterialExpression::BuildNode();
     }
 
+    void CMaterialExpression_WorldPos::BuildNode()
+    {
+        CMaterialExpression::BuildNode();
+    }
+
+    void CMaterialExpression_WorldPos::GenerateDefinition(FMaterialCompiler* Compiler)
+    {
+        Compiler->WorldPos(FullName);
+    }
+
+    void CMaterialExpression_CameraPos::BuildNode()
+    {
+        CMaterialExpression::BuildNode();
+    }
+
+    void CMaterialExpression_CameraPos::GenerateDefinition(FMaterialCompiler* Compiler)
+    {
+        Compiler->CameraPos(FullName);
+    }
+
     void CMaterialExpression_Constant::BuildNode()
     {
         switch (ValueType)
@@ -162,10 +182,13 @@ namespace Lumina
         A = Cast<CMaterialInput>(CreatePin(CMaterialInput::StaticClass(), "X", ENodePinDirection::Input, EMaterialInputType::Float));
         A->SetPinName("X");
         A->SetShouldDrawEditor(true);
+        A->SetIndex(0);
         
         B = Cast<CMaterialInput>(CreatePin(CMaterialInput::StaticClass(), "Y", ENodePinDirection::Input, EMaterialInputType::Float));
         B->SetPinName("Y");
         B->SetShouldDrawEditor(true);
+        B->SetIndex(1);
+
     }
 
     void CMaterialExpression_Addition::GenerateDefinition(FMaterialCompiler* Compiler)
@@ -180,10 +203,12 @@ namespace Lumina
         A = Cast<CMaterialInput>(CreatePin(CMaterialInput::StaticClass(), "X", ENodePinDirection::Input, EMaterialInputType::Float));
         A->SetPinName("X");
         A->SetShouldDrawEditor(true);
+        A->SetIndex(0);
         
         B = Cast<CMaterialInput>(CreatePin(CMaterialInput::StaticClass(), "Y", ENodePinDirection::Input, EMaterialInputType::Float));
         B->SetPinName("Y");
         B->SetShouldDrawEditor(true);
+        B->SetIndex(1);
     }
 
 
@@ -199,15 +224,201 @@ namespace Lumina
         A = Cast<CMaterialInput>(CreatePin(CMaterialInput::StaticClass(), "X", ENodePinDirection::Input, EMaterialInputType::Float));
         A->SetPinName("X");
         A->SetShouldDrawEditor(true);
+        A->SetIndex(0);
         
         B = Cast<CMaterialInput>(CreatePin(CMaterialInput::StaticClass(), "Y", ENodePinDirection::Input, EMaterialInputType::Float));
         B->SetPinName("Y");
         B->SetShouldDrawEditor(true);
+        B->SetIndex(1);
     }
     
     void CMaterialExpression_Multiplication::GenerateDefinition(FMaterialCompiler* Compiler)
     {
         Compiler->Multiply(A, B);
+    }
+
+    void CMaterialExpression_Sin::BuildNode()
+    {
+        CMaterialExpression_Math::BuildNode();
+
+        A = Cast<CMaterialInput>(CreatePin(CMaterialInput::StaticClass(), "X", ENodePinDirection::Input, EMaterialInputType::Float));
+        A->SetPinName("X");
+        A->SetShouldDrawEditor(true);
+    }
+
+    void CMaterialExpression_Sin::GenerateDefinition(FMaterialCompiler* Compiler)
+    {
+        Compiler->Sin(A, B);
+    }
+
+    void CMaterialExpression_Cosin::BuildNode()
+    {
+        CMaterialExpression_Math::BuildNode();
+
+        A = Cast<CMaterialInput>(CreatePin(CMaterialInput::StaticClass(), "X", ENodePinDirection::Input, EMaterialInputType::Float));
+        A->SetPinName("X");
+        A->SetShouldDrawEditor(true);
+    }
+
+    void CMaterialExpression_Cosin::GenerateDefinition(FMaterialCompiler* Compiler)
+    {
+        Compiler->Cos(A, B);
+    }
+
+    void CMaterialExpression_Floor::BuildNode()
+    {
+        CMaterialExpression_Math::BuildNode();
+
+        A = Cast<CMaterialInput>(CreatePin(CMaterialInput::StaticClass(), "X", ENodePinDirection::Input, EMaterialInputType::Float));
+        A->SetPinName("X");
+        A->SetShouldDrawEditor(true);
+    }
+
+    void CMaterialExpression_Floor::GenerateDefinition(FMaterialCompiler* Compiler)
+    {
+        Compiler->Floor(A, B);
+    }
+
+    void CMaterialExpression_Ceil::BuildNode()
+    {
+        CMaterialExpression_Math::BuildNode();
+
+        A = Cast<CMaterialInput>(CreatePin(CMaterialInput::StaticClass(), "X", ENodePinDirection::Input, EMaterialInputType::Float));
+        A->SetPinName("X");
+        A->SetShouldDrawEditor(true);
+        
+    }
+
+    void CMaterialExpression_Ceil::GenerateDefinition(FMaterialCompiler* Compiler)
+    {
+        Compiler->Ceil(A, B);
+    }
+
+    void CMaterialExpression_Power::BuildNode()
+    {
+        CMaterialExpression_Math::BuildNode();
+
+        A = Cast<CMaterialInput>(CreatePin(CMaterialInput::StaticClass(), "X", ENodePinDirection::Input, EMaterialInputType::Float));
+        A->SetPinName("X");
+        A->SetShouldDrawEditor(true);
+        A->SetIndex(0);
+        
+        B = Cast<CMaterialInput>(CreatePin(CMaterialInput::StaticClass(), "Y", ENodePinDirection::Input, EMaterialInputType::Float));
+        B->SetPinName("Y");
+        B->SetShouldDrawEditor(true);
+        B->SetIndex(3);
+        
+    }
+
+    void CMaterialExpression_Power::GenerateDefinition(FMaterialCompiler* Compiler)
+    {
+        Compiler->Power(A, B);
+    }
+
+    void CMaterialExpression_Mod::BuildNode()
+    {
+        CMaterialExpression_Math::BuildNode();
+        
+        A = Cast<CMaterialInput>(CreatePin(CMaterialInput::StaticClass(), "X", ENodePinDirection::Input, EMaterialInputType::Float));
+        A->SetPinName("X");
+        A->SetShouldDrawEditor(true);
+        A->SetIndex(0);
+        
+        B = Cast<CMaterialInput>(CreatePin(CMaterialInput::StaticClass(), "Y", ENodePinDirection::Input, EMaterialInputType::Float));
+        B->SetPinName("Y");
+        B->SetShouldDrawEditor(true);
+        B->SetIndex(1);
+    }
+
+    void CMaterialExpression_Min::BuildNode()
+    {
+        CMaterialExpression_Math::BuildNode();
+
+        A = Cast<CMaterialInput>(CreatePin(CMaterialInput::StaticClass(), "X", ENodePinDirection::Input, EMaterialInputType::Float));
+        A->SetPinName("X");
+        A->SetShouldDrawEditor(true);
+        A->SetIndex(0);
+        
+        B = Cast<CMaterialInput>(CreatePin(CMaterialInput::StaticClass(), "Y", ENodePinDirection::Input, EMaterialInputType::Float));
+        B->SetPinName("Y");
+        B->SetShouldDrawEditor(true);
+        B->SetIndex(1);
+    }
+
+    void CMaterialExpression_Max::BuildNode()
+    {
+        CMaterialExpression_Math::BuildNode();
+
+        A = Cast<CMaterialInput>(CreatePin(CMaterialInput::StaticClass(), "X", ENodePinDirection::Input, EMaterialInputType::Float));
+        A->SetPinName("X");
+        A->SetShouldDrawEditor(true);
+        A->SetIndex(0);
+        
+        B = Cast<CMaterialInput>(CreatePin(CMaterialInput::StaticClass(), "Y", ENodePinDirection::Input, EMaterialInputType::Float));
+        B->SetPinName("Y");
+        B->SetShouldDrawEditor(true);
+        B->SetIndex(1);
+    }
+
+    void CMaterialExpression_Step::BuildNode()
+    {
+        CMaterialExpression_Math::BuildNode();
+        
+        A = Cast<CMaterialInput>(CreatePin(CMaterialInput::StaticClass(), "X", ENodePinDirection::Input, EMaterialInputType::Float));
+        A->SetPinName("X");
+        A->SetShouldDrawEditor(true);
+        A->SetIndex(0);
+
+        B = Cast<CMaterialInput>(CreatePin(CMaterialInput::StaticClass(), "Y", ENodePinDirection::Input, EMaterialInputType::Float));
+        B->SetPinName("Y");
+        B->SetShouldDrawEditor(true);
+        B->SetIndex(1);
+
+    }
+
+    void CMaterialExpression_Step::GenerateDefinition(FMaterialCompiler* Compiler)
+    {
+        Compiler->Step(A, B);
+    }
+
+    void CMaterialExpression_Lerp::BuildNode()
+    {
+        CMaterialExpression_Math::BuildNode();
+
+        A = Cast<CMaterialInput>(CreatePin(CMaterialInput::StaticClass(), "X", ENodePinDirection::Input, EMaterialInputType::Float));
+        A->SetPinName("X");
+        A->SetShouldDrawEditor(true);
+        A->SetIndex(0);
+        
+        B = Cast<CMaterialInput>(CreatePin(CMaterialInput::StaticClass(), "Y", ENodePinDirection::Input, EMaterialInputType::Float));
+        B->SetPinName("Y");
+        B->SetShouldDrawEditor(true);
+        B->SetIndex(1);
+
+        C = Cast<CMaterialInput>(CreatePin(CMaterialInput::StaticClass(), "A", ENodePinDirection::Input, EMaterialInputType::Float));
+        C->SetPinName("A");
+        C->SetShouldDrawEditor(true);
+        C->SetIndex(2);
+    }
+
+    void CMaterialExpression_Lerp::GenerateDefinition(FMaterialCompiler* Compiler)
+    {
+        Compiler->Lerp(A, B, C);
+    }
+
+    void CMaterialExpression_Max::GenerateDefinition(FMaterialCompiler* Compiler)
+    {
+        Compiler->Max(A, B);
+    }
+
+    void CMaterialExpression_Min::GenerateDefinition(FMaterialCompiler* Compiler)
+    {
+        Compiler->Min(A, B);
+    }
+
+    void CMaterialExpression_Mod::GenerateDefinition(FMaterialCompiler* Compiler)
+    {
+        Compiler->Mod(A, B);
     }
 
     void CMaterialExpression_Division::BuildNode()
@@ -217,10 +428,12 @@ namespace Lumina
         A = Cast<CMaterialInput>(CreatePin(CMaterialInput::StaticClass(), "X", ENodePinDirection::Input, EMaterialInputType::Float));
         A->SetPinName("X");
         A->SetShouldDrawEditor(true);
+        A->SetIndex(0);
         
         B = Cast<CMaterialInput>(CreatePin(CMaterialInput::StaticClass(), "Y", ENodePinDirection::Input, EMaterialInputType::Float));
         B->SetPinName("Y");
         B->SetShouldDrawEditor(true);
+        B->SetIndex(1);
     }
 
     void CMaterialExpression_Division::GenerateDefinition(FMaterialCompiler* Compiler)

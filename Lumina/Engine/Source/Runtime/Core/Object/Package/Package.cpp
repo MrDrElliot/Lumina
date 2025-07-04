@@ -122,7 +122,7 @@ namespace Lumina
             Export.Object = Object;
         }
 
-        LOG_INFO("Loaded Package: \"{}\" - [[{}] Exports | [{}] Imports]", Package->GetName(), Package->ExportTable.size(), Package->ImportTable.size());
+        LOG_INFO("Loaded Package: \"{}\" - ( [{}] Exports | [{}] Imports )", Package->GetName(), Package->ExportTable.size(), Package->ImportTable.size());
 
         return Package;
     }
@@ -210,7 +210,7 @@ namespace Lumina
             return false;
         }
 
-        LOG_INFO("Saved Package: \"{}\" - [[{}] Exports | [{}] Imports]", Package->GetName(), Package->ExportTable.size(), Package->ImportTable.size());
+        LOG_INFO("Saved Package: \"{}\" - ( [{}] Exports | [{}] Imports )", Package->GetName(), Package->ExportTable.size(), Package->ImportTable.size());
         return true;
     }
 

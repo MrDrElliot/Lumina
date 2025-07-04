@@ -10,7 +10,9 @@
 #include "Renderer/RenderContext.h"
 #include "Renderer/RenderManager.h"
 #include "Renderer/ShaderCompiler.h"
+#include "Tools/UI/ImGui/ImGuiRenderer.h"
 #include "Tools/UI/ImGui/ImGuiX.h"
+#include "Tools/UI/ImGui/ImGuiColorTextEdit/TextEditor.h"
 #include "UI/Tools/NodeGraph/Material/MaterialCompiler.h"
 #include "UI/Tools/NodeGraph/Material/MaterialNodeGraph.h"
 
@@ -19,7 +21,7 @@ namespace Lumina
     const char* MaterialGraphName           = "Material Graph";
     const char* MaterialPropertiesName      = "Material Properties";
     const char* MaterialPreviewName         = "Material Preview";
-    const char* MaterialCompileLogName      = "Compilation Log";
+    const char* GLSLPreviewName             = "GLSL Preview";
 
     void FMaterialEditorTool::OnInitialize()
     {
@@ -38,9 +40,9 @@ namespace Lumina
             DrawMaterialPreview(Cxt);
         });
 
-        CreateToolWindow(MaterialCompileLogName, [this](const FUpdateContext& Cxt, bool bFocused)
+        CreateToolWindow(GLSLPreviewName, [this](const FUpdateContext& Cxt, bool bFocused)
         {
-            DrawCompilationLog(Cxt);
+            DrawGLSLPreview(Cxt);
         });
 
         NodeGraph = NewObject<CMaterialNodeGraph>();
@@ -81,12 +83,12 @@ namespace Lumina
             else
             {
                 FString Tree = Compiler.BuildTree();
-                CompilationResult.CompilationLog = "Material Compiled Successfully! Generated GLSL: \n \n \n" + Tree;
+                CompilationResult.CompilationLog = "Generated GLSL: \n \n \n" + Tree;
                 CompilationResult.bIsError = false;
 
-
-                IShaderCompiler* Compiler = GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext()->GetShaderCompiler();
-                Compiler->CompilerShaderRaw(Tree, {}, [this](const TVector<uint32>& Binaries)
+                bGLSLPreviewDirty = true;
+                IShaderCompiler* ShaderCompiler = GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext()->GetShaderCompiler();
+                ShaderCompiler->CompilerShaderRaw(Tree, {}, [this](const TVector<uint32>& Binaries)
                 {
                     IRenderContext* RenderContext = GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext();
                     FRHIVertexShaderRef Shader = RenderContext->CreateVertexShader(Binaries);
@@ -95,7 +97,6 @@ namespace Lumina
                     Material->VertexShader = Shader;
                     Material->PixelShader = PixelShader;
                     RenderContext->OnShaderCompiled(Shader);
-                    
                 });
                 
             }
@@ -122,27 +123,36 @@ namespace Lumina
 
     }
 
-    void FMaterialEditorTool::DrawCompilationLog(const FUpdateContext& UpdateContext)
+    void FMaterialEditorTool::DrawGLSLPreview(const FUpdateContext& UpdateContext)
     {
-        if (!CompilationResult.CompilationLog.empty())
+        if (CompilationResult.CompilationLog.empty())
         {
-            ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(10, 10));
-            ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
-            ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
-
-            ImGui::BeginChild("CompilationLog", ImVec2(0, 0), true);
-
-            ImVec4 Color = CompilationResult.bIsError ? ImVec4(1.0f, 0.2f, 0.2f, 1.0f)
-                                                      : ImVec4(0.8f, 0.8f, 0.6f, 1.0f);
-
-            ImGui::TextColored(Color, "%s", CompilationResult.CompilationLog.c_str());
-
-            ImGui::EndChild();
-
-            ImGui::PopStyleColor(2);
-            ImGui::PopStyleVar();
+            return;
         }
+
+        TextEditor& Editor = IImGuiRenderer::GetTextEditor();
+
+        if (bGLSLPreviewDirty)
+        {
+            Editor.SetLanguageDefinition(TextEditor::LanguageDefinition::GLSL());
+            Editor.SetText(CompilationResult.CompilationLog.c_str());
+            Editor.SetReadOnly(true);
+            Editor.SetShowWhitespaces(false);
+            bGLSLPreviewDirty = false;
+        }
+
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(10, 10));
+        ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.08f, 0.08f, 0.08f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.25f, 0.25f, 0.25f, 1.0f));
+
+        ImGui::BeginChild("CompilationLogEditor", ImVec2(0, 0), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+        Editor.Render("GLSL Compilation Log");
+        ImGui::EndChild();
+
+        ImGui::PopStyleColor(2);
+        ImGui::PopStyleVar();
     }
+
     
     void FMaterialEditorTool::InitializeDockingLayout(ImGuiID InDockspaceID, const ImVec2& InDockspaceSize) const
     {
@@ -159,7 +169,7 @@ namespace Lumina
         ImGui::DockBuilderDockWindow(GetToolWindowName(MaterialPreviewName).c_str(), rightDockID);
 
         // Dock only the MaterialCompileLogName window to the full bottom dock
-        ImGui::DockBuilderDockWindow(GetToolWindowName(MaterialCompileLogName).c_str(), bottomDockID);
+        ImGui::DockBuilderDockWindow(GetToolWindowName(GLSLPreviewName).c_str(), bottomDockID);
     }
 
 

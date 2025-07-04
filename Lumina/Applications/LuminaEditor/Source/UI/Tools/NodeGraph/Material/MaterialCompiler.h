@@ -45,10 +45,26 @@ namespace Lumina
         void DefineConstantFloat3(const FString& ID, float Value[3]);
         void DefineConstantFloat4(const FString& ID, float Value[4]);
 
+        void Time(const FString& ID);
+
+        void WorldPos(const FString& ID);
+        void CameraPos(const FString& ID);
+        
         void Multiply(CMaterialInput* A, CMaterialInput* B);
         void Divide(CMaterialInput* A, CMaterialInput* B);
         void Add(CMaterialInput* A, CMaterialInput* B);
         void Subtract(CMaterialInput* A, CMaterialInput* B);
+        void Sin(CMaterialInput* A, CMaterialInput* B);
+        void Cos(CMaterialInput* A, CMaterialInput* B);
+        void Floor(CMaterialInput* A, CMaterialInput* B);
+        void Ceil(CMaterialInput* A, CMaterialInput* B);
+        void Power(CMaterialInput* A, CMaterialInput* B);
+        void Mod(CMaterialInput* A, CMaterialInput* B);
+        void Min(CMaterialInput* A, CMaterialInput* B);
+        void Max(CMaterialInput* A, CMaterialInput* B);
+        void Step(CMaterialInput* A, CMaterialInput* B);
+        void Lerp(CMaterialInput* A, CMaterialInput* B, CMaterialInput* C);
+        
 
         void AddRaw(const FString& Raw);
         

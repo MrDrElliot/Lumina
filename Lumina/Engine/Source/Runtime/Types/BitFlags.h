@@ -243,4 +243,6 @@ namespace Lumina
 
     enum class BitFlagsValidation : uint32_t {};
     static_assert( sizeof( TBitFlags<BitFlagsValidation> ) == sizeof( FBitFlags ), "TBitFlags is purely syntactic sugar for easy conversion of enums to flags. It must not contain any members!" );
+
+    
 }

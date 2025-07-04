@@ -7,6 +7,8 @@
 #include "Core/Object/Class.h"
 #include <Core/Reflection/Type/LuminaTypes.h>
 
+#include "Core/Object/Cast.h"
+
 #define SHOW_DEBUG 0
 
 namespace Lumina
@@ -89,6 +91,8 @@ namespace Lumina
     {
         //ImNodes::EditorContextSet(ImNodesContext);
 
+        TVector<CEdGraphNode*> NodesToDestroy;
+        
         ImNodes::BeginNodeEditor();
 
         if (ImNodes::IsEditorHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
@@ -100,21 +104,53 @@ namespace Lumina
         if (ImGui::BeginPopup("RightClickMenu"))
         {
             const ImVec2 MousePos = ImGui::GetMousePosOnOpeningCurrentPopup();
-            
-            if (ImGui::BeginMenu("New Node"))
+
+            bool bWasHoveringNode = false;
+            for (int i = 0; i < Nodes.size(); ++i)
             {
-                for (CClass* NodeClass : SupportedNodes)
+                CEdGraphNode* Node = Nodes[i];
+                
+                const int NodeID = Node->GetNodeID();
+                const ImVec2 NodePos = ImNodes::GetNodeScreenSpacePos(NodeID);
+                const ImVec2 NodeSize = ImNodes::GetNodeDimensions(NodeID);
+
+                ImRect NodeRect(NodePos, NodePos + NodeSize);
+
+                if (NodeRect.Contains(MousePos))
                 {
-                    if (ImGui::MenuItem(NodeClass->GetName().c_str()))
+                    if (ImGui::BeginMenu(Node->GetNodeDisplayName().c_str()))
                     {
-                        CEdGraphNode* NewNode = CreateNode(NodeClass);
-                        uint64 NodeID = NewNode->NodeID;
-                        ImNodes::SetNodeScreenSpacePos(NodeID, MousePos);
-                        ImVec2 NodePos = ImNodes::GetNodeGridSpacePos(NodeID);
-                        NewNode->SetGridPos(NodePos.x, NodePos.y);
+                        if (ImGui::MenuItem("Destroy"))
+                        {
+                            NodesToDestroy.push_back(Node);
+                        }
+                        
+                        ImGui::EndMenu();
                     }
+                    
+                    bWasHoveringNode = true;
+                    break;
                 }
-                ImGui::EndMenu();
+            }
+
+            if (!bWasHoveringNode)
+            {
+                if (ImGui::BeginMenu("New Node"))
+                {
+                    for (CClass* NodeClass : SupportedNodes)
+                    {
+                        CEdGraphNode* CDO = Cast<CEdGraphNode>(NodeClass->GetDefaultObject());
+                        if (ImGui::MenuItem(CDO->GetNodeDisplayName().c_str()))
+                        {
+                            CEdGraphNode* NewNode = CreateNode(NodeClass);
+                            uint64 NodeID = NewNode->NodeID;
+                            ImNodes::SetNodeScreenSpacePos(NodeID, MousePos);
+                            ImVec2 NodePos = ImNodes::GetNodeGridSpacePos(NodeID);
+                            NewNode->SetGridPos(NodePos.x, NodePos.y);
+                        }
+                    }
+                    ImGui::EndMenu();
+                }
             }
     
             ImGui::EndPopup();
@@ -153,7 +189,6 @@ namespace Lumina
             ImGui::TextUnformatted(Node->GetNodeDisplayName().c_str());
             #endif
 
-            
             ImGui::Dummy(ImVec2(Node->GetMinNodeSize().x, 0.1f));
             ImNodes::EndNodeTitleBar();
 
@@ -214,10 +249,6 @@ namespace Lumina
                     Pin->DrawPin();
                 }
                 
-                ImGui::SameLine();
-                
-                ImGui::TextUnformatted(Pin->GetPinName().c_str());
-                
                 ImNodes::EndInputAttribute();
                 
                 ImNodes::PopColorStyle();
@@ -235,7 +266,7 @@ namespace Lumina
 
                 for (CEdNodeGraphPin* Connection : InputPin->GetConnections())
                 {
-                    Links.push_back(TPair(InputPin, Connection));
+                    Links.emplace_back(TPair(InputPin, Connection));
                 }
             }
 
@@ -325,6 +356,17 @@ namespace Lumina
                 Pair.second->RemoveConnection(Pair.first);
 
                 ValidateGraph();
+            }
+        }
+
+        for (CEdGraphNode* ToDestroy : NodesToDestroy)
+        {
+            ToDestroy->MarkGarbage();
+
+            auto it = eastl::find(Nodes.begin(), Nodes.end(), ToDestroy);
+            if (it != Nodes.end())
+            {
+                Nodes.erase(it);
             }
         }
     }
