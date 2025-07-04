@@ -13,10 +13,28 @@ namespace Lumina
         // Allocates memory of specified size and alignment.
         virtual void* Allocate(SIZE_T Size, SIZE_T Alignment = alignof(std::max_align_t)) = 0;
 
+        virtual void Free(void* Data) = 0;
+        
         // Clears or resets the allocator (depending on strategy).
         virtual void Reset() = 0;
     };
 
+    class FDefaultAllocator : public IAllocator
+    {
+    public:
+
+        void* Allocate(SIZE_T Size, SIZE_T Alignment) override
+        {
+            return Memory::Malloc(Size, Alignment);
+        }
+        
+        void Free(void* Data) override
+        {
+            Memory::Free(Data);
+        }
+        
+        void Reset() override { }
+    };
     
     class FFrameAllocator : public IAllocator
     {
@@ -28,7 +46,7 @@ namespace Lumina
             Offset = 0;
         }
 
-        ~FFrameAllocator()
+        ~FFrameAllocator() override
         {
             Memory::Free(Base);
             Base = nullptr;
@@ -46,6 +64,8 @@ namespace Lumina
             Offset = NextOffset;
             return Result;
         }
+
+        void Free(void* Data) override { }
 
         void Reset() override
         {

@@ -9,6 +9,7 @@
 #include "Core/Object/Package/Package.h"
 #include "Paths/Paths.h"
 #include "Project/Project.h"
+#include "TaskSystem/TaskSystem.h"
 #include "Tools/UI/ImGui/ImGuiMemoryEditor.h"
 #include "Tools/UI/ImGui/ImGuiX.h"
 
@@ -47,7 +48,10 @@ namespace Lumina
             }
             else
             {
-                CObject* Asset = LoadObject<CObject>(ContentItem->GetVirtualPath().c_str());
+                FString ObjectName = ContentItem->GetName().ToString();
+                FString QualifiedName = ContentItem->GetVirtualPath() + "." + ObjectName;
+
+                CObject* Asset = LoadObject<CObject>(FName(QualifiedName));
                 ToolContext->OpenAssetEditor(Asset);
             }
         };
@@ -399,9 +403,12 @@ namespace Lumina
                 Paths::AddPackageExtension(PathString);
                 MakeUniquePath(PathString);
                 PathString = Paths::RemoveExtension(PathString);
-                        
-                Factory->TryImport(FilePath.generic_string().c_str(), PathString);
-                
+
+                FTaskSystem::Get()->ScheduleLambda([this, Factory, FilePath, PathString]
+                {
+                    Factory->TryImport(FilePath.generic_string().c_str(), PathString);
+                    RefreshContentBrowser();
+                });
             }
             
             

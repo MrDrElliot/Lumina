@@ -1,5 +1,7 @@
 ﻿#include "Package.h"
 
+#include "Assets/AssetRegistry/AssetRegistry.h"
+#include "Core/Engine/Engine.h"
 #include "Core/Object/Class.h"
 #include "Core/Profiler/Profile.h"
 #include "Paths/Paths.h"
@@ -40,7 +42,7 @@ namespace Lumina
         }
     }
 
-    CPackage* CPackage::CreatePackage(const FString& FileName)
+    CPackage* CPackage::CreatePackage(const FString& InTopLevelClassName, const FString& FileName)
     {
         FString FullName = FileName;
         Paths::AddPackageExtension(FullName);
@@ -55,7 +57,10 @@ namespace Lumina
             Package = NewObject<CPackage>(nullptr, FileNameName);
         }
 
+        Package->TopLevelClassName = InTopLevelClassName;
         LOG_INFO("Created Package: \"{}\"", VirtualPath);
+
+        GEngine->GetEngineSubsystem<FAssetRegistry>()->BuildAssetDictionary();
         return Package;
     }
 
@@ -64,12 +69,9 @@ namespace Lumina
         LUMINA_PROFILE_SCOPE();
 
         FString FullName = FileName.ToString();
-        Paths::AddPackageExtension(FullName);
-
-        TVector<uint8> FileBinary;
-        if (!FileHelper::LoadFileToArray(FileBinary, FullName))
+        if (!Paths::HasExtension(FullName, "lasset"))
         {
-            return nullptr;
+            Paths::AddPackageExtension(FullName);
         }
 
         FString VirtualPath = Paths::ConvertToVirtualPath(FullName);
@@ -78,6 +80,12 @@ namespace Lumina
         {
             // Package is already loaded.
             return Package;
+        }
+        
+        TVector<uint8> FileBinary;
+        if (!FileHelper::LoadFileToArray(FileBinary, FullName))
+        {
+            return nullptr;
         }
         
         Package = NewObject<CPackage>(nullptr, VirtualPath.c_str());
@@ -91,18 +99,13 @@ namespace Lumina
         
         FPackageHeader PackageHeader;
         Reader << PackageHeader;
+        Package->TopLevelClassName = PackageHeader.ClassPath;
 
         Reader.Seek((int64)PackageHeader.ImportTableOffset);
         Reader << Package->ImportTable;
         
         Reader.Seek((int64)PackageHeader.ExportTableOffset);
         Reader << Package->ExportTable;
-
-        
-        for (SIZE_T i = 0; i < Package->ImportTable.size(); ++i)
-        {
-            const FObjectImport& Import = Package->ImportTable[i];
-        }
 
         for (SIZE_T i = 0; i < Package->ExportTable.size(); ++i)
         {
@@ -118,8 +121,8 @@ namespace Lumina
 
             Export.Object = Object;
         }
-        
-        LOG_INFO("Loaded Package: \"{}\"", Package->GetName());
+
+        LOG_INFO("Loaded Package: \"{}\" - [[{}] Exports | [{}] Imports]", Package->GetName(), Package->ExportTable.size(), Package->ImportTable.size());
 
         return Package;
     }
@@ -128,6 +131,12 @@ namespace Lumina
     {
         LUMINA_PROFILE_SCOPE();
 
+        FString PathString = FileName.ToString();
+        if (!Paths::HasExtension(PathString, "lasset"))
+        {
+            Paths::AddPackageExtension(PathString);
+        }
+        
         Package->ExportTable.clear();
         Package->ImportTable.clear();
         
@@ -135,6 +144,7 @@ namespace Lumina
         FPackageSaver Writer(FileBinary, Package);
         FPackageHeader PackageHeader;
         PackageHeader.Version = 1;
+        PackageHeader.ClassPath = Package->TopLevelClassName;
 
         // Skip the header until we've built the tables.
         Writer.Seek(sizeof(FPackageHeader));
@@ -148,14 +158,16 @@ namespace Lumina
             Package->ImportTable.emplace_back(Import);
         }
         
+        PackageHeader.ImportTableOffset = Writer.Tell();
+        Writer << Package->ImportTable;
+
+
+        
         for (CObject* Export : SaveContext.Exports)
         {
             Export->LoaderIndex = FObjectPackageIndex::FromExport(Package->ExportTable.size()).GetRaw();
             Package->ExportTable.emplace_back(Export);
         }
-        
-        PackageHeader.ImportTableOffset = Writer.Tell();
-        Writer << Package->ImportTable;
         
         PackageHeader.ObjectDataOffset = Writer.Tell();
 
@@ -193,12 +205,12 @@ namespace Lumina
             Package->Loader = Memory::New<FPackageLoader>(HeapData, FileBinary.size(), Package);
         }
 
-        if (!FileHelper::SaveArrayToFile(FileBinary, FileName.c_str()))
+        if (!FileHelper::SaveArrayToFile(FileBinary, PathString))
         {
             return false;
         }
 
-        LOG_INFO("Saved Package: \"{}\"", Package->GetName());
+        LOG_INFO("Saved Package: \"{}\" - [[{}] Exports | [{}] Imports]", Package->GetName(), Package->ExportTable.size(), Package->ImportTable.size());
         return true;
     }
 
@@ -306,6 +318,7 @@ namespace Lumina
 
         Object->ClearFlags(OF_NeedsLoad);
 
+        
         Object->PostLoad();
         
         // Reset the state of the loader to the previous object.
@@ -335,10 +348,15 @@ namespace Lumina
             SIZE_T ArrayIndex = Index.GetArrayIndex();
             if (ArrayIndex >= ImportTable.size())
             {
-                LOG_INFO("Failed to find an object in the import table {}", Index.GetArrayIndex());
+                LOG_WARN("Failed to find an object in the import table {}", ArrayIndex);
                 return nullptr;
             }
-            return ImportTable[Index.GetArrayIndex()].Object;
+            FObjectImport& Import = ImportTable[ArrayIndex];
+            FString FullPath = Paths::ResolveVirtualPath(Import.Package.ToString());
+            CPackage* Package = LoadPackage(FName(FullPath));
+            Import.Object = FindObject<CObject>(Import.ObjectName);
+            
+            return ImportTable[ArrayIndex].Object;
         }
 
         if (Index.IsExport())
@@ -346,11 +364,11 @@ namespace Lumina
             SIZE_T ArrayIndex = Index.GetArrayIndex();
             if (ArrayIndex >= ExportTable.size())
             {
-                LOG_INFO("Failed to find an object in the export table {}", Index.GetArrayIndex());
+                LOG_WARN("Failed to find an object in the export table {}", ArrayIndex);
                 return nullptr;
             }
             
-            return ExportTable[Index.GetArrayIndex()].Object;
+            return ExportTable[ArrayIndex].Object;
         }
         
         return nullptr;

@@ -2,6 +2,8 @@
 
 #include "Core/Math/Hash/Hash.h"
 #include "Nodes/MaterialNodeExpression.h"
+#include "Paths/Paths.h"
+#include "Platform/Filesystem/FileHelper.h"
 #include "UI/Tools/NodeGraph/EdGraphNode.h"
 
 
@@ -12,9 +14,23 @@ namespace Lumina
         FString Result;
         for (const FShaderChunk& Chunk : ShaderChunks)
         {
-            Result += Chunk.Data + "; \n";
+            Result += Chunk.Data + "\n";
         }
-        return Result;
+
+        FString VertexPath = std::filesystem::path(Paths::GetEngineResourceDirectory() / "Shaders/Material.vert").generic_string().c_str();
+
+        FString LoadedString;
+        FileHelper::LoadFileIntoString(LoadedString, VertexPath);
+
+        const char* Token = "$VERTEX_REPLACEMENT";
+        size_t Pos = LoadedString.find(Token);
+
+        if (Pos != FString::npos)
+        {
+            LoadedString.replace(Pos, strlen(Token), Result);
+        }
+        
+        return LoadedString;
     }
 
 
@@ -24,7 +40,7 @@ namespace Lumina
         FString ValueString = eastl::to_string(Value);
     
         FShaderChunk Chunk;
-        Chunk.Data = "float " + ID + " = " + ValueString;
+        Chunk.Data = "float " + ID + " = " + ValueString + ";";
         
         ShaderChunks.push_back(Chunk);
     }
@@ -37,7 +53,7 @@ namespace Lumina
         FString ValueStringY = eastl::to_string(Value[1]);
 
         FShaderChunk Chunk;
-        Chunk.Data = "vec4 " + ID + " = vec4(" + ValueStringX + ", " + ValueStringY + ", 0.0, 1.0)";
+        Chunk.Data = "vec4 " + ID + " = vec4(" + ValueStringX + ", " + ValueStringY + ", 0.0, 1.0);";
         ShaderChunks.push_back(Chunk);
     }
 
@@ -50,7 +66,7 @@ namespace Lumina
         FString ValueStringZ = eastl::to_string(Value[2]);
 
         FShaderChunk Chunk;
-        Chunk.Data = "vec4 " + ID + " = vec4(" + ValueStringX + ", " + ValueStringY + ", " + ValueStringZ + ", 1.0)";
+        Chunk.Data = "vec4 " + ID + " = vec4(" + ValueStringX + ", " + ValueStringY + ", " + ValueStringZ + ", 1.0);";
         ShaderChunks.push_back(Chunk);
     }
 
@@ -64,7 +80,7 @@ namespace Lumina
         FString ValueStringW = eastl::to_string(Value[3]);
 
         FShaderChunk Chunk;
-        Chunk.Data = "vec4 " + ID + " = vec4(" + ValueStringX + ", " + ValueStringY + ", " + ValueStringZ + ", " + ValueStringW + ")";
+        Chunk.Data = "vec4 " + ID + " = vec4(" + ValueStringX + ", " + ValueStringY + ", " + ValueStringZ + ", " + ValueStringW + ");";
         ShaderChunks.push_back(Chunk);
     }
 
@@ -91,7 +107,7 @@ namespace Lumina
         }
     
         FShaderChunk Chunk;
-        Chunk.Data = "vec4 " + OwningNode + " = " + AValue + " * " + BValue;
+        Chunk.Data = "vec4 " + OwningNode + " = " + AValue + " * " + BValue + ";";
         ShaderChunks.push_back(Chunk);
     }
 
@@ -119,7 +135,7 @@ namespace Lumina
         }
     
         FShaderChunk Chunk;
-        Chunk.Data = "vec4 " + OwningNode + " = " + AValue + " / " + BValue;
+        Chunk.Data = "vec4 " + OwningNode + " = " + AValue + " / " + BValue + ";";
         ShaderChunks.push_back(Chunk);
     }
 
@@ -147,7 +163,7 @@ namespace Lumina
         }
     
         FShaderChunk Chunk;
-        Chunk.Data = "vec4 " + OwningNode + " = " + AValue + " + " + BValue;
+        Chunk.Data = "vec4 " + OwningNode + " = " + AValue + " + " + BValue + ";";
         ShaderChunks.push_back(Chunk);
     }
 
@@ -175,7 +191,7 @@ namespace Lumina
         }
     
         FShaderChunk Chunk;
-        Chunk.Data = "vec4 " + OwningNode + " = " + AValue + " - " + BValue;
+        Chunk.Data = "vec4 " + OwningNode + " = " + AValue + " - " + BValue + ";";
         ShaderChunks.push_back(Chunk);
     }
 

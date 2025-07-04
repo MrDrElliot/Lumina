@@ -44,9 +44,9 @@ namespace Lumina
 
         //-------------------------------------------------------------------------------------
 
-        virtual FRHICommandListRef CreateCommandList(const FCommandListInfo& Info = FCommandListInfo()) = 0;
-        virtual void ExecuteCommandList(ICommandList* CommandLists, uint32 NumCommandLists = 1, ECommandQueue QueueType = ECommandQueue::Graphics) = 0;
-        NODISCARD virtual FRHICommandListRef GetCommandList(ECommandQueue Queue = ECommandQueue::Graphics) = 0;
+        virtual FRHICommandListRef CreateCommandList(const FCommandListInfo& Info) = 0;
+        virtual void ExecuteCommandList(ICommandList* CommandLists, uint32 NumCommandLists, ECommandQueue QueueType) = 0;
+        NODISCARD virtual FRHICommandListRef GetCommandList(ECommandQueue Queue) = 0;
 
 
         //-------------------------------------------------------------------------------------
@@ -84,6 +84,8 @@ namespace Lumina
         
         
         //-------------------------------------------------------------------------------------
+
+        virtual void OnShaderCompiled(FRHIShader* Shader) = 0;
 
         virtual void SetObjectName(IRHIResource* Resource, const char* Name, EAPIResourceType Type = EAPIResourceType::Default) = 0;
 

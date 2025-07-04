@@ -1,6 +1,7 @@
 ﻿#include "SceneManager.h"
 #include "Scene/SceneRenderer.h"
 #include "Scene.h"
+#include "Core/Profiler/Profile.h"
 #include "Renderer/RHIIncl.h"
 
 namespace Lumina
@@ -25,6 +26,8 @@ namespace Lumina
 
     void FSceneManager::StartFrame()
     {
+        LUMINA_PROFILE_SCOPE();
+        
         for (FManagedScene& Scene : Scenes)
         {
             if (Scene.Scene->IsPaused())
@@ -39,6 +42,7 @@ namespace Lumina
 
     void FSceneManager::UpdateScenes(const FUpdateContext& UpdateContext)
     {
+        LUMINA_PROFILE_SCOPE();
         for (const FManagedScene& Scene : Scenes)
         {
             if (Scene.Scene->IsPaused())
@@ -53,6 +57,7 @@ namespace Lumina
 
     void FSceneManager::EndFrame()
     {
+        LUMINA_PROFILE_SCOPE();
         for (const FManagedScene& Scene : Scenes)
         {
             if (Scene.Scene->IsPaused())
@@ -67,6 +72,7 @@ namespace Lumina
 
     FScene* FSceneManager::CreateScene(ESceneType InType)
     {
+        LUMINA_PROFILE_SCOPE();
         if (InType == ESceneType::Game)
         {
             AssertMsg(GameScene == nullptr, "Only one game scene is allowed"); 
@@ -82,7 +88,8 @@ namespace Lumina
 
     void FSceneManager::DestroyScene(FScene* SceneToRemove)
     {
-        Assert(SceneToRemove != nullptr);
+        LUMINA_PROFILE_SCOPE();
+        Assert(SceneToRemove != nullptr)
         
         auto Itr = eastl::find_if(Scenes.begin(), Scenes.end(), [SceneToRemove] (const FManagedScene& Scene) 
         {

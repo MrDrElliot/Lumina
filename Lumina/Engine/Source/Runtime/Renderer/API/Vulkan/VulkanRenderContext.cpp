@@ -167,12 +167,12 @@ namespace Lumina
         
     }
 
-    TRefCountPtr<FTrackedCommandBufer> FQueue::GetOrCreateCommandBuffer()
+    TRefCountPtr<FTrackedCommandBuffer> FQueue::GetOrCreateCommandBuffer()
     {
         LUMINA_PROFILE_SCOPE();
         
         FScopeLock Lock(Mutex);
-        TRefCountPtr<FTrackedCommandBufer> Buf;
+        TRefCountPtr<FTrackedCommandBuffer> Buf;
         
         if (CommandBufferPool.empty())
         {
@@ -194,8 +194,9 @@ namespace Lumina
 
             VkCommandBuffer Buffer;
             VK_CHECK(vkAllocateCommandBuffers(Device->GetDevice(), &BufferInfo, &Buffer));
-            
-            Buf = MakeRefCount<FTrackedCommandBufer>(Device, Buffer, CommandPool, Queue);
+
+            bool bCreateTracy = (Type == ECommandQueue::Graphics || Type == ECommandQueue::Compute);
+            Buf = MakeRefCount<FTrackedCommandBuffer>(Device, Buffer, CommandPool, bCreateTracy, Queue);
             
         }
         else
@@ -233,6 +234,8 @@ namespace Lumina
             FVulkanCommandList* VulkanCommandList = static_cast<FVulkanCommandList*>(&CommandLists[i]);
 
             auto& TrackedBuffer = VulkanCommandList->CurrentCommandBuffer;
+            Assert(TrackedBuffer->Queue == Queue)
+            
             CommandBuffers[i] = TrackedBuffer->CommandBuffer;
             CommandBuffersInFlight.push_back(TrackedBuffer);
         }
@@ -478,8 +481,8 @@ namespace Lumina
         
         CommandList->Open();
         
-        GetQueue()->AddWaitSemaphore(Swapchain->GetAquireSemaphore());
-        GetQueue()->AddSignalSemaphore(Swapchain->GetPresentSemaphore());
+        GetQueue(Q_Graphics)->AddWaitSemaphore(Swapchain->GetAquireSemaphore());
+        GetQueue(Q_Graphics)->AddSignalSemaphore(Swapchain->GetPresentSemaphore());
         
     }
 
@@ -489,7 +492,7 @@ namespace Lumina
         
         CommandList->Close();
         
-        ExecuteCommandList(CommandList);
+        ExecuteCommandList(CommandList, 1, Q_Graphics);
         
         Swapchain->Present();
         
@@ -577,21 +580,21 @@ namespace Lumina
         {
             VkQueue Queue = vkbDevice.get_queue(vkb::QueueType::graphics).value();
             uint32 Index = vkbDevice.get_queue_index(vkb::QueueType::graphics).value();
-            Queues[uint32(ECommandQueue::Graphics)] = Memory::New<FQueue>(VulkanDevice, Queue, Index);
+            Queues[uint32(ECommandQueue::Graphics)] = Memory::New<FQueue>(VulkanDevice, Queue, Index, ECommandQueue::Graphics);
         }
 
         if (vkbDevice.get_queue(vkb::QueueType::compute).has_value())
         {
             VkQueue Queue = vkbDevice.get_queue(vkb::QueueType::compute).value();
             uint32 Index = vkbDevice.get_queue_index(vkb::QueueType::compute).value();
-            Queues[uint32(ECommandQueue::Compute)] = Memory::New<FQueue>(VulkanDevice, Queue, Index);
+            Queues[uint32(ECommandQueue::Compute)] = Memory::New<FQueue>(VulkanDevice, Queue, Index, ECommandQueue::Compute);
         }
 
         if (vkbDevice.get_queue(vkb::QueueType::transfer).has_value())
         {
             VkQueue Queue = vkbDevice.get_queue(vkb::QueueType::transfer).value();
             uint32 Index = vkbDevice.get_queue_index(vkb::QueueType::transfer).value();
-            Queues[uint32(ECommandQueue::Transfer)] = Memory::New<FQueue>(VulkanDevice, Queue, Index);
+            Queues[uint32(ECommandQueue::Transfer)] = Memory::New<FQueue>(VulkanDevice, Queue, Index, ECommandQueue::Transfer);
         }
     }
 
@@ -750,6 +753,11 @@ namespace Lumina
                 }
             }
         }
+    }
+
+    void FVulkanRenderContext::OnShaderCompiled(FRHIShader* Shader)
+    {
+        PipelineCache.PostShaderRecompiled("");
     }
 
     FRHIInputLayoutRef FVulkanRenderContext::CreateInputLayout(const FVertexAttributeDesc* AttributeDesc, uint32 Count)

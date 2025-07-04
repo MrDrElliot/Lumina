@@ -23,9 +23,6 @@ project "Lumina"
 		"Engine/ThirdParty/glm/glm/**.cpp",
 		"Engine/ThirdParty/glm/glm/**.inl",
 		
-		"Engine/ThirdParty/EnkiTS/src/**.cpp",
-		"Engine/ThirdParty/EnkiTS/src/**.h",
-		
 		"Engine/ThirdParty/vk-bootstrap/src/**.h",
 	    "Engine/ThirdParty/vk-bootstrap/src/**.cpp",
 	    
@@ -84,6 +81,7 @@ project "Lumina"
 	 	"GLFW",
 	 	"ImGui",
 	 	"EA",
+	 	"EnkiTS",
 	  	"%{VULKAN_SDK}/lib/vulkan-1.lib",
 	    "DbgHelp",
 	 }

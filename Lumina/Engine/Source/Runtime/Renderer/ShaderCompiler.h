@@ -22,7 +22,8 @@ namespace Lumina
 
         virtual void Initialize() = 0;
         virtual void Shutdown() = 0;
-        
+
+        virtual bool CompilerShaderRaw(const FString& ShaderString, const FShaderCompileOptions& CompileOptions, CompletedFunc OnCompleted) = 0;
         virtual bool CompileShader(const FString& ShaderPath, const FShaderCompileOptions& CompileOptions, CompletedFunc OnCompleted) = 0;
         
         
@@ -48,10 +49,10 @@ namespace Lumina
         
         void Initialize() override;
         void Shutdown() override;
-        
+
+        bool CompilerShaderRaw(const FString& ShaderString, const FShaderCompileOptions& CompileOptions, CompletedFunc OnCompleted) override;
         bool CompileShader(const FString& ShaderPath, const FShaderCompileOptions& CompileOptions, CompletedFunc OnCompleted) override;
 
-        void OnCompileThread();
         
         TQueue<FRequest>            CompileRequests;
         std::thread		            CompileThread;

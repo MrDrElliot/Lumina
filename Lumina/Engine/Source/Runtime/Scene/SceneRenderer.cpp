@@ -16,22 +16,17 @@
 #include "Renderer/RenderContext.h"
 #include "Renderer/RenderManager.h"
 #include "Rendering/ClearColorRenderPass.h"
+#include "Rendering/RenderGraphResources.h"
 #include "Rendering/SkyboxRenderPass.h"
 #include "Subsystems/FCameraManager.h"
 #include "Tools/Import/ImportHelpers.h"
 
 namespace Lumina
 {
-    namespace
-    {
-        const char* SkyboxPassName      = "Skybox";
-        const char* ClearColorPassName  = "ClearColor";
-
-    }
-    
     
     FSceneRenderer::FSceneRenderer()
         : SceneGlobalData()
+        , RenderGraph(GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext())
     {
         SceneViewport = GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext()->CreateViewport(Windowing::GetPrimaryWindowHandle()->GetExtent());
     }
@@ -42,11 +37,28 @@ namespace Lumina
 
     void FSceneRenderer::Initialize()
     {
+        LUMINA_PROFILE_SCOPE();
         InitBuffers();
         CreateImages();
+        InitResources();
 
-        RenderGraph.AddRenderPass<FClearColorRenderPass>(ClearColorPassName);
-        RenderGraph.AddRenderPass<FSkyboxRenderPass>(SkyboxPassName);
+        RenderGraph.AddResource<PrimaryRenderTargetTag>(GetRenderTarget());
+        RenderGraph.AddResource<DepthBufferTargetTag>(DepthBuffer);
+        RenderGraph.AddResource<SceneGlobalDataTag>(SceneDataBuffer);
+        RenderGraph.AddResource<CubeMapImageTag>(CubeMap);
+        
+        RenderGraph.AddRenderPass<FClearColorRenderPass>("ClearColorPass", [] (FRenderGraphBuilder& Builder)
+        {
+            Builder.Write<PrimaryRenderTargetTag>(ERHIAccess::Write);
+        });
+        
+        RenderGraph.AddRenderPass<FSkyboxRenderPass>("SkyBox", [] (FRenderGraphBuilder& Builder)
+        {
+            Builder.Write<PrimaryRenderTargetTag>(ERHIAccess::ColorAttachmentWrite);
+            Builder.Write<DepthBufferTargetTag>(ERHIAccess::DepthStencilAttachmentWrite);
+            Builder.Read<SceneGlobalDataTag>(ERHIAccess::Read);
+            Builder.Read<CubeMapImageTag>(ERHIAccess::ShaderRead);
+        });
     }
 
     void FSceneRenderer::Deinitialize()
@@ -60,7 +72,7 @@ namespace Lumina
         
         IRenderContext* RenderContext = GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext();
 
-        ICommandList* CommandList = RenderContext->GetCommandList();
+        ICommandList* CommandList = RenderContext->GetCommandList(Q_Graphics);
 
         FCameraManager* CameraManager = Scene->GetSceneSubsystem<FCameraManager>();
         FCameraComponent& CameraComponent = CameraManager->GetActiveCameraEntity().GetComponent<FCameraComponent>();
@@ -80,16 +92,13 @@ namespace Lumina
 
     void FSceneRenderer::EndScene(const FScene* Scene)
     {
-        
         IRenderContext* RenderContext = GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext();
-        ICommandList* CommandList = RenderContext->GetCommandList();
+        ICommandList* CommandList = RenderContext->GetCommandList(Q_Graphics);
 
         RenderGraph.Compile();
         RenderGraph.Execute(CommandList);
         
-        
         //FullScreenPass(Scene);
-        DrawSkybox(Scene);
         ForwardRenderPass(Scene);
     }
 
@@ -97,111 +106,12 @@ namespace Lumina
     {
         CreateImages();
     }
-
-    void FSceneRenderer::DrawSkybox(const FScene* Scene)
-    {
-        IRenderContext* RenderContext = GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext();
-        ICommandList* CommandList = RenderContext->GetCommandList();
-
-        FRHIVertexShaderRef VertexShader = RenderContext->GetShaderLibrary()->GetShader<FRHIVertexShader>("Skybox.vert");
-        FRHIPixelShaderRef PixelShader = RenderContext->GetShaderLibrary()->GetShader<FRHIPixelShader>("Skybox.frag");
-        if (!VertexShader || !PixelShader)
-        {
-            return;
-        }
-
-        
-        FBindingLayoutItem Item;
-        Item.Size = sizeof(FSceneGlobalData);
-        Item.Slot = 0;
-        Item.Type = ERHIBindingResourceType::Buffer_CBV;
-        
-        FBindingLayoutDesc LayoutDesc;
-        LayoutDesc.AddItem(Item);
-        LayoutDesc.StageFlags.SetFlag(ERHIShaderType::Vertex);
-        FRHIBindingLayoutRef Layout = RenderContext->CreateBindingLayout(LayoutDesc);
-        
-        FBindingSetDesc SetDesc;
-        SetDesc.AddItem(FBindingSetItem::BufferCBV(0, SceneDataBuffer));
-        FRHIBindingSetRef Set = RenderContext->CreateBindingSet(SetDesc, Layout);
-        
-        
-        FBindingLayoutItem ImageItem;
-        ImageItem.Slot = 0;
-        ImageItem.Type = ERHIBindingResourceType::Texture_SRV;
-
-        FBindingLayoutDesc ImageLayoutDesc;
-        ImageLayoutDesc.AddItem(ImageItem);
-        ImageLayoutDesc.StageFlags.SetFlag(ERHIShaderType::Fragment);
-        FRHIBindingLayoutRef Layout2 = RenderContext->CreateBindingLayout(ImageLayoutDesc);
-
-        FBindingSetDesc SetDesc2;
-        SetDesc2.AddItem(FBindingSetItem::TextureSRV(0, CubeMap));
-        FRHIBindingSetRef Set2 = RenderContext->CreateBindingSet(SetDesc2, Layout2);
-        
-
-        FDepthStencilState DepthState;
-        DepthState.SetDepthTestEnable(false);
-        DepthState.SetDepthWriteEnable(false);
-        
-        FBlendState BlendState;
-        FBlendState::RenderTarget RenderTarget;
-        RenderTarget.EnableBlend();
-        RenderTarget.SetSrcBlend(EBlendFactor::SrcAlpha);
-        RenderTarget.SetDestBlend(EBlendFactor::OneMinusSrcAlpha);
-        RenderTarget.SetSrcBlendAlpha(EBlendFactor::One);
-        RenderTarget.SetDestBlendAlpha(EBlendFactor::Zero);
-        BlendState.SetRenderTarget(0, RenderTarget);
-
-        FRasterState RasterState;
-        RasterState.SetCullNone();
-        RasterState.SetDepthClipEnable(false);
-
-        FRenderState RenderState;
-        RenderState.SetBlendState(BlendState);
-        RenderState.SetRasterState(RasterState);
-        RenderState.SetDepthStencilState(DepthState);
-        
-        FGraphicsPipelineDesc Desc;
-        Desc.SetRenderState(RenderState);
-        Desc.AddBindingLayout(Layout);
-        Desc.AddBindingLayout(Layout2);
-        Desc.SetVertexShader(VertexShader);
-        Desc.SetPixelShader(PixelShader);
-
-        FRHIGraphicsPipelineRef Pipeline = RenderContext->CreateGraphicsPipeline(Desc);
-
-        CommandList->SetGraphicsPipeline(Pipeline);
-
-        CommandList->BindBindingSets({Set, Set2}, ERHIBindingPoint::Graphics);
-
-        FRenderPassBeginInfo BeginInfo; BeginInfo
-        .AddColorAttachment(GetRenderTarget())
-        .SetColorLoadOp(ERenderLoadOp::Load)
-        .SetColorStoreOp(ERenderStoreOp::Store)
-        .SetColorClearColor(FColor::Black)
-                
-        .SetDepthAttachment(DepthBuffer)
-        .SetDepthClearValue(0.0f)
-        .SetDepthLoadOp(ERenderLoadOp::Clear)
-        .SetDepthStoreOp(ERenderStoreOp::Store)
-                
-        .SetRenderArea(GetRenderTarget()->GetExtent());
-        CommandList->BeginRenderPass(BeginInfo);
-
-        CommandList->SetViewport(0.0f, 0.0f, 0.0f, (float)GetRenderTarget()->GetSizeX(), (float)GetRenderTarget()->GetSizeY(), 1.0f);
-        CommandList->SetScissorRect(0, 0, GetRenderTarget()->GetSizeX(), GetRenderTarget()->GetSizeY());
-
-        CommandList->Draw(36, 1, 0, 0);
-        
-        CommandList->EndRenderPass();
-
-    }
+    
 
     void FSceneRenderer::ForwardRenderPass(const FScene* Scene)
     {
         IRenderContext* RenderContext = GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext();
-        ICommandList* CommandList = RenderContext->GetCommandList();
+        ICommandList* CommandList = RenderContext->GetCommandList(Q_Graphics);
 
         FRHIVertexShaderRef VertexShader = RenderContext->GetShaderLibrary()->GetShader<FRHIVertexShader>("PrimitiveMesh.vert");
         FRHIPixelShaderRef PixelShader = RenderContext->GetShaderLibrary()->GetShader<FRHIPixelShader>("PrimitiveMesh.frag");
@@ -256,26 +166,13 @@ namespace Lumina
         RenderState.SetBlendState(BlendState);
         RenderState.SetRasterState(RasterState);
         RenderState.SetDepthStencilState(DepthState);
-        
-        FGraphicsPipelineDesc Desc;
-        Desc.SetRenderState(RenderState);
-        Desc.SetInputLayout(VertexLayoutInput);
-        Desc.AddBindingLayout(Layout);
-        Desc.SetVertexShader(VertexShader);
-        Desc.SetPixelShader(PixelShader);
 
-        FRHIGraphicsPipelineRef Pipeline = RenderContext->CreateGraphicsPipeline(Desc);
-
-        CommandList->SetGraphicsPipeline(Pipeline);
-
-        CommandList->BindBindingSets({Set}, ERHIBindingPoint::Graphics);
-        
         for (auto& Entity : Scene->GetConstEntityRegistry().view<FStaticMeshComponent>())
         {
             const FStaticMeshComponent& MeshComponent = Scene->GetConstEntityRegistry().get<FStaticMeshComponent>(Entity);
             
             CStaticMesh* Mesh = MeshComponent.StaticMesh;
-            if (Mesh == nullptr)
+            if (!IsValid(Mesh))
             {
                 continue;
             }
@@ -296,34 +193,59 @@ namespace Lumina
         {
             CommandList->UploadToBuffer(ModelDataBuffer, ModelData.data(), 0, sizeof(FModelData) * (uint32)ModelData.size());
         }
-        
-        FRenderPassBeginInfo BeginInfo; BeginInfo
-        .AddColorAttachment(GetRenderTarget())
-        .SetColorLoadOp(ERenderLoadOp::Load)
-        .SetColorStoreOp(ERenderStoreOp::Store)
-        .SetColorClearColor(FColor::Black)
-        
-        .SetDepthAttachment(DepthBuffer)
-        .SetDepthClearValue(0.0f)
-        .SetDepthLoadOp(ERenderLoadOp::Load)
-        .SetDepthStoreOp(ERenderStoreOp::Store)
-        
-        .SetRenderArea(GetRenderTarget()->GetExtent());
-        CommandList->BeginRenderPass(BeginInfo);
 
-        CommandList->SetViewport(0.0f, 0.0f, 0.0f, (float)GetRenderTarget()->GetSizeX(), (float)GetRenderTarget()->GetSizeY(), 1.0f);
-        CommandList->SetScissorRect(0, 0, GetRenderTarget()->GetSizeX(), GetRenderTarget()->GetSizeY());
-
+        
         uint32 Index = 0;
         for (auto& Entity : Scene->GetConstEntityRegistry().view<FStaticMeshComponent>())
         {
             const FStaticMeshComponent& MeshComponent = Scene->GetConstEntityRegistry().get<FStaticMeshComponent>(Entity);
-            
             CStaticMesh* Mesh = MeshComponent.StaticMesh;
-            if (Mesh == nullptr)
+            if (!IsValid(Mesh))
             {
                 continue;
             }
+
+            if (Mesh->GetMaterial() == nullptr)
+            {
+                continue;
+            }
+
+            if (!Mesh->GetMaterial()->VertexShader.IsValid() || !Mesh->GetMaterial()->PixelShader.IsValid())
+            {
+                continue;
+            }
+            
+            FGraphicsPipelineDesc Desc;
+            Desc.SetRenderState(RenderState);
+            Desc.SetInputLayout(VertexLayoutInput);
+            Desc.AddBindingLayout(Layout);
+            Desc.SetVertexShader(Mesh->GetMaterial()->VertexShader);
+            Desc.SetPixelShader(Mesh->GetMaterial()->PixelShader);
+            
+            FRHIGraphicsPipelineRef Pipeline = RenderContext->CreateGraphicsPipeline(Desc);
+            
+            CommandList->SetGraphicsPipeline(Pipeline);
+            
+            CommandList->BindBindingSets({Set}, ERHIBindingPoint::Graphics);
+            
+            FRenderPassBeginInfo BeginInfo; BeginInfo
+            .AddColorAttachment(GetRenderTarget())
+            .SetColorLoadOp(ERenderLoadOp::Load)
+            .SetColorStoreOp(ERenderStoreOp::Store)
+            .SetColorClearColor(FColor::Black)
+            
+            .SetDepthAttachment(DepthBuffer)
+            .SetDepthClearValue(0.0f)
+            .SetDepthLoadOp(ERenderLoadOp::Load)
+            .SetDepthStoreOp(ERenderStoreOp::Store)
+            
+            .SetRenderArea(GetRenderTarget()->GetExtent());
+            CommandList->BeginRenderPass(BeginInfo);
+            
+            CommandList->SetViewport(0.0f, 0.0f, 0.0f, (float)GetRenderTarget()->GetSizeX(), (float)GetRenderTarget()->GetSizeY(), 1.0f);
+            CommandList->SetScissorRect(0, 0, GetRenderTarget()->GetSizeX(), GetRenderTarget()->GetSizeY());
+        
+            
                 
             FRHIBufferRef MeshVertexBuffer = Mesh->GetVertexBuffer();
             FRHIBufferRef MeshIndexBuffer = Mesh->GetIndexBuffer();
@@ -334,15 +256,15 @@ namespace Lumina
             CommandList->DrawIndexed(MeshIndexBuffer, Mesh->GetNumIndicies(), 1, 0);
             
             Index++;
+            CommandList->EndRenderPass();
         }
         
-        CommandList->EndRenderPass();
     }
 
     void FSceneRenderer::FullScreenPass(const FScene* Scene)
     {
         IRenderContext* RenderContext = GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext();
-        ICommandList* CommandList = RenderContext->GetCommandList();
+        ICommandList* CommandList = RenderContext->GetCommandList(Q_Graphics);
         
         FRHIVertexShaderRef VertexShader = RenderContext->GetShaderLibrary()->GetShader<FRHIVertexShader>("InfiniteGrid.vert");
         FRHIPixelShaderRef PixelShader = RenderContext->GetShaderLibrary()->GetShader<FRHIPixelShader>("InfiniteGrid.frag");
@@ -419,24 +341,10 @@ namespace Lumina
     {
         
     }
-    
-    void FSceneRenderer::InitBuffers()
+
+    void FSceneRenderer::InitResources()
     {
         IRenderContext* RenderContext = GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext();
-
-        FRHIBufferDesc BufferDesc;
-        BufferDesc.Size = sizeof(FSceneGlobalData);
-        BufferDesc.Stride = sizeof(FSceneGlobalData);
-        BufferDesc.Usage.SetFlag(BUF_UniformBuffer);
-        SceneDataBuffer = RenderContext->CreateBuffer(BufferDesc);
-        RenderContext->SetObjectName(SceneDataBuffer, "SceneGlobalData", EAPIResourceType::Buffer);
-
-        FRHIBufferDesc ModelBufferDesc;
-        ModelBufferDesc.Size = sizeof(FModelData) * 1000;
-        ModelBufferDesc.Stride = sizeof(FModelData);
-        ModelBufferDesc.Usage.SetFlag(BUF_StorageBuffer);
-        ModelDataBuffer = RenderContext->CreateBuffer(ModelBufferDesc);
-        RenderContext->SetObjectName(ModelDataBuffer, "ModelDataBuffer", EAPIResourceType::Buffer);
 
         FVertexAttributeDesc VertexDesc[4];
         // Pos
@@ -460,6 +368,28 @@ namespace Lumina
         VertexDesc[3].Format = EFormat::RG32_FLOAT;
         
         VertexLayoutInput = RenderContext->CreateInputLayout(VertexDesc, std::size(VertexDesc));
+
+        
+    }
+
+    void FSceneRenderer::InitBuffers()
+    {
+        IRenderContext* RenderContext = GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext();
+
+        FRHIBufferDesc BufferDesc;
+        BufferDesc.Size = sizeof(FSceneGlobalData);
+        BufferDesc.Stride = sizeof(FSceneGlobalData);
+        BufferDesc.Usage.SetFlag(BUF_UniformBuffer);
+        SceneDataBuffer = RenderContext->CreateBuffer(BufferDesc);
+        RenderContext->SetObjectName(SceneDataBuffer, "SceneGlobalData", EAPIResourceType::Buffer);
+
+        FRHIBufferDesc ModelBufferDesc;
+        ModelBufferDesc.Size = sizeof(FModelData) * 1000;
+        ModelBufferDesc.Stride = sizeof(FModelData);
+        ModelBufferDesc.Usage.SetFlag(BUF_StorageBuffer);
+        ModelDataBuffer = RenderContext->CreateBuffer(ModelBufferDesc);
+        RenderContext->SetObjectName(ModelDataBuffer, "ModelDataBuffer", EAPIResourceType::Buffer);
+        
     }
     
     void FSceneRenderer::CreateImages()
@@ -490,7 +420,7 @@ namespace Lumina
             "right.jpg", "left.jpg", "top.jpg", "bottom.jpg", "front.jpg", "back.jpg"
         };
 
-        ICommandList* CommandList = RenderContext->CreateCommandList();
+        ICommandList* CommandList = RenderContext->CreateCommandList({Q_Transfer});
         CommandList->Open();
         for (int i = 0; i < 6; ++i)
         {
@@ -508,7 +438,7 @@ namespace Lumina
             CommandList->WriteToImage(CubeMap, i, 0, Pixels.data(), rowPitch, depthPitch);
         }
         CommandList->Close();
-    	RenderContext->ExecuteCommandList(CommandList);
+    	RenderContext->ExecuteCommandList(CommandList, 1, Q_Transfer);
     }
     
 }

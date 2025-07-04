@@ -10,6 +10,12 @@
 #include "Module/API.h"
 #include "Platform/WindowsPlatform.h"
 
+namespace Lumina
+{
+    struct FARFilter;
+    class CClass;
+}
+
 namespace Lumina::ImGuiX
 {
     struct LUMINA_API FImGuiImageInfo
@@ -41,6 +47,8 @@ namespace Lumina::ImGuiX
 
     LUMINA_API void DrawObjectProperties(CObject* Object);
 
+    LUMINA_API void ObjectSelector(const FARFilter& Filter, CObject*& OutSelected);
+    
     struct LUMINA_API ApplicationTitleBar
     {
         constexpr static float const s_windowControlButtonWidth = 45;

@@ -23,6 +23,9 @@ namespace Lumina
         virtual FString GetDefaultAssetCreationName(const FString& InPath) { return "New_Asset"; }
 
         virtual void TryImport(const FString& RawPath, const FString& DestinationPath) { }
-        
+
+        virtual CClass* GetSupportedType() const { return nullptr; }
+    protected:
+
     };
 }

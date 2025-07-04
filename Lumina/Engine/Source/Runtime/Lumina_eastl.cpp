@@ -116,3 +116,11 @@ int Vsnprintf16(char16_t* pDestination, size_t n, const char16_t* pFormat, va_li
 }
 #endif // !EASTL_EASTDC_VSNPRINTF
 
+namespace eastl
+{
+    void AssertionFailure(const char* expression)
+    {
+        std::fprintf(stderr, "EASTL Assertion Failure: %s\n", expression);
+        std::abort();
+    }
+}

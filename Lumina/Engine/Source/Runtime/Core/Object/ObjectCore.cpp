@@ -114,15 +114,13 @@ namespace Lumina
     
     CObject* StaticLoadObject(const CClass* InClass, const FName& QualifiedName)
     {
-        FString FullPath = QualifiedName.c_str();
-        FName ObjectName = FName(GetObjectNameFromPath(FullPath));
         
-        CObject* FoundObject = FindObjectFast(InClass, ObjectName);
+        CObject* FoundObject = FindObjectFast(InClass, QualifiedName);
 
         if (FoundObject == nullptr || FoundObject->HasAnyFlag(OF_NeedsLoad))
         {
             FAssetManager* Manager = GEngine->GetEngineSubsystem<FAssetManager>();
-            FAssetRequest* Request = Manager->LoadAsset(FullPath);
+            FAssetRequest* Request = Manager->LoadAsset(QualifiedName.ToString());
             Manager->FlushAsyncLoading();
 
             FoundObject = Request->GetPendingObject();
@@ -222,6 +220,21 @@ namespace Lumina
         }
 
         Name = FName(MutableName);
+    }
+
+    bool IsValid(CObjectBase* Obj)
+    {
+        if (Obj == nullptr)
+        {
+            return false;
+        }
+
+        if (Obj->HasAnyFlag(OF_NeedsLoad | OF_MarkedGarbage))
+        {
+            return false;
+        }
+
+        return true;
     }
 
     CObject* NewObject(CClass* InClass, const CPackage* Package, const FName& Name, EObjectFlags Flags)

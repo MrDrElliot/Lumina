@@ -58,8 +58,11 @@ namespace Lumina
     void FVulkanCommandList::Close()
     {
         LUMINA_PROFILE_SCOPE();
-        TracyVkCollect(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer)
-        
+        if (Info.CommandQueue != ECommandQueue::Transfer)
+        {
+            TracyVkCollect(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer)
+        }
+
         // Reset any images or buffers to their default desired layouts.
         CommandListTracker.ResetBufferDefaultStates();
         CommandListTracker.ResetImageDefaultStates();
@@ -84,7 +87,6 @@ namespace Lumina
     void FVulkanCommandList::CopyImage(FRHIImage* Src, FRHIImage* Dst)
     {
         LUMINA_PROFILE_SCOPE();
-        TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "CopyImage")        
         Assert(Src != nullptr && Dst != nullptr)
         
         CurrentCommandBuffer->AddReferencedResource(Src);
@@ -134,7 +136,6 @@ namespace Lumina
     void FVulkanCommandList::WriteToImage(FRHIImage* Dst, uint32 ArraySlice, uint32 MipLevel, const void* Data, SIZE_T RowPitch, SIZE_T DepthPitch)
     {
         LUMINA_PROFILE_SCOPE();
-        TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "WriteToImage")        
         Assert(Dst != nullptr && Data != nullptr)
 
         CurrentCommandBuffer->AddReferencedResource(Dst);
@@ -188,7 +189,6 @@ namespace Lumina
     void FVulkanCommandList::CopyBuffer(FRHIBuffer* Source, uint64 SrcOffset, FRHIBuffer* Destination, uint64 DstOffset, uint64 CopySize)
     {
         LUMINA_PROFILE_SCOPE();
-        TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "CopyImage")        
         Assert(PendingState.IsRecording())
         Assert(Source != nullptr)
         Assert(Destination != nullptr)
@@ -212,9 +212,7 @@ namespace Lumina
     void FVulkanCommandList::UploadToBuffer(FRHIBuffer* Buffer, const void* Data, uint32 Offset, uint32 Size)
     {
         LUMINA_PROFILE_SCOPE();
-        TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "UploadToBuffer")        
         Assert(Size > 0 && Size <= Buffer->GetSize())
-        Assert(PendingState.IsRecording())
         
         CurrentCommandBuffer->AddReferencedResource(Buffer);
         
@@ -244,7 +242,6 @@ namespace Lumina
     void FVulkanCommandList::SetRequiredImageAccess(FRHIImage* Image, ERHIAccess Access)
     {
         LUMINA_PROFILE_SCOPE();
-        TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "SetRequiredImageAccess")        
 
         CommandListTracker.RequireImageAccess(Image, Access);
 
@@ -257,7 +254,6 @@ namespace Lumina
     void FVulkanCommandList::SetRequiredBufferAccess(FRHIBuffer* Buffer, ERHIAccess Access)
     {
         LUMINA_PROFILE_SCOPE();
-        TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "SetRequiredBufferAccess")        
 
         CommandListTracker.RequireBufferAccess(Buffer, Access);
 
@@ -270,7 +266,6 @@ namespace Lumina
     void FVulkanCommandList::CommitBarriers()
     {
         LUMINA_PROFILE_SCOPE();
-        TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "CommitBarriers")        
 
         FVulkanPipelineBarrier Barrier;
 
@@ -289,7 +284,6 @@ namespace Lumina
     void FVulkanCommandList::SetResourceStatesForBindingSet(FRHIBindingSet* BindingSet)
     {
         LUMINA_PROFILE_SCOPE();
-        TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "SetResourceStatesForBindingSet")        
 
         FVulkanBindingSet* VkBindingSet = static_cast<FVulkanBindingSet*>(BindingSet);
 
@@ -323,7 +317,6 @@ namespace Lumina
     
     void FVulkanCommandList::AddMarker(const char* Name, const FColor& Color)
     {
-        TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "AddMarker")        
 
         if (PendingState.IsRecording())
         {
@@ -333,7 +326,6 @@ namespace Lumina
 
     void FVulkanCommandList::PopMarker()
     {
-        TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "PopMarker")        
 
         if(PendingState.IsRecording())
         {

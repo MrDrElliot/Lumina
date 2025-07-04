@@ -7,11 +7,6 @@ namespace Lumina
     {
     public:
 
-        FClearColorRenderPass(const FName& Name)
-            :IRenderPass(Name)
-        {}
-        
-        void Execute(ICommandList* CommandList) override;
-    
+        void Execute(FRenderGraphScope& Scope) override;
     };
 }

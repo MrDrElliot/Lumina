@@ -91,7 +91,7 @@ namespace Lumina
     	
 		SwapchainImages.clear();
 
-    	ICommandList* CommandList = Context->GetCommandList();
+    	ICommandList* CommandList = Context->GetCommandList(Q_Graphics);
     	CommandList->Open();
     	
         for (VkImage RawImage : RawImages)
@@ -133,7 +133,7 @@ namespace Lumina
 
     	CommandList->CommitBarriers();
     	CommandList->Close();
-    	Context->ExecuteCommandList(CommandList);
+    	Context->ExecuteCommandList(CommandList, 1, Q_Graphics);
 
     	size_t currentImageCount = RawImages.size();
 

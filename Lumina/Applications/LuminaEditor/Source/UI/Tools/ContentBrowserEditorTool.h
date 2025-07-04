@@ -35,7 +35,7 @@ namespace Lumina
                 return FInlineString(CombinedString.c_str());
             }
 
-            const FName& GetName() const override
+            FName GetName() const override
             {
                 return Path.filename().string().c_str();
             }

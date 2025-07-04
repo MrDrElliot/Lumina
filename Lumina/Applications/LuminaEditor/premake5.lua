@@ -16,6 +16,7 @@ project "Editor"
 		"Lumina",
 		"DbgHelp",
     	"EA",
+    	"EnkiTS",
 		"ImGui"
 	 }
 	 

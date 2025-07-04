@@ -1,11 +1,15 @@
 ﻿#include "SceneEditorTool.h"
 
+#include "Scene/SceneManager.h"
+#include "Scene/SceneRenderer.h"
 #include "Scene/Entity/Components/NameComponent.h"
 #include "Scene/Entity/Components/EditorComponent.h"
 
 
 namespace Lumina
 {
+    class FSceneRenderer;
+    class FSceneManager;
 
     FSceneEditorTool::FSceneEditorTool(IEditorToolContext* Context, FScene* InScene)
         : FEditorTool(Context, "Scene Editor", InScene)
@@ -68,6 +72,14 @@ namespace Lumina
             OutlinerListView.MarkTreeDirty();
 
             EntityDestroyRequests.pop();
+        }
+    }
+
+    void FSceneEditorTool::DrawToolMenu(const FUpdateContext& UpdateContext)
+    {
+        if (ImGui::MenuItem(LE_ICON_DEBUG_STEP_INTO" Render Graph"))
+        {
+            FSceneRenderer* SceneRenderer = UpdateContext.GetSubsystem<FSceneManager>()->GetSceneRendererForScene(Scene);
         }
     }
 

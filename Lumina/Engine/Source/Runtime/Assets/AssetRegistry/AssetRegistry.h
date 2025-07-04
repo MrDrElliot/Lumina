@@ -20,6 +20,20 @@ DECLARE_MULTICAST_DELEGATE(FAssetRegistryUpdatedDelegate);
 
 namespace Lumina
 {
+	class CClass;
+
+	struct FAssetData
+	{
+		FName	Name;
+		FString	ClassName;
+		FString Path;
+	};
+
+	struct FARFilter
+	{
+		TVector<FString> ClassNames;
+	};
+	
 	class LUMINA_API FAssetRegistry final : public ISubsystem
 	{
 	public:
@@ -27,18 +41,12 @@ namespace Lumina
 		void Initialize(FSubsystemManager& Manager) override;
 		void Deinitialize() override;
 
-		void StopDiscoveryThread();
-		void UpdateAssetDictionary();
-		void UpdateAssetPath(const FName& AssetName, const FString& NewPath);
-		FAssetHeader GetAssetHeader(const FName& AssetName);
-		
-	protected:
-		
-		void BeginAssetInitialDiscovery();
-		void BuildAssetDictionary(const TVector<FString>& DiscoveredAssets);
+		void BuildAssetDictionary();
 
-		std::thread							DiscoveryThread;
-		eastl::atomic<bool> 				bDiscoveryThreadRunning;
-		THashMap<FName, FAssetHeader> 		AssetDictionary;
+		void GetAssets(const FARFilter& Filter, TVector<FAssetData>& OutAssets);
+
+	private:
+
+		TVector<FAssetData> Assets;
 	};
 }

@@ -27,6 +27,7 @@ namespace Lumina
         };
         
 
+        LUMINA_API uint64 GetThreadID();
         LUMINA_API bool IsMainThread();
         LUMINA_API bool IsRenderThread();
 

@@ -27,7 +27,7 @@ namespace Lumina
             const char* GetTooltipText() const override { return GetName().c_str(); }
             bool HasContextMenu() override { return true; }
 
-            const FName& GetName() const override
+            FName GetName() const override
             {
                 return Entity.GetConstComponent<FNameComponent>().GetName();
             }
@@ -49,6 +49,7 @@ namespace Lumina
 
         void Update(const FUpdateContext& UpdateContext) override;
 
+        void DrawToolMenu(const FUpdateContext& UpdateContext) override;
         void InitializeDockingLayout(ImGuiID InDockspaceID, const ImVec2& InDockspaceSize) const override;
         
     protected:

@@ -29,7 +29,7 @@ namespace Lumina
         const FSettings& GetProjectSettings() const { return Settings; }
 
         FString GetProjectContentDirectory() const;
-
+    
 
     private:
         

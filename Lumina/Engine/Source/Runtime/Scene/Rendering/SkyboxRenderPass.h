@@ -7,11 +7,7 @@ namespace Lumina
     {
     public:
 
-        FSkyboxRenderPass(const FName& Name)
-            :IRenderPass(Name)
-        {}
-
-        void Execute(ICommandList* CommandList) override;
+        void Execute(FRenderGraphScope& Scope) override;
     
     };
 }

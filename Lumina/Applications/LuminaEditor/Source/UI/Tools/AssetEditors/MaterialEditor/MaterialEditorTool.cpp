@@ -1,8 +1,15 @@
 ﻿#include "MaterialEditorTool.h"
 #include "imnodes/imnodes.h"
 #include "Assets/AssetTypes/Material/Material.h"
+#include "Core/Engine/Engine.h"
+#include "Core/Object/Cast.h"
 #include "Renderer/RHIIncl.h"
 #include "Core/Object/Class.h"
+#include "Paths/Paths.h"
+#include "Platform/Filesystem/FileHelper.h"
+#include "Renderer/RenderContext.h"
+#include "Renderer/RenderManager.h"
+#include "Renderer/ShaderCompiler.h"
 #include "Tools/UI/ImGui/ImGuiX.h"
 #include "UI/Tools/NodeGraph/Material/MaterialCompiler.h"
 #include "UI/Tools/NodeGraph/Material/MaterialNodeGraph.h"
@@ -76,6 +83,20 @@ namespace Lumina
                 FString Tree = Compiler.BuildTree();
                 CompilationResult.CompilationLog = "Material Compiled Successfully! Generated GLSL: \n \n \n" + Tree;
                 CompilationResult.bIsError = false;
+
+
+                IShaderCompiler* Compiler = GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext()->GetShaderCompiler();
+                Compiler->CompilerShaderRaw(Tree, {}, [this](const TVector<uint32>& Binaries)
+                {
+                    IRenderContext* RenderContext = GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext();
+                    FRHIVertexShaderRef Shader = RenderContext->CreateVertexShader(Binaries);
+                    FRHIPixelShaderRef PixelShader = RenderContext->GetShaderLibrary()->GetShader("Material.frag").As<FRHIPixelShader>();
+                    CMaterial* Material = Cast<CMaterial>(Asset);
+                    Material->VertexShader = Shader;
+                    Material->PixelShader = PixelShader;
+                    RenderContext->OnShaderCompiled(Shader);
+                    
+                });
                 
             }
         }

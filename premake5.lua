@@ -60,6 +60,7 @@ workspace "Lumina"
 
 	group "Dependencies"
 		include "Lumina/Engine/ThirdParty/EA"
+		include "Lumina/Engine/ThirdParty/EnkiTS"
 		include "Lumina/Engine/ThirdParty/glfw"
 		include "Lumina/Engine/ThirdParty/imgui"
 	group ""

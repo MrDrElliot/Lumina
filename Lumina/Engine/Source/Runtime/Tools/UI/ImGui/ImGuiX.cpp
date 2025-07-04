@@ -2,10 +2,13 @@
 
 #include "ImGuiDesignIcons.h"
 #include "imgui_internal.h"
+#include "Assets/AssetRegistry/AssetRegistry.h"
+#include "Core/Engine/Engine.h"
 #include "Core/Object/Class.h"
 #include "Core/Reflection/Type/LuminaTypes.h"
 #include "Core/Windows/Window.h"
 #include "GLFW/glfw3.h"
+#include "Paths/Paths.h"
 
 #define IMDRAW_DEBUG
 
@@ -259,6 +262,55 @@ namespace Lumina::ImGuiX
             Current->DrawProperty(ValuePtr);
             
             Current = (FProperty*)Current->Next;
+        }
+    }
+
+    void ObjectSelector(const FARFilter& Filter, CObject*& OutSelected)
+    {
+        static ImGuiTextFilter SearchFilter;
+        
+        const char* Text = "Select Object";
+        float WindowWidth = ImGui::GetContentRegionAvail().x;
+        float TextWidth = ImGui::CalcTextSize(Text).x;
+
+        ImGui::SetCursorPosX((WindowWidth - TextWidth) * 0.5f);
+        ImGui::Text("%s", Text);        ImGui::Separator();
+
+        SearchFilter.Draw("##", ImGui::GetContentRegionAvail().x);
+        ImGui::Separator();
+
+        TVector<FAssetData> FilteredAssets;
+        GEngine->GetEngineSubsystem<FAssetRegistry>()->GetAssets(Filter, FilteredAssets);
+
+        if (ImGui::BeginTable("AssetTable", 1, ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_ScrollY))
+        {
+            ImGui::TableSetupColumn("Asset", ImGuiTableColumnFlags_WidthStretch);
+
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+
+            for (const FAssetData& Asset : FilteredAssets)
+            {
+                if (!SearchFilter.PassFilter(Asset.Name.c_str()))
+                {
+                    continue;
+                }
+
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+
+                if (ImGui::Selectable(Asset.Name.c_str()))
+                {
+                    FString VirtualPath = Paths::ConvertToVirtualPath(Asset.Path);
+                    VirtualPath += "." + Asset.Name.ToString();
+                    FName AssetName = VirtualPath.c_str();
+                    OutSelected = LoadObject<CObject>(AssetName);
+                    ImGui::CloseCurrentPopup();
+                    break;
+                }
+            }
+
+            ImGui::EndTable();
         }
     }
 

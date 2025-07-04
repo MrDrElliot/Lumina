@@ -1,6 +1,7 @@
 ﻿#include "RenderGraph.h"
-
+#include "Renderer/RHIIncl.h"
 #include "Core/Profiler/Profile.h"
+#include "EASTL/sort.h"
 #include "RenderPasses/RenderPass.h"
 
 namespace Lumina
@@ -18,16 +19,23 @@ namespace Lumina
     void FRenderGraph::Execute(ICommandList* CommandList)
     {
         LUMINA_PROFILE_SCOPE();
+        
+        FRenderGraphScope Scope;
+        Scope.CommandList = CommandList;
+        Scope.RenderContext = RenderContext;
+        Scope.Resources = Resources;
+        
         for (IRenderPass* Pass : RenderPasses)
         {
-            Pass->Execute(CommandList);    
+            Pass->Execute(Scope);    
         }
     }
 
     void FRenderGraph::Compile()
     {
-        
+        LUMINA_PROFILE_SCOPE();
     }
+
 
     void FRenderGraph::AddPassInternal(IRenderPass* InPass)
     {

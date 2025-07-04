@@ -11,7 +11,12 @@ namespace Lumina
 
         static std::thread::id gMainThreadID = {};
         static std::thread::id gRenderThreadID = {};
-        
+
+        uint64 GetThreadID()
+        {
+            return std::this_thread::get_id()._Get_underlying_id();
+        }
+
         bool IsMainThread()
         {
             return gMainThreadID == std::this_thread::get_id();

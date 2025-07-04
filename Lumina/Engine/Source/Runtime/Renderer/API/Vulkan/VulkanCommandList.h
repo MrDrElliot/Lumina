@@ -24,7 +24,10 @@ namespace Lumina
             , ComputeState()
             , RenderContext(InContext)
             , Info(InInfo)
-        {}
+            , PushConstantVisibility(0)
+            , CurrentPipelineLayout(nullptr)
+        {
+        }
 
         void Open() override;
         void Close() override;
@@ -70,7 +73,7 @@ namespace Lumina
 
         FPendingCommandState& GetPendingCommandState() override { return PendingState; }
 
-        TRefCountPtr<FTrackedCommandBufer>  CurrentCommandBuffer;
+        TRefCountPtr<FTrackedCommandBuffer>  CurrentCommandBuffer;
 
     private:
         

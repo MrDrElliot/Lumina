@@ -31,7 +31,12 @@ namespace Lumina
             return *this;
         }
 
-        if (Value->GetPackage() && Value->GetPackage() == SaveContext->CurrentPackage)
+        if (Value->GetPackage() == nullptr)
+        {
+            return *this;
+        }
+        
+        if (Value->GetPackage() == SaveContext->CurrentPackage)
         {
             SaveContext->AddExport(Value);
         }
@@ -39,8 +44,11 @@ namespace Lumina
         {
             SaveContext->AddImport(Value);
         }
-        
-        Value->Serialize(*this);
+
+        if (Value->GetPackage() == SaveContext->CurrentPackage)
+        {
+            Value->Serialize(*this);
+        }
         
         return *this;
     }

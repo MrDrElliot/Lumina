@@ -5,12 +5,14 @@ namespace Lumina
     void FShaderLibrary::AddShader(FRHIShader* Shader)
     {
         FScopeLock Lock(Mutex);
+        
         Shaders.insert_or_assign(Shader->GetKey(), Shader);
     }
 
     void FShaderLibrary::RemoveShader(FName Key)
     {
         FScopeLock Lock(Mutex);
+        
         auto It = Shaders.find(Key);
         Assert(It != Shaders.end())
         

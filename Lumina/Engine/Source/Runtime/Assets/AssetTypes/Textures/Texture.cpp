@@ -9,6 +9,7 @@ namespace Lumina
 {
     void CTexture::Serialize(FArchive& Ar)
     {
+        Super::Serialize(Ar);
         Ar << ImageDescription;
         Ar << Pixels;
     }
@@ -29,8 +30,11 @@ namespace Lumina
         const uint32 Height = ImageDescription.Extent.Y;
         const SIZE_T RowPitch = Width * 4; // 4 bytes per pixel (RGBA8)
         const SIZE_T DepthPitch = RowPitch * Height; // 2D texture → no slices
-        
-        RenderContext->GetCommandList()->WriteToImage(RHIImage, 0, 0, Pixels.data(), RowPitch, DepthPitch);
-        
+
+        FRHICommandListRef TransferCommandList = RenderContext->CreateCommandList({ECommandQueue::Transfer});
+        TransferCommandList->Open();
+        TransferCommandList->WriteToImage(RHIImage, 0, 0, Pixels.data(), RowPitch, DepthPitch);
+        TransferCommandList->Close();
+        RenderContext->ExecuteCommandList(TransferCommandList, 1, Q_Transfer);
     }
 }

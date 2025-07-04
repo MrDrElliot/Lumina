@@ -79,18 +79,19 @@ namespace Lumina
     {
     public:
 
-        FQueue(FVulkanDevice* InDevice, VkQueue InQueue, uint32 InQueueFamilyIndex)
+        FQueue(FVulkanDevice* InDevice, VkQueue InQueue, uint32 InQueueFamilyIndex, ECommandQueue InType)
             : IDeviceChild(InDevice)
             , CommandPool(nullptr)
             , Queue(InQueue)
             , QueueFamilyIndex(InQueueFamilyIndex)
             , FencePool(InDevice)
+            , Type(InType)
         {
         }
 
         ~FQueue();
         
-        TRefCountPtr<FTrackedCommandBufer> GetOrCreateCommandBuffer();
+        TRefCountPtr<FTrackedCommandBuffer> GetOrCreateCommandBuffer();
 
         void RetireCommandBuffers();
         
@@ -101,7 +102,8 @@ namespace Lumina
         void AddSignalSemaphore(VkSemaphore Semaphore);
         void AddWaitSemaphore(VkSemaphore Semaphore);
         
-        
+
+        ECommandQueue               Type;
         FMutex                      Mutex;
         VkCommandPool               CommandPool;
         VkQueue                     Queue;
@@ -110,8 +112,8 @@ namespace Lumina
         TVector<VkSemaphore>        SignalSemaphores;
         FFencePool                  FencePool;
         
-        TFixedVector<TRefCountPtr<FTrackedCommandBufer>, 4> CommandBuffersInFlight;
-        TStack<TRefCountPtr<FTrackedCommandBufer>, TFixedVector<TRefCountPtr<FTrackedCommandBufer>, 4>> CommandBufferPool;
+        TFixedVector<TRefCountPtr<FTrackedCommandBuffer>, 4> CommandBuffersInFlight;
+        TStack<TRefCountPtr<FTrackedCommandBuffer>, TFixedVector<TRefCountPtr<FTrackedCommandBuffer>, 4>> CommandBufferPool;
     };
 
     class FVulkanStagingManager
@@ -156,11 +158,11 @@ namespace Lumina
         void FrameStart(const FUpdateContext& UpdateContext, uint8 InCurrentFrameIndex) override;
         void FrameEnd(const FUpdateContext& UpdateContext) override;
 
-        FORCEINLINE FQueue* GetQueue(ECommandQueue Type = ECommandQueue::Graphics) const { return Queues[(uint32)Type]; }
+        FORCEINLINE FQueue* GetQueue(ECommandQueue Type) const { return Queues[(uint32)Type]; }
 
         NODISCARD FRHICommandListRef CreateCommandList(const FCommandListInfo& Info) override;
-        void ExecuteCommandList(ICommandList* CommandLists, uint32 NumCommandLists = 1, ECommandQueue QueueType = ECommandQueue::Graphics) override;
-        NODISCARD FRHICommandListRef GetCommandList(ECommandQueue Queue = ECommandQueue::Graphics) override;
+        void ExecuteCommandList(ICommandList* CommandLists, uint32 NumCommandLists, ECommandQueue QueueType) override;
+        NODISCARD FRHICommandListRef GetCommandList(ECommandQueue Queue) override;
         
         void CreateDevice(vkb::Instance Instance);
 
@@ -193,6 +195,7 @@ namespace Lumina
         IShaderCompiler* GetShaderCompiler() const override;
         FRHIShaderLibraryRef GetShaderLibrary() const override;
         void CompileEngineShaders() override;
+        void OnShaderCompiled(FRHIShader* Shader) override;
 
         
         //-------------------------------------------------------------------------------------

@@ -7,7 +7,7 @@
 #include "Core/Object/Class.h"
 #include <Core/Reflection/Type/LuminaTypes.h>
 
-#define SHOW_DEBUG 1
+#define SHOW_DEBUG 0
 
 namespace Lumina
 {
@@ -168,8 +168,7 @@ namespace Lumina
     
                 ImNodes::BeginOutputAttribute(Pin->GetGUID(), Shape);
 
-                FString DebugString = Pin->GetPinName() + " - " + eastl::to_string(Pin->GetGUID());
-                ImGui::TextUnformatted(DebugString.c_str());
+                ImGui::TextUnformatted(Pin->GetPinName().c_str());
                 
                 ImGui::SameLine();
             
@@ -202,8 +201,7 @@ namespace Lumina
                 
                 ImNodes::BeginInputAttribute(Pin->GetGUID(), Shape);
 
-                FString DebugString = Pin->GetPinName() + " - " + eastl::to_string(Pin->GetGUID());
-                ImGui::TextUnformatted(DebugString.c_str());
+                ImGui::TextUnformatted(Pin->GetPinName().c_str());
                 
                 ImGui::SameLine();
                 

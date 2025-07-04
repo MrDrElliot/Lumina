@@ -26,6 +26,7 @@
 #include "Assets/AssetTypes/Mesh/StaticMesh/StaticMesh.h"
 #include "Assets/AssetTypes/Textures/Texture.h"
 #include "Core/Object/Package/Package.h"
+#include "Core/Profiler/Profile.h"
 #include "Renderer/RenderManager.h"
 #include "Scene/SceneRenderer.h"
 #include "Tools/AssetEditors/MeshEditor/MeshEditorTool.h"
@@ -85,6 +86,7 @@ namespace Lumina
 
     void FEditorUI::OnStartFrame(const FUpdateContext& UpdateContext)
     {
+        LUMINA_PROFILE_SCOPE();
         Assert(UpdateContext.GetUpdateStage() == EUpdateStage::FrameStart)
 
         auto TitleBarLeftContents = [this, &UpdateContext] ()
@@ -287,6 +289,7 @@ namespace Lumina
 
     void FEditorUI::OnUpdate(const FUpdateContext& UpdateContext)
     {
+        LUMINA_PROFILE_SCOPE()
         for (FEditorTool* Tool : EditorTools)
         {
             if (Tool->HasScene())
@@ -298,7 +301,7 @@ namespace Lumina
 
     void FEditorUI::OnEndFrame(const FUpdateContext& UpdateContext)
     {
-        
+        LUMINA_PROFILE_SCOPE()
     }
     
     void FEditorUI::DestroyTool(const FUpdateContext& UpdateContext, FEditorTool* Tool)

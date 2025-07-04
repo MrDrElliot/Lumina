@@ -48,12 +48,12 @@ namespace Lumina
 
     protected:
 
-        void DrawSkybox(const FScene* Scene);
         void ForwardRenderPass(const FScene* Scene);
         void FullScreenPass(const FScene* Scene);
 
         void DrawPrimitives(const FScene* Scene);
 
+        void InitResources();
         void InitBuffers();
         void CreateImages();
         void OnSwapchainResized();
@@ -75,6 +75,9 @@ namespace Lumina
         TVector<FModelData>                 ModelData;
         TVector<FMaterialTexturesData>      TexturesData;
 
+        FRHIBindingSetRef                   SceneGlobalBindingSet;
+        FRHIBindingLayoutRef                SceneGlobalBindingLayout;
+        
         FRenderGraph                        RenderGraph;
     };
     

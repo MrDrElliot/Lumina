@@ -5,6 +5,9 @@
 #include <nlohmann/json.hpp>
 #include <string>
 
+#include "Assets/AssetRegistry/AssetRegistry.h"
+#include "Core/Engine/Engine.h"
+
 
 namespace Lumina
 {
@@ -36,7 +39,7 @@ namespace Lumina
             LOG_ERROR("Failed to parse project JSON: {0}", e.what());
         }
 
-        
+        GEngine->GetEngineSubsystem<FAssetRegistry>()->BuildAssetDictionary();
         bHasProjectLoaded = true;
     }
 

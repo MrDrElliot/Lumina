@@ -5,6 +5,7 @@
 #include "Tools/UI/ImGui/Vulkan/VulkanImGuiRender.h"
 #endif
 
+#include "Core/Profiler/Profile.h"
 #include "Tools/UI/ImGui/ImGuiRenderer.h"
 
 namespace Lumina
@@ -47,6 +48,7 @@ namespace Lumina
 
     void FRenderManager::FrameStart(const FUpdateContext& UpdateContext)
     {
+        LUMINA_PROFILE_SCOPE();
         CurrentFrameIndex = (CurrentFrameIndex + 1) % FRAMES_IN_FLIGHT;
 
         RenderContext->FrameStart(UpdateContext, CurrentFrameIndex);
@@ -58,6 +60,8 @@ namespace Lumina
 
     void FRenderManager::FrameEnd(const FUpdateContext& UpdateContext)
     {
+        LUMINA_PROFILE_SCOPE();
+        
         #if WITH_DEVELOPMENT_TOOLS
         ImGuiRenderer->EndFrame(UpdateContext);
         #endif

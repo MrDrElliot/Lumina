@@ -197,6 +197,9 @@ namespace Lumina
         /** Byte offset from file start to the raw object data block */
         uint64 ObjectDataOffset;
 
+        /** The class for the asset at this packages top level (e.g. A static mesh). */
+        FString ClassPath;
+
         INLINE friend FArchive& operator << (FArchive& Ar, FPackageHeader& Data)
         {
             Ar << Data.Version;
@@ -205,6 +208,7 @@ namespace Lumina
             Ar << Data.ExportTableOffset;
             Ar << Data.ExportCount;
             Ar << Data.ObjectDataOffset;
+            Ar << Data.ClassPath;
 
             return Ar;
         }
@@ -307,7 +311,7 @@ namespace Lumina
          * @param FileName 
          * @return 
          */
-        LUMINA_API static CPackage* CreatePackage(const FString& FileName);
+        LUMINA_API static CPackage* CreatePackage(const FString& InTopLevelClassName, const FString& FileName);
 
         /**
          * Will load the package and create the package loader. If called twice, nothing will happen.
@@ -363,7 +367,8 @@ namespace Lumina
     public:
 
         FArchive*                        Loader = nullptr;
-                                                
+
+        FString                          TopLevelClassName;
         TVector<FObjectImport>           ImportTable;
         TVector<FObjectExport>           ExportTable;
 

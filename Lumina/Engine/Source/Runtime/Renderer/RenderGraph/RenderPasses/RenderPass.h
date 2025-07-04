@@ -1,9 +1,16 @@
 ﻿#pragma once
-#include "Containers/Array.h"
+
 #include "Containers/Name.h"
-#include "EASTL/variant.h"
-#include "Memory/RefCounted.h"
+#include "Core/Functional/Function.h"
 #include "Renderer/RHIFwd.h"
+#include "Renderer/RenderGraph/RenderGraph.h"
+
+namespace Lumina
+{
+    class IRenderContext;
+    class FRenderGraphBuilder;
+    class FRenderGraphScope;
+}
 
 namespace Lumina
 {
@@ -15,20 +22,18 @@ namespace Lumina
     
     class IRenderPass
     {
+        friend class FRenderGraph;
     public:
-
-        IRenderPass(const IRenderPass&) = delete;
-        IRenderPass() = delete;
-        IRenderPass(const FName& InName)
-            : PassName(InName)
-        {}
-
+        
+        virtual ~IRenderPass() = default;
+        
         FName GetPassName() const { return PassName; }
 
-        virtual void Execute(ICommandList* CommandList) = 0;
+        virtual void Execute(FRenderGraphScope& Scope) = 0;
 
     private:
         
-        FName                               PassName;
+        FName PassName;
+        TFunction<void(FRenderGraphBuilder&)> BuildFunctor;
     };
 }

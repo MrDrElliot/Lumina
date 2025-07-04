@@ -11,6 +11,7 @@
 #include "Entity/Components/TransformComponent.h"
 #include "Entity/Systems/EntitySystem.h"
 #include "Subsystems/FCameraManager.h"
+#include "TaskSystem/TaskSystem.h"
 
 namespace Lumina
 {
@@ -47,6 +48,7 @@ namespace Lumina
         {
             System->Update(EntityRegistry, SceneContext);
         }
+        
     }
     
     void FScene::EndFrame()

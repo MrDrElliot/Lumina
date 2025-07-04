@@ -39,9 +39,10 @@ namespace Lumina
         Assert(FilePath.extension() == ".png")
 
         
-        CPackage* NewPackage = CPackage::CreatePackage(DestinationPath);
+        CPackage* NewPackage = CPackage::CreatePackage(GetSupportedType()->GetName().ToString(), DestinationPath);
         CTexture* NewTexture = NewObject<CTexture>(NewPackage, FileName.c_str());
-        
+        NewTexture->SetFlag(OF_NeedsLoad);
+
         FRHIImageDesc ImageDescription;
         ImageDescription.Format = EImageFormat::RGBA32_UNORM;
         ImageDescription.Extent = ImportHelpers::GetImagePixelData(NewTexture->Pixels, RawPath);

@@ -241,7 +241,7 @@ namespace Lumina
                 return *this;
             }
         
-            if (HasError() || SerializeNum > GetMaxSerializeSize())
+            if (SerializeNum > GetMaxSerializeSize())
             {
                 SetHasError(true);
                 LOG_ERROR("Archiver is corrupted, attempted to serialize {} array elements. Max is: {}", SerializeNum, GetMaxSerializeSize());

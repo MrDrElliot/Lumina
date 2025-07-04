@@ -13,8 +13,8 @@
 inline bool GIsMemorySystemInitialized = false;
 inline rpmalloc_config_t GrpmallocConfig;
 
-constexpr uint16 DEFAULT_ALIGNMENT = 0;
-constexpr uint16 MIN_ALIGNMENT = 8;
+constexpr SIZE_T DEFAULT_ALIGNMENT = 0;
+constexpr SIZE_T MIN_ALIGNMENT = 8;
 
 namespace Lumina::Memory
 {

@@ -90,6 +90,11 @@ namespace Lumina
         Num = 3,
     };
 
+    #define Q_Graphics ECommandQueue::Graphics
+    #define Q_Compute ECommandQueue::Compute
+    #define Q_Transfer ECommandQueue::Transfer
+
+    
     enum class ECommandBufferUsage : uint8
     {
         General,

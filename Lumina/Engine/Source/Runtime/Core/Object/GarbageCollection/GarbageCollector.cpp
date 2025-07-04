@@ -32,7 +32,7 @@ namespace Lumina::GarbageCollection
 
     void CollectGarbage()
     {
-        LUMINA_PROFILE_SECTION("Garbage Collection");
+        LUMINA_PROFILE_SCOPE();
         while (!PendingDeletes.empty())
         {
             CObjectBase* Obj = PendingDeletes.front();

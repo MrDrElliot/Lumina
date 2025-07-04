@@ -2,6 +2,7 @@
 #include "InputSubsystem.h"
 
 #include "Input.h"
+#include "Core/Profiler/Profile.h"
 
 namespace Lumina
 {
@@ -11,6 +12,8 @@ namespace Lumina
 
     void FInputSubsystem::Update(const FUpdateContext& UpdateContext)
     {
+        LUMINA_PROFILE_SCOPE();
+
         glm::vec2 MousePos = Input::GetMousePos();
         if (MousePosLastFrame == glm::vec2(0.0f))
         {

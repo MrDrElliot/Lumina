@@ -48,6 +48,27 @@ namespace Lumina::Paths
         return FilePart;
     }
 
+    FString GetExtension(const FString& InPath)
+    {
+        size_t Dot = InPath.find_last_of(".");
+        if (Dot != FString::npos && Dot + 1 < InPath.length())
+        {
+            return InPath.substr(Dot + 1);
+        }
+
+        return InPath;
+    }
+
+    bool HasExtension(const FString& Path, const FString& Ext)
+    {
+        size_t Dot = Path.find_last_of('.');
+        if (Dot == FString::npos || Dot + 1 >= Path.length())
+            return false;
+
+        FString ActualExt = Path.substr(Dot + 1);
+        return StringUtils::ToLower(ActualExt) == StringUtils::ToLower(Ext);
+    }
+
     FString RemoveExtension(const FString& InPath)
     {
         size_t Dot = InPath.find_last_of(".");

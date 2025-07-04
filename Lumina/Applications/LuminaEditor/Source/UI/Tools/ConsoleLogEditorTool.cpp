@@ -76,24 +76,23 @@ namespace Lumina
         ImGui::SetNextWindowSize(ImVec2(600, 400), ImGuiCond_FirstUseEver);
     
         ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
-    
+
         ImGui::BeginChild("LogMessages", ImVec2(0, -ImGui::GetFrameHeightWithSpacing()), true, ImGuiWindowFlags_HorizontalScrollbar);
 
         SIZE_T PreviousMessageSize = OutputMessages.size();
         Logging::GetConsoleLogs(OutputMessages);
         SIZE_T NewMessageSize = OutputMessages.size();
-
-
+        
         if (NewMessageSize > PreviousMessageSize)
         {
             ScrollToBottom = true;
         }
 
-        if (ImGui::BeginTable("LogTable", 4, ImGuiTableFlags_Resizable | ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH | ImGuiTableFlags_ScrollY))
+        if (ImGui::BeginTable("LogTable", 4, ImGuiTableFlags_Resizable | ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH | ImGuiTableFlags_ScrollY | ImGuiTableFlags_ScrollX))
         {
             ImGui::TableSetupColumn("Level", ImGuiTableColumnFlags_WidthFixed, 60.0f);
-            ImGui::TableSetupColumn("Time", ImGuiTableColumnFlags_WidthFixed, 80.0f);
-            ImGui::TableSetupColumn("Logger", ImGuiTableColumnFlags_WidthFixed, 100.0f);
+            ImGui::TableSetupColumn("Time", ImGuiTableColumnFlags_WidthFixed, 60.0f);
+            ImGui::TableSetupColumn("Logger", ImGuiTableColumnFlags_WidthFixed, 60.0f);
             ImGui::TableSetupColumn("Message", ImGuiTableColumnFlags_WidthStretch);
             ImGui::TableHeadersRow();
             
@@ -136,33 +135,39 @@ namespace Lumina
                 ImGui::TableSetColumnIndex(1);
                 if (bColorWholeRow)
                 {
-                    ImGui::TextColored(Color, "%s", Message.Time.c_str());
+                    ImGui::PushStyleColor(ImGuiCol_Text, Color);
+                    ImGui::TextWrapped("%s", Message.Time.c_str());
+                    ImGui::PopStyleColor();
                 }
                 else
                 {
-                    ImGui::TextUnformatted(Message.Time.c_str());
+                    ImGui::TextWrapped("%s", Message.Time.c_str());
                 }
     
                 // Logger Name
                 ImGui::TableSetColumnIndex(2);
                 if (bColorWholeRow)
                 {
-                    ImGui::TextColored(Color, "%s", Message.LoggerName.c_str());
+                    ImGui::PushStyleColor(ImGuiCol_Text, Color);
+                    ImGui::TextWrapped("%s", Message.LoggerName.c_str());
+                    ImGui::PopStyleColor();
                 }
                 else
                 {
-                    ImGui::TextUnformatted(Message.LoggerName.c_str());
+                    ImGui::TextWrapped("%s", Message.LoggerName.c_str());
                 }
                 
                 // Message
                 ImGui::TableSetColumnIndex(3);
                 if (bColorWholeRow)
                 {
-                    ImGui::TextColored(Color, "%s", Message.Message.c_str());
+                    ImGui::PushStyleColor(ImGuiCol_Text, Color);
+                    ImGui::TextWrapped("%s", Message.Message.c_str());
+                    ImGui::PopStyleColor();
                 }
                 else
                 {
-                    ImGui::TextUnformatted(Message.Message.c_str());
+                    ImGui::TextWrapped("%s", Message.Message.c_str());
                 }
             }
 

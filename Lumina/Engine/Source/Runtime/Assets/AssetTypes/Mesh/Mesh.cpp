@@ -10,6 +10,7 @@ namespace Lumina
 {
     void CMesh::Serialize(FArchive& Ar)
     {
+        Super::Serialize(Ar);
         Ar << MeshResource;
     }
 
@@ -22,8 +23,9 @@ namespace Lumina
     {
         FRenderManager* RenderManager = GEngine->GetEngineSubsystem<FRenderManager>();
         IRenderContext* RenderContext = RenderManager->GetRenderContext();
-        ICommandList* CommandList = RenderContext->GetCommandList();
         
+        FRHICommandListRef TransferCommandList = RenderContext->CreateCommandList({ECommandQueue::Transfer});
+        TransferCommandList->Open();
         
         // Vertex buffer
         FRHIBufferDesc VertexBufferDesc;
@@ -32,7 +34,7 @@ namespace Lumina
         VertexBufferDesc.Usage.SetFlag(EBufferUsageFlags::VertexBuffer);
 
         VertexBuffer = RenderContext->CreateBuffer(VertexBufferDesc);
-        CommandList->UploadToBuffer(VertexBuffer, MeshResource.Vertices.data(), 0, GetNumVertices() * sizeof(FVertex));
+        TransferCommandList->UploadToBuffer(VertexBuffer, MeshResource.Vertices.data(), 0, GetNumVertices() * sizeof(FVertex));
         
         // Index buffer
         FRHIBufferDesc IndexBufferDesc;
@@ -41,8 +43,11 @@ namespace Lumina
         IndexBufferDesc.Usage.SetFlag(EBufferUsageFlags::IndexBuffer);
 
         IndexBuffer = RenderContext->CreateBuffer(IndexBufferDesc);
-        CommandList->UploadToBuffer(IndexBuffer, MeshResource.Indices.data(), 0, GetNumIndicies() * sizeof(uint32));
-
+        
+        TransferCommandList->UploadToBuffer(IndexBuffer, MeshResource.Indices.data(), 0, GetNumIndicies() * sizeof(uint32));
+        
+        TransferCommandList->Close();
+        RenderContext->ExecuteCommandList(TransferCommandList, 1, ECommandQueue::Transfer);
 
     }
 }

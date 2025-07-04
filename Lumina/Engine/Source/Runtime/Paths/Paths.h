@@ -23,6 +23,10 @@ namespace Lumina::Paths
      * @param bRemoveExtension If true, removes the file extension from the result.
      */
     LUMINA_API FString FileName(const FString& InPath, bool bRemoveExtension = false);
+
+    LUMINA_API FString GetExtension(const FString& InPath);
+
+    LUMINA_API bool HasExtension(const FString& Path, const FString& Ext);
     
     /** Removes and returns the path without its file extension. */
     LUMINA_API FString RemoveExtension(const FString& InPath);

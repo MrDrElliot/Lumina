@@ -27,7 +27,7 @@ namespace Lumina
         MetallicPin->SetPinName("Metallic");
         
         // Roughness (Controls how smooth or rough the surface is)
-        RoughnessPin = CreatePin(CMaterialInput::StaticClass(), "Rougness", ENodePinDirection::Input, EMaterialInputType::Float);
+        RoughnessPin = CreatePin(CMaterialInput::StaticClass(), "Roughness", ENodePinDirection::Input, EMaterialInputType::Float);
         RoughnessPin->SetPinName("Roughness");
 
         // Specular (Affects intensity of reflections for non-metals)
@@ -56,10 +56,11 @@ namespace Lumina
         FString Output;
         Output += "\n \n";
     
-        Output += "MaterialInput Input = (CMaterialInputs)0;\n";
-    
+        Output += "SMaterialInputs GetMaterialInputs()\n{\n";
+        Output += "\tSMaterialInputs Input;\n";
+        
         // Base Color
-        Output += "Input.Diffuse = ";
+        Output += "\tInput.Diffuse = ";
         if (BaseColorPin->HasConnection())
         {
             Output += BaseColorPin->GetConnections()[0]->GetOwningNode()->GetNodeFullName() + ".rgb;";
@@ -71,7 +72,7 @@ namespace Lumina
         Output += "\n";
     
         // Metallic
-        Output += "Input.Metallic = ";
+        Output += "\tInput.Metallic = ";
         if (MetallicPin->HasConnection())
         {
             Output += MetallicPin->GetConnections()[0]->GetOwningNode()->GetNodeFullName() + ".r;";
@@ -83,7 +84,7 @@ namespace Lumina
         Output += "\n";
     
         // Roughness
-        Output += "Input.Roughness = ";
+        Output += "\tInput.Roughness = ";
         if (RoughnessPin->HasConnection())
         {
             Output += RoughnessPin->GetConnections()[0]->GetOwningNode()->GetNodeFullName() + ".r;";
@@ -95,7 +96,7 @@ namespace Lumina
         Output += "\n";
     
         // Specular
-        Output += "Input.Specular = ";
+        Output += "\tInput.Specular = ";
         if (SpecularPin->HasConnection())
         {
             Output += SpecularPin->GetConnections()[0]->GetOwningNode()->GetNodeFullName() + ".r;";
@@ -107,7 +108,7 @@ namespace Lumina
         Output += "\n";
     
         // Emissive
-        Output += "Input.Emissive = ";
+        Output += "\tInput.Emissive = ";
         if (EmissivePin->HasConnection())
         {
             Output += EmissivePin->GetConnections()[0]->GetOwningNode()->GetNodeFullName() + ".rgb;";
@@ -119,7 +120,7 @@ namespace Lumina
         Output += "\n";
     
         // Ambient Occlusion
-        Output += "Input.AO = ";
+        Output += "\tInput.AmbientOcclusion = ";
         if (AOPin->HasConnection())
         {
             Output += AOPin->GetConnections()[0]->GetOwningNode()->GetNodeFullName() + ".r;";
@@ -131,7 +132,7 @@ namespace Lumina
         Output += "\n";
     
         // Normal
-        Output += "Input.Normal = ";
+        Output += "\tInput.Normal = ";
         if (NormalPin->HasConnection())
         {
             Output += "normalize(" + NormalPin->GetConnections()[0]->GetOwningNode()->GetNodeFullName() + ".xyz);";
@@ -143,7 +144,7 @@ namespace Lumina
         Output += "\n";
     
         // Opacity
-        Output += "Input.Opacity = ";
+        Output += "\tInput.Opacity = ";
         if (OpacityPin->HasConnection())
         {
             Output += OpacityPin->GetConnections()[0]->GetOwningNode()->GetNodeFullName() + ".r;";
@@ -152,7 +153,7 @@ namespace Lumina
         {
             Output += "1.0;";
         }
-        Output += "\n";
+        Output += "\n\treturn Input;\n}\n";
     
         Compiler->AddRaw(Output);
     }

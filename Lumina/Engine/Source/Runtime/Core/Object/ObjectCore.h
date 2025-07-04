@@ -35,6 +35,8 @@ namespace Lumina
 
     LUMINA_API FName MakeFullyQualifiedObjectName(const CPackage* Package, const FName& ObjectName);
     LUMINA_API void ResolveObjectName(FName& Name);
+
+    LUMINA_API bool IsValid(CObjectBase* Obj);
     
     template<typename T>
     inline T* FindObject(const FName& QualifiedName)

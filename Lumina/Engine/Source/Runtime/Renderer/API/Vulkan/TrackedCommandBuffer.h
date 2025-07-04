@@ -7,26 +7,32 @@
 
 namespace Lumina
 {
-    class FTrackedCommandBufer : public FRefCounted, public IDeviceChild
+    class FTrackedCommandBuffer : public FRefCounted, public IDeviceChild
     {
     public:
 
-        FTrackedCommandBufer(FVulkanDevice* InDevice, VkCommandBuffer InBuffer, VkCommandPool InPool, VkQueue InQueue)
+        FTrackedCommandBuffer(FVulkanDevice* InDevice, VkCommandBuffer InBuffer, VkCommandPool InPool, bool bCreateTraceContext, VkQueue InQueue)
             : IDeviceChild(InDevice)
             , CommandBuffer(InBuffer)
             , CommandPool(InPool)
             , Queue(InQueue)
         {
             ReferencedResources.reserve(24);
-            TracyContext = TracyVkContext(InDevice->GetPhysicalDevice(),
-            InDevice->GetDevice(),
-            InQueue,
-            CommandBuffer)
+            if (bCreateTraceContext)
+            {
+                TracyContext = TracyVkContext(InDevice->GetPhysicalDevice(),
+                    InDevice->GetDevice(),
+                    InQueue,
+                    CommandBuffer)
+            }
         }
 
-        ~FTrackedCommandBufer() override
+        ~FTrackedCommandBuffer() override
         {
-            TracyVkDestroy(TracyContext)
+            if (TracyContext)
+            {
+                TracyVkDestroy(TracyContext)
+            }
             vkDestroyCommandPool(Device->GetDevice(), CommandPool, nullptr);
         }
 
@@ -45,7 +51,7 @@ namespace Lumina
         VkQueue                     Queue;
         
 
-        TracyVkCtx                  TracyContext;
+        TracyVkCtx                  TracyContext = nullptr;
 
         
         /** Here we keep alive any resources that this current command buffer needs/uses */

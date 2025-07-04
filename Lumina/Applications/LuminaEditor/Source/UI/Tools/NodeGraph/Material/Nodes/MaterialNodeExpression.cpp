@@ -30,6 +30,7 @@ namespace Lumina
                 ValuePin->SetShouldDrawEditor(true);
                 ValuePin->SetHideDuringConnection(false);
                 ValuePin->SetPinName("X");
+                ValuePin->InputType = EMaterialInputType::Float;
             }
             break;
         case EMaterialInputType::Float2:
@@ -38,6 +39,7 @@ namespace Lumina
                 ValuePin->SetShouldDrawEditor(true);
                 ValuePin->SetHideDuringConnection(false);
                 ValuePin->SetPinName("XY");
+                ValuePin->InputType = EMaterialInputType::Float2;
                 
                 CMaterialOutput* R = Cast<CMaterialOutput>(CreatePin(CMaterialOutput::StaticClass(), "X", ENodePinDirection::Output, EMaterialInputType::Float));
                 R->SetPinColor(IM_COL32(255, 10, 10, 255));
@@ -57,6 +59,7 @@ namespace Lumina
                 ValuePin->SetShouldDrawEditor(true);
                 ValuePin->SetHideDuringConnection(false);
                 ValuePin->SetPinName("RGB");
+                ValuePin->InputType = EMaterialInputType::Float3;
                 
                 CMaterialOutput* R = Cast<CMaterialOutput>(CreatePin(CMaterialOutput::StaticClass(), "R", ENodePinDirection::Output, EMaterialInputType::Float));
                 R->SetPinColor(IM_COL32(255, 10, 10, 255));
@@ -81,6 +84,8 @@ namespace Lumina
                 ValuePin->SetShouldDrawEditor(true);
                 ValuePin->SetHideDuringConnection(false);
                 ValuePin->SetPinName("RGBA");
+                ValuePin->InputType = EMaterialInputType::Float4;
+
                 
                 CMaterialOutput* R = Cast<CMaterialOutput>(CreatePin(CMaterialOutput::StaticClass(), "R", ENodePinDirection::Output, EMaterialInputType::Float));
                 R->SetPinColor(IM_COL32(255, 10, 10, 255));

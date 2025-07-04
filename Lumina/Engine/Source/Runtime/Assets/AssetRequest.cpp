@@ -8,8 +8,9 @@ namespace Lumina
 {
     bool FAssetRequest::Process()
     {
-        FString FullPath = Paths::ResolveVirtualPath(AssetPath);
-        FString Name = Paths::FileName(AssetPath);
+        FString FullPath = Paths::RemoveExtension(AssetPath);
+        FString Name = Paths::FileName(FullPath);
+        FullPath = Paths::ResolveVirtualPath(FullPath);
 
         CPackage* Package = CPackage::LoadPackage(FullPath.c_str());
         FName QualifiedName = MakeFullyQualifiedObjectName(Package, Name.c_str());
