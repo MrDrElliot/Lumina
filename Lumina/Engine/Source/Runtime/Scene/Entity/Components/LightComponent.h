@@ -4,10 +4,8 @@
 
 namespace Lumina
 {
-    struct FLightComponent : public FEntityComponent
+    struct FPointLightComponent : FEntityComponent
     {
-
         glm::vec4 LightColor = glm::vec4(1.0f);
-    
     };
 }

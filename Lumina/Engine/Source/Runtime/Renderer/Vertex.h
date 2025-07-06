@@ -13,6 +13,7 @@ namespace Lumina
         glm::vec4       Position;
         glm::vec4       Color;
         glm::vec4       Normal;
+        //glm::vec4       Tangent;
         glm::vec2       UV;
 
         
@@ -36,6 +37,12 @@ namespace Lumina
             Ar << Data.Normal.z;
             Ar << Data.Normal.w;
 
+            // Tangent
+            //Ar << Data.Tangent.x;
+            //Ar << Data.Tangent.y;
+            //Ar << Data.Tangent.z;
+            //Ar << Data.Tangent.w;
+            
             // UV
             Ar << Data.UV.x;
             Ar << Data.UV.y;

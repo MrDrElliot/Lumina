@@ -2,10 +2,10 @@
 #include "EditorTool.h"
 #include "imgui_internal.h"
 #include "ToolFlags.h"
-#include "Core/Math/Hash/Hash.h"
 #include "Scene/SceneManager.h"
 #include "Scene/Entity/Components/CameraComponent.h"
 #include "Scene/Entity/Components/EditorComponent.h"
+#include "Scene/Entity/Components/LightComponent.h"
 #include "Scene/Subsystems/FCameraManager.h"
 #include "Tools/UI/ImGui/ImGuiX.h"
 
@@ -32,10 +32,15 @@ namespace Lumina
         if (HasScene())
         {
             FTransform EditorEntityTransform = FTransform();
-            EditorEntityTransform.Location = {0.0f, 1.0f, 6.0f};
+            EditorEntityTransform.Location = {0.0f, 1.0f, 0.0f};
             EditorEntity = Scene->CreateEntity(EditorEntityTransform, FName("Editor Camera"));
             EditorEntity.AddComponent<FCameraComponent>();
             EditorEntity.AddComponent<FEditorComponent>();
+
+            Entity PointLightEntity = Scene->CreateEntity(EditorEntityTransform, FName("Editor Point Light"));
+            PointLightEntity.AddComponent<FPointLightComponent>();
+            PointLightEntity.GetComponent<FTransformComponent>().SetLocation({0.0f, 2.0f, 10.0f});
+            
             Scene->GetSceneCameraManager()->SetActiveCamera(EditorEntity);
             
             FToolWindow* NewWindow = CreateToolWindow(ViewportWindowName, [] (const FUpdateContext& Contxt, bool bIsFocused)
@@ -144,15 +149,8 @@ namespace Lumina
             IM_COL32_WHITE
         );
 
-        FString CameraString;
-        CameraString += "Camera Location: " + eastl::to_string(CameraComponent.GetPosition().x) + ", " + eastl::to_string(CameraComponent.GetPosition().y) + ", " + eastl::to_string(CameraComponent.GetPosition().z);
+        DrawViewportOverlayElements(UpdateContext, ViewportTexture);
         
-        ImGui::GetWindowDrawList()->AddText(
-            ImVec2(cursorScreenPos.x + 10, cursorScreenPos.y + 10),
-            IM_COL32(255, 255, 255, 255),
-            CameraString.begin(),
-            CameraString.end()
-        );
         
         if (ImGuiDockNode* pDockNode = ImGui::GetWindowDockNode())
         {

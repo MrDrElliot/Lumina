@@ -75,7 +75,7 @@ namespace Lumina
         Output += "\tInput.Metallic = ";
         if (MetallicPin->HasConnection())
         {
-            Output += MetallicPin->GetConnections()[0]->GetOwningNode()->GetNodeFullName() + ".r;";
+            Output += MetallicPin->GetConnections()[0]->GetOwningNode()->GetNodeFullName() + ".b;";
         }
         else
         {
@@ -87,7 +87,7 @@ namespace Lumina
         Output += "\tInput.Roughness = ";
         if (RoughnessPin->HasConnection())
         {
-            Output += RoughnessPin->GetConnections()[0]->GetOwningNode()->GetNodeFullName() + ".r;";
+            Output += RoughnessPin->GetConnections()[0]->GetOwningNode()->GetNodeFullName() + ".g;";
         }
         else
         {
@@ -135,7 +135,7 @@ namespace Lumina
         Output += "\tInput.Normal = ";
         if (NormalPin->HasConnection())
         {
-            Output += "normalize(" + NormalPin->GetConnections()[0]->GetOwningNode()->GetNodeFullName() + ".xyz);";
+            Output += NormalPin->GetConnections()[0]->GetOwningNode()->GetNodeFullName() + ".xyz;";
         }
         else
         {

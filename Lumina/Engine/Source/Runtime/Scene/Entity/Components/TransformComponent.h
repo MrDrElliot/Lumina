@@ -19,7 +19,6 @@ namespace Lumina
         inline glm::quat GetRotation() const    { return Transform.Rotation; }
         inline glm::vec3 GetScale()    const    { return Transform.Scale; }
         
-
         FORCEINLINE void SetLocation(const glm::vec3& InLocation) 
         { 
             Transform.Location = InLocation; 

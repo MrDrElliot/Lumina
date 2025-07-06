@@ -58,7 +58,7 @@ mat4 GetCameraProjection()
 
 vec3 GetModelLocation()
 {
-    return vec3(ModelData.ModelMatrix[PC.ModelIndex][3]);
+    return vec3(ModelData.ModelMatrix[PC.ModelIndex][3].xyz);
 }
 
 mat4 GetModelMatrix()

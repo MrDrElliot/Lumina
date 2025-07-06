@@ -17,9 +17,11 @@ namespace Lumina
         FTransform()
             : Location(0.0f),
               Rotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f)),
-              Scale(1.0f, 1.0f, 1.0f) {}
+              Scale(1.0f, 1.0f, 1.0f)
+        {
+        }
 
-    
+
         glm::mat4 GetMatrix() const
         {
             // First, create scale, then rotation, then translation matrices

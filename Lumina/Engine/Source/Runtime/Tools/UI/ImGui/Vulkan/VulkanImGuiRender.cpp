@@ -1,5 +1,6 @@
 #include "VulkanImGuiRender.h"
 
+#include "ImGuizmo.h"
 #include "Assets/Factories/TextureFactory/TextureFactory.h"
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_vulkan.h"
@@ -97,6 +98,7 @@ namespace Lumina
         ImGui_ImplVulkan_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
+    	ImGuizmo::BeginFrame();
     }
 	
     void FVulkanImGuiRender::OnEndFrame(const FUpdateContext& UpdateContext)

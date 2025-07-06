@@ -690,7 +690,6 @@ namespace Lumina
         , DescriptorPool(RenderContext->GetDescriptorPool())
     {
         Assert(InLayout->DescriptorSetLayout)
-        Assert(!InLayout->PoolSizes.empty())
 
         
         VkDescriptorSetAllocateInfo AllocateInfo = {};

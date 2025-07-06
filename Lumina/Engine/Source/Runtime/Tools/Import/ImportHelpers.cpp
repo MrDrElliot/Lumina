@@ -120,7 +120,7 @@ namespace Lumina::ImportHelpers
                     {
                         OutVertices[InitialVert + index].Normal.x = v.x;
                         OutVertices[InitialVert + index].Normal.y = v.y;
-                        OutVertices[InitialVert + index].Normal.z = v.y;
+                        OutVertices[InitialVert + index].Normal.z = v.z;
                         OutVertices[InitialVert + index].Normal.w = 1.0f;
 
                     });

@@ -12,6 +12,7 @@
 #include "glm/gtx/quaternion.hpp"
 #include "Core/Engine/Engine.h"
 #include "Core/Profiler/Profile.h"
+#include "Entity/Components/LightComponent.h"
 #include "Entity/Components/StaicMeshComponent.h"
 #include "Paths/Paths.h"
 #include "Renderer/RenderContext.h"
@@ -90,13 +91,8 @@ namespace Lumina
         CommandList->UploadToBuffer(SceneDataBuffer, &SceneGlobalData, 0, sizeof(FSceneGlobalData));
         
         ModelData.clear();
-    }
 
-    void FSceneRenderer::EndScene(const FScene* Scene)
-    {
-        ICommandList* CommandList = RenderContext->GetCommandList(Q_Graphics);
-
-        FFrameDrawList DrawList;
+        FSceneRenderData DrawList;
         DrawList.Meshes.reserve(100);
         DrawList.ModelData.reserve(100);
 
@@ -110,20 +106,33 @@ namespace Lumina
                 continue;
             }
 
-            glm::mat4 ModelMatrix = glm::mat4(1.0f);
-            ModelMatrix = glm::translate(ModelMatrix, TransformComponent.GetLocation());
-
-            glm::quat Rotation = TransformComponent.GetRotation();
-            ModelMatrix *= glm::toMat4(Rotation);
-            ModelMatrix = glm::scale(ModelMatrix, TransformComponent.GetScale());
+            glm::mat4 ModelMatrix = TransformComponent.Transform.GetMatrix();
             
             DrawList.ModelData.push_back({ModelMatrix});
             DrawList.Meshes.push_back(Mesh);
         }
 
+        for (auto& Entity : Scene->GetConstEntityRegistry().view<FPointLightComponent>())
+        {
+            const FTransformComponent& TransformComponent = Scene->GetConstEntityRegistry().get<FTransformComponent>(Entity);
+            const FPointLightComponent& PointLightComponent = Scene->GetConstEntityRegistry().get<FPointLightComponent>(Entity);
+
+            FPointLight PointLight;
+            PointLight.Position = glm::vec4(TransformComponent.GetLocation(), 1.0f);
+            PointLight.Color = PointLightComponent.LightColor;
+            DrawList.LightData.Lights[DrawList.LightData.NumLights] = PointLight;
+            
+            DrawList.LightData.NumLights++;
+        }
+        
         if (!DrawList.ModelData.empty())
         {
             CommandList->UploadToBuffer(ModelDataBuffer, DrawList.ModelData.data(), 0, sizeof(FModelData) * (uint32)DrawList.ModelData.size());
+        }
+
+        if (DrawList.LightData.NumLights)
+        {
+            CommandList->UploadToBuffer(SceneLightBuffer, &DrawList.LightData, 0, sizeof(FSceneLightData));
         }
 
         
@@ -132,7 +141,14 @@ namespace Lumina
         GeometryPass(DrawList);
         LightingPass(DrawList);
         SkyboxPass(DrawList);
+        DrawPrimitives(DrawList);
 
+    }
+
+    void FSceneRenderer::EndScene(const FScene* Scene)
+    {
+        ICommandList* CommandList = RenderContext->GetCommandList(Q_Graphics);
+        
         CommandList->SetRequiredImageAccess(GetRenderTarget(), ERHIAccess::ShaderRead);
         CommandList->CommitBarriers();
     }
@@ -143,7 +159,7 @@ namespace Lumina
     }
     
 
-    void FSceneRenderer::GeometryPass(const FFrameDrawList& DrawList)
+    void FSceneRenderer::GeometryPass(const FSceneRenderData& DrawList)
     {
         ICommandList* CommandList = RenderContext->GetCommandList(Q_Graphics);
         
@@ -154,6 +170,11 @@ namespace Lumina
         .SetColorClearColor(FColor::Black)
         
         .AddColorAttachment(GBuffer.Normals)
+        .SetColorLoadOp(ERenderLoadOp::Clear)
+        .SetColorStoreOp(ERenderStoreOp::Store)
+        .SetColorClearColor(FColor::Black)
+
+        .AddColorAttachment(GBuffer.Material)
         .SetColorLoadOp(ERenderLoadOp::Clear)
         .SetColorStoreOp(ERenderStoreOp::Store)
         .SetColorClearColor(FColor::Black)
@@ -187,7 +208,7 @@ namespace Lumina
             AlbedoTarget.SetDestBlend(EBlendFactor::OneMinusSrcAlpha);
             AlbedoTarget.SetSrcBlendAlpha(EBlendFactor::One);
             AlbedoTarget.SetDestBlendAlpha(EBlendFactor::Zero);
-            AlbedoTarget.SetFormat(EFormat::RGBA8_UNORM);
+            AlbedoTarget.SetFormat(EFormat::RGBA16_FLOAT);
             BlendState.SetRenderTarget(0, AlbedoTarget);
 
             FBlendState::RenderTarget NormalTarget;
@@ -196,7 +217,7 @@ namespace Lumina
             NormalTarget.SetDestBlend(EBlendFactor::OneMinusSrcAlpha);
             NormalTarget.SetSrcBlendAlpha(EBlendFactor::One);
             NormalTarget.SetDestBlendAlpha(EBlendFactor::Zero);
-            NormalTarget.SetFormat(EFormat::RG16_SNORM);
+            NormalTarget.SetFormat(EFormat::RGBA16_FLOAT);
             BlendState.SetRenderTarget(1, NormalTarget);
 
             FBlendState::RenderTarget MaterialTarget;
@@ -207,6 +228,15 @@ namespace Lumina
             MaterialTarget.SetDestBlendAlpha(EBlendFactor::Zero);
             MaterialTarget.SetFormat(EFormat::RGBA8_UNORM);
             BlendState.SetRenderTarget(2, MaterialTarget);
+
+            FBlendState::RenderTarget AlbedoSpecTarget;
+            AlbedoSpecTarget.DisableBlend();
+            AlbedoSpecTarget.SetSrcBlend(EBlendFactor::SrcAlpha);
+            AlbedoSpecTarget.SetDestBlend(EBlendFactor::OneMinusSrcAlpha);
+            AlbedoSpecTarget.SetSrcBlendAlpha(EBlendFactor::One);
+            AlbedoSpecTarget.SetDestBlendAlpha(EBlendFactor::Zero);
+            AlbedoSpecTarget.SetFormat(EFormat::RGBA8_UNORM);
+            BlendState.SetRenderTarget(3, AlbedoSpecTarget);
 
             FRasterState RasterState;
             RasterState.SetDepthClipEnable(true);
@@ -249,7 +279,7 @@ namespace Lumina
         CommandList->EndRenderPass();
     }
 
-    void FSceneRenderer::LightingPass(const FFrameDrawList& DrawList)
+    void FSceneRenderer::LightingPass(const FSceneRenderData& DrawList)
     {
         FRHIVertexShaderRef VertexShader = RenderContext->GetShaderLibrary()->GetShader<FRHIVertexShader>("DeferredLighting.vert");
         FRHIPixelShaderRef PixelShader = RenderContext->GetShaderLibrary()->GetShader<FRHIPixelShader>("DeferredLighting.frag");
@@ -260,9 +290,9 @@ namespace Lumina
         
         ICommandList* CommandList = RenderContext->GetCommandList(Q_Graphics);
         
-        FBindingLayoutItem Item_Albedo;
-        Item_Albedo.Slot = 0;
-        Item_Albedo.Type = ERHIBindingResourceType::Texture_SRV;
+        FBindingLayoutItem Item_Position;
+        Item_Position.Slot = 0;
+        Item_Position.Type = ERHIBindingResourceType::Texture_SRV;
 
         FBindingLayoutItem Item_Normal;
         Item_Normal.Slot = 1;
@@ -272,22 +302,36 @@ namespace Lumina
         Item_Material.Slot = 2;
         Item_Material.Type = ERHIBindingResourceType::Texture_SRV;
 
-        FBindingLayoutItem Item_Depth;
-        Item_Depth.Slot = 3;
-        Item_Depth.Type = ERHIBindingResourceType::Texture_SRV;
+        FBindingLayoutItem Item_AlbedoSpec;
+        Item_AlbedoSpec.Slot = 3;
+        Item_AlbedoSpec.Type = ERHIBindingResourceType::Texture_SRV;
+
+        FBindingLayoutItem Item_SceneData;
+        Item_SceneData.Slot = 4;
+        Item_SceneData.Type = ERHIBindingResourceType::Buffer_CBV;
+
+        FBindingLayoutItem Item_LightData;
+        Item_LightData.Slot = 5;
+        Item_LightData.Type = ERHIBindingResourceType::Buffer_UAV;
         
         FBindingLayoutDesc LayoutDesc;
-        LayoutDesc.AddItem(Item_Albedo);
+        LayoutDesc.AddItem(Item_Position);
         LayoutDesc.AddItem(Item_Normal);
         LayoutDesc.AddItem(Item_Material);
-        LayoutDesc.AddItem(Item_Depth);
+        LayoutDesc.AddItem(Item_AlbedoSpec);
+        LayoutDesc.AddItem(Item_SceneData);
+        LayoutDesc.AddItem(Item_LightData);
         LayoutDesc.StageFlags.SetMultipleFlags(ERHIShaderType::Fragment);
         FRHIBindingLayoutRef LightingPassLayout = RenderContext->CreateBindingLayout(LayoutDesc);
 
         FBindingSetDesc SetDesc;
         SetDesc.AddItem(FBindingSetItem::TextureSRV(0, GBuffer.Position));
         SetDesc.AddItem(FBindingSetItem::TextureSRV(1, GBuffer.Normals));
-        SetDesc.AddItem(FBindingSetItem::TextureSRV(2, GBuffer.AlbedoSpec));
+        SetDesc.AddItem(FBindingSetItem::TextureSRV(2, GBuffer.Material));
+        SetDesc.AddItem(FBindingSetItem::TextureSRV(3, GBuffer.AlbedoSpec));
+        SetDesc.AddItem(FBindingSetItem::BufferCBV(4, SceneDataBuffer));
+        SetDesc.AddItem(FBindingSetItem::BufferSRV(5, SceneLightBuffer));
+
         FRHIBindingSetRef LightingPassSet = RenderContext->CreateBindingSet(SetDesc, LightingPassLayout);
         
         FRasterState RasterState;
@@ -347,7 +391,7 @@ namespace Lumina
 
     }
 
-    void FSceneRenderer::SkyboxPass(const FFrameDrawList& DrawList)
+    void FSceneRenderer::SkyboxPass(const FSceneRenderData& DrawList)
     {
         ICommandList* CommandList = RenderContext->GetCommandList(ECommandQueue::Graphics);
 
@@ -521,9 +565,91 @@ namespace Lumina
 #endif
     }
 
-    void FSceneRenderer::DrawPrimitives(const FScene* Scene)
+    void FSceneRenderer::DrawPrimitives(const FSceneRenderData& DrawList)
     {
+        ICommandList* CommandList = RenderContext->GetCommandList(Q_Graphics);
+
+        FRHIVertexShaderRef VertexShader = RenderContext->GetShaderLibrary()->GetShader<FRHIVertexShader>("Simple.vert");
+        FRHIPixelShaderRef PixelShader = RenderContext->GetShaderLibrary()->GetShader<FRHIPixelShader>("Simple.frag");
+        if (!VertexShader || !PixelShader)
+        {
+            return;
+        }
         
+        FRenderPassBeginInfo BeginInfo; BeginInfo
+        .AddColorAttachment(GetRenderTarget())
+        .SetColorLoadOp(ERenderLoadOp::Load)
+        .SetColorStoreOp(ERenderStoreOp::Store)
+
+        .SetDepthAttachment(DepthAttachment)
+        .SetDepthLoadOp(ERenderLoadOp::Load)
+        .SetDepthStoreOp(ERenderStoreOp::Store)        
+            
+        .SetRenderArea(GetRenderTarget()->GetExtent());
+        CommandList->BeginRenderPass(BeginInfo);
+        
+        FDepthStencilState DepthState;
+        DepthState.SetDepthFunc(EComparisonFunc::Greater);
+        
+        FBlendState BlendState;
+        FBlendState::RenderTarget RenderTarget;
+        RenderTarget.DisableBlend();
+        RenderTarget.SetSrcBlend(EBlendFactor::SrcAlpha);
+        RenderTarget.SetDestBlend(EBlendFactor::OneMinusSrcAlpha);
+        RenderTarget.SetSrcBlendAlpha(EBlendFactor::One);
+        RenderTarget.SetDestBlendAlpha(EBlendFactor::Zero);
+        RenderTarget.SetFormat(EFormat::BGRA8_UNORM);
+        BlendState.SetRenderTarget(0, RenderTarget);
+
+        FRasterState RasterState;
+        RasterState.SetDepthClipEnable(true);
+            
+        FRenderState RenderState;
+        RenderState.SetBlendState(BlendState);
+        RenderState.SetRasterState(RasterState);
+        RenderState.SetDepthStencilState(DepthState);
+            
+        FGraphicsPipelineDesc Desc;
+        Desc.SetRenderState(RenderState);
+        Desc.AddBindingLayout(SimpleBindingLayout);
+        Desc.SetVertexShader(VertexShader);
+        Desc.SetPixelShader(PixelShader);
+            
+        FRHIGraphicsPipelineRef Pipeline = RenderContext->CreateGraphicsPipeline(Desc);
+            
+        CommandList->SetGraphicsPipeline(Pipeline);
+            
+        CommandList->BindBindingSets({SimpleBindingLayoutSet}, ERHIBindingPoint::Graphics);
+        
+        for (uint32 CurrentDraw = 0; CurrentDraw < (uint32)DrawList.LightData.NumLights; ++CurrentDraw)
+        {
+            FPointLight Light = DrawList.LightData.Lights[CurrentDraw];
+
+            struct FPC
+            {
+                glm::mat4 ModelMatrix;
+                glm::vec4 Color;
+            } PC;
+            
+            PC.ModelMatrix = glm::mat4(1.0f);
+            PC.ModelMatrix = glm::translate(PC.ModelMatrix, glm::vec3(Light.Position));
+            PC.ModelMatrix = glm::scale(PC.ModelMatrix, glm::vec3(0.25f));
+
+            PC.Color = Light.Color;
+
+            
+            float SizeY = (float)GBuffer.AlbedoSpec->GetSizeY();
+            float SizeX = (float)GBuffer.AlbedoSpec->GetSizeX();
+            CommandList->SetViewport(0.0f, 0.0f, 0.0f, SizeX, SizeY, 1.0f);
+            CommandList->SetScissorRect(0, 0, SizeX, SizeY);
+            
+
+            CommandList->SetPushConstants(&PC, sizeof(FPC));
+            CommandList->Draw(36, 1, 0, 0);
+            
+        }
+        
+        CommandList->EndRenderPass();
     }
 
     void FSceneRenderer::InitResources()
@@ -550,6 +676,7 @@ namespace Lumina
         VertexDesc[3].Format = EFormat::RG32_FLOAT;
         
         VertexLayoutInput = RenderContext->CreateInputLayout(VertexDesc, std::size(VertexDesc));
+        
 
         FBindingLayoutItem Item;
         Item.Size = sizeof(FSceneGlobalData);
@@ -577,6 +704,22 @@ namespace Lumina
         SetDesc.AddItem(FBindingSetItem::BufferCBV(0, SceneDataBuffer));
         SetDesc.AddItem(FBindingSetItem::BufferUAV(1, ModelDataBuffer));
         SceneGlobalBindingSet = RenderContext->CreateBindingSet(SetDesc, SceneGlobalBindingLayout);
+
+        FBindingLayoutItem SimplePushConstants;
+        SimplePushConstants.Size = 80;
+        SimplePushConstants.Slot = 0;
+        SimplePushConstants.Type = ERHIBindingResourceType::PushConstants;
+        
+        FBindingLayoutDesc SimpleLayoutDesc;
+        SimpleLayoutDesc.AddItem(Item);
+        SimpleLayoutDesc.AddItem(SimplePushConstants);
+        SimpleLayoutDesc.StageFlags.SetMultipleFlags(ERHIShaderType::Vertex);
+        SimpleBindingLayout = RenderContext->CreateBindingLayout(SimpleLayoutDesc);
+
+        FBindingSetDesc SimpleSetDesc;
+        SimpleSetDesc.AddItem(FBindingSetItem::BufferCBV(0, SceneDataBuffer));
+
+        SimpleBindingLayoutSet = RenderContext->CreateBindingSet(SimpleSetDesc, SimpleBindingLayout);
         
     }
 
@@ -595,6 +738,14 @@ namespace Lumina
         ModelBufferDesc.Usage.SetFlag(BUF_StorageBuffer);
         ModelDataBuffer = RenderContext->CreateBuffer(ModelBufferDesc);
         RenderContext->SetObjectName(ModelDataBuffer, "ModelDataBuffer", EAPIResourceType::Buffer);
+
+        
+        FRHIBufferDesc LightBufferDesc;
+        LightBufferDesc.Size = sizeof(FSceneLightData);
+        LightBufferDesc.Stride = sizeof(FSceneLightData);
+        LightBufferDesc.Usage.SetFlag(BUF_StorageBuffer);
+        SceneLightBuffer = RenderContext->CreateBuffer(LightBufferDesc);
+        RenderContext->SetObjectName(SceneLightBuffer, "LightDataBuffer", EAPIResourceType::Buffer);
         
     }
     
@@ -605,21 +756,33 @@ namespace Lumina
         FRHIImageDesc GBufferPosition;
         GBufferPosition.Extent = Extent;
         GBufferPosition.Flags.SetMultipleFlags(EImageCreateFlags::ColorAttachment, EImageCreateFlags::ShaderResource);
-        GBufferPosition.Format = EFormat::RGBA8_UNORM;
+        GBufferPosition.Format = EFormat::RGBA16_FLOAT;
         GBufferPosition.Dimension = EImageDimension::Texture2D;
         
         GBuffer.Position = RenderContext->CreateImage(GBufferPosition);
         RenderContext->SetObjectName(GBuffer.Position, "GBuffer - Position", EAPIResourceType::Image);
 
+        
         FRHIImageDesc NormalDesc = {};
         NormalDesc.Extent = Extent;
-        NormalDesc.Format = EFormat::RG16_SNORM;
+        NormalDesc.Format = EFormat::RGBA16_FLOAT;
         NormalDesc.Dimension = EImageDimension::Texture2D;
         NormalDesc.Flags.SetMultipleFlags(EImageCreateFlags::ColorAttachment, EImageCreateFlags::ShaderResource);
         
         GBuffer.Normals = RenderContext->CreateImage(NormalDesc);
         RenderContext->SetObjectName(GBuffer.Normals, "GBuffer - Normals", EAPIResourceType::Image);
 
+        
+        FRHIImageDesc MaterialDesc = {};
+        MaterialDesc.Extent = Extent;
+        MaterialDesc.Format = EFormat::RGBA8_UNORM;
+        MaterialDesc.Dimension = EImageDimension::Texture2D;
+        MaterialDesc.Flags.SetMultipleFlags(EImageCreateFlags::ColorAttachment, EImageCreateFlags::ShaderResource);
+        
+        GBuffer.Material = RenderContext->CreateImage(MaterialDesc);
+        RenderContext->SetObjectName(GBuffer.Material, "GBuffer - Material", EAPIResourceType::Image);
+
+        
         FRHIImageDesc AlbedoDesc = {};
         AlbedoDesc.Extent = Extent;
         AlbedoDesc.Format = EFormat::RGBA8_UNORM;

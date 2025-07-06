@@ -2,6 +2,7 @@
 
 #include "ImGuiDesignIcons.h"
 #include "ImGuiFonts.h"
+#include "ImGuizmo.h"
 #include "Core/Engine/Engine.h"
 #include "imgui/misc/freetype/imgui_freetype.h"
 #include "Renderer/RHIIncl.h"
@@ -17,8 +18,9 @@ namespace Lumina
     {
 
         IMGUI_CHECKVERSION();
-        ImGui::CreateContext();
-
+        ImGuiContext* Context = ImGui::CreateContext();
+    	ImGuizmo::SetImGuiContext(Context);
+    	
         ImGuiIO& io = ImGui::GetIO();
 
     	TVector<uint8> FontData, BoldFontData;

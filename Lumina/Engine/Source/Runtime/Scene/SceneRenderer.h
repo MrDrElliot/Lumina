@@ -22,23 +22,6 @@ namespace Lumina
     class FBuffer;
     class FCamera;
     
-    struct FModelData
-    {
-        glm::mat4 ModelMatrix;
-    };
-
-    struct FGBuffer
-    {
-        FRHIImageRef Position;
-        FRHIImageRef Normals;
-        FRHIImageRef AlbedoSpec;
-    };
-
-    struct FFrameDrawList
-    {
-        TVector<CStaticMesh*> Meshes;
-        TVector<FModelData> ModelData;
-    };
     
     /**
      * Scene renderers are stateful renderers that interface with the state-less renderer.
@@ -63,12 +46,11 @@ namespace Lumina
 
     protected:
 
-        void GeometryPass(const FFrameDrawList& DrawList);
-        void LightingPass(const FFrameDrawList& DrawList);
-        void SkyboxPass(const FFrameDrawList& DrawList);
-        void FullScreenPass(const FScene* Scene);
+        void GeometryPass(const FSceneRenderData& DrawList);
+        void LightingPass(const FSceneRenderData& DrawList);
+        void SkyboxPass(const FSceneRenderData& DrawList);
+        void DrawPrimitives(const FSceneRenderData& DrawList);
 
-        void DrawPrimitives(const FScene* Scene);
 
         void InitResources();
         void InitBuffers();
@@ -76,6 +58,7 @@ namespace Lumina
         void OnSwapchainResized();
 
 
+        void FullScreenPass(const FScene* Scene);
         
         
     private:
@@ -85,15 +68,18 @@ namespace Lumina
         FRHIViewportRef                     SceneViewport;
         FRHIBufferRef                       SceneDataBuffer;
         FRHIBufferRef                       ModelDataBuffer;
+        FRHIBufferRef                       SceneLightBuffer;
         FRHIInputLayoutRef                  VertexLayoutInput;
         
         FSceneGlobalData                    SceneGlobalData;
-        FSceneLightData                     SceneLightData;
         TVector<FModelData>                 ModelData;
         TVector<FMaterialTexturesData>      TexturesData;
 
         FRHIBindingSetRef                   SceneGlobalBindingSet;
         FRHIBindingLayoutRef                SceneGlobalBindingLayout;
+        
+        FRHIBindingLayoutRef                SimpleBindingLayout;
+        FRHIBindingSetRef                   SimpleBindingLayoutSet;
         
         FRenderGraph                        RenderGraph;
         FGBuffer                            GBuffer;

@@ -10,10 +10,6 @@ namespace Lumina
 
 		FEntityComponent() =			default;
 		virtual ~FEntityComponent() =	default;
-	
-	protected:
 		
-		FString DisplayName;
-
 	};
 }

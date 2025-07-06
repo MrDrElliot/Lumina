@@ -10,7 +10,8 @@ layout(location = 3) in vec2 inUV;
 
 layout(location = 0) out vec3 GPosition;
 layout(location = 1) out vec3 GNormal;
-layout(location = 2) out vec4 GAlbedoSpec;
+layout(location = 2) out vec3 GMaterial;
+layout(location = 3) out vec4 GAlbedoSpec;
 
 struct SMaterialInputs
 {
@@ -26,13 +27,35 @@ struct SMaterialInputs
 
 $MATERIAL_INPUTS
 
+
+vec3 getNormalFromMap(vec3 Normal)
+{
+    vec3 tangentNormal = Normal * 2.0 - 1.0;
+
+    vec3 Q1  = dFdx(inFragPos);
+    vec3 Q2  = dFdy(inFragPos);
+    vec2 st1 = dFdx(inUV);
+    vec2 st2 = dFdy(inUV);
+
+    vec3 N   = normalize(inNormal);
+    vec3 T  = normalize(Q1*st2.t - Q2*st1.t);
+    vec3 B  = -normalize(cross(N, T));
+    mat3 TBN = mat3(T, B, N);
+
+    return normalize(TBN * tangentNormal);
+}
+
 void main()
 {
     SMaterialInputs mat = GetMaterialInputs();
 
     GPosition = inFragPos;
+
+    GNormal = getNormalFromMap(mat.Normal);
     
-    GNormal = normalize(mat.Normal);
+    GMaterial.r = mat.AmbientOcclusion;
+    GMaterial.g = mat.Roughness;
+    GMaterial.b = mat.Metallic;
     
     GAlbedoSpec.rgb = mat.Diffuse.rgb;
     

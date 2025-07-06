@@ -7,6 +7,7 @@
 #include "Subsystems/Subsystem.h"
 #include "Core/Delegates/Delegate.h"
 #include "Core/Serialization/MemoryArchiver.h"
+#include "Core/Threading/Thread.h"
 
 PRAGMA_DISABLE_ALL_WARNINGS
 #include "EASTL/internal/atomic/atomic.h"
@@ -47,6 +48,7 @@ namespace Lumina
 
 	private:
 
+		FMutex				Mutex;
 		TVector<FAssetData> Assets;
 	};
 }

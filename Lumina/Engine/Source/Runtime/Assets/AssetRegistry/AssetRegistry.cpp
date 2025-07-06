@@ -18,10 +18,13 @@ namespace Lumina
 
     void FAssetRegistry::BuildAssetDictionary()
     {
+        FScopeLock Lock(Mutex);
         Assets.clear();
         
         FTaskSystem::Get()->ScheduleLambda([this]
         {
+            FScopeLock Lock(Mutex);
+
             FString ContentDirectory = FProject::Get()->GetProjectContentDirectory();
 
             if (!FProject::Get()->HasLoadedProject())
