@@ -25,7 +25,7 @@ namespace Lumina
         GENERATED_BODY()
         
     public:
-
+        void Serialize(FArchive& Ar) override;
         void BuildNode() override;
         
         CMaterialInput* A;
@@ -46,7 +46,7 @@ namespace Lumina
         void BuildNode() override;
 
         FString GetNodeDisplayName() const override { return "Add"; }
-        float* GetNodeDefaultValue() override { return &ConstA; }
+        void* GetNodeDefaultValue() override { return &ConstA; }
         uint32 GenerateExpression(FMaterialCompiler* Compiler) override { return 0; }
         void GenerateDefinition(FMaterialCompiler* Compiler) override;
         
@@ -66,7 +66,7 @@ namespace Lumina
 
 
         FString GetNodeDisplayName() const override { return "Subtract"; }
-        float* GetNodeDefaultValue() override { return &ConstA; }
+        void* GetNodeDefaultValue() override { return &ConstA; }
         uint32 GenerateExpression(FMaterialCompiler* Compiler) override { return 0; }
         void GenerateDefinition(FMaterialCompiler* Compiler) override;
     };
@@ -81,7 +81,7 @@ namespace Lumina
         void BuildNode() override;
 
         FString GetNodeDisplayName() const override { return "Multiply"; }
-        float* GetNodeDefaultValue() override { return &ConstA; }
+        void* GetNodeDefaultValue() override { return &ConstA; }
         uint32 GenerateExpression(FMaterialCompiler* Compiler) override { return 0; }
         void GenerateDefinition(FMaterialCompiler* Compiler) override;
     };
@@ -97,7 +97,7 @@ namespace Lumina
         void BuildNode() override;
 
         FString GetNodeDisplayName() const override { return "Sin"; }
-        float* GetNodeDefaultValue() override { return &ConstA; }
+        void* GetNodeDefaultValue() override { return &ConstA; }
         uint32 GenerateExpression(FMaterialCompiler* Compiler) override { return 0; }
         void GenerateDefinition(FMaterialCompiler* Compiler) override;
 
@@ -113,7 +113,7 @@ namespace Lumina
         void BuildNode() override;
 
         FString GetNodeDisplayName() const override { return "Cosin"; }
-        float* GetNodeDefaultValue() override { return &ConstA; }
+        void* GetNodeDefaultValue() override { return &ConstA; }
         uint32 GenerateExpression(FMaterialCompiler* Compiler) override { return 0; }
         void GenerateDefinition(FMaterialCompiler* Compiler) override;
 
@@ -129,7 +129,7 @@ namespace Lumina
         void BuildNode() override;
 
         FString GetNodeDisplayName() const override { return "Floor"; }
-        float* GetNodeDefaultValue() override { return &ConstA; }
+        void* GetNodeDefaultValue() override { return &ConstA; }
         uint32 GenerateExpression(FMaterialCompiler* Compiler) override { return 0; }
         void GenerateDefinition(FMaterialCompiler* Compiler) override;
 
@@ -145,7 +145,7 @@ namespace Lumina
         void BuildNode() override;
 
         FString GetNodeDisplayName() const override { return "Ceil"; }
-        float* GetNodeDefaultValue() override { return &ConstA; }
+        void* GetNodeDefaultValue() override { return &ConstA; }
         uint32 GenerateExpression(FMaterialCompiler* Compiler) override { return 0; }
         void GenerateDefinition(FMaterialCompiler* Compiler) override;
 
@@ -161,7 +161,7 @@ namespace Lumina
         void BuildNode() override;
 
         FString GetNodeDisplayName() const override { return "Power"; }
-        float* GetNodeDefaultValue() override { return &ConstA; }
+        void* GetNodeDefaultValue() override { return &ConstA; }
         uint32 GenerateExpression(FMaterialCompiler* Compiler) override { return 0; }
         void GenerateDefinition(FMaterialCompiler* Compiler) override;
 
@@ -177,7 +177,7 @@ namespace Lumina
         void BuildNode() override;
 
         FString GetNodeDisplayName() const override { return "Mod"; }
-        float* GetNodeDefaultValue() override { return &ConstA; }
+        void* GetNodeDefaultValue() override { return &ConstA; }
         uint32 GenerateExpression(FMaterialCompiler* Compiler) override { return 0; }
         void GenerateDefinition(FMaterialCompiler* Compiler) override;
 
@@ -193,7 +193,7 @@ namespace Lumina
         void BuildNode() override;
 
         FString GetNodeDisplayName() const override { return "Min"; }
-        float* GetNodeDefaultValue() override { return &ConstA; }
+        void* GetNodeDefaultValue() override { return &ConstA; }
         uint32 GenerateExpression(FMaterialCompiler* Compiler) override { return 0; }
         void GenerateDefinition(FMaterialCompiler* Compiler) override;
 
@@ -209,7 +209,7 @@ namespace Lumina
         void BuildNode() override;
 
         FString GetNodeDisplayName() const override { return "Max"; }
-        float* GetNodeDefaultValue() override { return &ConstA; }
+        void* GetNodeDefaultValue() override { return &ConstA; }
         uint32 GenerateExpression(FMaterialCompiler* Compiler) override { return 0; }
         void GenerateDefinition(FMaterialCompiler* Compiler) override;
 
@@ -225,7 +225,7 @@ namespace Lumina
         void BuildNode() override;
 
         FString GetNodeDisplayName() const override { return "Step"; }
-        float* GetNodeDefaultValue() override { return &ConstA; }
+        void* GetNodeDefaultValue() override { return &ConstA; }
         uint32 GenerateExpression(FMaterialCompiler* Compiler) override { return 0; }
         void GenerateDefinition(FMaterialCompiler* Compiler) override;
         
@@ -237,11 +237,11 @@ namespace Lumina
         GENERATED_BODY()
     public:
         
-        
+        void Serialize(FArchive& Ar) override;
         void BuildNode() override;
 
         FString GetNodeDisplayName() const override { return "Lerp"; }
-        float* GetNodeDefaultValue() override { return &ConstA; }
+        void* GetNodeDefaultValue() override { return &ConstA; }
         uint32 GenerateExpression(FMaterialCompiler* Compiler) override { return 0; }
         void GenerateDefinition(FMaterialCompiler* Compiler) override;
         
@@ -260,7 +260,7 @@ namespace Lumina
         void BuildNode() override;
 
         FString GetNodeDisplayName() const override { return "Divide"; }
-        float* GetNodeDefaultValue() override { return &ConstA; }
+        void* GetNodeDefaultValue() override { return &ConstA; }
         uint32 GenerateExpression(FMaterialCompiler* Compiler) override { return 0; }
         void GenerateDefinition(FMaterialCompiler* Compiler) override;
         
@@ -278,7 +278,7 @@ namespace Lumina
         void BuildNode() override;
 
         FString GetNodeDisplayName() const override { return "WorldPosition"; }
-        float* GetNodeDefaultValue() override { return nullptr; }
+        void* GetNodeDefaultValue() override { return nullptr; }
         uint32 GenerateExpression(FMaterialCompiler* Compiler) override { return 0; }
         void GenerateDefinition(FMaterialCompiler* Compiler) override;
     };
@@ -292,7 +292,7 @@ namespace Lumina
         void BuildNode() override;
 
         FString GetNodeDisplayName() const override { return "CameraPosition"; }
-        float* GetNodeDefaultValue() override { return nullptr; }
+        void* GetNodeDefaultValue() override { return nullptr; }
         uint32 GenerateExpression(FMaterialCompiler* Compiler) override { return 0; }
         void GenerateDefinition(FMaterialCompiler* Compiler) override;
     };
@@ -306,16 +306,16 @@ namespace Lumina
         GENERATED_BODY()
     public:
         
-        CMaterialExpression_Constant()
-            :ValueType(EMaterialInputType::Wildcard)
-        {}
 
+        void Serialize(FArchive& Ar) override;
+
+        
         void BuildNode() override;
         
-        float* GetNodeDefaultValue() override { return &Value.R; }
+        void* GetNodeDefaultValue() override { return &Value.R; }
 
         FColor              Value;
-        EMaterialInputType  ValueType;
+        EMaterialInputType  ValueType = EMaterialInputType::Wildcard;
         
     };
 

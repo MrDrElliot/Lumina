@@ -15,6 +15,14 @@ namespace Lumina
         Output->SetShouldDrawEditor(false);
     }
 
+    void CMaterialExpression_Math::Serialize(FArchive& Ar)
+    {
+        CMaterialExpression::Serialize(Ar);
+
+        Ar << ConstA;
+        Ar << ConstB;
+    }
+
     void CMaterialExpression_Math::BuildNode()
     {
         CMaterialExpression::BuildNode();
@@ -38,6 +46,13 @@ namespace Lumina
     void CMaterialExpression_CameraPos::GenerateDefinition(FMaterialCompiler* Compiler)
     {
         Compiler->CameraPos(FullName);
+    }
+
+    void CMaterialExpression_Constant::Serialize(FArchive& Ar)
+    {
+        CMaterialExpression::Serialize(Ar);
+
+        Ar << Value;
     }
 
     void CMaterialExpression_Constant::BuildNode()
@@ -65,12 +80,14 @@ namespace Lumina
                 R->SetPinColor(IM_COL32(255, 10, 10, 255));
                 R->SetHideDuringConnection(false);
                 R->SetPinName("X");
-                
+                R->SetComponentMask(EComponentMask::R);
+
                 CMaterialOutput* G = Cast<CMaterialOutput>(CreatePin(CMaterialOutput::StaticClass(), "Y", ENodePinDirection::Output, EMaterialInputType::Float));
                 R->SetPinColor(IM_COL32(10, 255, 10, 255));
                 G->SetHideDuringConnection(false);
                 G->SetPinName("Y");
-                
+                G->SetComponentMask(EComponentMask::G);
+
             }
             break;
         case EMaterialInputType::Float3:
@@ -85,16 +102,19 @@ namespace Lumina
                 R->SetPinColor(IM_COL32(255, 10, 10, 255));
                 R->SetHideDuringConnection(false);
                 R->SetPinName("R");
-                
+                R->SetComponentMask(EComponentMask::R);
+
                 CMaterialOutput* G = Cast<CMaterialOutput>(CreatePin(CMaterialOutput::StaticClass(), "G", ENodePinDirection::Output, EMaterialInputType::Float));
                 G->SetPinColor(IM_COL32(10, 255, 10, 255));
                 G->SetHideDuringConnection(false);
                 G->SetPinName("G");
+                G->SetComponentMask(EComponentMask::G);
 
                 CMaterialOutput* B = Cast<CMaterialOutput>(CreatePin(CMaterialOutput::StaticClass(), "B", ENodePinDirection::Output, EMaterialInputType::Float2));
                 B->SetPinColor(IM_COL32(10, 10, 255, 255));
                 B->SetHideDuringConnection(false);
                 B->SetPinName("B");
+                B->SetComponentMask(EComponentMask::B);
 
             }
             break;
@@ -111,20 +131,25 @@ namespace Lumina
                 R->SetPinColor(IM_COL32(255, 10, 10, 255));
                 R->SetHideDuringConnection(false);
                 R->SetPinName("R");
-                
+                R->SetComponentMask(EComponentMask::R);
+
                 CMaterialOutput* G = Cast<CMaterialOutput>(CreatePin(CMaterialOutput::StaticClass(), "G", ENodePinDirection::Output, EMaterialInputType::Float));
                 G->SetPinColor(IM_COL32(10, 255, 10, 255));
                 G->SetHideDuringConnection(false);
                 G->SetPinName("G");
+                G->SetComponentMask(EComponentMask::G);
 
                 CMaterialOutput* B = Cast<CMaterialOutput>(CreatePin(CMaterialOutput::StaticClass(), "B", ENodePinDirection::Output, EMaterialInputType::Float));
                 B->SetPinColor(IM_COL32(10, 10, 255, 255));
                 B->SetHideDuringConnection(false);
                 B->SetPinName("B");
+                B->SetComponentMask(EComponentMask::B);
 
                 CMaterialOutput* A = Cast<CMaterialOutput>(CreatePin(CMaterialOutput::StaticClass(), "A", ENodePinDirection::Output, EMaterialInputType::Float));
                 A->SetHideDuringConnection(false);
                 A->SetPinName("A");
+                A->SetComponentMask(EComponentMask::A);
+
             }
             break;
         case EMaterialInputType::Wildcard:
@@ -379,6 +404,13 @@ namespace Lumina
     void CMaterialExpression_Step::GenerateDefinition(FMaterialCompiler* Compiler)
     {
         Compiler->Step(A, B);
+    }
+
+    void CMaterialExpression_Lerp::Serialize(FArchive& Ar)
+    {
+        CMaterialExpression_Math::Serialize(Ar);
+
+        Ar << ConstC;
     }
 
     void CMaterialExpression_Lerp::BuildNode()

@@ -1,6 +1,7 @@
 ﻿#include "MaterialCompiler.h"
 
-#include "Core/Math/Hash/Hash.h"
+#include "Assets/AssetTypes/Textures/Texture.h"
+#include "Core/Object/Cast.h"
 #include "Nodes/MaterialNodeExpression.h"
 #include "Paths/Paths.h"
 #include "Platform/Filesystem/FileHelper.h"
@@ -17,12 +18,12 @@ namespace Lumina
             Result += Chunk.Data + "\n";
         }
 
-        FString VertexPath = std::filesystem::path(Paths::GetEngineResourceDirectory() / "MaterialShader/Material.vert").generic_string().c_str();
+        FString FragmentPath = std::filesystem::path(Paths::GetEngineResourceDirectory() / "MaterialShader/Material.frag").generic_string().c_str();
 
         FString LoadedString;
-        FileHelper::LoadFileIntoString(LoadedString, VertexPath);
+        FileHelper::LoadFileIntoString(LoadedString, FragmentPath);
 
-        const char* Token = "$VERTEX_REPLACEMENT";
+        const char* Token = "$MATERIAL_INPUTS";
         size_t Pos = LoadedString.find(Token);
 
         if (Pos != FString::npos)
@@ -77,6 +78,38 @@ namespace Lumina
         ShaderChunks.push_back(Chunk);
     }
 
+    void FMaterialCompiler::DefineTextureSample(const FString& ID)
+    {
+        FShaderChunk Chunk;
+        Chunk.Data = "layout(set = 1, binding = " + eastl::to_string(BindingIndex) + ") uniform sampler2D " + ID + "_sample;";
+        ShaderChunks.push_back(Chunk);
+        BindingIndex++;
+    }
+
+    void FMaterialCompiler::TextureSample(const FString& ID, CTexture* Texture)
+    {
+        if (Texture == nullptr)
+        {
+            return;
+        }
+        if (Texture->RHIImage == nullptr)
+        {
+            return;
+        }
+        
+        FShaderChunk Chunk;
+        Chunk.Data = "vec4 " + ID + " = texture(" + ID + "_sample" + ", inUV.xy);";
+        ShaderChunks.push_back(Chunk);
+        BoundImages.push_back(Texture->RHIImage);
+    }
+
+    void FMaterialCompiler::NewLine()
+    {
+        FShaderChunk Chunk;
+        Chunk.Data = "\n";
+        ShaderChunks.push_back(Chunk);
+    }
+
     void FMaterialCompiler::WorldPos(const FString& ID)
     {
         FShaderChunk Chunk;
@@ -94,7 +127,7 @@ namespace Lumina
     void FMaterialCompiler::Time(const FString& ID)
     {
         FShaderChunk Chunk;
-        Chunk.Data = "vec4 " + ID + " = vec4(GetTime(), GetTime(), GetTime(), GetTime());";
+        Chunk.Data = "vec4 " + ID + " = vec4(GetTime());";
         ShaderChunks.push_back(Chunk);
     }
 
@@ -102,24 +135,37 @@ namespace Lumina
     {
         FString OwningNode = A->GetOwningNode()->GetNodeFullName();
         CMaterialExpression_Multiplication* Node = A->GetOwningNode<CMaterialExpression_Multiplication>();
-        FString ConstAString = eastl::to_string(Node->ConstA);
-        FString ConstBString = eastl::to_string(Node->ConstB);
-    
-        FString AValue = "vec4(" + ConstAString + ")";
-        FString BValue = "vec4(" + ConstBString + ")";
+
+        FString AValue, BValue;
 
         if (A->HasConnection())
         {
-            AValue = A->GetConnections()[0]->GetOwningNode()->GetNodeFullName();
+            CMaterialOutput* AConn = Cast<CMaterialOutput>(A->GetConnections()[0]);
+            FString Swizzle = GetSwizzleForMask(AConn->GetComponentMask());
+            AValue = "vec4(" + AConn->GetOwningNode()->GetNodeFullName() + Swizzle + ")";
+        }
+        else
+        {
+            FString ConstAString = eastl::to_string(Node->ConstA);
+            AValue = "vec4(" + ConstAString + ")";
         }
 
         if (B->HasConnection())
         {
-            BValue = B->GetConnections()[0]->GetOwningNode()->GetNodeFullName();
+            CMaterialOutput* BConn = Cast<CMaterialOutput>(B->GetConnections()[0]);
+            FString Swizzle = GetSwizzleForMask(BConn->GetComponentMask());
+            BValue = "vec4(" + BConn->GetOwningNode()->GetNodeFullName() + Swizzle + ")";
         }
-    
+        else
+        {
+            FString ConstBString = eastl::to_string(Node->ConstB);
+            BValue = "vec4(" + ConstBString + ")";
+        }
+
+        FString ResultType = "vec4";
+
         FShaderChunk Chunk;
-        Chunk.Data = "vec4 " + OwningNode + " = " + AValue + " * " + BValue + ";";
+        Chunk.Data = ResultType + " " + OwningNode + " = " + AValue + " * " + BValue + ";";
         ShaderChunks.push_back(Chunk);
     }
 
@@ -128,22 +174,31 @@ namespace Lumina
     {
         FString OwningNode = A->GetOwningNode()->GetNodeFullName();
         CMaterialExpression_Division* Node = A->GetOwningNode<CMaterialExpression_Division>();
-        FString ConstAString = eastl::to_string(Node->ConstA);
-        FString ConstBString = eastl::to_string(Node->ConstB);
-    
-        FString AValue = "vec4(" + ConstAString + ")";
-        FString BValue = "vec4(" + ConstBString + ")";
+
+        FString AValue, BValue;
 
         if (A->HasConnection())
         {
-            AValue = A->GetConnections()[0]->GetOwningNode()->GetNodeFullName();
+            CMaterialOutput* AConn = Cast<CMaterialOutput>(A->GetConnections()[0]);
+            FString Swizzle = GetSwizzleForMask(AConn->GetComponentMask());
+            AValue = "vec4(" + AConn->GetOwningNode()->GetNodeFullName() + Swizzle + ")";
+        }
+        else
+        {
+            AValue = "vec4(" + eastl::to_string(Node->ConstA) + ")";
         }
 
         if (B->HasConnection())
         {
-            BValue = B->GetConnections()[0]->GetOwningNode()->GetNodeFullName();
+            CMaterialOutput* BConn = Cast<CMaterialOutput>(B->GetConnections()[0]);
+            FString Swizzle = GetSwizzleForMask(BConn->GetComponentMask());
+            BValue = "vec4(" + BConn->GetOwningNode()->GetNodeFullName() + Swizzle + ")";
         }
-    
+        else
+        {
+            BValue = "vec4(" + eastl::to_string(Node->ConstB) + ")";
+        }
+
         FShaderChunk Chunk;
         Chunk.Data = "vec4 " + OwningNode + " = " + AValue + " / " + BValue + ";";
         ShaderChunks.push_back(Chunk);
@@ -154,63 +209,88 @@ namespace Lumina
     {
         FString OwningNode = A->GetOwningNode()->GetNodeFullName();
         CMaterialExpression_Addition* Node = A->GetOwningNode<CMaterialExpression_Addition>();
-        FString ConstAString = eastl::to_string(Node->ConstA);
-        FString ConstBString = eastl::to_string(Node->ConstB);
-    
-        FString AValue = "vec4(" + ConstAString + ")";
-        FString BValue = "vec4(" + ConstBString + ")";
+
+        FString AValue, BValue;
 
         if (A->HasConnection())
         {
-            AValue = A->GetConnections()[0]->GetOwningNode()->GetNodeFullName();
+            CMaterialOutput* AConn = Cast<CMaterialOutput>(A->GetConnections()[0]);
+            FString Swizzle = GetSwizzleForMask(AConn->GetComponentMask());
+            AValue = "vec4(" + AConn->GetOwningNode()->GetNodeFullName() + Swizzle + ")";
+        }
+        else
+        {
+            AValue = "vec4(" + eastl::to_string(Node->ConstA) + ")";
         }
 
         if (B->HasConnection())
         {
-            BValue = B->GetConnections()[0]->GetOwningNode()->GetNodeFullName();
+            CMaterialOutput* BConn = Cast<CMaterialOutput>(B->GetConnections()[0]);
+            FString Swizzle = GetSwizzleForMask(BConn->GetComponentMask());
+            BValue = "vec4(" + BConn->GetOwningNode()->GetNodeFullName() + Swizzle + ")";
         }
-    
+        else
+        {
+            BValue = "vec4(" + eastl::to_string(Node->ConstB) + ")";
+        }
+
         FShaderChunk Chunk;
         Chunk.Data = "vec4 " + OwningNode + " = " + AValue + " + " + BValue + ";";
         ShaderChunks.push_back(Chunk);
     }
 
 
+
     void FMaterialCompiler::Subtract(CMaterialInput* A, CMaterialInput* B)
     {
         FString OwningNode = A->GetOwningNode()->GetNodeFullName();
         CMaterialExpression_Subtraction* Node = A->GetOwningNode<CMaterialExpression_Subtraction>();
-        FString ConstAString = eastl::to_string(Node->ConstA);
-        FString ConstBString = eastl::to_string(Node->ConstB);
-    
-        FString AValue = "vec4(" + ConstAString + ")";
-        FString BValue = "vec4(" + ConstBString + ")";
+
+        FString AValue, BValue;
 
         if (A->HasConnection())
         {
-            AValue = A->GetConnections()[0]->GetOwningNode()->GetNodeFullName();
+            CMaterialOutput* AConn = Cast<CMaterialOutput>(A->GetConnections()[0]);
+            FString Swizzle = GetSwizzleForMask(AConn->GetComponentMask());
+            AValue = "vec4(" + AConn->GetOwningNode()->GetNodeFullName() + Swizzle + ")";
+        }
+        else
+        {
+            AValue = "vec4(" + eastl::to_string(Node->ConstA) + ")";
         }
 
         if (B->HasConnection())
         {
-            BValue = B->GetConnections()[0]->GetOwningNode()->GetNodeFullName();
+            CMaterialOutput* BConn = Cast<CMaterialOutput>(B->GetConnections()[0]);
+            FString Swizzle = GetSwizzleForMask(BConn->GetComponentMask());
+            BValue = "vec4(" + BConn->GetOwningNode()->GetNodeFullName() + Swizzle + ")";
         }
-    
+        else
+        {
+            BValue = "vec4(" + eastl::to_string(Node->ConstB) + ")";
+        }
+
         FShaderChunk Chunk;
         Chunk.Data = "vec4 " + OwningNode + " = " + AValue + " - " + BValue + ";";
         ShaderChunks.push_back(Chunk);
     }
-
+    
     void FMaterialCompiler::Sin(CMaterialInput* A, CMaterialInput* B)
     {
         FString OwningNode = A->GetOwningNode()->GetNodeFullName();
         CMaterialExpression_Sin* Node = A->GetOwningNode<CMaterialExpression_Sin>();
-        FString ConstAString = eastl::to_string(Node->ConstA);
-        FString AValue = "vec4(" + ConstAString + ")";
 
+        FString AValue;
         if (A->HasConnection())
         {
-            AValue = A->GetConnections()[0]->GetOwningNode()->GetNodeFullName();
+            CMaterialOutput* AConn = Cast<CMaterialOutput>(A->GetConnections()[0]);
+            FString Swizzle = GetSwizzleForMask(AConn->GetComponentMask());
+            AValue = "vec4(" + AConn->GetOwningNode()->GetNodeFullName() + Swizzle + ")";
+        }
+        else
+        {
+            FString ConstAString = eastl::to_string(Node->ConstA);
+            AValue = "vec4(" + ConstAString + ")";
         }
 
         FShaderChunk Chunk;
@@ -222,12 +302,18 @@ namespace Lumina
     {
         FString OwningNode = A->GetOwningNode()->GetNodeFullName();
         CMaterialExpression_Cosin* Node = A->GetOwningNode<CMaterialExpression_Cosin>();
-        FString ConstAString = eastl::to_string(Node->ConstA);
-        FString AValue = "vec4(" + ConstAString + ")";
 
+        FString AValue;
         if (A->HasConnection())
         {
-            AValue = A->GetConnections()[0]->GetOwningNode()->GetNodeFullName();
+            CMaterialOutput* AConn = Cast<CMaterialOutput>(A->GetConnections()[0]);
+            FString Swizzle = GetSwizzleForMask(AConn->GetComponentMask());
+            AValue = "vec4(" + AConn->GetOwningNode()->GetNodeFullName() + Swizzle + ")";
+        }
+        else
+        {
+            FString ConstAString = eastl::to_string(Node->ConstA);
+            AValue = "vec4(" + ConstAString + ")";
         }
 
         FShaderChunk Chunk;
@@ -239,12 +325,18 @@ namespace Lumina
     {
         FString OwningNode = A->GetOwningNode()->GetNodeFullName();
         CMaterialExpression_Floor* Node = A->GetOwningNode<CMaterialExpression_Floor>();
-        FString ConstAString = eastl::to_string(Node->ConstA);
-        FString AValue = "vec4(" + ConstAString + ")";
 
+        FString AValue;
         if (A->HasConnection())
         {
-            AValue = A->GetConnections()[0]->GetOwningNode()->GetNodeFullName();
+            CMaterialOutput* AConn = Cast<CMaterialOutput>(A->GetConnections()[0]);
+            FString Swizzle = GetSwizzleForMask(AConn->GetComponentMask());
+            AValue = "vec4(" + AConn->GetOwningNode()->GetNodeFullName() + Swizzle + ")";
+        }
+        else
+        {
+            FString ConstAString = eastl::to_string(Node->ConstA);
+            AValue = "vec4(" + ConstAString + ")";
         }
 
         FShaderChunk Chunk;
@@ -256,12 +348,18 @@ namespace Lumina
     {
         FString OwningNode = A->GetOwningNode()->GetNodeFullName();
         CMaterialExpression_Ceil* Node = A->GetOwningNode<CMaterialExpression_Ceil>();
-        FString ConstAString = eastl::to_string(Node->ConstA);
-        FString AValue = "vec4(" + ConstAString + ")";
 
+        FString AValue;
         if (A->HasConnection())
         {
-            AValue = A->GetConnections()[0]->GetOwningNode()->GetNodeFullName();
+            CMaterialOutput* AConn = Cast<CMaterialOutput>(A->GetConnections()[0]);
+            FString Swizzle = GetSwizzleForMask(AConn->GetComponentMask());
+            AValue = "vec4(" + AConn->GetOwningNode()->GetNodeFullName() + Swizzle + ")";
+        }
+        else
+        {
+            FString ConstAString = eastl::to_string(Node->ConstA);
+            AValue = "vec4(" + ConstAString + ")";
         }
 
         FShaderChunk Chunk;
@@ -273,20 +371,30 @@ namespace Lumina
     {
         FString OwningNode = A->GetOwningNode()->GetNodeFullName();
         CMaterialExpression_Power* Node = A->GetOwningNode<CMaterialExpression_Power>();
-        FString ConstAString = eastl::to_string(Node->ConstA);
-        FString ConstBString = eastl::to_string(Node->ConstB);
 
-        FString AValue = "vec4(" + ConstAString + ")";
-        FString BValue = "vec4(" + ConstBString + ")";
-
+        FString AValue, BValue;
         if (A->HasConnection())
         {
-            AValue = A->GetConnections()[0]->GetOwningNode()->GetNodeFullName();
+            CMaterialOutput* AConn = Cast<CMaterialOutput>(A->GetConnections()[0]);
+            FString Swizzle = GetSwizzleForMask(AConn->GetComponentMask());
+            AValue = "vec4(" + AConn->GetOwningNode()->GetNodeFullName() + Swizzle + ")";
+        }
+        else
+        {
+            FString ConstAString = eastl::to_string(Node->ConstA);
+            AValue = "vec4(" + ConstAString + ")";
         }
 
         if (B->HasConnection())
         {
-            BValue = B->GetConnections()[0]->GetOwningNode()->GetNodeFullName();
+            CMaterialOutput* BConn = Cast<CMaterialOutput>(B->GetConnections()[0]);
+            FString Swizzle = GetSwizzleForMask(BConn->GetComponentMask());
+            BValue = "vec4(" + BConn->GetOwningNode()->GetNodeFullName() + Swizzle + ")";
+        }
+        else
+        {
+            FString ConstBString = eastl::to_string(Node->ConstB);
+            BValue = "vec4(" + ConstBString + ")";
         }
 
         FShaderChunk Chunk;
@@ -298,17 +406,31 @@ namespace Lumina
     {
         FString OwningNode = A->GetOwningNode()->GetNodeFullName();
         CMaterialExpression_Mod* Node = A->GetOwningNode<CMaterialExpression_Mod>();
-        FString ConstAString = eastl::to_string(Node->ConstA);
-        FString ConstBString = eastl::to_string(Node->ConstB);
 
-        FString AValue = "vec4(" + ConstAString + ")";
-        FString BValue = "vec4(" + ConstBString + ")";
-
+        FString AValue, BValue;
         if (A->HasConnection())
-            AValue = A->GetConnections()[0]->GetOwningNode()->GetNodeFullName();
+        {
+            CMaterialOutput* AConn = Cast<CMaterialOutput>(A->GetConnections()[0]);
+            FString Swizzle = GetSwizzleForMask(AConn->GetComponentMask());
+            AValue = "vec4(" + AConn->GetOwningNode()->GetNodeFullName() + Swizzle + ")";
+        }
+        else
+        {
+            FString ConstAString = eastl::to_string(Node->ConstA);
+            AValue = "vec4(" + ConstAString + ")";
+        }
 
         if (B->HasConnection())
-            BValue = B->GetConnections()[0]->GetOwningNode()->GetNodeFullName();
+        {
+            CMaterialOutput* BConn = Cast<CMaterialOutput>(B->GetConnections()[0]);
+            FString Swizzle = GetSwizzleForMask(BConn->GetComponentMask());
+            BValue = "vec4(" + BConn->GetOwningNode()->GetNodeFullName() + Swizzle + ")";
+        }
+        else
+        {
+            FString ConstBString = eastl::to_string(Node->ConstB);
+            BValue = "vec4(" + ConstBString + ")";
+        }
 
         FShaderChunk Chunk;
         Chunk.Data = "vec4 " + OwningNode + " = mod(" + AValue + ", " + BValue + ");";
@@ -340,17 +462,31 @@ namespace Lumina
     {
         FString OwningNode = A->GetOwningNode()->GetNodeFullName();
         CMaterialExpression_Max* Node = A->GetOwningNode<CMaterialExpression_Max>();
-        FString ConstAString = eastl::to_string(Node->ConstA);
-        FString ConstBString = eastl::to_string(Node->ConstB);
 
-        FString AValue = "vec4(" + ConstAString + ")";
-        FString BValue = "vec4(" + ConstBString + ")";
-
+        FString AValue, BValue;
         if (A->HasConnection())
-            AValue = A->GetConnections()[0]->GetOwningNode()->GetNodeFullName();
+        {
+            CMaterialOutput* AConn = Cast<CMaterialOutput>(A->GetConnections()[0]);
+            FString Swizzle = GetSwizzleForMask(AConn->GetComponentMask());
+            AValue = "vec4(" + AConn->GetOwningNode()->GetNodeFullName() + Swizzle + ")";
+        }
+        else
+        {
+            FString ConstAString = eastl::to_string(Node->ConstA);
+            AValue = "vec4(" + ConstAString + ")";
+        }
 
         if (B->HasConnection())
-            BValue = B->GetConnections()[0]->GetOwningNode()->GetNodeFullName();
+        {
+            CMaterialOutput* BConn = Cast<CMaterialOutput>(B->GetConnections()[0]);
+            FString Swizzle = GetSwizzleForMask(BConn->GetComponentMask());
+            BValue = "vec4(" + BConn->GetOwningNode()->GetNodeFullName() + Swizzle + ")";
+        }
+        else
+        {
+            FString ConstBString = eastl::to_string(Node->ConstB);
+            BValue = "vec4(" + ConstBString + ")";
+        }
 
         FShaderChunk Chunk;
         Chunk.Data = "vec4 " + OwningNode + " = max(" + AValue + ", " + BValue + ");";
@@ -361,17 +497,31 @@ namespace Lumina
     {
         FString OwningNode = A->GetOwningNode()->GetNodeFullName();
         CMaterialExpression_Step* Node = A->GetOwningNode<CMaterialExpression_Step>();
-        FString ConstAString = eastl::to_string(Node->ConstA); // edge
-        FString ConstBString = eastl::to_string(Node->ConstB); // input
 
-        FString AValue = "vec4(" + ConstAString + ")";
-        FString BValue = "vec4(" + ConstBString + ")";
-
+        FString AValue, BValue;
         if (A->HasConnection())
-            AValue = A->GetConnections()[0]->GetOwningNode()->GetNodeFullName();
+        {
+            CMaterialOutput* AConn = Cast<CMaterialOutput>(A->GetConnections()[0]);
+            FString Swizzle = GetSwizzleForMask(AConn->GetComponentMask());
+            AValue = "vec4(" + AConn->GetOwningNode()->GetNodeFullName() + Swizzle + ")";
+        }
+        else
+        {
+            FString ConstAString = eastl::to_string(Node->ConstA); // edge
+            AValue = "vec4(" + ConstAString + ")";
+        }
 
         if (B->HasConnection())
-            BValue = B->GetConnections()[0]->GetOwningNode()->GetNodeFullName();
+        {
+            CMaterialOutput* BConn = Cast<CMaterialOutput>(B->GetConnections()[0]);
+            FString Swizzle = GetSwizzleForMask(BConn->GetComponentMask());
+            BValue = "vec4(" + BConn->GetOwningNode()->GetNodeFullName() + Swizzle + ")";
+        }
+        else
+        {
+            FString ConstBString = eastl::to_string(Node->ConstB); // input
+            BValue = "vec4(" + ConstBString + ")";
+        }
 
         FShaderChunk Chunk;
         Chunk.Data = "vec4 " + OwningNode + " = step(" + AValue + ", " + BValue + ");";
@@ -383,26 +533,55 @@ namespace Lumina
         FString OwningNode = A->GetOwningNode()->GetNodeFullName();
         CMaterialExpression_Lerp* Node = A->GetOwningNode<CMaterialExpression_Lerp>();
 
-        FString ConstAString = eastl::to_string(Node->ConstA);
-        FString ConstBString = eastl::to_string(Node->ConstB);
-        FString ConstCString = eastl::to_string(Node->ConstC);
+        FString AValue, BValue, CValue;
 
-        FString AValue = "vec4(" + ConstAString + ")";
-        FString BValue = "vec4(" + ConstBString + ")";
-        FString CValue = "vec4(" + ConstCString + ")";
-
+        // Handle A input
         if (A->HasConnection())
-            AValue = A->GetConnections()[0]->GetOwningNode()->GetNodeFullName();
+        {
+            CMaterialOutput* AConn = Cast<CMaterialOutput>(A->GetConnections()[0]);
+            FString Swizzle = GetSwizzleForMask(AConn->GetComponentMask());
+            AValue = "vec4(" + AConn->GetOwningNode()->GetNodeFullName() + Swizzle + ")";
+        }
+        else
+        {
+            FString ConstAString = eastl::to_string(Node->ConstA);
+            AValue = "vec4(" + ConstAString + ")";
+        }
 
+        // Handle B input
         if (B->HasConnection())
-            BValue = B->GetConnections()[0]->GetOwningNode()->GetNodeFullName();
+        {
+            CMaterialOutput* BConn = Cast<CMaterialOutput>(B->GetConnections()[0]);
+            FString Swizzle = GetSwizzleForMask(BConn->GetComponentMask());
+            BValue = "vec4(" + BConn->GetOwningNode()->GetNodeFullName() + Swizzle + ")";
+        }
+        else
+        {
+            FString ConstBString = eastl::to_string(Node->ConstB);
+            BValue = "vec4(" + ConstBString + ")";
+        }
 
+        // Handle C input
         if (C->HasConnection())
-            CValue = C->GetConnections()[0]->GetOwningNode()->GetNodeFullName();
+        {
+            CMaterialOutput* CConn = Cast<CMaterialOutput>(C->GetConnections()[0]);
+            FString Swizzle = GetSwizzleForMask(CConn->GetComponentMask());
+            CValue = "vec4(" + CConn->GetOwningNode()->GetNodeFullName() + Swizzle + ")";
+        }
+        else
+        {
+            FString ConstCString = eastl::to_string(Node->ConstC);
+            CValue = "vec4(" + ConstCString + ")";
+        }
 
         FShaderChunk Chunk;
         Chunk.Data = "vec4 " + OwningNode + " = mix(" + AValue + ", " + BValue + ", " + CValue + ");";
         ShaderChunks.push_back(Chunk);
+    }
+
+    void FMaterialCompiler::GetBoundImages(TVector<FRHIImageRef>& Images)
+    {
+        Images = BoundImages;
     }
 
     void FMaterialCompiler::AddRaw(const FString& Raw)

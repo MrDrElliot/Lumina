@@ -289,6 +289,11 @@ namespace Lumina::ImGuiX
             ImGui::TableNextRow();
             ImGui::TableSetColumnIndex(0);
 
+            if (ImGui::Selectable("Clear"))
+            {
+                OutSelected = nullptr;
+            }
+            
             for (const FAssetData& Asset : FilteredAssets)
             {
                 if (!SearchFilter.PassFilter(Asset.Name.c_str()))
@@ -299,15 +304,31 @@ namespace Lumina::ImGuiX
                 ImGui::TableNextRow();
                 ImGui::TableSetColumnIndex(0);
 
-                if (ImGui::Selectable(Asset.Name.c_str()))
+                const char* NameStr = Asset.Name.c_str();
+                float TextWidth = ImGui::CalcTextSize(NameStr).x;
+                float ColumnWidth = ImGui::GetColumnWidth();
+                float SelectableWidth = TextWidth + ImGui::GetStyle().FramePadding.x * 2.0f;
+
+                float Padding = (ColumnWidth - SelectableWidth) * 0.5f;
+                if (Padding > 0.0f)
+                    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + Padding);
+
+                // Limit width of the selectable to just fit the text
+                ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(ImGui::GetStyle().FramePadding.x, ImGui::GetStyle().FramePadding.y));
+                ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, ImGui::GetStyle().ItemSpacing.y));
+
+                if (ImGui::Selectable(NameStr, false, 0, ImVec2(SelectableWidth, 0)))
                 {
                     FString VirtualPath = Paths::ConvertToVirtualPath(Asset.Path);
                     VirtualPath += "." + Asset.Name.ToString();
                     FName AssetName = VirtualPath.c_str();
                     OutSelected = LoadObject<CObject>(AssetName);
                     ImGui::CloseCurrentPopup();
+                    ImGui::PopStyleVar(2);
                     break;
                 }
+
+                ImGui::PopStyleVar(2);
             }
 
             ImGui::EndTable();

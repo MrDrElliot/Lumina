@@ -15,24 +15,23 @@ namespace Lumina
         
     public:
         
-        uint32 GetMask() const { return Mask; }
-        void DrawPin() override;
+        float DrawPin() override;
 
         void SetInputType(EMaterialInputType InType) { InputType = InType; }
 
+        EComponentMask GetComponentMask() const { return Mask; }
+        void SetComponentMask(EComponentMask InMask) { Mask = InMask; }
         void SetIndex(uint32 InIndex) { Index = InIndex; }
         uint32 GetIndex() const { return Index; }
         
     private:
-
-        /** Mask represents the values of a float4 */
-        uint32              Mask = 0;
 
         /** Index on the node's pin array, useful for offsetting for properties */
         uint32              Index = 0;
         
         EMaterialInputType  InputType = EMaterialInputType::Float;
 
+        EComponentMask      Mask = EComponentMask::RGBA;
     };
 
 }

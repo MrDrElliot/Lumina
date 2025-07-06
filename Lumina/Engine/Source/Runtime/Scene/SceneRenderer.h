@@ -9,6 +9,8 @@
 
 namespace Lumina
 {
+    class CStaticMesh;
+    struct FStaticMeshComponent;
     class FPrimitiveDrawManager;
     struct FMaterialTexturesData;
     class FSceneUpdateContext;
@@ -23,6 +25,19 @@ namespace Lumina
     struct FModelData
     {
         glm::mat4 ModelMatrix;
+    };
+
+    struct FGBuffer
+    {
+        FRHIImageRef Position;
+        FRHIImageRef Normals;
+        FRHIImageRef AlbedoSpec;
+    };
+
+    struct FFrameDrawList
+    {
+        TVector<CStaticMesh*> Meshes;
+        TVector<FModelData> ModelData;
     };
     
     /**
@@ -48,7 +63,9 @@ namespace Lumina
 
     protected:
 
-        void ForwardRenderPass(const FScene* Scene);
+        void GeometryPass(const FFrameDrawList& DrawList);
+        void LightingPass(const FFrameDrawList& DrawList);
+        void SkyboxPass(const FFrameDrawList& DrawList);
         void FullScreenPass(const FScene* Scene);
 
         void DrawPrimitives(const FScene* Scene);
@@ -63,8 +80,8 @@ namespace Lumina
         
     private:
 
+        IRenderContext*                     RenderContext = nullptr;
         FRHIImageRef                        CubeMap;
-        FRHIImageRef                        DepthBuffer;
         FRHIViewportRef                     SceneViewport;
         FRHIBufferRef                       SceneDataBuffer;
         FRHIBufferRef                       ModelDataBuffer;
@@ -79,6 +96,8 @@ namespace Lumina
         FRHIBindingLayoutRef                SceneGlobalBindingLayout;
         
         FRenderGraph                        RenderGraph;
+        FGBuffer                            GBuffer;
+        FRHIImageRef                        DepthAttachment;
     };
     
 }

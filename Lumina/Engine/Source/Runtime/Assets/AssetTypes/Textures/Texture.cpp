@@ -23,7 +23,6 @@ namespace Lumina
     {
         FRenderManager* RenderManager = GEngine->GetEngineSubsystem<FRenderManager>();
         IRenderContext* RenderContext = RenderManager->GetRenderContext();
-
         RHIImage = RenderContext->CreateImage(ImageDescription);
 
         const uint32 Width = ImageDescription.Extent.X;
@@ -36,5 +35,9 @@ namespace Lumina
         TransferCommandList->WriteToImage(RHIImage, 0, 0, Pixels.data(), RowPitch, DepthPitch);
         TransferCommandList->Close();
         RenderContext->ExecuteCommandList(TransferCommandList, 1, Q_Transfer);
+        
+        FRHICommandListRef CommandList = RenderContext->GetCommandList({ECommandQueue::Graphics});
+        CommandList->SetRequiredImageAccess(RHIImage, ERHIAccess::ShaderRead);
+        CommandList->CommitBarriers();
     }
 }

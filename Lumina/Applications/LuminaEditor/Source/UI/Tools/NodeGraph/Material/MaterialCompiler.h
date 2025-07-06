@@ -4,6 +4,12 @@
 #include "MaterialInput.h"
 #include "Containers/Array.h"
 #include "Containers/String.h"
+#include "Renderer/RHIFwd.h"
+
+namespace Lumina
+{
+    class CTexture;
+}
 
 namespace Lumina
 {
@@ -39,14 +45,19 @@ namespace Lumina
         FORCEINLINE const TVector<FError>& GetErrors() const { return Errors; }
 
         FString BuildTree();
-
+        
+        
         void DefineConstantFloat(const FString& ID, float Value);
         void DefineConstantFloat2(const FString& ID, float Value[2]);
         void DefineConstantFloat3(const FString& ID, float Value[3]);
         void DefineConstantFloat4(const FString& ID, float Value[4]);
 
-        void Time(const FString& ID);
+        void DefineTextureSample(const FString& ID);
+        void TextureSample(const FString& ID, CTexture* Texture);
 
+        void NewLine();
+        
+        void Time(const FString& ID);
         void WorldPos(const FString& ID);
         void CameraPos(const FString& ID);
         
@@ -64,7 +75,8 @@ namespace Lumina
         void Max(CMaterialInput* A, CMaterialInput* B);
         void Step(CMaterialInput* A, CMaterialInput* B);
         void Lerp(CMaterialInput* A, CMaterialInput* B, CMaterialInput* C);
-        
+
+        void GetBoundImages(TVector<FRHIImageRef>& Images);
 
         void AddRaw(const FString& Raw);
         
@@ -76,6 +88,8 @@ namespace Lumina
         FMaterialNodePin*                   CurrentPin =  nullptr;
         TVector<FShaderChunk>               ShaderChunks;
         TVector<FError>                     Errors;
-        
+
+        uint32                              BindingIndex = 0;
+        TVector<FRHIImageRef>               BoundImages;
     };
 }

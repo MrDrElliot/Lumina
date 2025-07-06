@@ -215,13 +215,27 @@ namespace Lumina::Reflection
         eastl::string LowerProject = Project;
         LowerProject.make_lower();
         eastl::string PackageName = "script://" + LowerProject;
+
+        if (!Namespace.empty())
+        {
+            Stream += "namespace " + Namespace + "\n";
+            Stream += "{\n";
+            Stream += "\tclass " + DisplayName + ";\n";
+            Stream += "}\n";
+        }
+        else
+        {
+            Stream += "\tclass " + DisplayName + ";\n";
+        }
+
         
         Stream += "#define " + FileID + "_" + eastl::to_string(LineNumber) + "_CLASS \\\n";
         Stream += "private: \\\n";
         Stream += "\\\n";
         Stream += "public: \\\n";
         Stream += "\tDECLARE_CLASS(" + Namespace + ", " + DisplayName + ", " + Parent + ", \"" + PackageName.c_str() + "\", NO_API" + ") \\\n";
-        Stream += "\tDEFINE_DEFAULT_CONSTRUCTOR_CALL(" + Namespace + "::" + DisplayName + ")\n";
+        Stream += "\tDEFINE_DEFAULT_CONSTRUCTOR_CALL(" + Namespace + "::" + DisplayName + ") \\\n";
+        Stream += "\tDECLARE_SERIALIZER(" + Namespace + ", " + DisplayName + ") \\\n";
         Stream += "\n\n";
     }
 

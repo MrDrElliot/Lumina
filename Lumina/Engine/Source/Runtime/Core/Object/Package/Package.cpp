@@ -107,6 +107,11 @@ namespace Lumina
         Reader.Seek((int64)PackageHeader.ExportTableOffset);
         Reader << Package->ExportTable;
 
+        for (const FObjectImport& Name : Package->ImportTable)
+        {
+            LOG_INFO("Import: {}", Name.ObjectName);
+        }
+        
         for (SIZE_T i = 0; i < Package->ExportTable.size(); ++i)
         {
             FObjectExport& Export = Package->ExportTable[i];
@@ -209,7 +214,7 @@ namespace Lumina
         {
             return false;
         }
-
+        
         LOG_INFO("Saved Package: \"{}\" - ( [{}] Exports | [{}] Imports )", Package->GetName(), Package->ExportTable.size(), Package->ImportTable.size());
         return true;
     }
@@ -244,18 +249,12 @@ namespace Lumina
 
     void CPackage::CreateImports()
     {
-        while (ImportIndex < ImportTable.size())
-        {
-
-
-            ++ImportIndex;
-        }
+        
     }
     
     void CPackage::LoadObject(CObject* Object)
     {
         LUMINA_PROFILE_SCOPE();
-        
         if (!Object || !Object->HasAnyFlag(OF_NeedsLoad))
         {
             return;

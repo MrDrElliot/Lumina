@@ -66,7 +66,8 @@ namespace Lumina
             }
             else
             {
-                Index = FObjectPackageIndex::FromImport(Package->ImportIndex);
+                Index = FObjectPackageIndex::FromImport(CurrentImportIndex);
+                CurrentImportIndex++;
             }
         }
         

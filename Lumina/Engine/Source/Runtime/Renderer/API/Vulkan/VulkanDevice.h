@@ -3,11 +3,13 @@
 #include <vma/vk_mem_alloc.h>
 #include <vulkan/vulkan_core.h>
 
+#include "Lumina.h"
 #include "Containers/Array.h"
 #include "Memory/Memory.h"
 
 namespace Lumina
 {
+    class IDeviceChild;
     class FVulkanRenderContext;
 }
 
@@ -59,13 +61,20 @@ namespace Lumina
             Allocator = Memory::New<FVulkanMemoryAllocator>(Instance, PhysicalDevice, Device);
         }
 
-        ~FVulkanDevice()
+        virtual ~FVulkanDevice()
         {
+            for (auto it = Children.rbegin(); it != Children.rend(); ++it)
+            {
+                Memory::Delete(*it);
+            }
+
+            Children.clear();
             Memory::Delete(Allocator);
             vkDestroyDevice(Device, nullptr);
         }
 
-        
+        void AddChild(IDeviceChild* InChild);
+        void RemoveChild(IDeviceChild* InChild);
 
         FORCEINLINE FVulkanMemoryAllocator* GetAllocator() const { return Allocator; }
         FORCEINLINE VkPhysicalDevice GetPhysicalDevice() const { return PhysicalDevice; }
@@ -76,29 +85,32 @@ namespace Lumina
     
     private:
 
-        FVulkanMemoryAllocator* Allocator = nullptr;
-        VkPhysicalDevice        PhysicalDevice;
-        VkDevice                Device;
+        FVulkanMemoryAllocator*                 Allocator = nullptr;
+        VkPhysicalDevice                        PhysicalDevice;
+        VkDevice                                Device;
 
         VkPhysicalDeviceProperties              PhysicalDeviceProperties;
         VkPhysicalDeviceMemoryProperties        PhysicalDeviceMemoryProperties;
+        TFixedVector<IDeviceChild*, 1000>       Children;
     };
 
     class IDeviceChild
     {
-    protected:
-        
-        ~IDeviceChild() = default;
-
     public:
-        
+
         IDeviceChild(FVulkanDevice* InDevice)
             :Device(InDevice)
-        {}
-
+        {
+            Device->AddChild(this);
+        }
         
+        virtual ~IDeviceChild()
+        {
+            Device->RemoveChild(this);
+        }
+        
+        SIZE_T         Index = INDEX_NONE;
         FVulkanDevice* Device = nullptr;
-        
     };
     
 }

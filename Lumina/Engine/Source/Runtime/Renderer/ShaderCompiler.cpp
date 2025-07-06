@@ -72,7 +72,8 @@ namespace Lumina
                 LOG_ERROR("Failed to load shader: {0}", Request.Path);
                 return;
             }
-    
+
+            
             auto Preprocessed = Compiler.PreprocessGlsl(RawShaderString.c_str(),
                                                         RawShaderString.size(),
                                                         shaderc_glsl_infer_from_source,
@@ -90,7 +91,7 @@ namespace Lumina
                                                            PreprocessedShader.size(),
                                                            shaderc_glsl_infer_from_source,
                                                            Request.Path.c_str(), Options);
-    
+            
             if (CompileResult.GetCompilationStatus() != shaderc_compilation_status_success)
             {
                 LOG_ERROR("Compilation failed: {0} - {1}", Request.Path, CompileResult.GetErrorMessage());
@@ -132,10 +133,7 @@ namespace Lumina
 
         FTaskSystem::Get()->ScheduleLambda([Request]
         {
-            FString VertexPath = std::filesystem::path(Paths::GetEngineResourceDirectory() / "Shaders/Material.vert").generic_string().c_str();
-
-            FString LoadedString;
-            FileHelper::LoadFileIntoString(LoadedString, VertexPath);
+            FString VertexPath = std::filesystem::path(Paths::GetEngineResourceDirectory() / "Shaders/Material.frag").generic_string().c_str();
             
             TVector<uint32> Binaries;
             shaderc::Compiler Compiler;

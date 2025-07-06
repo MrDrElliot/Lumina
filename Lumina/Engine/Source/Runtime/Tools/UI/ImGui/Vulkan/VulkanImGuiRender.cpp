@@ -59,6 +59,7 @@ namespace Lumina
 
     	
         ImGui_ImplVulkan_InitInfo InitInfo = {};
+    	InitInfo.ApiVersion = VK_API_VERSION_1_3;
         InitInfo.PipelineRenderingCreateInfo = RenderPipeline;
         InitInfo.Instance = VulkanRenderContext->GetVulkanInstance();
         InitInfo.PhysicalDevice = VulkanRenderContext->GetDevice()->GetPhysicalDevice();
@@ -106,12 +107,11 @@ namespace Lumina
 		{
 			FRHICommandListRef CommandList = VulkanRenderContext->GetCommandList(ECommandQueue::Graphics);
 			
-			
 			FRenderPassBeginInfo RenderPass; RenderPass
 			.AddColorAttachment(GEngine->GetEngineViewport()->GetRenderTarget())
-			.SetColorLoadOp(ERenderLoadOp::Clear)
+			.SetColorLoadOp(ERenderLoadOp::Load)
 			.SetColorStoreOp(ERenderStoreOp::Store)
-			.SetColorClearColor(FColor::White)
+			.SetColorClearColor(FColor::Black)
 			.SetRenderArea(GEngine->GetEngineViewport()->GetRenderTarget()->GetDescription().Extent);
 			
 			CommandList->BeginRenderPass(RenderPass);

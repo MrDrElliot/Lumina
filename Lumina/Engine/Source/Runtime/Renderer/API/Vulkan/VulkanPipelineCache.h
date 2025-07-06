@@ -5,7 +5,7 @@
 
 namespace Lumina
 {
-    class FName;
+    class IVulkanShader;
     struct FComputePipelineDesc;
     struct FGraphicsPipelineDesc;
     class FVulkanDevice;
@@ -27,7 +27,7 @@ namespace Lumina
         FRHIGraphicsPipelineRef GetOrCreateGraphicsPipeline(FVulkanDevice* Device, const FGraphicsPipelineDesc& InDesc);
         FRHIComputePipelineRef GetOrCreateComputePipeline(FVulkanDevice* Device, const FComputePipelineDesc& InDesc);
 
-        void PostShaderRecompiled(const FName& Shader);
+        void PostShaderRecompiled(const IVulkanShader* Shader);
         void ReleasePipelines();
         
     private:

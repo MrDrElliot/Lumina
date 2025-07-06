@@ -372,7 +372,6 @@ namespace Lumina
         TVector<FObjectImport>           ImportTable;
         TVector<FObjectExport>           ExportTable;
 
-        int64       ImportIndex = 0;
         int64       ExportIndex = 0;
     };
     

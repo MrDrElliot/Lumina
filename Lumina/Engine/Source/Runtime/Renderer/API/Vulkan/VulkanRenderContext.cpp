@@ -433,26 +433,29 @@ namespace Lumina
         CommandList.SafeRelease();
         ShaderLibrary.SafeRelease();
         PipelineCache.ReleasePipelines();
+        DescriptorCache.ReleaseResources();
 
         ShaderCompiler->Shutdown();
         Memory::Delete(ShaderCompiler);
+        
         Memory::Delete(Swapchain);
+        
+        for (FQueue* Queue : Queues)
+        {
+            Memory::Delete(Queue);
+        }
+        
+        
+        auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(VulkanInstance, "vkDestroyDebugUtilsMessengerEXT");
+        func(VulkanInstance, DebugUtils.DebugMessenger, nullptr);
+        
+        FlushPendingDeletes();
 
         for (VkDescriptorPool Pool : DescriptorPool)
         {
             vkDestroyDescriptorPool(VulkanDevice->GetDevice(), Pool, nullptr);
             Pool = VK_NULL_HANDLE;
         }
-
-        for (FQueue* Queue : Queues)
-        {
-            Memory::Delete(Queue);
-        }
-        
-        auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(VulkanInstance, "vkDestroyDebugUtilsMessengerEXT");
-        func(VulkanInstance, DebugUtils.DebugMessenger, nullptr);
-        
-        FlushPendingDeletes();
         
         Memory::Delete(VulkanDevice);
         vkDestroyInstance(VulkanInstance, nullptr);
@@ -729,21 +732,24 @@ namespace Lumina
                             FRHIVertexShaderRef Shader = CreateVertexShader(Binaries);
                             Shader->SetKey(FileNameString.c_str());
                             ShaderLibrary->AddShader(Shader);
+                            PipelineCache.PostShaderRecompiled(Shader.As<FVulkanVertexShader>());
+
                         }
                         else if (Dir.path().extension() == ".frag")
                         {
                             FRHIPixelShaderRef Shader = CreatePixelShader(Binaries);
                             Shader->SetKey(FileNameString.c_str());
                             ShaderLibrary->AddShader(Shader);
+                            PipelineCache.PostShaderRecompiled(Shader.As<FVulkanPixelShader>());
                         }
                         else if (Dir.path().extension() == ".comp")
                         {
                             FRHIComputeShaderRef Shader = CreateComputeShader(Binaries);
                             Shader->SetKey(FileNameString.c_str());
                             ShaderLibrary->AddShader(Shader);
+                            PipelineCache.PostShaderRecompiled(Shader.As<FVulkanComputeShader>());
                         }
                         
-                        PipelineCache.PostShaderRecompiled("");
                     });
 
                     if (!bSuccess)
@@ -757,7 +763,7 @@ namespace Lumina
 
     void FVulkanRenderContext::OnShaderCompiled(FRHIShader* Shader)
     {
-        PipelineCache.PostShaderRecompiled("");
+        PipelineCache.PostShaderRecompiled((IVulkanShader*)Shader);
     }
 
     FRHIInputLayoutRef FVulkanRenderContext::CreateInputLayout(const FVertexAttributeDesc* AttributeDesc, uint32 Count)

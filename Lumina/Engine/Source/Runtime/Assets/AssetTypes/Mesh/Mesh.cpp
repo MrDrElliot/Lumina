@@ -50,4 +50,30 @@ namespace Lumina
         RenderContext->ExecuteCommandList(TransferCommandList, 1, ECommandQueue::Transfer);
 
     }
+
+    bool CMesh::IsReadyForRender() const
+    {
+        if (HasAnyFlag(OF_NeedsLoad) || HasAllFlags(OF_MarkedGarbage))
+        {
+            return false;
+        }
+
+        //@ TODO Temp until reflection is better supported.
+        CMaterial* CastedMaterial = Cast<CMaterial>(Material);
+        
+        if (CastedMaterial == nullptr)
+        {
+            return false;
+        }
+
+        if (CastedMaterial->BindingLayout == nullptr
+            || CastedMaterial->BindingSet == nullptr
+            || CastedMaterial->VertexShader == nullptr
+            || CastedMaterial->PixelShader == nullptr)
+        {
+            return false;
+        }
+
+        return true;
+    }
 }

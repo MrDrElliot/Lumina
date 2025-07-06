@@ -132,7 +132,7 @@ namespace Lumina::ImportHelpers
                     fastgltf::iterateAccessorWithIndex<glm::vec2>(Asset, Asset.accessors[(*uv).second], [&](glm::vec2 v, size_t index)
                     {
                         OutVertices[InitialVert + index].UV.x = v.x;
-                        OutVertices[InitialVert + index].UV.y = 1.0f - v.y;
+                        OutVertices[InitialVert + index].UV.y = v.y;
                     });
                 }
         
@@ -147,20 +147,6 @@ namespace Lumina::ImportHelpers
                         OutVertices[InitialVert + index].Color.b = v.b;
                         OutVertices[InitialVert + index].Color.a = v.a;
                     });
-                }
-                
-            }
-            
-            constexpr bool OverrideColors = true;
-            if (OverrideColors)
-            {
-                std::random_device rd;
-                std::mt19937 gen(rd()); // Standard Mersenne Twister
-                std::uniform_real_distribution<float> dist(0.0f, 1.0f);
-
-                for (FVertex& vtx : OutVertices)
-                {
-                    vtx.Color = glm::vec4(dist(gen), dist(gen), dist(gen), 1.0f);
                 }
             }
         }

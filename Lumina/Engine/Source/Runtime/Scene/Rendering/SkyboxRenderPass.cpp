@@ -69,6 +69,7 @@ namespace Lumina
         RenderTarget.SetDestBlend(EBlendFactor::OneMinusSrcAlpha);
         RenderTarget.SetSrcBlendAlpha(EBlendFactor::One);
         RenderTarget.SetDestBlendAlpha(EBlendFactor::Zero);
+        RenderTarget.SetFormat(EFormat::BGRA8_UNORM);
         BlendState.SetRenderTarget(0, RenderTarget);
 
         FRasterState RasterState;
@@ -86,7 +87,7 @@ namespace Lumina
         Desc.AddBindingLayout(Layout2);
         Desc.SetVertexShader(VertexShader);
         Desc.SetPixelShader(PixelShader);
-
+  
         FRHIGraphicsPipelineRef Pipeline = RenderContext->CreateGraphicsPipeline(Desc);
         
         CommandList->SetGraphicsPipeline(Pipeline);

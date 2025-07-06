@@ -31,6 +31,8 @@ namespace Lumina
 
     void FVulkanMemoryAllocator::ClearAllAllocations()
     {
+        LUMINA_PROFILE_SCOPE();
+
         for (auto& kvp : AllocatedBuffers)
         {
             if (kvp.first != VK_NULL_HANDLE)
@@ -59,6 +61,8 @@ namespace Lumina
 
     VmaAllocation FVulkanMemoryAllocator::AllocateBuffer(const VkBufferCreateInfo* CreateInfo, VmaAllocationCreateFlags Flags, VkBuffer* vkBuffer, const char* AllocationName)
     {
+        LUMINA_PROFILE_SCOPE();
+        
         VmaAllocationCreateInfo Info = {};
         Info.usage = VMA_MEMORY_USAGE_AUTO;
         Info.flags = Flags;
@@ -78,6 +82,8 @@ namespace Lumina
 
     VmaAllocation FVulkanMemoryAllocator::AllocateImage(VkImageCreateInfo* CreateInfo, VmaAllocationCreateFlags Flags, VkImage* vkImage, const char* AllocationName)
     {
+        LUMINA_PROFILE_SCOPE();
+
         if (CreateInfo->extent.depth == 0)
         {
             LOG_WARN("Trying to allocate image with 0 depth. No allocation done");
@@ -115,7 +121,9 @@ namespace Lumina
 
     void FVulkanMemoryAllocator::DestroyBuffer(VkBuffer Buffer)
     {
-        Assert(Buffer);
+        LUMINA_PROFILE_SCOPE();
+
+        Assert(Buffer)
 
         VmaAllocationInfo AllocationInfo;
         vmaGetAllocationInfo(Allocator, AllocatedBuffers[Buffer], &AllocationInfo);
@@ -129,7 +137,9 @@ namespace Lumina
 
     void FVulkanMemoryAllocator::DestroyImage(VkImage Image)
     {
-        Assert(Image);
+        LUMINA_PROFILE_SCOPE();
+
+        Assert(Image)
         
         VmaAllocationInfo AllocationInfo;
         vmaGetAllocationInfo(Allocator, AllocatedImages[Image], &AllocationInfo);
@@ -152,5 +162,22 @@ namespace Lumina
     {
         LUMINA_PROFILE_SCOPE();
         vmaUnmapMemory(Allocator, Allocation);
+    }
+
+    void FVulkanDevice::AddChild(IDeviceChild* InChild)
+    {
+        InChild->Index = Children.size();
+        Children.push_back(InChild);
+    }
+
+    void FVulkanDevice::RemoveChild(IDeviceChild* InChild)
+    {
+        size_t idx = InChild->Index;
+        if (idx < Children.size() && Children[idx] == InChild)
+        {
+            std::swap(Children[idx], Children.back());
+            Children[idx]->Index = idx;
+            Children.pop_back();
+        }
     }
 }

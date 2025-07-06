@@ -37,6 +37,7 @@ namespace Lumina
         void DrawMaterialPreview(const FUpdateContext& UpdateContext);
         void DrawGLSLPreview(const FUpdateContext& UpdateContext);
 
+        void Compile();
         void InitializeDockingLayout(ImGuiID InDockspaceID, const ImVec2& InDockspaceSize) const override;
 
     private:

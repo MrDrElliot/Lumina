@@ -326,8 +326,8 @@ namespace Lumina
                 FString MenuItemName = FString(ImportIcon) + " " + "Import Asset";
                 if (ImGui::MenuItem(MenuItemName.c_str()) &&  !FileBrowser.IsOpened())
                 {
-                    FileBrowser = ImGui::FileBrowser(ImGuiFileBrowserFlags_CloseOnEsc);
-                    FileBrowser.SetTitle("Select a file to import.");
+                    FileBrowser = ImGui::FileBrowser(ImGuiFileBrowserFlags_CloseOnEsc | ImGuiFileBrowserFlags_MultipleSelection);
+                    FileBrowser.SetTitle("Select a file(s) to import.");
                     FileBrowser.SetTypeFilters({".png", ".jpg", ".fbx", ".gltf"});
 
                     FileBrowser.Open();
@@ -377,42 +377,44 @@ namespace Lumina
         FileBrowser.Display();
         if (FileBrowser.HasSelected())
         {
-            std::filesystem::path FilePath = FileBrowser.GetSelected();
+            std::vector<std::filesystem::path> Files = FileBrowser.GetMultiSelected();
             FileBrowser.ClearSelected();
             FileBrowser.Close();
-            
-            TVector<CAssetDefinition*> Definitions;
-            CAssetDefinitionRegistry::Get()->GetAssetDefinitions(Definitions);
-            for (CAssetDefinition* Definition : Definitions)
+
+            for (const auto& FilePath : Files)
             {
-                if (!Definition->CanImport())
+                TVector<CAssetDefinition*> Definitions;
+                CAssetDefinitionRegistry::Get()->GetAssetDefinitions(Definitions);
+                for (CAssetDefinition* Definition : Definitions)
                 {
-                    continue;
-                }
+                    if (!Definition->CanImport())
+                    {
+                        continue;
+                    }
 
-                if (Definition->GetImportFileExtension() != FilePath.extension().generic_string().c_str())
-                {
-                    continue;
-                }
+                    FString Ext = FilePath.extension().generic_string().c_str();
+                    if (!Definition->IsExtensionSupported(Ext))
+                    {
+                        continue;
+                    }
                 
-                CFactory* Factory = Definition->GetFactory();
+                    CFactory* Factory = Definition->GetFactory();
                 
-                FString NoExtFileName = Paths::RemoveExtension(FilePath.filename().generic_string().c_str());
-                FString PathString = Paths::Combine(SelectedPath.generic_string().c_str(), NoExtFileName.c_str());
+                    FString NoExtFileName = Paths::RemoveExtension(FilePath.filename().generic_string().c_str());
+                    FString PathString = Paths::Combine(SelectedPath.generic_string().c_str(), NoExtFileName.c_str());
                 
-                Paths::AddPackageExtension(PathString);
-                MakeUniquePath(PathString);
-                PathString = Paths::RemoveExtension(PathString);
+                    Paths::AddPackageExtension(PathString);
+                    MakeUniquePath(PathString);
+                    PathString = Paths::RemoveExtension(PathString);
 
-                FTaskSystem::Get()->ScheduleLambda([this, Factory, FilePath, PathString]
-                {
-                    Factory->TryImport(FilePath.generic_string().c_str(), PathString);
-                    RefreshContentBrowser();
-                });
+                    FTaskSystem::Get()->ScheduleLambda([this, Factory, FilePath, PathString]
+                    {
+                        Factory->TryImport(FilePath.generic_string().c_str(), PathString);
+                        RefreshContentBrowser();
+                    });
+                    bWroteSomething = true;
+                }
             }
-            
-            
-            bWroteSomething = true;
         }
         
         if (bWroteSomething)

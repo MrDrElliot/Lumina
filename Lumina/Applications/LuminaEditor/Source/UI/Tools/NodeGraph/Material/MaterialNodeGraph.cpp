@@ -5,8 +5,10 @@
 #include "Renderer/RHIIncl.h"
 #include "MaterialCompiler.h"
 #include "Assets/AssetTypes/Material/Material.h"
+#include "Core/Profiler/Profile.h"
 #include "Nodes/MaterialNodeExpression.h"
 #include "Nodes/MaterialNodeGetTime.h"
+#include "Nodes/MaterialNode_TextureSample.h"
 #include "Nodes/MaterialOutputNode.h"
 #include "UI/Tools/NodeGraph/EdNodeGraphPin.h"
 
@@ -112,6 +114,8 @@ namespace Lumina
         RegisterGraphNode(CMaterialExpression_ConstantFloat3::StaticClass());
         RegisterGraphNode(CMaterialExpression_ConstantFloat4::StaticClass());
 
+        RegisterGraphNode(CMaterialExpression_TextureSample::StaticClass());
+
         ValidateGraph();
     }
 
@@ -127,6 +131,8 @@ namespace Lumina
 
     void CMaterialNodeGraph::CompileGraph(FMaterialCompiler* Compiler)
     {
+        LUMINA_PROFILE_SCOPE();
+        
         TVector<CEdGraphNode*> SortedNodes;
         TVector<CEdGraphNode*> NodesToEvaluate;
         TSet<CEdGraphNode*> ReachableNodes;
@@ -165,9 +171,24 @@ namespace Lumina
             }
 
             CMaterialGraphNode* MaterialGraphNode = static_cast<CMaterialGraphNode*>(Node);
-            MaterialGraphNode->GenerateDefinition(Compiler);
+            MaterialGraphNode->GenerateExpression(Compiler);
+        }
 
-            LOG_DEBUG("Generating node: {0}", MaterialGraphNode->GetNodeFullName());
+        Compiler->NewLine();
+        Compiler->NewLine();
+
+        for (int i = 0; i < SortedNodes.size(); ++i)
+        {
+            CEdGraphNode* Node = SortedNodes[i];
+            
+            Node->SetDebugExecutionOrder(i);
+            if (Node == Nodes[0])
+            {
+                continue; 
+            }
+
+            CMaterialGraphNode* MaterialGraphNode = static_cast<CMaterialGraphNode*>(Node);
+            MaterialGraphNode->GenerateDefinition(Compiler);
         }
 
         // We then start off the compilation process using the MaterialOutput node as the kick-off.
@@ -206,6 +227,8 @@ namespace Lumina
     
     CEdGraphNode* CMaterialNodeGraph::TopologicalSort(const TVector<CEdGraphNode*>& NodesToSort, TVector<CEdGraphNode*>& SortedNodes)
     {
+        LUMINA_PROFILE_SCOPE();
+
         THashMap<CEdGraphNode*, uint32> InDegree;
         TQueue<CEdGraphNode*> ReadyQueue;
         THashSet<CEdGraphNode*> ReachableNodes;

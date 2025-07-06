@@ -89,10 +89,12 @@ public: \
     } \
 
 #define DECLARE_SERIALIZER(TNamespace, TClass) \
-    friend FArchive& operator << (FArchive& Ar, TNamespace::TClass*& Res) \
+    public: \
+    friend Lumina::FArchive& operator << (Lumina::FArchive& Ar, TNamespace::TClass*& Res) \
     { \
-        return Ar << (CObject*&)Res; \
+        return Ar << (Lumina::CObject*&)Res; \
     } \
+    private:
 
 
 #define DEFINE_DEFAULT_CONSTRUCTOR_CALL(TClass) \

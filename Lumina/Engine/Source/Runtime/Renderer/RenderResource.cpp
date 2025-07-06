@@ -48,11 +48,14 @@ namespace Lumina
     void FRHIViewport::CreateRenderTarget(const FIntVector2D& InSize)
     {
         FRHIImageDesc Desc;
-        Desc.Format = EImageFormat::BGRA32_UNORM;
+        Desc.Format = EFormat::BGRA8_UNORM;
         Desc.Flags.SetMultipleFlags(EImageCreateFlags::RenderTarget, EImageCreateFlags::ShaderResource);
         Desc.Extent = InSize;
 
         RenderTarget = RenderContext->CreateImage(Desc);
+        RenderTarget->SetDefaultAccess(ERHIAccess::ColorAttachmentWrite);
+        
+        RenderContext->SetObjectName(RenderTarget, "Render Target", EAPIResourceType::Image);
     }
     
 }

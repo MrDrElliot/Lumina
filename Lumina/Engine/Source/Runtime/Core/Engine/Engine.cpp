@@ -191,6 +191,7 @@ namespace Lumina
 
                 SceneManager->UpdateScenes(UpdateContext);
 
+                
                 SceneManager->EndFrame();
 
                 

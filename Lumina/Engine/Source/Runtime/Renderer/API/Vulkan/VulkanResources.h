@@ -117,9 +117,6 @@ namespace Lumina
         VkImage                     Image =                 VK_NULL_HANDLE;
         VkImageView                 ImageView =             VK_NULL_HANDLE;
     };
-
-
-    
     
     class IVulkanShader : public IDeviceChild
     {
@@ -128,7 +125,7 @@ namespace Lumina
         IVulkanShader(FVulkanDevice* InDevice, const TVector<uint32>& ByteCode, ERHIResourceType Type)
             :IDeviceChild(InDevice)
         {
-            Assert(!ByteCode.empty());
+            Assert(!ByteCode.empty())
             
             SpirV.ByteCode = ByteCode;
 
@@ -143,7 +140,7 @@ namespace Lumina
             VK_CHECK(vkCreateShaderModule(Device->GetDevice(), &CreateInfo, nullptr, &ShaderModule));
         }
         
-        ~IVulkanShader()
+        ~IVulkanShader() override
         {
             vkDestroyShaderModule(Device->GetDevice(), ShaderModule, nullptr);
         }
@@ -154,13 +151,17 @@ namespace Lumina
             *Size = SpirV.ByteCode.size() * sizeof(uint32);
         }
 
+        bool CompareSpirV(const IVulkanShader* Other) const
+        {
+            return VectorsAreEqual(Other->SpirV.ByteCode, SpirV.ByteCode);
+        }
+    
     protected:
         
         struct FSpirvCode
         {
             TVector<uint32> ByteCode;
         } SpirV;
-        
         
         VkShaderModule  ShaderModule = VK_NULL_HANDLE;
     };

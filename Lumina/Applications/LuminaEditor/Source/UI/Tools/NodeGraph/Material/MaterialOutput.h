@@ -12,8 +12,12 @@ namespace Lumina
         GENERATED_BODY()
     public:
         
-        void DrawPin() override;
+        float DrawPin() override;
+        EComponentMask GetComponentMask() const { return Mask; }
+        void SetComponentMask(EComponentMask InMask) { Mask = InMask; }
         
         EMaterialInputType  InputType = EMaterialInputType::Float;
+        EComponentMask      Mask = EComponentMask::RGBA;
+        
     };
 }

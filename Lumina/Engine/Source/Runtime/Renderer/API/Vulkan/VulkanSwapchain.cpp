@@ -117,7 +117,7 @@ namespace Lumina
 
         	FRHIImageDesc ImageDescription;
         	ImageDescription.Extent = Extent;
-        	ImageDescription.Format = EImageFormat::R8_UNORM;
+        	ImageDescription.Format = EFormat::R8_UNORM;
         	ImageDescription.NumMips = 1;
         	ImageDescription.NumSamples = 1;
 

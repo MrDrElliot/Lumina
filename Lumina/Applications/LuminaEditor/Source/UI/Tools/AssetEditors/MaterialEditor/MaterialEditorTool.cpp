@@ -66,40 +66,7 @@ namespace Lumina
     {
         if (ImGui::MenuItem(LE_ICON_RECEIPT_TEXT" Compile"))
         {
-            CompilationResult = FCompilationResultInfo();
-            
-            FMaterialCompiler Compiler;
-            NodeGraph->CompileGraph(&Compiler);
-
-            if (Compiler.HasErrors())
-            {
-                for (const FMaterialCompiler::FError& Error : Compiler.GetErrors())
-                {
-                    CompilationResult.CompilationLog += "ERROR - [" + Error.ErrorName + "]: " + Error.ErrorDescription + "\n";
-                }
-                
-                CompilationResult.bIsError = true;
-            }
-            else
-            {
-                FString Tree = Compiler.BuildTree();
-                CompilationResult.CompilationLog = "Generated GLSL: \n \n \n" + Tree;
-                CompilationResult.bIsError = false;
-
-                bGLSLPreviewDirty = true;
-                IShaderCompiler* ShaderCompiler = GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext()->GetShaderCompiler();
-                ShaderCompiler->CompilerShaderRaw(Tree, {}, [this](const TVector<uint32>& Binaries)
-                {
-                    IRenderContext* RenderContext = GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext();
-                    FRHIVertexShaderRef Shader = RenderContext->CreateVertexShader(Binaries);
-                    FRHIPixelShaderRef PixelShader = RenderContext->GetShaderLibrary()->GetShader("Material.frag").As<FRHIPixelShader>();
-                    CMaterial* Material = Cast<CMaterial>(Asset);
-                    Material->VertexShader = Shader;
-                    Material->PixelShader = PixelShader;
-                    RenderContext->OnShaderCompiled(Shader);
-                });
-                
-            }
+            Compile();
         }
     }
 
@@ -153,7 +120,77 @@ namespace Lumina
         ImGui::PopStyleVar();
     }
 
-    
+    void FMaterialEditorTool::Compile()
+    {
+        CompilationResult = FCompilationResultInfo();
+            
+        FMaterialCompiler Compiler;
+        NodeGraph->CompileGraph(&Compiler);
+
+        if (Compiler.HasErrors())
+        {
+            for (const FMaterialCompiler::FError& Error : Compiler.GetErrors())
+            {
+                CompilationResult.CompilationLog += "ERROR - [" + Error.ErrorName + "]: " + Error.ErrorDescription + "\n";
+            }
+                
+            CompilationResult.bIsError = true;
+        }
+        else
+        {
+            FString Tree = Compiler.BuildTree();
+            CompilationResult.CompilationLog = "Generated GLSL: \n \n \n" + Tree;
+            CompilationResult.bIsError = false;
+
+            bGLSLPreviewDirty = true;
+            IShaderCompiler* ShaderCompiler = GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext()->GetShaderCompiler();
+            ShaderCompiler->CompilerShaderRaw(Tree, {}, [this](const TVector<uint32>& Binaries)
+            {
+                IRenderContext* RenderContext = GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext();
+                FRHIPixelShaderRef PixelShader = RenderContext->CreatePixelShader(Binaries);
+
+                FName Key = eastl::to_string(Hash::GetHash64(Binaries.data(), Binaries.size())).c_str();
+                PixelShader->SetKey(Key);
+                    
+                FRHIVertexShaderRef VertexShader = RenderContext->GetShaderLibrary()->GetShader("Material.vert").As<FRHIVertexShader>();
+                CMaterial* Material = Cast<CMaterial>(Asset);
+                Material->VertexShader = VertexShader;
+                Material->PixelShader = PixelShader;
+                RenderContext->OnShaderCompiled(PixelShader);
+            });
+
+            IRenderContext* RenderContext = GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext();
+
+            CMaterial* Material = Cast<CMaterial>(Asset);
+            Compiler.GetBoundImages(Material->Images);
+            
+            FBindingSetDesc SetDesc;
+            
+            FBindingLayoutDesc LayoutDesc;
+            LayoutDesc.StageFlags.SetMultipleFlags(ERHIShaderType::Fragment);
+            
+            for (int i = 0; i < Material->Images.size(); ++i)
+            {
+                FRHIImageRef Image = Material->Images[i];
+                
+                FBindingLayoutItem Item;
+                Item.Slot = i;
+                Item.Type = ERHIBindingResourceType::Texture_SRV;
+                
+                LayoutDesc.AddItem(Item);
+                SetDesc.AddItem(FBindingSetItem::TextureSRV(i, Image));
+            }
+
+            Material->BindingLayout = RenderContext->CreateBindingLayout(LayoutDesc);
+            RenderContext->SetObjectName(Material->BindingLayout, Material->GetName().c_str(), EAPIResourceType::DescriptorSetLayout);
+            
+            Material->BindingSet = RenderContext->CreateBindingSet(SetDesc, Material->BindingLayout);
+            RenderContext->SetObjectName(Material->BindingSet, Material->GetName().c_str(), EAPIResourceType::DescriptorSet);
+
+        }
+    }
+
+
     void FMaterialEditorTool::InitializeDockingLayout(ImGuiID InDockspaceID, const ImVec2& InDockspaceSize) const
     {
         ImGuiID leftDockID = 0, rightDockID = 0, bottomDockID = 0;

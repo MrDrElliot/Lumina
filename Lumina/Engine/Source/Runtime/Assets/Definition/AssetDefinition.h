@@ -29,7 +29,7 @@ namespace Lumina
 
         virtual bool CanImport() { return false; }
 
-        virtual FString GetImportFileExtension() { return ""; }
+        virtual bool IsExtensionSupported(const FString& Ext) { return false; }
     };
 
     

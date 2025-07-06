@@ -27,13 +27,15 @@ namespace Lumina
         case ERHIAccess::DepthStencilAttachmentWrite: return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
             
         case ERHIAccess::PresentRead: return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-            
+        
         case ERHIAccess::ComputeWrite: return VK_IMAGE_LAYOUT_GENERAL;
             
         case ERHIAccess::ComputeRead: return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
             
         case ERHIAccess::HostRead: return VK_IMAGE_LAYOUT_GENERAL;
+            
         case ERHIAccess::HostWrite: return VK_IMAGE_LAYOUT_GENERAL;
+            
         case ERHIAccess::All: return VK_IMAGE_LAYOUT_GENERAL;
     
         default: return VK_IMAGE_LAYOUT_UNDEFINED;
@@ -462,7 +464,7 @@ namespace Lumina
         }
         
         vkCmdBindDescriptorSets(CurrentCommandBuffer->CommandBuffer, BindingPoint,
-            CurrentPipelineLayout, 0, DescriptorSets.size(), DescriptorSets.data(), 0, nullptr);
+            CurrentPipelineLayout, 0, (uint32)DescriptorSets.size(), DescriptorSets.data(), 0, nullptr);
     }
 
     void FVulkanCommandList::SetPushConstants(const void* Data, SIZE_T ByteSize)

@@ -3,6 +3,7 @@
 #include "Lumina.h"
 #include <glm/glm.hpp>
 
+#include "Format.h"
 #include "RHIFwd.h"
 #include "Core/Math/Color.h"
 #include "Vertex.h"
@@ -318,52 +319,14 @@ namespace Lumina
         Aliasable = 10,
 
         /** Texture can be used with multi-sampling (MSAA) */
-        MultiSampled = 11
+        MultiSampled = 11,
+
+
+        // Aliases.
+
+        ColorAttachment = RenderTarget,
+        DepthAttachment = DepthStencil,
     };
-    
-    enum class EImageFormat : uint8
-    {
-        None = 0,
-        
-        // Standard 8-bit formats
-        R8_UNORM,
-        R8_SNORM,
-
-        // 16-bit formats
-        RG16_UNORM,
-        RG16_SNORM,
-
-        // 24-bit formats
-        RGB24_UNORM,
-        RGB24_SNORM,
-
-        // 32-bit color formats
-        RGBA32_SRGB,
-        RGBA32_UNORM,
-        BGRA32_SRGB,
-        BGRA32_UNORM,
-
-        // HDR and floating-point formats
-        RGB32_SFLOAT,  // HDR format
-        RGBA64_SFLOAT,
-        RGBA128_SFLOAT,
-
-        // Depth formats
-        D32,
-
-        // Block compression formats (BCn / S3TC)
-        BC1_UNORM,  // DXT1
-        BC1_SRGB,
-        BC3_UNORM,  // DXT5 (often used for RGBA)
-        BC3_SRGB,
-        BC5_UNORM,  // ATI2 / 3Dc (used for normal maps)
-        BC5_SNORM,
-        BC6H_UFLOAT, // HDR format
-        BC6H_SFLOAT, // HDR format
-        BC7_UNORM,
-        BC7_SRGB
-    };
-
     
     enum class EImageType : uint8
     {
@@ -526,7 +489,7 @@ namespace Lumina
         EPipelineFrontFace          FaceOrientation =           EPipelineFrontFace::COUNTER_CLOCKWISE;
         EPipelineTopology           PrimitiveTopology =         EPipelineTopology::TRIANGLES;
         EPipelineFillMode           PolygonFillMode =           EPipelineFillMode::FILL;
-        TVector<EImageFormat>       RenderTargetFormats         { EImageFormat::RGBA32_SRGB };
+        TVector<EFormat>            RenderTargetFormats         { EFormat::SRGBA8_UNORM };
 
         FVertexBinding              VertexBinding;
         TVector<FVertexAttribute>   VertexAttributes;
@@ -643,7 +606,7 @@ namespace Lumina
             return *this;
         }
     
-        FGraphicsPipelineSpec& SetRenderTargetFormats(const TVector<EImageFormat>& formats)
+        FGraphicsPipelineSpec& SetRenderTargetFormats(const TVector<EFormat>& formats)
         {
             RenderTargetFormats = formats;
             return *this;
@@ -707,7 +670,7 @@ namespace Lumina
         EPipelineFrontFace GetFaceOrientation() const { return FaceOrientation; }
         EPipelineTopology GetPrimitiveTopology() const { return PrimitiveTopology; }
         EPipelineFillMode GetPolygonFillMode() const { return PolygonFillMode; }
-        const TVector<EImageFormat>& GetRenderTargetFormats() const { return RenderTargetFormats; }
+        const TVector<EFormat>& GetRenderTargetFormats() const { return RenderTargetFormats; }
         bool GetEnablePrimitiveRestart() const { return EnablePrimitiveRestart; }
         bool GetEnableAlphaBlending() const { return EnableAlphaBlending; }
         bool GetEnableDepthTest() const { return EnableDepthTest; }

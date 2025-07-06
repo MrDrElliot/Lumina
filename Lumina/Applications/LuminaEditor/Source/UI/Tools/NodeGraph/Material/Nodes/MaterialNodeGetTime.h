@@ -14,7 +14,7 @@ namespace Lumina
     public:
 
         FString GetNodeDisplayName() const override { return "Time"; }
-        float* GetNodeDefaultValue() override { return nullptr; }
+        void* GetNodeDefaultValue() override { return nullptr; }
         uint32 GenerateExpression(FMaterialCompiler* Compiler) override;
         void GenerateDefinition(FMaterialCompiler* Compiler) override;
     

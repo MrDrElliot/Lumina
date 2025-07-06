@@ -18,7 +18,7 @@ namespace Lumina
         CClass* GetAssetClass() const override { return CStaticMesh::StaticClass(); }
         CFactory* GetFactory() const override { return GetMutableDefault<CStaticMeshFactory>(); }
         bool CanImport() override { return true; }
-        FString GetImportFileExtension() override { return ".gltf"; }
+        bool IsExtensionSupported(const FString& Ext) override { return Ext == ".gltf"; }
     
     };
 }

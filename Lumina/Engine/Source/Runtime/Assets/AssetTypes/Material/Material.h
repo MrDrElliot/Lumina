@@ -37,11 +37,14 @@ namespace Lumina
         
         LUM_PROPERTY()
         EMaterialType MaterialType;
+
         
-        
-        FRHIVertexShaderRef     VertexShader;
-        FRHIPixelShaderRef      PixelShader;
-        FRHIBindingSetRef       BindingSet;
+        TVector<FRHIImageRef>       Images;
+        FRHIVertexShaderRef         VertexShader;
+        FRHIPixelShaderRef          PixelShader;
+        FRHIBindingSetRef           BindingSet;
+        FRHIBindingLayoutRef        BindingLayout;
+        FRHIGraphicsPipelineRef     Pipeline;
 
     };
     

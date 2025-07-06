@@ -2,6 +2,7 @@
 
 #include <vulkan/vulkan.h>
 
+#include "Format.h"
 #include "RenderTypes.h"
 #include "StateTracking.h"
 #include "ViewVolume.h"
@@ -24,83 +25,6 @@ namespace Lumina
 	static constexpr uint32 MaxBindingLayouts = 4;
 	static constexpr uint32 MaxBindingsPerLayout = 128;
 
-
-enum class EFormat : uint8
-{
-	UNKNOWN,
-
-	R8_UINT,
-	R8_SINT,
-	R8_UNORM,
-	R8_SNORM,
-	RG8_UINT,
-	RG8_SINT,
-	RG8_UNORM,
-	RG8_SNORM,
-	R16_UINT,
-	R16_SINT,
-	R16_UNORM,
-	R16_SNORM,
-	R16_FLOAT,
-	BGRA4_UNORM,
-	B5G6R5_UNORM,
-	B5G5R5A1_UNORM,
-	RGBA8_UINT,
-	RGBA8_SINT,
-	RGBA8_UNORM,
-	RGBA8_SNORM,
-	BGRA8_UNORM,
-	SRGBA8_UNORM,
-	SBGRA8_UNORM,
-	R10G10B10A2_UNORM,
-	R11G11B10_FLOAT,
-	RG16_UINT,
-	RG16_SINT,
-	RG16_UNORM,
-	RG16_SNORM,
-	RG16_FLOAT,
-	R32_UINT,
-	R32_SINT,
-	R32_FLOAT,
-	RGBA16_UINT,
-	RGBA16_SINT,
-	RGBA16_FLOAT,
-	RGBA16_UNORM,
-	RGBA16_SNORM,
-	RG32_UINT,
-	RG32_SINT,
-	RG32_FLOAT,
-	RGB32_UINT,
-	RGB32_SINT,
-	RGB32_FLOAT,
-	RGBA32_UINT,
-	RGBA32_SINT,
-	RGBA32_FLOAT,
-	
-	D16,
-	D24S8,
-	X24G8_UINT,
-	D32,
-	D32S8,
-	X32G8_UINT,
-
-	BC1_UNORM,
-	BC1_UNORM_SRGB,
-	BC2_UNORM,
-	BC2_UNORM_SRGB,
-	BC3_UNORM,
-	BC3_UNORM_SRGB,
-	BC4_UNORM,
-	BC4_SNORM,
-	BC5_UNORM,
-	BC5_SNORM,
-	BC6H_UFLOAT,
-	BC6H_SFLOAT,
-	BC7_UNORM,
-	BC7_UNORM_SRGB,
-
-	COUNT,
-};
 
 enum class EFormatKind : uint8
 {
@@ -579,7 +503,7 @@ namespace Lumina
 		EImageDimension Dimension = EImageDimension::Texture2D;
 
 		/** The format of the image (e.g., RGBA8, BC7 compressed, etc.). */
-		EImageFormat Format = EImageFormat::None;
+		EFormat Format = EFormat::UNKNOWN;
 
 		friend FArchive& operator << (FArchive& Ar, FRHIImageDesc& Data)
 		{
@@ -677,7 +601,7 @@ namespace Lumina
 		FORCEINLINE const FIntVector2D& GetExtent() const { return Description.Extent; }
 		FORCEINLINE uint32 GetSizeX() const { return Description.Extent.X; }
 		FORCEINLINE uint32 GetSizeY() const { return Description.Extent.Y; }
-		FORCEINLINE EImageFormat GetFormat() const { return Description.Format; }
+		FORCEINLINE EFormat GetFormat() const { return Description.Format; }
 		FORCEINLINE TBitFlags<EImageCreateFlags> GetFlags() const { return Description.Flags; }
 		
 	
@@ -692,8 +616,8 @@ namespace Lumina
 	{
 	public:
 
-		FORCEINLINE FName GetKey() const { return Key; }
-		void SetKey(FName InKey) { Key = InKey; }
+		FName GetKey() const { return Key; }
+		void SetKey(const FName& InKey) { Key = InKey; }
 		
 		/** Get the shader's native representation of it's bytecode */
 		virtual void GetByteCode(const void** ByteCode, uint64* Size) = 0;
@@ -708,7 +632,7 @@ namespace Lumina
 	public:
 
 		RENDER_RESOURCE(RRT_VertexShader)
-		
+
 	};
 
 	class LUMINA_API FRHIPixelShader : public FRHIShader
@@ -716,7 +640,7 @@ namespace Lumina
 	public:
 
 		RENDER_RESOURCE(RRT_PixelShader)
-		
+
 	};
 	
 	class LUMINA_API FRHIComputeShader : public FRHIShader
@@ -724,7 +648,7 @@ namespace Lumina
 	public:
 
 		RENDER_RESOURCE(RRT_ComputeShader)
-		
+
 	};
 
 	class LUMINA_API FShaderLibrary : public IRHIResource
@@ -857,6 +781,7 @@ namespace Lumina
             EBlendFactor 	DestBlendAlpha = EBlendFactor::Zero;
             EBlendOp     	BlendOpAlpha = EBlendOp::Add;
             EColorMask   	ColorWriteMask = EColorMask::All;
+        	EFormat			Format = EFormat::BGRA8_UNORM;
         	bool			bEnabled = false;
 
             constexpr RenderTarget& SetBlendEnable(bool enable) { bBlendEnable = enable; return *this; }
@@ -869,6 +794,7 @@ namespace Lumina
             constexpr RenderTarget& SetDestBlendAlpha(EBlendFactor value) { DestBlendAlpha = value; return *this; }
             constexpr RenderTarget& SetBlendOpAlpha(EBlendOp value) { BlendOpAlpha = value; return *this; }
             constexpr RenderTarget& SetColorWriteMask(EColorMask value) { ColorWriteMask = value; return *this; }
+        	constexpr RenderTarget& SetFormat(EFormat InFormat) { Format = InFormat; return *this; }
         	
             constexpr bool operator ==(const RenderTarget& other) const
             {
@@ -879,7 +805,8 @@ namespace Lumina
                     && SrcBlendAlpha == other.SrcBlendAlpha
                     && DestBlendAlpha == other.DestBlendAlpha
                     && BlendOpAlpha == other.BlendOpAlpha
-                    && ColorWriteMask == other.ColorWriteMask;
+                    && ColorWriteMask == other.ColorWriteMask
+					&& Format == other.Format;
             }
 
             constexpr bool operator !=(const RenderTarget& other) const

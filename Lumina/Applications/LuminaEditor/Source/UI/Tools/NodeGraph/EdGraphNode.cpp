@@ -32,6 +32,14 @@ namespace Lumina
     void CEdGraphNode::Serialize(FArchive& Ar)
     {
         Super::Serialize(Ar);
+
+        for (auto& PinVector : NodePins)
+        {
+            for (CEdNodeGraphPin* Pin : PinVector)
+            {
+                Pin->Serialize(Ar);
+            }
+        }
     }
     
     CEdNodeGraphPin* CEdGraphNode::GetPin(uint16 ID, ENodePinDirection Direction)

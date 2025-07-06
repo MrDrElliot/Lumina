@@ -35,7 +35,8 @@ namespace Lumina
         INLINE const FRHIBufferRef GetIndexBuffer() const { return IndexBuffer; }
         
         void PostLoad() override;
-        
+
+        bool IsReadyForRender() const;
 
         LUM_PROPERTY()
         CObject*        Material;

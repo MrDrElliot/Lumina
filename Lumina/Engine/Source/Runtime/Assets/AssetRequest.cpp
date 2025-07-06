@@ -13,6 +13,12 @@ namespace Lumina
         FullPath = Paths::ResolveVirtualPath(FullPath);
 
         CPackage* Package = CPackage::LoadPackage(FullPath.c_str());
+        if (Package == nullptr)
+        {
+            LOG_INFO("Failed to load package at path: {}", FullPath);
+            return false;
+        }
+        
         FName QualifiedName = MakeFullyQualifiedObjectName(Package, Name.c_str());
         PendingObject = FindObject<CObject>(QualifiedName);
 

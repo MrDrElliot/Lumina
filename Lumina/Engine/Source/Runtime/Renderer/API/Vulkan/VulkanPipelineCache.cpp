@@ -1,12 +1,14 @@
 ﻿#include "VulkanPipelineCache.h"
 
 #include "VulkanResources.h"
+#include "Core/Profiler/Profile.h"
 
 namespace Lumina
 {
 
     FRHIGraphicsPipelineRef FVulkanPipelineCache::GetOrCreateGraphicsPipeline(FVulkanDevice* Device, const FGraphicsPipelineDesc& InDesc)
     {
+        LUMINA_PROFILE_SCOPE();
 
         SIZE_T Hash = Hash::GetHash(InDesc);
         if (GraphicsPipelines.find(Hash) != GraphicsPipelines.end())
@@ -18,12 +20,13 @@ namespace Lumina
         
 
         GraphicsPipelines.emplace(Hash, NewPipeline);
-
         return NewPipeline;
     }
 
     FRHIComputePipelineRef FVulkanPipelineCache::GetOrCreateComputePipeline(FVulkanDevice* Device, const FComputePipelineDesc& InDesc)
     {
+        LUMINA_PROFILE_SCOPE();
+
         SIZE_T Hash = Hash::GetHash(InDesc);
         if (ComputePipelines.find(Hash) != ComputePipelines.end())
         {
@@ -31,18 +34,17 @@ namespace Lumina
         }
         
         auto NewPipeline = MakeRefCount<FVulkanComputePipeline>(Device, InDesc);
-
+        
         ComputePipelines.emplace(Hash, NewPipeline);
-
         return NewPipeline;
     }
 
-    void FVulkanPipelineCache::PostShaderRecompiled(const FName& Shader)
+    void FVulkanPipelineCache::PostShaderRecompiled(const IVulkanShader* Shader)
     {
-        //@TODO Proper, right now we're just clearing all the pipelines. Forcing them to be rebuilt.
-        ReleasePipelines();
+        GraphicsPipelines.clear();
+        ComputePipelines.clear();
     }
-
+    
     void FVulkanPipelineCache::ReleasePipelines()
     {
         GraphicsPipelines.clear();

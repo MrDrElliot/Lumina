@@ -158,11 +158,22 @@ namespace Lumina
         }
         else
         {
-            return (int32_t) ( iter - vector.begin() );
+            return (int32_t) (iter - vector.begin());
         }
     }
 
     //-------------------------------------------------------------------------
+
+    template<typename T>
+    requires std::is_trivially_constructible_v<T>
+    bool VectorsAreEqual(const TVector<T>& A, const TVector<T>& B)
+    {
+        if (A.size() != B.size())
+            return false;
+
+        return std::memcmp(A.data(), B.data(), A.size() * sizeof(T)) == 0;
+    }
+    
 
     template<typename T, typename V, eastl_size_t S>
     inline bool VectorContains(TFixedVector<T, S> const& vector, V const& value)

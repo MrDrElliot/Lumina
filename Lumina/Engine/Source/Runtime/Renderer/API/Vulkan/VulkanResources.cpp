@@ -95,6 +95,8 @@ namespace Lumina
         return FormatMap[uint32_t(format)].vkFormat;
     }
 
+    // Deprecated, held for reference.
+#if 0
     VkFormat GetVkFormat(EImageFormat Format)
     {
         switch (Format)
@@ -123,8 +125,8 @@ namespace Lumina
             default:                            return VK_FORMAT_UNDEFINED;
         }
     }
+#endif
 
-    
     VkBufferUsageFlags ToVkBufferUsage(TBitFlags<EBufferUsageFlags> Usage) 
     {
         VkBufferUsageFlags result = VK_NO_FLAGS;
@@ -426,8 +428,8 @@ namespace Lumina
         VkImageCreateFlags ImageFlags = VK_NO_FLAGS;
         VkImageUsageFlags UsageFlags = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
         
-        Assert(InDescription.Format != EImageFormat::None);
-        VkFormat VulkanFormat = GetVkFormat(InDescription.Format);
+        Assert(InDescription.Format != EFormat::UNKNOWN)
+        VkFormat VulkanFormat = ConvertFormat(InDescription.Format);
         
         if (InDescription.Flags.IsFlagSet(EImageCreateFlags::RenderTarget))
         {
@@ -924,6 +926,7 @@ namespace Lumina
         RasterizationState.polygonMode = ToVkPolygonMode(RasterState.FillMode);
         RasterizationState.cullMode = ToVkCullModeFlags(RasterState.CullMode);
         RasterizationState.frontFace = RasterState.FrontCounterClockwise ? VK_FRONT_FACE_COUNTER_CLOCKWISE : VK_FRONT_FACE_CLOCKWISE;
+        RasterizationState.depthClampEnable = VK_FALSE;
         RasterizationState.depthBiasEnable = RasterState.DepthBias ? VK_TRUE : VK_FALSE;
         RasterizationState.depthBiasConstantFactor = float(RasterState.DepthBias);
         RasterizationState.depthBiasClamp = RasterState.DepthBiasClamp;
@@ -947,6 +950,7 @@ namespace Lumina
 
         FBlendState BlendState = InDesc.RenderState.BlendState;
 
+        TVector<VkFormat> ColorAttachmentFormats;
         TVector<VkPipelineColorBlendAttachmentState> ColorBlendAttachmentStates;
         for (const FBlendState::RenderTarget& RenderTarget : BlendState.Targets)
         {
@@ -964,8 +968,10 @@ namespace Lumina
             ColorBlendAttachment.srcAlphaBlendFactor = ToVkBlendFactor(RenderTarget.SrcBlendAlpha);
             ColorBlendAttachment.dstAlphaBlendFactor = ToVkBlendFactor(RenderTarget.DestBlendAlpha);
             ColorBlendAttachment.blendEnable = RenderTarget.bBlendEnable;
-
+            
+            ColorAttachmentFormats.push_back(ConvertFormat(RenderTarget.Format));
             ColorBlendAttachmentStates.push_back(Memory::Move(ColorBlendAttachment));
+            
         }
         
         VkPipelineColorBlendStateCreateInfo ColorBlendState = {};
@@ -975,11 +981,9 @@ namespace Lumina
 
         VkPipelineRenderingCreateInfo RenderingCreateInfo = {};
         RenderingCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
-        RenderingCreateInfo.colorAttachmentCount = 1;
-        VkFormat ColorFormat = VK_FORMAT_B8G8R8A8_UNORM;
-        RenderingCreateInfo.pColorAttachmentFormats = &ColorFormat;
-        VkFormat DepthFormat = VK_FORMAT_D32_SFLOAT;
-        RenderingCreateInfo.depthAttachmentFormat = DepthFormat;
+        RenderingCreateInfo.colorAttachmentCount = (uint32)ColorBlendAttachmentStates.size();
+        RenderingCreateInfo.pColorAttachmentFormats = ColorAttachmentFormats.data();
+        RenderingCreateInfo.depthAttachmentFormat = VK_FORMAT_D32_SFLOAT;
         RenderingCreateInfo.stencilAttachmentFormat = VK_FORMAT_UNDEFINED;
         
         VkGraphicsPipelineCreateInfo CreateInfo = {};

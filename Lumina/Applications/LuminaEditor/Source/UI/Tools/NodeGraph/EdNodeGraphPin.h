@@ -27,7 +27,7 @@ namespace Lumina
             , bHidePinDuringConnection(true)
         {}
         
-        virtual void DrawPin() { }
+        virtual float DrawPin() { return 1.5f; }
         
         void SetPinName(const FString& Name) { PinName = Name; }
         const FString& GetPinName() const { return PinName; }

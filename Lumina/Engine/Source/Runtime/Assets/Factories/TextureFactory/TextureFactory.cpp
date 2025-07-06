@@ -36,7 +36,6 @@ namespace Lumina
         FString FileName = Paths::FileName(DestinationPath, true);
         
         std::filesystem::path FilePath = RawPath.c_str();
-        Assert(FilePath.extension() == ".png")
 
         
         CPackage* NewPackage = CPackage::CreatePackage(GetSupportedType()->GetName().ToString(), DestinationPath);
@@ -44,7 +43,7 @@ namespace Lumina
         NewTexture->SetFlag(OF_NeedsLoad);
 
         FRHIImageDesc ImageDescription;
-        ImageDescription.Format = EImageFormat::RGBA32_UNORM;
+        ImageDescription.Format = EFormat::RGBA8_UNORM;
         ImageDescription.Extent = ImportHelpers::GetImagePixelData(NewTexture->Pixels, RawPath);
         ImageDescription.Flags.SetFlag(EImageCreateFlags::ShaderResource);
         ImageDescription.NumMips = CalculateMipCount(ImageDescription.Extent.X, ImageDescription.Extent.Y);

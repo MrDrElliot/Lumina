@@ -8,6 +8,7 @@
 #include <Core/Reflection/Type/LuminaTypes.h>
 
 #include "Core/Object/Cast.h"
+#include "Core/Profiler/Profile.h"
 
 #define SHOW_DEBUG 0
 
@@ -90,6 +91,7 @@ namespace Lumina
     void CEdNodeGraph::DrawGraph()
     {
         //ImNodes::EditorContextSet(ImNodesContext);
+        LUMINA_PROFILE_SCOPE()
 
         TVector<CEdGraphNode*> NodesToDestroy;
         
@@ -202,18 +204,18 @@ namespace Lumina
                 ImNodesPinShape Shape = (Pin->HasConnection()) ? ImNodesPinShape_QuadFilled : ImNodesPinShape_Quad;
     
                 ImNodes::BeginOutputAttribute(Pin->GetGUID(), Shape);
-
-                ImGui::TextUnformatted(Pin->GetPinName().c_str());
                 
+                ImGui::TextUnformatted(Pin->GetPinName().c_str());
+
                 ImGui::SameLine();
             
                 if (Pin->HasConnection() && Pin->ShouldHideDuringConnection())
                 {
-                    ImGui::Dummy(ImVec2(1.0f, 1.0f));
+                    ImGui::Dummy(ImVec2(0.0f, 1.0f));
                 }
                 else
                 {
-                    Pin->DrawPin();
+                    float DrawWidth = Pin->DrawPin();
                 }
     
                 ImNodes::EndOutputAttribute();

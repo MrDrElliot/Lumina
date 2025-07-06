@@ -14,6 +14,7 @@ namespace Lumina
         glm::vec4       Color;
         glm::vec4       Normal;
         glm::vec2       UV;
+
         
         friend FArchive& operator<<(FArchive& Ar, FVertex& Data)
         {
