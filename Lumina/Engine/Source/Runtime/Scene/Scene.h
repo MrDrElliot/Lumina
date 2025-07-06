@@ -6,8 +6,14 @@
 #include "Core/UpdateContext.h"
 #include "Core/Functional/Function.h"
 #include "Entity/Registry/EntityRegistry.h"
+#include "glm/vec3.hpp"
 #include "Subsystems/Subsystem.h"
 
+
+namespace Lumina
+{
+    class FEntityComponent;
+}
 
 namespace Lumina
 {
@@ -57,7 +63,6 @@ namespace Lumina
         template<typename T>
         T* GetSceneSubsystem() const;
         
-
         template <typename T>
         void ForEachComponent(const TFunction<void(uint32& CurrentIndex, entt::entity& OutEntity, T& OutComponent)>&& Functor);
 

@@ -138,18 +138,17 @@ namespace Lumina
             }
         }
 
-        ImVec2 cursorScreenPos = ImGui::GetCursorScreenPos();
-        ImVec2 viewportSize = ImGui::GetContentRegionAvail();
+        ImVec2 CursorScreenPos = ImGui::GetCursorScreenPos();
         
         ImGui::GetWindowDrawList()->AddImage(
             ViewportTexture,
-            cursorScreenPos,
-            ImVec2(cursorScreenPos.x + viewportSize.x, cursorScreenPos.y + viewportSize.y),
+            CursorScreenPos,
+            ImVec2(CursorScreenPos.x + ViewportSize.x, CursorScreenPos.y + ViewportSize.y),
             ImVec2(0, 0), ImVec2(1, 1),
             IM_COL32_WHITE
         );
 
-        DrawViewportOverlayElements(UpdateContext, ViewportTexture);
+        DrawViewportOverlayElements(UpdateContext, ViewportTexture, ViewportSize);
         
         
         if (ImGuiDockNode* pDockNode = ImGui::GetWindowDockNode())
@@ -180,7 +179,7 @@ namespace Lumina
 
     void FEditorTool::SetEditorCameraEnabled(bool bNewEnable)
     {
-        EditorEntity.GetComponent<FEditorComponent>().SetEnabled(bNewEnable);
+        EditorEntity.GetComponent<FEditorComponent>().bEnabled = bNewEnable;
     }
 
     void FEditorTool::DrawHelpTextRow(const char* pLabel, const char* pText) const

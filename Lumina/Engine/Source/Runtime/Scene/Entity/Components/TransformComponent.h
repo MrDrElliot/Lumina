@@ -5,10 +5,8 @@
 
 namespace Lumina
 {
-    class FTransformComponent : public FEntityComponent
+    struct FTransformComponent : public FEntityComponent
     {
-    public:
-        
         FTransformComponent(const FTransform& InTransform = FTransform()) : Transform(InTransform) {}
 
     

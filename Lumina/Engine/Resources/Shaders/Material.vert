@@ -32,5 +32,6 @@ void main()
     outFragColor = inColor;
     outNormal = worldNormal;
     outFragPos = worldPos.xyz;
-    outUV = vec2(inUV.x, 1.0 - inUV.y);
+    outUV = inUV;
+    outUV.y = 1.0 - inUV.y;
 }

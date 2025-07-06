@@ -14,6 +14,10 @@ namespace Lumina
         Tool,
     };
     
-    
+
+    struct FRayResult
+    {
+        
+    };
     
 }

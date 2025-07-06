@@ -19,16 +19,16 @@ namespace Lumina
             : EntityHandle(InHandle)
             , Scene(InScene)
         {
-            Assert(EntityHandle != entt::null);
-            Assert(Scene != nullptr);
+            Assert(EntityHandle != entt::null)
+            Assert(Scene != nullptr)
         }
 
-        
+        bool IsValid() const { return EntityHandle != entt::null && Scene != nullptr; }
         FORCEINLINE FScene* GetScene() const                { return Scene; }
         FORCEINLINE entt::entity GetHandle() const          { return EntityHandle; }
-        FORCEINLINE entt::entity GetHandleChecked() const   { Assert(EntityHandle != entt::null); return EntityHandle; }
+        FORCEINLINE entt::entity GetHandleChecked() const   { Assert(EntityHandle != entt::null) return EntityHandle; }
 
-        FORCEINLINE const FName& GetName() const     { return GetConstComponent<FNameComponent>().GetName(); }
+        FORCEINLINE const FName& GetName() const     { return GetConstComponent<FNameComponent>().Name; }
         FORCEINLINE FTransform GetTransform()        { return GetComponent<FTransformComponent>().GetTransform(); }
         FORCEINLINE glm::vec3 GetLocation()          { return GetComponent<FTransformComponent>().GetLocation(); }
         FORCEINLINE glm::quat GetRotation()          { return GetComponent<FTransformComponent>().GetRotation(); }

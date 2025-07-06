@@ -34,7 +34,7 @@ namespace Lumina
             FEditorComponent& EditorComponent = EntityRegistry.get<FEditorComponent>(CameraEntity);
 
 
-            if (EditorComponent.IsEnabled() == false)
+            if (EditorComponent.bEnabled == false)
             {
                 continue;
             }

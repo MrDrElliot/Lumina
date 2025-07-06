@@ -169,7 +169,7 @@ namespace Lumina
             Item->bSelected = true;
         }
 
-        Context.ItemSelectedFunction(Item);
+        Context.ItemSelectedFunction(bWasSelected ? nullptr : Item);
         Item->OnSelectionStateChanged();
     }
 

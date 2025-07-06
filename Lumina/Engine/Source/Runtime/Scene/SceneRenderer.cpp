@@ -204,37 +204,21 @@ namespace Lumina
             FBlendState BlendState;
             FBlendState::RenderTarget AlbedoTarget;
             AlbedoTarget.DisableBlend();
-            AlbedoTarget.SetSrcBlend(EBlendFactor::SrcAlpha);
-            AlbedoTarget.SetDestBlend(EBlendFactor::OneMinusSrcAlpha);
-            AlbedoTarget.SetSrcBlendAlpha(EBlendFactor::One);
-            AlbedoTarget.SetDestBlendAlpha(EBlendFactor::Zero);
             AlbedoTarget.SetFormat(EFormat::RGBA16_FLOAT);
             BlendState.SetRenderTarget(0, AlbedoTarget);
 
             FBlendState::RenderTarget NormalTarget;
             NormalTarget.DisableBlend();
-            NormalTarget.SetSrcBlend(EBlendFactor::SrcAlpha);
-            NormalTarget.SetDestBlend(EBlendFactor::OneMinusSrcAlpha);
-            NormalTarget.SetSrcBlendAlpha(EBlendFactor::One);
-            NormalTarget.SetDestBlendAlpha(EBlendFactor::Zero);
             NormalTarget.SetFormat(EFormat::RGBA16_FLOAT);
             BlendState.SetRenderTarget(1, NormalTarget);
 
             FBlendState::RenderTarget MaterialTarget;
             MaterialTarget.DisableBlend();
-            MaterialTarget.SetSrcBlend(EBlendFactor::SrcAlpha);
-            MaterialTarget.SetDestBlend(EBlendFactor::OneMinusSrcAlpha);
-            MaterialTarget.SetSrcBlendAlpha(EBlendFactor::One);
-            MaterialTarget.SetDestBlendAlpha(EBlendFactor::Zero);
             MaterialTarget.SetFormat(EFormat::RGBA8_UNORM);
             BlendState.SetRenderTarget(2, MaterialTarget);
 
             FBlendState::RenderTarget AlbedoSpecTarget;
             AlbedoSpecTarget.DisableBlend();
-            AlbedoSpecTarget.SetSrcBlend(EBlendFactor::SrcAlpha);
-            AlbedoSpecTarget.SetDestBlend(EBlendFactor::OneMinusSrcAlpha);
-            AlbedoSpecTarget.SetSrcBlendAlpha(EBlendFactor::One);
-            AlbedoSpecTarget.SetDestBlendAlpha(EBlendFactor::Zero);
             AlbedoSpecTarget.SetFormat(EFormat::RGBA8_UNORM);
             BlendState.SetRenderTarget(3, AlbedoSpecTarget);
 
@@ -340,10 +324,6 @@ namespace Lumina
         FBlendState BlendState;
         FBlendState::RenderTarget RenderTarget;
         RenderTarget.DisableBlend();
-        RenderTarget.SetSrcBlend(EBlendFactor::SrcAlpha);
-        RenderTarget.SetDestBlend(EBlendFactor::OneMinusSrcAlpha);
-        RenderTarget.SetSrcBlendAlpha(EBlendFactor::Zero);
-        RenderTarget.SetDestBlendAlpha(EBlendFactor::One);
         BlendState.SetRenderTarget(0, RenderTarget);
 
         FDepthStencilState DepthState;
@@ -631,12 +611,11 @@ namespace Lumina
                 glm::vec4 Color;
             } PC;
             
-            PC.ModelMatrix = glm::mat4(1.0f);
-            PC.ModelMatrix = glm::translate(PC.ModelMatrix, glm::vec3(Light.Position));
-            PC.ModelMatrix = glm::scale(PC.ModelMatrix, glm::vec3(0.25f));
+            FTransform Transform;
+            Transform.Location = Light.Position;
+            PC.ModelMatrix = Transform.GetMatrix();
 
             PC.Color = Light.Color;
-
             
             float SizeY = (float)GBuffer.AlbedoSpec->GetSizeY();
             float SizeX = (float)GBuffer.AlbedoSpec->GetSizeX();

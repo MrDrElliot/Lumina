@@ -6,9 +6,8 @@
 
 namespace Lumina
 {
-    class FCameraComponent : public FEntityComponent
+    struct FCameraComponent : FEntityComponent
     {
-    public:
         FCameraComponent(float fov = 90.0f, float aspect = 16.0f / 9.0f)
             :ViewVolume(fov, aspect)
         {}

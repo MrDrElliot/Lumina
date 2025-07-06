@@ -39,7 +39,6 @@ namespace Lumina
         AspectRatio = aspect;
 
         ProjectionMatrix = glm::perspective(glm::radians(FOV), AspectRatio, 1000.0f, 0.1f);
-        ProjectionMatrix[1][1] *= -1.0f; // Flip Y if needed
         UpdateMatrices();
     }
 
@@ -49,7 +48,6 @@ namespace Lumina
         AspectRatio = InAspect;
 
         ProjectionMatrix = glm::perspective(glm::radians(FOV), AspectRatio, 1000.0f, 0.1f);
-        ProjectionMatrix[1][1] *= -1.0f; // Flip Y if needed
         UpdateMatrices();
     }
     
@@ -57,7 +55,6 @@ namespace Lumina
     {
         FOV = InFOV;
         ProjectionMatrix = glm::perspective(glm::radians(FOV), AspectRatio, 1000.0f, 0.1f);
-        ProjectionMatrix[1][1] *= -1.0f; // Flip Y if needed
         UpdateMatrices();
     }
 

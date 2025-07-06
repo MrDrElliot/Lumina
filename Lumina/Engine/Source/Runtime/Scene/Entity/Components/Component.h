@@ -1,15 +1,10 @@
 #pragma once
-#include "Containers/String.h"
 
 
 namespace Lumina
 {
-	class FEntityComponent
+	struct FEntityComponent
 	{
-	public:
-
-		FEntityComponent() =			default;
-		virtual ~FEntityComponent() =	default;
 		
 	};
 }

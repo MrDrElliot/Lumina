@@ -502,10 +502,10 @@ namespace Lumina
         TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "SetViewport")        
 
         VkViewport Viewport = {};
-        Viewport.x = MinX;
-        Viewport.y = MinY;
-        Viewport.width = MaxX - MinX;
-        Viewport.height = MaxY - MinY;
+        Viewport.x        = MinX;
+        Viewport.y        = MaxY; // <- Y offset at bottom
+        Viewport.width    = MaxX - MinX;
+        Viewport.height   = -(MaxY - MinY); // <- Negative height
         Viewport.minDepth = MinZ;
         Viewport.maxDepth = MaxZ;
 
