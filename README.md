@@ -6,6 +6,7 @@ Lumina is a hobby project and a work-in-progress game engine designed as a learn
 
 In the future, the goal is to make it easier to build games without needing to rely on the editor. Written in C++, Lumina follows a very specific and nuanced coding style that most developers will likely find unconventional, if not outright disagreeable. Despite these quirks, the engine aims to offer a unique environment for game development and experimentation.
 
+Discord: https://discord.gg/xQSB7CRzQE
 
 ---
 
