@@ -1,5 +1,6 @@
 #include "DevelopmentToolUI.h"
 
+#include "Core/Profiler/Profile.h"
 
 
 namespace Lumina

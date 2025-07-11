@@ -5,6 +5,7 @@
 #include "VulkanMacros.h"
 #include "VulkanRenderContext.h"
 #include "Core/Engine/Engine.h"
+#include "Core/Templates/Align.h"
 #include "Renderer/RenderManager.h"
 
 namespace Lumina
@@ -148,7 +149,7 @@ namespace Lumina
         {
             result |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
         }
-
+        
         if (Usage.IsFlagSet(EBufferUsageFlags::StorageBuffer))
         {
             result |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
@@ -292,12 +293,14 @@ namespace Lumina
     {
         switch (Type)
         {
-            case ERHIBindingResourceType::Texture_SRV:  return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-            case ERHIBindingResourceType::Texture_UAV:  return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-            case ERHIBindingResourceType::Buffer_SRV:   return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-            case ERHIBindingResourceType::Buffer_UAV:   return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-            case ERHIBindingResourceType::Buffer_CBV:   return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-            default:                                    NO_ENTRY()
+        case ERHIBindingResourceType::Texture_SRV:        return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        case ERHIBindingResourceType::Texture_UAV:        return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+        case ERHIBindingResourceType::Buffer_SRV:         return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+        case ERHIBindingResourceType::Buffer_UAV:         return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+        case ERHIBindingResourceType::Buffer_CBV:         return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        case ERHIBindingResourceType::Buffer_Dynamic:     return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+        case ERHIBindingResourceType::PushConstants:      /* handled separately */;
+        default:                                          return VK_DESCRIPTOR_TYPE_MAX_ENUM;
         }
     }
 
@@ -361,26 +364,69 @@ namespace Lumina
     {
         VmaAllocationCreateFlags VmaFlags = 0;
 
+        VkDeviceSize Size = InDescription.Size;
+        
+        if (InDescription.Usage.IsFlagSet(BUF_Dynamic))
+        {
+            uint64 Alignment = InDevice->GetPhysicalDeviceProperties().limits.minUniformBufferOffsetAlignment;
+            uint64 AtomSize = InDevice->GetPhysicalDeviceProperties().limits.nonCoherentAtomSize;
+            Alignment = Math::Max<uint64>(Alignment, AtomSize);
+
+            // Check if it's a power of 2
+            Assert((Alignment & (Alignment - 1)) == 0)
+            Size = (Size + Alignment - 1) & ~(Alignment - 1);
+            
+            Description.Size = Size;
+            Size *= Description.MaxVersions;
+
+            VersionTracking.resize(Description.MaxVersions);
+            std::ranges::fill(VersionTracking, 0);
+
+            Description.Usage.ClearFlag(EBufferUsageFlags::CPUWritable);
+            VmaFlags |= VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT;
+        }
+        else
+        {
+            // Vulkan allows for <= 64kb buffer updates to be done inline via vkCmdUpdateBuffer,
+            // but the data size must always be a multiple of 4.
+            Size = (Size + 3) & ~3ull;
+        }
+
+        if (GetDescription().Usage.IsFlagSet(EBufferUsageFlags::UniformBuffer))
+        {
+            uint32 MaxSize = Device->GetPhysicalDeviceProperties().limits.maxUniformBufferRange;
+            Assert(Size <= MaxSize)
+        }
+        
         if(GetDescription().Usage.IsFlagSet(EBufferUsageFlags::CPUWritable))
         {
             VmaFlags |= VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
         }
         
-        
         VkBufferCreateInfo BufferCreateInfo = {};
         BufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-        BufferCreateInfo.size = InDescription.Size;
+        BufferCreateInfo.size = Size;
         BufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
         BufferCreateInfo.usage = ToVkBufferUsage(InDescription.Usage);
         BufferCreateInfo.flags = 0;
         
-        Device->GetAllocator()->AllocateBuffer(&BufferCreateInfo, VmaFlags, &Buffer, "");
+        Allocation = Device->GetAllocator()->AllocateBuffer(&BufferCreateInfo, VmaFlags, &Buffer, "");
+
+        if (InDescription.Usage.IsFlagSet(BUF_Dynamic))
+        {
+            MappedMemory = Device->GetAllocator()->MapMemory(Allocation);
+        }
         
         Assert(Buffer != VK_NULL_HANDLE)
     }
 
     FVulkanBuffer::~FVulkanBuffer()
     {
+        if (MappedMemory)
+        {
+            Device->GetAllocator()->UnmapMemory(Allocation);
+            MappedMemory = nullptr;
+        }
         Device->GetAllocator()->DestroyBuffer(Buffer);
     }
 
@@ -683,14 +729,21 @@ namespace Lumina
         return DescriptorSetLayout;
     }
 
-    FVulkanBindingSet::FVulkanBindingSet(FVulkanRenderContext* RenderContext, FVulkanDevice* InDevice, const FBindingSetDesc& InDesc, FVulkanBindingLayout* InLayout)
-        : IDeviceChild(InDevice)
+    FVulkanBindingSet::FVulkanBindingSet(FVulkanRenderContext* RenderContext, const FBindingSetDesc& InDesc, FVulkanBindingLayout* InLayout)
+        : IDeviceChild(RenderContext->GetDevice())
         , Desc(InDesc)
         , Layout(InLayout)
-        , DescriptorPool(RenderContext->GetDescriptorPool())
+        , DescriptorPool(nullptr)
     {
         Assert(InLayout->DescriptorSetLayout)
 
+        VkDescriptorPoolCreateInfo PoolCreateInfo = {};
+        PoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+        PoolCreateInfo.poolSizeCount = (uint32)InLayout->PoolSizes.size();
+        PoolCreateInfo.pPoolSizes = InLayout->PoolSizes.data();
+        PoolCreateInfo.maxSets = 1;
+
+        VK_CHECK(vkCreateDescriptorPool(Device->GetDevice(), &PoolCreateInfo, nullptr, &DescriptorPool));
         
         VkDescriptorSetAllocateInfo AllocateInfo = {};
         AllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -698,7 +751,7 @@ namespace Lumina
         AllocateInfo.descriptorSetCount = 1;
         AllocateInfo.pSetLayouts = &InLayout->DescriptorSetLayout;
         
-        VK_CHECK(vkAllocateDescriptorSets(InDevice->GetDevice(), &AllocateInfo, &DescriptorSet));
+        VK_CHECK(vkAllocateDescriptorSets(Device->GetDevice(), &AllocateInfo, &DescriptorSet));
 
 
         TVector<VkDescriptorBufferInfo> BufferInfos;
@@ -797,6 +850,19 @@ namespace Lumina
                     Write.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
                 }
                 break;
+            case ERHIBindingResourceType::Buffer_Dynamic:
+                {
+                    FVulkanBuffer* Buffer = static_cast<FVulkanBuffer*>(Item.ResourceHandle);
+                    VkDescriptorBufferInfo& BufferInfo = BufferInfos.emplace_back();
+                    BufferInfo.buffer = Buffer->GetBuffer();
+                    BufferInfo.offset = 0;
+                    BufferInfo.range = Buffer->GetSize();
+                        
+                    Write.pBufferInfo = &BufferInfo;
+                    Write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+                    DynamicBuffers.push_back(Buffer);
+                }
+                break;
             }
 
             Writes.push_back(Write);
@@ -808,7 +874,8 @@ namespace Lumina
 
     FVulkanBindingSet::~FVulkanBindingSet()
     {
-        VK_CHECK(vkFreeDescriptorSets(Device->GetDevice(), DescriptorPool, 1, &DescriptorSet));
+        vkDestroyDescriptorPool(Device->GetDevice(), DescriptorPool, nullptr);
+        //VK_CHECK(vkFreeDescriptorSets(Device->GetDevice(), DescriptorPool, 1, &DescriptorSet));
     }
 
     void* FVulkanBindingSet::GetAPIResourceImpl(EAPIResourceType InType)

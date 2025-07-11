@@ -88,8 +88,6 @@ namespace Lumina
     {
         Assert(ImageBarriers.empty())
         Assert(BufferBarriers.empty())
-        
-        
     }
 
     void FCommandListStateTracker::ResetImageDefaultStates()

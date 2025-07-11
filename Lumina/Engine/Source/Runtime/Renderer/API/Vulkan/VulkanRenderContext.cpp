@@ -164,7 +164,8 @@ namespace Lumina
 
     FQueue::~FQueue()
     {
-        
+        vkDestroySemaphore(Device->GetDevice(), TimelineSemaphore, nullptr);
+        TimelineSemaphore = nullptr;
     }
 
     TRefCountPtr<FTrackedCommandBuffer> FQueue::GetOrCreateCommandBuffer()
@@ -172,8 +173,10 @@ namespace Lumina
         LUMINA_PROFILE_SCOPE();
         
         FScopeLock Lock(Mutex);
-        TRefCountPtr<FTrackedCommandBuffer> Buf;
+
+        uint64 RecodingID = ++LastRecordingID;
         
+        TRefCountPtr<FTrackedCommandBuffer> Buf;
         if (CommandBufferPool.empty())
         {
             VkCommandPoolCreateFlags Flags = 0;
@@ -197,14 +200,14 @@ namespace Lumina
 
             bool bCreateTracy = (Type == ECommandQueue::Graphics || Type == ECommandQueue::Compute);
             Buf = MakeRefCount<FTrackedCommandBuffer>(Device, Buffer, CommandPool, bCreateTracy, Queue);
-            
         }
         else
         {
-            Buf = CommandBufferPool.top();
+            Buf = CommandBufferPool.front();
             CommandBufferPool.pop();
         }
 
+        Buf->RecordingID = RecodingID;
         return Buf;
     }
 
@@ -214,60 +217,78 @@ namespace Lumina
         
         auto Submissions = Memory::Move(CommandBuffersInFlight);
         CommandBuffersInFlight.clear();
+
+        VK_CHECK(vkGetSemaphoreCounterValue(Device->GetDevice(), TimelineSemaphore, &LastFinishedID));
         
         for (auto& Submission : Submissions)
         {
-            Submission->ClearReferencedResources();
-            CommandBufferPool.push(Submission);
+            if (Submission->SubmissionID <= LastFinishedID)
+            {
+                Submission->ClearReferencedResources();
+                Submission->SubmissionID = 0;
+                CommandBufferPool.push(Submission);
+            }
+            else
+            {
+                CommandBuffersInFlight.push_back(Submission);
+            }
         }
     }
 
-    void FQueue::Submit(ICommandList* CommandLists, uint32 NumCommandLists)
+    uint64 FQueue::Submit(ICommandList* CommandLists, uint32 NumCommandLists)
     {
         LUMINA_PROFILE_SCOPE();
         
         TFixedVector<VkCommandBuffer, 4> CommandBuffers(NumCommandLists);
+        TFixedVector<VkPipelineStageFlags, 4> StageFlags(WaitSemaphores.size());
+
+        for (SIZE_T i = 0; i < WaitSemaphores.size(); ++i)
+        {
+            StageFlags[i] = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+        }
         
+        LastSubmittedID++;
+
         for (uint32 i = 0; i < NumCommandLists; ++i)
         {
-            /** Static cast in this case if fine because CommandLists will only ever contain one type specific to the RHI. */
-            FVulkanCommandList* VulkanCommandList = static_cast<FVulkanCommandList*>(&CommandLists[i]);
-
+            auto* VulkanCommandList = static_cast<FVulkanCommandList*>(&CommandLists[i]);
             auto& TrackedBuffer = VulkanCommandList->CurrentCommandBuffer;
+
             Assert(TrackedBuffer->Queue == Queue)
-            
+
             CommandBuffers[i] = TrackedBuffer->CommandBuffer;
+            TrackedBuffer->LastCommandListID = LastSubmittedID;
             CommandBuffersInFlight.push_back(TrackedBuffer);
         }
 
-        VkPipelineStageFlags WaitStages = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        AddSignalSemaphore(TimelineSemaphore, LastSubmittedID);
+
+        VkTimelineSemaphoreSubmitInfo TimelineSubmitInfo = {};
+        TimelineSubmitInfo.sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO;
+        TimelineSubmitInfo.signalSemaphoreValueCount = (uint32)SignalSemaphoreValues.size();
+        TimelineSubmitInfo.pSignalSemaphoreValues = SignalSemaphoreValues.data();
+        TimelineSubmitInfo.waitSemaphoreValueCount = (uint32)WaitSemaphoreValues.size();
+        TimelineSubmitInfo.pWaitSemaphoreValues = WaitSemaphoreValues.data();
 
         VkSubmitInfo SubmitInfo = {};
         SubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        SubmitInfo.pWaitDstStageMask = &WaitStages;
+        SubmitInfo.pNext = &TimelineSubmitInfo;
         SubmitInfo.pCommandBuffers = CommandBuffers.data();
         SubmitInfo.commandBufferCount = NumCommandLists;
         SubmitInfo.pWaitSemaphores = WaitSemaphores.data();
         SubmitInfo.waitSemaphoreCount = (uint32)WaitSemaphores.size();
+        SubmitInfo.pWaitDstStageMask = StageFlags.data();
         SubmitInfo.pSignalSemaphores = SignalSemaphores.data();
         SubmitInfo.signalSemaphoreCount = (uint32)SignalSemaphores.size();
 
-        VkFence Fence = FencePool.Aquire();
-        
-        {
-            LUMINA_PROFILE_SECTION("vkQueueSubmit");
-            VK_CHECK(vkQueueSubmit(Queue, NumCommandLists, &SubmitInfo, Fence));
-        }
-
-        {
-            LUMINA_PROFILE_SECTION("vkWaitForFences");
-            VK_CHECK(vkWaitForFences(Device->GetDevice(), 1, &Fence, VK_TRUE, VULKAN_TIMEOUT_ONE_SECOND));
-        }
-        
-        FencePool.Release(Fence);
+        VK_CHECK(vkQueueSubmit(Queue, 1, &SubmitInfo, nullptr));
 
         WaitSemaphores.clear();
+        WaitSemaphoreValues.clear();
         SignalSemaphores.clear();
+        SignalSemaphoreValues.clear();
+
+        return LastSubmittedID;
     }
 
     void FQueue::WaitIdle()
@@ -276,16 +297,63 @@ namespace Lumina
         VK_CHECK(vkQueueWaitIdle(Queue));
     }
 
-    void FQueue::AddSignalSemaphore(VkSemaphore Semaphore)
+    bool FQueue::PollCommandList(uint64 CommandListID)
     {
+        if (CommandListID > LastSubmittedID || CommandListID == 0)
+        {
+            return false;
+        }
+
+        bool bCompleted = LastFinishedID >= CommandListID;
+        if (bCompleted)
+        {
+            return true;
+        }
+        
+        VK_CHECK(vkGetSemaphoreCounterValue(Device->GetDevice(), TimelineSemaphore, &LastFinishedID));
+        bCompleted = LastFinishedID >= CommandListID;
+        return bCompleted;
+        
+    }
+
+    bool FQueue::WaitCommandList(uint64 CommandListID, uint64 Timeout)
+    {
+        if (CommandListID > LastSubmittedID || CommandListID == 0)
+        {
+            return false;
+        }
+
+        if (PollCommandList(CommandListID))
+        {
+            return true;
+        }
+
+        VkSemaphoreWaitInfo WaitInfo = {};
+        WaitInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO;
+        WaitInfo.semaphoreCount = 1;
+        WaitInfo.pSemaphores = &TimelineSemaphore;
+        WaitInfo.pValues = &CommandListID;
+
+        VK_CHECK(vkWaitSemaphores(Device->GetDevice(), &WaitInfo, Timeout));
+
+        return true;
+    }
+
+    void FQueue::AddSignalSemaphore(VkSemaphore Semaphore, uint64 Value)
+    {
+        Assert(Semaphore)
         SignalSemaphores.push_back(Semaphore);
+        SignalSemaphoreValues.push_back(Value);
     }
 
-    void FQueue::AddWaitSemaphore(VkSemaphore Semaphore)
+    void FQueue::AddWaitSemaphore(VkSemaphore Semaphore, uint64 Value)
     {
+        Assert(Semaphore)
         WaitSemaphores.push_back(Semaphore);
+        WaitSemaphoreValues.push_back(Value);
     }
-
+    
+    
     bool FVulkanStagingManager::GetStagingBuffer(TRefCountPtr<FVulkanBuffer>& OutBuffer)
     {
         LUMINA_PROFILE_SCOPE();
@@ -440,11 +508,11 @@ namespace Lumina
         
         Memory::Delete(Swapchain);
         
-        for (FQueue* Queue : Queues)
+        for (size_t i = 0; i < Queues.size(); ++i)
         {
-            Memory::Delete(Queue);
+            Memory::Delete(Queues[i]);
+            Queues[i] = nullptr;
         }
-        
         
         auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(VulkanInstance, "vkDestroyDebugUtilsMessengerEXT");
         func(VulkanInstance, DebugUtils.DebugMessenger, nullptr);
@@ -478,15 +546,11 @@ namespace Lumina
 
     void FVulkanRenderContext::FrameStart(const FUpdateContext& UpdateContext, uint8 InCurrentFrameIndex)
     {
-
         CurrentFrameIndex = InCurrentFrameIndex;
-        Swapchain->AquireNextImage(CurrentFrameIndex);
+        
+        Swapchain->AcquireNextImage();
         
         CommandList->Open();
-        
-        GetQueue(Q_Graphics)->AddWaitSemaphore(Swapchain->GetAquireSemaphore());
-        GetQueue(Q_Graphics)->AddSignalSemaphore(Swapchain->GetPresentSemaphore());
-        
     }
 
     void FVulkanRenderContext::FrameEnd(const FUpdateContext& UpdateContext)
@@ -498,8 +562,9 @@ namespace Lumina
         ExecuteCommandList(CommandList, 1, Q_Graphics);
         
         Swapchain->Present();
+
+        StagingManager.ReturnAllStagingBuffers();
         
-        GetStagingManager().ReturnAllStagingBuffers();
         FlushPendingDeletes();
     }
 
@@ -516,15 +581,14 @@ namespace Lumina
     
     void FVulkanRenderContext::ExecuteCommandList(ICommandList* CommandLists, uint32 NumCommandLists, ECommandQueue QueueType)
     {
-
         FQueue* Queue = Queues[uint32(QueueType)];
 
-        Queue->Submit(CommandLists, NumCommandLists);
+        uint64 SubmissionID = Queue->Submit(CommandLists, NumCommandLists);
 
         for (uint32 i = 0; i < NumCommandLists; ++i)
         {
             /** Static cast in this case if fine because CommandLists will only ever contain one type. */
-            static_cast<FVulkanCommandList*>(&CommandLists[i])->Executed(Queue);  // NOLINT(bugprone-pointer-arithmetic-on-polymorphic-object)
+            static_cast<FVulkanCommandList*>(&CommandLists[i])->Executed(Queue, SubmissionID);
         }
     }
 
@@ -536,6 +600,10 @@ namespace Lumina
     void FVulkanRenderContext::CreateDevice(vkb::Instance Instance)
     {
 
+        VkPhysicalDeviceTimelineSemaphoreFeatures TimelineFeatures = {};
+        TimelineFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES;
+        TimelineFeatures.timelineSemaphore = VK_TRUE;
+        
         VkPhysicalDeviceFeatures DeviceFeatures = {};
         DeviceFeatures.samplerAnisotropy = VK_TRUE;
         DeviceFeatures.sampleRateShading = VK_TRUE;
@@ -545,6 +613,7 @@ namespace Lumina
         
         VkPhysicalDeviceVulkan12Features Features12 = {};
         Features12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+        Features12.timelineSemaphore = VK_TRUE;
         Features12.bufferDeviceAddress = VK_TRUE;
         Features12.descriptorIndexing =  VK_TRUE;
         Features12.descriptorBindingPartiallyBound = VK_TRUE;
@@ -569,7 +638,8 @@ namespace Lumina
 
         physicalDevice.enable_extension_if_present(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
         physicalDevice.enable_extension_if_present(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
-        physicalDevice.enable_extension_if_present("VK_EXT_conservative_rasterization");
+        physicalDevice.enable_extension_if_present(VK_EXT_CONSERVATIVE_RASTERIZATION_EXTENSION_NAME);
+        physicalDevice.enable_extension_if_present(VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME);
 
         vkb::DeviceBuilder deviceBuilder(physicalDevice);
         vkb::Device vkbDevice = deviceBuilder.build().value();
@@ -584,6 +654,7 @@ namespace Lumina
             VkQueue Queue = vkbDevice.get_queue(vkb::QueueType::graphics).value();
             uint32 Index = vkbDevice.get_queue_index(vkb::QueueType::graphics).value();
             Queues[uint32(ECommandQueue::Graphics)] = Memory::New<FQueue>(VulkanDevice, Queue, Index, ECommandQueue::Graphics);
+            SetVulkanObjectName("Graphics Queue", VK_OBJECT_TYPE_QUEUE, (uintptr_t)Queue);
         }
 
         if (vkbDevice.get_queue(vkb::QueueType::compute).has_value())
@@ -591,6 +662,7 @@ namespace Lumina
             VkQueue Queue = vkbDevice.get_queue(vkb::QueueType::compute).value();
             uint32 Index = vkbDevice.get_queue_index(vkb::QueueType::compute).value();
             Queues[uint32(ECommandQueue::Compute)] = Memory::New<FQueue>(VulkanDevice, Queue, Index, ECommandQueue::Compute);
+            SetVulkanObjectName("Compute Queue", VK_OBJECT_TYPE_QUEUE, (uintptr_t)Queue);
         }
 
         if (vkbDevice.get_queue(vkb::QueueType::transfer).has_value())
@@ -598,6 +670,7 @@ namespace Lumina
             VkQueue Queue = vkbDevice.get_queue(vkb::QueueType::transfer).value();
             uint32 Index = vkbDevice.get_queue_index(vkb::QueueType::transfer).value();
             Queues[uint32(ECommandQueue::Transfer)] = Memory::New<FQueue>(VulkanDevice, Queue, Index, ECommandQueue::Transfer);
+            SetVulkanObjectName("Transfer Queue", VK_OBJECT_TYPE_QUEUE, (uintptr_t)Queue);
         }
     }
 
@@ -605,7 +678,7 @@ namespace Lumina
     {
         uint64 MinAlignment = 1;
 
-        if(Usage.AreAnyFlagsSet(EBufferUsageFlags::UniformBuffer))
+        if(Usage.AreAnyFlagsSet(EBufferUsageFlags::Dynamic))
         {
             MinAlignment = VulkanDevice->GetPhysicalDeviceProperties().limits.minUniformBufferOffsetAlignment;
         }
@@ -655,12 +728,12 @@ namespace Lumina
 
     FRHIBindingLayoutRef FVulkanRenderContext::CreateBindingLayout(const FBindingLayoutDesc& Desc)
     {
-        return DescriptorCache.GetOrCreateLayout(VulkanDevice, Desc);
+        return MakeRefCount<FVulkanBindingLayout>(VulkanDevice, Desc);
     }
 
     FRHIBindingSetRef FVulkanRenderContext::CreateBindingSet(const FBindingSetDesc& Desc, FRHIBindingLayout* InLayout)
     {
-        return DescriptorCache.GetOrCreateSet(this, Desc, InLayout);
+        return MakeRefCount<FVulkanBindingSet>(this, Desc, (FVulkanBindingLayout*)InLayout);
     }
 
     FRHIComputePipelineRef FVulkanRenderContext::CreateComputePipeline(const FComputePipelineDesc& Desc)
@@ -682,6 +755,50 @@ namespace Lumina
         NameInfo.objectHandle = reinterpret_cast<uint64>(Resource->GetAPIResource(Type));
 
         GetDebugUtils().DebugUtilsObjectNameEXT(GetDevice()->GetDevice(), &NameInfo);
+    }
+
+    FRHIEventQueryRef FVulkanRenderContext::CreateEventQuery()
+    {
+        return MakeRefCount<FVulkanEventQuery>();
+    }
+
+    void FVulkanRenderContext::SetEventQuery(IEventQuery* Query, ECommandQueue Queue)
+    {
+        FVulkanEventQuery* VkQuery = static_cast<FVulkanEventQuery*>(Query);
+        Assert(VkQuery->CommandListID == 0)
+
+        VkQuery->Queue = Queue;
+        VkQuery->CommandListID = GetQueue(Queue)->LastSubmittedID;
+    }
+
+    void FVulkanRenderContext::ResetEventQuery(IEventQuery* Query)
+    {
+        FVulkanEventQuery* VkQuery = static_cast<FVulkanEventQuery*>(Query);
+        VkQuery->CommandListID = 0;
+    }
+
+    void FVulkanRenderContext::PollEventQuery(IEventQuery* Query)
+    {
+        FVulkanEventQuery* VkQuery = static_cast<FVulkanEventQuery*>(Query);
+        if (VkQuery->CommandListID == 0)
+        {
+            return;
+        }
+
+        FQueue* Queue = GetQueue(VkQuery->Queue);
+        Queue->PollCommandList(VkQuery->CommandListID);
+    }
+
+    void FVulkanRenderContext::WaitEventQuery(IEventQuery* Query)
+    {
+        FVulkanEventQuery* VkQuery = static_cast<FVulkanEventQuery*>(Query);
+        if (VkQuery->CommandListID == 0)
+        {
+            return;
+        }
+
+        FQueue* Queue = GetQueue(VkQuery->Queue);
+        Queue->WaitCommandList(VkQuery->CommandListID, UINT32_MAX);
     }
 
     FRHIBufferRef FVulkanRenderContext::CreateBuffer(const FRHIBufferDesc& Description)

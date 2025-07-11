@@ -23,7 +23,7 @@ namespace Lumina
             Assert(Scene != nullptr)
         }
 
-        bool IsValid() const { return EntityHandle != entt::null && Scene != nullptr; }
+        bool IsValid() const                                { return EntityHandle != entt::null && Scene != nullptr; }
         FORCEINLINE FScene* GetScene() const                { return Scene; }
         FORCEINLINE entt::entity GetHandle() const          { return EntityHandle; }
         FORCEINLINE entt::entity GetHandleChecked() const   { Assert(EntityHandle != entt::null) return EntityHandle; }
@@ -34,10 +34,9 @@ namespace Lumina
         FORCEINLINE glm::quat GetRotation()          { return GetComponent<FTransformComponent>().GetRotation(); }
         FORCEINLINE glm::vec3 GetScale()             { return GetComponent<FTransformComponent>().GetScale(); }
 
-        FORCEINLINE void Destroy() const             { Assert(Scene != nullptr); Scene->DestroyEntity(*this);  }
+        FORCEINLINE void Destroy() const             { Assert(Scene != nullptr) Scene->DestroyEntity(*this);  }
 
-
-
+        
         
         template <typename T, typename... Args>
         auto AddComponent(Args&&... args) -> decltype(auto);

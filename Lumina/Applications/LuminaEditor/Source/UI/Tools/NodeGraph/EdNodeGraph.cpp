@@ -91,7 +91,7 @@ namespace Lumina
     void CEdNodeGraph::DrawGraph()
     {
         //ImNodes::EditorContextSet(ImNodesContext);
-        LUMINA_PROFILE_SCOPE()
+        LUMINA_PROFILE_SCOPE();
 
         TVector<CEdGraphNode*> NodesToDestroy;
         

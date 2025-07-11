@@ -31,13 +31,16 @@ namespace Lumina
 
         void Open() override;
         void Close() override;
-        void Executed(FQueue* Queue) override;
+        void Executed(FQueue* Queue, uint64 SubmissionID) override;
 
         void CopyImage(FRHIImage* Src, FRHIImage* Dst) override;
-        void WriteToImage(FRHIImage* Dst, uint32 ArraySlice, uint32 MipLevel, const void* Data, SIZE_T RowPitch, SIZE_T DepthPitch) override;
+        void WriteImage(FRHIImage* Dst, uint32 ArraySlice, uint32 MipLevel, const void* Data, SIZE_T RowPitch, SIZE_T DepthPitch) override;
 
         void CopyBuffer(FRHIBuffer* Source, uint64 SrcOffset, FRHIBuffer* Destination, uint64 DstOffset, uint64 CopySize) override;
-        void UploadToBuffer(FRHIBuffer* Buffer, const void* Data, uint32 Offset, uint32 Size) override;
+        void WriteBuffer(FRHIBuffer* Buffer, const void* Data, uint32 Offset, uint32 Size) override;
+
+        void FlushDynamicBufferWrites();
+        void SubmitDynamicBuffers(uint64 RecordingID, uint64 SubmittedID);
 
         void SetRequiredImageAccess(FRHIImage* Image, ERHIAccess Access) override;
         void SetRequiredBufferAccess(FRHIBuffer* Buffer, ERHIAccess Access) override;
@@ -76,16 +79,19 @@ namespace Lumina
         TRefCountPtr<FTrackedCommandBuffer>  CurrentCommandBuffer;
 
     private:
-        
-        FVulkanGraphicsState            GraphicsState;
-        FVulkanComputeState             ComputeState;
 
-        FCommandListStateTracker        CommandListTracker;
-        FPendingCommandState            PendingState;
-        FVulkanRenderContext*           RenderContext = nullptr;
-        FCommandListInfo                Info;
-        VkShaderStageFlags              PushConstantVisibility;
-        VkPipelineLayout                CurrentPipelineLayout;
+        THashMap<FRHIBufferRef, FDynamicBufferWrite>    DynamicBufferWrites;
+        bool                                            bHasDynamicBufferWrites = false;
+        
+        FVulkanGraphicsState                            GraphicsState;
+        FVulkanComputeState                             ComputeState;
+                                                        
+        FCommandListStateTracker                        CommandListTracker;
+        FPendingCommandState                            PendingState;
+        FVulkanRenderContext*                           RenderContext = nullptr;
+        FCommandListInfo                                Info;
+        VkShaderStageFlags                              PushConstantVisibility;
+        VkPipelineLayout                                CurrentPipelineLayout;
     };
     
 }

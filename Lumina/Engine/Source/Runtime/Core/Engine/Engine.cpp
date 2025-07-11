@@ -109,15 +109,12 @@ namespace Lumina
                 LUMINA_PROFILE_SECTION("FrameStart");
                 UpdateCallback(UpdateContext);
                 
-                SceneManager->StartFrame();
+                SceneManager->StartFrame(UpdateContext);
 
                 InputSubsystem->Update(UpdateContext);
                 
                 #if WITH_DEVELOPMENT_TOOLS
                 DeveloperToolUI->StartFrame(UpdateContext);
-                #endif
-
-                #if WITH_DEVELOPMENT_TOOLS
                 DeveloperToolUI->Update(UpdateContext);
                 #endif
                 
@@ -192,7 +189,7 @@ namespace Lumina
                 SceneManager->UpdateScenes(UpdateContext);
 
                 
-                SceneManager->EndFrame();
+                SceneManager->EndFrame(UpdateContext);
 
                 
                 #if WITH_DEVELOPMENT_TOOLS

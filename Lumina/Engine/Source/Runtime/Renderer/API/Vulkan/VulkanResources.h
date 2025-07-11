@@ -34,6 +34,17 @@ namespace Lumina
     
     class FVulkanSwapchain;
 
+
+    class FVulkanEventQuery : public IEventQuery
+    {
+    public:
+        RENDER_RESOURCE(RRT_None)
+
+        ECommandQueue   Queue;
+        uint64          CommandListID = 0;
+        
+    };
+    
     class FVulkanViewport : public FRHIViewport
     {
     public:
@@ -51,10 +62,30 @@ namespace Lumina
         
     };
 
+    // A copyable version of std::atomic.
+    class FBufferVersionItem : public std::atomic<uint64> 
+    {
+    public:
+        FBufferVersionItem()
+        { }
+
+        FBufferVersionItem(const FBufferVersionItem& other)
+        {
+            store(other);
+        }
+
+        FBufferVersionItem& operator=(const uint64 a)
+        {
+            store(a);
+            return *this;
+        }
+    };
+
     class FVulkanBuffer : public FRHIBuffer, public IDeviceChild
     {
     public:
-
+        friend class FVulkanCommandList;
+        
         FVulkanBuffer(FVulkanDevice* InDevice, const FRHIBufferDesc& InDescription);
         ~FVulkanBuffer() override;
 
@@ -67,8 +98,13 @@ namespace Lumina
         
 
     private:
-        
-        VkBuffer Buffer = VK_NULL_HANDLE;
+
+        TVector<FBufferVersionItem> VersionTracking;
+        uint32                      VersionSearchStart = 0;
+        VmaAllocation               Allocation = nullptr;
+        void*                       MappedMemory = nullptr;
+        VkBuffer                    Buffer = VK_NULL_HANDLE;
+
     };
 
     
@@ -273,13 +309,14 @@ namespace Lumina
 
         RENDER_RESOURCE(RRT_BindingSet)
         
-        FVulkanBindingSet(FVulkanRenderContext* RenderContext, FVulkanDevice* InDevice, const FBindingSetDesc& InDesc, FVulkanBindingLayout* InLayout);
+        FVulkanBindingSet(FVulkanRenderContext* RenderContext, const FBindingSetDesc& InDesc, FVulkanBindingLayout* InLayout);
         ~FVulkanBindingSet() override;
 
         const FBindingSetDesc* GetDesc() const override { return &Desc; }
         FRHIBindingLayout* GetLayout() const override { return Layout; }
         void* GetAPIResourceImpl(EAPIResourceType Type) override;
 
+        TVector<FRHIBufferRef>              DynamicBuffers;
         TVector<uint32>                     BindingsRequiringTransitions;
         TVector<FRHIResourceRef>            Resources;
         TRefCountPtr<FVulkanBindingLayout>  Layout;

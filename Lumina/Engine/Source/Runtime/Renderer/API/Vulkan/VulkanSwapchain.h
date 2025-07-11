@@ -29,34 +29,35 @@ namespace Lumina
         
         FORCEINLINE VkPresentModeKHR GetPresentMode() const { return CurrentPresentMode; }
         FORCEINLINE VkFormat GetSwapchainFormat() const { return Format; }
-        FORCEINLINE VkSemaphore GetPresentSemaphore() const { return PresentSemaphores[CurrentImageIndex]; }
-        FORCEINLINE VkSemaphore GetAquireSemaphore() const { return AquireSemaphores[CurrentFrameIndex]; }
-        FORCEINLINE VkFence GetFence() const { return Fences[CurrentFrameIndex]; }
         FORCEINLINE const FIntVector2D& GetSwapchainExtent() const { return SwapchainExtent; }
         
         TRefCountPtr<FVulkanImage> GetCurrentImage() const;
 
-        void AquireNextImage(uint32 NewFrameIndex);
+        void AcquireNextImage();
         void Present();
         
     private:
+
+        uint64                                  AcquireSemaphoreIndex = 0;
         
         bool                                    bNeedsResize = false;
-        uint32                                  CurrentFrameIndex = 0;
         uint32                                  CurrentImageIndex = 0;
         VkSurfaceKHR                            Surface;
         VkFormat                                Format;
         FIntVector2D                            SwapchainExtent;
                                                 
-        VkSwapchainKHR                          Swapchain;
+        VkSwapchainKHR                          Swapchain = nullptr;
         VkSurfaceFormatKHR                      SurfaceFormat;
         VkPresentModeKHR                        CurrentPresentMode = VK_PRESENT_MODE_FIFO_KHR;
         
         TVector<TRefCountPtr<FVulkanImage>>     SwapchainImages;
         TVector<VkSemaphore>                    PresentSemaphores;
-        TVector<VkSemaphore>                    AquireSemaphores;
+        TVector<VkSemaphore>                    AcquireSemaphores;
         TVector<VkFence>                        Fences;
         FVulkanRenderContext*                   Context = nullptr;
+
+        TQueue<FRHIEventQueryRef>               FramesInFlight;
+        TVector<FRHIEventQueryRef>              QueryPool;
     };
     
 }

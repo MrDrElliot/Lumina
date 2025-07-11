@@ -34,7 +34,7 @@ namespace Lumina
         VertexBufferDesc.Usage.SetFlag(EBufferUsageFlags::VertexBuffer);
 
         VertexBuffer = RenderContext->CreateBuffer(VertexBufferDesc);
-        TransferCommandList->UploadToBuffer(VertexBuffer, MeshResource.Vertices.data(), 0, GetNumVertices() * sizeof(FVertex));
+        TransferCommandList->WriteBuffer(VertexBuffer, MeshResource.Vertices.data(), 0, GetNumVertices() * sizeof(FVertex));
         
         // Index buffer
         FRHIBufferDesc IndexBufferDesc;
@@ -44,7 +44,7 @@ namespace Lumina
 
         IndexBuffer = RenderContext->CreateBuffer(IndexBufferDesc);
         
-        TransferCommandList->UploadToBuffer(IndexBuffer, MeshResource.Indices.data(), 0, GetNumIndicies() * sizeof(uint32));
+        TransferCommandList->WriteBuffer(IndexBuffer, MeshResource.Indices.data(), 0, GetNumIndicies() * sizeof(uint32));
         
         TransferCommandList->Close();
         RenderContext->ExecuteCommandList(TransferCommandList, 1, ECommandQueue::Transfer);

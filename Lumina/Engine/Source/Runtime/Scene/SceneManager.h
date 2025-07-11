@@ -32,9 +32,9 @@ namespace Lumina
         void Initialize(FSubsystemManager& Manager) override;
         void Deinitialize() override;
 
-        void StartFrame();
+        void StartFrame(const FUpdateContext& UpdateContext);
         void UpdateScenes(const FUpdateContext& UpdateContext);
-        void EndFrame();
+        void EndFrame(const FUpdateContext& UpdateContext);
         
         FScene* CreateScene(ESceneType InType);
         void DestroyScene(FScene* SceneToRemove);

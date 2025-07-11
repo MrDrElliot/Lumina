@@ -24,7 +24,7 @@ namespace Lumina
         Scenes.clear();
     }
 
-    void FSceneManager::StartFrame()
+    void FSceneManager::StartFrame(const FUpdateContext& UpdateContext)
     {
         LUMINA_PROFILE_SCOPE();
         
@@ -35,7 +35,7 @@ namespace Lumina
                 continue;
             }
             
-            Scene.SceneRenderer->StartScene(Scene.Scene);
+            Scene.SceneRenderer->StartScene(UpdateContext);
             Scene.Scene->StartFrame();       
         }
     }
@@ -55,7 +55,7 @@ namespace Lumina
     }
     
 
-    void FSceneManager::EndFrame()
+    void FSceneManager::EndFrame(const FUpdateContext& UpdateContext)
     {
         LUMINA_PROFILE_SCOPE();
         for (const FManagedScene& Scene : Scenes)
@@ -66,7 +66,7 @@ namespace Lumina
             }
             
             Scene.Scene->EndFrame();
-            Scene.SceneRenderer->EndScene(Scene.Scene);
+            Scene.SceneRenderer->EndScene(UpdateContext);
         }
     }
 
@@ -79,7 +79,7 @@ namespace Lumina
         }
 
         FScene* NewScene = Memory::New<FScene>(InType);
-        FSceneRenderer* SceneRenderer = Memory::New<FSceneRenderer>();
+        FSceneRenderer* SceneRenderer = Memory::New<FSceneRenderer>(NewScene);
         SceneRenderer->Initialize();
 
         Scenes.emplace_back(NewScene, SceneRenderer);

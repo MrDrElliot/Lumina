@@ -58,8 +58,8 @@ project "Lumina"
         
         "Engine/ThirdParty/xxhash/**.h",
     	"Engine/ThirdParty/xxhash/**.c",
-        
-        "Engine/ThirdParty/tracy/public/TracyClient.cpp",
+
+		"Engine/ThirdParty/Tracy/public/TracyClient.cpp",
 
 	}
 
@@ -82,6 +82,7 @@ project "Lumina"
 	 	"ImGui",
 	 	"EA",
 	 	"EnkiTS",
+	 	"Tracy",
 	  	"%{VULKAN_SDK}/lib/vulkan-1.lib",
 	    "DbgHelp",
 	 }

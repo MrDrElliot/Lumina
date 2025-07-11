@@ -36,6 +36,8 @@ namespace Lumina
 
         INLINE FRHISamplerRef GetNearestSampler() const { return NearestSampler; }
         INLINE FRHISamplerRef GetLinearSampler() const { return LinearSampler; }
+
+        uint32 GetCurrentFrameIndex() const { return CurrentFrameIndex; }
         
     private:
 
@@ -44,7 +46,7 @@ namespace Lumina
         #endif
         
         IRenderContext*     RenderContext = nullptr;
-        uint8               CurrentFrameIndex = 1;
+        uint8               CurrentFrameIndex = 0;
         
         FRHISamplerRef      NearestSampler;
         FRHISamplerRef      LinearSampler;

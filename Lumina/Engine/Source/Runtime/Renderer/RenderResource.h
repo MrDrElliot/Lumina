@@ -89,7 +89,7 @@ enum class ERHIBindingResourceType : uint8
 	// SRV (Shader Resource View) Types.
 	Texture_SRV,
 	Buffer_SRV,
-
+	Buffer_Dynamic,
 
 	// UAV (Unordered Access View) Types.
 	Texture_UAV,
@@ -173,8 +173,37 @@ virtual ERHIResourceType GetResourceType() const override { return ERHIResourceT
  * Base class for all render resources. Reference counted and destroyed externally by the implementation.
  *
  */
+
 namespace Lumina
 {
+
+	constexpr uint64 GVersionSubmittedFlag = 0x8000000000000000;
+	constexpr uint32 GVersionQueueShift = 60;
+	constexpr uint32 GVersionQueueMask = 0x7;
+	constexpr uint64 GVersionIDMask = 0x0FFFFFFFFFFFFFFF;
+
+	constexpr uint64_t MakeVersion(uint64 ID, ECommandQueue Queue, bool Submitted)
+	{
+		uint64 Result = (ID & GVersionIDMask) | (uint64(Queue) << GVersionQueueShift);
+		if (Submitted) Result |= GVersionSubmittedFlag;
+		return Result;
+	}
+
+	constexpr uint64_t VersionGetInstance(uint64_t version)
+	{
+		return version & GVersionIDMask;
+	}
+
+	constexpr ECommandQueue VersionGetQueue(uint64_t version)
+	{
+		return ECommandQueue((version >> GVersionQueueShift) & GVersionQueueMask);
+	}
+
+	constexpr bool VersionGetSubmitted(uint64_t version)
+	{
+		return (version & GVersionSubmittedFlag) != 0;
+	}
+	
     class LUMINA_API IRHIResource
     {
     public:
@@ -355,6 +384,8 @@ namespace Lumina
 
 	//-------------------------------------------------------------------------------------------------------------------
 
+	class IEventQuery : public IRHIResource { };
+	
 
 	class LUMINA_API FRHIViewport : public IRHIResource
 	{
@@ -403,16 +434,23 @@ namespace Lumina
 
 	//-------------------------------------------------------------------------------------------------------------------
 
-	
+	struct FDynamicBufferWrite
+	{
+		int64 LatestVersion = 0;
+		int64 MinVersion = 0;
+		int64 MaxVersion = 0;
+		bool bInitialized = false;
+	};
 
 	struct LUMINA_API FRHIBufferDesc
 	{
-		uint32 Size = 0;
+		uint64 Size = 0;
 		uint32 Stride = 0;
+		uint32 MaxVersions = 0;
 		TBitFlags<EBufferUsageFlags> Usage;
 
 		FRHIBufferDesc() = default;
-		FRHIBufferDesc(uint32 InSize, uint32 InStride, EBufferUsageFlags InUsage)
+		FRHIBufferDesc(uint64 InSize, uint32 InStride, EBufferUsageFlags InUsage)
 			: Size  (InSize)
 			, Stride(InStride)
 			, Usage (InUsage)
@@ -459,7 +497,7 @@ namespace Lumina
 		FORCEINLINE uint32 GetStride() const { return Description.Stride; }
 		FORCEINLINE TBitFlags<EBufferUsageFlags> GetUsage() const { return Description.Usage; }
 
-	private:
+	protected:
 
 		FRHIBufferDesc Description;
 		
@@ -1043,8 +1081,9 @@ namespace Lumina
 	{
 		IRHIResource* ResourceHandle;
 		uint32 Slot;
-		
+		uint32 ArrayElement;
 		ERHIBindingResourceType Type	: 8;
+		
 		uint8 bUnused					: 8;
 
 		union 
@@ -1058,6 +1097,7 @@ namespace Lumina
 		{
 			FBindingSetItem Result;
 			Result.bUnused = false;
+			Result.ArrayElement = 0;
 			Result.Type = ERHIBindingResourceType::Buffer_SRV;
 			Result.Slot = Slot;
 			Result.ResourceHandle = Buffer;
@@ -1072,6 +1112,7 @@ namespace Lumina
 		{
 			FBindingSetItem Result;
 			Result.bUnused = false;
+			Result.ArrayElement = 0;
 			Result.Type = ERHIBindingResourceType::Buffer_UAV;
 			Result.Slot = Slot;
 			Result.ResourceHandle = Buffer;
@@ -1084,9 +1125,11 @@ namespace Lumina
 		// Used to bind uniform buffers (read-only, small constant data).
 		static FBindingSetItem BufferCBV(uint32 Slot, FRHIBuffer* Buffer)
 		{
+			bool bIsDynamic = Buffer->GetDescription().Usage.IsFlagSet(BUF_Dynamic);
 			FBindingSetItem Result;
 			Result.bUnused = false;
-			Result.Type = ERHIBindingResourceType::Buffer_CBV;
+			Result.ArrayElement = 0;
+			Result.Type = bIsDynamic ? ERHIBindingResourceType::Buffer_Dynamic : ERHIBindingResourceType::Buffer_CBV;
 			Result.Slot = Slot;
 			Result.ResourceHandle = Buffer;
 			memset(Result.RawData, 0, std::size(Result.RawData));
@@ -1100,6 +1143,7 @@ namespace Lumina
 		{
 			FBindingSetItem Result;
 			Result.bUnused = false;
+			Result.ArrayElement = 0;
 			Result.Type = ERHIBindingResourceType::Texture_SRV;
 			Result.Slot = Slot;
 			Result.ResourceHandle = Image;
@@ -1115,6 +1159,7 @@ namespace Lumina
 		{
 			FBindingSetItem Result;
 			Result.bUnused = false;
+			Result.ArrayElement = 0;
 			Result.Type = ERHIBindingResourceType::Texture_UAV;
 			Result.Slot = Slot;
 			Result.ResourceHandle = Image;
@@ -1133,6 +1178,9 @@ namespace Lumina
 		}
 
 	};
+
+	// Verify the packing of BindingSetItem for good alignment.
+	static_assert(sizeof(FBindingSetItem) == 40, "sizeof(FBindingSetItem) is supposed to be 40 bytes");
 	
 	struct LUMINA_API FBindingSetDesc
 	{
@@ -1177,6 +1225,14 @@ namespace Lumina
 		NODISCARD virtual const FBindingSetDesc* GetDesc() const = 0;
 		NODISCARD virtual FRHIBindingLayout* GetLayout() const = 0;
 		
+	};
+	
+	class LUMINA_API FRHIDescriptorTable : public FRHIBindingSet
+	{
+	public:
+		
+		NODISCARD virtual uint32_t GetCapacity() const = 0;
+		NODISCARD virtual uint32_t GetFirstDescriptorIndexInHeap() const = 0;
 	};
 
 	enum class LUMINA_API EVariableShadingRate : uint8

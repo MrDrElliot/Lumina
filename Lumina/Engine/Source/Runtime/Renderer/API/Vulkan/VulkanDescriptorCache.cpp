@@ -34,7 +34,7 @@ namespace Lumina
             return SetMap.at(Hash);
         }
 
-        FRHIBindingSetRef Set = MakeRefCount<FVulkanBindingSet>(RenderContext, RenderContext->GetDevice(), Desc, static_cast<FVulkanBindingLayout*>(InLayout));
+        FRHIBindingSetRef Set = MakeRefCount<FVulkanBindingSet>(RenderContext, Desc, static_cast<FVulkanBindingLayout*>(InLayout));
         SetMap.try_emplace(Hash, Set);
 
         return Set;

@@ -5,6 +5,11 @@
 
 namespace Lumina
 {
+    class IEventQuery;
+}
+
+namespace Lumina
+{
     class FRHISampler;
     class IRHIResource;
     class FShaderLibrary;
@@ -24,6 +29,7 @@ namespace Lumina
     
     //----------------------------------------------------------------------------
 
+    using FRHIEventQueryRef         = TRefCountPtr<IEventQuery>;
     using FRHIResourceRef           = TRefCountPtr<IRHIResource>;
     using FRHIBufferRef             = TRefCountPtr<FRHIBuffer>;
     using FRHIImageRef              = TRefCountPtr<FRHIImage>;

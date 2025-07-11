@@ -34,12 +34,12 @@ namespace Lumina
         FORCEINLINE uint64 GetFrame() const { return Frame; }
         FORCEINLINE EUpdateStage GetUpdateStage() const { return UpdateStage; }
         
-        
         FORCEINLINE FSubsystemManager* GetSubsystemManager() const { return SubsystemManager; }
 
         template<typename T>
         FORCEINLINE T* GetSubsystem() const { return SubsystemManager->GetSubsystem<T>(); }
 
+        
     protected:
 
         double              Time = 0;

@@ -8,4 +8,6 @@ namespace Lumina
     {
         bool bEnabled = true;
     };
+
+    struct FHiddenComponent : FEntityComponent { };
 }

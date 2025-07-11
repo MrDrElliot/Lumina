@@ -30,7 +30,7 @@ namespace Lumina
     		vkDestroyFence(Context->GetDevice()->GetDevice(), Fence, nullptr);
     	}
 
-    	for (VkSemaphore Semaphore : AquireSemaphores)
+    	for (VkSemaphore Semaphore : AcquireSemaphores)
     	{
     		vkDestroySemaphore(Context->GetDevice()->GetDevice(), Semaphore, nullptr);    
     	}
@@ -44,7 +44,7 @@ namespace Lumina
     	vkDestroySurfaceKHR(Context->GetVulkanInstance(), Surface, nullptr);
     	
     	Fences.clear();
-    	AquireSemaphores.clear();
+    	AcquireSemaphores.clear();
     	PresentSemaphores.clear();
     }
 
@@ -172,41 +172,40 @@ namespace Lumina
     		Context->SetVulkanObjectName("Present Semaphore: " + eastl::to_string(i), VK_OBJECT_TYPE_SEMAPHORE, (uint64)PresentSemaphores[i]);
     	}
 
-    	// --------- AQUIRE SEMAPHORES MANAGEMENT --------- //
+    	// --------- ACQUIRE SEMAPHORES MANAGEMENT --------- //
     	
-    	// Destroy excess AquireSemaphores
-    	if (AquireSemaphores.size() > FRAMES_IN_FLIGHT)
+    	// Destroy excess AcquireSemaphores
+    	if (AcquireSemaphores.size() > FRAMES_IN_FLIGHT)
     	{
-    		for (size_t i = FRAMES_IN_FLIGHT; i < AquireSemaphores.size(); i++)
+    		for (size_t i = FRAMES_IN_FLIGHT; i < AcquireSemaphores.size(); i++)
     		{
-    			vkDestroySemaphore(Context->GetDevice()->GetDevice(), AquireSemaphores[i], nullptr);
+    			vkDestroySemaphore(Context->GetDevice()->GetDevice(), AcquireSemaphores[i], nullptr);
     		}
     		
-    		AquireSemaphores.resize(FRAMES_IN_FLIGHT);
+    		AcquireSemaphores.resize(FRAMES_IN_FLIGHT);
     	}
 
-    	// Ensure AquireSemaphores has enough slots
-    	if (AquireSemaphores.size() < FRAMES_IN_FLIGHT)
+    	// Ensure AcquireSemaphores has enough slots
+    	if (AcquireSemaphores.size() < FRAMES_IN_FLIGHT)
     	{
-    		for (auto Semaphore : AquireSemaphores)
+    		for (auto Semaphore : AcquireSemaphores)
     		{
     			vkDestroySemaphore(Context->GetDevice()->GetDevice(), Semaphore, nullptr);
     		}
     		
-    		AquireSemaphores.clear();
-    		AquireSemaphores.resize(FRAMES_IN_FLIGHT);
+    		AcquireSemaphores.clear();
+    		AcquireSemaphores.resize(FRAMES_IN_FLIGHT);
     	}
 
-    	// Create new Aquire semaphores
+    	// Create new Acquire semaphores
     	for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
     	{
     		VkSemaphoreCreateInfo CreateInfo = {};
     		CreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
-    		vkDestroySemaphore(Context->GetDevice()->GetDevice(), AquireSemaphores[i], nullptr);
-    		VK_CHECK(vkCreateSemaphore(Context->GetDevice()->GetDevice(),&CreateInfo,  nullptr, &AquireSemaphores[i]));
-    		Context->SetVulkanObjectName("Aquire Semaphore: " + eastl::to_string(i), VK_OBJECT_TYPE_SEMAPHORE, (uint64)PresentSemaphores[i]);
-
+    		vkDestroySemaphore(Context->GetDevice()->GetDevice(), AcquireSemaphores[i], nullptr);
+    		VK_CHECK(vkCreateSemaphore(Context->GetDevice()->GetDevice(),&CreateInfo,  nullptr, &AcquireSemaphores[i]));
+    		Context->SetVulkanObjectName("Acquire Semaphore: " + eastl::to_string(i), VK_OBJECT_TYPE_SEMAPHORE, (uint64)AcquireSemaphores[i]);
     	}
 
     	
@@ -217,6 +216,7 @@ namespace Lumina
     	
         VkFenceCreateInfo FenceCreateInfo = {};
         FenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    	FenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
         Fences.reserve(FRAMES_IN_FLIGHT);
         for (uint8 i = 0; i < FRAMES_IN_FLIGHT; i++)
@@ -247,31 +247,33 @@ namespace Lumina
 
     TRefCountPtr<FVulkanImage> FVulkanSwapchain::GetCurrentImage() const
     {
-	    return SwapchainImages[CurrentFrameIndex];
+	    return SwapchainImages[CurrentImageIndex];
     }
 
-    void FVulkanSwapchain::AquireNextImage(uint32 NewFrameIndex)
+    void FVulkanSwapchain::AcquireNextImage()
     {
     	LUMINA_PROFILE_SCOPE();
-    	CurrentFrameIndex = NewFrameIndex;
 
-    	VkFenceCreateInfo FenceInfo = {};
-    	FenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-
+    	VkSemaphore Semaphore = AcquireSemaphores[AcquireSemaphoreIndex];
+    	
     	VkResult Result;
 	    {
     		LUMINA_PROFILE_SECTION("vkAcquireNextImageKHR");
-		    Result = vkAcquireNextImageKHR(Context->GetDevice()->GetDevice(), Swapchain, VULKAN_TIMEOUT_ONE_SECOND, AquireSemaphores[CurrentFrameIndex], Fences[CurrentFrameIndex], &CurrentImageIndex);
+		    Result = vkAcquireNextImageKHR(Context->GetDevice()->GetDevice(), Swapchain, UINT64_MAX, Semaphore, nullptr, &CurrentImageIndex);
 	    }
-    	{
-    		LUMINA_PROFILE_SECTION("vkWaitForFences");
-    		VK_CHECK(vkWaitForFences(Context->GetDevice()->GetDevice(), 1, &Fences[CurrentFrameIndex], VK_TRUE, VULKAN_TIMEOUT_ONE_SECOND));
-    		VK_CHECK(vkResetFences(Context->GetDevice()->GetDevice(), 1, &Fences[CurrentFrameIndex]));
-    	}
     	
-    	if (Result == VK_SUBOPTIMAL_KHR || Result == VK_ERROR_OUT_OF_DATE_KHR)
+    	if (Result == VK_SUBOPTIMAL_KHR || Result == VK_ERROR_OUT_OF_DATE_KHR || bNeedsResize)
     	{
     		bNeedsResize = true;
+    	}
+    	
+    	AcquireSemaphoreIndex = (AcquireSemaphoreIndex + 1) % AcquireSemaphores.size();
+
+    	if (Result == VK_SUCCESS || Result == VK_SUBOPTIMAL_KHR)
+    	{
+    		FQueue* Queue = Context->GetQueue(ECommandQueue::Graphics);
+    		Queue->AddWaitSemaphore(Semaphore, 0);
+    		return;
     	}
     	
     	VK_CHECK(Result);
@@ -281,28 +283,62 @@ namespace Lumina
     void FVulkanSwapchain::Present()
     {
 	    LUMINA_PROFILE_SCOPE();
+
+    	VkSemaphore Semaphore = PresentSemaphores[CurrentImageIndex];
+
+    	FQueue* Queue = Context->GetQueue(ECommandQueue::Graphics);
+    	
+    	Queue->AddSignalSemaphore(Semaphore, 0);
+    	
+    	Context->ExecuteCommandList(nullptr, 0, ECommandQueue::Graphics);
     	
     	VkPresentInfoKHR PresentInfo = {};
     	PresentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
     	PresentInfo.pSwapchains = &Swapchain;
     	PresentInfo.swapchainCount = 1;
-    	PresentInfo.pWaitSemaphores = &PresentSemaphores[CurrentImageIndex];
+    	PresentInfo.pWaitSemaphores = &Semaphore;
     	PresentInfo.waitSemaphoreCount = 1;
     	PresentInfo.pImageIndices = &CurrentImageIndex;
 
     	VkResult Result;
 	    {
 	    	LUMINA_PROFILE_SECTION("vkQueuePresentKHR");
-		    Result = vkQueuePresentKHR(Context->GetQueue(ECommandQueue::Graphics)->Queue, &PresentInfo);
+		    Result = vkQueuePresentKHR(Queue->Queue, &PresentInfo);
 	    }
-    	if (Result == VK_SUBOPTIMAL_KHR || Result == VK_ERROR_OUT_OF_DATE_KHR || bNeedsResize)
+    	if (!(Result == VK_SUCCESS || Result == VK_SUBOPTIMAL_KHR || Result == VK_ERROR_OUT_OF_DATE_KHR) || bNeedsResize)
     	{
     		RecreateSwapchain(Windowing::GetPrimaryWindowHandle()->GetExtent());
     	}
+
+    	if (CurrentPresentMode == VK_PRESENT_MODE_FIFO_KHR)
+    	{
+    		Queue->WaitIdle();
+    	}
+
+    	while (!FramesInFlight.empty())
+    	{
+    		auto& Query = FramesInFlight.front();
+    		FramesInFlight.pop();
+
+    		Context->WaitEventQuery(Query);
+
+    		QueryPool.push_back(Query);
+    	}
+
+    	FRHIEventQueryRef Query;
+    	if (!QueryPool.empty())
+    	{
+    		Query = QueryPool.back();
+    		QueryPool.pop_back();
+    	}
 	    else
 	    {
-    		VK_CHECK(Result);
+		    Query = Context->CreateEventQuery();
 	    }
+
+    	Context->ResetEventQuery(Query);
+    	Context->SetEventQuery(Query, ECommandQueue::Graphics);
+    	FramesInFlight.push(Query);
     }
 }
 

@@ -88,7 +88,7 @@ namespace Lumina
         Compute     = 1,
         Transfer    = 2,
         
-        Num = 3,
+        Num         = 3,
     };
 
     #define Q_Graphics ECommandQueue::Graphics
@@ -123,10 +123,8 @@ namespace Lumina
 
         NullResource        = 1,
 
-        /** The buffer will be written to occassionally. */
         Dynamic             = 2,
 
-        /** Buffer will be used as the source for a copy */
         SourceCopy          = 3,
 
         VertexBuffer        = 4,

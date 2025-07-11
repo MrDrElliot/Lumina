@@ -26,8 +26,9 @@
 namespace Lumina
 {
     
-    FSceneRenderer::FSceneRenderer()
-        : SceneGlobalData()
+    FSceneRenderer::FSceneRenderer(FScene* InScene)
+        : Scene(InScene)
+        , SceneGlobalData()
         , RenderGraph(GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext())
     {
         SceneViewport = GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext()->CreateViewport(Windowing::GetPrimaryWindowHandle()->GetExtent());
@@ -56,14 +57,6 @@ namespace Lumina
         {
             Builder.Write<PrimaryRenderTargetTag>(ERHIAccess::Write);
         });
-        
-        //RenderGraph.AddRenderPass<FSkyboxRenderPass>("SkyBox", [] (FRenderGraphBuilder& Builder)
-        //{
-        //    Builder.Write<PrimaryRenderTargetTag>(ERHIAccess::ColorAttachmentWrite);
-        //    Builder.Write<DepthBufferTargetTag>(ERHIAccess::DepthStencilAttachmentWrite);
-        //    Builder.Read<SceneGlobalDataTag>(ERHIAccess::Read);
-        //    Builder.Read<CubeMapImageTag>(ERHIAccess::ShaderRead);
-        //});
     }
 
     void FSceneRenderer::Deinitialize()
@@ -71,12 +64,12 @@ namespace Lumina
         RenderGraph.ClearPasses();
     }
 
-    void FSceneRenderer::StartScene(const FScene* Scene)
+    void FSceneRenderer::StartScene(const FUpdateContext& UpdateContext)
     {
         LUMINA_PROFILE_SCOPE();
-        
         ICommandList* CommandList = RenderContext->GetCommandList(Q_Graphics);
-
+        uint32 FrameIndex = UpdateContext.GetSubsystem<FRenderManager>()->GetCurrentFrameIndex();
+        
         FCameraManager* CameraManager = Scene->GetSceneSubsystem<FCameraManager>();
         FCameraComponent& CameraComponent = CameraManager->GetActiveCameraEntity().GetComponent<FCameraComponent>();
 
@@ -88,7 +81,8 @@ namespace Lumina
         
         SceneViewport->SetViewVolume(CameraComponent.GetViewVolume());
         
-        CommandList->UploadToBuffer(SceneDataBuffer, &SceneGlobalData, 0, sizeof(FSceneGlobalData));
+        CommandList->WriteBuffer(SceneDataBuffer, &SceneGlobalData, 0, sizeof(FSceneGlobalData));
+
         
         ModelData.clear();
 
@@ -125,27 +119,27 @@ namespace Lumina
             DrawList.LightData.NumLights++;
         }
         
-        if (!DrawList.ModelData.empty())
-        {
-            CommandList->UploadToBuffer(ModelDataBuffer, DrawList.ModelData.data(), 0, sizeof(FModelData) * (uint32)DrawList.ModelData.size());
-        }
-
-        if (DrawList.LightData.NumLights)
-        {
-            CommandList->UploadToBuffer(SceneLightBuffer, &DrawList.LightData, 0, sizeof(FSceneLightData));
-        }
+        //if (!DrawList.ModelData.empty())
+        //{
+        //    CommandList->WriteBuffer(ModelDataBuffer, DrawList.ModelData.data(), 0, sizeof(FModelData) * (uint32)DrawList.ModelData.size());
+        //}
+        //
+        //if (DrawList.LightData.NumLights)
+        //{
+        //    CommandList->WriteBuffer(SceneLightBuffer, &DrawList.LightData, 0, sizeof(FSceneLightData));
+        //}
 
         
         RenderGraph.Compile();
         RenderGraph.Execute(CommandList);
-        GeometryPass(DrawList);
-        LightingPass(DrawList);
-        SkyboxPass(DrawList);
-        DrawPrimitives(DrawList);
+        //GeometryPass(DrawList);
+        //LightingPass(DrawList);
+        //SkyboxPass(DrawList);
+        //DrawPrimitives(DrawList);
 
     }
 
-    void FSceneRenderer::EndScene(const FScene* Scene)
+    void FSceneRenderer::EndScene(const FUpdateContext& UpdateContext)
     {
         ICommandList* CommandList = RenderContext->GetCommandList(Q_Graphics);
         
@@ -292,7 +286,7 @@ namespace Lumina
 
         FBindingLayoutItem Item_SceneData;
         Item_SceneData.Slot = 4;
-        Item_SceneData.Type = ERHIBindingResourceType::Buffer_CBV;
+        Item_SceneData.Type = ERHIBindingResourceType::Buffer_Dynamic;
 
         FBindingLayoutItem Item_LightData;
         Item_LightData.Slot = 5;
@@ -387,7 +381,7 @@ namespace Lumina
         FBindingLayoutItem Item;
         Item.Size = sizeof(FSceneGlobalData);
         Item.Slot = 0;
-        Item.Type = ERHIBindingResourceType::Buffer_CBV;
+        Item.Type = ERHIBindingResourceType::Buffer_Dynamic;
         
         
         FBindingLayoutDesc LayoutDesc;
@@ -660,7 +654,7 @@ namespace Lumina
         FBindingLayoutItem Item;
         Item.Size = sizeof(FSceneGlobalData);
         Item.Slot = 0;
-        Item.Type = ERHIBindingResourceType::Buffer_CBV;
+        Item.Type = ERHIBindingResourceType::Buffer_Dynamic;
 
         FBindingLayoutItem ModelItem;
         ModelItem.Size = sizeof(FModelData) * 1000;
@@ -707,7 +701,8 @@ namespace Lumina
         FRHIBufferDesc BufferDesc;
         BufferDesc.Size = sizeof(FSceneGlobalData);
         BufferDesc.Stride = sizeof(FSceneGlobalData);
-        BufferDesc.Usage.SetFlag(BUF_UniformBuffer);
+        BufferDesc.Usage.SetMultipleFlags(BUF_UniformBuffer, BUF_Dynamic);
+        BufferDesc.MaxVersions = 2;
         SceneDataBuffer = RenderContext->CreateBuffer(BufferDesc);
         RenderContext->SetObjectName(SceneDataBuffer, "SceneGlobalData", EAPIResourceType::Buffer);
 
@@ -815,7 +810,7 @@ namespace Lumina
             const SIZE_T rowPitch = width * 4;  // 4 bytes per pixel (RGBA8)
             const SIZE_T depthPitch = rowPitch * height;
             
-            CommandList->WriteToImage(CubeMap, i, 0, Pixels.data(), rowPitch, depthPitch);
+            CommandList->WriteImage(CubeMap, i, 0, Pixels.data(), rowPitch, depthPitch);
         }
         
         CommandList->Close();

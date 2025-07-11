@@ -32,7 +32,7 @@ namespace Lumina
 
         FRHICommandListRef TransferCommandList = RenderContext->CreateCommandList({ECommandQueue::Transfer});
         TransferCommandList->Open();
-        TransferCommandList->WriteToImage(RHIImage, 0, 0, Pixels.data(), RowPitch, DepthPitch);
+        TransferCommandList->WriteImage(RHIImage, 0, 0, Pixels.data(), RowPitch, DepthPitch);
         TransferCommandList->Close();
         RenderContext->ExecuteCommandList(TransferCommandList, 1, Q_Transfer);
         

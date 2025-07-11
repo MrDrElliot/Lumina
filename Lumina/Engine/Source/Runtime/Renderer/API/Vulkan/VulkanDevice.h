@@ -30,7 +30,8 @@ namespace Lumina
 
         VmaAllocation GetAllocation(VkBuffer Buffer);
         VmaAllocation GetAllocation(VkImage Image);
-        
+
+        VmaAllocator GetAllocator() const { return Allocator; }
 
         void DestroyBuffer(VkBuffer Buffer);
         void DestroyImage(VkImage Image);

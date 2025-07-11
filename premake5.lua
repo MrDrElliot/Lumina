@@ -63,6 +63,7 @@ workspace "Lumina"
 		include "Lumina/Engine/ThirdParty/EnkiTS"
 		include "Lumina/Engine/ThirdParty/glfw"
 		include "Lumina/Engine/ThirdParty/imgui"
+		include "Lumina/Engine/Thirdparty/Tracy"
 	group ""
 
 	group "Core"

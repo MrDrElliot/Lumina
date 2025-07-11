@@ -10,6 +10,7 @@
 #include "Scene/Entity/Components/CameraComponent.h"
 #include "Scene/Entity/Components/NameComponent.h"
 #include "Scene/Entity/Components/EditorComponent.h"
+#include "Scene/Entity/Components/LightComponent.h"
 
 
 namespace Lumina
@@ -47,39 +48,40 @@ namespace Lumina
                     continue;
                 }
 
+                
                 if (ImGui::MenuItem("Add Component"))
                 {
-                    
-                    ToolContext->PushModal("Add Component", ImVec2(350.0f, 800.0f), [this, Item](const FUpdateContext& Context) -> bool
+                    ToolContext->PushModal("Add Component", ImVec2(600.0f, 350.0f), [this, Item](const FUpdateContext& Context) -> bool
                     {
+                        FEntityListViewItem* EntityListItem = static_cast<FEntityListViewItem*>(Item);
+                        Entity Ent = EntityListItem->GetEntity();
+
+                        bool bComponentAdded = false;
+
                         ImGuiTableFlags TableFlags = ImGuiTableFlags_Resizable | ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_ScrollY;
                         TableFlags |= ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuterH | ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_BordersV;
 
-                        
                         ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(2, 2));
                         if (ImGui::BeginTable("AddComponentTable", 1, TableFlags, ImVec2(ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x / 2, -1)))
                         {
                             ImGui::PushID(Item);
-
                             ImGui::TableSetupColumn("Label", ImGuiTableColumnFlags_WidthStretch);
 
                             ImGui::TableNextRow();
                             ImGui::TableSetColumnIndex(0);
-                            
-                            ImGuiTreeNodeFlags Flags = ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_FramePadding | ImGuiTreeNodeFlags_DrawLinesFull;
-                            bool bOpen = ImGui::TreeNodeEx("##TreeNode", Flags, "%s", "Static Mesh");
 
-                            if (ImGui::IsItemClicked(ImGuiMouseButton_Left))
+                            if (ImGui::Selectable("Point Light"))
                             {
-                                ImGui::EndTable();
-                                ImGui::PopStyleVar();
-                                return true;
+                                Ent.AddComponent<FPointLightComponent>();
+                                bComponentAdded = true;
                             }
 
+                            ImGui::PopID();
                             ImGui::EndTable();
                         }
                         ImGui::PopStyleVar();
-                        return false;
+
+                        return bComponentAdded;
                     });
                 }
                 
@@ -97,7 +99,7 @@ namespace Lumina
 
         OutlinerContext.RebuildTreeFunction = [this](FTreeListView* Tree)
         {
-            for (auto entity : Scene->GetConstEntityRegistry().view<FNameComponent>())
+            for (auto entity : Scene->GetConstEntityRegistry().view<FNameComponent>(entt::exclude<FHiddenComponent>))
             {
                 Entity NewEntity(entity, Scene);
                 OutlinerListView.AddItemToTree<FEntityListViewItem>(nullptr, eastl::move(NewEntity));
@@ -144,7 +146,7 @@ namespace Lumina
             const char* operations[] = { "Translate", "Rotate", "Scale" };
             static int currentOp = 0;
 
-            if (ImGui::Combo("Operation", &currentOp, operations, IM_ARRAYSIZE(operations)))
+            if (ImGui::Combo("##", &currentOp, operations, IM_ARRAYSIZE(operations)))
             {
                 switch (currentOp)
                 {
@@ -182,6 +184,7 @@ namespace Lumina
         {
             return;
         }
+        
         ImGuizmo::SetDrawlist(ImGui::GetCurrentWindow()->DrawList);
     
         FCameraComponent& CameraComponent = EditorEntity.GetComponent<FCameraComponent>();

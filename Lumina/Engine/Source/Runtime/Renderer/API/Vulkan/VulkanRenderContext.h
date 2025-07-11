@@ -83,39 +83,56 @@ namespace Lumina
 
         FQueue(FVulkanDevice* InDevice, VkQueue InQueue, uint32 InQueueFamilyIndex, ECommandQueue InType)
             : IDeviceChild(InDevice)
+            , Type(InType)
             , CommandPool(nullptr)
             , Queue(InQueue)
             , QueueFamilyIndex(InQueueFamilyIndex)
-            , FencePool(InDevice)
-            , Type(InType)
         {
+            VkSemaphoreTypeCreateInfo TimelineInfo = {};
+            TimelineInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO;
+            TimelineInfo.semaphoreType = VK_SEMAPHORE_TYPE_TIMELINE;
+            TimelineInfo.initialValue = 0;
+
+            VkSemaphoreCreateInfo CreateInfo = {};
+            CreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+            CreateInfo.pNext = &TimelineInfo;
+
+            VK_CHECK(vkCreateSemaphore(InDevice->GetDevice(), &CreateInfo, nullptr, &TimelineSemaphore));
         }
 
-        ~FQueue();
+        ~FQueue() override;
         
         TRefCountPtr<FTrackedCommandBuffer> GetOrCreateCommandBuffer();
 
         void RetireCommandBuffers();
         
-        void Submit(ICommandList* CommandLists, uint32 NumCommandLists);
+        uint64 Submit(ICommandList* CommandLists, uint32 NumCommandLists);
 
         void WaitIdle();
+        bool PollCommandList(uint64 CommandListID);
+        bool WaitCommandList(uint64 CommandListID, uint64 Timeout);
         
-        void AddSignalSemaphore(VkSemaphore Semaphore);
-        void AddWaitSemaphore(VkSemaphore Semaphore);
-        
+        void AddSignalSemaphore(VkSemaphore Semaphore, uint64 Value);
+        void AddWaitSemaphore(VkSemaphore Semaphore, uint64 Value);
 
+        uint64                      LastRecordingID = 0;
+        uint64                      LastSubmittedID = 0;
+        uint64                      LastFinishedID = 0;
+        
+        TVector<VkSemaphore>        WaitSemaphores;
+        TVector<uint64>             WaitSemaphoreValues;
+        TVector<VkSemaphore>        SignalSemaphores;
+        TVector<uint64>             SignalSemaphoreValues;
+        
         ECommandQueue               Type;
         FMutex                      Mutex;
         VkCommandPool               CommandPool;
         VkQueue                     Queue;
         uint32                      QueueFamilyIndex;
-        TVector<VkSemaphore>        WaitSemaphores;
-        TVector<VkSemaphore>        SignalSemaphores;
-        FFencePool                  FencePool;
-        
+        VkSemaphore                 TimelineSemaphore;
+
         TFixedVector<TRefCountPtr<FTrackedCommandBuffer>, 4> CommandBuffersInFlight;
-        TStack<TRefCountPtr<FTrackedCommandBuffer>, TFixedVector<TRefCountPtr<FTrackedCommandBuffer>, 4>> CommandBufferPool;
+        TQueue<TRefCountPtr<FTrackedCommandBuffer>> CommandBufferPool;
     };
 
     class FVulkanStagingManager
@@ -172,7 +189,15 @@ namespace Lumina
         FORCEINLINE NODISCARD FVulkanDevice* GetDevice() const { return VulkanDevice; }
         FORCEINLINE NODISCARD FVulkanSwapchain* GetSwapchain() const { return Swapchain; }
         
-        //----------------------------------------------------
+        //-------------------------------------------------------------------------------------
+
+        FRHIEventQueryRef CreateEventQuery() override;
+        void SetEventQuery(IEventQuery* Query, ECommandQueue Queue) override;
+        void ResetEventQuery(IEventQuery* Query) override;
+        void PollEventQuery(IEventQuery* Query) override;
+        void WaitEventQuery(IEventQuery* Query) override;
+
+        //-------------------------------------------------------------------------------------
 
 
         NODISCARD FRHIBufferRef CreateBuffer(const FRHIBufferDesc& Description) override;

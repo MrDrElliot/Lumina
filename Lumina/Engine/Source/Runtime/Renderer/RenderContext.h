@@ -48,6 +48,14 @@ namespace Lumina
         virtual void ExecuteCommandList(ICommandList* CommandLists, uint32 NumCommandLists, ECommandQueue QueueType) = 0;
         NODISCARD virtual FRHICommandListRef GetCommandList(ECommandQueue Queue) = 0;
 
+        //-------------------------------------------------------------------------------------
+
+        NODISCARD virtual FRHIEventQueryRef CreateEventQuery() = 0;
+        virtual void SetEventQuery(IEventQuery* Query, ECommandQueue Queue) = 0;
+        virtual void ResetEventQuery(IEventQuery* Query) = 0;
+        virtual void WaitEventQuery(IEventQuery* Query) = 0;
+        virtual void PollEventQuery(IEventQuery* Query) = 0;
+        
 
         //-------------------------------------------------------------------------------------
 
@@ -98,7 +106,6 @@ namespace Lumina
 
         
         virtual void FlushPendingDeletes() = 0;
-        
     
     protected:
         

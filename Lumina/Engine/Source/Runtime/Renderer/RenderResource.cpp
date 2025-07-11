@@ -9,6 +9,7 @@ namespace Lumina
 
     // DLL Template specialization exports.
     template class LUMINA_API TRefCountPtr<IRHIResource>;
+    template class LUMINA_API TRefCountPtr<IEventQuery>;
     template class LUMINA_API TRefCountPtr<FRHIBuffer>;
     template class LUMINA_API TRefCountPtr<FRHIImage>;
     template class LUMINA_API TRefCountPtr<FRHISampler>;

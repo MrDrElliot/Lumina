@@ -36,16 +36,14 @@ namespace Lumina
             EditorEntity = Scene->CreateEntity(EditorEntityTransform, FName("Editor Camera"));
             EditorEntity.AddComponent<FCameraComponent>();
             EditorEntity.AddComponent<FEditorComponent>();
-
-            Entity PointLightEntity = Scene->CreateEntity(EditorEntityTransform, FName("Editor Point Light"));
-            PointLightEntity.AddComponent<FPointLightComponent>();
-            PointLightEntity.GetComponent<FTransformComponent>().SetLocation({0.0f, 2.0f, 10.0f});
+            EditorEntity.AddComponent<FHiddenComponent>();
+            
             
             Scene->GetSceneCameraManager()->SetActiveCamera(EditorEntity);
             
             FToolWindow* NewWindow = CreateToolWindow(ViewportWindowName, [] (const FUpdateContext& Contxt, bool bIsFocused)
             {
-                //.. Intentionally blank.
+                //... Intentionally blank.
             });
 
             NewWindow->bViewport = true;

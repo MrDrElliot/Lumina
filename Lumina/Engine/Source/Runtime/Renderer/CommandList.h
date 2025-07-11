@@ -40,12 +40,12 @@ namespace Lumina
 
         virtual void Open() = 0;
         virtual void Close() = 0;
-        virtual void Executed(FQueue* Queue) = 0;
+        virtual void Executed(FQueue* Queue, uint64 SubmissionID) = 0;
 
         virtual void CopyImage(FRHIImage* Src, FRHIImage* Dst) = 0;
-        virtual void WriteToImage(FRHIImage* Dst, uint32 ArraySlice, uint32 MipLevel, const void* Data, SIZE_T RowPitch, SIZE_T DepthPitch) = 0;
+        virtual void WriteImage(FRHIImage* Dst, uint32 ArraySlice, uint32 MipLevel, const void* Data, SIZE_T RowPitch, SIZE_T DepthPitch) = 0;
         
-        NODISCARD virtual void UploadToBuffer(FRHIBuffer* Buffer, const void* Data, uint32 Offset, uint32 Size) = 0;
+        NODISCARD virtual void WriteBuffer(FRHIBuffer* Buffer, const void* Data, uint32 Offset, uint32 Size) = 0;
         virtual void CopyBuffer(FRHIBuffer* Source, uint64 SrcOffset, FRHIBuffer* Destination, uint64 DstOffset, uint64 CopySize) = 0;
 
         virtual void SetRequiredImageAccess(FRHIImage* Image, ERHIAccess Access) = 0;

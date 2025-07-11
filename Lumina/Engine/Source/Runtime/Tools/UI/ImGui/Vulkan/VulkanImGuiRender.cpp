@@ -78,6 +78,7 @@ namespace Lumina
 
     void FVulkanImGuiRender::Deinitialize()
     {
+    	VulkanRenderContext->WaitIdle();
     	for (auto& KVP : ImageCache)
     	{
     		ImGui_ImplVulkan_RemoveTexture(KVP.second);

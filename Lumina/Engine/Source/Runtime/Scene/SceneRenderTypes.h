@@ -5,7 +5,8 @@
 #include "Platform/GenericPlatform.h"
 #include "Renderer/RHIFwd.h"
 
-#define MAX_LIGHTS 200
+#define MAX_LIGHTS 1000
+#define MAX_MODELS 1000
 
 namespace Lumina
 {
@@ -61,6 +62,7 @@ namespace Lumina
         FCameraData    CameraData;
         float          Time;
         float          DeltaTime;
+        
     };
 
 

@@ -50,10 +50,9 @@ namespace Lumina
         VkCommandBufferBeginInfo BeginInfo = {};
         BeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
         BeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-        BeginInfo.pInheritanceInfo = nullptr;
         
         VK_CHECK(vkBeginCommandBuffer(CurrentCommandBuffer->CommandBuffer, &BeginInfo));
-        
+
         PendingState.AddPendingState(EPendingCommandState::Recording);
     }
 
@@ -71,19 +70,30 @@ namespace Lumina
         CommitBarriers();
         
         // Clear the recording state and end the command buffer. 
-        PendingState.ClearPendingState(EPendingCommandState::Recording);
         VK_CHECK(vkEndCommandBuffer(CurrentCommandBuffer->CommandBuffer));
+        
+        PendingState.ClearPendingState(EPendingCommandState::Recording);
+
+        FlushDynamicBufferWrites();
     }
 
-    void FVulkanCommandList::Executed(FQueue* Queue)
+    void FVulkanCommandList::Executed(FQueue* Queue, uint64 SubmissionID)
     {
         LUMINA_PROFILE_SCOPE();
-        CommandListTracker.CommandListExecuted(this);
+
+        CurrentCommandBuffer->SubmissionID = SubmissionID;
+        uint64 RecordingID = CurrentCommandBuffer->RecordingID;
         
+        CurrentCommandBuffer = nullptr;
+
+        SubmitDynamicBuffers(RecordingID, SubmissionID);
+        
+        CommandListTracker.CommandListExecuted(this);
         PushConstantVisibility =    VK_SHADER_STAGE_FLAG_BITS_MAX_ENUM;
         CurrentPipelineLayout =     VK_NULL_HANDLE;
         ComputeState =           {};
         GraphicsState =          {};
+        bHasDynamicBufferWrites =   false;
     }
 
     void FVulkanCommandList::CopyImage(FRHIImage* Src, FRHIImage* Dst)
@@ -135,7 +145,7 @@ namespace Lumina
 
     }
 
-    void FVulkanCommandList::WriteToImage(FRHIImage* Dst, uint32 ArraySlice, uint32 MipLevel, const void* Data, SIZE_T RowPitch, SIZE_T DepthPitch)
+    void FVulkanCommandList::WriteImage(FRHIImage* Dst, uint32 ArraySlice, uint32 MipLevel, const void* Data, SIZE_T RowPitch, SIZE_T DepthPitch)
     {
         LUMINA_PROFILE_SCOPE();
         Assert(Dst != nullptr && Data != nullptr)
@@ -211,33 +221,209 @@ namespace Lumina
 
     }
 
-    void FVulkanCommandList::UploadToBuffer(FRHIBuffer* Buffer, const void* Data, uint32 Offset, uint32 Size)
+    void FVulkanCommandList::WriteBuffer(FRHIBuffer* Buffer, const void* Data, uint32 Offset, uint32 Size)
     {
         LUMINA_PROFILE_SCOPE();
         Assert(Size > 0 && Size <= Buffer->GetSize())
-        
+        constexpr size_t vkCmdUpdateBufferLimit = 65536;
         CurrentCommandBuffer->AddReferencedResource(Buffer);
+        FVulkanBuffer* VulkanBuffer = static_cast<FVulkanBuffer*>(Buffer);
         
-        if(Buffer->GetDescription().Usage.IsFlagCleared(EBufferUsageFlags::CPUWritable))
+        if (Buffer->GetDescription().Usage.IsFlagSet(BUF_Dynamic))
         {
-            TRefCountPtr<FVulkanBuffer> StagingBuffer;
-            RenderContext->GetStagingManager().GetStagingBuffer(StagingBuffer);
-            Assert(StagingBuffer != nullptr)
+            Assert(Offset == 0);
+            auto GetQueueFinishID = [this] (ECommandQueue Queue)-> uint64
+            {
+                return RenderContext->GetQueue(Queue)->LastFinishedID;
+            };
+            
+            FDynamicBufferWrite& Write = DynamicBufferWrites[Buffer];
 
-            FVulkanMemoryAllocator* MemoryAllocator = RenderContext->GetDevice()->GetAllocator();
-            VmaAllocation Allocation = MemoryAllocator->GetAllocation(StagingBuffer->GetBuffer());
+            if (!Write.bInitialized)
+            {
+                Write.MinVersion = Buffer->GetDescription().MaxVersions;
+                Write.MaxVersion = -1;
+                Write.bInitialized = true;
+            }
+
+            TArray<uint64, uint32(ECommandQueue::Num)> QueueCompletionValues =
+            {
+                GetQueueFinishID(ECommandQueue::Graphics),
+                GetQueueFinishID(ECommandQueue::Compute),
+                GetQueueFinishID(ECommandQueue::Transfer),
+            };
+            
+            uint32 SearchStart = VulkanBuffer->VersionSearchStart;
+            uint32 MaxVersions = Buffer->GetDescription().MaxVersions;
+            uint32 Version = 0;
+            
+            uint64 OriginalVersionInfo = 0;
+
+            while (true)
+            {
+                bool bFound = false;
+                
+                for (SIZE_T i = 0; i < MaxVersions; ++i)
+                {
+                
+                    Version = i + SearchStart;
+                    Version = (Version >= MaxVersions) ? (Version - MaxVersions) : Version;
+
+                    OriginalVersionInfo = VulkanBuffer->VersionTracking[Version];
+                    
+                    if (OriginalVersionInfo == 0)
+                    {
+                        bFound = true;
+                        break;
+                    }
+
+                    bool bSubmitted = (OriginalVersionInfo & GVersionSubmittedFlag) != 0;
+                    uint32 QueueIndex = uint32(OriginalVersionInfo >> GVersionQueueShift) & GVersionQueueMask;
+                    uint64 ID = OriginalVersionInfo & GVersionIDMask;
+
+                    if (bSubmitted)
+                    {
+                        if (QueueIndex >= uint32(ECommandQueue::Num))
+                        {
+                            bFound = true;
+                            break;
+                        }
+
+                        if (ID <= QueueCompletionValues[QueueIndex])
+                        {
+                            bFound = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!bFound)
+                {
+                    LOG_ERROR("Dynamic Buffer [] has MaxVersions: {} - Which is insufficient", Buffer->GetDescription().MaxVersions);
+                    return;
+                }
+
+                uint64_t NewVersionInfo = (uint64_t(Info.CommandQueue) << GVersionQueueShift) | (CurrentCommandBuffer->RecordingID);
+
+                if (VulkanBuffer->VersionTracking[Version].compare_exchange_weak(OriginalVersionInfo, NewVersionInfo))
+                {
+                    break;
+                }
+            }
+
+            VulkanBuffer->VersionSearchStart = (Version + 1 < MaxVersions) ? (Version + 1) : 0;
+
+            Write.LatestVersion = Version;
+            Write.MinVersion = Math::Min<int32>(Version, Write.MinVersion);
+            Write.MaxVersion = Math::Max<int32>(Version, Write.MaxVersion);
+
+            void* HostData = (uint8*)VulkanBuffer->MappedMemory + Version * VulkanBuffer->GetDescription().Size;
+            
             void* SourceData = const_cast<void*>(Data);
-            void* StagingData = MemoryAllocator->MapMemory(Allocation);
-            Memory::Memcpy(StagingData, SourceData, Size);
-            MemoryAllocator->UnmapMemory(Allocation);
+            Memory::Memcpy(HostData, SourceData, Size);
 
-            CopyBuffer(StagingBuffer, 0, Buffer, 0, Size);
-
-            //RenderContext->GetStagingManager().FreeStagingBuffer(StagingBuffer);
+            bHasDynamicBufferWrites = true;
+        }
+        
+        
+        if (Size <= vkCmdUpdateBufferLimit && (Offset & 3) == 0)
+        {
+            // Per Vulkan spec, vkCmdUpdateBuffer requires that the data size is smaller than or equal to 64 kB,
+            // and that the offset and data size are a multiple of 4. We can't change the offset, but data size
+            // is rounded up later.
+            const size_t SizeToWrite = (Size + 3) & ~3ull;
+            vkCmdUpdateBuffer(CurrentCommandBuffer->CommandBuffer, Buffer->GetAPIResource<VkBuffer>(), Offset, SizeToWrite, Data);
         }
         else
         {
-            LOG_ERROR("Using UploadToBuffer on a mappable buffer is invalid.");
+            if(Buffer->GetDescription().Usage.IsFlagCleared(EBufferUsageFlags::CPUWritable))
+            {
+                TRefCountPtr<FVulkanBuffer> StagingBuffer;
+                RenderContext->GetStagingManager().GetStagingBuffer(StagingBuffer);
+                Assert(StagingBuffer != nullptr)
+
+                FVulkanMemoryAllocator* MemoryAllocator = RenderContext->GetDevice()->GetAllocator();
+                VmaAllocation Allocation = MemoryAllocator->GetAllocation(StagingBuffer->GetBuffer());
+                void* SourceData = const_cast<void*>(Data);
+                void* StagingData = MemoryAllocator->MapMemory(Allocation);
+                Memory::Memcpy(StagingData, SourceData, Size);
+                MemoryAllocator->UnmapMemory(Allocation);
+
+                CopyBuffer(StagingBuffer, Offset, Buffer, 0, Size);
+
+                //RenderContext->GetStagingManager().FreeStagingBuffer(StagingBuffer);
+            }
+            else
+            {
+                LOG_ERROR("Using UploadToBuffer on a mappable buffer is invalid.");
+            }
+        }
+    }
+
+    void FVulkanCommandList::FlushDynamicBufferWrites()
+    {
+        TVector<VmaAllocation> Allocations;
+        TVector<VkDeviceSize> Offsets;
+        TVector<VkDeviceSize> Sizes;
+    
+        for (auto& Pair : DynamicBufferWrites)
+        {
+            FVulkanBuffer* Buffer = Pair.first.As<FVulkanBuffer>();
+            FDynamicBufferWrite& Write = Pair.second;
+
+            if (Write.MaxVersion < Write.MinVersion || !Write.bInitialized)
+            {
+                continue;
+            }
+
+            uint64 NumVersions = Write.MaxVersion - Write.MinVersion + 1;
+            VkDeviceSize Offset = Write.MinVersion * Buffer->GetDescription().Size;
+            VkDeviceSize Size = NumVersions * Buffer->GetDescription().Size;
+
+            VmaAllocation Allocation = Buffer->Allocation;
+            if (!Allocation)
+            {
+                LOG_WARN("Attempted to flush a dynamic buffer with no valid VmaAllocation.");
+                continue;
+            }
+
+            Allocations.push_back(Allocation);
+            Offsets.push_back(Offset);
+            Sizes.push_back(Size);
+        }
+
+        if (!Allocations.empty())
+        {
+            VK_CHECK(vmaFlushAllocations(
+                RenderContext->GetDevice()->GetAllocator()->GetAllocator(),
+                static_cast<uint32_t>(Allocations.size()),
+                Allocations.data(),
+                Offsets.data(),
+                Sizes.data()
+            ));
+        }
+    }
+
+    void FVulkanCommandList::SubmitDynamicBuffers(uint64 RecordingID, uint64 SubmittedID)
+    {
+        uint64 StateToFind = (uint64(Info.CommandQueue) << GVersionQueueShift) | (RecordingID & GVersionIDMask);
+        uint64 StateToReplace = (uint64(Info.CommandQueue) << GVersionQueueShift) | (SubmittedID & GVersionIDMask) | GVersionSubmittedFlag;
+
+        for (auto& Pair : DynamicBufferWrites)
+        {
+            FRHIBufferRef Buffer = Pair.first;
+            FDynamicBufferWrite& Write = Pair.second;
+
+            if (!Write.bInitialized)
+            {
+                continue;
+            }
+
+            for (SIZE_T i = Write.MinVersion; i <= Write.MaxVersion; ++i)
+            {
+                uint64 Expected = StateToFind;
+                Buffer.As<FVulkanBuffer>()->VersionTracking[i].compare_exchange_strong(Expected, StateToReplace);
+            }
         }
     }
 
@@ -445,6 +631,9 @@ namespace Lumina
     {
         LUMINA_PROFILE_SCOPE();
         TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "BindBindingSet")        
+
+        const uint32 NumBindings = (uint32)BindingSets.size();
+        const uint32 NumDescriptorSets = NumBindings;
         
         VkPipelineBindPoint BindingPoint = (BindPoint == ERHIBindingPoint::Graphics) ? VK_PIPELINE_BIND_POINT_GRAPHICS : VK_PIPELINE_BIND_POINT_COMPUTE;
 
@@ -452,19 +641,66 @@ namespace Lumina
         PushConstantVisibility = (BindPoint == ERHIBindingPoint::Graphics) ? GraphicsState.Pipeline->PushConstantVisibility : ComputeState.Pipeline->PushConstantVisibility;
 
         TVector<VkDescriptorSet> DescriptorSets;
-        for (SIZE_T i = 0; i < BindingSets.size(); ++i)
+        uint32 NextDescriptorSetToBind = 0;
+        TVector<uint32> DynamicOffsets;
+        
+        for (SIZE_T i = 0; i < NumDescriptorSets; ++i)
         {
-            FVulkanBindingSet* VkBindingSet = static_cast<FVulkanBindingSet*>(BindingSets[i]);
-            CurrentCommandBuffer->AddReferencedResource(VkBindingSet);
+            FVulkanBindingSet* BindingSet = static_cast<FVulkanBindingSet*>(BindingSets[i]);
 
-            DescriptorSets.push_back(VkBindingSet->DescriptorSet);
-            
-            SetResourceStatesForBindingSet(VkBindingSet);
+            if (BindingSet == nullptr)
+            {
+                if (!DescriptorSets.empty())
+                {
+                    vkCmdBindDescriptorSets(CurrentCommandBuffer->CommandBuffer, BindingPoint, CurrentPipelineLayout,
+                        NextDescriptorSetToBind,
+                        uint32(DescriptorSets.size()),
+                        DescriptorSets.data(),
+                        uint32(DynamicOffsets.size()),
+                        DynamicOffsets.data());
+
+                    DescriptorSets.resize(0);
+                    DynamicOffsets.resize(0);
+                }
+
+                NextDescriptorSetToBind = i + 1;
+            }
+            else
+            {
+                const FBindingSetDesc* Desc = BindingSet->GetDesc();
+                if (Desc)
+                {
+                    DescriptorSets.push_back(BindingSet->DescriptorSet);
+
+                    for (FRHIBuffer* DynamicBuffer : BindingSet->DynamicBuffers)
+                    {
+                        auto Found = DynamicBufferWrites.find(DynamicBuffer);
+                        if (Found == DynamicBufferWrites.end())
+                        {
+                            LOG_ERROR("Binding Dynamic buffer before writing is invalid");
+                            DynamicOffsets.push_back(0);
+                        }
+                        else
+                        {
+                            uint32 Version = Found->second.LatestVersion;
+                            uint64 Offset = Version * DynamicBuffer->GetDescription().Size;
+                            DynamicOffsets.push_back(uint32(Offset));
+                        }
+                    }
+                }
+            }
+
+            SetResourceStatesForBindingSet(BindingSet);
             CommitBarriers();
         }
         
-        vkCmdBindDescriptorSets(CurrentCommandBuffer->CommandBuffer, BindingPoint,
-            CurrentPipelineLayout, 0, (uint32)DescriptorSets.size(), DescriptorSets.data(), 0, nullptr);
+        vkCmdBindDescriptorSets(CurrentCommandBuffer->CommandBuffer,
+            BindingPoint,
+            CurrentPipelineLayout,
+            NextDescriptorSetToBind,
+            (uint32)DescriptorSets.size(),
+            DescriptorSets.data(),
+            uint32(DynamicOffsets.size()), DynamicOffsets.data());
     }
 
     void FVulkanCommandList::SetPushConstants(const void* Data, SIZE_T ByteSize)

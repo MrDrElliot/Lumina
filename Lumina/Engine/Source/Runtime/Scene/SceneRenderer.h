@@ -32,14 +32,14 @@ namespace Lumina
     public:
         
        
-        FSceneRenderer();
+        FSceneRenderer(FScene* InScene);
         virtual ~FSceneRenderer();
 
         void Initialize();
         void Deinitialize();
         
-        void StartScene(const FScene* Scene);
-        void EndScene(const FScene* Scene);
+        void StartScene(const FUpdateContext& UpdateContext);
+        void EndScene(const FUpdateContext& UpdateContext);
     
         INLINE FRHIImageRef GetRenderTarget() const { return SceneViewport->GetRenderTarget(); }
         INLINE FSceneGlobalData* GetSceneGlobalData() { return &SceneGlobalData; }
@@ -63,6 +63,7 @@ namespace Lumina
         
     private:
 
+        FScene*                             Scene = nullptr;
         IRenderContext*                     RenderContext = nullptr;
         FRHIImageRef                        CubeMap;
         FRHIViewportRef                     SceneViewport;

@@ -21,7 +21,6 @@
 #include "imnodes/imnodes.h"
 #include <Assets/AssetHeader.h>
 #include <client/TracyProfiler.hpp>
-
 #include "Assets/AssetTypes/Material/Material.h"
 #include "Assets/AssetTypes/Mesh/StaticMesh/StaticMesh.h"
 #include "Assets/AssetTypes/Textures/Texture.h"
@@ -289,7 +288,7 @@ namespace Lumina
 
     void FEditorUI::OnUpdate(const FUpdateContext& UpdateContext)
     {
-        LUMINA_PROFILE_SCOPE()
+        LUMINA_PROFILE_SCOPE();
         for (FEditorTool* Tool : EditorTools)
         {
             if (Tool->HasScene())
@@ -301,7 +300,7 @@ namespace Lumina
 
     void FEditorUI::OnEndFrame(const FUpdateContext& UpdateContext)
     {
-        LUMINA_PROFILE_SCOPE()
+        LUMINA_PROFILE_SCOPE();
     }
     
     void FEditorUI::DestroyTool(const FUpdateContext& UpdateContext, FEditorTool* Tool)
@@ -354,6 +353,8 @@ namespace Lumina
     
     void FEditorUI::EditorToolLayoutCopy(FEditorTool* SourceTool)
     {
+        LUMINA_PROFILE_SCOPE();
+
         ImGuiID sourceToolID = SourceTool->GetPrevDockspaceID();
         ImGuiID destinationToolID = SourceTool->GetCurrDockspaceID();
         Assert(sourceToolID != 0 && destinationToolID != 0)
@@ -407,6 +408,7 @@ namespace Lumina
 
     bool FEditorUI::SubmitToolMainWindow(const FUpdateContext& UpdateContext, FEditorTool* EditorTool, ImGuiID TopLevelDockspaceID)
     {
+        LUMINA_PROFILE_SCOPE();
         Assert(EditorTool != nullptr)
         Assert(TopLevelDockspaceID != 0)
 
@@ -475,6 +477,8 @@ namespace Lumina
 
     void FEditorUI::DrawToolContents(const FUpdateContext& UpdateContext, FEditorTool* Tool)
     {
+        LUMINA_PROFILE_SCOPE();
+
         // This is the second Begin(), as MyEditor_UpdateDocLocationAndLayout() has already done one
         // (Therefore only the p_open and flags of the first call to Begin() applies)
         ImGui::Begin(Tool->GetToolName().c_str());
@@ -707,6 +711,8 @@ namespace Lumina
 
     void FEditorUI::DrawTitleBarMenu(const FUpdateContext& UpdateContext)
     {
+        LUMINA_PROFILE_SCOPE();
+
         ImGui::Text(LE_ICON_GAVEL);
         ImGui::SameLine();
 

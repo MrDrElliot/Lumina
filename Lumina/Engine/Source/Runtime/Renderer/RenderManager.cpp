@@ -49,8 +49,7 @@ namespace Lumina
     void FRenderManager::FrameStart(const FUpdateContext& UpdateContext)
     {
         LUMINA_PROFILE_SCOPE();
-        CurrentFrameIndex = (CurrentFrameIndex + 1) % FRAMES_IN_FLIGHT;
-
+        
         RenderContext->FrameStart(UpdateContext, CurrentFrameIndex);
 
         #if WITH_DEVELOPMENT_TOOLS
@@ -67,5 +66,7 @@ namespace Lumina
         #endif
         
         RenderContext->FrameEnd(UpdateContext);
+
+        CurrentFrameIndex = (CurrentFrameIndex + 1) % FRAMES_IN_FLIGHT;
     }
 }
