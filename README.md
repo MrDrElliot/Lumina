@@ -1,4 +1,4 @@
-# Lumina Game Engine
+## Lumina Game Engine
 
 ![Lumina Logo](https://github.com/user-attachments/assets/5efc3b14-caff-4465-8597-33f8d70e50cd)
 
