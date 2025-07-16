@@ -32,6 +32,7 @@ namespace Lumina
 
 	struct FARFilter
 	{
+		TVector<FString> Paths;
 		TVector<FString> ClassNames;
 	};
 	
@@ -45,10 +46,12 @@ namespace Lumina
 		void BuildAssetDictionary();
 
 		void GetAssets(const FARFilter& Filter, TVector<FAssetData>& OutAssets);
+		FAssetData GetAsset(const FString& Path);
 
 	private:
 
-		FMutex				Mutex;
-		TVector<FAssetData> Assets;
+		FMutex						Mutex;
+		TVector<FAssetData> 		Assets;
+		THashMap<FName, FAssetData> AssetPathMap;
 	};
 }

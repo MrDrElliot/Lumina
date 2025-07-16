@@ -10,6 +10,9 @@
 #include <fastgltf/glm_element_traits.hpp>
 
 #include "Memory/Memory.h"
+#include "Paths/Paths.h"
+#include "Renderer/RenderContext.h"
+#include "Renderer/RenderResource.h"
 #include "Renderer/Vertex.h"
 #include "stb_image/stb_image.h"
 
@@ -150,5 +153,34 @@ namespace Lumina::ImportHelpers
                 }
             }
         }
+    }
+
+    
+    FRHIImageRef CreateTextureFromImport(IRenderContext* RenderContext, const FString& RawFilePath, bool bFlipVerticalOnLoad)
+    {
+        TVector<uint8> Pixels;
+        FRHIImageDesc ImageDescription;
+        ImageDescription.Format = EFormat::RGBA8_UNORM;
+        ImageDescription.Extent = GetImagePixelData(Pixels, RawFilePath, bFlipVerticalOnLoad);
+        ImageDescription.Flags.SetFlag(EImageCreateFlags::ShaderResource);
+        ImageDescription.NumMips = 1;
+        ImageDescription.DebugName = Paths::FileName(RawFilePath, true);
+        ImageDescription.InitialState = EResourceStates::ShaderResource;
+        ImageDescription.bKeepInitialState = true;
+        
+        FRHIImageRef ReturnImage = RenderContext->CreateImage(ImageDescription);
+
+        const uint32 Width = ImageDescription.Extent.X;
+        const uint32 Height = ImageDescription.Extent.Y;
+        const SIZE_T RowPitch = Width * 4;
+        const SIZE_T DepthPitch = RowPitch * Height;
+
+        FRHICommandListRef TransferCommandList = RenderContext->CreateCommandList(FCommandListInfo::Graphics());
+        TransferCommandList->Open();
+        TransferCommandList->WriteImage(ReturnImage, 0, 0, Pixels.data(), RowPitch, DepthPitch);
+        TransferCommandList->Close();
+        RenderContext->ExecuteCommandList(TransferCommandList, 1, Q_Graphics);
+
+        return ReturnImage;
     }
 }

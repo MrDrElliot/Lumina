@@ -25,6 +25,7 @@ namespace Lumina
     template class LUMINA_API TRefCountPtr<FRHIBindingSet>;
     template class LUMINA_API TRefCountPtr<IRHIInputLayout>;
     template class LUMINA_API TRefCountPtr<FShaderLibrary>;
+    template class LUMINA_API TRefCountPtr<FRHIDescriptorTable>;
 
     TStack<IRHIResource*, TFixedVector<IRHIResource*, 100>> PendingDeletes;
     
@@ -52,13 +53,74 @@ namespace Lumina
         Desc.Format = EFormat::BGRA8_UNORM;
         Desc.Flags.SetMultipleFlags(EImageCreateFlags::RenderTarget, EImageCreateFlags::ShaderResource);
         Desc.Extent = InSize;
+        Desc.InitialState = EResourceStates::RenderTarget;
+        Desc.bKeepInitialState = true;
+        Desc.DebugName = "Viewport Render Target";
 
         RenderTarget = RenderContext->CreateImage(Desc);
-        RenderTarget->SetDefaultAccess(ERHIAccess::ColorAttachmentWrite);
         
-        RenderContext->SetObjectName(RenderTarget, "Render Target", EAPIResourceType::Image);
+        RenderContext->SetObjectName(RenderTarget, "Viewport Render Target", EAPIResourceType::Image);
     }
-    
+
+    FTextureSlice FTextureSlice::Resolve(const FRHIImageDesc& desc) const
+    {
+        FTextureSlice ret(*this);
+
+        assert(MipLevel < desc.NumMips);
+
+        if (X == uint32(-1))
+        {
+            ret.X = std::max((uint32)desc.Extent.X >> MipLevel, 1u);
+        }
+
+        if (Y == uint32(-1))
+            ret.Y = std::max((uint32)desc.Extent.Y >> MipLevel, 1u);
+
+        if (Z == uint32(-1))
+        {
+            if (desc.Dimension == EImageDimension::Texture3D)
+                ret.Z = std::max((uint32)desc.Depth >> MipLevel, 1u);
+            else
+                ret.Z = 1;
+        }
+
+        return ret;
+    }
+
+    FTextureSubresourceSet FTextureSubresourceSet::Resolve(const FRHIImageDesc& Desc, bool bSingleMipLevel) const
+    {
+        FTextureSubresourceSet ret;
+        ret.BaseMipLevel = BaseMipLevel;
+
+        if (bSingleMipLevel)
+        {
+            ret.NumMipLevels = 1;
+        }
+        else
+        {
+            int lastMipLevelPlusOne = std::min(BaseMipLevel + NumMipLevels, (uint32)Desc.NumMips);
+            ret.NumMipLevels = uint32(std::max(0u, lastMipLevelPlusOne - BaseMipLevel));
+        }
+
+        switch (Desc.Dimension)  // NOLINT(clang-diagnostic-switch-enum)
+        {
+        default: 
+            ret.BaseArraySlice = 0;
+            ret.NumArraySlices = 1;
+            break;
+        }
+
+        return ret;
+    }
+
+    bool FTextureSubresourceSet::IsEntireTexture(const FRHIImageDesc& Desc) const
+    {
+        if (BaseMipLevel > 0u || BaseMipLevel + NumMipLevels < Desc.NumMips)
+        {
+            return false;
+        }
+        return true;
+    }
 }
 
  // Format mapping table. The rows must be in the exactly same order as Format enum members are defined.

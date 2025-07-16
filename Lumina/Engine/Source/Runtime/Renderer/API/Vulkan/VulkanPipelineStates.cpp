@@ -14,20 +14,32 @@ namespace Lumina
         VkDeviceSize Offsets[17];
         uint32 NumBindings = 0;
 
+        // Check if PendingStreams differs from LastPendingStreams
+        bool bShouldRebind = std::memcmp(PendingStreams, LastPendingStreams, sizeof(PendingStreams)) != 0;
+        if (!bShouldRebind)
+        {
+            return;
+        }
+        
         for (uint32 i = 0; i < 17; ++i)
         {
-            if (PendingStreams[i].Stream != VK_NULL_HANDLE)
+            const FVertexStream& Curr = PendingStreams[i];
+
+            if (Curr.Stream != VK_NULL_HANDLE)
             {
-                Buffers[NumBindings] = PendingStreams[i].Stream;
-                Offsets[NumBindings] = PendingStreams[i].BufferOffset;
+                Buffers[NumBindings] = Curr.Stream;
+                Offsets[NumBindings] = Curr.BufferOffset;
                 NumBindings++;
             }
         }
 
-        if (NumBindings > 0)
+        // If anything has changed, bind the buffers and copy PendingStreams to LastPendingStreams
+        if (bShouldRebind && NumBindings > 0)
         {
             vkCmdBindVertexBuffers(CmdBuffer, 0, NumBindings, Buffers, Offsets);
+
+            // Efficiently copy PendingStreams to LastPendingStreams
+            std::memcpy(LastPendingStreams, PendingStreams, sizeof(PendingStreams));
         }
     }
-
 }

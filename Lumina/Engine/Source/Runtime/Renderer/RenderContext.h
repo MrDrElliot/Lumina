@@ -38,8 +38,8 @@ namespace Lumina
         //-------------------------------------------------------------------------------------
 
 
-        virtual void FrameStart(const FUpdateContext& UpdateContext, uint8 InCurrentFrameIndex) = 0;
-        virtual void FrameEnd(const FUpdateContext& UpdateContext) = 0;
+        virtual bool FrameStart(const FUpdateContext& UpdateContext, uint8 InCurrentFrameIndex) = 0;
+        virtual bool FrameEnd(const FUpdateContext& UpdateContext) = 0;
         
 
         //-------------------------------------------------------------------------------------
@@ -84,8 +84,12 @@ namespace Lumina
         
         //-------------------------------------------------------------------------------------
 
+        NODISCARD virtual FRHIDescriptorTableRef CreateDescriptorTable(FRHIBindingLayout* InLayout) = 0;
+        virtual void ResizeDescriptorTable(FRHIDescriptorTable* Table, uint32 NewSize, bool bKeepContents) = 0;
+        virtual bool WriteDescriptorTable(FRHIDescriptorTable* Table, const FBindingSetItem& Binding) = 0;
         NODISCARD virtual FRHIInputLayoutRef CreateInputLayout(const FVertexAttributeDesc* AttributeDesc, uint32 Count) = 0;
         NODISCARD virtual FRHIBindingLayoutRef CreateBindingLayout(const FBindingLayoutDesc& Desc) = 0;
+        NODISCARD virtual FRHIBindingLayoutRef CreateBindlessLayout(const FBindlessLayoutDesc& Desc) = 0;
         NODISCARD virtual FRHIBindingSetRef CreateBindingSet(const FBindingSetDesc& Desc, FRHIBindingLayout* InLayout) = 0;
         NODISCARD virtual FRHIComputePipelineRef CreateComputePipeline(const FComputePipelineDesc& Desc) = 0;
         NODISCARD virtual FRHIGraphicsPipelineRef CreateGraphicsPipeline(const FGraphicsPipelineDesc& Desc) = 0;

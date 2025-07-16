@@ -12,7 +12,7 @@ namespace Lumina
     void FSkyboxRenderPass::Execute(FRenderGraphScope& Scope)
     {
         LUMINA_PROFILE_SCOPE();
-        
+#if 0
         
         ICommandList* CommandList = Scope.GetCommandList();
         IRenderContext* RenderContext = Scope.GetRenderContext();
@@ -92,7 +92,7 @@ namespace Lumina
         
         CommandList->SetGraphicsPipeline(Pipeline);
 
-        CommandList->BindBindingSets({Set, Set2}, ERHIBindingPoint::Graphics);
+        CommandList->BindBindingSets(ERHIBindingPoint::Graphics, {Set, Set2});
 
         FRenderPassBeginInfo BeginInfo; BeginInfo
         .AddColorAttachment(ColorAttachment)
@@ -114,5 +114,6 @@ namespace Lumina
         CommandList->Draw(36, 1, 0, 0);
         
         CommandList->EndRenderPass();
+#endif
     }
 }

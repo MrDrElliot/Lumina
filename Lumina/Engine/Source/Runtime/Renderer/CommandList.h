@@ -23,9 +23,39 @@ namespace Lumina
 
     struct FCommandListInfo
     {
+
+        // Minimum size of memory chunks created to upload data to the device on DX12.
+        SIZE_T UploadChunkSize = 64 * 1024;
+
+        // Minimum size of memory chunks created for AS build scratch buffers.
+        SIZE_T ScratchChunkSize = 64 * 1024;
+
+        // Maximum total memory size used for all AS build scratch buffers owned by this command list.
+        SIZE_T ScratchMaxMemory = 1024 * 1024 * 1024;
         
         /** Type of command queue that this list is to be executed on */
-        ECommandQueue       CommandQueue = ECommandQueue::Graphics;
+        ECommandQueue CommandQueue = ECommandQueue::Graphics;
+
+        static FCommandListInfo Transfer()
+        {
+            FCommandListInfo Ret;
+            Ret.CommandQueue = ECommandQueue::Transfer;
+            return Ret;
+        }
+
+        static FCommandListInfo Graphics()
+        {
+            FCommandListInfo Ret;
+            Ret.CommandQueue = ECommandQueue::Graphics;
+            return Ret;
+        }
+
+        static FCommandListInfo Compute()
+        {
+            FCommandListInfo Ret;
+            Ret.CommandQueue = ECommandQueue::Compute;
+            return Ret;
+        }
         
     };
     
@@ -42,16 +72,28 @@ namespace Lumina
         virtual void Close() = 0;
         virtual void Executed(FQueue* Queue, uint64 SubmissionID) = 0;
 
-        virtual void CopyImage(FRHIImage* Src, FRHIImage* Dst) = 0;
+
+        virtual void CopyImage(FRHIImage* Src, const FTextureSlice& SrcSlice, FRHIImage* Dst, const FTextureSlice& DstSlice) = 0;
         virtual void WriteImage(FRHIImage* Dst, uint32 ArraySlice, uint32 MipLevel, const void* Data, SIZE_T RowPitch, SIZE_T DepthPitch) = 0;
         
         NODISCARD virtual void WriteBuffer(FRHIBuffer* Buffer, const void* Data, uint32 Offset, uint32 Size) = 0;
         virtual void CopyBuffer(FRHIBuffer* Source, uint64 SrcOffset, FRHIBuffer* Destination, uint64 DstOffset, uint64 CopySize) = 0;
-
-        virtual void SetRequiredImageAccess(FRHIImage* Image, ERHIAccess Access) = 0;
-        virtual void SetRequiredBufferAccess(FRHIBuffer* Buffer, ERHIAccess Access) = 0;
-        virtual void CommitBarriers() = 0;
+        
+        virtual void SetPermanentImageState(FRHIImage* Image, EResourceStates StateBits) = 0;
+        virtual void SetPermanentBufferState(FRHIBuffer* Buffer, EResourceStates StateBits) = 0;
+        
+        virtual void BeginTrackingImageState(FRHIImage* Image, FTextureSubresourceSet Subresources, EResourceStates StateBits) = 0;
+        virtual void BeginTrackingBufferState(FRHIBuffer* Buffer, EResourceStates StateBits) = 0;
+        
+        virtual void SetImageState(FRHIImage* Image, FTextureSubresourceSet Subresources, EResourceStates StateBits) = 0;
+        virtual void SetBufferState(FRHIBuffer* Buffer, EResourceStates StateBits) = 0;
+        
         virtual void SetResourceStatesForBindingSet(FRHIBindingSet* BindingSet) = 0;
+        
+        virtual void CommitBarriers() = 0;
+
+        virtual EResourceStates GetImageSubresourceState(FRHIImage* Image, uint32 ArraySlice, uint32 MipLevel) = 0;
+        virtual EResourceStates GetBufferState(FRHIBuffer* Buffer) = 0; 
 
         virtual void AddMarker(const char* Name, const FColor& Color = FColor::Red) = 0;
         virtual void PopMarker() = 0;
@@ -60,7 +102,7 @@ namespace Lumina
         virtual void EndRenderPass() = 0;
         virtual void ClearImageColor(FRHIImage* Image, const FColor& Color) = 0;
 
-        virtual void BindBindingSets(TVector<FRHIBindingSet*> BindingSets, ERHIBindingPoint BindPoint) = 0;
+        virtual void BindBindingSets(ERHIBindingPoint BindPoint, TVector<TPair<FRHIBindingSet*, uint32>> BindingSets) = 0;
 
         virtual void SetPushConstants(const void* Data, SIZE_T ByteSize) = 0;
         

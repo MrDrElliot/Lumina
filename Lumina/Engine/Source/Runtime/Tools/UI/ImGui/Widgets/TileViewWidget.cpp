@@ -17,41 +17,48 @@ namespace Lumina
         float cellSize = ButtonSize + ImGui::GetStyle().ItemSpacing.x;
         int itemsPerRow = std::max(1, int(paneWidth / cellSize));
 
-
         int itemIndex = 0;
         for (FTileViewItem* Item : ListItems)
         {
             const char* DisplayName = Item->GetDisplayName().c_str();
+
             if (itemIndex % itemsPerRow != 0)
-            {
                 ImGui::SameLine(0.0f, 20.0f);
-            }
-        
+
             ImGui::PushID(Item);
             ImGui::BeginGroup();
 
-            ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f);
-            
-            ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[2]);
-            float TextWidth = ImGui::CalcTextSize(DisplayName).x;
-            float TextOffset = ((cellSize) - TextWidth) * 0.5f;
-
             DrawItem(Item, Context);
-    
-            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + TextOffset);
-            ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ButtonSize);
-            ImGui::TextWrapped("%s", DisplayName);
-            ImGui::PopTextWrapPos();
+
+            // --- Centered Wrapped Text Drawing ---
+            ImFont* font = ImGui::GetIO().Fonts->Fonts[3];
+            ImGui::PushFont(font);
+
+            float wrapWidth = ButtonSize;
+
+            // Estimate text height with wrapping
+            ImVec2 textSize = ImGui::CalcTextSize(DisplayName, nullptr, true, wrapWidth);
+            float reservedHeight = textSize.y;
+
+            ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+            float textStartX = cursorPos.x + (cellSize - wrapWidth) * 0.5f;
+
+            // Reserve vertical space
+            ImGui::Dummy(ImVec2(cellSize, reservedHeight));
+
+            // Draw centered wrapped text
+            ImGui::GetWindowDrawList()->AddText(font, font->LegacySize,
+                ImVec2(textStartX, cursorPos.y),
+                ImGui::ColorConvertFloat4ToU32(ImGui::GetStyle().Colors[ImGuiCol_Text]),
+                DisplayName, nullptr, wrapWidth);
+
             ImGui::PopFont();
-            
-            ImGui::PopStyleVar();
-            
+
             ImGui::EndGroup();
             ImGui::PopID();
-    
+
             ++itemIndex;
         }
-        
     }
     
     void FTileViewWidget::ClearTree()
@@ -86,11 +93,21 @@ namespace Lumina
         bDirty = false;
     }
 
-    void FTileViewWidget::DrawItem(FTileViewItem* ItemToDraw, FTileViewContext Context)
+    void FTileViewWidget::DrawItem(FTileViewItem* ItemToDraw, const FTileViewContext& Context)
     {
-        if (ImGui::Button("##", ImVec2(125.0f, 125.0f)))
+        if (Context.DrawItemOverrideFunction)
         {
-            SetSelection(ItemToDraw, Context);
+            if (Context.DrawItemOverrideFunction(ItemToDraw))
+            {
+                SetSelection(ItemToDraw, Context);
+            }
+        }
+        else
+        {
+            if (ImGui::Button("##", ImVec2(125.0f, 125.0f)))
+            {
+                SetSelection(ItemToDraw, Context);
+            }
         }
 
         if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Right) && ItemToDraw->HasContextMenu())

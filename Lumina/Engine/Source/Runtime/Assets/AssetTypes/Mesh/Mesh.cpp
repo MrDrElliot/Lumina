@@ -24,7 +24,7 @@ namespace Lumina
         FRenderManager* RenderManager = GEngine->GetEngineSubsystem<FRenderManager>();
         IRenderContext* RenderContext = RenderManager->GetRenderContext();
         
-        FRHICommandListRef TransferCommandList = RenderContext->CreateCommandList({ECommandQueue::Transfer});
+        FRHICommandListRef TransferCommandList = RenderContext->CreateCommandList(FCommandListInfo::Graphics());
         TransferCommandList->Open();
         
         // Vertex buffer
@@ -34,7 +34,9 @@ namespace Lumina
         VertexBufferDesc.Usage.SetFlag(EBufferUsageFlags::VertexBuffer);
 
         VertexBuffer = RenderContext->CreateBuffer(VertexBufferDesc);
+        TransferCommandList->BeginTrackingBufferState(VertexBuffer, EResourceStates::Common);
         TransferCommandList->WriteBuffer(VertexBuffer, MeshResource.Vertices.data(), 0, GetNumVertices() * sizeof(FVertex));
+        TransferCommandList->SetPermanentBufferState(VertexBuffer, EResourceStates::VertexBuffer);
         
         // Index buffer
         FRHIBufferDesc IndexBufferDesc;
@@ -44,10 +46,13 @@ namespace Lumina
 
         IndexBuffer = RenderContext->CreateBuffer(IndexBufferDesc);
         
+        TransferCommandList->BeginTrackingBufferState(IndexBuffer, EResourceStates::Common);
         TransferCommandList->WriteBuffer(IndexBuffer, MeshResource.Indices.data(), 0, GetNumIndicies() * sizeof(uint32));
+        TransferCommandList->SetPermanentBufferState(IndexBuffer, EResourceStates::IndexBuffer);
+        TransferCommandList->CommitBarriers();
         
         TransferCommandList->Close();
-        RenderContext->ExecuteCommandList(TransferCommandList, 1, ECommandQueue::Transfer);
+        RenderContext->ExecuteCommandList(TransferCommandList, 1, ECommandQueue::Graphics);
 
     }
 

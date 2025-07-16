@@ -32,10 +32,10 @@ namespace Lumina
         #endif
         
         
-        FORCEINLINE IRenderContext* GetRenderContext() const { return RenderContext; }
+        LUMINA_API IRenderContext* GetRenderContext() const { return RenderContext; }
 
-        INLINE FRHISamplerRef GetNearestSampler() const { return NearestSampler; }
-        INLINE FRHISamplerRef GetLinearSampler() const { return LinearSampler; }
+        LUMINA_API FRHISamplerRef GetNearestSampler() const { return NearestSampler; }
+        LUMINA_API FRHISamplerRef GetLinearSampler() const { return LinearSampler; }
 
         uint32 GetCurrentFrameIndex() const { return CurrentFrameIndex; }
         

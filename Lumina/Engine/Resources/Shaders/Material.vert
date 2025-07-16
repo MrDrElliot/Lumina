@@ -1,6 +1,7 @@
 #version 450 core
 #pragma shader_stage(vertex)
 
+#include "Includes/Common.glsl"
 #include "Includes/SceneGlobals.glsl"
 
 // Input attributes
@@ -18,7 +19,7 @@ layout(location = 3) out vec2 outUV;
 
 void main()
 {
-    mat4 model = GetModelMatrix();
+    mat4 model = GetModelMatrix(gl_InstanceIndex);
     vec4 worldPos = model * vec4(inPosition.xyz, 1.0f);
 
     mat3 normalMatrix = transpose(inverse(mat3(model)));

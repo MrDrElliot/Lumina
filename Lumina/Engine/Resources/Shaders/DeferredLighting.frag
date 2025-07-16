@@ -3,43 +3,16 @@
 #pragma shader_stage(fragment)
 
 #include "Includes/Common.glsl"
-
-#define MAX_LIGHTS 200
-
-struct FCameraView
-{
-    vec4 CameraPosition;    // Camera Position
-    mat4 CameraView;        // View matrix
-    mat4 CameraProjection;  // Projection matrix
-};
-
-struct FPointLight
-{
-    vec4 Position;
-    vec4 Color;
-};
+#include "Includes/SceneGlobals.glsl"
 
 layout(location = 0) in vec2 vUV;
 layout(location = 0) out vec4 outColor;
 
-layout(set = 0, binding = 0) uniform sampler2D uPosition;
-layout(set = 0, binding = 1) uniform sampler2D uNormal;
-layout(set = 0, binding = 2) uniform sampler2D uMaterial;
-layout(set = 0, binding = 3) uniform sampler2D uAlbedoSpec;
+layout(set = 1, binding = 0) uniform sampler2D uPosition;
+layout(set = 1, binding = 1) uniform sampler2D uNormal;
+layout(set = 1, binding = 2) uniform sampler2D uMaterial;
+layout(set = 1, binding = 3) uniform sampler2D uAlbedoSpec;
 
-layout(set = 0, binding = 4) readonly uniform SceneGlobals
-{
-    FCameraView CameraView;
-    float Time;
-    float DeltaTime;
-    uint  NumLights;
-} SceneUBO;
-
-layout(set = 0, binding = 5) readonly buffer FLightData
-{
-    uint NumLights;
-    FPointLight Lights[MAX_LIGHTS];
-} LightData;
 
 float DistributionGGX(vec3 N, vec3 H, float roughness)
 {
@@ -98,11 +71,35 @@ void main()
     
     vec3 F0 = vec3(0.04);
     F0 = mix(F0, Albedo.rgb, Metallic);
-    
+
     vec3 Lo = vec3(0.0);
-    for(int i = 0; i < LightData.NumLights; ++i)
+    if (HasDirectionalLight())
     {
-        FPointLight Light = LightData.Lights[i];
+        FDirectionalLight Light = GetDirectionalLight();
+
+        vec3 L = normalize(-Light.Direction.xyz);
+        vec3 H = normalize(V + L);
+        vec3 Radiance = Light.Color.rgb * Light.Color.a;
+
+        float NDF = DistributionGGX(N, H, Roughness);
+        float G = GeometrySmith(N, V, L, Roughness);
+        vec3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);
+
+        vec3 Numerator = NDF * G * F;
+        float Denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
+        vec3 Spec = Numerator / Denominator;
+        vec3 kS = F;
+        vec3 kD = vec3(1.0) - kS;
+        kD *= 1.0 - Metallic;
+
+        float NdotL = max(dot(N, L), 0.0);
+
+        Lo += (kD * Albedo / PI + Spec) * Radiance * NdotL;
+    }
+    
+    for(int i = 0; i < LightData.NumPointLights; ++i)
+    {
+        FPointLight Light = LightData.PointLights[i];
         
         vec3 L = normalize(Light.Position.xyz - Position);
         vec3 H = normalize(V + L);
@@ -128,7 +125,7 @@ void main()
         Lo += (kD * Albedo / PI + Spec) * Radiance * NdotL;
     }
     
-    vec3 Ambient = vec3(0.03) * Albedo * AO;
+    vec3 Ambient = vec3(0.00) * Albedo * AO;
     vec3 Color = Ambient + Lo;
     
     Color = Color / (Color + vec3(1.0));

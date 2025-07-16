@@ -58,6 +58,9 @@ namespace Lumina
         /** Callback to draw any context menus this item may want */
         TFunction<void(const TVector<FTileViewItem*>&)>         DrawItemContextMenuFunction;
 
+        /** Callback to override item drawing */
+        TFunction<bool(FTileViewItem*)>                         DrawItemOverrideFunction;
+
         /** Called when a rebuild of the widget tree is requested */
         TFunction<void(FTileViewWidget*)>                       RebuildTreeFunction;
 
@@ -95,7 +98,7 @@ namespace Lumina
         
         void RebuildTree(FTileViewContext Context, bool bKeepSelections = false);
         
-        void DrawItem(FTileViewItem* ItemToDraw, FTileViewContext Context);
+        void DrawItem(FTileViewItem* ItemToDraw, const FTileViewContext& Context);
 
         void SetSelection(FTileViewItem* Item, FTileViewContext Context);
         void ClearSelection();

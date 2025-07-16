@@ -23,10 +23,26 @@ namespace Lumina
         FSceneManager* SceneManager = GEngine->GetEngineSubsystem<FSceneManager>();
         FScene* NewScene = SceneManager->CreateScene(ESceneType::Tool);
         NewScene->RegisterSystem(Memory::New<FDebugCameraEntitySystem>());
-        
-        MeshEntity = NewScene->CreateEntity(FTransform(), "MeshEntity");
-        FStaticMeshComponent& NewComponent = MeshEntity.AddComponent<FStaticMeshComponent>();
-        NewComponent.StaticMesh = Cast<CStaticMesh>(InAsset);
+
+        Entity DirectionalLightEntity = NewScene->CreateEntity(FTransform(), "Directional Light");
+        DirectionalLightEntity.AddComponent<FDirectionalLightComponent>();
+
+        int gridSize = sqrt(2000); // ≈ sqrt(1000)
+        float spacing = 2.0f;
+
+        for (int i = 0; i < 2000; ++i)
+        {
+            int x = i % gridSize;
+            int y = i / gridSize;
+
+            glm::vec3 position = glm::vec3(x * spacing, y * spacing, 0.0f);
+
+            MeshEntity = NewScene->CreateEntity(FTransform(), "MeshEntity");
+            FStaticMeshComponent& NewComponent = MeshEntity.AddComponent<FStaticMeshComponent>();
+
+            MeshEntity.GetComponent<FTransformComponent>().SetLocation(position);
+            NewComponent.StaticMesh = Cast<CStaticMesh>(InAsset);
+        }
         
         Scene = NewScene;
     }

@@ -9,8 +9,11 @@
 #include "Core/Object/Package/Package.h"
 #include "Paths/Paths.h"
 #include "Project/Project.h"
+#include "Renderer/RenderManager.h"
 #include "TaskSystem/TaskSystem.h"
+#include "Tools/Import/ImportHelpers.h"
 #include "Tools/UI/ImGui/ImGuiMemoryEditor.h"
+#include "Tools/UI/ImGui/ImGuiRenderer.h"
 #include "Tools/UI/ImGui/ImGuiX.h"
 
 namespace Lumina
@@ -25,6 +28,13 @@ namespace Lumina
 
     void FContentBrowserEditorTool::OnInitialize()
     {
+        IRenderContext* RenderContext = GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext();
+        FString Path = Paths::Combine(Paths::GetEngineResourceDirectory().c_str(), "Textures");
+        FolderIcon = ImportHelpers::CreateTextureFromImport(RenderContext, Path + "/Folder.png", false);
+        StaticMeshIcon = ImportHelpers::CreateTextureFromImport(RenderContext, Path + "/StaticMeshIcon.png", false);
+        TextureIcon = ImportHelpers::CreateTextureFromImport(RenderContext, Path + "/TextureIcon.png", false);
+        MaterialIcon = ImportHelpers::CreateTextureFromImport(RenderContext, Path + "/ShaderIcon.png", false);
+
         CreateToolWindow("Content", [this] (const FUpdateContext& Contxt, bool bIsFocused)
         {
             float Left = 200.0f;
@@ -36,6 +46,43 @@ namespace Lumina
         });
         
         SelectedPath = FProject::Get()->GetProjectContentDirectory().c_str();
+
+        ContentBrowserTileViewContext.DrawItemOverrideFunction = [this] (FTileViewItem* Item) -> bool
+        {
+            FContentBrowserTileViewItem* ContentItem = static_cast<FContentBrowserTileViewItem*>(Item);
+            ImTextureID ImTexture;
+            
+            FAssetData Asset = GEngine->GetEngineSubsystem<FAssetRegistry>()->GetAsset(ContentItem->GetPath().generic_string().c_str());
+            if (Asset.ClassName == "CMaterial")
+            {
+                ImTexture = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer()->GetOrCreateImTexture(MaterialIcon);
+            }
+            else if (Asset.ClassName == "CStaticMesh")
+            {
+                ImTexture = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer()->GetOrCreateImTexture(StaticMeshIcon);
+            }
+            else if (Asset.ClassName == "CTexture")
+            {
+                ImTexture = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer()->GetOrCreateImTexture(TextureIcon);
+            }
+            else
+            {
+                ImTexture = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer()->GetOrCreateImTexture(FolderIcon);
+            }
+
+            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1, 1, 1, 0.05f)); 
+            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1, 1, 1, 0.3f));
+            ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(1, 1, 1, 0.5f));
+            if (ImGui::ImageButton("##", ImTexture, ImVec2(115.0f, 115.0f)))
+            {
+                ImGui::PopStyleColor(3);
+                return true;
+            }
+
+            ImGui::PopStyleColor(3);
+
+            return false;
+        };
         
         ContentBrowserTileViewContext.ItemSelectedFunction = [this] (FTileViewItem* Item)
         {
@@ -203,6 +250,11 @@ namespace Lumina
 
         OutlinerContext.ItemSelectedFunction = [this] (FTreeListViewItem* Item)
         {
+            if (Item == nullptr)
+            {
+                return;
+            }
+            
             FContentBrowserListViewItem* ContentItem = static_cast<FContentBrowserListViewItem*>(Item);
 
             std::filesystem::path Path = ContentItem->GetPath();

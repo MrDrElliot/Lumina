@@ -47,6 +47,8 @@ namespace Lumina
         ImageDescription.Extent = ImportHelpers::GetImagePixelData(NewTexture->Pixels, RawPath);
         ImageDescription.Flags.SetFlag(EImageCreateFlags::ShaderResource);
         ImageDescription.NumMips = CalculateMipCount(ImageDescription.Extent.X, ImageDescription.Extent.Y);
+        ImageDescription.InitialState = EResourceStates::ShaderResource;
+        ImageDescription.bKeepInitialState = true;
         NewTexture->ImageDescription = ImageDescription;
 
         CPackage::SavePackage(NewPackage, NewTexture, FullPath.c_str());

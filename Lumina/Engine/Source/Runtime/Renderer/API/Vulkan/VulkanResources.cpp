@@ -293,14 +293,15 @@ namespace Lumina
     {
         switch (Type)
         {
-        case ERHIBindingResourceType::Texture_SRV:        return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        case ERHIBindingResourceType::Texture_UAV:        return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-        case ERHIBindingResourceType::Buffer_SRV:         return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-        case ERHIBindingResourceType::Buffer_UAV:         return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-        case ERHIBindingResourceType::Buffer_CBV:         return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        case ERHIBindingResourceType::Buffer_Dynamic:     return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-        case ERHIBindingResourceType::PushConstants:      /* handled separately */;
-        default:                                          return VK_DESCRIPTOR_TYPE_MAX_ENUM;
+        case ERHIBindingResourceType::Texture_SRV:                  return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        case ERHIBindingResourceType::Texture_UAV:                  return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+        case ERHIBindingResourceType::Buffer_SRV:                   return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+        case ERHIBindingResourceType::Buffer_UAV:                   return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+        case ERHIBindingResourceType::Buffer_CBV:                   return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        case ERHIBindingResourceType::Buffer_Uniform_Dynamic:       return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+        case ERHIBindingResourceType::Buffer_Storage_Dynamic:       return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC;
+        case ERHIBindingResourceType::PushConstants:                /* handled separately */;
+        default:                                                    return VK_DESCRIPTOR_TYPE_MAX_ENUM;
         }
     }
 
@@ -358,6 +359,140 @@ namespace Lumina
     }
 
 
+    FUploadManager::FUploadManager(FVulkanRenderContext* Ctx, uint64 InDefaultChunkSize, uint64 InMemoryLimit, bool bInIsScratchBuffer)
+        : IDeviceChild(Ctx->GetDevice())
+        , Context(Ctx)
+        , DefaultChunkSize(InDefaultChunkSize)
+        , MemoryLimit(InMemoryLimit)
+        , bIsScratchBuffer(bInIsScratchBuffer)
+    { }
+
+    TSharedPtr<FBufferChunk> FUploadManager::CreateChunk(uint64 Size) const
+    {
+        TSharedPtr<FBufferChunk> chunk = MakeSharedPtr<FBufferChunk>();
+
+        if (bIsScratchBuffer)
+        {
+            FRHIBufferDesc Desc;
+            Desc.Size = Size;
+            Desc.DebugName = "ScratchBufferChunk";
+            chunk->Buffer = Context->CreateBuffer(Desc);
+            
+            chunk->MappedMemory = nullptr;
+            chunk->BufferSize = Size;
+        }
+        else
+        {
+            FRHIBufferDesc Desc;
+            Desc.Size = Size;
+            Desc.Usage.SetFlag(EBufferUsageFlags::CPUWritable);
+            Desc.DebugName = "UploadChunk";
+
+            chunk->Buffer = Context->CreateBuffer(Desc);
+            FVulkanBuffer* VkBuffer = chunk->Buffer.As<FVulkanBuffer>();
+            chunk->MappedMemory = VkBuffer->GetMappedMemory();
+            chunk->BufferSize = Size;
+        }
+
+        return chunk;
+    }
+
+    bool FUploadManager::SuballocateBuffer(uint64 Size, FRHIBuffer** Buffer, uint64* Offset, void** CpuVA, uint64 CurrentVersion, uint32 Alignment)
+    {
+        TSharedPtr<FBufferChunk> chunkToRetire;
+
+        if (CurrentChunk)
+        {
+            uint64 alignedOffset = Align(CurrentChunk->WritePointer, Alignment);
+            uint64_t endOfDataInChunk = alignedOffset + Size;
+
+            if (endOfDataInChunk <= CurrentChunk->BufferSize)
+            {
+                CurrentChunk->WritePointer = endOfDataInChunk;
+
+                *Buffer = CurrentChunk->Buffer.GetReference();
+                *Offset = alignedOffset;
+                if (CpuVA && CurrentChunk->MappedMemory)
+                {
+                    *CpuVA = (char*)CurrentChunk->MappedMemory + alignedOffset;
+                }
+
+                return true;
+            }
+
+            chunkToRetire = CurrentChunk;
+            CurrentChunk.reset();
+        }
+
+        ECommandQueue queue = VersionGetQueue(CurrentVersion);
+        FQueue* Queue = Context->GetQueue(queue);
+        uint64 completedInstance;
+        vkGetSemaphoreCounterValue(Device->GetDevice(), Queue->TimelineSemaphore, &completedInstance);
+
+        for (auto it = ChunkPool.begin(); it != ChunkPool.end(); ++it)
+        {
+            TSharedPtr<FBufferChunk> chunk = *it;
+
+            if (VersionGetSubmitted(chunk->Version) && VersionGetInstance(chunk->Version) <= completedInstance)
+            {
+                chunk->Version = 0;
+            }
+
+            if (chunk->Version == 0 && chunk->BufferSize >= Size)
+            {
+                ChunkPool.erase(it);
+                CurrentChunk = chunk;
+                break;
+            }
+        }
+
+        if (chunkToRetire)
+        {
+            ChunkPool.push_back(chunkToRetire);
+        }
+
+        if (!CurrentChunk)
+        {
+            uint64_t sizeToAllocate = Align(std::max(Size, DefaultChunkSize), FBufferChunk::c_sizeAlignment);
+
+            if ((MemoryLimit > 0) && (AllocatedMemory + sizeToAllocate > MemoryLimit))
+            {
+                return false;
+            }
+
+            CurrentChunk = CreateChunk(sizeToAllocate);
+        }
+
+        CurrentChunk->Version = CurrentVersion;
+        CurrentChunk->WritePointer = Size;
+
+        *Buffer = CurrentChunk->Buffer.GetReference();
+        *Offset = 0;
+        if (CpuVA)
+        {
+            *CpuVA = CurrentChunk->MappedMemory;
+        }
+
+        return true;
+    }
+
+    void FUploadManager::SubmitChunks(uint64 CurrentVersion, uint64 submittedVersion)
+    {
+        if (CurrentChunk)
+        {
+            ChunkPool.push_back(CurrentChunk);
+            CurrentChunk.reset();
+        }
+
+        for (const TSharedPtr<FBufferChunk>& chunk : ChunkPool)
+        {
+            if (chunk->Version == CurrentVersion)
+            {
+                chunk->Version = submittedVersion;
+            }
+        }
+    }
+
     FVulkanBuffer::FVulkanBuffer(FVulkanDevice* InDevice, const FRHIBufferDesc& InDescription)
         : FRHIBuffer(InDescription)
         , IDeviceChild(InDevice)
@@ -365,11 +500,26 @@ namespace Lumina
         VmaAllocationCreateFlags VmaFlags = 0;
 
         VkDeviceSize Size = InDescription.Size;
+
+        bool bIsUniformBuffer = InDescription.Usage.IsFlagSet(BUF_UniformBuffer);
+        bool bIsStorageBuffer = InDescription.Usage.IsFlagSet(BUF_StorageBuffer);
+        
         
         if (InDescription.Usage.IsFlagSet(BUF_Dynamic))
         {
-            uint64 Alignment = InDevice->GetPhysicalDeviceProperties().limits.minUniformBufferOffsetAlignment;
-            uint64 AtomSize = InDevice->GetPhysicalDeviceProperties().limits.nonCoherentAtomSize;
+            uint64 Alignment = 0;
+            uint64 AtomSize = 0;
+            if (bIsStorageBuffer)
+            {
+                Alignment = InDevice->GetPhysicalDeviceProperties().limits.minStorageBufferOffsetAlignment;
+                AtomSize = InDevice->GetPhysicalDeviceProperties().limits.nonCoherentAtomSize;
+            }
+            else
+            {
+                Alignment = InDevice->GetPhysicalDeviceProperties().limits.minUniformBufferOffsetAlignment;
+                AtomSize = InDevice->GetPhysicalDeviceProperties().limits.nonCoherentAtomSize;
+            }
+            
             Alignment = Math::Max<uint64>(Alignment, AtomSize);
 
             // Check if it's a power of 2
@@ -383,7 +533,6 @@ namespace Lumina
             std::ranges::fill(VersionTracking, 0);
 
             Description.Usage.ClearFlag(EBufferUsageFlags::CPUWritable);
-            VmaFlags |= VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT;
         }
         else
         {
@@ -392,15 +541,21 @@ namespace Lumina
             Size = (Size + 3) & ~3ull;
         }
 
-        if (GetDescription().Usage.IsFlagSet(EBufferUsageFlags::UniformBuffer))
+        if (bIsUniformBuffer)
         {
             uint32 MaxSize = Device->GetPhysicalDeviceProperties().limits.maxUniformBufferRange;
             Assert(Size <= MaxSize)
         }
-        
-        if(GetDescription().Usage.IsFlagSet(EBufferUsageFlags::CPUWritable))
+        else
         {
-            VmaFlags |= VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
+            uint32 MaxSize = Device->GetPhysicalDeviceProperties().limits.maxStorageBufferRange;
+            Assert(Size < MaxSize)
+        }
+        
+        
+        if(GetDescription().Usage.AreAnyFlagsSet(EBufferUsageFlags::CPUWritable, EBufferUsageFlags::Dynamic))
+        {
+            VmaFlags |= VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT;
         }
         
         VkBufferCreateInfo BufferCreateInfo = {};
@@ -411,23 +566,18 @@ namespace Lumina
         BufferCreateInfo.flags = 0;
         
         Allocation = Device->GetAllocator()->AllocateBuffer(&BufferCreateInfo, VmaFlags, &Buffer, "");
-
-        if (InDescription.Usage.IsFlagSet(BUF_Dynamic))
-        {
-            MappedMemory = Device->GetAllocator()->MapMemory(Allocation);
-        }
-        
-        Assert(Buffer != VK_NULL_HANDLE)
     }
 
     FVulkanBuffer::~FVulkanBuffer()
     {
-        if (MappedMemory)
-        {
-            Device->GetAllocator()->UnmapMemory(Allocation);
-            MappedMemory = nullptr;
-        }
         Device->GetAllocator()->DestroyBuffer(Buffer);
+    }
+
+    void* FVulkanBuffer::GetMappedMemory() const
+    {
+        VmaAllocationInfo Info;
+        vmaGetAllocationInfo(Device->GetAllocator()->GetAllocator(), Allocation, &Info);
+        return Info.pMappedData;
     }
 
     FVulkanSampler::FVulkanSampler(FVulkanDevice* InDevice, const FSamplerDesc& InDesc)
@@ -454,7 +604,7 @@ namespace Lumina
         Info.compareEnable = VK_FALSE;
         Info.compareOp = VK_COMPARE_OP_ALWAYS;
         Info.minLod = 0.0f;
-        Info.maxLod = VK_LOD_CLAMP_NONE;
+        Info.maxLod = 0.0f; // TEMP WAS VK_LOD_CLAMP_NONE
 
         VK_CHECK(vkCreateSampler(Device->GetDevice(), &Info, nullptr, &Sampler));
     }
@@ -469,7 +619,8 @@ namespace Lumina
     
 
     FVulkanImage::FVulkanImage(FVulkanDevice* InDevice, const FRHIImageDesc& InDescription)
-        : FRHIImage(InDescription), IDeviceChild(InDevice)
+        : FRHIImage(InDescription)
+        , IDeviceChild(InDevice)
     {
         VkImageCreateFlags ImageFlags = VK_NO_FLAGS;
         VkImageUsageFlags UsageFlags = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
@@ -531,7 +682,7 @@ namespace Lumina
         ImageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
         ImageCreateInfo.format = VulkanFormat;
         ImageCreateInfo.extent = { (uint32)GetExtent().X, (uint32)GetExtent().Y, 1 };
-        ImageCreateInfo.mipLevels = 1;//GetDescription().NumMips;
+        ImageCreateInfo.mipLevels = GetDescription().NumMips;
         ImageCreateInfo.arrayLayers = GetDescription().ArraySize;
         ImageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
         ImageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
@@ -557,7 +708,7 @@ namespace Lumina
         ImageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
         ImageViewCreateInfo.subresourceRange.layerCount = GetDescription().ArraySize;
         ImageViewCreateInfo.subresourceRange.baseMipLevel = 0;
-        ImageViewCreateInfo.subresourceRange.levelCount = 1;//GetDescription().NumMips;
+        ImageViewCreateInfo.subresourceRange.levelCount = GetDescription().NumMips;
     
         VK_CHECK(vkCreateImageView(Device->GetDevice(), &ImageViewCreateInfo, nullptr, &ImageView));
     
@@ -678,7 +829,8 @@ namespace Lumina
     }
 
     FVulkanBindingLayout::FVulkanBindingLayout(FVulkanDevice* InDevice, const FBindingLayoutDesc& InDesc)
-        :IDeviceChild(InDevice)
+        : IDeviceChild(InDevice)
+        , DescriptorSetLayout(nullptr)
     {
         Desc = InDesc;
 
@@ -698,28 +850,126 @@ namespace Lumina
             Binding.descriptorCount = 1;
             Binding.binding = Item.Slot;
 
-            Bindings.push_back(Memory::Move(Binding));
-
-            VkDescriptorPoolSize PoolSize = {};
-            PoolSize.type = Binding.descriptorType;
-            PoolSize.descriptorCount = 1;
-            PoolSizes.push_back(Memory::Move(PoolSize));
+            Bindings.push_back(Binding);
         }
+    }
 
+    FVulkanBindingLayout::FVulkanBindingLayout(FVulkanDevice* InDevice, const FBindlessLayoutDesc& InDesc)
+        : IDeviceChild(InDevice)
+        , DescriptorSetLayout(nullptr)
+    {
+        BindlessDesc = InDesc;
+        bBindless = true;
 
-        VkDescriptorSetLayoutCreateInfo CreateInfo = {};
-        CreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-        CreateInfo.pBindings = Bindings.data();
-        CreateInfo.bindingCount = (uint32)Bindings.size();
-        CreateInfo.flags = VK_NO_FLAGS;
+        Bindings.reserve(InDesc.Bindings.size());
+        PoolSizes.reserve(InDesc.Bindings.size());
         
-        
-        VK_CHECK(vkCreateDescriptorSetLayout(Device->GetDevice(), &CreateInfo, nullptr, &DescriptorSetLayout));
+        for (const FBindingLayoutItem& Item : InDesc.Bindings)
+        {
+            if (Item.Type == ERHIBindingResourceType::PushConstants)
+            {
+                continue;
+            }
+            
+            VkDescriptorSetLayoutBinding Binding = {};
+            Binding.descriptorType = ToVkDescriptorType(Item.Type);
+            Binding.stageFlags = ToVkStageFlags(InDesc.StageFlags);
+            Binding.descriptorCount = 1;
+            Binding.binding = Item.Slot;
+
+            Bindings.push_back(Binding);
+        }
     }
 
     FVulkanBindingLayout::~FVulkanBindingLayout()
     {
         vkDestroyDescriptorSetLayout(Device->GetDevice(), DescriptorSetLayout, nullptr);
+    }
+
+    bool FVulkanBindingLayout::Bake()
+    {
+        VkDescriptorSetLayoutCreateInfo CreateInfo = {};
+        CreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+        CreateInfo.bindingCount = (uint32)Bindings.size();
+        CreateInfo.pBindings = Bindings.data();
+
+        TVector<VkDescriptorBindingFlags> BindFlags(Bindings.size(), VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT);
+
+        VkDescriptorSetLayoutBindingFlagsCreateInfo ExtendedInfo = {};
+        ExtendedInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO;
+        ExtendedInfo.bindingCount = (uint32)Bindings.size();
+        ExtendedInfo.pBindingFlags = BindFlags.data();
+
+        VkDescriptorType CbvSrvUavTypes[] = 
+        {
+            VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+            VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+            VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER,
+            VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER,
+            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            VK_DESCRIPTOR_TYPE_STORAGE_BUFFER
+        };
+
+        VkDescriptorType CounterTypes[] =
+        {
+            VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+        };
+
+        VkDescriptorType SamplerTypes[] =
+        {
+            VK_DESCRIPTOR_TYPE_SAMPLER,
+        };
+
+        VkMutableDescriptorTypeListEXT CbvSrvUavTypesList = {};
+        CbvSrvUavTypesList.descriptorTypeCount = uint32(std::size(CbvSrvUavTypes));
+        CbvSrvUavTypesList.pDescriptorTypes = CbvSrvUavTypes;
+
+        VkMutableDescriptorTypeListEXT CounterTypesList = {};
+        CounterTypesList.descriptorTypeCount = uint32(std::size(CounterTypes));
+        CounterTypesList.pDescriptorTypes = CounterTypes;
+
+        VkMutableDescriptorTypeListEXT SamplerTypesList = {};
+        SamplerTypesList.descriptorTypeCount = uint32(std::size(SamplerTypes));
+        SamplerTypesList.pDescriptorTypes = SamplerTypes;
+
+        auto MutableDescriptorTypeList =
+            &CbvSrvUavTypes;
+
+        // Is it bindless?
+        if (bBindless)
+        {
+            CreateInfo.pNext = &ExtendedInfo;
+        }
+
+        auto Result = vkCreateDescriptorSetLayout(Device->GetDevice(), &CreateInfo, nullptr, &DescriptorSetLayout);
+        VK_CHECK(Result);
+
+        THashMap<VkDescriptorType, uint32> PoolSizeMap;
+        for (VkDescriptorSetLayoutBinding Binding : Bindings)
+        {
+            if (PoolSizeMap.find(Binding.descriptorType) == PoolSizeMap.end())
+            {
+                PoolSizeMap[Binding.descriptorType] = 0;
+            }
+
+            PoolSizeMap[Binding.descriptorType] += Binding.descriptorCount;
+        }
+
+        for (auto& Pair : PoolSizeMap)
+        {
+            if (Pair.second > 0)
+            {
+                VkDescriptorPoolSize PoolSize = {};
+                PoolSize.type = Pair.first;
+                PoolSize.descriptorCount = Pair.second;
+                
+                PoolSizes.push_back(PoolSize);
+            }
+        }
+
+
+        return Result == VK_SUCCESS;
+        
     }
 
     void* FVulkanBindingLayout::GetAPIResourceImpl(EAPIResourceType Type)
@@ -756,13 +1006,12 @@ namespace Lumina
 
         TVector<VkDescriptorBufferInfo> BufferInfos;
         TVector<VkDescriptorImageInfo> ImageInfos;
+        TVector<VkWriteDescriptorSet> Writes;
         BufferInfos.reserve(InDesc.Bindings.size());
         ImageInfos.reserve(InDesc.Bindings.size());
-
-        
-        TVector<VkWriteDescriptorSet> Writes;
         Writes.reserve(4);
 
+        
         for (SIZE_T BindingIndex = 0; BindingIndex < InDesc.Bindings.size(); ++BindingIndex)
         {
             const FBindingSetItem& Item = InDesc.Bindings[BindingIndex];
@@ -850,7 +1099,7 @@ namespace Lumina
                     Write.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
                 }
                 break;
-            case ERHIBindingResourceType::Buffer_Dynamic:
+            case ERHIBindingResourceType::Buffer_Uniform_Dynamic:
                 {
                     FVulkanBuffer* Buffer = static_cast<FVulkanBuffer*>(Item.ResourceHandle);
                     VkDescriptorBufferInfo& BufferInfo = BufferInfos.emplace_back();
@@ -860,6 +1109,19 @@ namespace Lumina
                         
                     Write.pBufferInfo = &BufferInfo;
                     Write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+                    DynamicBuffers.push_back(Buffer);
+                }
+                break;
+            case ERHIBindingResourceType::Buffer_Storage_Dynamic:
+                {
+                    FVulkanBuffer* Buffer = static_cast<FVulkanBuffer*>(Item.ResourceHandle);
+                    VkDescriptorBufferInfo& BufferInfo = BufferInfos.emplace_back();
+                    BufferInfo.buffer = Buffer->GetBuffer();
+                    BufferInfo.offset = 0;
+                    BufferInfo.range = Buffer->GetSize();
+                        
+                    Write.pBufferInfo = &BufferInfo;
+                    Write.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC;
                     DynamicBuffers.push_back(Buffer);
                 }
                 break;
@@ -875,7 +1137,6 @@ namespace Lumina
     FVulkanBindingSet::~FVulkanBindingSet()
     {
         vkDestroyDescriptorPool(Device->GetDevice(), DescriptorPool, nullptr);
-        //VK_CHECK(vkFreeDescriptorSets(Device->GetDevice(), DescriptorPool, 1, &DescriptorSet));
     }
 
     void* FVulkanBindingSet::GetAPIResourceImpl(EAPIResourceType InType)
@@ -883,6 +1144,39 @@ namespace Lumina
         return DescriptorSet;
     }
 
+    FVulkanDescriptorTable::FVulkanDescriptorTable(FVulkanRenderContext* InContext, FVulkanBindingLayout* InLayout)
+        : IDeviceChild(InContext->GetDevice())
+        , Layout(InLayout)
+    {
+        Capacity = InLayout->Bindings[0].descriptorCount;
+
+        VkDescriptorPoolCreateInfo PoolCreateInfo = {};
+        PoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+        PoolCreateInfo.poolSizeCount = (uint32)InLayout->PoolSizes.size();
+        PoolCreateInfo.pPoolSizes = InLayout->PoolSizes.data();
+        PoolCreateInfo.maxSets = 1;
+
+        VK_CHECK(vkCreateDescriptorPool(Device->GetDevice(), &PoolCreateInfo, nullptr, &DescriptorPool));
+        
+        VkDescriptorSetAllocateInfo AllocateInfo = {};
+        AllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+        AllocateInfo.descriptorPool = DescriptorPool;
+        AllocateInfo.descriptorSetCount = 1;
+        AllocateInfo.pSetLayouts = &InLayout->DescriptorSetLayout;
+        
+        VK_CHECK(vkAllocateDescriptorSets(Device->GetDevice(), &AllocateInfo, &DescriptorSet));
+    }
+
+    FVulkanDescriptorTable::~FVulkanDescriptorTable()
+    {
+        vkDestroyDescriptorPool(Device->GetDevice(), DescriptorPool, nullptr);
+    }
+
+    void* FVulkanDescriptorTable::GetAPIResourceImpl(EAPIResourceType Type)
+    {
+        return nullptr;
+    }
+    
     FVulkanPipeline::~FVulkanPipeline()
     {
         vkDestroyPipeline(Device->GetDevice(), Pipeline, nullptr);
@@ -893,19 +1187,24 @@ namespace Lumina
     {
         TVector<VkDescriptorSetLayout> Layouts;
         uint32 PushConstantSize = 0;
+        
         for (const FRHIBindingLayoutRef& Binding : BindingLayouts)
         {
             FVulkanBindingLayout* VkBindingLayout = Binding.As<FVulkanBindingLayout>();
-            for (const FBindingLayoutItem& Item : VkBindingLayout->GetDesc()->Bindings)
+            if (!VkBindingLayout->bBindless)
             {
-                if (Item.Type == ERHIBindingResourceType::PushConstants)
+                for (const FBindingLayoutItem& Item : VkBindingLayout->GetDesc()->Bindings)
                 {
-                    PushConstantSize = Item.Size;
-                    OutStageFlags = ToVkStageFlags(VkBindingLayout->GetDesc()->StageFlags);
+                    if (Item.Type == ERHIBindingResourceType::PushConstants)
+                    {
+                        PushConstantSize = Item.Size;
+                        OutStageFlags = ToVkStageFlags(VkBindingLayout->GetDesc()->StageFlags);
 
-                    break;
+                        break;
+                    }
                 }
             }
+            
             Layouts.push_back(VkBindingLayout->DescriptorSetLayout);
         }
 

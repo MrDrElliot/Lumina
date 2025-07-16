@@ -24,27 +24,50 @@
 #include "Core/Engine/Engine.h"
 #include "Core/Math/Alignment.h"
 #include "VulkanRenderContext.h"
+
+#include "Renderer/RenderManager.h"
 #include "src/VkBootstrap.h"
 
 namespace Lumina
 {
     extern TStack<IRHIResource*, TFixedVector<IRHIResource*, 100>> PendingDeletes;
 
-    VkBool32 VKAPI_PTR VkDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
+    VkBool32 VKAPI_PTR VkDebugCallback(
+        VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+        VkDebugUtilsMessageTypeFlagsEXT messageTypes,
+        const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+        void* pUserData)
     {
+        // Helper to decode messageTypes
+        auto GetMessageTypeString = [](VkDebugUtilsMessageTypeFlagsEXT types) -> std::string {
+            std::string result;
+            if (types & VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT) {
+                result += "[General] ";
+            }
+            if (types & VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT) {
+                result += "[Validation] ";
+            }
+            if (types & VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT) {
+                result += "[Performance] ";
+            }
+            return result.empty() ? "[Unknown] " : result;
+        };
+
+        std::string typeStr = GetMessageTypeString(messageTypes);
+
         switch (messageSeverity)
         {
         case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
-            LOG_INFO("Vulkan Validation Layer: {0}", pCallbackData->pMessage);
+            LOG_TRACE("Vulkan {}{}", typeStr, pCallbackData->pMessage);
             break;
         case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
-            LOG_DEBUG("Vulkan Validation Layer: {0}", pCallbackData->pMessage);
+            LOG_DEBUG("Vulkan {}{}", typeStr, pCallbackData->pMessage);
             break;
         case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
-            LOG_WARN("Vulkan Validation Layer: {0}", pCallbackData->pMessage);
+            LOG_WARN("Vulkan {}{}", typeStr, pCallbackData->pMessage);
             break;
         case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-            LOG_ERROR("Vulkan Validation Layer: {0}", pCallbackData->pMessage);
+            LOG_ERROR("Vulkan {}{}", typeStr, pCallbackData->pMessage);
             break;
         case VK_DEBUG_UTILS_MESSAGE_SEVERITY_FLAG_BITS_MAX_ENUM_EXT:
             std::unreachable();
@@ -86,82 +109,29 @@ namespace Lumina
         }
     }
     
-    constexpr VkPipelineStageFlagBits ToVkPipelineStage(EPipelineStage stage)
-    {
-        switch (stage)
-        {
-        case EPipelineStage::TopOfPipe: return VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-        case EPipelineStage::BottomOfPipe: return VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-            
-            // Vertex Input stages
-        case EPipelineStage::VertexInput: return VK_PIPELINE_STAGE_VERTEX_INPUT_BIT;
-        case EPipelineStage::VertexShader: return VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
-            
-            // Tessellation stages
-        case EPipelineStage::TessellationControlShader: return VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT;
-        case EPipelineStage::TessellationEvaluationShader: return VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT;
-            
-            // Geometry stages
-        case EPipelineStage::GeometryShader: return VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT;
-            
-            // Fragment stages
-        case EPipelineStage::FragmentShader: return VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-        case EPipelineStage::ColorAttachmentOutput: return VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-            
-            // Compute stages
-        case EPipelineStage::ComputeShader: return VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
-        case EPipelineStage::Transfer: return VK_PIPELINE_STAGE_TRANSFER_BIT;
-            
-            // Post-processing stages
-        case EPipelineStage::EarlyFragmentTests: return VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-        case EPipelineStage::LateFragmentTests: return VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-            
-            // Special stages
-        case EPipelineStage::Host: return VK_PIPELINE_STAGE_HOST_BIT;
-        case EPipelineStage::AllGraphics: return VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT;
-        case EPipelineStage::AllCommands: return VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
-            
-        default:
-            return VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-        }
-    }
-
-
-    VkPipelineStageFlags GetPipelineStageForAccess(VkAccessFlags access)
-    {
-        VkPipelineStageFlags stageMask = 0;
-
-        if (access & VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
-        {
-            stageMask |= VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        }
-        if (access & VK_ACCESS_TRANSFER_WRITE_BIT)
-        {
-            stageMask |= VK_PIPELINE_STAGE_TRANSFER_BIT;
-        }
-        if (access & VK_ACCESS_SHADER_READ_BIT)
-        {
-            stageMask |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-        }
-        if (access & VK_ACCESS_SHADER_WRITE_BIT)
-        {
-            stageMask |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
-        }
-        if (access & VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT)
-        {
-            stageMask |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-        }
-        if (access & VK_ACCESS_MEMORY_READ_BIT)
-        {
-            stageMask |= VK_PIPELINE_STAGE_HOST_BIT;
-        }
-
-        return stageMask;
-    }
-    
     //------------------------------------------------------------------------------------
 
 
+    FQueue::FQueue(FVulkanRenderContext* InRenderContext, VkQueue InQueue, uint32 InQueueFamilyIndex, ECommandQueue InType)
+        : IDeviceChild(InRenderContext->GetDevice())
+        , Type(InType)
+        , CommandPool(nullptr)
+        , Queue(InQueue)
+        , QueueFamilyIndex(InQueueFamilyIndex)
+    {
+        VkSemaphoreTypeCreateInfo TimelineInfo = {};
+        TimelineInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO;
+        TimelineInfo.semaphoreType = VK_SEMAPHORE_TYPE_TIMELINE;
+        TimelineInfo.initialValue = 0;
+
+        VkSemaphoreCreateInfo CreateInfo = {};
+        CreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+        CreateInfo.pNext = &TimelineInfo;
+
+        VK_CHECK(vkCreateSemaphore(Device->GetDevice(), &CreateInfo, nullptr, &TimelineSemaphore));
+        InRenderContext->SetVulkanObjectName("Timeline Semaphore", VK_OBJECT_TYPE_SEMAPHORE, (uintptr_t)TimelineSemaphore);
+    }
+    
     FQueue::~FQueue()
     {
         vkDestroySemaphore(Device->GetDevice(), TimelineSemaphore, nullptr);
@@ -218,11 +188,11 @@ namespace Lumina
         auto Submissions = Memory::Move(CommandBuffersInFlight);
         CommandBuffersInFlight.clear();
 
-        VK_CHECK(vkGetSemaphoreCounterValue(Device->GetDevice(), TimelineSemaphore, &LastFinishedID));
+        uint64 LastFinish = UpdateLastFinishID();
         
         for (auto& Submission : Submissions)
         {
-            if (Submission->SubmissionID <= LastFinishedID)
+            if (Submission->SubmissionID <= LastFinish)
             {
                 Submission->ClearReferencedResources();
                 Submission->SubmissionID = 0;
@@ -238,6 +208,8 @@ namespace Lumina
     uint64 FQueue::Submit(ICommandList* CommandLists, uint32 NumCommandLists)
     {
         LUMINA_PROFILE_SCOPE();
+
+        FScopeLock Lock(Mutex);
         
         TFixedVector<VkCommandBuffer, 4> CommandBuffers(NumCommandLists);
         TFixedVector<VkPipelineStageFlags, 4> StageFlags(WaitSemaphores.size());
@@ -259,6 +231,14 @@ namespace Lumina
             CommandBuffers[i] = TrackedBuffer->CommandBuffer;
             TrackedBuffer->LastCommandListID = LastSubmittedID;
             CommandBuffersInFlight.push_back(TrackedBuffer);
+
+            for (const auto& Buffer : TrackedBuffer->ReferencedStagingResources)
+            {
+                FVulkanBuffer* VkBuf = Buffer.As<FVulkanBuffer>();
+                VkBuf->LastUseQueue = Type;
+                VkBuf->LastUseCommandListID = LastSubmittedID;
+            }
+            
         }
 
         AddSignalSemaphore(TimelineSemaphore, LastSubmittedID);
@@ -267,8 +247,12 @@ namespace Lumina
         TimelineSubmitInfo.sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO;
         TimelineSubmitInfo.signalSemaphoreValueCount = (uint32)SignalSemaphoreValues.size();
         TimelineSubmitInfo.pSignalSemaphoreValues = SignalSemaphoreValues.data();
-        TimelineSubmitInfo.waitSemaphoreValueCount = (uint32)WaitSemaphoreValues.size();
-        TimelineSubmitInfo.pWaitSemaphoreValues = WaitSemaphoreValues.data();
+        if (!WaitSemaphoreValues.empty())
+        {
+            TimelineSubmitInfo.waitSemaphoreValueCount = (uint32)WaitSemaphoreValues.size();
+            TimelineSubmitInfo.pWaitSemaphoreValues = WaitSemaphoreValues.data();
+        }
+
 
         VkSubmitInfo SubmitInfo = {};
         SubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -297,6 +281,12 @@ namespace Lumina
         VK_CHECK(vkQueueWaitIdle(Queue));
     }
 
+    uint64 FQueue::UpdateLastFinishID()
+    {
+        VK_CHECK(vkGetSemaphoreCounterValue(Device->GetDevice(), TimelineSemaphore, &LastFinishedID));
+        return LastFinishedID;
+    }
+
     bool FQueue::PollCommandList(uint64 CommandListID)
     {
         if (CommandListID > LastSubmittedID || CommandListID == 0)
@@ -310,10 +300,8 @@ namespace Lumina
             return true;
         }
         
-        VK_CHECK(vkGetSemaphoreCounterValue(Device->GetDevice(), TimelineSemaphore, &LastFinishedID));
-        bCompleted = LastFinishedID >= CommandListID;
+        bCompleted = UpdateLastFinishID() >= CommandListID;
         return bCompleted;
-        
     }
 
     bool FQueue::WaitCommandList(uint64 CommandListID, uint64 Timeout)
@@ -334,9 +322,10 @@ namespace Lumina
         WaitInfo.pSemaphores = &TimelineSemaphore;
         WaitInfo.pValues = &CommandListID;
 
-        VK_CHECK(vkWaitSemaphores(Device->GetDevice(), &WaitInfo, Timeout));
-
-        return true;
+        VkResult Result = vkWaitSemaphores(Device->GetDevice(), &WaitInfo, Timeout);
+        VK_CHECK(Result);
+        
+        return (Result == VK_SUCCESS);
     }
 
     void FQueue::AddSignalSemaphore(VkSemaphore Semaphore, uint64 Value)
@@ -353,72 +342,11 @@ namespace Lumina
         WaitSemaphoreValues.push_back(Value);
     }
     
-    
-    bool FVulkanStagingManager::GetStagingBuffer(TRefCountPtr<FVulkanBuffer>& OutBuffer)
-    {
-        LUMINA_PROFILE_SCOPE();
-        if(!BufferPool.empty())
-        {
-            OutBuffer = BufferPool.top();
-            BufferPool.pop();
-            InFlightBuffers.push_back(OutBuffer);
-            return true;
-        }
-
-        CreateNewStagingBuffer(OutBuffer);
-        InFlightBuffers.push_back(OutBuffer);
-        return true;
-    }
-
-    void FVulkanStagingManager::FreeStagingBuffer(TRefCountPtr<FVulkanBuffer> InBuffer)
-    {
-        LUMINA_PROFILE_SCOPE();
-        BufferPool.push(InBuffer);
-    }
-
-    void FVulkanStagingManager::ReturnAllStagingBuffers()
-    {
-        LUMINA_PROFILE_SCOPE();
-        for (auto& Buffer : InFlightBuffers)
-        {
-            FreeStagingBuffer(Buffer);
-        }
-
-        InFlightBuffers.clear();
-    }
-
-    void FVulkanStagingManager::FreeAllBuffers()
-    {
-        LUMINA_PROFILE_SCOPE();
-        while(!BufferPool.empty())
-        {
-            BufferPool.pop();
-        }
-    }
-
-    bool FVulkanStagingManager::CreateNewStagingBuffer(TRefCountPtr<FVulkanBuffer>& OutBuffer)
-    {
-        LUMINA_PROFILE_SCOPE();
-        const uint32 vkCmdUpdateBufferLimit = Context->GetDevice()->GetPhysicalDeviceProperties().limits.maxUniformBufferRange;
-
-        FRHIBufferDesc Desc;
-        Desc.Size = 1024 * 1024 * 100; //100MiB temp.
-        Desc.Stride = 0;
-        Desc.Usage.SetMultipleFlags(EBufferUsageFlags::StagingBuffer, EBufferUsageFlags::CPUWritable);
-        FRHIBufferRef Buffer = Context->CreateBuffer(Desc);
-        OutBuffer = Buffer.As<FVulkanBuffer>();
-
-        return true;
-    }
-
     FVulkanRenderContext::FVulkanRenderContext()
         : CurrentFrameIndex(0)
         , Queues{}
         , VulkanInstance(nullptr)
-        , StagingManager(this)
-        , DebugUtils()
         , ShaderCompiler(nullptr)
-        , DescriptorPool()
     {
     }
 
@@ -431,6 +359,11 @@ namespace Lumina
         vkb::InstanceBuilder Builder;
         auto InstBuilder = Builder
         .set_app_name("Lumina Engine")
+        //.add_validation_feature_enable(VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT)
+        .add_validation_feature_enable(VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT)
+        //.add_validation_feature_enable(VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT)
+        //.add_validation_feature_enable(VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_RESERVE_BINDING_SLOT_EXT)
+        //.add_validation_feature_enable(VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT)
         .request_validation_layers()
         .use_default_debug_messenger()
         .set_debug_callback(VkDebugCallback)
@@ -450,7 +383,7 @@ namespace Lumina
         DebugUtils.vkCmdDebugMarkerBeginEXT = (PFN_vkCmdDebugMarkerBeginEXT)vkGetDeviceProcAddr(GetDevice()->GetDevice(), "vkCmdDebugMarkerBeginEXT");
         DebugUtils.vkCmdDebugMarkerEndEXT = (PFN_vkCmdDebugMarkerEndEXT)vkGetDeviceProcAddr(GetDevice()->GetDevice(), "vkCmdDebugMarkerEndEXT");
 
-        CommandList = CreateCommandList({ECommandQueue::Graphics});
+        CommandList = CreateCommandList(FCommandListInfo());
         
         Swapchain = Memory::New<FVulkanSwapchain>();
         Swapchain->CreateSwapchain(VulkanInstance, this, Windowing::GetPrimaryWindowHandle(), Windowing::GetPrimaryWindowHandle()->GetExtent());
@@ -458,33 +391,6 @@ namespace Lumina
         ShaderLibrary = MakeRefCount<FShaderLibrary>();
         ShaderCompiler = Memory::New<FSpirVShaderCompiler>();
         ShaderCompiler->Initialize();
-
-        for (int i = 0; i < FRAMES_IN_FLIGHT; ++i)
-        {
-            VkDescriptorPoolSize PoolSizes[] =
-            {
-                { VK_DESCRIPTOR_TYPE_SAMPLER,                       1000 },
-                { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,        1000 },
-                { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,                 1000 },
-                { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,                 1000 },
-                { VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER,          1000 },
-                { VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER,          1000 },
-                { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,                1000 },
-                { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,                1000 },
-                { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC,        1000 },
-                { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC,        1000 },
-                { VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,              1000 }
-            };
-
-            VkDescriptorPoolCreateInfo PoolInfo =  {};
-            PoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-            PoolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-            PoolInfo.maxSets = 1000;
-            PoolInfo.poolSizeCount = (uint32)std::size(PoolSizes);
-            PoolInfo.pPoolSizes = PoolSizes;
-            
-            VK_CHECK(vkCreateDescriptorPool(GetDevice()->GetDevice(), &PoolInfo, nullptr, &DescriptorPool[i]));
-        }
             
         CompileEngineShaders();
         
@@ -497,7 +403,6 @@ namespace Lumina
     {
         WaitIdle();
         
-        StagingManager.FreeAllBuffers();
         CommandList.SafeRelease();
         ShaderLibrary.SafeRelease();
         PipelineCache.ReleasePipelines();
@@ -518,12 +423,6 @@ namespace Lumina
         func(VulkanInstance, DebugUtils.DebugMessenger, nullptr);
         
         FlushPendingDeletes();
-
-        for (VkDescriptorPool Pool : DescriptorPool)
-        {
-            vkDestroyDescriptorPool(VulkanDevice->GetDevice(), Pool, nullptr);
-            Pool = VK_NULL_HANDLE;
-        }
         
         Memory::Delete(VulkanDevice);
         vkDestroyInstance(VulkanInstance, nullptr);
@@ -544,28 +443,30 @@ namespace Lumina
         VK_CHECK(vkDeviceWaitIdle(VulkanDevice->GetDevice()));
     }
 
-    void FVulkanRenderContext::FrameStart(const FUpdateContext& UpdateContext, uint8 InCurrentFrameIndex)
+    bool FVulkanRenderContext::FrameStart(const FUpdateContext& UpdateContext, uint8 InCurrentFrameIndex)
     {
         CurrentFrameIndex = InCurrentFrameIndex;
-        
-        Swapchain->AcquireNextImage();
+
+        bool bSuccess = Swapchain->AcquireNextImage();
         
         CommandList->Open();
+        
+        return bSuccess;
     }
 
-    void FVulkanRenderContext::FrameEnd(const FUpdateContext& UpdateContext)
+    bool FVulkanRenderContext::FrameEnd(const FUpdateContext& UpdateContext)
     {
-        CommandList->CopyImage(GEngine->GetEngineViewport()->GetRenderTarget(), Swapchain->GetCurrentImage());
+        CommandList->CopyImage(GEngine->GetEngineViewport()->GetRenderTarget(), {}, Swapchain->GetCurrentImage(), {});
         
         CommandList->Close();
         
         ExecuteCommandList(CommandList, 1, Q_Graphics);
         
-        Swapchain->Present();
-
-        StagingManager.ReturnAllStagingBuffers();
+        bool bSuccess = Swapchain->Present();
         
         FlushPendingDeletes();
+
+        return bSuccess;
     }
 
     FRHICommandListRef FVulkanRenderContext::CreateCommandList(const FCommandListInfo& Info)
@@ -599,7 +500,6 @@ namespace Lumina
 
     void FVulkanRenderContext::CreateDevice(vkb::Instance Instance)
     {
-
         VkPhysicalDeviceTimelineSemaphoreFeatures TimelineFeatures = {};
         TimelineFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES;
         TimelineFeatures.timelineSemaphore = VK_TRUE;
@@ -637,9 +537,7 @@ namespace Lumina
         
 
         physicalDevice.enable_extension_if_present(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-        physicalDevice.enable_extension_if_present(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
         physicalDevice.enable_extension_if_present(VK_EXT_CONSERVATIVE_RASTERIZATION_EXTENSION_NAME);
-        physicalDevice.enable_extension_if_present(VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME);
 
         vkb::DeviceBuilder deviceBuilder(physicalDevice);
         vkb::Device vkbDevice = deviceBuilder.build().value();
@@ -647,13 +545,13 @@ namespace Lumina
         
         VkDevice Device = vkbDevice.device;
         VkPhysicalDevice PhysicalDevice = physicalDevice.physical_device;
-        VulkanDevice = Memory::New<FVulkanDevice>(VulkanInstance, PhysicalDevice, Device);
+        VulkanDevice = Memory::New<FVulkanDevice>(this, VulkanInstance, PhysicalDevice, Device);
 
         if (vkbDevice.get_queue(vkb::QueueType::graphics).has_value())
         {
             VkQueue Queue = vkbDevice.get_queue(vkb::QueueType::graphics).value();
             uint32 Index = vkbDevice.get_queue_index(vkb::QueueType::graphics).value();
-            Queues[uint32(ECommandQueue::Graphics)] = Memory::New<FQueue>(VulkanDevice, Queue, Index, ECommandQueue::Graphics);
+            Queues[uint32(ECommandQueue::Graphics)] = Memory::New<FQueue>(this, Queue, Index, ECommandQueue::Graphics);
             SetVulkanObjectName("Graphics Queue", VK_OBJECT_TYPE_QUEUE, (uintptr_t)Queue);
         }
 
@@ -661,7 +559,7 @@ namespace Lumina
         {
             VkQueue Queue = vkbDevice.get_queue(vkb::QueueType::compute).value();
             uint32 Index = vkbDevice.get_queue_index(vkb::QueueType::compute).value();
-            Queues[uint32(ECommandQueue::Compute)] = Memory::New<FQueue>(VulkanDevice, Queue, Index, ECommandQueue::Compute);
+            Queues[uint32(ECommandQueue::Compute)] = Memory::New<FQueue>(this, Queue, Index, ECommandQueue::Compute);
             SetVulkanObjectName("Compute Queue", VK_OBJECT_TYPE_QUEUE, (uintptr_t)Queue);
         }
 
@@ -669,7 +567,7 @@ namespace Lumina
         {
             VkQueue Queue = vkbDevice.get_queue(vkb::QueueType::transfer).value();
             uint32 Index = vkbDevice.get_queue_index(vkb::QueueType::transfer).value();
-            Queues[uint32(ECommandQueue::Transfer)] = Memory::New<FQueue>(VulkanDevice, Queue, Index, ECommandQueue::Transfer);
+            Queues[uint32(ECommandQueue::Transfer)] = Memory::New<FQueue>(this, Queue, Index, ECommandQueue::Transfer);
             SetVulkanObjectName("Transfer Queue", VK_OBJECT_TYPE_QUEUE, (uintptr_t)Queue);
         }
     }
@@ -726,9 +624,139 @@ namespace Lumina
         return ShaderLibrary;
     }
 
+    FRHIDescriptorTableRef FVulkanRenderContext::CreateDescriptorTable(FRHIBindingLayout* InLayout)
+    {
+        return MakeRefCount<FVulkanDescriptorTable>(this, (FVulkanBindingLayout*)InLayout);
+    }
+
+    void FVulkanRenderContext::ResizeDescriptorTable(FRHIDescriptorTable* Table, uint32 NewSize, bool bKeepContents)
+    {
+        (void)Table;
+        (void)NewSize;
+        (void)bKeepContents;
+    }
+
+    bool FVulkanRenderContext::WriteDescriptorTable(FRHIDescriptorTable* Table, const FBindingSetItem& Binding)
+    {
+        FVulkanDescriptorTable* DescriptorTable = static_cast<FVulkanDescriptorTable*>(Table);
+        FVulkanBindingLayout* BindingLayout = static_cast<FVulkanBindingLayout*>(DescriptorTable->GetLayout());
+
+        TVector<VkWriteDescriptorSet> Writes;
+        TVector<VkDescriptorImageInfo> ImageWriteInfos;
+        TVector<VkDescriptorBufferInfo> BufferWriteInfos;
+        
+        if (Binding.Slot >= DescriptorTable->GetCapacity())
+        {
+            return false;
+        }
+
+
+        auto WriteDescriptorForBinding = [&] (const VkDescriptorSetLayoutBinding& LayoutBinding)
+        {
+            VkWriteDescriptorSet Write = {};
+            Write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            Write.descriptorCount = LayoutBinding.descriptorCount;
+            Write.dstArrayElement = 0;
+            Write.dstBinding = LayoutBinding.binding;
+            Write.dstSet = DescriptorTable->DescriptorSet;
+            
+            switch (Binding.Type)
+            {
+            case ERHIBindingResourceType::Texture_SRV:
+                {
+                    FVulkanImage* Image = static_cast<FVulkanImage*>(Binding.ResourceHandle);
+                    VkDescriptorImageInfo& ImageInfo = ImageWriteInfos.emplace_back();
+                    ImageInfo.imageView = Image->GetImageView();
+                    ImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                    ImageInfo.sampler = GEngine->GetEngineSubsystem<FRenderManager>()->GetLinearSampler()->GetAPIResource<VkSampler>();
+
+                    
+                    Write.pImageInfo = &ImageInfo;
+                    Write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                }
+                break;
+            case ERHIBindingResourceType::Texture_UAV:
+                {
+                    FVulkanImage* Image = static_cast<FVulkanImage*>(Binding.ResourceHandle);
+                    VkDescriptorImageInfo& ImageInfo = ImageWriteInfos.emplace_back();
+                    ImageInfo.imageView = Image->GetImageView();
+                    ImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+                    
+                    Write.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+                    Write.pImageInfo = &ImageInfo;
+                }
+                break;
+            case ERHIBindingResourceType::Buffer_CBV:
+                {
+                    FVulkanBuffer* Buffer = static_cast<FVulkanBuffer*>(Binding.ResourceHandle);
+                    VkDescriptorBufferInfo& BufferInfo = BufferWriteInfos.emplace_back();
+                    BufferInfo.buffer = Buffer->GetBuffer();
+                    BufferInfo.offset = 0;
+                    BufferInfo.range = Buffer->GetSize();
+                        
+                    Write.pBufferInfo = &BufferInfo;
+                    Write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                }
+                break;
+            case ERHIBindingResourceType::Buffer_SRV:
+                {
+                    FVulkanBuffer* Buffer = static_cast<FVulkanBuffer*>(Binding.ResourceHandle);
+                    VkDescriptorBufferInfo& BufferInfo = BufferWriteInfos.emplace_back();
+                    BufferInfo.buffer = Buffer->GetBuffer();
+                    BufferInfo.offset = 0;
+                    BufferInfo.range = Buffer->GetSize();
+                        
+                    Write.pBufferInfo = &BufferInfo;
+                    Write.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+                }
+                break;
+            case ERHIBindingResourceType::Buffer_UAV:
+                {
+                    FVulkanBuffer* Buffer = static_cast<FVulkanBuffer*>(Binding.ResourceHandle);
+                    VkDescriptorBufferInfo& BufferInfo = BufferWriteInfos.emplace_back();
+                    BufferInfo.buffer = Buffer->GetBuffer();
+                    BufferInfo.offset = 0;
+                    BufferInfo.range = Buffer->GetSize();
+                        
+                    Write.pBufferInfo = &BufferInfo;
+                    Write.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+                }
+                break;
+            }
+
+            Writes.push_back(Write);
+        };
+
+        for (uint32 BindingLocation = 0; BindingLocation < uint32(BindingLayout->Bindings.size()); BindingLocation++)
+        {
+            if (BindingLayout->BindlessDesc.Bindings[BindingLocation].Type == Binding.Type)
+            {
+                const VkDescriptorSetLayoutBinding& LayoutBinding = BindingLayout->Bindings[BindingLocation];
+                WriteDescriptorForBinding(LayoutBinding);
+            }
+        }
+        
+        vkUpdateDescriptorSets(VulkanDevice->GetDevice(), (uint32)Writes.size(), Writes.data(), 0, nullptr);
+
+        return true;
+    }
+    
     FRHIBindingLayoutRef FVulkanRenderContext::CreateBindingLayout(const FBindingLayoutDesc& Desc)
     {
-        return MakeRefCount<FVulkanBindingLayout>(VulkanDevice, Desc);
+        auto Layout = MakeRefCount<FVulkanBindingLayout>(VulkanDevice, Desc);
+        
+        Layout->Bake();
+
+        return Layout;
+    }
+
+    FRHIBindingLayoutRef FVulkanRenderContext::CreateBindlessLayout(const FBindlessLayoutDesc& Desc)
+    {
+        auto Layout = MakeRefCount<FVulkanBindingLayout>(VulkanDevice, Desc);
+        
+        Layout->Bake();
+
+        return Layout;
     }
 
     FRHIBindingSetRef FVulkanRenderContext::CreateBindingSet(const FBindingSetDesc& Desc, FRHIBindingLayout* InLayout)
@@ -748,13 +776,16 @@ namespace Lumina
 
     void FVulkanRenderContext::SetObjectName(IRHIResource* Resource, const char* Name, EAPIResourceType Type)
     {
-        VkDebugUtilsObjectNameInfoEXT NameInfo = {};
-        NameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
-        NameInfo.pObjectName = Name;
-        NameInfo.objectType = ToVkObjectType(Type);
-        NameInfo.objectHandle = reinterpret_cast<uint64>(Resource->GetAPIResource(Type));
+        if (GetDebugUtils().DebugUtilsObjectNameEXT)
+        {
+            VkDebugUtilsObjectNameInfoEXT NameInfo = {};
+            NameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+            NameInfo.pObjectName = Name;
+            NameInfo.objectType = ToVkObjectType(Type);
+            NameInfo.objectHandle = reinterpret_cast<uint64>(Resource->GetAPIResource(Type));
 
-        GetDebugUtils().DebugUtilsObjectNameEXT(GetDevice()->GetDevice(), &NameInfo);
+            GetDebugUtils().DebugUtilsObjectNameEXT(GetDevice()->GetDevice(), &NameInfo);
+        }
     }
 
     FRHIEventQueryRef FVulkanRenderContext::CreateEventQuery()
@@ -780,11 +811,6 @@ namespace Lumina
     void FVulkanRenderContext::PollEventQuery(IEventQuery* Query)
     {
         FVulkanEventQuery* VkQuery = static_cast<FVulkanEventQuery*>(Query);
-        if (VkQuery->CommandListID == 0)
-        {
-            return;
-        }
-
         FQueue* Queue = GetQueue(VkQuery->Queue);
         Queue->PollCommandList(VkQuery->CommandListID);
     }
@@ -798,7 +824,10 @@ namespace Lumina
         }
 
         FQueue* Queue = GetQueue(VkQuery->Queue);
-        Queue->WaitCommandList(VkQuery->CommandListID, UINT32_MAX);
+        bool bSuccess = Queue->WaitCommandList(VkQuery->CommandListID, UINT64_MAX);
+        Assert(bSuccess);
+        
+        (void)bSuccess;
     }
 
     FRHIBufferRef FVulkanRenderContext::CreateBuffer(const FRHIBufferDesc& Description)
@@ -882,6 +911,7 @@ namespace Lumina
     {
         PipelineCache.PostShaderRecompiled((IVulkanShader*)Shader);
     }
+    
 
     FRHIInputLayoutRef FVulkanRenderContext::CreateInputLayout(const FVertexAttributeDesc* AttributeDesc, uint32 Count)
     {
@@ -891,13 +921,16 @@ namespace Lumina
 
     void FVulkanRenderContext::SetVulkanObjectName(FString Name, VkObjectType ObjectType, uint64 Handle)
     {
-        VkDebugUtilsObjectNameInfoEXT NameInfo = {};
-        NameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
-        NameInfo.objectType = ObjectType;
-        NameInfo.objectHandle = Handle;
-        NameInfo.pObjectName = Name.c_str();
+        if (DebugUtils.DebugUtilsObjectNameEXT)
+        {
+            VkDebugUtilsObjectNameInfoEXT NameInfo = {};
+            NameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+            NameInfo.objectType = ObjectType;
+            NameInfo.objectHandle = Handle;
+            NameInfo.pObjectName = Name.c_str();
 
-        DebugUtils.DebugUtilsObjectNameEXT(VulkanDevice->GetDevice(), &NameInfo);
+            DebugUtils.DebugUtilsObjectNameEXT(VulkanDevice->GetDevice(), &NameInfo);
+        }
     }
 
     FVulkanRenderContextFunctions& FVulkanRenderContext::GetDebugUtils()

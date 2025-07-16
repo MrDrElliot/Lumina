@@ -168,6 +168,11 @@ namespace Lumina::Memory
         Assert(Destination != nullptr)
     }
     
+    LUMINA_API NODISCARD inline void Memcpy(void* Destination, const void* Source, uint64 SrcSize)
+    {
+        memcpy(Destination, Source, SrcSize);
+        Assert(Destination != nullptr)
+    }
 
     LUMINA_API NODISCARD inline void* Realloc(void* pMemory, size_t newSize, size_t originalAlignment = DEFAULT_ALIGNMENT)
     {
@@ -179,7 +184,7 @@ namespace Lumina::Memory
     LUMINA_API inline void Free(void*& Memory)
     {
         LUMINA_PROFILE_FREE(Memory);
-        rpfree((uint8_t*)Memory);
+        rpfree(Memory);
         Memory = nullptr;
     }
 

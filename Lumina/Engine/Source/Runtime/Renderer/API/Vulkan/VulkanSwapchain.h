@@ -33,27 +33,26 @@ namespace Lumina
         
         TRefCountPtr<FVulkanImage> GetCurrentImage() const;
 
-        void AcquireNextImage();
-        void Present();
+        bool AcquireNextImage();
+        bool Present();
         
     private:
 
         uint64                                  AcquireSemaphoreIndex = 0;
+        uint32                                  CurrentImageIndex = 0;
         
         bool                                    bNeedsResize = false;
-        uint32                                  CurrentImageIndex = 0;
-        VkSurfaceKHR                            Surface;
-        VkFormat                                Format;
+        VkSurfaceKHR                            Surface = nullptr;
+        VkFormat                                Format = VK_FORMAT_MAX_ENUM;
         FIntVector2D                            SwapchainExtent;
                                                 
         VkSwapchainKHR                          Swapchain = nullptr;
-        VkSurfaceFormatKHR                      SurfaceFormat;
+        VkSurfaceFormatKHR                      SurfaceFormat = {};
         VkPresentModeKHR                        CurrentPresentMode = VK_PRESENT_MODE_FIFO_KHR;
         
         TVector<TRefCountPtr<FVulkanImage>>     SwapchainImages;
         TVector<VkSemaphore>                    PresentSemaphores;
         TVector<VkSemaphore>                    AcquireSemaphores;
-        TVector<VkFence>                        Fences;
         FVulkanRenderContext*                   Context = nullptr;
 
         TQueue<FRHIEventQueryRef>               FramesInFlight;

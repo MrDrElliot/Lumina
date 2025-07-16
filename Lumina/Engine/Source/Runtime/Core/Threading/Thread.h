@@ -10,7 +10,7 @@ namespace Lumina
     using FThread =             std::thread;
     using FMutex =              std::mutex;
     using FRecursiveMutex =     std::recursive_mutex;
-    using FScopeLock =          std::lock_guard<FMutex>;
+    using FScopeLock =          std::scoped_lock<FMutex>;
 
     // ------------------------------------------------------------------------------
     
@@ -35,7 +35,7 @@ namespace Lumina
 
         LUMINA_API void SetRenderThread(std::thread::id ID);
 
-        LUMINA_API void Sleep(uint64 Miliseconds);
+        LUMINA_API void Sleep(uint64 Milliseconds);
         
         LUMINA_API void Initialize(const char* MainThreadName);
         LUMINA_API void Shutdown();

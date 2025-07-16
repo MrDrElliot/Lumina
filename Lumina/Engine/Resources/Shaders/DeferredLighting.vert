@@ -1,6 +1,8 @@
 #version 450
 #pragma shader_stage(vertex)
 
+#include "Includes/SceneGlobals.glsl"
+
 layout(location = 0) out vec2 vUV;
 
 void main()

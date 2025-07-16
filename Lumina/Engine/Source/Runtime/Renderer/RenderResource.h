@@ -79,7 +79,7 @@ enum ERHIResourceType : uint8
 	RRT_Viewport,
 	RRT_StagingBuffer,
 	RRT_CommandList,
-
+	RRT_DescriptorTable,
 
 	RRT_Num
 };
@@ -89,7 +89,6 @@ enum class ERHIBindingResourceType : uint8
 	// SRV (Shader Resource View) Types.
 	Texture_SRV,
 	Buffer_SRV,
-	Buffer_Dynamic,
 
 	// UAV (Unordered Access View) Types.
 	Texture_UAV,
@@ -98,6 +97,8 @@ enum class ERHIBindingResourceType : uint8
 	// Constant Buffer (could be a uniform buffer)
 	Buffer_CBV,
 	Buffer_Uniform = Buffer_CBV,
+	Buffer_Uniform_Dynamic,
+	Buffer_Storage_Dynamic,
 
 	// Push Constant Ranges
 	PushConstants,
@@ -447,6 +448,9 @@ namespace Lumina
 		uint64 Size = 0;
 		uint32 Stride = 0;
 		uint32 MaxVersions = 0;
+		FString DebugName;
+		EResourceStates InitialState = EResourceStates::Common;
+		bool bKeepInitialState = false;
 		TBitFlags<EBufferUsageFlags> Usage;
 
 		FRHIBufferDesc() = default;
@@ -475,14 +479,15 @@ namespace Lumina
 	};
 
 	
-	class LUMINA_API FRHIBuffer : public IRHIResource, public IAccessableRHIResource
+	class LUMINA_API FRHIBuffer : public IRHIResource, public FBufferStateExtension
 	{
 	public:
 
 		RENDER_RESOURCE(RRT_Buffer)
 
 		FRHIBuffer(const FRHIBufferDesc& InDesc)
-			: Description(InDesc)
+			: FBufferStateExtension(Description)
+			, Description(InDesc)
 		{}
 		
 		FORCEINLINE const FRHIBufferDesc& GetDescription() const { return Description; }
@@ -505,7 +510,8 @@ namespace Lumina
 
 
 	//-------------------------------------------------------------------------------------------------------------------
-
+	
+	
 	/** 
 	 * Descriptor used to define the properties of an image (texture) resource.
 	 * This struct specifies how an image should be created, including its format,
@@ -543,6 +549,17 @@ namespace Lumina
 		/** The format of the image (e.g., RGBA8, BC7 compressed, etc.). */
 		EFormat Format = EFormat::UNKNOWN;
 
+		/** Debug Name of this texture */
+		FString DebugName;
+
+		/** Initial state of this image. */
+		EResourceStates InitialState = EResourceStates::Unknown;
+		
+		// If keepInitialState is true, command lists that use the texture will automatically
+		// begin tracking the texture from the initial state and transition it to the initial state 
+		// on command list close.
+		bool bKeepInitialState = false;
+
 		friend FArchive& operator << (FArchive& Ar, FRHIImageDesc& Data)
 		{
 			Ar << Data.Flags;
@@ -554,12 +571,74 @@ namespace Lumina
 			Ar << Data.NumSamples;
 			Ar << Data.Dimension;
 			Ar << Data.Format;
-
+			Ar << Data.DebugName;
+			Ar << Data.InitialState;
+			Ar << Data.bKeepInitialState;
 			return Ar;
 		}
 		
 	};
 
+	// Describes a 2D or 3D section of a single mip level, single array slice of a texture.
+	struct FTextureSlice
+	{
+		uint32 X = 0;
+		uint32 Y = 0;
+		uint32 Z = 0;
+
+		uint32 MipLevel = 0;
+		uint32 ArraySlice = 0;
+
+		NODISCARD LUMINA_API FTextureSlice Resolve(const FRHIImageDesc& desc) const;
+
+		constexpr FTextureSlice& SetOrigin(uint32 vx = 0, uint32 vy = 0, uint32 vz = 0) { X = vx; Y = vy; Z = vz; return *this; }
+		constexpr FTextureSlice& SetMipLevel(uint32 level) { MipLevel = level; return *this; }
+		constexpr FTextureSlice& SetArraySlice(uint32 slice) { ArraySlice = slice; return *this; }
+	};
+
+	struct FTextureSubresourceSet
+    {
+        static constexpr uint32 AllMipLevels = uint32(-1);
+        static constexpr uint32 AllArraySlices = uint32(-1);
+        
+        uint32 BaseMipLevel = 0;
+        uint32 NumMipLevels = 1;
+        uint32 BaseArraySlice = 0;
+        uint32 NumArraySlices = 1;
+
+        FTextureSubresourceSet() = default;
+
+        FTextureSubresourceSet(uint32 _baseMipLevel, uint32 _numMipLevels, uint32 _baseArraySlice, uint32 _numArraySlices)
+            : BaseMipLevel(_baseMipLevel)
+            , NumMipLevels(_numMipLevels)
+            , BaseArraySlice(_baseArraySlice)
+            , NumArraySlices(_numArraySlices)
+        {}
+
+        NODISCARD LUMINA_API FTextureSubresourceSet Resolve(const FRHIImageDesc& Desc, bool bSingleMipLevel) const;
+        NODISCARD LUMINA_API bool IsEntireTexture(const FRHIImageDesc& Desc) const;
+
+        bool operator ==(const FTextureSubresourceSet& other) const
+        {
+            return BaseMipLevel == other.BaseMipLevel &&
+                NumMipLevels == other.NumMipLevels &&
+                BaseArraySlice == other.BaseArraySlice &&
+                NumArraySlices == other.NumArraySlices;
+        }
+        bool operator !=(const FTextureSubresourceSet& other) const { return !(*this == other); }
+
+        constexpr FTextureSubresourceSet& SetBaseMipLevel(uint32 value) { BaseMipLevel = value; return *this; }
+        constexpr FTextureSubresourceSet& SetNumMipLevels(uint32 value) { NumMipLevels = value; return *this; }
+        constexpr FTextureSubresourceSet& SetMipLevels(uint32 base, uint32 num) { BaseMipLevel = base; NumMipLevels = num; return *this; }
+        constexpr FTextureSubresourceSet& SetBaseArraySlice(uint32 value) { BaseArraySlice = value; return *this; }
+        constexpr FTextureSubresourceSet& SetNumArraySlices(uint32 value) { NumArraySlices = value; return *this; }
+        constexpr FTextureSubresourceSet& SetArraySlices(uint32 base, uint32 num) { BaseArraySlice = base; NumArraySlices = num; return *this; }
+
+        // see the bottom of this file for a specialization of std::hash<TextureSubresourceSet>
+    };
+
+    static const FTextureSubresourceSet AllSubresources = FTextureSubresourceSet(0, FTextureSubresourceSet::AllMipLevels, 0, FTextureSubresourceSet::AllArraySlices);
+	
 	enum class ESamplerAddressMode : uint8
 	{
 		// D3D names
@@ -624,14 +703,15 @@ namespace Lumina
 		
 	};
 	
-	class LUMINA_API FRHIImage : public IRHIResource, public IAccessableRHIResource
+	class LUMINA_API FRHIImage : public IRHIResource, public FTextureStateExtension
 	{
 	public:
 
 		RENDER_RESOURCE(RRT_Image)
 
 		FRHIImage(const FRHIImageDesc& InDesc)
-			: Description(InDesc)
+			: FTextureStateExtension(Description)
+			, Description(InDesc)
 		{}
 		
 		FORCEINLINE const FRHIImageDesc& GetDescription() const { return Description; }
@@ -798,7 +878,7 @@ namespace Lumina
 		constexpr FVertexAttributeDesc& SetElementStride(uint32 value) { ElementStride = value; return *this; }
 		constexpr FVertexAttributeDesc& SetIsInstanced(bool value) { bInstanced = value; return *this; }
 	};
-
+	
 	class LUMINA_API IRHIInputLayout : public IRHIResource
 	{
 	public:
@@ -1023,6 +1103,29 @@ namespace Lumina
         
     };
 
+	struct FBufferRange
+	{
+		uint64 ByteOffset = 0;
+		uint64 ByteSize = 0;
+        
+		FBufferRange() = default;
+
+		FBufferRange(uint64 _byteOffset, uint64 _byteSize)
+			: ByteOffset(_byteOffset)
+			, ByteSize(_byteSize)
+		{ }
+
+		NODISCARD LUMINA_API FBufferRange Resolve(const FRHIBufferDesc& Desc) const;
+		NODISCARD constexpr bool IsEntireBuffer(const FRHIBufferDesc& desc) const { return (ByteOffset == 0) && (ByteSize == ~0ull || ByteSize == desc.Size); }
+		constexpr bool operator == (const FBufferRange& other) const { return ByteOffset == other.ByteOffset && ByteSize == other.ByteSize; }
+
+		constexpr FBufferRange& SetByteOffset(uint64 value) { ByteOffset = value; return *this; }
+		constexpr FBufferRange& SetByteSize(uint64 value) { ByteSize = value; return *this; }
+	};
+
+	static const FBufferRange EntireBuffer = FBufferRange(0, ~0ull);
+
+
 	struct LUMINA_API FSinglePassStereoState
 	{
 		bool bEnabled = false;
@@ -1063,7 +1166,8 @@ namespace Lumina
 		ERHIBindingResourceType Type	: 8;
 		uint16 Size						: 16;
 	};
-
+	
+	
 	struct LUMINA_API FBindingLayoutDesc
 	{
 		TBitFlags<ERHIShaderType> StageFlags;
@@ -1077,77 +1181,120 @@ namespace Lumina
 		FBindingLayoutDesc& AddItem(const FBindingLayoutItem& Item) { Bindings.push_back(Item); return *this; }
 	};
 
+	struct LUMINA_API FBindlessLayoutDesc
+	{
+		TBitFlags<ERHIShaderType> StageFlags;
+		uint32 FirstSlot = 0;
+		uint32 MaxCapacity = 0;
+		TFixedVector<FBindingLayoutItem, MaxBindingsPerLayout> Bindings;
+
+		FBindlessLayoutDesc& SetVisibility(ERHIShaderType Value) { StageFlags.SetFlag(Value); return *this; }
+		FBindlessLayoutDesc& SetFirstSlot(uint32 Value) { FirstSlot = Value; return *this; }
+		FBindlessLayoutDesc& SetMaxCapacity(uint32 Value) { MaxCapacity = Value; return *this; }
+		FBindlessLayoutDesc& AddBinding(const FBindingLayoutItem& value) { Bindings.push_back(value); return *this; }
+
+	};
+	
 	struct LUMINA_API FBindingSetItem
 	{
+		FBindingSetItem() { }
+		
 		IRHIResource* ResourceHandle;
 		uint32 Slot;
 		uint32 ArrayElement;
 		ERHIBindingResourceType Type	: 8;
-		
+		EImageDimension Dimension		: 8;
+		EFormat Format					: 8;
 		uint8 bUnused					: 8;
+		uint32 bUnused2; // Padding
 
 		union 
 		{
-			uint64		RawData[2];
+			FTextureSubresourceSet Subresources; // valid for Texture_SRV, Texture_UAV
+			FBufferRange Range; // valid for Buffer_SRV, Buffer_UAV, ConstantBuffer
+			uint64 RawData[2];
 		};
 
+		// verify that the `subresources` and `range` have the same size and are covered by `rawData`
+		static_assert(sizeof(FTextureSubresourceSet) == 16, "sizeof(TextureSubresourceSet) is supposed to be 16 bytes");
+		static_assert(sizeof(FBufferRange) == 16, "sizeof(BufferRange) is supposed to be 16 bytes");
+		
 		// Creates a Shader Resource View (SRV) binding for a buffer.
 		// Typically used for read-only access to structured or byte-address buffers.
-		static FBindingSetItem BufferSRV(uint32 Slot, FRHIBuffer* Buffer)
+		static FBindingSetItem BufferSRV(uint32 Slot, FRHIBuffer* Buffer, EFormat Format = EFormat::UNKNOWN, FBufferRange Range = EntireBuffer)
 		{
+			bool bIsDynamic = Buffer->GetDescription().Usage.IsFlagSet(BUF_Dynamic);
 			FBindingSetItem Result;
-			Result.bUnused = false;
-			Result.ArrayElement = 0;
-			Result.Type = ERHIBindingResourceType::Buffer_SRV;
-			Result.Slot = Slot;
+			Result.Type = bIsDynamic ? ERHIBindingResourceType::Buffer_Storage_Dynamic : ERHIBindingResourceType::Buffer_SRV;
 			Result.ResourceHandle = Buffer;
-			memset(Result.RawData, 0, std::size(Result.RawData));
+			Result.Dimension = EImageDimension::Unknown;
+			Result.Format = Format;
+			Result.ArrayElement = 0;
+			Result.Slot = Slot;
+			Result.RawData[0] = 0;
+			Result.RawData[1] = 0;
+			Result.bUnused = 0;
+			Result.bUnused2 = 0;
 			
 			return Result;
 		}
 
 		// Creates an Unordered Access View (UAV) binding for a buffer.
 		// Used for read-write access in shaders (e.g. compute shaders).
-		static FBindingSetItem BufferUAV(uint32 Slot, FRHIBuffer* Buffer)
+		static FBindingSetItem BufferUAV(uint32 Slot, FRHIBuffer* Buffer, EFormat Format = EFormat::UNKNOWN, FBufferRange Range = EntireBuffer)
 		{
+			bool bIsDynamic = Buffer->GetDescription().Usage.IsFlagSet(BUF_Dynamic);
 			FBindingSetItem Result;
-			Result.bUnused = false;
-			Result.ArrayElement = 0;
-			Result.Type = ERHIBindingResourceType::Buffer_UAV;
-			Result.Slot = Slot;
+			Result.Type = bIsDynamic ? ERHIBindingResourceType::Buffer_Storage_Dynamic : ERHIBindingResourceType::Buffer_UAV;
 			Result.ResourceHandle = Buffer;
-			memset(Result.RawData, 0, std::size(Result.RawData));
+			Result.Range = Range;
+			Result.Dimension = EImageDimension::Unknown;
+			Result.Format = Format;
+			Result.ArrayElement = 0;
+			Result.Slot = Slot;
+			Result.RawData[0] = 0;
+			Result.RawData[1] = 0;
+			Result.bUnused = 0;
+			Result.bUnused2 = 0;
 			
 			return Result;
 		}
 
 		// Creates a Constant Buffer View (CBV) binding for a buffer.
 		// Used to bind uniform buffers (read-only, small constant data).
-		static FBindingSetItem BufferCBV(uint32 Slot, FRHIBuffer* Buffer)
+		static FBindingSetItem BufferCBV(uint32 Slot, FRHIBuffer* Buffer, FBufferRange Range = EntireBuffer)
 		{
 			bool bIsDynamic = Buffer->GetDescription().Usage.IsFlagSet(BUF_Dynamic);
 			FBindingSetItem Result;
-			Result.bUnused = false;
-			Result.ArrayElement = 0;
-			Result.Type = bIsDynamic ? ERHIBindingResourceType::Buffer_Dynamic : ERHIBindingResourceType::Buffer_CBV;
-			Result.Slot = Slot;
+			Result.Type = bIsDynamic ? ERHIBindingResourceType::Buffer_Uniform_Dynamic : ERHIBindingResourceType::Buffer_CBV;
 			Result.ResourceHandle = Buffer;
-			memset(Result.RawData, 0, std::size(Result.RawData));
+			Result.Range = Range;
+			Result.Dimension = EImageDimension::Unknown;
+			Result.Format = EFormat::UNKNOWN;
+			Result.ArrayElement = 0;
+			Result.Slot = Slot;
+			Result.RawData[0] = 0;
+			Result.RawData[1] = 0;
+			Result.bUnused = 0;
+			Result.bUnused2 = 0;
 			
 			return Result;
 		}
 
 		// Creates a Shader Resource View (SRV) binding for a texture/image.
 		// Used to read from a texture in shaders (e.g. sampling or texel fetch).
-		static FBindingSetItem TextureSRV(uint32 Slot, FRHIImage* Image)
+		static FBindingSetItem TextureSRV(uint32 Slot, FRHIImage* Image, EFormat Format = EFormat::UNKNOWN, FTextureSubresourceSet Subresources = AllSubresources, EImageDimension Dimension = EImageDimension::Unknown)
 		{
 			FBindingSetItem Result;
-			Result.bUnused = false;
+			Result.Slot = Slot;
 			Result.ArrayElement = 0;
 			Result.Type = ERHIBindingResourceType::Texture_SRV;
-			Result.Slot = Slot;
 			Result.ResourceHandle = Image;
-			memset(Result.RawData, 0, std::size(Result.RawData));
+			Result.Format = Format;
+			Result.Dimension = Dimension;
+			Result.Subresources = Subresources;
+			Result.bUnused = 0;
+			Result.bUnused2 = 0;
 			
 			return Result;
 		}
@@ -1155,15 +1302,20 @@ namespace Lumina
 		
 		// Creates an Unordered Access View (UAV) binding for a texture/image.
 		// Used for read-write access to a texture (e.g. compute shader writes).
-		static FBindingSetItem TextureUAV(uint32 Slot, FRHIImage* Image)
+		static FBindingSetItem TextureUAV(uint32 Slot, FRHIImage* Image, EFormat Format = EFormat::UNKNOWN, FTextureSubresourceSet Subresources =
+			FTextureSubresourceSet(0, 1, 0, FTextureSubresourceSet::AllArraySlices),
+			EImageDimension Dimension = EImageDimension::Unknown)
 		{
 			FBindingSetItem Result;
-			Result.bUnused = false;
+			Result.Slot = Slot;
 			Result.ArrayElement = 0;
 			Result.Type = ERHIBindingResourceType::Texture_UAV;
-			Result.Slot = Slot;
 			Result.ResourceHandle = Image;
-			memset(Result.RawData, 0, std::size(Result.RawData));
+			Result.Format = Format;
+			Result.Dimension = Dimension;
+			Result.Subresources = Subresources;
+			Result.bUnused = 0;
+			Result.bUnused2 = 0;
 			
 			return Result;
 		}
@@ -1216,6 +1368,8 @@ namespace Lumina
 	public:
 		
 		NODISCARD virtual const FBindingLayoutDesc* GetDesc() const = 0;
+		NODISCARD virtual const FBindlessLayoutDesc* GetBindlessDesc() const = 0;
+
 	};
 
 	class LUMINA_API FRHIBindingSet : public IRHIResource
@@ -1333,26 +1487,6 @@ namespace Lumina
 		NODISCARD virtual const FComputePipelineDesc& GetDesc() const = 0;
 		
 	};
-
-
-	struct LUMINA_API FGraphicsState
-	{
-
-		FRHIGraphicsPipeline*	Pipeline;
-		FRHIViewport*			Viewport;
-
-		FGraphicsState& SetPipeline(FRHIGraphicsPipeline* InPipeline) { Pipeline = InPipeline; return *this; }
-		FGraphicsState& SetViewport(FRHIViewport* InViewport) { Viewport = InViewport; return *this; }
-		
-	};
-
-	struct LUMINA_API FComputeState
-	{
-		FRHIComputePipeline*	Pipeline;
-
-		FComputeState& SetPipeline(FRHIComputePipeline* InPipeline) { Pipeline = InPipeline; return *this; }
-	};
-	
 	
 }
 

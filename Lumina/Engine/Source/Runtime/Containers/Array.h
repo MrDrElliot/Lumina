@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Core/DisableAllWarnings.h"
+#include "EASTL/list.h"
 #include "Platform/GenericPlatform.h"
 
 PRAGMA_DISABLE_ALL_WARNINGS
@@ -32,8 +33,9 @@ namespace Lumina
                                                                                         
     template<typename K, typename V> using TUnorderedMap =                              eastl::unordered_map<K, V>;
     template<typename K, typename V> using TOrderedMap =                                eastl::map<K, V>;
-    template<typename K, typename V> using THashMap =                                   eastl::hash_map<K, V>;
+    template<typename K, typename V, typename H = eastl::hash<K>, typename E = eastl::equal_to<K>> using THashMap =           eastl::hash_map<K, V, H, E>;
     template<typename K, typename V> using TPair =                                      eastl::pair<K, V>;
+    template<typename T> using TList =                                                  eastl::list<T>;
     template<typename T> using TSet =                                                   eastl::set<T>;
     template<typename T> using THashSet =                                               eastl::hash_set<T>;
     template<typename T> using TUnorderedSet =                                          eastl::unordered_set<T>;

@@ -5,6 +5,11 @@
 
 namespace Lumina
 {
+    class FRHIDescriptorTable;
+}
+
+namespace Lumina
+{
     class IEventQuery;
 }
 
@@ -46,5 +51,6 @@ namespace Lumina
     using FRHIBindingSetRef         = TRefCountPtr<FRHIBindingSet>;
     using FRHIInputLayoutRef        = TRefCountPtr<IRHIInputLayout>;
     using FRHIShaderLibraryRef      = TRefCountPtr<FShaderLibrary>;
+    using FRHIDescriptorTableRef    = TRefCountPtr<FRHIDescriptorTable>;
 
 }

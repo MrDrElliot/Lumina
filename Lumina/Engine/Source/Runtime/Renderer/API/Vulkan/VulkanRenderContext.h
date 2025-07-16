@@ -27,10 +27,10 @@ namespace Lumina
 
     struct FVulkanRenderContextFunctions
     {
-        VkDebugUtilsMessengerEXT DebugMessenger;
-        PFN_vkSetDebugUtilsObjectNameEXT DebugUtilsObjectNameEXT;
-        PFN_vkCmdDebugMarkerBeginEXT vkCmdDebugMarkerBeginEXT;
-        PFN_vkCmdDebugMarkerEndEXT vkCmdDebugMarkerEndEXT;
+        VkDebugUtilsMessengerEXT DebugMessenger = nullptr;
+        PFN_vkSetDebugUtilsObjectNameEXT DebugUtilsObjectNameEXT = nullptr;
+        PFN_vkCmdDebugMarkerBeginEXT vkCmdDebugMarkerBeginEXT = nullptr;
+        PFN_vkCmdDebugMarkerEndEXT vkCmdDebugMarkerEndEXT = nullptr;
     };
     
     class FFencePool : public IDeviceChild
@@ -80,26 +80,8 @@ namespace Lumina
     class FQueue : public IDeviceChild
     {
     public:
-
-        FQueue(FVulkanDevice* InDevice, VkQueue InQueue, uint32 InQueueFamilyIndex, ECommandQueue InType)
-            : IDeviceChild(InDevice)
-            , Type(InType)
-            , CommandPool(nullptr)
-            , Queue(InQueue)
-            , QueueFamilyIndex(InQueueFamilyIndex)
-        {
-            VkSemaphoreTypeCreateInfo TimelineInfo = {};
-            TimelineInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO;
-            TimelineInfo.semaphoreType = VK_SEMAPHORE_TYPE_TIMELINE;
-            TimelineInfo.initialValue = 0;
-
-            VkSemaphoreCreateInfo CreateInfo = {};
-            CreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-            CreateInfo.pNext = &TimelineInfo;
-
-            VK_CHECK(vkCreateSemaphore(InDevice->GetDevice(), &CreateInfo, nullptr, &TimelineSemaphore));
-        }
-
+        
+        FQueue(FVulkanRenderContext* InRenderContext, VkQueue InQueue, uint32 InQueueFamilyIndex, ECommandQueue InType);
         ~FQueue() override;
         
         TRefCountPtr<FTrackedCommandBuffer> GetOrCreateCommandBuffer();
@@ -109,6 +91,7 @@ namespace Lumina
         uint64 Submit(ICommandList* CommandLists, uint32 NumCommandLists);
 
         void WaitIdle();
+        uint64 UpdateLastFinishID();
         bool PollCommandList(uint64 CommandListID);
         bool WaitCommandList(uint64 CommandListID, uint64 Timeout);
         
@@ -134,31 +117,6 @@ namespace Lumina
         TFixedVector<TRefCountPtr<FTrackedCommandBuffer>, 4> CommandBuffersInFlight;
         TQueue<TRefCountPtr<FTrackedCommandBuffer>> CommandBufferPool;
     };
-
-    class FVulkanStagingManager
-    {
-    public:
-
-        FVulkanStagingManager(FVulkanRenderContext* InContext)
-            :Context(InContext)
-        {}
-
-        bool GetStagingBuffer(TRefCountPtr<FVulkanBuffer>& OutBuffer);
-        void FreeStagingBuffer(TRefCountPtr<FVulkanBuffer> InBuffer);
-
-        void ReturnAllStagingBuffers();
-
-        void FreeAllBuffers();
-    private:
-
-        bool CreateNewStagingBuffer(TRefCountPtr<FVulkanBuffer>& OutBuffer);
-
-    private:
-
-        FVulkanRenderContext* Context = nullptr;
-        TStack<TRefCountPtr<FVulkanBuffer>> BufferPool;
-        TVector<TRefCountPtr<FVulkanBuffer>> InFlightBuffers;
-    };
     
     class FVulkanRenderContext : public IRenderContext
     {
@@ -174,8 +132,8 @@ namespace Lumina
 
         void WaitIdle() override;
         
-        void FrameStart(const FUpdateContext& UpdateContext, uint8 InCurrentFrameIndex) override;
-        void FrameEnd(const FUpdateContext& UpdateContext) override;
+        bool FrameStart(const FUpdateContext& UpdateContext, uint8 InCurrentFrameIndex) override;
+        bool FrameEnd(const FUpdateContext& UpdateContext) override;
 
         FORCEINLINE FQueue* GetQueue(ECommandQueue Type) const { return Queues[(uint32)Type]; }
 
@@ -227,8 +185,12 @@ namespace Lumina
         
         //-------------------------------------------------------------------------------------
 
+        NODISCARD FRHIDescriptorTableRef CreateDescriptorTable(FRHIBindingLayout* InLayout) override;
+        void ResizeDescriptorTable(FRHIDescriptorTable* Table, uint32 NewSize, bool bKeepContents) override;
+        bool WriteDescriptorTable(FRHIDescriptorTable* Table, const FBindingSetItem& Binding) override;
         NODISCARD FRHIInputLayoutRef CreateInputLayout(const FVertexAttributeDesc* AttributeDesc, uint32 Count) override;
         NODISCARD FRHIBindingLayoutRef CreateBindingLayout(const FBindingLayoutDesc& Desc) override;
+        NODISCARD FRHIBindingLayoutRef CreateBindlessLayout(const FBindlessLayoutDesc& Desc) override;
         NODISCARD FRHIBindingSetRef CreateBindingSet(const FBindingSetDesc& Desc, FRHIBindingLayout* InLayout) override;
         NODISCARD FRHIComputePipelineRef CreateComputePipeline(const FComputePipelineDesc& Desc) override;
         NODISCARD FRHIGraphicsPipelineRef CreateGraphicsPipeline(const FGraphicsPipelineDesc& Desc) override;
@@ -237,11 +199,7 @@ namespace Lumina
         //-------------------------------------------------------------------------------------
 
         void SetObjectName(IRHIResource* Resource, const char* Name, EAPIResourceType Type) override;
-
-        FORCEINLINE FVulkanStagingManager& GetStagingManager() { return StagingManager; }
-
-        INLINE VkDescriptorPool GetDescriptorPool() const { return DescriptorPool[CurrentFrameIndex]; }
-
+        
         void FlushPendingDeletes() override;
         
         void SetVulkanObjectName(FString Name, VkObjectType ObjectType, uint64 Handle);
@@ -260,14 +218,11 @@ namespace Lumina
         
         FVulkanSwapchain*                               Swapchain = nullptr;
         FVulkanDevice*                                  VulkanDevice = nullptr;
-        FVulkanStagingManager                           StagingManager;
         FVulkanRenderContextFunctions                   DebugUtils;
 
         
         FSpirVShaderCompiler*                           ShaderCompiler;
         FRHIShaderLibraryRef                            ShaderLibrary;
-
-        TArray<VkDescriptorPool, FRAMES_IN_FLIGHT>      DescriptorPool;
     };
     
 }

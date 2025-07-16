@@ -12,7 +12,28 @@ namespace Lumina
 
     VkImageLayout ConvertRHIAccessToVkImageLayout(ERHIAccess Access);
 
+    struct FResourceStateMapping
+    {
+        EResourceStates State;
+        VkPipelineStageFlags StageFlags;
+        VkAccessFlags AccessMask;
+        VkImageLayout ImageLayout;
+        FResourceStateMapping(EResourceStates InState, VkPipelineStageFlags InStageFlags, VkAccessFlags InAccessMask, VkImageLayout InImageLayout):
+            State(InState), StageFlags(InStageFlags), AccessMask(InAccessMask), ImageLayout(InImageLayout)
+        {}
+        
+    };
 
+    struct FResourceStateMapping2 // for use with KHR_synchronization2
+    {
+            EResourceStates State;
+            VkPipelineStageFlags2 stageFlags;
+            VkAccessFlags2 accessMask;
+            VkImageLayout imageLayout;
+            FResourceStateMapping2(EResourceStates InState, VkPipelineStageFlags2 InStageFlags, VkAccessFlags2 InAccessMask, VkImageLayout ImageLayout) :
+                State(InState), stageFlags(InStageFlags), accessMask(InAccessMask), imageLayout(ImageLayout)
+        {}
+    };
     
     class FVulkanCommandList : public ICommandList
     {
@@ -20,7 +41,7 @@ namespace Lumina
         
         
         FVulkanCommandList(FVulkanRenderContext* InContext, const FCommandListInfo& InInfo)
-            : GraphicsState()
+            : UploadManager(MakeUniquePtr<FUploadManager>(InContext, InInfo.UploadChunkSize, 0, false))
             , ComputeState()
             , RenderContext(InContext)
             , Info(InInfo)
@@ -33,7 +54,8 @@ namespace Lumina
         void Close() override;
         void Executed(FQueue* Queue, uint64 SubmissionID) override;
 
-        void CopyImage(FRHIImage* Src, FRHIImage* Dst) override;
+        
+        void CopyImage(FRHIImage* Src, const FTextureSlice& SrcSlice, FRHIImage* Dst, const FTextureSlice& DstSlice) override;
         void WriteImage(FRHIImage* Dst, uint32 ArraySlice, uint32 MipLevel, const void* Data, SIZE_T RowPitch, SIZE_T DepthPitch) override;
 
         void CopyBuffer(FRHIBuffer* Source, uint64 SrcOffset, FRHIBuffer* Destination, uint64 DstOffset, uint64 CopySize) override;
@@ -42,8 +64,18 @@ namespace Lumina
         void FlushDynamicBufferWrites();
         void SubmitDynamicBuffers(uint64 RecordingID, uint64 SubmittedID);
 
-        void SetRequiredImageAccess(FRHIImage* Image, ERHIAccess Access) override;
-        void SetRequiredBufferAccess(FRHIBuffer* Buffer, ERHIAccess Access) override;
+        void SetPermanentImageState(FRHIImage* Image,EResourceStates StateBits) override;
+        void SetPermanentBufferState(FRHIBuffer* Buffer, EResourceStates StateBits) override;
+
+        void BeginTrackingImageState(FRHIImage* Image, FTextureSubresourceSet Subresources, EResourceStates StateBits) override;
+        void BeginTrackingBufferState(FRHIBuffer* Buffer, EResourceStates StateBits) override;
+
+        void SetImageState(FRHIImage* Image, FTextureSubresourceSet Subresources, EResourceStates StateBits) override;
+        void SetBufferState(FRHIBuffer* Buffer, EResourceStates StateBits) override;
+        
+        EResourceStates GetImageSubresourceState(FRHIImage* Image, uint32 ArraySlice, uint32 MipLevel) override;
+        EResourceStates GetBufferState(FRHIBuffer* Buffer) override;
+        
         void CommitBarriers() override;
         void SetResourceStatesForBindingSet(FRHIBindingSet* BindingSet) override;
 
@@ -54,7 +86,7 @@ namespace Lumina
         void EndRenderPass() override;
         void ClearImageColor(FRHIImage* Image, const FColor& Color) override;
 
-        void BindBindingSets(TVector<FRHIBindingSet*> BindingSets, ERHIBindingPoint BindPoint) override;
+        void BindBindingSets(ERHIBindingPoint BindPoint, TVector<TPair<FRHIBindingSet*, uint32>> BindingSets) override;
 
         void SetPushConstants(const void* Data, SIZE_T ByteSize) override;
 
@@ -69,7 +101,14 @@ namespace Lumina
         void Dispatch(uint32 GroupCountX, uint32 GroupCountY, uint32 GroupCountZ) override;
 
 
+        void CommitBarriersInternal();
 
+        void TrackResourcesAndBarriers();
+
+        void RequireTextureState(FRHIImage* Texture, FTextureSubresourceSet Subresources, EResourceStates StateBits);
+
+        void RequireBufferState(FRHIBuffer* Buffer, EResourceStates StateBits);
+        
         
         void* GetAPIResourceImpl(EAPIResourceType Type) override;
         const FCommandListInfo& GetCommandListInfo() const override { return Info; }
@@ -80,13 +119,15 @@ namespace Lumina
 
     private:
 
+        TUniquePtr<FUploadManager>                      UploadManager;
+        
         THashMap<FRHIBufferRef, FDynamicBufferWrite>    DynamicBufferWrites;
         bool                                            bHasDynamicBufferWrites = false;
         
         FVulkanGraphicsState                            GraphicsState;
         FVulkanComputeState                             ComputeState;
                                                         
-        FCommandListStateTracker                        CommandListTracker;
+        FCommandListResourceStateTracker                StateTracker;
         FPendingCommandState                            PendingState;
         FVulkanRenderContext*                           RenderContext = nullptr;
         FCommandListInfo                                Info;

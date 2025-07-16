@@ -13,7 +13,7 @@ float time = GetTime();
 
 void main()
 {
-    mat4 model = GetModelMatrix();
+    mat4 model = GetModelMatrix(gl_InstanceIndex);
     vec4 worldPos = model * vec4(inPosition.xyz, 1.0);
 
     gl_Position = GetCameraProjection() * GetCameraView() * worldPos;

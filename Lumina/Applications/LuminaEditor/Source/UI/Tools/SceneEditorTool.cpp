@@ -4,6 +4,7 @@
 #include "glm/gtc/type_ptr.hpp"
 #define GLM_ENABLE_EXPERIMENTAL
 #include "EditorToolContext.h"
+#include "Assets/AssetRegistry/AssetRegistry.h"
 #include "glm/gtx/matrix_decompose.hpp"
 #include "Scene/SceneManager.h"
 #include "Scene/SceneRenderer.h"
@@ -11,6 +12,8 @@
 #include "Scene/Entity/Components/NameComponent.h"
 #include "Scene/Entity/Components/EditorComponent.h"
 #include "Scene/Entity/Components/LightComponent.h"
+#include "Scene/Entity/Components/StaicMeshComponent.h"
+#include "Tools/UI/ImGui/ImGuiX.h"
 
 
 namespace Lumina
@@ -70,9 +73,21 @@ namespace Lumina
                             ImGui::TableNextRow();
                             ImGui::TableSetColumnIndex(0);
 
+                            if (ImGui::Selectable("Directional Light"))
+                            {
+                                Ent.AddComponent<FDirectionalLightComponent>();
+                                bComponentAdded = true;
+                            }
+                            
                             if (ImGui::Selectable("Point Light"))
                             {
                                 Ent.AddComponent<FPointLightComponent>();
+                                bComponentAdded = true;
+                            }
+
+                            if (ImGui::Selectable("Static Mesh"))
+                            {
+                                Ent.AddComponent<FStaticMeshComponent>();
                                 bComponentAdded = true;
                             }
 
@@ -90,6 +105,11 @@ namespace Lumina
                     
                 }
 
+                if (ImGui::MenuItem("Duplicate"))
+                {
+                    
+                }
+                
                 if (ImGui::MenuItem("Delete"))
                 {
                     EntityDestroyRequests.push(EntityListItem->GetEntity());
@@ -130,6 +150,14 @@ namespace Lumina
             OutlinerListView.MarkTreeDirty();
 
             EntityDestroyRequests.pop();
+        }
+
+        if (SelectedEntity.IsValid())
+        {
+            if (ImGui::IsKeyPressed(ImGuiKey_LeftCtrl) && ImGui::IsKeyPressed(ImGuiKey_C))
+            {
+                LOG_INFO("Copied!");
+            }
         }
     }
 
@@ -240,7 +268,108 @@ namespace Lumina
 
         ImGui::BeginChild("EntityEditor", ImVec2(0, 200), true);
 
-        ImGui::TextColored(ImVec4(255.0f, 0.0f, 0.0f, 255.0f), "%s", "TODO: Automatic component discovery and property drawing.");
+        if (SelectedEntity.HasComponent<FPointLightComponent>())
+        {
+            auto& Light = SelectedEntity.GetComponent<FPointLightComponent>();
+
+            ImGui::Text("Point Light Component");
+
+            glm::vec3 color = glm::vec3(Light.LightColor);
+            float intensity = Light.LightColor.a;
+
+            if (ImGui::ColorEdit3("Color", glm::value_ptr(color)))
+            {
+                Light.LightColor.r = color.r;
+                Light.LightColor.g = color.g;
+                Light.LightColor.b = color.b;
+            }
+
+            if (ImGui::DragFloat("Intensity", &intensity, 0.1f, 0.0f, 100.0f))
+            {
+                Light.LightColor.a = intensity;
+            }
+
+            ImGui::Separator();
+        }
+
+        if (SelectedEntity.HasComponent<FDirectionalLightComponent>())
+        {
+            auto& Light = SelectedEntity.GetComponent<FDirectionalLightComponent>();
+
+            ImGui::Text("Directional Light Component");
+            float Intensity = Light.Color.a;
+
+            glm::vec4 dir = Light.Direction;
+            if (ImGui::SliderFloat3("Direction", &dir.x, -1.0f, 1.0f))
+            {
+                Light.Direction = dir;
+            }
+
+            glm::vec3 Color = glm::vec3(Light.Color);
+            if (ImGui::ColorEdit3("Color", glm::value_ptr(Light.Color)))
+            {
+                Light.Color.r = Color.r;
+                Light.Color.g = Color.g;
+                Light.Color.b = Color.b;
+            }
+            
+            if (ImGui::DragFloat("Intensity", &Intensity, 0.1f, 0.0f, 100.0f))
+            {
+                Light.Color.a = Intensity;
+            }
+        }
+
+        // Static Mesh Component UI
+        if (SelectedEntity.HasComponent<FStaticMeshComponent>())
+        {
+            auto& MeshComp = SelectedEntity.GetComponent<FStaticMeshComponent>();
+
+            float ButtonWidth = ImGui::GetContentRegionAvail().x;
+
+            const char* Label = MeshComp.StaticMesh ? MeshComp.StaticMesh->GetName().c_str() : "nullptr";
+
+            ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.0f);
+            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(8, 4));
+            ImVec4 BgColor = MeshComp.StaticMesh ? ImVec4(0.2f, 0.25f, 0.3f, 1.0f) : ImVec4(0.3f, 0.1f, 0.1f, 1.0f);
+            ImGui::PushStyleColor(ImGuiCol_Button, BgColor);
+            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(BgColor.x + 0.1f, BgColor.y + 0.1f, BgColor.z + 0.1f, 1.0f));
+            ImGui::PushStyleColor(ImGuiCol_ButtonActive, BgColor);
+
+            if (ImGui::Button(Label, ImVec2(ButtonWidth, 0)))
+            {
+                ImGui::OpenPopup("ObjectSelectorPopup");
+            }
+
+            ImGui::PopStyleColor(3);
+            ImGui::PopStyleVar(2);
+
+            if (ImGui::BeginPopup("ObjectSelectorPopup"))
+            {
+
+                if (ImGui::Button("Clear", ImVec2(ImGui::GetContentRegionAvail().x, 0)))
+                {
+                    MeshComp.StaticMesh = nullptr;
+                    ImGui::EndPopup();
+                    return;
+                }
+
+                ImGui::Separator();
+            
+                CObject* Selected = nullptr;
+                FARFilter Filter;
+                Filter.ClassNames.push_back("CStaticMesh");
+                ImGuiX::ObjectSelector(Filter, Selected);
+
+                if (Selected)
+                {
+                    MeshComp.StaticMesh = Cast<CStaticMesh>(Selected);
+                }
+            
+                ImGui::EndPopup();
+            }
+            
+            ImGui::Separator();
+        }
         
         ImGui::EndChild();
     }

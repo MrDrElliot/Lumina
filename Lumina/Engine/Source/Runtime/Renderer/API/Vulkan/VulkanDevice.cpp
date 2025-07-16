@@ -1,12 +1,14 @@
 ﻿#include "VulkanDevice.h"
 
 #include "VulkanMacros.h"
+#include "VulkanRenderContext.h"
+#include "VulkanResources.h"
 #include "Core/Profiler/Profile.h"
 
 namespace Lumina
 {
 
-    FVulkanMemoryAllocator::FVulkanMemoryAllocator(VkInstance Instance, VkPhysicalDevice PhysicalDevice, VkDevice Device)
+    FVulkanMemoryAllocator::FVulkanMemoryAllocator(FVulkanRenderContext* InCxt, VkInstance Instance, VkPhysicalDevice PhysicalDevice, VkDevice Device)
     {
         VmaVulkanFunctions Functions = {};
         Functions.vkGetInstanceProcAddr = &vkGetInstanceProcAddr;
@@ -20,6 +22,8 @@ namespace Lumina
         Info.pVulkanFunctions = &Functions;
 
         VK_CHECK(vmaCreateAllocator(&Info, &Allocator));
+
+        RenderContext = InCxt;
 
     }
     
@@ -123,9 +127,17 @@ namespace Lumina
     {
         LUMINA_PROFILE_SCOPE();
 
-        Assert(Buffer)
+        Assert(Buffer != VK_NULL_HANDLE)
 
         VmaAllocationInfo AllocationInfo;
+
+        auto it = AllocatedBuffers.find(Buffer);
+        if (it == AllocatedBuffers.end())
+        {
+            LOG_CRITICAL("Buffer was not found in VulkanMemoryAllocator!");
+            return;
+        }
+        
         vmaGetAllocationInfo(Allocator, AllocatedBuffers[Buffer], &AllocationInfo);
         
         vmaDestroyBuffer(Allocator, Buffer, AllocatedBuffers[Buffer]);
@@ -150,15 +162,23 @@ namespace Lumina
 
     }
 
-    void* FVulkanMemoryAllocator::MapMemory(VmaAllocation Allocation)
+    void* FVulkanMemoryAllocator::MapMemory(FVulkanBuffer* Buffer, VmaAllocation Allocation)
     {
         LUMINA_PROFILE_SCOPE();
+
+        // If the buffer has been used in a command list before, wait for that CL to complete
+        if (Buffer->LastUseCommandListID != 0)
+        {
+            FQueue* Queue = RenderContext->GetQueue(Buffer->LastUseQueue);
+            Queue->WaitCommandList(Buffer->LastUseCommandListID, UINT64_MAX);
+        }
+        
         void* MappedMemory;
         VK_CHECK(vmaMapMemory(Allocator, Allocation, &MappedMemory));
         return MappedMemory;
     }
 
-    void FVulkanMemoryAllocator::UnmapMemory(VmaAllocation Allocation)
+    void FVulkanMemoryAllocator::UnmapMemory(FVulkanBuffer* Buffer, VmaAllocation Allocation)
     {
         LUMINA_PROFILE_SCOPE();
         vmaUnmapMemory(Allocator, Allocation);

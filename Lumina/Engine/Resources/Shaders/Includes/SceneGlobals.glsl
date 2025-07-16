@@ -1,16 +1,21 @@
 
-struct FSimpleElementVertex
-{
-    vec3 Position;
-    vec4 Color;
-};
-
-
 struct FCameraView
 {
     vec4 CameraPosition;    // Camera Position
     mat4 CameraView;        // View matrix
     mat4 CameraProjection;  // Projection matrix
+};
+
+struct FPointLight
+{
+    vec4 Position;
+    vec4 Color;
+};
+
+struct FDirectionalLight
+{
+    vec4 Direction;
+    vec4 Color;
 };
 
 layout(set = 0, binding = 0) readonly uniform SceneGlobals
@@ -22,13 +27,16 @@ layout(set = 0, binding = 0) readonly uniform SceneGlobals
 
 layout(set = 0, binding = 1) readonly buffer FModelData
 {
-    mat4 ModelMatrix[1000];
+    mat4 ModelMatrix[];
 } ModelData;
 
-layout(push_constant) uniform PushConstants 
+layout(set = 0, binding = 2) readonly buffer FLightData
 {
-    uint ModelIndex;
-} PC;
+    uint                NumPointLights;
+    bool                bHasDirectionalLight;
+    FDirectionalLight   DirectionalLight;
+    FPointLight         PointLights[];
+} LightData;
 
 float GetTime()
 {
@@ -56,14 +64,14 @@ mat4 GetCameraProjection()
     return SceneUBO.CameraView.CameraProjection;
 }
 
-vec3 GetModelLocation()
+vec3 GetModelLocation(uint Index)
 {
-    return vec3(ModelData.ModelMatrix[PC.ModelIndex][3].xyz);
+    return vec3(ModelData.ModelMatrix[Index][3].xyz);
 }
 
-mat4 GetModelMatrix()
+mat4 GetModelMatrix(uint Index)
 {
-    return ModelData.ModelMatrix[PC.ModelIndex];
+    return ModelData.ModelMatrix[Index];
 }
 
 vec3 WorldToView(vec3 worldPos)
@@ -86,3 +94,12 @@ float SineWave(float speed, float amplitude)
     return amplitude * sin(float(GetTime()) * speed);
 }
 
+bool HasDirectionalLight()
+{
+    return LightData.bHasDirectionalLight;
+}
+
+FDirectionalLight GetDirectionalLight()
+{
+    return LightData.DirectionalLight;
+}

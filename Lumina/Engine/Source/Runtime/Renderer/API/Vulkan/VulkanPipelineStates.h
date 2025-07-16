@@ -13,9 +13,8 @@ namespace Lumina
         FVulkanGraphicsState() = default;
 
         void SetVertexStream(FRHIBuffer* Buffer, uint32 Index, uint32 Offset);
-
         void PrepareForDraw(VkCommandBuffer CmdBuffer);
-
+        
         struct FVertexStream
         {
             FVertexStream()
@@ -27,9 +26,12 @@ namespace Lumina
             uint32 BufferOffset;
         };
 
-        FVertexStream               PendingStreams[17];
-        FVulkanGraphicsPipeline*    Pipeline;
-        FRenderPassBeginInfo        CurrentRenderPassInfo;
+        FVertexStream                           LastPendingStreams[17];
+        VkBuffer                                IndexBuffer = nullptr;
+        FVertexStream                           PendingStreams[17];
+        FVulkanGraphicsPipeline*                Pipeline = nullptr;
+        TVector<TPair<FRHIBindingSet*, uint32>> CurrentBindings;
+        FRenderPassBeginInfo                    CurrentRenderPassInfo;
     };
 
     class FVulkanComputeState
@@ -38,8 +40,9 @@ namespace Lumina
 
         FVulkanComputeState() = default;
         
-        FVulkanComputePipeline*     Pipeline;
-        
+        FVulkanComputePipeline*                 Pipeline;
+        TVector<TPair<FRHIBindingSet*, uint32>> CurrentBindings;
+
     };
     
 }

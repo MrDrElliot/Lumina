@@ -30,14 +30,10 @@ namespace Lumina
         const SIZE_T RowPitch = Width * 4; // 4 bytes per pixel (RGBA8)
         const SIZE_T DepthPitch = RowPitch * Height; // 2D texture → no slices
 
-        FRHICommandListRef TransferCommandList = RenderContext->CreateCommandList({ECommandQueue::Transfer});
+        FRHICommandListRef TransferCommandList = RenderContext->CreateCommandList(FCommandListInfo::Transfer());
         TransferCommandList->Open();
         TransferCommandList->WriteImage(RHIImage, 0, 0, Pixels.data(), RowPitch, DepthPitch);
         TransferCommandList->Close();
         RenderContext->ExecuteCommandList(TransferCommandList, 1, Q_Transfer);
-        
-        FRHICommandListRef CommandList = RenderContext->GetCommandList({ECommandQueue::Graphics});
-        CommandList->SetRequiredImageAccess(RHIImage, ERHIAccess::ShaderRead);
-        CommandList->CommitBarriers();
     }
 }

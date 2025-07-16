@@ -370,6 +370,11 @@ namespace Lumina
             {
                 Nodes.erase(it);
             }
+
+        }
+        if (!NodesToDestroy.empty())
+        {
+            ValidateGraph();
         }
     }
 
@@ -394,6 +399,7 @@ namespace Lumina
         AddNode(NewNode);
         return NewNode;
     }
+    
 
     uint64 CEdNodeGraph::AddNode(CEdGraphNode* InNode)
     {

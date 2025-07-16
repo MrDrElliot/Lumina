@@ -9,6 +9,8 @@
 
 namespace Lumina
 {
+    class FVulkanBuffer;
+    class FRHIBuffer;
     class IDeviceChild;
     class FVulkanRenderContext;
 }
@@ -20,7 +22,7 @@ namespace Lumina
     {
     public:
 
-        FVulkanMemoryAllocator(VkInstance Instance, VkPhysicalDevice PhysicalDevice, VkDevice Device);
+        FVulkanMemoryAllocator(FVulkanRenderContext* InCxt, VkInstance Instance, VkPhysicalDevice PhysicalDevice, VkDevice Device);
         ~FVulkanMemoryAllocator();
 
         void ClearAllAllocations();
@@ -36,8 +38,8 @@ namespace Lumina
         void DestroyBuffer(VkBuffer Buffer);
         void DestroyImage(VkImage Image);
 
-        void* MapMemory(VmaAllocation Allocation);
-        void UnmapMemory(VmaAllocation Allocation);
+        void* MapMemory(FVulkanBuffer* Buffer, VmaAllocation Allocation);
+        void UnmapMemory(FVulkanBuffer* Buffer, VmaAllocation Allocation);
 
     
     private:
@@ -45,6 +47,7 @@ namespace Lumina
         VmaAllocator Allocator = nullptr;
         THashMap<VkBuffer, VmaAllocation> AllocatedBuffers;
         THashMap<VkImage, VmaAllocation> AllocatedImages;
+        FVulkanRenderContext* RenderContext = nullptr;
 
     };
     
@@ -52,14 +55,14 @@ namespace Lumina
     {
     public:
 
-        FVulkanDevice(VkInstance Instance, VkPhysicalDevice InPhysicalDevice, VkDevice InDevice)
+        FVulkanDevice(FVulkanRenderContext* RenderContext, VkInstance Instance, VkPhysicalDevice InPhysicalDevice, VkDevice InDevice)
             : PhysicalDevice(InPhysicalDevice)
             , Device(InDevice)
         {
             vkGetPhysicalDeviceMemoryProperties(PhysicalDevice, &PhysicalDeviceMemoryProperties);
             vkGetPhysicalDeviceProperties(PhysicalDevice, &PhysicalDeviceProperties);
 
-            Allocator = Memory::New<FVulkanMemoryAllocator>(Instance, PhysicalDevice, Device);
+            Allocator = Memory::New<FVulkanMemoryAllocator>(RenderContext, Instance, PhysicalDevice, Device);
         }
 
         virtual ~FVulkanDevice()

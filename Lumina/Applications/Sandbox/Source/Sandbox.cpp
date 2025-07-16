@@ -28,7 +28,7 @@ void FSandbox::EngineLoopCallback(const FUpdateContext& UpdateContext)
 {
 	FRenderManager* RenderManager = UpdateContext.GetSubsystem<FRenderManager>();
 	IRenderContext* RenderContext = RenderManager->GetRenderContext();
-	ICommandList* CommandList = RenderContext->GetCommandList();
+	ICommandList* CommandList = RenderContext->GetCommandList(ECommandQueue::Graphics);
 
 	FRHIComputeShaderRef Shader = RenderContext->GetShaderLibrary()->GetShader("Test.comp").As<FRHIComputeShader>();
 	if (Shader == nullptr)
@@ -46,6 +46,9 @@ void FSandbox::EngineLoopCallback(const FUpdateContext& UpdateContext)
 	FRHIBufferDesc Buffer;
 	Buffer.Size = sizeof(Foo);
 	Buffer.Usage.SetFlag(BUF_UniformBuffer);
+	Buffer.InitialState = EResourceStates::UnorderedAccess;
+	Buffer.bKeepInitialState = true;
+	
 	FRHIBufferRef BufferRef = RenderContext->CreateBuffer(Buffer);
 
 	// Here we upload a float (time) to the buffer so it can be read from in the shader.
@@ -53,12 +56,12 @@ void FSandbox::EngineLoopCallback(const FUpdateContext& UpdateContext)
 	Bar.res.x = GEngine->GetEngineViewport()->GetSize().X;
 	Bar.res.y = GEngine->GetEngineViewport()->GetSize().Y;
 	Bar.time = Time;
-	CommandList->UploadToBuffer(BufferRef, &Bar, 0, sizeof(Foo));
+	CommandList->WriteBuffer(BufferRef, &Bar, 0, sizeof(Foo));
 
 	// Here we setup a storage image, (Unordered Access View), the compute shader will write to this.
 	FRHIImageDesc Image;
 	Image.Extent = GEngine->GetEngineViewport()->GetSize();
-	Image.Format = EImageFormat::RGBA32_UNORM;
+	Image.Format = EFormat::RGBA8_UNORM;
 	Image.Flags.SetFlag(EImageCreateFlags::Storage);
 	FRHIImageRef ImageRef = RenderContext->CreateImage(Image);
 
@@ -91,14 +94,14 @@ void FSandbox::EngineLoopCallback(const FUpdateContext& UpdateContext)
 	CommandList->SetComputePipeline(Pipeline);
 
 	// Here we bind the set to the pipeline that we just bound (which is tracked internally).
-	CommandList->BindBindingSet(SetLayout, ERHIBindingPoint::Compute);
+	CommandList->BindBindingSets(ERHIBindingPoint::Compute, {{SetLayout, 0}});
 
 	// Finally we dispatch the compute shader, giving it the proper amount of work groups.
 	CommandList->Dispatch(ImageRef->GetSizeX() / 16, ImageRef->GetSizeY() / 16, 1);
 
 	// Since we wrote to a transient storage image, we now want to copy/blit that image back to the render target so we can see it.
-	CommandList->CopyImage(ImageRef, GEngine->GetEngineViewport()->GetRenderTarget());
-	
+	CommandList->CopyImage(ImageRef, {}, GEngine->GetEngineViewport()->GetRenderTarget(), {});
+
 }
 
 bool FSandbox::ApplicationLoop()
@@ -118,15 +121,6 @@ void FSandbox::Shutdown()
 Lumina::FApplication* Lumina::CreateApplication(int argc, char** argv)
 {
 	return new FSandbox();
-}
-
-namespace eastl 
-{
-	void AssertionFailure(const char* pExpression)
-	{
-		std::fprintf(stderr, "EASTL Assertion Failed: %s\n", pExpression);
-		std::abort();
-	}
 }
 
 DECLARE_MODULE_ALLOCATOR_OVERRIDES()

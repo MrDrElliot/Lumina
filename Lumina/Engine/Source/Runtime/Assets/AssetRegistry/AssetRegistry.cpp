@@ -68,8 +68,8 @@ namespace Lumina
                         ClassPath = Package->TopLevelClassName;
                     }
                     
-                    
                     Data.ClassName = ClassPath;
+                    AssetPathMap.insert_or_assign(FName(Data.Path), Data);
                     Assets.push_back(Data);
                 }
             }
@@ -82,11 +82,27 @@ namespace Lumina
     {
         for (const FAssetData& Data : Assets)
         {
-            if (Filter.ClassNames.empty() || eastl::find(Filter.ClassNames.begin(), Filter.ClassNames.end(), Data.ClassName) != Filter.ClassNames.end())
+            bool classMatches = Filter.ClassNames.empty() || 
+                eastl::find(Filter.ClassNames.begin(), Filter.ClassNames.end(), Data.ClassName) != Filter.ClassNames.end();
+
+            bool pathMatches = Filter.Paths.empty() || 
+                eastl::find(Filter.Paths.begin(), Filter.Paths.end(), Data.Path) != Filter.Paths.end();
+
+            if (classMatches && pathMatches)
             {
                 OutAssets.push_back(Data);
             }
         }
     }
-    
+
+    FAssetData FAssetRegistry::GetAsset(const FString& Path)
+    {
+        FName PathName(Path);
+        if (AssetPathMap.find(PathName) != AssetPathMap.end())
+        {
+            return AssetPathMap[PathName];
+        }
+
+        return FAssetData();
+    }
 }

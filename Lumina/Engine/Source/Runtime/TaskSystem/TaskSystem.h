@@ -39,9 +39,9 @@ namespace Lumina
         FLambdaParallelTaskSet(uint32 NumElements, TLambda&& InLambda)
             : Count(NumElements), Lambda(Memory::Move(InLambda)) {}
 
-        void ExecuteRange(enki::TaskSetPartition range, uint32_t threadnum) override
+        void ExecuteRange(enki::TaskSetPartition range, uint32 threadnum) override
         {
-            for (uint32_t i = range.start; i < range.end; ++i)
+            for (uint32 i = range.start; i < range.end; ++i)
                 Lambda(i);
         }
 
@@ -74,6 +74,30 @@ namespace Lumina
             ScheduleTask(Task);
         }
 
+        template<typename Iterable, typename TLambda>
+        void ParallelForEach(const Iterable& Range, TLambda&& Func)
+        {
+            using std::begin;
+            using std::end;
+
+            auto BeginIt = begin(Range);
+            auto EndIt = end(Range);
+
+            const uint32_t Count = static_cast<uint32_t>(std::distance(BeginIt, EndIt));
+    
+            if (Count == 0)
+                return;
+
+            auto TaskLambda = [BeginIt, Func = std::forward<TLambda>(Func)](uint32_t i)
+            {
+                auto It = BeginIt;
+                std::advance(It, i);
+                Func(i, *It);
+            };
+
+            this->ParallelFor(Count, TaskLambda);
+        }
+        
         template<typename TLambda>
         void ParallelFor(uint32 Count, TLambda&& Lambda)
         {

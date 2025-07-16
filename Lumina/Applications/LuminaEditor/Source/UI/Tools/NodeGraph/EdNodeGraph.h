@@ -52,7 +52,8 @@ namespace Lumina
         virtual void ValidateGraph()  { }
         
         virtual CEdGraphNode* CreateNode(CClass* NodeClass);
-    
+
+        virtual CEdGraphNode* OnNodeRemoved(CEdGraphNode* Node) { return nullptr; }
         
     protected:
 

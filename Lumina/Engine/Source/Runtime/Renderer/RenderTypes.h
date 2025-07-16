@@ -66,11 +66,43 @@ namespace Lumina
         // Compute Access Types
         ComputeRead = 1 << 11,               // Read access in compute shaders
         ComputeWrite = 1 << 12,              // Write access in compute shaders
+
+        General = HostRead,
         
         // Combined Access Flags
         All = Read | Write | TransferRead | TransferWrite | ShaderRead | ShaderWrite | ColorAttachmentWrite |
           DepthStencilAttachmentWrite | PresentRead | HostRead | HostWrite | ComputeRead | ComputeWrite
     };
+
+    enum class EResourceStates : uint32
+    {
+        Unknown                     = 0,
+        Common                      = 0x00000001,
+        ConstantBuffer              = 0x00000002,
+        VertexBuffer                = 0x00000004,
+        IndexBuffer                 = 0x00000008,
+        IndirectArgument            = 0x00000010,
+        ShaderResource              = 0x00000020,
+        UnorderedAccess             = 0x00000040,
+        RenderTarget                = 0x00000080,
+        DepthWrite                  = 0x00000100,
+        DepthRead                   = 0x00000200,
+        StreamOut                   = 0x00000400,
+        CopyDest                    = 0x00000800,
+        CopySource                  = 0x00001000,
+        ResolveDest                 = 0x00002000,
+        ResolveSource               = 0x00004000,
+        Present                     = 0x00008000,
+        AccelStructRead             = 0x00010000,
+        AccelStructWrite            = 0x00020000,
+        AccelStructBuildInput       = 0x00040000,
+        AccelStructBuildBlas        = 0x00080000,
+        ShadingRateSurface          = 0x00100000,
+        OpacityMicromapWrite        = 0x00200000,
+        OpacityMicromapBuildInput   = 0x00400000,
+    };
+
+    ENUM_CLASS_FLAGS(EResourceStates)
 
     enum class ERHIPipeline : uint8
     {
@@ -136,6 +168,7 @@ namespace Lumina
         StagingBuffer       = 8,
 
         CPUWritable         = 9,
+        CPUReadable         = 10,
         
     };
     
@@ -169,9 +202,12 @@ namespace Lumina
         Store,
         DontCare,
     };
+
+    
     
     struct FRenderPassBeginInfo
     {
+        bool bValidPass = false;
         TVector<FRHIImageRef> ColorAttachments;    // Color attachments
         TVector<ERenderLoadOp> ColorLoadOps;       // One per color attachment
         TVector<ERenderStoreOp> ColorStoreOps;     // How to handle color attachments at the end
@@ -182,7 +218,7 @@ namespace Lumina
         ERenderStoreOp DepthStoreOp = ERenderStoreOp::Store;    // Default depth store operation
         float ClearDepth = 1.0f;                                // Default depth clear value
         uint32 ClearStencil = 0;                                // Default stencil clear value
-        
+        FString DebugName;
         FIntVector2D RenderArea;                                // Defines the renderable area
     
         // Fluent API for adding color attachments
@@ -274,6 +310,7 @@ namespace Lumina
     /** Describes the dimension of a texture. */
     enum class EImageDimension : uint8
     {
+        Unknown,
         Texture2D,
         Texture2DArray,
         Texture3D,
@@ -681,6 +718,63 @@ namespace Lumina
         bool IsTransparent() const { return bTransparent; }
     };
 
+    struct FVertexBufferBinding
+    {
+        FRHIBuffer* Buffer = nullptr;
+        uint32 Slot;
+        uint64 Offset;
+
+        bool operator ==(const FVertexBufferBinding& b) const
+        {
+            return Buffer == b.Buffer
+                && Slot == b.Slot
+                && Offset == b.Offset;
+        }
+        bool operator !=(const FVertexBufferBinding& b) const { return !(*this == b); }
+
+        FVertexBufferBinding& SetBuffer(FRHIBuffer* value) { Buffer = value; return *this; }
+        FVertexBufferBinding& SetSlot(uint32 value) { Slot = value; return *this; }
+        FVertexBufferBinding& SetOffset(uint64 value) { Offset = value; return *this; }
+    };
+
+    struct FIndexBufferBinding
+    {
+        FRHIBuffer* buffer = nullptr;
+        EFormat format;
+        uint32 Offset;
+
+        bool operator ==(const FIndexBufferBinding& b) const
+        {
+            return buffer == b.buffer
+                && format == b.format
+                && Offset == b.Offset;
+        }
+        bool operator !=(const FIndexBufferBinding& b) const { return !(*this == b); }
+
+        FIndexBufferBinding& setBuffer(FRHIBuffer* value) { buffer = value; return *this; }
+        FIndexBufferBinding& setFormat(EFormat value) { format = value; return *this; }
+        FIndexBufferBinding& setOffset(uint32 value) { Offset = value; return *this; }
+    };
+
+    struct LUMINA_API FGraphicsState
+    {
+        FRHIGraphicsPipeline* Pipeline = nullptr;
+        FRenderPassBeginInfo RenderPass = {};
+        TVector<FRHIBindingSet*> Bindings;
+
+        TVector<FVertexBufferBinding> VertexBuffers;
+        FIndexBufferBinding IndexBuffer;
+
+        FRHIBuffer* IndirectParams = nullptr;
+
+        FGraphicsState& SetPipeline(FRHIGraphicsPipeline* value) { Pipeline = value; return *this; }
+        //FGraphicsState& SetViewport(const ViewportState& value) { viewport = value; return *this; }
+        FGraphicsState& AddBindingSet(FRHIBindingSet* value) { Bindings.push_back(value); return *this; }
+        FGraphicsState& AddVertexBuffer(const FVertexBufferBinding& value) { VertexBuffers.push_back(value); return *this; }
+        FGraphicsState& SetIndexBuffer(const FIndexBufferBinding& value) { IndexBuffer = value; return *this; }
+        FGraphicsState& SetIndirectParams(FRHIBuffer* value) { IndirectParams = value; return *this; }
+    };
+    
     template <>
     struct FVertexTypeTraits<FVertex>
     {

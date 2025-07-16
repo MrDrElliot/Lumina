@@ -149,7 +149,7 @@ namespace Lumina
                 SceneManager->UpdateScenes(UpdateContext);
             }
 
-            // Post Phsyics
+            // Post Physics
             //-------------------------------------------------------------------
             {
                 LUMINA_PROFILE_SECTION("Post Physics");

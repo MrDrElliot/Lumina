@@ -41,9 +41,15 @@ namespace Lumina
             ReferencedResources.push_back(InResource);
         }
 
+        void AddStagingResource(const TRefCountPtr<FRHIBuffer>& InResource)
+        {
+            ReferencedStagingResources.push_back(InResource);
+        }
+        
         void ClearReferencedResources()
         {
             ReferencedResources.clear();
+            ReferencedStagingResources.clear();
         }
 
         VkCommandBuffer             CommandBuffer;
@@ -59,6 +65,7 @@ namespace Lumina
         
         /** Here we keep alive any resources that this current command buffer needs/uses */
         TFixedVector<TRefCountPtr<IRHIResource>, 20> ReferencedResources;
-        
+        TFixedVector<TRefCountPtr<FRHIBuffer>, 20> ReferencedStagingResources;
+
     };
 }

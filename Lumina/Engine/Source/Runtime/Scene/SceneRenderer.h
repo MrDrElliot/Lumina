@@ -1,8 +1,9 @@
 #pragma once
 
 #include "Scene.h"
-#include "ScenePrimitives.h"
 #include "SceneRenderTypes.h"
+#include "Memory/SmartPtr.h"
+#include "Renderer/DescriptorTableManager.h"
 #include "Renderer/RenderResource.h"
 #include "Renderer/RenderTypes.h"
 #include "Renderer/RenderGraph/RenderGraph.h"
@@ -51,6 +52,7 @@ namespace Lumina
         void SkyboxPass(const FSceneRenderData& DrawList);
         void DrawPrimitives(const FSceneRenderData& DrawList);
 
+        void CreateIrradianceCube();
 
         void InitResources();
         void InitBuffers();
@@ -65,26 +67,35 @@ namespace Lumina
 
         FScene*                             Scene = nullptr;
         IRenderContext*                     RenderContext = nullptr;
-        FRHIImageRef                        CubeMap;
+        FSceneRenderStats                   SceneRenderStats;
+        
         FRHIViewportRef                     SceneViewport;
+        
+        FRHIBufferRef                       VertexBuffer;
+        FRHIBufferRef                       IndexBuffer;
+        
         FRHIBufferRef                       SceneDataBuffer;
         FRHIBufferRef                       ModelDataBuffer;
-        FRHIBufferRef                       SceneLightBuffer;
+        FRHIBufferRef                       LightDataBuffer;
         FRHIInputLayoutRef                  VertexLayoutInput;
         
         FSceneGlobalData                    SceneGlobalData;
-        TVector<FModelData>                 ModelData;
-        TVector<FMaterialTexturesData>      TexturesData;
 
-        FRHIBindingSetRef                   SceneGlobalBindingSet;
-        FRHIBindingLayoutRef                SceneGlobalBindingLayout;
-        
-        FRHIBindingLayoutRef                SimpleBindingLayout;
-        FRHIBindingSetRef                   SimpleBindingLayoutSet;
+        FRHIBindingLayoutRef                SkyboxBindingLayout;
+        FRHIBindingSetRef                   SkyboxBindingSet;
+        FRHIBindingSetRef                   LightingPassSet;
+        FRHIBindingLayoutRef                LightingPassLayout;
+        FRHIBindingLayoutRef                BindingLayout;
+        FRHIBindingSetRef                   BindingSet;
         
         FRenderGraph                        RenderGraph;
         FGBuffer                            GBuffer;
+        
         FRHIImageRef                        DepthAttachment;
+        FRHIImageRef                        CubeMap;
+        FRHIImageRef                        IrradianceCube;
+        
+        TSharedPtr<FDescriptorTableManager> DescriptorTableManager;
     };
     
 }

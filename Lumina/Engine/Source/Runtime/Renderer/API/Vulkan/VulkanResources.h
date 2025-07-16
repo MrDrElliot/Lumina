@@ -34,7 +34,39 @@ namespace Lumina
     
     class FVulkanSwapchain;
 
+    struct FBufferChunk
+    {
+        FRHIBufferRef Buffer;
+        uint64 Version = 0;
+        uint64 BufferSize = 0;
+        uint64 WritePointer = 0;
+        void* MappedMemory = nullptr;
 
+        static constexpr uint64 c_sizeAlignment = 4096; // GPU page size
+    };
+
+    class FUploadManager : public IDeviceChild
+    {
+    public:
+        FUploadManager(FVulkanRenderContext* Ctx, uint64 InDefaultChunkSize, uint64 InMemoryLimit, bool bInIsScratchBuffer);
+
+        TSharedPtr<FBufferChunk> CreateChunk(uint64 Size) const;
+
+        bool SuballocateBuffer(uint64 Size, FRHIBuffer** Buffer, uint64* Offset, void** CpuVA, uint64 CurrentVersion, uint32 Alignment = 256);
+        void SubmitChunks(uint64 CurrentVersion, uint64_t submittedVersion);
+
+    private:
+        
+        FVulkanRenderContext* Context;
+        uint64 DefaultChunkSize = 0;
+        uint64 MemoryLimit = 0;
+        uint64 AllocatedMemory = 0;
+        bool bIsScratchBuffer = false;
+
+        TList<TSharedPtr<FBufferChunk>>     ChunkPool;
+        TSharedPtr<FBufferChunk>            CurrentChunk;
+    };
+    
     class FVulkanEventQuery : public IEventQuery
     {
     public:
@@ -85,6 +117,8 @@ namespace Lumina
     {
     public:
         friend class FVulkanCommandList;
+        friend class FQueue;
+        friend class FVulkanMemoryAllocator;
         
         FVulkanBuffer(FVulkanDevice* InDevice, const FRHIBufferDesc& InDescription);
         ~FVulkanBuffer() override;
@@ -95,14 +129,17 @@ namespace Lumina
         }
 
         FORCEINLINE VkBuffer GetBuffer() const { return Buffer; }
-        
+        VmaAllocation GetAllocation() const { return Allocation; }
+        void* GetMappedMemory() const;
 
     private:
+
+        ECommandQueue               LastUseQueue = ECommandQueue::Graphics;
+        uint64                      LastUseCommandListID = 0;
 
         TVector<FBufferVersionItem> VersionTracking;
         uint32                      VersionSearchStart = 0;
         VmaAllocation               Allocation = nullptr;
-        void*                       MappedMemory = nullptr;
         VkBuffer                    Buffer = VK_NULL_HANDLE;
 
     };
@@ -291,12 +328,19 @@ namespace Lumina
         RENDER_RESOURCE(RRT_BindingLayout)
 
         FVulkanBindingLayout(FVulkanDevice* InDevice, const FBindingLayoutDesc& InDesc);
+        FVulkanBindingLayout(FVulkanDevice* InDevice, const FBindlessLayoutDesc& InDesc);
+
         ~FVulkanBindingLayout() override;
-        
-        const FBindingLayoutDesc* GetDesc() const override { return &Desc; }
+
+        bool Bake();
+        const FBindingLayoutDesc* GetDesc() const override { return bBindless ? nullptr : &Desc; }
+        const FBindlessLayoutDesc* GetBindlessDesc() const override { return bBindless ? &BindlessDesc : nullptr; }
         void* GetAPIResourceImpl(EAPIResourceType Type) override;
         
         FBindingLayoutDesc                      Desc;
+        FBindlessLayoutDesc                     BindlessDesc;
+        bool                                    bBindless = false;
+        
         VkDescriptorSetLayout                   DescriptorSetLayout;
         TVector<VkDescriptorSetLayoutBinding>   Bindings;
         TVector<VkDescriptorPoolSize>           PoolSizes;
@@ -324,7 +368,29 @@ namespace Lumina
         VkDescriptorPool                    DescriptorPool;
         VkDescriptorSet                     DescriptorSet;
     };
-    
+
+    class FVulkanDescriptorTable : public FRHIDescriptorTable, public IDeviceChild
+    {
+    public:
+
+        RENDER_RESOURCE(RRT_DescriptorTable)
+
+        FVulkanDescriptorTable(FVulkanRenderContext* InContext, FVulkanBindingLayout* InLayout);
+        ~FVulkanDescriptorTable() override;
+        
+        const FBindingSetDesc* GetDesc() const override { return nullptr; }
+        FRHIBindingLayout* GetLayout() const override { return Layout; }
+        uint32_t GetCapacity() const override { return Capacity; }
+
+        uint32_t GetFirstDescriptorIndexInHeap() const override { return 0; }
+        void* GetAPIResourceImpl(EAPIResourceType Type) override;
+        
+        TRefCountPtr<FVulkanBindingLayout> Layout;
+        uint32 Capacity = 0;
+
+        VkDescriptorPool DescriptorPool = nullptr;
+        VkDescriptorSet DescriptorSet = nullptr;
+    };
 
     class FVulkanPipeline : public IDeviceChild
     {
