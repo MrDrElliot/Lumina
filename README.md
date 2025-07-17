@@ -2,6 +2,10 @@
 
 <img width="256" height="256" alt="svgviewer-png-output" src="https://github.com/user-attachments/assets/552b8ca0-ebca-4876-9c6a-df38c468d41e" />
 <img width="2235" height="1229" alt="image" src="https://github.com/user-attachments/assets/b6811315-7097-4e01-a4fe-d3f06f30c252" />
+<img width="2238" height="1239" alt="image" src="https://github.com/user-attachments/assets/283c9475-c1b7-4b6b-bbc8-781dc2aeb000" />
+<img width="2253" height="1244" alt="image" src="https://github.com/user-attachments/assets/8d588019-6311-4dbd-b3dd-7b5c832321aa" />
+<img width="2235" height="1233" alt="image" src="https://github.com/user-attachments/assets/c4ec5ced-4f1c-4387-8836-78c8cbeda179" />
+
 
 Lumina is a hobby project and a work-in-progress game engine designed as a learning experience. Still in heavy development, Lumina is inspired by established engines like Unreal Engine, Godot, and others, while aiming to strike a balance between power and simplicity. The engine uses reflection to simplify workflows, and while it is intended to be semi-lightweight, the editor will remain a core feature for the foreseeable future.
 
