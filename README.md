@@ -3,13 +3,12 @@
 # Lumina Game Engine
 
 [![License](https://img.shields.io/github/license/mrdrelliot/lumina)](LICENSE)
+[![Status](https://img.shields.io/badge/status-WIP-orange)]()
 [![Platform](https://img.shields.io/badge/platform-Windows-blue)]()
 [![Build](https://img.shields.io/badge/build-Visual%20Studio%202022-blueviolet)]()
 [![Language](https://img.shields.io/badge/language-C++20-blue)]()
 [![Renderer](https://img.shields.io/badge/renderer-Vulkan-red)]()
 [![Reflection](https://img.shields.io/badge/reflection-custom-lightgrey)]()
-[![Style](https://img.shields.io/badge/style-Custom-green)]()
-[![Status](https://img.shields.io/badge/status-WIP-orange)]()
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)]()
 
 
