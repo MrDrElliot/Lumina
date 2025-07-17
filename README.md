@@ -45,7 +45,7 @@
 
 | Material Editor | GBuffer |
 |:---:|:---:|
-| [<img src="https://github.com/user-attachments/assets/c4ec5ced-4f1c-4387-8836-78c8cbeda179" width="400"/>](https://github.com/user-attachments/assets/c4ec5ced-4f1c-4387-8836-78c8cbeda179) | *(add a fourth image here if you have one, or leave blank)* |
+| [<img src="https://github.com/user-attachments/assets/c4ec5ced-4f1c-4387-8836-78c8cbeda179" width="400"/>](https://github.com/user-attachments/assets/c4ec5ced-4f1c-4387-8836-78c8cbeda179) | *(More coming soon.)* |
 
 
 
