@@ -38,7 +38,6 @@
 ---
 
 ## 📸 Screenshots
-<img width="1989" height="1284" alt="image" src="https://github.com/user-attachments/assets/12ddaeac-ad21-4804-bac9-fa269e3d35c6" />
 
 | Render Pipeline | Editor |
 |:---:|:---:|
