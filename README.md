@@ -1,5 +1,7 @@
 <img src="https://github.com/user-attachments/assets/552b8ca0-ebca-4876-9c6a-df38c468d41e" width="40" style="vertical-align: middle; margin-right: 10px;" />
-<span style="font-size: 2em; vertical-align: middle;"><b>Lumina Game Engine</b></span>
+<span style="font-size: 2em; vertical-align: middle;"><b># Lumina Game Engine</b></span>
+
+
 
 
 [![License](https://img.shields.io/github/license/mrdrelliot/lumina)](LICENSE)
