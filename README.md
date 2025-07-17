@@ -5,7 +5,7 @@
 [![License](https://img.shields.io/github/license/mrdrelliot/lumina)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows-blue)]()
 [![Build](https://img.shields.io/badge/build-Visual%20Studio%202022-blueviolet)]()
-[![Language](https://img.shields.io/badge/language-C++17-blue)]()
+[![Language](https://img.shields.io/badge/language-C++20-blue)]()
 [![Renderer](https://img.shields.io/badge/renderer-Vulkan-red)]()
 [![Editor](https://img.shields.io/badge/editor-ImGui-yellow)]()
 [![ECS](https://img.shields.io/badge/ecs-EnTT-9cf)]()
