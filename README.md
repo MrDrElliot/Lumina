@@ -2,7 +2,17 @@
 
 [![License](https://img.shields.io/github/license/mrdrelliot/lumina)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows-blue)]()
+[![Build](https://img.shields.io/badge/build-Visual%20Studio%202022-blueviolet)]()
+[![Language](https://img.shields.io/badge/language-C++17-blue)]()
+[![Renderer](https://img.shields.io/badge/renderer-Vulkan-red)]()
+[![Editor](https://img.shields.io/badge/editor-ImGui-yellow)]()
+[![ECS](https://img.shields.io/badge/ecs-EnTT-9cf)]()
+[![Reflection](https://img.shields.io/badge/reflection-custom-lightgrey)]()
+[![Style](https://img.shields.io/badge/style-Custom-green)]()
 [![Status](https://img.shields.io/badge/status-WIP-orange)]()
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)]()
+[![Discord](https://img.shields.io/discord/1240448302514092082?label=discord&logo=discord&color=7289DA)](https://discord.gg/xQSB7CRzQE)
+
 
 <p align="left">
   <img src="https://github.com/user-attachments/assets/552b8ca0-ebca-4876-9c6a-df38c468d41e" width="64" />
