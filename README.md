@@ -97,7 +97,6 @@ Pull requests are welcome!
 
 > See [CONTRIBUTING.md](CONTRIBUTING.md) for code style and guidelines.
 
-- ❌ No generative AI (ChatGPT, Copilot) use in code contributions.
 - ✅ Tests, documentation, and clean commits required.
 
 ---
