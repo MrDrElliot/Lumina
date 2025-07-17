@@ -2,14 +2,23 @@
 
 # Lumina Game Engine
 
-[![License](https://img.shields.io/github/license/mrdrelliot/lumina)](LICENSE)
-[![Status](https://img.shields.io/badge/status-WIP-orange)]()
-[![Platform](https://img.shields.io/badge/platform-Windows-blue)]()
-[![Build](https://img.shields.io/badge/build-Visual%20Studio%202022-blueviolet)]()
-[![Language](https://img.shields.io/badge/language-C++20-blue)]()
-[![Renderer](https://img.shields.io/badge/renderer-Vulkan-red)]()
-[![Reflection](https://img.shields.io/badge/reflection-custom-lightgrey)]()
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)]()
+<table>
+  <tr>
+    <td><img src="https://img.shields.io/github/license/mrdrelliot/lumina"></td>
+    <td><img src="https://img.shields.io/badge/status-WIP-orange"></td>
+    <td><img src="https://img.shields.io/badge/platform-Windows-blue"></td>
+  </tr>
+  <tr>
+    <td><img src="https://img.shields.io/badge/build-Visual%20Studio%202022-blueviolet"></td>
+    <td><img src="https://img.shields.io/badge/language-C++20-blue"></td>
+    <td><img src="https://img.shields.io/badge/renderer-Vulkan-red"></td>
+  </tr>
+  <tr>
+    <td><img src="https://img.shields.io/badge/reflection-custom-lightgrey"></td>
+    <td><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg"></td>
+    <td></td>
+  </tr>
+</table>
 
 
 **Lumina** is a C++-based, Vulkan-powered game engine built as a hands-on learning project. Inspired by engines like Unreal and Godot, it emphasizes reflection, modularity, and a clean visual editor built with ImGui.
