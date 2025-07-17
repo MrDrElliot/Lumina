@@ -39,16 +39,14 @@
 
 ## 📸 Screenshots
 
-<details>
-<summary>Click to expand</summary>
+| Render Pipeline | Editor |
+|:---:|:---:|
+| [<img src="https://github.com/user-attachments/assets/b6811315-7097-4e01-a4fe-d3f06f30c252" width="400"/>](https://github.com/user-attachments/assets/b6811315-7097-4e01-a4fe-d3f06f30c252) | [<img src="https://github.com/user-attachments/assets/283c9475-c1b7-4b6b-bbc8-781dc2aeb000" width="400"/>](https://github.com/user-attachments/assets/283c9475-c1b7-4b6b-bbc8-781dc2aeb000) |
 
-[<img src="https://github.com/user-attachments/assets/b6811315-7097-4e01-a4fe-d3f06f30c252" width="400"/>](https://github.com/user-attachments/assets/b6811315-7097-4e01-a4fe-d3f06f30c252)
+| Debug View | GBuffer |
+|:---:|:---:|
+| [<img src="https://github.com/user-attachments/assets/c4ec5ced-4f1c-4387-8836-78c8cbeda179" width="400"/>](https://github.com/user-attachments/assets/c4ec5ced-4f1c-4387-8836-78c8cbeda179) | *(add a fourth image here if you have one, or leave blank)* |
 
-[<img src="https://github.com/user-attachments/assets/283c9475-c1b7-4b6b-bbc8-781dc2aeb000" width="400"/>](https://github.com/user-attachments/assets/283c9475-c1b7-4b6b-bbc8-781dc2aeb000)
-
-[<img src="https://github.com/user-attachments/assets/c4ec5ced-4f1c-4387-8836-78c8cbeda179" width="400"/>](https://github.com/user-attachments/assets/c4ec5ced-4f1c-4387-8836-78c8cbeda179)
-
-</details>
 
 ---
 
