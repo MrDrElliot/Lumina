@@ -1,6 +1,7 @@
 ## Lumina Game Engine
 
-![Lumina Logo](https://github.com/user-attachments/assets/5efc3b14-caff-4465-8597-33f8d70e50cd)
+<img width="256" height="256" alt="svgviewer-png-output" src="https://github.com/user-attachments/assets/552b8ca0-ebca-4876-9c6a-df38c468d41e" />
+<img width="2235" height="1229" alt="image" src="https://github.com/user-attachments/assets/b6811315-7097-4e01-a4fe-d3f06f30c252" />
 
 Lumina is a hobby project and a work-in-progress game engine designed as a learning experience. Still in heavy development, Lumina is inspired by established engines like Unreal Engine, Godot, and others, while aiming to strike a balance between power and simplicity. The engine uses reflection to simplify workflows, and while it is intended to be semi-lightweight, the editor will remain a core feature for the foreseeable future.
 
