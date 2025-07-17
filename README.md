@@ -1,4 +1,6 @@
-# Lumina Game Engine
+<img src="https://github.com/user-attachments/assets/552b8ca0-ebca-4876-9c6a-df38c468d41e" width="40" style="vertical-align: middle; margin-right: 10px;" />
+<span style="font-size: 2em; vertical-align: middle;"><b>Lumina Game Engine</b></span>
+
 
 [![License](https://img.shields.io/github/license/mrdrelliot/lumina)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows-blue)]()
@@ -13,10 +15,6 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)]()
 [![Discord](https://img.shields.io/discord/1240448302514092082?label=discord&logo=discord&color=7289DA)](https://discord.gg/xQSB7CRzQE)
 
-
-<p align="left">
-  <img src="https://github.com/user-attachments/assets/552b8ca0-ebca-4876-9c6a-df38c468d41e" width="64" />
-</p>
 
 **Lumina** is a C++-based, Vulkan-powered game engine built as a hands-on learning project. Inspired by engines like Unreal and Godot, it emphasizes reflection, modularity, and a clean visual editor built with ImGui.
 
