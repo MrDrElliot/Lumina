@@ -20,7 +20,7 @@
 - 🖥️ **ImGui-based editor** with real-time scene editing
 - 🎮 **Vulkan renderer** with ECS architecture (EnTT-based)
 - 🧰 **Tools** like `Reflector` for auto-generating code
-- 🔗 Integrated third-party libraries: GLFW, VMA, EASTL, VkBootstrap, etc.
+- 🔗 Integrated third-party libraries: GLFW, VMA, EASTL, VkBootstrap, EnTT, EnkiTS, ImGui, FastGLTF, GLM, NlohmanJson, RPMalloc, SPDLog, SPIRV-Reflect, STB_Image, Tracy, XXHash.
 
 ---
 
