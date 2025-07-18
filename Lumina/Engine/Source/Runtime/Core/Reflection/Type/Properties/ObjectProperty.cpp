@@ -54,16 +54,6 @@ namespace Lumina
 
         if (ImGui::BeginPopup("ObjectSelectorPopup"))
         {
-
-            if (ImGui::Button("Clear", ImVec2(ImGui::GetContentRegionAvail().x, 0)))
-            {
-                *(CObject**)ValuePtr = nullptr;
-                ImGui::EndPopup();
-                return;
-            }
-
-            ImGui::Separator();
-            
             CObject* Selected = nullptr;
             FARFilter Filter;
             Filter.ClassNames.push_back("CMaterial");

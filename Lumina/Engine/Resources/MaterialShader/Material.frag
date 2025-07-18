@@ -8,9 +8,9 @@ layout(location = 1) in vec3 inNormal;
 layout(location = 2) in vec3 inFragPos;
 layout(location = 3) in vec2 inUV;
 
-layout(location = 0) out vec3 GPosition;
-layout(location = 1) out vec3 GNormal;
-layout(location = 2) out vec3 GMaterial;
+layout(location = 0) out vec4 GPosition;
+layout(location = 1) out vec4 GNormal;
+layout(location = 2) out vec4 GMaterial;
 layout(location = 3) out vec4 GAlbedoSpec;
 
 struct SMaterialInputs
@@ -49,13 +49,14 @@ void main()
 {
     SMaterialInputs mat = GetMaterialInputs();
 
-    GPosition = inFragPos;
+    GPosition = vec4(inFragPos, 1.0);
 
-    GNormal = getNormalFromMap(mat.Normal);
+    GNormal = vec4(getNormalFromMap(mat.Normal), 1.0);
     
     GMaterial.r = mat.AmbientOcclusion;
     GMaterial.g = mat.Roughness;
     GMaterial.b = mat.Metallic;
+    GMaterial.a = 1.0;
     
     GAlbedoSpec.rgb = mat.Diffuse.rgb;
     

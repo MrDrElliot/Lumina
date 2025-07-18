@@ -30,5 +30,6 @@ namespace Lumina
 
         FAssetRegistry*               AssetRegistry = nullptr;
         FSubsystemManager*            SubsystemManager = nullptr;
+
     };
 }

@@ -48,7 +48,7 @@ namespace Lumina
                                                 
         VkSwapchainKHR                          Swapchain = nullptr;
         VkSurfaceFormatKHR                      SurfaceFormat = {};
-        VkPresentModeKHR                        CurrentPresentMode = VK_PRESENT_MODE_FIFO_KHR;
+        VkPresentModeKHR                        CurrentPresentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
         
         TVector<TRefCountPtr<FVulkanImage>>     SwapchainImages;
         TVector<VkSemaphore>                    PresentSemaphores;

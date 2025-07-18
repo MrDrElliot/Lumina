@@ -21,39 +21,7 @@ namespace Lumina
 
     void CMesh::PostLoad()
     {
-        FRenderManager* RenderManager = GEngine->GetEngineSubsystem<FRenderManager>();
-        IRenderContext* RenderContext = RenderManager->GetRenderContext();
         
-        FRHICommandListRef TransferCommandList = RenderContext->CreateCommandList(FCommandListInfo::Graphics());
-        TransferCommandList->Open();
-        
-        // Vertex buffer
-        FRHIBufferDesc VertexBufferDesc;
-        VertexBufferDesc.Size = GetNumVertices() * sizeof(FVertex);
-        VertexBufferDesc.Stride = sizeof(FVertex);
-        VertexBufferDesc.Usage.SetFlag(EBufferUsageFlags::VertexBuffer);
-
-        VertexBuffer = RenderContext->CreateBuffer(VertexBufferDesc);
-        TransferCommandList->BeginTrackingBufferState(VertexBuffer, EResourceStates::Common);
-        TransferCommandList->WriteBuffer(VertexBuffer, MeshResource.Vertices.data(), 0, GetNumVertices() * sizeof(FVertex));
-        TransferCommandList->SetPermanentBufferState(VertexBuffer, EResourceStates::VertexBuffer);
-        
-        // Index buffer
-        FRHIBufferDesc IndexBufferDesc;
-        IndexBufferDesc.Size = GetNumIndicies() * sizeof(uint32);
-        IndexBufferDesc.Stride = sizeof(uint32);
-        IndexBufferDesc.Usage.SetFlag(EBufferUsageFlags::IndexBuffer);
-
-        IndexBuffer = RenderContext->CreateBuffer(IndexBufferDesc);
-        
-        TransferCommandList->BeginTrackingBufferState(IndexBuffer, EResourceStates::Common);
-        TransferCommandList->WriteBuffer(IndexBuffer, MeshResource.Indices.data(), 0, GetNumIndicies() * sizeof(uint32));
-        TransferCommandList->SetPermanentBufferState(IndexBuffer, EResourceStates::IndexBuffer);
-        TransferCommandList->CommitBarriers();
-        
-        TransferCommandList->Close();
-        RenderContext->ExecuteCommandList(TransferCommandList, 1, ECommandQueue::Graphics);
-
     }
 
     bool CMesh::IsReadyForRender() const

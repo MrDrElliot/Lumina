@@ -16,11 +16,9 @@ namespace Lumina
     using TCopyQualifiersFromTo_T = typename TCopyQualifiersFromTo<From, To>::Type;
 
     template<typename To, typename From>
-    requires eastl::is_base_of_v<From, To>
+    requires eastl::is_base_of_v<From, To> && (sizeof(From) > 0 && sizeof(To) > 0)
     FORCEINLINE TCopyQualifiersFromTo_T<From, To>* Cast(From* Src)
     {
-        static_assert(sizeof(From) > 0 && sizeof(To) > 0, "Attempting to cast between incomplete types");
-
         if (Src)
         {
             if (((const CObject*)Src)->IsA<To>())

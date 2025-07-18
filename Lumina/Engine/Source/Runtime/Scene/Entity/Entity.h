@@ -49,10 +49,12 @@ namespace Lumina
 
         template <typename T>
         T& GetComponent();
-
+        
         template <typename T>
         const T& GetConstComponent() const;
 
+        template <typename T>
+        SIZE_T RemoveComponent() const;
         
         inline operator entt::entity() const               { return EntityHandle; }
         inline operator uint32()                           { return static_cast<uint32>(EntityHandle); }
@@ -98,10 +100,16 @@ namespace Lumina
     {
         return Scene->GetMutableEntityRegistry().get<T>(EntityHandle);
     }
-
+    
     template <typename T>
     const T& Entity::GetConstComponent() const
     {
         return Scene->GetMutableEntityRegistry().get<T>(EntityHandle);
+    }
+
+    template <typename T>
+    SIZE_T Entity::RemoveComponent() const
+    {
+        return Scene->GetMutableEntityRegistry().remove<T>(EntityHandle);
     }
 }

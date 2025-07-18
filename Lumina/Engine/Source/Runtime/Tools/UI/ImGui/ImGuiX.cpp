@@ -273,6 +273,13 @@ namespace Lumina::ImGuiX
         float WindowWidth = ImGui::GetContentRegionAvail().x;
         float TextWidth = ImGui::CalcTextSize(Text).x;
 
+        if (ImGui::Button("Clear", ImVec2(ImGui::GetContentRegionAvail().x, 0)))
+        {
+            OutSelected = nullptr;
+            ImGui::EndPopup();
+            return;
+        }
+        
         ImGui::SetCursorPosX((WindowWidth - TextWidth) * 0.5f);
         ImGui::Text("%s", Text);        ImGui::Separator();
 
@@ -288,11 +295,6 @@ namespace Lumina::ImGuiX
 
             ImGui::TableNextRow();
             ImGui::TableSetColumnIndex(0);
-
-            if (ImGui::Selectable("Clear"))
-            {
-                OutSelected = nullptr;
-            }
             
             for (const FAssetData& Asset : FilteredAssets)
             {

@@ -16,7 +16,6 @@ namespace Lumina
     class FEditorToolModal;
     class FContentBrowserEditorTool;
     class FRendererInfoEditorTool;
-    class FRendererInfoEditorTool;
     class FPrimitiveDrawManager;
     class FConsoleLogEditorTool;
     class FEntitySceneEditorTool;
@@ -94,6 +93,8 @@ namespace Lumina
 
         TQueue<FEditorTool*>                            ToolsPendingAdd;
 
+    protected:
+        
     };
 
     template <typename T, typename ... Args>

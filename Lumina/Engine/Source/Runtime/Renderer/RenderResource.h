@@ -204,6 +204,34 @@ namespace Lumina
 	{
 		return (version & GVersionSubmittedFlag) != 0;
 	}
+
+	struct FDrawIndirectArguments
+	{
+		uint32 VertexCount = 0;
+		uint32 InstanceCount = 1;
+		uint32 StartVertexLocation = 0;
+		uint32 StartInstanceLocation = 0;
+
+		constexpr FDrawIndirectArguments& SetVertexCount(uint32_t value) { VertexCount = value; return *this; }
+		constexpr FDrawIndirectArguments& SetInstanceCount(uint32_t value) { InstanceCount = value; return *this; }
+		constexpr FDrawIndirectArguments& SetStartVertexLocation(uint32_t value) { StartVertexLocation = value; return *this; }
+		constexpr FDrawIndirectArguments& SetStartInstanceLocation(uint32_t value) { StartInstanceLocation = value; return *this; }
+	};
+
+	struct FDrawIndexedIndirectArguments
+	{
+		uint32 IndexCount = 0;
+		uint32 InstanceCount = 1;
+		uint32 StartIndexLocation = 0;
+		int32  BaseVertexLocation = 0;
+		uint32 StartInstanceLocation = 0;
+
+		constexpr FDrawIndexedIndirectArguments& SetIndexCount(uint32 value) { IndexCount = value; return *this; }
+		constexpr FDrawIndexedIndirectArguments& SetInstanceCount(uint32 value) { InstanceCount = value; return *this; }
+		constexpr FDrawIndexedIndirectArguments& SetStartIndexLocation(uint32 value) { StartIndexLocation = value; return *this; }
+		constexpr FDrawIndexedIndirectArguments& SetBaseVertexLocation(int32 value) { BaseVertexLocation = value; return *this; }
+		constexpr FDrawIndexedIndirectArguments& SetStartInstanceLocation(uint32 value) { StartInstanceLocation = value; return *this; }
+	};
 	
     class LUMINA_API IRHIResource
     {

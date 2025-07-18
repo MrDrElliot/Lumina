@@ -179,7 +179,7 @@ namespace Lumina::ImportHelpers
         TransferCommandList->Open();
         TransferCommandList->WriteImage(ReturnImage, 0, 0, Pixels.data(), RowPitch, DepthPitch);
         TransferCommandList->Close();
-        RenderContext->ExecuteCommandList(TransferCommandList, 1, Q_Graphics);
+        RenderContext->ExecuteCommandList(TransferCommandList, ECommandQueue::Graphics);
 
         return ReturnImage;
     }

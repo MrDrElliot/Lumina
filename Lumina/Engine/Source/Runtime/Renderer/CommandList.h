@@ -112,6 +112,8 @@ namespace Lumina
         virtual void SetScissorRect(uint32 MinX, uint32 MinY, uint32 MaxX, uint32 MaxY) = 0;
         virtual void Draw(uint32 VertexCount, uint32 InstanceCount, uint32 FirstVertex, uint32 FirstInstance) = 0;
         virtual void DrawIndexed(FRHIBuffer* IndexBuffer, uint32 IndexCount, uint32 InstanceCount = 1, uint32 FirstIndex = 1, int32 VertexOffset = 0, uint32 FirstInstance = 0) = 0;
+        virtual void DrawIndirect(FRHIBuffer* Buffer, uint32 DrawCount, uint64 Offset) = 0;
+        virtual void DrawIndexedIndirect(FRHIBuffer* DrawBuffer, FRHIBuffer* IndexBuffer, uint32 DrawCount, uint64 Offset) = 0;
 
         
         virtual void SetComputePipeline(FRHIComputePipeline* InPipeline) = 0;

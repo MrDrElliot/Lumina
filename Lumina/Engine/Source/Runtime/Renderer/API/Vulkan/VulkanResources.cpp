@@ -169,6 +169,11 @@ namespace Lumina
         {
             result |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
         }
+
+        if (Usage.IsFlagSet(EBufferUsageFlags::IndirectBuffer))
+        {
+            result |= VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT;
+        }
         
         return result;
     }
@@ -386,7 +391,7 @@ namespace Lumina
             FRHIBufferDesc Desc;
             Desc.Size = Size;
             Desc.Usage.SetFlag(EBufferUsageFlags::CPUWritable);
-            Desc.DebugName = "UploadChunk";
+            Desc.DebugName = FString("UploadChunk [ " + eastl::to_string(Size) + " ]");
 
             chunk->Buffer = Context->CreateBuffer(Desc);
             FVulkanBuffer* VkBuffer = chunk->Buffer.As<FVulkanBuffer>();
@@ -453,14 +458,14 @@ namespace Lumina
 
         if (!CurrentChunk)
         {
-            uint64_t sizeToAllocate = Align(std::max(Size, DefaultChunkSize), FBufferChunk::c_sizeAlignment);
+            uint64 SizeToAllocate = Align(std::max(Size, DefaultChunkSize), FBufferChunk::c_sizeAlignment);
 
-            if ((MemoryLimit > 0) && (AllocatedMemory + sizeToAllocate > MemoryLimit))
+            if ((MemoryLimit > 0) && (AllocatedMemory + SizeToAllocate > MemoryLimit))
             {
                 return false;
             }
 
-            CurrentChunk = CreateChunk(sizeToAllocate);
+            CurrentChunk = CreateChunk(SizeToAllocate);
         }
 
         CurrentChunk->Version = CurrentVersion;
@@ -565,7 +570,7 @@ namespace Lumina
         BufferCreateInfo.usage = ToVkBufferUsage(InDescription.Usage);
         BufferCreateInfo.flags = 0;
         
-        Allocation = Device->GetAllocator()->AllocateBuffer(&BufferCreateInfo, VmaFlags, &Buffer, "");
+        Allocation = Device->GetAllocator()->AllocateBuffer(&BufferCreateInfo, VmaFlags, &Buffer, GetDescription().DebugName.c_str());
     }
 
     FVulkanBuffer::~FVulkanBuffer()

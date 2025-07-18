@@ -27,12 +27,10 @@ namespace Lumina
 
         
         FORCEINLINE const FMeshResource& GetMeshResource() const { return MeshResource; }
-        FORCEINLINE const uint32 GetNumVertices() const { return (uint32)MeshResource.Vertices.size(); }
-        FORCEINLINE const uint32 GetNumIndicies() const { return (uint32)MeshResource.Indices.size(); }
+        FORCEINLINE uint32 GetNumVertices() const { return (uint32)MeshResource.Vertices.size(); }
+        FORCEINLINE uint32 GetNumIndices() const { return (uint32)MeshResource.Indices.size(); }
         
-        INLINE CMaterial* GetMaterial() { return Cast<CMaterial>(Material); }
-        INLINE const FRHIBufferRef GetVertexBuffer() const { return VertexBuffer; }
-        INLINE const FRHIBufferRef GetIndexBuffer() const { return IndexBuffer; }
+        INLINE CMaterial* GetMaterial() const { return Cast<CMaterial>(Material); }
         
         void PostLoad() override;
 
@@ -44,8 +42,6 @@ namespace Lumina
     private:
         
         FMeshResource   MeshResource;
-        FRHIBufferRef   VertexBuffer;
-        FRHIBufferRef   IndexBuffer;
     };
     
 }

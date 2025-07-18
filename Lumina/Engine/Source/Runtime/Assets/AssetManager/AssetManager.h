@@ -20,9 +20,6 @@ namespace Lumina
 
 		void Initialize(FSubsystemManager& Manager) override;
 		void Deinitialize() override;
-
-		void Update();
-		
 		FAssetRequest* LoadAsset(const FString& InAssetPath);
 
 		void NotifyAssetRequestCompleted(FAssetRequest* Request);
@@ -31,20 +28,14 @@ namespace Lumina
 		
 	private:
 
-		FAssetRequest* TryFindActiveRequest(const FString& InAssetPath);
-
-		void ProcessAssetRequests();
+		FAssetRequest* TryFindActiveRequest(const FString& InAssetPath, bool& bAlreadyInQueue);
+		void SubmitAssetRequest(FAssetRequest* Request);
 	
 	private:
-
 		
-		std::thread												AssetRequestThread;
-		eastl::atomic<bool>										bAssetThreadRunning = true;
-		mutable FRecursiveMutex									RecursiveMutex;
-		
-		TQueue<FAssetRequest*>									RequestQueue;
 		TVector<FAssetRequest*>									ActiveRequests;
-
+		
+		std::atomic<int32> OutstandingTasks =					0;
 		FMutex													RequestMutex;
 		std::mutex												FlushMutex;
 		std::condition_variable									FlushCV;

@@ -26,5 +26,5 @@
 
 
 // Invalid Index
-constexpr SIZE_T INDEX_NONE = -1;
+constexpr int64 INDEX_NONE = -1;
 

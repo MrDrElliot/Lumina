@@ -95,9 +95,7 @@ namespace Lumina
         RenderManager->FrameStart(UpdateContext);
 
         bool bRunEngineUpdate = true;
-
-        AssetManager->Update();
-
+        
         
         if (bRunEngineUpdate)
         {

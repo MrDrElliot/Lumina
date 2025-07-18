@@ -67,6 +67,8 @@ namespace Lumina
         
         RenderContext->FrameEnd(UpdateContext);
 
+        RenderContext->FlushPendingDeletes();
+        
         CurrentFrameIndex = (CurrentFrameIndex + 1) % FRAMES_IN_FLIGHT;
     }
 }

@@ -27,22 +27,9 @@ namespace Lumina
         Entity DirectionalLightEntity = NewScene->CreateEntity(FTransform(), "Directional Light");
         DirectionalLightEntity.AddComponent<FDirectionalLightComponent>();
 
-        int gridSize = sqrt(2000); // ≈ sqrt(1000)
-        float spacing = 2.0f;
-
-        for (int i = 0; i < 2000; ++i)
-        {
-            int x = i % gridSize;
-            int y = i / gridSize;
-
-            glm::vec3 position = glm::vec3(x * spacing, y * spacing, 0.0f);
-
-            MeshEntity = NewScene->CreateEntity(FTransform(), "MeshEntity");
-            FStaticMeshComponent& NewComponent = MeshEntity.AddComponent<FStaticMeshComponent>();
-
-            MeshEntity.GetComponent<FTransformComponent>().SetLocation(position);
-            NewComponent.StaticMesh = Cast<CStaticMesh>(InAsset);
-        }
+        MeshEntity = NewScene->CreateEntity(FTransform(), "MeshEntity");
+        FStaticMeshComponent& NewComponent = MeshEntity.AddComponent<FStaticMeshComponent>();
+        NewComponent.StaticMesh = Cast<CStaticMesh>(InAsset);
         
         Scene = NewScene;
     }
@@ -54,48 +41,37 @@ namespace Lumina
             CStaticMesh* StaticMesh = Cast<CStaticMesh>(Asset);
 
             ImGui::Text("Vertices: %u", StaticMesh->GetNumVertices());
-            ImGui::Text("Indices: %u", StaticMesh->GetNumIndicies());
+            ImGui::Text("Indices: %u", StaticMesh->GetNumIndices());
 
+            ImGui::Separator();
+
+            
             ImGui::Separator();
 
             auto& Registry = Scene->GetMutableEntityRegistry();
+            auto View = Registry.view<FDirectionalLightComponent, FTransformComponent>();
 
-            // Add Light Button
-            if (ImGui::Button("Add Point Light"))
-            {
-                Entity New = Scene->CreateEntity(FTransform(), "New Light");
-                New.AddComponent<FPointLightComponent>();
-            }
-
-            ImGui::Separator();
-
-            auto View = Registry.view<FPointLightComponent, FTransformComponent>();
-
-            int lightIndex = 0;
             for (auto Entity : View)
             {
-                auto& PLC = Registry.get<FPointLightComponent>(Entity);
+                auto& DLC = Registry.get<FDirectionalLightComponent>(Entity);
                 auto& TC  = Registry.get<FTransformComponent>(Entity);
 
-                ImGui::PushID(lightIndex++);
 
-                if (ImGui::TreeNode("Point Light"))
+                if (ImGui::TreeNode("Directional Light"))
                 {
                     ImGui::SetNextItemWidth(150.0f);
-                    ImGui::ColorPicker3("Color", glm::value_ptr(PLC.LightColor),
+                    ImGui::ColorPicker3("Color", glm::value_ptr(DLC.Color),
                                         ImGuiColorEditFlags_DisplayRGB | ImGuiColorEditFlags_NoSidePreview);
 
-                    ImGui::SliderFloat("Intensity", &PLC.LightColor.a, 0.1, 10000.0f);
+                    ImGui::SliderFloat("Intensity", &DLC.Color.a, 0.1f, 200.0f);
 
-                    if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
+                    if (ImGui::DragFloat3("Direction", glm::value_ptr(DLC.Direction)))
                     {
-                        ImGuiUtils::DrawVec3Control("Position", TC.Transform.Location);
+                        
                     }
 
                     ImGui::TreePop();
                 }
-
-                ImGui::PopID();
             }
 
             ImGuiX::DrawObjectProperties(StaticMesh);

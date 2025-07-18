@@ -1,11 +1,11 @@
 #pragma once
 
-#include "Component.h"
+#include "RenderComponent.h"
 
 namespace Lumina
 {
-    struct FMeshComponent : public FEntityComponent
+    struct FMeshComponent : public FRenderComponent
     {
-
+        
     };
 }

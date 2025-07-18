@@ -45,6 +45,12 @@ namespace Lumina
         INLINE FRHIImageRef GetRenderTarget() const { return SceneViewport->GetRenderTarget(); }
         INLINE FSceneGlobalData* GetSceneGlobalData() { return &SceneGlobalData; }
 
+        const FSceneRenderStats& GetSceneRenderStats() const { return SceneRenderStats; }
+        const FGBuffer& GetGBuffer() const { return GBuffer; }
+        
+        ESceneRenderGBuffer GetGBufferDebugMode() const { return GBufferDebugMode; }
+        void SetGBufferDebugMode(ESceneRenderGBuffer Mode) { GBufferDebugMode = Mode; }
+        
     protected:
 
         void GeometryPass(const FSceneRenderData& DrawList);
@@ -59,6 +65,8 @@ namespace Lumina
         void CreateImages();
         void OnSwapchainResized();
 
+        void CreateOrResizeGeometryBuffers(uint64 VertexSize, uint64 IndexSize, uint64 VertexSizeDesired, uint64 IndexSizeDesired);
+        void CreateOrResizeDrawCommandBuffer(uint64 SizeRequired, uint64 SizeDesired);
 
         void FullScreenPass(const FScene* Scene);
         
@@ -71,8 +79,12 @@ namespace Lumina
         
         FRHIViewportRef                     SceneViewport;
         
+        TVector<FVertex>                    CombinedVertex;
+        TVector<uint32>                     CombinedIndex;
+        
         FRHIBufferRef                       VertexBuffer;
         FRHIBufferRef                       IndexBuffer;
+        FRHIBufferRef                       DrawCommandBuffer;
         
         FRHIBufferRef                       SceneDataBuffer;
         FRHIBufferRef                       ModelDataBuffer;
@@ -94,6 +106,23 @@ namespace Lumina
         FRHIImageRef                        DepthAttachment;
         FRHIImageRef                        CubeMap;
         FRHIImageRef                        IrradianceCube;
+
+        FSceneRenderData                    LastFrameRenderData;
+        ESceneRenderGBuffer                 GBufferDebugMode = ESceneRenderGBuffer::RenderTarget;
+
+        TVector<FRenderProxy>               RenderProxies;
+        TVector<FRenderProxy>               SortedRenderProxies;
+        TVector<FIndirectRenderBatch>       RenderBatch;
+        THashMap<SIZE_T, SIZE_T>            RenderBatchMap;
+
+        FModelData                              ModelData;
+        THashMap<uint64, SIZE_T>                IndirectArgsMap;
+        TVector<FDrawIndexedIndirectArguments>  DrawIndexedArguments;
+
+        
+        SIZE_T                              NumMeshBlocks;
+        THashMap<CStaticMesh*, SIZE_T>      MeshBlocks;
+        TSet<CStaticMesh*>                  RegisteredMeshes;
         
         TSharedPtr<FDescriptorTableManager> DescriptorTableManager;
     };

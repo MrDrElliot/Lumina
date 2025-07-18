@@ -187,10 +187,42 @@ namespace Lumina
             ImGui::EndMenu();
         }
 
-        if (ImGui::MenuItem(LE_ICON_DEBUG_STEP_INTO" Render Graph"))
+        if (ImGui::BeginMenu(LE_ICON_DEBUG_STEP_INTO " Render Debug"))
         {
             FSceneRenderer* SceneRenderer = UpdateContext.GetSubsystem<FSceneManager>()->GetSceneRendererForScene(Scene);
+            const FSceneRenderStats& Stats = SceneRenderer->GetSceneRenderStats();
+
+            ImGui::TextColored(ImVec4(1.0f, 0.78f, 0.16f, 1.0f), "Scene Statistics");
+            ImGui::Separator();
+            ImGui::Text("Draw Calls");    ImGui::SameLine(150); ImGui::Text("%u", Stats.NumDrawCalls);
+            ImGui::Text("Vertices");      ImGui::SameLine(150); ImGui::Text("%llu", Stats.NumVertices);
+            ImGui::Text("Indices");       ImGui::SameLine(150); ImGui::Text("%llu", Stats.NumIndices);
+
+            ImGui::Spacing();
+    
+            ImGui::TextColored(ImVec4(0.58f, 0.86f, 1.0f, 1.0f), "Debug Visualization");
+            ImGui::Separator();
+
+            static const char* GBufferDebugLabels[] =
+            {
+                "RenderTarget",
+                "Position",
+                "Normals",
+                "Material"
+            };
+
+            ESceneRenderGBuffer DebugMode = SceneRenderer->GetGBufferDebugMode();
+            int DebugModeInt = static_cast<int>(DebugMode);
+            ImGui::PushItemWidth(200);
+            if (ImGui::Combo("GBuffer Mode", &DebugModeInt, GBufferDebugLabels, IM_ARRAYSIZE(GBufferDebugLabels)))
+            {
+                SceneRenderer->SetGBufferDebugMode(static_cast<ESceneRenderGBuffer>(DebugModeInt));
+            }
+            ImGui::PopItemWidth();
+
+            ImGui::EndMenu();
         }
+        
     }
 
     void FSceneEditorTool::InitializeDockingLayout(ImGuiID InDockspaceID, const ImVec2& InDockspaceSize) const
@@ -345,16 +377,6 @@ namespace Lumina
 
             if (ImGui::BeginPopup("ObjectSelectorPopup"))
             {
-
-                if (ImGui::Button("Clear", ImVec2(ImGui::GetContentRegionAvail().x, 0)))
-                {
-                    MeshComp.StaticMesh = nullptr;
-                    ImGui::EndPopup();
-                    return;
-                }
-
-                ImGui::Separator();
-            
                 CObject* Selected = nullptr;
                 FARFilter Filter;
                 Filter.ClassNames.push_back("CStaticMesh");

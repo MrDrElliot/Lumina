@@ -58,7 +58,6 @@ namespace Lumina
 
         uint64                      SubmissionID = 0;
         uint64                      RecordingID = 0;
-        uint64                      LastCommandListID = 0;
 
         TracyVkCtx                  TracyContext = nullptr;
 

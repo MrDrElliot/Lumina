@@ -72,7 +72,7 @@ namespace Lumina
     public:
         RENDER_RESOURCE(RRT_None)
 
-        ECommandQueue   Queue;
+        ECommandQueue   Queue = ECommandQueue::Graphics;
         uint64          CommandListID = 0;
         
     };

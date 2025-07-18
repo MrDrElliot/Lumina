@@ -45,7 +45,7 @@ namespace Lumina
         //-------------------------------------------------------------------------------------
 
         virtual FRHICommandListRef CreateCommandList(const FCommandListInfo& Info) = 0;
-        virtual void ExecuteCommandList(ICommandList* CommandLists, uint32 NumCommandLists, ECommandQueue QueueType) = 0;
+        virtual uint64 ExecuteCommandLists(ICommandList* const* CommandLists, uint32 NumCommandLists, ECommandQueue QueueType) = 0;
         NODISCARD virtual FRHICommandListRef GetCommandList(ECommandQueue Queue) = 0;
 
         //-------------------------------------------------------------------------------------
@@ -104,7 +104,12 @@ namespace Lumina
         
         NODISCARD virtual FRHIImageRef CreateImage(const FRHIImageDesc& ImageSpec) = 0;
         NODISCARD virtual FRHISamplerRef CreateSampler(const FSamplerDesc& SamplerDesc) = 0;
-        
+
+        // Front-end for executeCommandLists(..., 1) for compatibility and convenience
+        uint64 ExecuteCommandList(ICommandList* CommandList, ECommandQueue ExecutionQueue = ECommandQueue::Graphics)
+        {
+            return ExecuteCommandLists(&CommandList, 1, ExecutionQueue);
+        }
 
         //-------------------------------------------------------------------------------------
 

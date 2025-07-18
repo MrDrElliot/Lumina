@@ -650,12 +650,38 @@ namespace Lumina
                         FScene* Scene = Tool->GetScene();
                         FSceneRenderer* SceneRenderer = UpdateContext.GetSubsystem<FSceneManager>()->GetSceneRendererForScene(Scene);
                         
-                        FRHIImageRef RenderTarget = SceneRenderer->GetRenderTarget();
+                        FRHIImageRef PositionTarget = SceneRenderer->GetGBuffer().Normals;
 
                         FRenderManager* RenderManager = UpdateContext.GetSubsystem<FRenderManager>();
                         IImGuiRenderer* ImGuiRenderer = RenderManager->GetImGuiRenderer();
-                        
-                        ImTextureID ViewportTexture = ImGuiRenderer->GetOrCreateImTexture(RenderTarget);
+
+                        ImTextureID ViewportTexture = 0;
+                        switch (SceneRenderer->GetGBufferDebugMode())
+                        {
+                            case ESceneRenderGBuffer::RenderTarget:
+                                {
+                                    ViewportTexture = ImGuiRenderer->GetOrCreateImTexture(SceneRenderer->GetRenderTarget());
+                                }
+                            break;
+                            
+                            case ESceneRenderGBuffer::Position:
+                                {
+                                    ViewportTexture = ImGuiRenderer->GetOrCreateImTexture(SceneRenderer->GetGBuffer().Position);
+                                }
+                            break;
+                            
+                            case ESceneRenderGBuffer::Normals:
+                                {
+                                    ViewportTexture = ImGuiRenderer->GetOrCreateImTexture(SceneRenderer->GetGBuffer().Normals);
+                                }
+                            break;
+                            
+                            case ESceneRenderGBuffer::Material:
+                                {
+                                    ViewportTexture = ImGuiRenderer->GetOrCreateImTexture(SceneRenderer->GetGBuffer().Material);
+                                }
+                            break;
+                        }
                         
                         Tool->bViewportFocused = ImGui::IsWindowFocused();
                         Tool->bViewportHovered = ImGui::IsWindowHovered();

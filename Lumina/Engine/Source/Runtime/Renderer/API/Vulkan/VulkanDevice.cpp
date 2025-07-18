@@ -77,8 +77,10 @@ namespace Lumina
         VK_CHECK(vmaCreateBuffer(Allocator, CreateInfo, &Info, vkBuffer, &Allocation, &AllocationInfo));
         AssertMsg(Allocation, "Vulkan failed to allocate buffer memory!");
 
+#if LE_DEBUG
         vmaSetAllocationName(Allocator, Allocation, AllocationName);
-
+#endif
+        
         AllocatedBuffers[*vkBuffer]= Allocation;
         
         return Allocation;
@@ -105,8 +107,10 @@ namespace Lumina
         AssertMsg(Allocation, "Vulkan failed to allocate image memory!");
 
         
+#if LE_DEBUG
         vmaSetAllocationName(Allocator, Allocation, AllocationName);
-
+#endif
+        
         AllocatedImages[*vkImage] = Allocation;
         
         return Allocation;
@@ -130,7 +134,8 @@ namespace Lumina
         Assert(Buffer != VK_NULL_HANDLE)
 
         VmaAllocationInfo AllocationInfo;
-
+        vmaGetAllocationInfo(Allocator, AllocatedBuffers[Buffer], &AllocationInfo);
+        
         auto it = AllocatedBuffers.find(Buffer);
         if (it == AllocatedBuffers.end())
         {
@@ -138,7 +143,6 @@ namespace Lumina
             return;
         }
         
-        vmaGetAllocationInfo(Allocator, AllocatedBuffers[Buffer], &AllocationInfo);
         
         vmaDestroyBuffer(Allocator, Buffer, AllocatedBuffers[Buffer]);
         

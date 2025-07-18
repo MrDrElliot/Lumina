@@ -13,52 +13,54 @@ namespace Lumina
         glm::vec3 Location;   // Position in world space
         glm::quat Rotation;   // Rotation as a quaternion (no gimbal lock)
         glm::vec3 Scale;      // Scaling factors
-
+        glm::mat4 Matrix;
+        
         FTransform()
             : Location(0.0f),
               Rotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f)),
               Scale(1.0f, 1.0f, 1.0f)
-        {}
-        
+            , Matrix()
+        {
+        }
+
         FTransform(const glm::vec3& location, const glm::vec3& eulerAngles, const glm::vec3& scale)
             : Location(location),
               Rotation(glm::quat(glm::radians(eulerAngles))),
               Scale(scale)
-        {}
+            , Matrix()
+        {
+        }
 
         glm::mat4 GetMatrix() const
         {
-            // First, create scale, then rotation, then translation matrices
-            glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), Scale);          // Scale
-            glm::mat4 rotateMatrix = glm::mat4_cast(Rotation);  // Convert quaternion to rotation matrix
-            glm::mat4 translateMatrix = glm::translate(glm::mat4(1.0f), Location);  // Translate
+            glm::mat4 m = glm::mat4_cast(Rotation);
+            m[0] *= Scale.x;
+            m[1] *= Scale.y;
+            m[2] *= Scale.z;
+            m[3] = glm::vec4(Location, 1.0f);
 
-            // Combine them into a single transformation matrix in the correct order
-            return translateMatrix * rotateMatrix * scaleMatrix;
+            return m;
         }
 
-
-        // Convenience methods to set rotation using Euler angles
         void SetRotationFromEuler(const glm::vec3& eulerAngles)
         {
-            Rotation = glm::quat(glm::radians(eulerAngles));  // Convert Euler angles to quaternion
+            Rotation = glm::quat(glm::radians(eulerAngles));
         }
 
-        // Methods for manipulating the transform
         void Translate(const glm::vec3& translation)
         {
-            Location += translation;  // Apply translation incrementally
+            Location += translation;
         }
 
         void Rotate(const glm::vec3& eulerAngles)
         {
-            glm::quat additionalRotation = glm::quat(glm::radians(eulerAngles));  // Convert Euler to quaternion
-            Rotation = additionalRotation * Rotation;  // Combine existing and new rotations
+            glm::quat additionalRotation = glm::quat(glm::radians(eulerAngles));
+            Rotation = additionalRotation * Rotation;
         }
 
         void SetScale(const glm::vec3& scaleFactors)
         {
-            Scale *= scaleFactors;  // Apply scaling incrementally
+            Scale *= scaleFactors;
         }
     };
 }

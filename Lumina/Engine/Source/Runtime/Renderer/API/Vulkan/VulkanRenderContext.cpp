@@ -205,11 +205,9 @@ namespace Lumina
         }
     }
 
-    uint64 FQueue::Submit(ICommandList* CommandLists, uint32 NumCommandLists)
+    uint64 FQueue::Submit(ICommandList* const* CommandLists, uint32 NumCommandLists)
     {
         LUMINA_PROFILE_SCOPE();
-
-        FScopeLock Lock(Mutex);
         
         TFixedVector<VkCommandBuffer, 4> CommandBuffers(NumCommandLists);
         TFixedVector<VkPipelineStageFlags, 4> StageFlags(WaitSemaphores.size());
@@ -223,13 +221,12 @@ namespace Lumina
 
         for (uint32 i = 0; i < NumCommandLists; ++i)
         {
-            auto* VulkanCommandList = static_cast<FVulkanCommandList*>(&CommandLists[i]);
+            auto* VulkanCommandList = static_cast<FVulkanCommandList*>(CommandLists[i]);
             auto& TrackedBuffer = VulkanCommandList->CurrentCommandBuffer;
 
             Assert(TrackedBuffer->Queue == Queue)
 
             CommandBuffers[i] = TrackedBuffer->CommandBuffer;
-            TrackedBuffer->LastCommandListID = LastSubmittedID;
             CommandBuffersInFlight.push_back(TrackedBuffer);
 
             for (const auto& Buffer : TrackedBuffer->ReferencedStagingResources)
@@ -289,6 +286,7 @@ namespace Lumina
 
     bool FQueue::PollCommandList(uint64 CommandListID)
     {
+        LUMINA_PROFILE_SCOPE_COLORED(tracy::Color::Green);
         if (CommandListID > LastSubmittedID || CommandListID == 0)
         {
             return false;
@@ -306,6 +304,7 @@ namespace Lumina
 
     bool FQueue::WaitCommandList(uint64 CommandListID, uint64 Timeout)
     {
+        LUMINA_PROFILE_SCOPE_COLORED(tracy::Color::Green);
         if (CommandListID > LastSubmittedID || CommandListID == 0)
         {
             return false;
@@ -459,19 +458,16 @@ namespace Lumina
         CommandList->CopyImage(GEngine->GetEngineViewport()->GetRenderTarget(), {}, Swapchain->GetCurrentImage(), {});
         
         CommandList->Close();
-        
-        ExecuteCommandList(CommandList, 1, Q_Graphics);
+
+        ExecuteCommandList(CommandList, Q_Graphics);
         
         bool bSuccess = Swapchain->Present();
         
-        FlushPendingDeletes();
-
         return bSuccess;
     }
 
     FRHICommandListRef FVulkanRenderContext::CreateCommandList(const FCommandListInfo& Info)
     {
-
         if (Queues[uint32(Info.CommandQueue)] == nullptr)
         {
             return nullptr;
@@ -480,7 +476,7 @@ namespace Lumina
         return MakeRefCount<FVulkanCommandList>(this, Info);
     }
     
-    void FVulkanRenderContext::ExecuteCommandList(ICommandList* CommandLists, uint32 NumCommandLists, ECommandQueue QueueType)
+    uint64 FVulkanRenderContext::ExecuteCommandLists(ICommandList* const* CommandLists, uint32 NumCommandLists, ECommandQueue QueueType)
     {
         FQueue* Queue = Queues[uint32(QueueType)];
 
@@ -488,9 +484,10 @@ namespace Lumina
 
         for (uint32 i = 0; i < NumCommandLists; ++i)
         {
-            /** Static cast in this case if fine because CommandLists will only ever contain one type. */
-            static_cast<FVulkanCommandList*>(&CommandLists[i])->Executed(Queue, SubmissionID);
+            static_cast<FVulkanCommandList*>(CommandLists[i])->Executed(Queue, SubmissionID);
         }
+
+        return SubmissionID;
     }
 
     FRHICommandListRef FVulkanRenderContext::GetCommandList(ECommandQueue Queue)
@@ -817,6 +814,7 @@ namespace Lumina
 
     void FVulkanRenderContext::WaitEventQuery(IEventQuery* Query)
     {
+        LUMINA_PROFILE_SCOPE_COLORED(tracy::Color::Green);
         FVulkanEventQuery* VkQuery = static_cast<FVulkanEventQuery*>(Query);
         if (VkQuery->CommandListID == 0)
         {

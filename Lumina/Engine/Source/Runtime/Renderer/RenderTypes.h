@@ -12,6 +12,7 @@
 
 #define NO_TEXTURE (-1)
 #define FRAMES_IN_FLIGHT 2
+#define SWAPCHAIN_IMAGES 3
 
 namespace Lumina
 {
@@ -152,24 +153,17 @@ namespace Lumina
     enum class EBufferUsageFlags : uint32
     {
         None = 0,
-
-        NullResource        = 1,
-
-        Dynamic             = 2,
-
-        SourceCopy          = 3,
-
-        VertexBuffer        = 4,
-        IndexBuffer         = 5,
-        UniformBuffer       = 6,
-
-        StorageBuffer       = 7,
-
-        StagingBuffer       = 8,
-
-        CPUWritable         = 9,
-        CPUReadable         = 10,
-        
+        NullResource,
+        Dynamic,
+        SourceCopy,
+        VertexBuffer,
+        IndexBuffer,
+        UniformBuffer,
+        IndirectBuffer,
+        StorageBuffer,
+        StagingBuffer,
+        CPUWritable,
+        CPUReadable,
     };
     
     ENUM_CLASS_FLAGS(EBufferUsageFlags);
@@ -181,6 +175,7 @@ namespace Lumina
     #define BUF_IndexBuffer     EBufferUsageFlags::IndexBuffer
     #define BUF_UniformBuffer   EBufferUsageFlags::UniformBuffer
     #define BUF_StorageBuffer   EBufferUsageFlags::StorageBuffer
+    #define BUF_Indirect        EBufferUsageFlags::IndirectBuffer
     
     enum class ERenderDeviceBufferMemoryUsage : uint8
     {

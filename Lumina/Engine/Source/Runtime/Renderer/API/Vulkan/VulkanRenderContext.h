@@ -88,7 +88,7 @@ namespace Lumina
 
         void RetireCommandBuffers();
         
-        uint64 Submit(ICommandList* CommandLists, uint32 NumCommandLists);
+        uint64 Submit(ICommandList* const* CommandLists, uint32 NumCommandLists);
 
         void WaitIdle();
         uint64 UpdateLastFinishID();
@@ -138,7 +138,7 @@ namespace Lumina
         FORCEINLINE FQueue* GetQueue(ECommandQueue Type) const { return Queues[(uint32)Type]; }
 
         NODISCARD FRHICommandListRef CreateCommandList(const FCommandListInfo& Info) override;
-        void ExecuteCommandList(ICommandList* CommandLists, uint32 NumCommandLists, ECommandQueue QueueType) override;
+        uint64 ExecuteCommandLists(ICommandList* const* CommandLists, uint32 NumCommandLists, ECommandQueue QueueType) override;
         NODISCARD FRHICommandListRef GetCommandList(ECommandQueue Queue) override;
         
         void CreateDevice(vkb::Instance Instance);

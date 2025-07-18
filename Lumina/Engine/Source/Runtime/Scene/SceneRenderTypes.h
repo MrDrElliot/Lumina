@@ -2,7 +2,9 @@
 
 #include <glm/glm.hpp>
 
+#include "Core/Math/Transform.h"
 #include "Platform/GenericPlatform.h"
+#include "Renderer/RenderResource.h"
 #include "Renderer/RHIFwd.h"
 
 #define MAX_LIGHTS 10000
@@ -11,16 +13,38 @@
 namespace Lumina
 {
     struct FVertex;
-}
-
-namespace Lumina
-{
     class CMaterial;
+    class CStaticMesh;
 }
 
 namespace Lumina
 {
-    class CStaticMesh;
+}
+
+namespace Lumina
+{
+    enum class ESceneRenderGBuffer : uint8
+    {
+        RenderTarget,
+        Position,
+        Normals,
+        Material,
+    };
+
+    struct FRenderProxy
+    {
+        CStaticMesh* Mesh;
+        CMaterial* Material;
+        glm::mat4 Matrix;
+        SIZE_T ProxyID;
+        SIZE_T SortKey;
+        SIZE_T ModelMatrixIndex;
+
+        bool operator < (const FRenderProxy& Other) const
+        {
+            return SortKey < Other.SortKey;
+        }
+    };
     
     struct FCameraData
     {
@@ -67,16 +91,8 @@ namespace Lumina
     {
         CStaticMesh* Mesh;
         CMaterial* Material;
-        uint32 VertexOffset;
-        uint32 First;
-        uint32 Count;
-    };
-
-    struct FStaticMeshRender
-    {
-        CStaticMesh* Mesh;
-        CMaterial* Material;
-        glm::mat4 Matrix;
+        SIZE_T Key;
+        FDrawIndexedIndirectArguments Args;
     };
 
     struct FSceneRenderStats
@@ -90,15 +106,16 @@ namespace Lumina
     {
         FSceneRenderData() = default;
         FSceneRenderData(const FSceneRenderData&) = delete;
-        const FSceneRenderData& operator = (const FSceneRenderData&) = delete;
+        FSceneRenderData& operator=(const FSceneRenderData&) = delete;
 
-        TVector<FStaticMeshRender>      StaticMeshRenders;
-        TVector<FVertex>                Vertices;
-        TVector<FIndirectRenderBatch>   RenderBatch;
-        FModelData                      ModelData;
-        FSceneLightData                 LightData;
-        
+        FSceneRenderData(FSceneRenderData&&) noexcept = default;
+        FSceneRenderData& operator=(FSceneRenderData&&) noexcept = default;
+
+        TVector<FDrawIndexedIndirectArguments>  DrawIndexedArguments;
+        TVector<FVertex>                        Vertices;
+        FSceneLightData                         LightData;
     };
+
 
     struct FSceneGlobalData
     {

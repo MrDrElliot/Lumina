@@ -843,6 +843,8 @@ namespace Lumina
                         DynamicOffsets.push_back(static_cast<uint32>(Offset));
                     }
                 }
+
+                CurrentCommandBuffer->AddReferencedResource(VulkanSet);
             }
         }
         
@@ -870,7 +872,8 @@ namespace Lumina
     {
         LUMINA_PROFILE_SCOPE();
         TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "BindVertexBuffer")        
-
+        Assert(Buffer != nullptr);
+        
         GraphicsState.SetVertexStream(Buffer, Index, Offset);
     }
 
@@ -923,7 +926,6 @@ namespace Lumina
     {
         LUMINA_PROFILE_SCOPE();
         TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "Draw")        
-        Assert(GraphicsState.Pipeline != nullptr)
 
         GraphicsState.PrepareForDraw(CurrentCommandBuffer->CommandBuffer);
         vkCmdDraw(CurrentCommandBuffer->CommandBuffer, VertexCount, InstanceCount, FirstVertex, FirstInstance);
@@ -932,13 +934,11 @@ namespace Lumina
     void FVulkanCommandList::DrawIndexed(FRHIBuffer* IndexBuffer, uint32 IndexCount, uint32 InstanceCount, uint32 FirstIndex, int32 VertexOffset, uint32 FirstInstance)
     {
         LUMINA_PROFILE_SCOPE();
-        TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "DrawIndexed")        
-        Assert(GraphicsState.Pipeline != nullptr)
-        Assert(IndexBuffer != nullptr)
-        Assert(IndexBuffer->GetUsage().IsFlagSet(EBufferUsageFlags::IndexBuffer))
+        TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "DrawIndexed")
         
         FVulkanBuffer* Buffer = static_cast<FVulkanBuffer*>(IndexBuffer);
         CurrentCommandBuffer->AddReferencedResource(Buffer);
+        
         if (Buffer->Buffer != GraphicsState.IndexBuffer)
         {
             vkCmdBindIndexBuffer(CurrentCommandBuffer->CommandBuffer, Buffer->GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
@@ -947,6 +947,36 @@ namespace Lumina
         
         GraphicsState.PrepareForDraw(CurrentCommandBuffer->CommandBuffer);
         vkCmdDrawIndexed(CurrentCommandBuffer->CommandBuffer, IndexCount, InstanceCount, FirstIndex, VertexOffset, FirstInstance);
+    }
+
+    void FVulkanCommandList::DrawIndirect(FRHIBuffer* Buffer, uint32 DrawCount, uint64 Offset)
+    {
+        LUMINA_PROFILE_SCOPE();
+        TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "DrawIndirect")
+        
+        CurrentCommandBuffer->AddReferencedResource(Buffer);
+        
+        GraphicsState.PrepareForDraw(CurrentCommandBuffer->CommandBuffer);
+        vkCmdDrawIndirect(CurrentCommandBuffer->CommandBuffer, Buffer->GetAPIResource<VkBuffer>(), Offset, DrawCount, sizeof(FDrawIndirectArguments));
+    }
+
+    void FVulkanCommandList::DrawIndexedIndirect(FRHIBuffer* DrawBuffer, FRHIBuffer* IndexBuffer, uint32 DrawCount, uint64 Offset)
+    {
+        LUMINA_PROFILE_SCOPE();
+        TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "DrawIndexedIndirect")
+        
+        CurrentCommandBuffer->AddReferencedResource(DrawBuffer);
+        CurrentCommandBuffer->AddReferencedResource(IndexBuffer);
+        
+        VkBuffer IndexBufferVk = IndexBuffer->GetAPIResource<VkBuffer>();
+        if (IndexBufferVk != GraphicsState.IndexBuffer)
+        {
+            vkCmdBindIndexBuffer(CurrentCommandBuffer->CommandBuffer, IndexBufferVk, 0, VK_INDEX_TYPE_UINT32);
+            GraphicsState.IndexBuffer = IndexBufferVk;
+        }
+        
+        GraphicsState.PrepareForDraw(CurrentCommandBuffer->CommandBuffer);
+        vkCmdDrawIndexedIndirect(CurrentCommandBuffer->CommandBuffer, DrawBuffer->GetAPIResource<VkBuffer>(), Offset, DrawCount, sizeof(FDrawIndexedIndirectArguments));
     }
 
     void FVulkanCommandList::SetComputePipeline(FRHIComputePipeline* InPipeline)
@@ -970,7 +1000,6 @@ namespace Lumina
         LUMINA_PROFILE_SCOPE();
         TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "Dispatch")        
 
-        Assert(ComputeState.Pipeline != nullptr)
         vkCmdDispatch(CurrentCommandBuffer->CommandBuffer, GroupCountX, GroupCountY, GroupCountZ);
     }
 

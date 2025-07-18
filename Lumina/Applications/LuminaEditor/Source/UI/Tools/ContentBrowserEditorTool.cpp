@@ -318,7 +318,6 @@ namespace Lumina
             FString BaseName = InPath;
             FString Extension;
 
-            // Separate extension if it exists (optional)
             size_t DotIndex = InPath.find_last_of('.');
             if (DotIndex != FString::npos && is_regular_file(InPath.c_str()))
             {
@@ -326,28 +325,34 @@ namespace Lumina
                 BaseName = InPath.substr(0, DotIndex);
             }
 
-            // Extract numeric suffix if it exists
             int SuffixNumber = 1;
-            size_t UnderscorePos = BaseName.find_last_of('_');
-            if (UnderscorePos != FString::npos)
+            size_t NameLen = BaseName.length();
+
+            size_t NumberStart = NameLen;
+            while (NumberStart > 0 && isdigit(BaseName[NumberStart - 1]))
             {
-                FString SuffixPart = BaseName.substr(UnderscorePos + 1);
+                --NumberStart;
+            }
+
+            if (NumberStart < NameLen)
+            {
+                FString SuffixPart = BaseName.substr(NumberStart);
                 char* EndPtr = nullptr;
                 long ParsedNumber = std::strtol(SuffixPart.c_str(), &EndPtr, 10);
 
-                if (EndPtr != SuffixPart.c_str() && *EndPtr == '\0') // Valid number
+                if (EndPtr != SuffixPart.c_str() && *EndPtr == '\0')
                 {
                     SuffixNumber = static_cast<int>(ParsedNumber) + 1;
-                    BaseName = BaseName.substr(0, UnderscorePos); // Strip old suffix
+                    BaseName = BaseName.substr(0, NumberStart);
                 }
             }
 
-            FString CandidatePath = BaseName + "_" + eastl::to_string(SuffixNumber) + Extension;
+            FString CandidatePath = BaseName + eastl::to_string(SuffixNumber) + Extension;
 
             while (exists(CandidatePath.c_str()))
             {
                 ++SuffixNumber;
-                CandidatePath = BaseName + "_" + eastl::to_string(SuffixNumber) + Extension;
+                CandidatePath = BaseName + eastl::to_string(SuffixNumber) + Extension;
             }
 
             InPath = CandidatePath;

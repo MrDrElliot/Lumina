@@ -34,6 +34,6 @@ namespace Lumina
         TransferCommandList->Open();
         TransferCommandList->WriteImage(RHIImage, 0, 0, Pixels.data(), RowPitch, DepthPitch);
         TransferCommandList->Close();
-        RenderContext->ExecuteCommandList(TransferCommandList, 1, Q_Transfer);
+        RenderContext->ExecuteCommandList(TransferCommandList, ECommandQueue::Transfer);
     }
 }
