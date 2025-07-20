@@ -27,7 +27,7 @@ layout(set = 0, binding = 0) readonly uniform SceneGlobals
 
 layout(set = 0, binding = 1) readonly buffer FModelData
 {
-    mat4 ModelMatrix[];
+    mat4 ModelMatrix[]; // Raw flat buffer of scatterd models (not sorted).
 } ModelData;
 
 layout(set = 0, binding = 2) readonly buffer FLightData
@@ -37,6 +37,11 @@ layout(set = 0, binding = 2) readonly buffer FLightData
     FDirectionalLight   DirectionalLight;
     FPointLight         PointLights[];
 } LightData;
+
+layout(set = 2, binding = 0) readonly buffer FBatchToModelBuffer
+{
+    uint Map[];
+} BatchToModel;
 
 float GetTime()
 {

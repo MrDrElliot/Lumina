@@ -248,7 +248,7 @@ namespace Lumina
 
     }
 
-    void FVulkanCommandList::WriteBuffer(FRHIBuffer* Buffer, const void* Data, uint32 Offset, uint32 Size)
+    void FVulkanCommandList::WriteBuffer(FRHIBuffer* Buffer, const void* Data, SIZE_T Offset, SIZE_T Size)
     {
         LUMINA_PROFILE_SCOPE();
         
@@ -258,7 +258,12 @@ namespace Lumina
             return;
         }
         
-        Assert(Size <= Buffer->GetSize())
+        if (Size > Buffer->GetSize())
+        {
+            LOG_ERROR("Buffer: \"{}\" has size: [{}], but tried to write [{}]", Buffer->GetDescription().DebugName, Buffer->GetSize(), Size);
+            return;    
+        }
+        
         constexpr size_t vkCmdUpdateBufferLimit = 65536;
         CurrentCommandBuffer->AddReferencedResource(Buffer);
         FVulkanBuffer* VulkanBuffer = static_cast<FVulkanBuffer*>(Buffer);
@@ -370,7 +375,7 @@ namespace Lumina
             CommitBarriers();
 
             // Round up the write size to a multiple of 4
-            const size_t SizeToWrite = (Size + 3) & ~3ull;
+            const SIZE_T SizeToWrite = (Size + 3) & ~3ull;
             
             vkCmdUpdateBuffer(CurrentCommandBuffer->CommandBuffer, Buffer->GetAPIResource<VkBuffer>(), Offset, SizeToWrite, Data);
         }
@@ -833,7 +838,7 @@ namespace Lumina
                     auto Found = DynamicBufferWrites.find(DynamicBuffer);
                     if (Found == DynamicBufferWrites.end())
                     {
-                        LOG_ERROR("Binding Dynamic buffer before writing is invalid");
+                        LOG_ERROR("Binding [Dynamic Buffer] \"{0}\" before writing is invalid!", DynamicBuffer->GetDescription().DebugName);
                         DynamicOffsets.push_back(0);
                     }
                     else
@@ -964,6 +969,7 @@ namespace Lumina
     {
         LUMINA_PROFILE_SCOPE();
         TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "DrawIndexedIndirect")
+        Assert(GraphicsState.CurrentRenderPassInfo.bValidPass)
         
         CurrentCommandBuffer->AddReferencedResource(DrawBuffer);
         CurrentCommandBuffer->AddReferencedResource(IndexBuffer);

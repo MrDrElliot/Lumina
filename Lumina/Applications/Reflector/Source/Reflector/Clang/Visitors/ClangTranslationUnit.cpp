@@ -13,8 +13,6 @@ namespace Lumina::Reflection
 
     uint64_t GFilesLookedAt;
     
-    eastl::hash_map<eastl::string, std::filesystem::path> CanonicalPathCache;
-    
     CXChildVisitResult VisitTranslationUnit(CXCursor Cursor, CXCursor Parent, CXClientData ClientData)
     {
         
@@ -31,7 +29,6 @@ namespace Lumina::Reflection
         }
 
         ParserContext->ReflectedHeader = ParserContext->Project.HeaderHashMap.at(Hash);
-
         
         CXCursorKind CursorKind = clang_getCursorKind(Cursor);
         eastl::string CursorName = ClangUtils::GetCursorDisplayName(Cursor);

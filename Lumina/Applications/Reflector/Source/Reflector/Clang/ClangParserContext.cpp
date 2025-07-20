@@ -139,6 +139,12 @@ namespace Lumina::Reflection
     }
 #pragma clang diagnostic pop
 
+    void FClangParserContext::FlushLogs()
+    {
+        std::cout << "\033[31m" << ErrorMessage.c_str() << "\033[0m\n";
+        ErrorMessage.clear();
+    }
+
 
 
     void FClangParserContext::PushNamespace(const eastl::string& Namespace)

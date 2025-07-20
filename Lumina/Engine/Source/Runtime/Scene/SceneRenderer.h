@@ -53,10 +53,10 @@ namespace Lumina
         
     protected:
 
-        void GeometryPass(const FSceneRenderData& DrawList);
-        void LightingPass(const FSceneRenderData& DrawList);
-        void SkyboxPass(const FSceneRenderData& DrawList);
-        void DrawPrimitives(const FSceneRenderData& DrawList);
+        void GeometryPass();
+        void LightingPass();
+        void SkyboxPass();
+        void DrawPrimitives();
 
         void CreateIrradianceCube();
 
@@ -66,10 +66,12 @@ namespace Lumina
         void OnSwapchainResized();
 
         void CreateOrResizeGeometryBuffers(uint64 VertexSize, uint64 IndexSize, uint64 VertexSizeDesired, uint64 IndexSizeDesired);
-        void CreateOrResizeDrawCommandBuffer(uint64 SizeRequired, uint64 SizeDesired);
 
         void FullScreenPass(const FScene* Scene);
-        
+
+    private:
+
+        void UpdateGeometryBuffersForNewMeshes(ICommandList* CommandList, const TVector<CStaticMesh*>& NewMeshes);
         
     private:
 
@@ -84,7 +86,6 @@ namespace Lumina
         
         FRHIBufferRef                       VertexBuffer;
         FRHIBufferRef                       IndexBuffer;
-        FRHIBufferRef                       DrawCommandBuffer;
         
         FRHIBufferRef                       SceneDataBuffer;
         FRHIBufferRef                       ModelDataBuffer;
@@ -107,22 +108,24 @@ namespace Lumina
         FRHIImageRef                        CubeMap;
         FRHIImageRef                        IrradianceCube;
 
-        FSceneRenderData                    LastFrameRenderData;
         ESceneRenderGBuffer                 GBufferDebugMode = ESceneRenderGBuffer::RenderTarget;
 
+        FSceneLightData                     LightData;
+        FModelData                          ModelData;
+
+        TVector<FPointLightProxy>           PointLightProxies;
+        
         TVector<FRenderProxy>               RenderProxies;
         TVector<FRenderProxy>               SortedRenderProxies;
-        TVector<FIndirectRenderBatch>       RenderBatch;
-        THashMap<SIZE_T, SIZE_T>            RenderBatchMap;
 
-        FModelData                              ModelData;
-        THashMap<uint64, SIZE_T>                IndirectArgsMap;
-        TVector<FDrawIndexedIndirectArguments>  DrawIndexedArguments;
+        THashMap<SIZE_T, SIZE_T>            IndirectBatchMap;
+        TVector<FIndirectRenderBatch>       IndirectRenderBatch;
 
-        
-        SIZE_T                              NumMeshBlocks;
-        THashMap<CStaticMesh*, SIZE_T>      MeshBlocks;
         TSet<CStaticMesh*>                  RegisteredMeshes;
+        TSet<CMaterial*>                    RegisteredMaterials;
+        THashMap<CStaticMesh*, SIZE_T>      VertexStartMap;
+        THashMap<CStaticMesh*, SIZE_T>      IndexStartMap;
+        
         
         TSharedPtr<FDescriptorTableManager> DescriptorTableManager;
     };

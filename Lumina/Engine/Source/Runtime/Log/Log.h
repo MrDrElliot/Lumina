@@ -20,6 +20,7 @@ namespace Lumina::Logging
 	LUMINA_API void GetConsoleLogs(TVector<FConsoleMessage>& OutLogs);
 	LUMINA_API void Shutdown();
 	LUMINA_API std::shared_ptr<spdlog::logger> GetLogger();
+
 	
 }
 

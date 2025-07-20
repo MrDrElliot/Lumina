@@ -2,6 +2,7 @@
 
 #include "imgui.h"
 #include "Containers/String.h"
+#include "Module/API.h"
 
 
 namespace Lumina::ImGuiX::Font
@@ -28,21 +29,19 @@ namespace Lumina::ImGuiX::Font
         Default = Medium,
     };
     
-    struct FSystemFonts
-    {
-        static ImFont* s_fonts[static_cast<int32>(EFont::NumFonts)];
-    };
+    LUMINA_API extern ImFont* GFonts[static_cast<int32>(EFont::NumFonts)];
 
-    inline void PushFont(EFont font ) 
+    LUMINA_API INLINE void PushFont(EFont font) 
     {
-        ImGui::PushFont( FSystemFonts::s_fonts[static_cast<int8_t>(font)] ); 
+        ImFont* Font = GFonts[static_cast<int8>(font)];
+        ImGui::PushFont(Font); 
     }
 
-    inline void PopFont() { ImGui::PopFont(); }
+    LUMINA_API INLINE void PopFont() { ImGui::PopFont(); }
 
-    inline void PushFontAndColor(EFont font, ImColor& color)
+    LUMINA_API INLINE void PushFontAndColor(EFont font, ImColor& color)
     {
-        ImGui::PushFont(FSystemFonts::s_fonts[(int8_t) font] );
+        ImGui::PushFont(GFonts[(int8) font] );
         //ImGui::PushStyleColor(ImGuiCol_Text, color);
     }
     

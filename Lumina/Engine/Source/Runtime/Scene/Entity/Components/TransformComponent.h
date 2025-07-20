@@ -8,8 +8,11 @@ namespace Lumina
     struct FTransformComponent : public FEntityComponent
     {
         FTransformComponent(const FTransform& InTransform = FTransform()) : Transform(InTransform) {}
-
-    
+        FTransformComponent(const glm::vec3& InPosition)
+            :Transform(InPosition)
+        {
+        }
+        
         inline FTransform& GetTransform() { return Transform; }
         inline void SetTransform(const FTransform& InTransform) { Transform = InTransform; }
 

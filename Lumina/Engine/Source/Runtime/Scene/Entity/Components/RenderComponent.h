@@ -1,6 +1,5 @@
 ﻿#pragma once
 #include "Component.h"
-#include "Containers/Array.h"
 #include "Platform/GenericPlatform.h"
 
 
@@ -13,6 +12,5 @@ namespace Lumina
 
     struct FNeedsRenderProxyUpdate
     {
-        SIZE_T DirtyProxy;
     };
 }

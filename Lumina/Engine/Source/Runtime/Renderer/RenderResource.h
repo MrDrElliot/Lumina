@@ -307,9 +307,8 @@ namespace Lumina
 
     	void Delete()
     	{
-    		Assert(!AtomicFlags.MarkForDelete(std::memory_order_acquire));
-    		IRHIResource* MutableThis = this;
-    		Memory::Delete(MutableThis);
+    		Assert(!AtomicFlags.MarkForDelete(std::memory_order_acquire))
+    		Memory::Delete(this);
     	}
 
     	NODISCARD bool Deleting() const

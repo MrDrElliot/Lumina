@@ -26,24 +26,10 @@ namespace Lumina
     enum class ESceneRenderGBuffer : uint8
     {
         RenderTarget,
+        Albedo,
         Position,
         Normals,
         Material,
-    };
-
-    struct FRenderProxy
-    {
-        CStaticMesh* Mesh;
-        CMaterial* Material;
-        glm::mat4 Matrix;
-        SIZE_T ProxyID;
-        SIZE_T SortKey;
-        SIZE_T ModelMatrixIndex;
-
-        bool operator < (const FRenderProxy& Other) const
-        {
-            return SortKey < Other.SortKey;
-        }
     };
     
     struct FCameraData
@@ -71,12 +57,12 @@ namespace Lumina
         bool bHasDirectionalLight = false;
         uint32 padding[2];
         FDirectionalLight DirectionalLight;
-        FPointLight PointLightsLights[MAX_LIGHTS];
+        FPointLight PointLights[MAX_LIGHTS];
     };
 
     struct FModelData
     {
-        glm::mat4 ModelMatrix[MAX_MODELS];
+        TVector<glm::mat4> ModelMatrices;
     };
 
     struct FGBuffer
@@ -87,14 +73,43 @@ namespace Lumina
         FRHIImageRef AlbedoSpec;
     };
 
-    struct FIndirectRenderBatch
+    struct FRenderProxy
     {
-        CStaticMesh* Mesh;
-        CMaterial* Material;
-        SIZE_T Key;
-        FDrawIndexedIndirectArguments Args;
+        CStaticMesh*    Mesh = nullptr;
+        CMaterial*      Material = nullptr;
+        glm::mat4       Matrix;
+        SIZE_T          ProxyID = 0;
+        SIZE_T          SortKey = 0;
+        int64           ModelMatrixIndex = INDEX_NONE;
+        
+        bool operator < (const FRenderProxy& Other) const
+        {
+            return SortKey < Other.SortKey;
+        }
     };
 
+    struct FPointLightProxy
+    {
+        SIZE_T ProxyIndex;
+    };
+    
+    struct FIndirectRenderBatch
+    {
+        CMaterial*  Material;
+
+        
+        FRHIBindingLayoutRef                    BindingLayout;
+        FRHIBindingSetRef                       BindingSet;
+                                                
+        FRHIBufferRef                           IndirectDrawBuffer;
+        FRHIBufferRef                           BatchToModelBuffer;
+
+        THashMap<CStaticMesh*, int32>           MeshDrawIndex;
+
+        TVector<uint32>                         DrawCallToModelIndexMap;
+        TVector<FDrawIndexedIndirectArguments>  DrawIndexedArguments;
+    };
+    
     struct FSceneRenderStats
     {
         uint32 NumDrawCalls;
@@ -110,10 +125,6 @@ namespace Lumina
 
         FSceneRenderData(FSceneRenderData&&) noexcept = default;
         FSceneRenderData& operator=(FSceneRenderData&&) noexcept = default;
-
-        TVector<FDrawIndexedIndirectArguments>  DrawIndexedArguments;
-        TVector<FVertex>                        Vertices;
-        FSceneLightData                         LightData;
     };
 
 
@@ -122,7 +133,6 @@ namespace Lumina
         FCameraData    CameraData;
         float          Time;
         float          DeltaTime;
-        
     };
 
 

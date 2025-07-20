@@ -48,8 +48,11 @@ namespace Lumina
 		void GetAssets(const FARFilter& Filter, TVector<FAssetData>& OutAssets);
 		FAssetData GetAsset(const FString& Path);
 
+		bool IsPathCorrupt(const FString& Path) { return CorruptedAssets.find(FName(Path)) != CorruptedAssets.end(); }
+
 	private:
 
+		TSet<FName>					CorruptedAssets;
 		FMutex						Mutex;
 		TVector<FAssetData> 		Assets;
 		THashMap<FName, FAssetData> AssetPathMap;

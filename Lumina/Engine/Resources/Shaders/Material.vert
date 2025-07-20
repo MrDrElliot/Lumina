@@ -1,4 +1,6 @@
-#version 450 core
+#version 460 core
+#extension GL_ARB_shader_draw_parameters : enable
+
 #pragma shader_stage(vertex)
 
 #include "Includes/Common.glsl"
@@ -19,7 +21,9 @@ layout(location = 3) out vec2 outUV;
 
 void main()
 {
-    mat4 model = GetModelMatrix(gl_InstanceIndex);
+    uint ModelIndex = BatchToModel.Map[gl_DrawID];
+    
+    mat4 model = GetModelMatrix(ModelIndex);
     vec4 worldPos = model * vec4(inPosition.xyz, 1.0f);
 
     mat3 normalMatrix = transpose(inverse(mat3(model)));

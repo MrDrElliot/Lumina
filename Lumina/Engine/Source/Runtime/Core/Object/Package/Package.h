@@ -179,6 +179,7 @@ namespace Lumina
 
     struct FPackageHeader
     {
+        
         /** File format version (increment when the layout changes) */
         uint32 Version;
 

@@ -4,7 +4,9 @@
 #include "Core/DisableAllWarnings.h"
 
 PRAGMA_DISABLE_ALL_WARNINGS
-#include <spdlog/fmt/fmt.h>
+#ifndef REFLECTION_PARSER
+#include "spdlog/fmt/fmt.h"
+#endif
 #include "EASTL/fixed_string.h"
 #include "EASTL/string.h"
 #include <ostream>

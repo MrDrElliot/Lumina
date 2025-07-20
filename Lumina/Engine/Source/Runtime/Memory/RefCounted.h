@@ -43,8 +43,7 @@ namespace Lumina
 			if(RefCount.fetch_sub(1, eastl::memory_order_acq_rel) == 1)
 			{
 				eastl::atomic_thread_fence(eastl::memory_order_acquire);
-				FRefCounted* MutableThis = const_cast<FRefCounted*>(this);
-				Memory::Delete(MutableThis);
+				Memory::Delete(this);
 			}
 		}
 

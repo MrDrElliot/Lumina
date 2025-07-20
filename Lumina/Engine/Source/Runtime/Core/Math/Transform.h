@@ -20,8 +20,14 @@ namespace Lumina
               Rotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f)),
               Scale(1.0f, 1.0f, 1.0f)
             , Matrix()
-        {
-        }
+        {}
+
+        FTransform(const glm::vec3& InPosition)
+            : Location(InPosition),
+              Rotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f)),
+              Scale(1.0f, 1.0f, 1.0f)
+            , Matrix()
+        {}
 
         FTransform(const glm::vec3& location, const glm::vec3& eulerAngles, const glm::vec3& scale)
             : Location(location),

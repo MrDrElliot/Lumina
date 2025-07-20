@@ -5,6 +5,7 @@
 
 #include "Lumina.h"
 #include "Containers/Array.h"
+#include "Core/Threading/Thread.h"
 #include "Memory/Memory.h"
 
 namespace Lumina
@@ -43,7 +44,9 @@ namespace Lumina
 
     
     private:
-        
+
+        FMutex ImageAllocationMutex;
+        FMutex BufferAllocationMutex;
         VmaAllocator Allocator = nullptr;
         THashMap<VkBuffer, VmaAllocation> AllocatedBuffers;
         THashMap<VkImage, VmaAllocation> AllocatedImages;
@@ -89,6 +92,7 @@ namespace Lumina
     
     private:
 
+        FMutex                                  ChildMutex;
         FVulkanMemoryAllocator*                 Allocator = nullptr;
         VkPhysicalDevice                        PhysicalDevice;
         VkDevice                                Device;

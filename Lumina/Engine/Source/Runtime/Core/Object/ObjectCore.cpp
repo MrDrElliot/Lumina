@@ -15,6 +15,9 @@
 
 namespace Lumina
 {
+    FMutex ObjectNameMutex;
+    FMutex ObjectCreationMutex;
+    
     /** Allocates a section of memory for the new object, does not place anything into the memory */
     CObjectBase* AllocateCObjectMemory(const CClass* InClass, EObjectFlags InFlags)
     {
@@ -38,6 +41,8 @@ namespace Lumina
     
     FName MakeUniqueObjectName(const CClass* Class, const CPackage* Package, const FName& InBaseName)
     {
+        FScopeLock Lock(ObjectNameMutex);
+        
         FName BaseName = (InBaseName == NAME_None) ? Class->GetName() : InBaseName;
 
         FName FullName;
@@ -76,6 +81,8 @@ namespace Lumina
 
     CObject* StaticAllocateObject(FConstructCObjectParams& Params)
     {
+        FScopeLock Lock(ObjectCreationMutex);
+        
         CPackage* Package = nullptr;
         if (Params.Package != NAME_None)
         {

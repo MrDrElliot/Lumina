@@ -46,7 +46,7 @@ namespace Lumina
     	auto CreateFont = [&] ( Blob& fontData, float fontSize, float iconFontSize, ImGuiX::Font::EFont fontID, char const* pName, ImVec2 const& glyphOffset )
     	{
     		ImFont* pFont = io.Fonts->AddFontFromMemoryTTF( fontData.data(), static_cast<int32_t>(fontData.size()), fontSize, &fontConfig );
-		    ImGuiX::Font::FSystemFonts::s_fonts[static_cast<uint8_t>(fontID)] = pFont;
+		    ImGuiX::Font::GFonts[static_cast<uint8_t>(fontID)] = pFont;
 
     		iconFontConfig.GlyphOffset = glyphOffset;
     		iconFontConfig.GlyphMinAdvanceX = iconFontSize;
@@ -73,9 +73,16 @@ namespace Lumina
     	CreateFont(BoldFontData, size24, size24, ImGuiX::Font::EFont::LargeBold, "Large Bold", ImVec2( 0, 2 ) );
 
     	io.Fonts->TexMinWidth = 4096;
-    	//io.Fonts->GetTx
 
-    	io.FontDefault = ImGuiX::Font::FSystemFonts::s_fonts[static_cast<uint8_t>(ImGuiX::Font::EFont::Medium)];
+    	using namespace ImGuiX::Font;
+    	io.FontDefault = GFonts[static_cast<uint8>(EFont::Medium)];
+    	
+        Assert(GFonts[(uint8)EFont::Small]->IsLoaded())
+        Assert(GFonts[(uint8)EFont::SmallBold]->IsLoaded())
+        Assert(GFonts[(uint8)EFont::Medium]->IsLoaded())
+        Assert(GFonts[(uint8)EFont::MediumBold]->IsLoaded())
+        Assert(GFonts[(uint8)EFont::Large]->IsLoaded())
+        Assert(GFonts[(uint8)EFont::LargeBold]->IsLoaded())
     	
 
     	io.ConfigWindowsMoveFromTitleBarOnly = true;
@@ -93,7 +100,6 @@ namespace Lumina
 		{
 			style.WindowRounding = 0.0f;
 			style.Colors[ImGuiCol_WindowBg].w = 1.0f;
-
 		}
     	
         style.Alpha = 1.0f;

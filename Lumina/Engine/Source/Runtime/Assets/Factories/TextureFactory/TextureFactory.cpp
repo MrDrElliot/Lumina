@@ -44,12 +44,18 @@ namespace Lumina
 
         FRHIImageDesc ImageDescription;
         ImageDescription.Format = EFormat::RGBA8_UNORM;
-        ImageDescription.Extent = ImportHelpers::GetImagePixelData(NewTexture->Pixels, RawPath);
+        ImageDescription.Extent = Import::Textures::ImportTexture(NewTexture->Pixels, RawPath);
         ImageDescription.Flags.SetFlag(EImageCreateFlags::ShaderResource);
         ImageDescription.NumMips = CalculateMipCount(ImageDescription.Extent.X, ImageDescription.Extent.Y);
         ImageDescription.InitialState = EResourceStates::ShaderResource;
         ImageDescription.bKeepInitialState = true;
         NewTexture->ImageDescription = ImageDescription;
+
+        if (ImageDescription.Extent.X == 0 || ImageDescription.Extent.Y == 0)
+        {
+            LOG_ERROR("Attempted to import an image with an invalid size: X: {} Y: {}", ImageDescription.Extent.X, ImageDescription.Extent.Y);
+            return;
+        }
 
         CPackage::SavePackage(NewPackage, NewTexture, FullPath.c_str());
         NewPackage->LoadObject(NewTexture);

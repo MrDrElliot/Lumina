@@ -7,6 +7,8 @@
 #include "Module/API.h"
 #include "Platform/Platform.h"
 #include "tracy/TracyC.h"
+
+
 #define LUMINA_PROFILE_ALLOC(p, size) TracyCAllocS(p, size, 12)
 #define LUMINA_PROFILE_FREE(p) TracyCFreeS(p, 12)
 
@@ -199,17 +201,17 @@ namespace Lumina::Memory
     }
 
     template<typename T>
-    inline void Delete(T*& Type)
+    void Delete(T* Type)
     {
         if (Type != nullptr)
         {
             Type->~T();
-            Free((void*&) Type);
+            Free((void*&)Type);
         }
     }
 
     template< typename T >
-    inline void Free(T*& Type)
+    void Free(T*& Type)
     {
         Free((void*&)Type);
     }

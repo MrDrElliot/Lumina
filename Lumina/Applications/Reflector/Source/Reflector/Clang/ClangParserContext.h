@@ -31,6 +31,7 @@ namespace Lumina::Reflection
 
         void LogError(char const* ErrorFormat, ...) const;
         void LogWarning(char const* ErrorFormat, ...) const;
+        void FlushLogs();
 
         bool HasError() const { return !ErrorMessage.empty(); }
 

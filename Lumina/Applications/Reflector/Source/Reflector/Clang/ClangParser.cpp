@@ -16,13 +16,11 @@ namespace Lumina::Reflection
         "/Lumina/Engine/Source",
         "/Lumina/Engine/Source/Runtime",
         "/Lumina/Engine/ThirdParty/EA/EABase/include/common",
-        "/Lumina/Engine/ThirdParty/EA/EASTL/include/",
-        "/Lumina/Engine/ThirdParty/spdlog/include/", // @TODO Some really weird clang voodoo going on here where TVector won't parse without this.
+        "/Lumina/Engine/ThirdParty/EA/EASTL/include",
     };
 
     
     FClangParser::FClangParser()
-        : ParsingContext()
     {
     }
 
@@ -137,6 +135,8 @@ namespace Lumina::Reflection
         clangArgs.emplace_back("-w");
 
         clangArgs.emplace_back("-ast-dump=json");
+
+        clangArgs.emplace_back("-ferror-limit=100000000");
         
         clangArgs.emplace_back("-Wno-multichar");
         clangArgs.emplace_back("-Wno-deprecated-builtins");
@@ -183,11 +183,12 @@ namespace Lumina::Reflection
                 break;
             }
         }
+        
 
         clang_disposeTranslationUnit(TranslationUnit);
         clang_disposeIndex(ClangIndex);
         
-        return true;
+        return Result == CXError_Success;
     }
     
 }

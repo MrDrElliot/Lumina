@@ -1,8 +1,10 @@
 ﻿#pragma once
 #include "TaskScheduler.h"
 #include "Core/Assertions/Assert.h"
+#include "Core/Functional/Function.h"
 #include "Core/Singleton/Singleton.h"
 #include "Memory/Memory.h"
+#include "Memory/SmartPtr.h"
 #include "Platform/GenericPlatform.h"
 
 namespace Lumina
@@ -11,44 +13,80 @@ namespace Lumina
     using ITaskSet =            enki::ITaskSet;
     using IPinnedTask =         enki::IPinnedTask;
     using ICompletableTask =    enki::ICompletable;
-    using AsyncTask =           enki::TaskSet;
     using TaskSetPartition =    enki::TaskSetPartition;
     using TaskFunction =        enki::TaskSetFunction;
-
-    template<typename TLambda>
-    class FLambdaTaskSet : public enki::ITaskSet
+    
+    struct CompletionActionDelete : enki::ICompletable
+    {
+        enki::Dependency    Dependency;
+    
+        // We override OnDependenciesComplete to provide an 'action' which occurs after
+        // the dependency task is complete.
+        void OnDependenciesComplete(enki::TaskScheduler* pTaskScheduler_, uint32_t threadNum_ ) override
+        {
+            // Call base class OnDependenciesComplete BEFORE deleting dependent task or self
+            enki::ICompletable::OnDependenciesComplete( pTaskScheduler_, threadNum_ );
+            
+            // In this example we delete the dependency, which is safe to do as the task
+            // manager will not dereference it at this point.
+            // However, the dependency task should have no other dependents,
+            // This class can have dependencies.
+            Memory::Delete(Dependency.GetDependencyTask()); // also deletes this as member
+        }
+    };
+    
+    // TaskSet - a utility task set for creating tasks based on std::function.
+    typedef TFunction<void (TaskSetPartition Range, uint32 Thread)> TaskSetFunction;
+    class FLambdaTask : public ITaskSet
     {
     public:
+        FLambdaTask() = default;
+        FLambdaTask(TaskSetFunction func_)
+            : Function(std::move(func_))
+        {
+            TaskDeleter.SetDependency(TaskDeleter.Dependency, this);
+        }
+        FLambdaTask(uint32 setSize_, TaskSetFunction func_)
+            : ITaskSet(setSize_), Function(std::move(func_))
+        {
+            TaskDeleter.SetDependency(TaskDeleter.Dependency, this);
+        }
+
+        void ExecuteRange(TaskSetPartition range_, uint32_t threadnum_) override
+        {
+            Function(range_, threadnum_);
+        }
         
-        FLambdaTaskSet(TLambda&& InLambda)
-            : Lambda(Memory::Move(InLambda)) {}
-
-        void ExecuteRange(enki::TaskSetPartition range, uint32_t threadnum) override
-        {
-            Lambda();
-        }
-
-    private:
-        TLambda Lambda;
+        TaskSetFunction             Function;
+        CompletionActionDelete      TaskDeleter;
+        enki::Dependency            Dependency;
     };
 
-    template<typename TLambda>
-    class FLambdaParallelTaskSet : public enki::ITaskSet
+    // TaskSet - a utility task set for creating tasks based on std::function.
+    typedef TFunction<void (TaskSetPartition Range, uint32 Thread)> TaskSetFunction;
+    class FParallelForTask : public ITaskSet
     {
     public:
-        FLambdaParallelTaskSet(uint32 NumElements, TLambda&& InLambda)
-            : Count(NumElements), Lambda(Memory::Move(InLambda)) {}
-
-        void ExecuteRange(enki::TaskSetPartition range, uint32 threadnum) override
+        FParallelForTask() = default;
+        FParallelForTask(uint32 setSize_, TaskSetFunction func_)
+            : ITaskSet(setSize_), Function(std::move(func_))
         {
-            for (uint32 i = range.start; i < range.end; ++i)
-                Lambda(i);
+            TaskDeleter.SetDependency(TaskDeleter.Dependency, this);
         }
 
-    private:
-        uint32 Count;
-        TLambda Lambda;
+        void ExecuteRange(TaskSetPartition range_, uint32_t threadnum_) override
+        {
+            for (uint32 i = range_.start; i < range_.end; ++i)
+            {
+                Function(range_, threadnum_);
+            }
+        }
+
+        TaskSetFunction             Function;
+        CompletionActionDelete      TaskDeleter;
+        enki::Dependency            Dependency;
     };
+    
     
     class LUMINA_API FTaskSystem : public TSingleton<FTaskSystem>
     {
@@ -67,64 +105,29 @@ namespace Lumina
             Scheduler.WaitforAll(); 
         }
 
-        template<typename TLambda>
-        void ScheduleLambda(TLambda&& Lambda)
+        FLambdaTask* ScheduleLambda(uint32 Num, enki::TaskSetFunction&& Function)
         {
-            auto* Task = new FLambdaTaskSet<std::decay_t<TLambda>>(Memory::Move(Lambda));
+            FLambdaTask* Task = Memory::New<FLambdaTask>(Num, std::move(Function));
             ScheduleTask(Task);
-        }
-
-        template<typename Iterable, typename TLambda>
-        void ParallelForEach(const Iterable& Range, TLambda&& Func)
-        {
-            using std::begin;
-            using std::end;
-
-            auto BeginIt = begin(Range);
-            auto EndIt = end(Range);
-
-            const uint32_t Count = static_cast<uint32_t>(std::distance(BeginIt, EndIt));
-    
-            if (Count == 0)
-                return;
-
-            auto TaskLambda = [BeginIt, Func = std::forward<TLambda>(Func)](uint32_t i)
-            {
-                auto It = BeginIt;
-                std::advance(It, i);
-                Func(i, *It);
-            };
-
-            this->ParallelFor(Count, TaskLambda);
+            return Task;
         }
         
-        template<typename TLambda>
-        void ParallelFor(uint32 Count, TLambda&& Lambda)
-        {
-            auto* Task = new FLambdaParallelTaskSet<std::decay_t<TLambda>>(Count, Memory::Move(Lambda));
-            ScheduleTask(Task);
-            WaitForTask(Task);
-            delete Task;
-        }
-
         void ScheduleTask(ITaskSet* pTask)
         {
-            Assert(bInitialized)
             Scheduler.AddTaskSetToPipe(pTask);
         }
 
         void ScheduleTask(IPinnedTask* pTask)
         {
-            Assert(bInitialized)
             Scheduler.AddPinnedTask(pTask);
         }
 
-        void WaitForTask(ITaskSet* pTask)
+        void WaitForTask(const ITaskSet* pTask)
         {
             Scheduler.WaitforTask(pTask);
         }
 
-        void WaitForTask(IPinnedTask* pTask)
+        void WaitForTask(const IPinnedTask* pTask)
         {
             Scheduler.WaitforTask(pTask);
         }

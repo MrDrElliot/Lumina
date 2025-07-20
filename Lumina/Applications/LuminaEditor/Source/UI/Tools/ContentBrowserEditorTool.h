@@ -113,6 +113,7 @@ namespace Lumina
 
         FRHIImageRef                FolderIcon;
         FRHIImageRef                MaterialIcon;
+        FRHIImageRef                CorruptIcon;
         FRHIImageRef                StaticMeshIcon;
         FRHIImageRef                TextureIcon;
 

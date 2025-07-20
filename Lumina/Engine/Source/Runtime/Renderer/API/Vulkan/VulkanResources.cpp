@@ -696,7 +696,7 @@ namespace Lumina
         ImageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     
         VmaAllocationCreateFlags AllocationFlags = VK_NO_FLAGS;
-        Device->GetAllocator()->AllocateImage(&ImageCreateInfo, AllocationFlags, &Image, "");
+        Device->GetAllocator()->AllocateImage(&ImageCreateInfo, AllocationFlags, &Image, InDescription.DebugName.c_str());
     
         Assert(Image != VK_NULL_HANDLE)
     

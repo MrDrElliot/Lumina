@@ -8,12 +8,20 @@ namespace Lumina
     struct FFieldInfo
     {
 
-        bool Validate(Reflection::FClangParserContext* Context)
+        bool Validate(Reflection::FClangParserContext* Context) const
         {
             if (!Context->ReflectionDatabase.IsTypeRegistered(FStringHash(TypeName)))
             {
-                Context->LogError("Failed to find reflected type: Class: %s | Property: %s | Type: %s", Context->ReflectedHeader.FileName.c_str(), Name.c_str(), TypeName.c_str());
-                return false;
+                eastl::string CurrentNamespaceScope = Context->CurrentNamespace;
+                if (!CurrentNamespaceScope.empty())
+                {
+                    if (!Context->ReflectionDatabase.IsTypeRegistered(FStringHash(CurrentNamespaceScope + "::" + TypeName)))
+                    {
+                        Context->LogError("Failed to find reflected type: Class: %s | Property: %s | Type: %s. Please check the "
+                                          "namespace scope, or specify the fully qualified type.", Context->ReflectedHeader.FileName.c_str(), Name.c_str(), TypeName.c_str());
+                        return false;
+                    }
+                }
             }
             return true;
         }

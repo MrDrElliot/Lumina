@@ -34,7 +34,7 @@ namespace Lumina
             OutputMessages->push_back(Memory::Move(Message));
 
             // Check if we exceed the max number of messages, remove the oldest if needed
-            if (OutputMessages->size() > 1000)
+            if (OutputMessages->size() > 150)
             {
                 OutputMessages->erase(OutputMessages->begin());  // Remove the oldest message
             }

@@ -59,7 +59,7 @@ namespace Lumina
         void WriteImage(FRHIImage* Dst, uint32 ArraySlice, uint32 MipLevel, const void* Data, SIZE_T RowPitch, SIZE_T DepthPitch) override;
 
         void CopyBuffer(FRHIBuffer* Source, uint64 SrcOffset, FRHIBuffer* Destination, uint64 DstOffset, uint64 CopySize) override;
-        void WriteBuffer(FRHIBuffer* Buffer, const void* Data, uint32 Offset, uint32 Size) override;
+        void WriteBuffer(FRHIBuffer* Buffer, const void* Data, SIZE_T Offset, SIZE_T Size) override;
 
         void FlushDynamicBufferWrites();
         void SubmitDynamicBuffers(uint64 RecordingID, uint64 SubmittedID);

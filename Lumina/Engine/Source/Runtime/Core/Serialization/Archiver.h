@@ -211,7 +211,7 @@ namespace Lumina
             return *this;
         }
 
-        FORCEINLINE FArchive& operator<<(Lumina::FName& str)
+        FORCEINLINE FArchive& operator<<(FName& str)
         {
             FString String(str.c_str());
             *this << String;

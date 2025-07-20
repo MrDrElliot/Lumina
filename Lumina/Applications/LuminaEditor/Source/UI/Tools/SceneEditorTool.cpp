@@ -76,18 +76,21 @@ namespace Lumina
                             if (ImGui::Selectable("Directional Light"))
                             {
                                 Ent.AddComponent<FDirectionalLightComponent>();
+                                Ent.AddComponent<FNeedsRenderProxyUpdate>();
                                 bComponentAdded = true;
                             }
                             
                             if (ImGui::Selectable("Point Light"))
                             {
                                 Ent.AddComponent<FPointLightComponent>();
+                                Ent.AddComponent<FNeedsRenderProxyUpdate>();
                                 bComponentAdded = true;
                             }
 
                             if (ImGui::Selectable("Static Mesh"))
                             {
                                 Ent.AddComponent<FStaticMeshComponent>();
+                                Ent.AddComponent<FNeedsRenderProxyUpdate>();
                                 bComponentAdded = true;
                             }
 
@@ -206,6 +209,7 @@ namespace Lumina
             static const char* GBufferDebugLabels[] =
             {
                 "RenderTarget",
+                "Albedo",
                 "Position",
                 "Normals",
                 "Material"
@@ -273,6 +277,8 @@ namespace Lumina
             TransformComponent.SetLocation(translation);
             TransformComponent.SetRotation(rotation);
             TransformComponent.SetScale(scale);
+
+            SelectedEntity.AddComponent<FNeedsRenderProxyUpdate>();
         }
     }
 
@@ -314,11 +320,13 @@ namespace Lumina
                 Light.LightColor.r = color.r;
                 Light.LightColor.g = color.g;
                 Light.LightColor.b = color.b;
+                SelectedEntity.AddComponent<FNeedsRenderProxyUpdate>();
             }
 
             if (ImGui::DragFloat("Intensity", &intensity, 0.1f, 0.0f, 100.0f))
             {
                 Light.LightColor.a = intensity;
+                SelectedEntity.AddComponent<FNeedsRenderProxyUpdate>();
             }
 
             ImGui::Separator();
@@ -335,6 +343,7 @@ namespace Lumina
             if (ImGui::SliderFloat3("Direction", &dir.x, -1.0f, 1.0f))
             {
                 Light.Direction = dir;
+                SelectedEntity.AddComponent<FNeedsRenderProxyUpdate>();
             }
 
             glm::vec3 Color = glm::vec3(Light.Color);
@@ -343,11 +352,13 @@ namespace Lumina
                 Light.Color.r = Color.r;
                 Light.Color.g = Color.g;
                 Light.Color.b = Color.b;
+                SelectedEntity.AddComponent<FNeedsRenderProxyUpdate>();
             }
             
             if (ImGui::DragFloat("Intensity", &Intensity, 0.1f, 0.0f, 100.0f))
             {
                 Light.Color.a = Intensity;
+                SelectedEntity.AddComponent<FNeedsRenderProxyUpdate>();
             }
         }
 
@@ -377,14 +388,10 @@ namespace Lumina
 
             if (ImGui::BeginPopup("ObjectSelectorPopup"))
             {
-                CObject* Selected = nullptr;
                 FARFilter Filter;
-                Filter.ClassNames.push_back("CStaticMesh");
-                ImGuiX::ObjectSelector(Filter, Selected);
-
-                if (Selected)
+                if (ImGuiX::ObjectSelector(Filter, MeshComp.StaticMesh))
                 {
-                    MeshComp.StaticMesh = Cast<CStaticMesh>(Selected);
+                    SelectedEntity.AddComponent<FNeedsRenderProxyUpdate>();
                 }
             
                 ImGui::EndPopup();

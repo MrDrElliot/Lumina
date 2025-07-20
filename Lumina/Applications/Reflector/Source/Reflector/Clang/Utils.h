@@ -230,11 +230,6 @@ namespace Lumina::ClangUtils
             QualifiedName = "Lumina::CObject";
         }
 
-        if (QualifiedName == "CMaterial")
-        {
-            QualifiedName = "Lumina::CMaterial";
-        }
-
         return !QualifiedName.empty();
     }
     

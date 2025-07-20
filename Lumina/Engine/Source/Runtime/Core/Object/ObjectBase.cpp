@@ -147,8 +147,7 @@ namespace Lumina
         OnMarkedGarbage();
         OnDestroy();
 
-        CObjectBase* MutableThis = const_cast<CObjectBase*>(this);
-        Memory::Delete(MutableThis);
+        Memory::Delete(this);
     }
 
     void CObjectBase::AddObject(const FName& Name, SIZE_T InInternalIndex)

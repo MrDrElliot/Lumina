@@ -1,9 +1,8 @@
 #include "Mesh.h"
 
-#include "Core/Engine/Engine.h"
-#include "Core/Object/Class.h"
 #include "Renderer/RenderContext.h"
-#include "Renderer/RenderManager.h"
+#include "Assets/AssetTypes/Material/Material.h"
+#include "Core/Object/Cast.h"
 
 
 namespace Lumina
@@ -11,7 +10,7 @@ namespace Lumina
     void CMesh::Serialize(FArchive& Ar)
     {
         Super::Serialize(Ar);
-        Ar << MeshResource;
+        Ar << MeshResources;
     }
 
     void CMesh::Serialize(IStructuredArchive::FSlot Slot)
@@ -24,6 +23,11 @@ namespace Lumina
         
     }
 
+    CMaterial* CMesh::GetMaterialAtSlot(SIZE_T Slot) const
+    {
+        return Materials.empty() ? nullptr : Cast<CMaterial>(Materials[Slot]);
+    }
+
     bool CMesh::IsReadyForRender() const
     {
         if (HasAnyFlag(OF_NeedsLoad) || HasAllFlags(OF_MarkedGarbage))
@@ -31,22 +35,22 @@ namespace Lumina
             return false;
         }
 
-        //@ TODO Temp until reflection is better supported.
-        CMaterial* CastedMaterial = Cast<CMaterial>(Material);
-        
-        if (CastedMaterial == nullptr)
+        for (CMaterial* Material : Materials)
         {
-            return false;
+            if (Material == nullptr)
+            {
+                return false;
+            }
+            
+            if (Material->BindingLayout == nullptr
+                || Material->BindingSet == nullptr
+                || Material->VertexShader == nullptr
+                || Material->PixelShader == nullptr)
+            {
+                return false;
+            }
         }
 
-        if (CastedMaterial->BindingLayout == nullptr
-            || CastedMaterial->BindingSet == nullptr
-            || CastedMaterial->VertexShader == nullptr
-            || CastedMaterial->PixelShader == nullptr)
-        {
-            return false;
-        }
-
-        return true;
+        return !Materials.empty();
     }
 }

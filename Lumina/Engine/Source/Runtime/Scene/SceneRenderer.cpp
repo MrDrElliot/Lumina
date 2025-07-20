@@ -10,11 +10,11 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <execution>
 
+#include "Assets/AssetTypes/Material/Material.h"
 #include "Assets/AssetTypes/Textures/Texture.h"
 #include "glm/gtx/quaternion.hpp"
 #include "Core/Engine/Engine.h"
 #include "Core/Profiler/Profile.h"
-#include "Entity/Entity.h"
 #include "Entity/Components/LightComponent.h"
 #include "Entity/Components/StaicMeshComponent.h"
 #include "Paths/Paths.h"
@@ -89,190 +89,252 @@ namespace Lumina
         SceneGlobalData.DeltaTime =             (float)Scene->GetSceneDeltaTime(); 
         
         SceneViewport->SetViewVolume(CameraComponent.GetViewVolume());
-        
-        FSceneRenderData DrawList;
-        CombinedVertex.clear();
-        CombinedIndex.clear();
-        
-        {
-            LUMINA_PROFILE_SECTION("Build Light List");
-            auto PointLightGroup = Scene->GetMutableEntityRegistry().group<>(entt::get<FTransformComponent, FPointLightComponent>);
-            PointLightGroup.each([&](auto& TransformComponent, auto& PointLightComponent)
-            {
-                FPointLight PointLight;
-                PointLight.Position = glm::vec4(TransformComponent.GetLocation(), 1.0f);
-                PointLight.Color = PointLightComponent.LightColor;
-                DrawList.LightData.PointLightsLights[DrawList.LightData.NumPointLights] = PointLight;
-                            
-                DrawList.LightData.NumPointLights++;
-            });
 
-            auto DirectionalLightGroup = Scene->GetMutableEntityRegistry().group<>(entt::get<FDirectionalLightComponent>);
-            DirectionalLightGroup.each([&] (auto& DirectionalLightComponent)
-            {
-                FDirectionalLight DirectionalLight;
-                DirectionalLight.Direction = DirectionalLightComponent.Direction;
-                DirectionalLight.Color = DirectionalLightComponent.Color;
-                DrawList.LightData.bHasDirectionalLight = true;
-                DrawList.LightData.DirectionalLight = DirectionalLight;
-            });
-        }
+        CommandList->WriteBuffer(SceneDataBuffer, &SceneGlobalData, 0, sizeof(FSceneGlobalData));
 
-
-
-        
-        TVector<SIZE_T> DirtyRenderProxies;
-        TVector<CStaticMesh*> NewMeshes;
-        THashMap<CStaticMesh*, SIZE_T> MeshCountMap;
+        TVector<SIZE_T> DirtyLightProxies;
 
         {
-            auto DirtyGroup = Scene->GetMutableEntityRegistry().view<FNeedsRenderProxyUpdate, FStaticMeshComponent, FTransformComponent>();
-            for (const auto& DirtyEntity : DirtyGroup)
+            LUMINA_PROFILE_SECTION("Process Dirty Point Light Proxies");
+            auto PointLightView = Scene->GetMutableEntityRegistry().view<FNeedsRenderProxyUpdate, FTransformComponent, FPointLightComponent>();
+            for (auto& DirtyEntity : PointLightView)
             {
                 Entity Entity(DirtyEntity, Scene);
-                FStaticMeshComponent& MeshComponent = Entity.GetComponent<FStaticMeshComponent>();
+                
+                FPointLightComponent& PointLightComponent = Entity.GetComponent<FPointLightComponent>();
                 FTransformComponent& TransformComponent = Entity.GetComponent<FTransformComponent>();
 
-                CStaticMesh* Mesh = MeshComponent.StaticMesh;
-                if (!IsValid(Mesh) || !Mesh->IsReadyForRender())
+                if (PointLightComponent.ProxyID == INDEX_NONE)
                 {
-                    continue;
+                    FPointLight PointLight;
+                    PointLight.Position = glm::vec4(TransformComponent.GetLocation(), 1.0f);
+                    PointLight.Color = PointLightComponent.LightColor;
+                    LightData.PointLights[LightData.NumPointLights] = PointLight;
+                            
+                    LightData.NumPointLights++;
+                    PointLightComponent.ProxyID = (int64)PointLightProxies.size();
+                }
+                else
+                {
+                    FPointLight PointLight;
+                    PointLight.Position = glm::vec4(TransformComponent.GetLocation(), 1.0f);
+                    PointLight.Color = PointLightComponent.LightColor;
+                    LightData.PointLights[PointLightComponent.ProxyID] = PointLight;
                 }
 
-                MeshCountMap[Mesh]++;
-                if (RegisteredMeshes.find(Mesh) == RegisteredMeshes.end())
-                {
-                    RegisteredMeshes.emplace(Mesh);
-                    NewMeshes.push_back(Mesh);
-                }
-                
-                // This mesh needs a proxy created.
-                if (MeshComponent.ProxyID == INDEX_NONE)
-                {
-                    FRenderProxy Proxy;
-                    MeshComponent.ProxyID = (int64)RenderProxies.size();
-                    Proxy.ProxyID = RenderProxies.size();
-                    Proxy.Material = Mesh->GetMaterial();
-                    Proxy.SortKey = ((uint64)Proxy.Material << 32) | ((uint64)Proxy.Mesh & 0xFFFFFFFF);
-                    Proxy.Mesh = Mesh;
-                    Proxy.Matrix = TransformComponent.GetTransform().GetMatrix();
-                    RenderProxies.push_back(Proxy);
-                    DirtyRenderProxies.push_back(Proxy.ProxyID);
-                }
-                else // Update current render proxy.
-                {
-                    FRenderProxy& Proxy = RenderProxies[MeshComponent.ProxyID];
-                    Proxy.Material = Mesh->GetMaterial();
-                    Proxy.Mesh = Mesh;
-                    Proxy.SortKey = ((uint64)Proxy.Material << 32) | ((uint64)Proxy.Mesh & 0xFFFFFFFF);
-                    Proxy.Matrix = TransformComponent.GetTransform().GetMatrix();
-                    Proxy.ModelMatrixIndex = 0;
-                    DirtyRenderProxies.push_back(Proxy.ProxyID);
-                }
+                DirtyLightProxies.push_back(PointLightComponent.ProxyID);
                 (void)Entity.RemoveComponent<FNeedsRenderProxyUpdate>();
             }
         }
 
-        SIZE_T CurrentOffset = NumMeshBlocks;
-        SIZE_T VertexOffset = 0;
-        SIZE_T IndexOffset = 0;
-
-        THashMap<CStaticMesh*, SIZE_T> VertexStartMap;
-        THashMap<CStaticMesh*, SIZE_T> IndexStartMap;
-
-        uint32 VertexStreamSize = CombinedVertex.size() * sizeof(FVertex);
-        uint32 IndexStreamSize = CombinedIndex.size() * sizeof(uint32);
-        CreateOrResizeGeometryBuffers(VertexStreamSize, IndexStreamSize,
-            VertexStreamSize + (NewMeshes.size() * 5000), IndexStreamSize + (NewMeshes.size() * 5000));
+        bool bDirectionalLightDirty = false;
         
-        for (CStaticMesh* NewMesh : NewMeshes)
         {
-            const SIZE_T Count = MeshCountMap[NewMesh];
-            MeshBlocks[NewMesh] = CurrentOffset;
-            CurrentOffset += Count;
+            LUMINA_PROFILE_SECTION("Process Dirty Directional Light Proxies");
 
-            const TVector<FVertex>& Vertices = NewMesh->GetMeshResource().Vertices;
-            const TVector<uint32>& Indices = NewMesh->GetMeshResource().Indices;
-            
-            CombinedVertex.insert(CombinedVertex.end(), Vertices.begin(), Vertices.end());
-            CombinedIndex.insert(CombinedIndex.end(), Indices.begin(), Indices.end());
-
-            CommandList->WriteBuffer(VertexBuffer, CombinedVertex.data() + VertexOffset, 0, Vertices.size() * sizeof(FVertex));
-            CommandList->WriteBuffer(IndexBuffer, CombinedIndex.data() + IndexOffset, 0, Indices.size() * sizeof(uint32));
-
-            VertexStartMap.try_emplace(NewMesh, VertexOffset);
-            IndexStartMap.try_emplace(NewMesh, IndexOffset);
-            
-            VertexOffset += Vertices.size();
-            IndexOffset += Indices.size();
-        }
-        
-        
-        THashMap<CStaticMesh*, SIZE_T> MeshInstanceOffsets;
-        for (const SIZE_T DirtyRenderProxy : DirtyRenderProxies)
-        {
-            FRenderProxy& Proxy = RenderProxies[DirtyRenderProxy];
-            CStaticMesh* Mesh = Proxy.Mesh;
-
-            SIZE_T BaseOffset = MeshBlocks[Mesh];
-            SIZE_T& Offset = MeshInstanceOffsets[Mesh];
-
-            Proxy.ModelMatrixIndex = BaseOffset + Offset;
-            Offset++;
-
-            Assert(Proxy.ModelMatrixIndex < MAX_MODELS);
-
-            ModelData.ModelMatrix[Proxy.ModelMatrixIndex] = Proxy.Matrix;
-
-            CommandList->WriteBuffer(ModelDataBuffer, &ModelData.ModelMatrix[Proxy.ModelMatrixIndex], Proxy.ModelMatrixIndex * sizeof(glm::mat4), sizeof(glm::mat4));
-        }
-
-        for (const SIZE_T DirtyRenderProxy : DirtyRenderProxies)
-        {
-            FRenderProxy& Proxy = RenderProxies[DirtyRenderProxy];
-            uint64 Key = Proxy.SortKey;
-
-            SIZE_T ArgumentIndex;
-            if (IndirectArgsMap.find(Key) != IndirectArgsMap.end())
+            auto LightView = Scene->GetMutableEntityRegistry().view<FNeedsRenderProxyUpdate, FDirectionalLightComponent>();
+            for (auto& DirtyEntity : LightView)
             {
-                // Existing draw call → increment instance count
-                ArgumentIndex = IndirectArgsMap[Key];
-                DrawIndexedArguments[ArgumentIndex].InstanceCount += 1;
-                CommandList->WriteBuffer(DrawCommandBuffer, &DrawIndexedArguments[ArgumentIndex], ArgumentIndex * sizeof(FDrawIndexedIndirectArguments), sizeof(FDrawIndexedIndirectArguments));
+                Entity Entity(DirtyEntity, Scene);
+                FDirectionalLightComponent& DirectionalLightComponent = Entity.GetComponent<FDirectionalLightComponent>();
+
+                FDirectionalLight DirectionalLight;
+                DirectionalLight.Direction = DirectionalLightComponent.Direction;
+                DirectionalLight.Color = DirectionalLightComponent.Color;
+                LightData.bHasDirectionalLight = true;
+                LightData.DirectionalLight = DirectionalLight;
+
+                bDirectionalLightDirty = true;
+                (void)Entity.RemoveComponent<FNeedsRenderProxyUpdate>();
+            }
+        }
+
+        if (!DirtyLightProxies.empty() || bDirectionalLightDirty)
+        {
+            CommandList->WriteBuffer(LightDataBuffer, &LightData, 0, sizeof(FSceneLightData));
+        }
+        
+        
+        TVector<SIZE_T> DirtyRenderProxies;
+        TVector<CStaticMesh*> NewMeshes;
+        TVector<CMaterial*> NewMaterials;
+
+        auto DirtyGroup = Scene->GetMutableEntityRegistry().view<FNeedsRenderProxyUpdate, FStaticMeshComponent, FTransformComponent>();
+        
+        for (const auto& DirtyEntity : DirtyGroup)
+        {
+            LUMINA_PROFILE_SECTION("Process Dirty Static Meshes");
+
+            Entity Entity(DirtyEntity, Scene);
+            FStaticMeshComponent& MeshComponent = Entity.GetComponent<FStaticMeshComponent>();
+            FTransformComponent& TransformComponent = Entity.GetComponent<FTransformComponent>();
+        
+            CStaticMesh* Mesh = MeshComponent.StaticMesh;
+            if (!IsValid(Mesh) || !Mesh->IsReadyForRender())
+            {
+                (void)Entity.RemoveComponent<FNeedsRenderProxyUpdate>();
+                continue;
+            }
+
+            CMaterial* Material = Mesh->GetMaterialAtSlot(0);
+            
+            if (RegisteredMeshes.find(Mesh) == RegisteredMeshes.end())
+            {
+                RegisteredMeshes.emplace(Mesh);
+                NewMeshes.push_back(Mesh);
+            }
+
+            if (RegisteredMaterials.find(Material) == RegisteredMaterials.end())
+            {
+                RegisteredMaterials.emplace(Material);
+                NewMaterials.push_back(Material);
+            }
+
+            if (MeshComponent.ProxyID == INDEX_NONE)
+            {
+                FRenderProxy Proxy;
+                Proxy.Material = Material;
+                Proxy.Mesh = Mesh;
+                Proxy.SortKey = (uintptr_t)Material;
+                Proxy.Matrix = TransformComponent.GetTransform().GetMatrix();
+                Proxy.ProxyID = RenderProxies.size();
+
+                MeshComponent.ProxyID = (int64)Proxy.ProxyID;
+                RenderProxies.push_back(Proxy);
             }
             else
             {
-                // New draw call → allocate and populate
-                ArgumentIndex = DrawIndexedArguments.size();
-                IndirectArgsMap[Key] = ArgumentIndex;
-
-                FDrawIndexedIndirectArguments Cmd = {};
-                Cmd.StartInstanceLocation   = Proxy.ModelMatrixIndex;
-                Cmd.BaseVertexLocation      = VertexStartMap[Proxy.Mesh];
-                Cmd.StartIndexLocation      = IndexStartMap[Proxy.Mesh];
-                Cmd.IndexCount              = Proxy.Mesh->GetNumIndices();
-                Cmd.InstanceCount           = 1;
-
-                DrawIndexedArguments.push_back(Cmd);
-                CommandList->WriteBuffer(DrawCommandBuffer, &DrawIndexedArguments[ArgumentIndex], ArgumentIndex * sizeof(FDrawIndexedIndirectArguments), sizeof(FDrawIndexedIndirectArguments));
+                FRenderProxy& Proxy = RenderProxies[MeshComponent.ProxyID];
+                Proxy.Material = Material;
+                Proxy.Mesh = Mesh;
+                Proxy.SortKey = (uintptr_t)Material;
+                Proxy.Matrix = TransformComponent.GetTransform().GetMatrix();
             }
-        }        
-        
-        uint32 DrawBufferSize = DrawList.DrawIndexedArguments.size() * sizeof(FDrawIndexedIndirectArguments);
-        CreateOrResizeDrawCommandBuffer(DrawBufferSize, DrawBufferSize + 5000);
 
-        CommandList->WriteBuffer(SceneDataBuffer, &SceneGlobalData, 0, sizeof(FSceneGlobalData));
-        CommandList->WriteBuffer(LightDataBuffer, &DrawList.LightData, 0, sizeof(FSceneLightData));
+            DirtyRenderProxies.emplace_back(MeshComponent.ProxyID);
+            
+            (void)Entity.RemoveComponent<FNeedsRenderProxyUpdate>();
+        }
+
+
+        UpdateGeometryBuffersForNewMeshes(CommandList, NewMeshes);
+
         
-        GeometryPass(DrawList);
-        LightingPass(DrawList);
-        SkyboxPass(DrawList);
-        DrawPrimitives(DrawList);
+        if (!DirtyRenderProxies.empty())
+        {
+            LUMINA_PROFILE_SECTION("Update Dirty Render Proxies");
+
+            SIZE_T SizeBefore = ModelData.ModelMatrices.empty() ? 0 : ModelData.ModelMatrices.size() - 1;
+            
+            for (SIZE_T ProxyIndex : DirtyRenderProxies)
+            {
+                FRenderProxy& Proxy = RenderProxies[ProxyIndex];
+
+                // Create batch if it doesn't exist
+                if (IndirectBatchMap.find(Proxy.SortKey) == IndirectBatchMap.end())
+                {
+                    IndirectBatchMap[Proxy.SortKey] = IndirectRenderBatch.size();
+                    FIndirectRenderBatch NewBatch;
+
+                    FRHIBufferDesc BufferDesc;
+                    BufferDesc.Size = sizeof(FDrawIndexedIndirectArguments) * 1000;
+                    BufferDesc.Stride = sizeof(FDrawIndexedIndirectArguments);
+                    BufferDesc.Usage.SetMultipleFlags(BUF_Indirect);
+                    BufferDesc.InitialState = EResourceStates::IndirectArgument;
+                    BufferDesc.bKeepInitialState = true;
+                    BufferDesc.DebugName = "Draw Indirect Buffer: " + Proxy.Material->GetName().ToString();
+                    NewBatch.IndirectDrawBuffer = RenderContext->CreateBuffer(BufferDesc);
+                    RenderContext->SetObjectName(NewBatch.IndirectDrawBuffer, BufferDesc.DebugName.c_str(), EAPIResourceType::Buffer);
+
+                    BufferDesc.Size = sizeof(uint32) * 1000;
+                    BufferDesc.Stride = sizeof(uint32);
+                    BufferDesc.Usage.SetMultipleFlags(BUF_StorageBuffer);
+                    BufferDesc.InitialState = EResourceStates::ShaderResource;
+                    BufferDesc.bKeepInitialState = true;
+                    BufferDesc.DebugName = " Batch To Model Buffer: " + Proxy.Material->GetName().ToString();
+                    NewBatch.BatchToModelBuffer = RenderContext->CreateBuffer(BufferDesc);
+                    RenderContext->SetObjectName(NewBatch.BatchToModelBuffer, BufferDesc.DebugName.c_str(), EAPIResourceType::Buffer);
+                    
+                    FBindingLayoutDesc BindingLayoutDesc;
+                    BindingLayoutDesc.StageFlags.SetMultipleFlags(ERHIShaderType::Vertex, ERHIShaderType::Fragment);
+                    BindingLayoutDesc.AddItem(FBindingLayoutItem(0, ERHIBindingResourceType::Buffer_SRV));
+                    NewBatch.BindingLayout = RenderContext->CreateBindingLayout(BindingLayoutDesc);
+
+                    FBindingSetDesc BindingSetDesc;
+                    BindingSetDesc.AddItem(FBindingSetItem::BufferSRV(0, NewBatch.BatchToModelBuffer));
+                    NewBatch.BindingSet = RenderContext->CreateBindingSet(BindingSetDesc, NewBatch.BindingLayout);                    
+        
+                    NewBatch.Material = Proxy.Material;
+                    IndirectRenderBatch.push_back(NewBatch);
+                }
+
+                FIndirectRenderBatch& Batch = IndirectRenderBatch[IndirectBatchMap[Proxy.SortKey]];
+
+                if (Proxy.ModelMatrixIndex == INDEX_NONE)
+                {
+                    Proxy.ModelMatrixIndex = (int64)ModelData.ModelMatrices.size();
+                    ModelData.ModelMatrices.push_back(Proxy.Matrix);
+
+                    FDrawIndexedIndirectArguments Args;
+                    Args.BaseVertexLocation     = (int32)VertexStartMap[Proxy.Mesh];
+                    Args.StartIndexLocation     = (uint32)IndexStartMap[Proxy.Mesh];
+                    Args.IndexCount             = Proxy.Mesh->GetMeshResource().Indices.size();
+                    Args.StartInstanceLocation  = 0;
+                    Args.InstanceCount          = 1;
+                    
+                    Batch.DrawCallToModelIndexMap.push_back(Proxy.ModelMatrixIndex);
+                    Batch.DrawIndexedArguments.push_back(Args);
+                    
+                    // If the current buffer cannot contain all the draws, recreate it.
+                    if (Batch.IndirectDrawBuffer->GetSize() < (Batch.DrawIndexedArguments.size() * sizeof(FDrawIndexedIndirectArguments)))
+                    {
+                        FRHIBufferDesc BufferDesc;
+                        BufferDesc.Size = (Batch.DrawIndexedArguments.size() * sizeof(FDrawIndexedIndirectArguments)) * 4;
+                        BufferDesc.Stride = sizeof(FDrawIndexedIndirectArguments);
+                        BufferDesc.Usage.SetMultipleFlags(BUF_Indirect);
+                        BufferDesc.InitialState = EResourceStates::IndirectArgument;
+                        BufferDesc.bKeepInitialState = true;
+                        BufferDesc.DebugName = "Draw Indirect Buffer: " + Proxy.Material->GetName().ToString();
+                        Batch.IndirectDrawBuffer = RenderContext->CreateBuffer(BufferDesc);
+                        RenderContext->SetObjectName(Batch.IndirectDrawBuffer, BufferDesc.DebugName.c_str(), EAPIResourceType::Buffer);
+
+                        BufferDesc.Size = (sizeof(uint32) * sizeof(FDrawIndexedIndirectArguments)) * 4;
+                        BufferDesc.Stride = sizeof(uint32);
+                        BufferDesc.Usage.SetMultipleFlags(BUF_StorageBuffer);
+                        BufferDesc.InitialState = EResourceStates::ShaderResource;
+                        BufferDesc.bKeepInitialState = true;
+                        BufferDesc.DebugName = " Batch To Model Buffer: " + Proxy.Material->GetName().ToString();
+                        Batch.BatchToModelBuffer = RenderContext->CreateBuffer(BufferDesc);
+                        RenderContext->SetObjectName(Batch.BatchToModelBuffer, BufferDesc.DebugName.c_str(), EAPIResourceType::Buffer);
+
+                        FBindingSetDesc BindingSetDesc;
+                        BindingSetDesc.AddItem(FBindingSetItem::BufferSRV(0, Batch.BatchToModelBuffer));
+                        Batch.BindingSet = RenderContext->CreateBindingSet(BindingSetDesc, Batch.BindingLayout);     
+                    }
+
+                    CommandList->SetBufferState(Batch.IndirectDrawBuffer , EResourceStates::IndirectArgument);
+                    CommandList->CommitBarriers();
+                    
+                    CommandList->WriteBuffer(Batch.BatchToModelBuffer, Batch.DrawCallToModelIndexMap.data(), 0, Batch.DrawCallToModelIndexMap.size() * sizeof(uint32));
+                    CommandList->WriteBuffer(Batch.IndirectDrawBuffer, Batch.DrawIndexedArguments.data(), 0, Batch.DrawIndexedArguments.size() * sizeof(FDrawIndexedIndirectArguments));
+                }
+                else
+                {
+                    ModelData.ModelMatrices[Proxy.ModelMatrixIndex] = Proxy.Matrix;
+                }
+            }
+
+            CommandList->WriteBuffer(ModelDataBuffer,ModelData.ModelMatrices.data(), 0, ModelData.ModelMatrices.size() * sizeof(glm::mat4));
+        }
+        
+        
+        GeometryPass();
+        LightingPass();
+        SkyboxPass();
+        DrawPrimitives();
 
         CommandList->SetImageState(GetRenderTarget(), AllSubresources, EResourceStates::ShaderResource);
         CommandList->CommitBarriers();
-
-        LastFrameRenderData = Memory::Move(DrawList);
     }
 
     void FSceneRenderer::OnSwapchainResized()
@@ -282,7 +344,7 @@ namespace Lumina
 
     void FSceneRenderer::CreateOrResizeGeometryBuffers(uint64 VertexSize, uint64 IndexSize, uint64 VertexSizeDesired, uint64 IndexSizeDesired)
     {
-        if (VertexSize != 0 && (VertexBuffer == nullptr || VertexBuffer->GetSize() < VertexSize))
+        if (VertexSizeDesired != 0 && (VertexBuffer == nullptr || VertexBuffer->GetSize() < VertexSize))
         {
             FRHIBufferDesc VertexBufferDesc;
             VertexBufferDesc.Size = VertexSizeDesired;
@@ -292,10 +354,10 @@ namespace Lumina
             VertexBufferDesc.bKeepInitialState = true;
             VertexBufferDesc.DebugName = "Vertex Buffer";
             VertexBuffer = RenderContext->CreateBuffer(VertexBufferDesc);
-            RenderContext->SetObjectName(VertexBuffer, "VertexBuffer", EAPIResourceType::Buffer);
+            RenderContext->SetObjectName(VertexBuffer, VertexBufferDesc.DebugName.c_str(), EAPIResourceType::Buffer);
         }
 
-        if (IndexSize != 0 && (IndexBuffer == nullptr || IndexBuffer->GetSize() < IndexSize))
+        if (IndexSizeDesired != 0 && (IndexBuffer == nullptr || IndexBuffer->GetSize() < IndexSize))
         {
             FRHIBufferDesc IndexBufferDesc;
             IndexBufferDesc.Size = IndexSizeDesired;
@@ -305,42 +367,28 @@ namespace Lumina
             IndexBufferDesc.bKeepInitialState = true;
             IndexBufferDesc.DebugName = "Index Buffer";
             IndexBuffer = RenderContext->CreateBuffer(IndexBufferDesc);
-            RenderContext->SetObjectName(IndexBuffer, "IndexBuffer", EAPIResourceType::Buffer);
+            RenderContext->SetObjectName(IndexBuffer, IndexBufferDesc.DebugName.c_str(), EAPIResourceType::Buffer);
         }
     }
 
-    void FSceneRenderer::CreateOrResizeDrawCommandBuffer(uint64 SizeRequired, uint64 SizeDesired)
-    {
-        if (SizeDesired == 0)
-        {
-            return;
-        }
-
-        if (!DrawCommandBuffer || DrawCommandBuffer->GetSize() < SizeRequired)
-        {
-            FRHIBufferDesc BufferDesc;
-            BufferDesc.Size = SizeDesired;
-            BufferDesc.Stride = sizeof(FDrawIndexedIndirectArguments);
-            BufferDesc.Usage.SetMultipleFlags(BUF_Indirect, BUF_Dynamic);
-            BufferDesc.InitialState = EResourceStates::IndirectArgument;
-            BufferDesc.bKeepInitialState = true;
-            BufferDesc.MaxVersions = 3;
-            BufferDesc.DebugName = "DrawCommandBuffer";
-
-            DrawCommandBuffer = RenderContext->CreateBuffer(BufferDesc);
-            RenderContext->SetObjectName(DrawCommandBuffer, BufferDesc.DebugName.c_str(), EAPIResourceType::Buffer);
-        }
-    }
-
-    void FSceneRenderer::GeometryPass(const FSceneRenderData& DrawList)
+    void FSceneRenderer::GeometryPass()
     {
         LUMINA_PROFILE_SCOPE_COLORED(tracy::Color::Red);
-        if (DrawList.DrawIndexedArguments.empty())
+        
+        ICommandList* CommandList = RenderContext->GetCommandList(ECommandQueue::Graphics);
+
+        if (IndirectRenderBatch.empty())
         {
             return;
         }
-        
-        ICommandList* CommandList = RenderContext->GetCommandList(Q_Graphics);
+
+        for (SIZE_T CurrentDraw = 0; CurrentDraw < IndirectRenderBatch.size(); ++CurrentDraw)
+        {
+            FIndirectRenderBatch& Batch = IndirectRenderBatch[CurrentDraw];
+
+            CommandList->SetBufferState(Batch.IndirectDrawBuffer , EResourceStates::IndirectArgument);
+            CommandList->CommitBarriers();
+        }
         
         FRenderPassBeginInfo BeginInfo; BeginInfo
         .AddColorAttachment(GBuffer.Position)
@@ -410,10 +458,9 @@ namespace Lumina
         RenderState.SetDepthStencilState(DepthState);
         
         CommandList->BindVertexBuffer(VertexBuffer, 0, 0);
-        for (SIZE_T CurrentDraw = 0; CurrentDraw < DrawList.RenderBatch.size(); ++CurrentDraw)
+        for (SIZE_T CurrentDraw = 0; CurrentDraw < IndirectRenderBatch.size(); ++CurrentDraw)
         {
-            FIndirectRenderBatch Batch = DrawList.RenderBatch[CurrentDraw];
-            CStaticMesh* Mesh = Batch.Mesh;
+            FIndirectRenderBatch& Batch = IndirectRenderBatch[CurrentDraw];
             CMaterial* Material = Batch.Material;
 
             FGraphicsPipelineDesc Desc;
@@ -421,6 +468,7 @@ namespace Lumina
             Desc.SetInputLayout(VertexLayoutInput);
             Desc.AddBindingLayout(BindingLayout);
             Desc.AddBindingLayout(Material->BindingLayout);
+            Desc.AddBindingLayout(Batch.BindingLayout);
             Desc.SetVertexShader(Material->VertexShader);
             Desc.SetPixelShader(Material->PixelShader);
             
@@ -428,21 +476,15 @@ namespace Lumina
             
             CommandList->SetGraphicsPipeline(Pipeline);
 
-            CommandList->BindBindingSets(ERHIBindingPoint::Graphics, {{BindingSet, 0}, {Material->BindingSet, 1}});
+            CommandList->BindBindingSets(ERHIBindingPoint::Graphics, {{BindingSet, 0}, {Material->BindingSet, 1}, {Batch.BindingSet, 2}});
             
-            CommandList->SetBufferState(DrawCommandBuffer, EResourceStates::IndirectArgument);
-            CommandList->CommitBarriers();
-            CommandList->DrawIndexedIndirect(DrawCommandBuffer, IndexBuffer, 1, CurrentDraw * sizeof(FDrawIndexedIndirectArguments));
-            
-            SceneRenderStats.NumVertices += Mesh->GetNumVertices() * Batch.Args.InstanceCount;
-            SceneRenderStats.NumIndices += Mesh->GetNumIndices() * Batch.Args.InstanceCount;
-            SceneRenderStats.NumDrawCalls++;
+            CommandList->DrawIndexedIndirect(Batch.IndirectDrawBuffer, IndexBuffer, IndirectRenderBatch.size(), 0);
         }
         
         CommandList->EndRenderPass();
     }
 
-    void FSceneRenderer::LightingPass(const FSceneRenderData& DrawList)
+    void FSceneRenderer::LightingPass()
     {
         LUMINA_PROFILE_SCOPE_COLORED(tracy::Color::Blue);
         FRHIVertexShaderRef VertexShader = RenderContext->GetShaderLibrary()->GetShader<FRHIVertexShader>("DeferredLighting.vert");
@@ -509,7 +551,7 @@ namespace Lumina
 
     }
 
-    void FSceneRenderer::SkyboxPass(const FSceneRenderData& DrawList)
+    void FSceneRenderer::SkyboxPass()
     {
         LUMINA_PROFILE_SCOPE_COLORED(tracy::Color::Green);
 
@@ -658,8 +700,9 @@ namespace Lumina
         CommandList->EndRenderPass();
 #endif
     }
+    
 
-    void FSceneRenderer::DrawPrimitives(const FSceneRenderData& DrawList)
+    void FSceneRenderer::DrawPrimitives()
     {
         LUMINA_PROFILE_SCOPE();
 
@@ -716,9 +759,9 @@ namespace Lumina
             
         CommandList->SetGraphicsPipeline(Pipeline);
         
-        for (uint32 CurrentDraw = 0; CurrentDraw < (uint32)DrawList.LightData.NumPointLights; ++CurrentDraw)
+        for (uint32 CurrentDraw = 0; CurrentDraw < LightData.NumPointLights; ++CurrentDraw)
         {
-            FPointLight Light = DrawList.LightData.PointLightsLights[CurrentDraw];
+            FPointLight Light = LightData.PointLights[CurrentDraw];
 
             struct FPC
             {
@@ -922,8 +965,8 @@ namespace Lumina
         FBindingLayoutDesc BindingLayoutDesc;
         BindingLayoutDesc.StageFlags.SetMultipleFlags(ERHIShaderType::Vertex, ERHIShaderType::Fragment);
         BindingLayoutDesc.AddItem(FBindingLayoutItem(0, ERHIBindingResourceType::Buffer_Uniform_Dynamic));
-        BindingLayoutDesc.AddItem(FBindingLayoutItem(1, ERHIBindingResourceType::Buffer_Storage_Dynamic));
-        BindingLayoutDesc.AddItem(FBindingLayoutItem(2, ERHIBindingResourceType::Buffer_Storage_Dynamic));
+        BindingLayoutDesc.AddItem(FBindingLayoutItem(1, ERHIBindingResourceType::Buffer_SRV));
+        BindingLayoutDesc.AddItem(FBindingLayoutItem(2, ERHIBindingResourceType::Buffer_SRV));
         BindingLayoutDesc.AddItem(FBindingLayoutItem(0, ERHIBindingResourceType::PushConstants, 80));
         BindingLayout = RenderContext->CreateBindingLayout(BindingLayoutDesc);
 
@@ -975,24 +1018,29 @@ namespace Lumina
         BufferDesc.Stride = sizeof(FSceneGlobalData);
         BufferDesc.Usage.SetMultipleFlags(BUF_UniformBuffer, BUF_Dynamic);
         BufferDesc.MaxVersions = 3;
+        BufferDesc.DebugName = "Scene Global Data";
         SceneDataBuffer = RenderContext->CreateBuffer(BufferDesc);
-        RenderContext->SetObjectName(SceneDataBuffer, "SceneGlobalData", EAPIResourceType::Buffer);
+        RenderContext->SetObjectName(SceneDataBuffer, BufferDesc.DebugName.c_str(), EAPIResourceType::Buffer);
 
         FRHIBufferDesc ModelBufferDesc;
-        ModelBufferDesc.Size = sizeof(FModelData);
-        ModelBufferDesc.Stride = sizeof(FModelData);
-        ModelBufferDesc.Usage.SetMultipleFlags(BUF_StorageBuffer, BUF_Dynamic);
-        ModelBufferDesc.MaxVersions = 3;
+        ModelBufferDesc.Size = sizeof(glm::mat4) * 100000;
+        ModelBufferDesc.Stride = sizeof(glm::mat4);
+        ModelBufferDesc.Usage.SetMultipleFlags(BUF_StorageBuffer);
+        ModelBufferDesc.bKeepInitialState = true;
+        ModelBufferDesc.InitialState = EResourceStates::ShaderResource;
+        ModelBufferDesc.DebugName = "Model Buffer";
         ModelDataBuffer = RenderContext->CreateBuffer(ModelBufferDesc);
-        RenderContext->SetObjectName(ModelDataBuffer, "ModelDataBuffer", EAPIResourceType::Buffer);
+        RenderContext->SetObjectName(ModelDataBuffer, ModelBufferDesc.DebugName.c_str(), EAPIResourceType::Buffer);
         
         FRHIBufferDesc LightBufferDesc;
         LightBufferDesc.Size = sizeof(FSceneLightData);
         LightBufferDesc.Stride = sizeof(FSceneLightData);
-        LightBufferDesc.Usage.SetMultipleFlags(BUF_StorageBuffer, BUF_Dynamic);
-        LightBufferDesc.MaxVersions = 3;
+        LightBufferDesc.Usage.SetMultipleFlags(BUF_StorageBuffer);
+        LightBufferDesc.bKeepInitialState = true;
+        LightBufferDesc.InitialState = EResourceStates::ShaderResource;
+        LightBufferDesc.DebugName = "Light Data Buffer";
         LightDataBuffer = RenderContext->CreateBuffer(LightBufferDesc);
-        RenderContext->SetObjectName(LightDataBuffer, "LightDataBuffer", EAPIResourceType::Buffer);
+        RenderContext->SetObjectName(LightDataBuffer, LightBufferDesc.DebugName.c_str(), EAPIResourceType::Buffer);
     }
     
     void FSceneRenderer::CreateImages()
@@ -1085,10 +1133,10 @@ namespace Lumina
             ResourceDirectory /= std::filesystem::path("Textures") / "CubeMaps" / "Mountains" / CubeFaceFiles[i];
             
             TVector<uint8> Pixels;
-            FIntVector2D Extent = ImportHelpers::GetImagePixelData(Pixels, ResourceDirectory.generic_string().c_str(), false);
+            FIntVector2D ImageExtent = Import::Textures::ImportTexture(Pixels, ResourceDirectory.generic_string().c_str(), false);
             
-            const uint32 width = Extent.X;
-            const uint32 height = Extent.Y;
+            const uint32 width = ImageExtent.X;
+            const uint32 height = ImageExtent.Y;
             const SIZE_T rowPitch = width * 4;  // 4 bytes per pixel (RGBA8)
             const SIZE_T depthPitch = rowPitch * height;
             
@@ -1100,6 +1148,35 @@ namespace Lumina
         
         CommandList->Close();
     	RenderContext->ExecuteCommandList(CommandList, ECommandQueue::Transfer);
+    }
+
+    void FSceneRenderer::UpdateGeometryBuffersForNewMeshes(ICommandList* CommandList, const TVector<CStaticMesh*>& NewMeshes)
+    {
+        SIZE_T VertexOffset = CombinedVertex.size() * sizeof(FVertex);
+        SIZE_T IndexOffset  = CombinedIndex.size() * sizeof(uint32);
+        CreateOrResizeGeometryBuffers(VertexOffset, IndexOffset, VertexOffset + (100000 * sizeof(FVertex)), IndexOffset + (100000 * sizeof(uint32)));
+        
+        for (CStaticMesh* NewMesh : NewMeshes)
+        {
+            const TVector<FVertex>& Vertices = NewMesh->GetMeshResource().Vertices;
+            const TVector<uint32>& Indices = NewMesh->GetMeshResource().Indices;
+
+            SIZE_T VertexSizeBytes = Vertices.size() * sizeof(FVertex);
+            SIZE_T IndexSizeBytes  = Indices.size()  * sizeof(uint32);
+            
+            CombinedVertex.insert(CombinedVertex.end(), Vertices.begin(), Vertices.end());
+            CombinedIndex.insert(CombinedIndex.end(), Indices.begin(), Indices.end());
+
+            CommandList->WriteBuffer(VertexBuffer, Vertices.data(), VertexOffset, VertexSizeBytes);
+            CommandList->WriteBuffer(IndexBuffer, Indices.data(), IndexOffset, IndexSizeBytes);
+
+            VertexStartMap.insert_or_assign(NewMesh, VertexOffset / sizeof(FVertex));
+            IndexStartMap.insert_or_assign(NewMesh, IndexOffset / sizeof(uint32));
+            
+            VertexOffset += Vertices.size();
+            IndexOffset += Indices.size();
+        }
+        
     }
     
 }

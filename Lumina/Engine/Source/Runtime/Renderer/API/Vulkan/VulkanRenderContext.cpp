@@ -142,7 +142,7 @@ namespace Lumina
     {
         LUMINA_PROFILE_SCOPE();
         
-        FScopeLock Lock(Mutex);
+        FScopeLock Lock(GetMutex);
 
         uint64 RecodingID = ++LastRecordingID;
         
@@ -208,7 +208,8 @@ namespace Lumina
     uint64 FQueue::Submit(ICommandList* const* CommandLists, uint32 NumCommandLists)
     {
         LUMINA_PROFILE_SCOPE();
-        
+
+        FScopeLock Lock(SubmitMutex);
         TFixedVector<VkCommandBuffer, 4> CommandBuffers(NumCommandLists);
         TFixedVector<VkPipelineStageFlags, 4> StageFlags(WaitSemaphores.size());
 
@@ -502,11 +503,15 @@ namespace Lumina
         TimelineFeatures.timelineSemaphore = VK_TRUE;
         
         VkPhysicalDeviceFeatures DeviceFeatures = {};
-        DeviceFeatures.samplerAnisotropy = VK_TRUE;
-        DeviceFeatures.sampleRateShading = VK_TRUE;
-        DeviceFeatures.fillModeNonSolid = VK_TRUE;
-        DeviceFeatures.wideLines = VK_TRUE;
-        
+        DeviceFeatures.samplerAnisotropy        = VK_TRUE;
+        DeviceFeatures.sampleRateShading        = VK_TRUE;
+        DeviceFeatures.fillModeNonSolid         = VK_TRUE;
+        DeviceFeatures.wideLines                = VK_TRUE;
+        DeviceFeatures.multiDrawIndirect        = VK_TRUE;
+
+        VkPhysicalDeviceVulkan11Features Features11 = {};
+        Features11.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
+        Features11.shaderDrawParameters = VK_TRUE;
         
         VkPhysicalDeviceVulkan12Features Features12 = {};
         Features12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
@@ -524,6 +529,7 @@ namespace Lumina
         vkb::PhysicalDevice physicalDevice = selector
             .set_minimum_version(1, 3)
             .set_required_features(DeviceFeatures)
+            .set_required_features_11(Features11)
             .set_required_features_12(Features12)
             .set_required_features_13(Features13)
             .require_separate_transfer_queue()

@@ -7,6 +7,7 @@
 #include "Scene/Entity/Components/EditorComponent.h"
 #include "Scene/Entity/Components/LightComponent.h"
 #include "Scene/Subsystems/FCameraManager.h"
+#include "TaskSystem/TaskSystem.h"
 #include "Tools/UI/ImGui/ImGuiX.h"
 
 namespace Lumina
@@ -78,7 +79,10 @@ namespace Lumina
 
         if (ImGui::MenuItem(LE_ICON_CONTENT_SAVE"##Save"))
         {
-            OnSave();
+            FTaskSystem::Get()->ScheduleLambda(1, [this](enki::TaskSetPartition Partition, uint32 Thread)
+            {
+                OnSave();
+            });
         }
 
         if (ImGui::MenuItem(LE_ICON_UNDO_VARIANT"##Undo"))

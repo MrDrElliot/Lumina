@@ -1,4 +1,4 @@
-#version 450 core
+#version 460 core
 #pragma shader_stage(fragment)
 
 #include "Includes/SceneGlobals.glsl"

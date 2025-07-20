@@ -66,7 +66,8 @@ namespace Lumina
     VmaAllocation FVulkanMemoryAllocator::AllocateBuffer(const VkBufferCreateInfo* CreateInfo, VmaAllocationCreateFlags Flags, VkBuffer* vkBuffer, const char* AllocationName)
     {
         LUMINA_PROFILE_SCOPE();
-        
+        FScopeLock Lock(BufferAllocationMutex);
+
         VmaAllocationCreateInfo Info = {};
         Info.usage = VMA_MEMORY_USAGE_AUTO;
         Info.flags = Flags;
@@ -89,6 +90,7 @@ namespace Lumina
     VmaAllocation FVulkanMemoryAllocator::AllocateImage(VkImageCreateInfo* CreateInfo, VmaAllocationCreateFlags Flags, VkImage* vkImage, const char* AllocationName)
     {
         LUMINA_PROFILE_SCOPE();
+        FScopeLock Lock(ImageAllocationMutex);
 
         if (CreateInfo->extent.depth == 0)
         {
@@ -108,7 +110,10 @@ namespace Lumina
 
         
 #if LE_DEBUG
-        vmaSetAllocationName(Allocator, Allocation, AllocationName);
+        if (AllocationName && strlen(AllocationName) > 0)
+        {
+            vmaSetAllocationName(Allocator, Allocation, AllocationName);
+        }
 #endif
         
         AllocatedImages[*vkImage] = Allocation;
@@ -130,6 +135,7 @@ namespace Lumina
     void FVulkanMemoryAllocator::DestroyBuffer(VkBuffer Buffer)
     {
         LUMINA_PROFILE_SCOPE();
+        FScopeLock Lock(BufferAllocationMutex);
 
         Assert(Buffer != VK_NULL_HANDLE)
 
@@ -154,8 +160,9 @@ namespace Lumina
     void FVulkanMemoryAllocator::DestroyImage(VkImage Image)
     {
         LUMINA_PROFILE_SCOPE();
-
         Assert(Image)
+
+        FScopeLock Lock(ImageAllocationMutex);
         
         VmaAllocationInfo AllocationInfo;
         vmaGetAllocationInfo(Allocator, AllocatedImages[Image], &AllocationInfo);
@@ -190,12 +197,16 @@ namespace Lumina
 
     void FVulkanDevice::AddChild(IDeviceChild* InChild)
     {
+        FScopeLock Lock(ChildMutex);
+        
         InChild->Index = Children.size();
         Children.push_back(InChild);
     }
 
     void FVulkanDevice::RemoveChild(IDeviceChild* InChild)
     {
+        FScopeLock Lock(ChildMutex);
+        
         size_t idx = InChild->Index;
         if (idx < Children.size() && Children[idx] == InChild)
         {

@@ -76,7 +76,7 @@ namespace Lumina
         virtual void CopyImage(FRHIImage* Src, const FTextureSlice& SrcSlice, FRHIImage* Dst, const FTextureSlice& DstSlice) = 0;
         virtual void WriteImage(FRHIImage* Dst, uint32 ArraySlice, uint32 MipLevel, const void* Data, SIZE_T RowPitch, SIZE_T DepthPitch) = 0;
         
-        NODISCARD virtual void WriteBuffer(FRHIBuffer* Buffer, const void* Data, uint32 Offset, uint32 Size) = 0;
+        NODISCARD virtual void WriteBuffer(FRHIBuffer* Buffer, const void* Data, SIZE_T Offset, SIZE_T Size) = 0;
         virtual void CopyBuffer(FRHIBuffer* Source, uint64 SrcOffset, FRHIBuffer* Destination, uint64 DstOffset, uint64 CopySize) = 0;
         
         virtual void SetPermanentImageState(FRHIImage* Image, EResourceStates StateBits) = 0;

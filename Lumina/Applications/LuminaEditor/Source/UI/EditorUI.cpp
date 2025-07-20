@@ -663,7 +663,12 @@ namespace Lumina
                                     ViewportTexture = ImGuiRenderer->GetOrCreateImTexture(SceneRenderer->GetRenderTarget());
                                 }
                             break;
-                            
+
+                            case ESceneRenderGBuffer::Albedo:
+                                {
+                                    ViewportTexture = ImGuiRenderer->GetOrCreateImTexture(SceneRenderer->GetGBuffer().AlbedoSpec);
+                                }
+                            break;
                             case ESceneRenderGBuffer::Position:
                                 {
                                     ViewportTexture = ImGuiRenderer->GetOrCreateImTexture(SceneRenderer->GetGBuffer().Position);

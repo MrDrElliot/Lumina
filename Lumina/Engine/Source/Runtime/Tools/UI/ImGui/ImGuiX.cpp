@@ -264,79 +264,7 @@ namespace Lumina::ImGuiX
             Current = (FProperty*)Current->Next;
         }
     }
-
-    void ObjectSelector(const FARFilter& Filter, CObject*& OutSelected)
-    {
-        static ImGuiTextFilter SearchFilter;
-        
-        const char* Text = "Select Object";
-        float WindowWidth = ImGui::GetContentRegionAvail().x;
-        float TextWidth = ImGui::CalcTextSize(Text).x;
-
-        if (ImGui::Button("Clear", ImVec2(ImGui::GetContentRegionAvail().x, 0)))
-        {
-            OutSelected = nullptr;
-            ImGui::EndPopup();
-            return;
-        }
-        
-        ImGui::SetCursorPosX((WindowWidth - TextWidth) * 0.5f);
-        ImGui::Text("%s", Text);        ImGui::Separator();
-
-        SearchFilter.Draw("##", ImGui::GetContentRegionAvail().x);
-        ImGui::Separator();
-
-        TVector<FAssetData> FilteredAssets;
-        GEngine->GetEngineSubsystem<FAssetRegistry>()->GetAssets(Filter, FilteredAssets);
-
-        if (ImGui::BeginTable("AssetTable", 1, ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_ScrollY))
-        {
-            ImGui::TableSetupColumn("Asset", ImGuiTableColumnFlags_WidthStretch);
-
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            
-            for (const FAssetData& Asset : FilteredAssets)
-            {
-                if (!SearchFilter.PassFilter(Asset.Name.c_str()))
-                {
-                    continue;
-                }
-
-                ImGui::TableNextRow();
-                ImGui::TableSetColumnIndex(0);
-
-                const char* NameStr = Asset.Name.c_str();
-                float TextWidth = ImGui::CalcTextSize(NameStr).x;
-                float ColumnWidth = ImGui::GetColumnWidth();
-                float SelectableWidth = TextWidth + ImGui::GetStyle().FramePadding.x * 2.0f;
-
-                float Padding = (ColumnWidth - SelectableWidth) * 0.5f;
-                if (Padding > 0.0f)
-                    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + Padding);
-
-                // Limit width of the selectable to just fit the text
-                ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(ImGui::GetStyle().FramePadding.x, ImGui::GetStyle().FramePadding.y));
-                ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, ImGui::GetStyle().ItemSpacing.y));
-
-                if (ImGui::Selectable(NameStr, false, 0, ImVec2(SelectableWidth, 0)))
-                {
-                    FString VirtualPath = Paths::ConvertToVirtualPath(Asset.Path);
-                    VirtualPath += "." + Asset.Name.ToString();
-                    FName AssetName = VirtualPath.c_str();
-                    OutSelected = LoadObject<CObject>(AssetName);
-                    ImGui::CloseCurrentPopup();
-                    ImGui::PopStyleVar(2);
-                    break;
-                }
-
-                ImGui::PopStyleVar(2);
-            }
-
-            ImGui::EndTable();
-        }
-    }
-
+    
     void ApplicationTitleBar::DrawWindowControls()
     {
         ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0);
@@ -350,10 +278,17 @@ namespace Lumina::ImGuiX
         }
 
         ImGui::SameLine();
-
+        
         if (ImGuiX::FlatButton(LE_ICON_WINDOW_RESTORE "##Res", ImVec2(s_windowControlButtonWidth, -1)))
         {
-            glfwRestoreWindow(Window);
+            if (glfwGetWindowAttrib(Window, GLFW_MAXIMIZED))
+            {
+                glfwRestoreWindow(Window);
+            }
+            else
+            {
+                glfwMaximizeWindow(Window);
+            }
         }
 
         ImGui::SameLine();

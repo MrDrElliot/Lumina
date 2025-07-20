@@ -108,7 +108,8 @@ namespace Lumina
         TVector<uint64>             SignalSemaphoreValues;
         
         ECommandQueue               Type;
-        FMutex                      Mutex;
+        FMutex                      GetMutex;
+        FMutex                      SubmitMutex;
         VkCommandPool               CommandPool;
         VkQueue                     Queue;
         uint32                      QueueFamilyIndex;

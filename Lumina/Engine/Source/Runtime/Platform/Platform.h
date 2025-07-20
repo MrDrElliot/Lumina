@@ -1,5 +1,6 @@
 #pragma once
 
+#ifndef REFLECTION_PARSER
 
 /** Branch prediction hints */
 #ifndef LIKELY						/* Hints compiler that expression is likely to be true */
@@ -62,3 +63,5 @@
 
 #define UTF16TEXT(x) UTF16TEXT_PASTE(x)
 #define WIDETEXT(str) WIDETEXT_PASTE(str)
+
+#endif

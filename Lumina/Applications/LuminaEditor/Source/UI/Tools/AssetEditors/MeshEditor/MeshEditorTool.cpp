@@ -10,6 +10,7 @@
 #include "Scene/Entity/Components/LightComponent.h"
 #include "Scene/Entity/Components/StaicMeshComponent.h"
 #include "Scene/Entity/Systems/DebugCameraEntitySystem.h"
+#include "Tools/UI/ImGui/ImGuiFonts.h"
 #include "Tools/UI/ImGui/ImGuiX.h"
 
 
@@ -26,10 +27,13 @@ namespace Lumina
 
         Entity DirectionalLightEntity = NewScene->CreateEntity(FTransform(), "Directional Light");
         DirectionalLightEntity.AddComponent<FDirectionalLightComponent>();
-
+        DirectionalLightEntity.AddComponent<FNeedsRenderProxyUpdate>();
+        
         MeshEntity = NewScene->CreateEntity(FTransform(), "MeshEntity");
-        FStaticMeshComponent& NewComponent = MeshEntity.AddComponent<FStaticMeshComponent>();
-        NewComponent.StaticMesh = Cast<CStaticMesh>(InAsset);
+        
+        MeshEntity.AddComponent<FStaticMeshComponent>().StaticMesh = Cast<CStaticMesh>(InAsset);
+        MeshEntity.GetComponent<FTransformComponent>().SetLocation(glm::vec3(0.0f, 0.0f, -2.5f));
+        MeshEntity.AddComponent<FNeedsRenderProxyUpdate>();
         
         Scene = NewScene;
     }
@@ -40,14 +44,58 @@ namespace Lumina
         {
             CStaticMesh* StaticMesh = Cast<CStaticMesh>(Asset);
 
-            ImGui::Text("Vertices: %u", StaticMesh->GetNumVertices());
-            ImGui::Text("Indices: %u", StaticMesh->GetNumIndices());
+            const FMeshResource& Resource = StaticMesh->GetMeshResource();
+            TVector<FGeometrySurface> Surfaces = Resource.GeometrySurfaces;
+            
+            if (ImGui::CollapsingHeader("Mesh Resources"))
+            {
+                ImGui::Indent();
 
-            ImGui::Separator();
+                if (ImGui::BeginTable("MeshResourceTable", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg))
+                {
+                    ImGui::TableSetupColumn("Property");
+                    ImGui::TableSetupColumn("Value");
+                    ImGui::TableHeadersRow();
+
+                    auto Row = [](const char* label, const FString& value)
+                    {
+                           ImGui::TableNextRow();
+                           ImGui::TableSetColumnIndex(0);
+                           ImGui::TextUnformatted(label);
+                           ImGui::TableSetColumnIndex(1);
+                           ImGui::TextUnformatted(value.c_str());
+                    };
+
+                    Row("Vertices", eastl::to_string(Resource.Vertices.size()));
+                    Row("Indices", eastl::to_string(Resource.Indices.size()));
+                    Row("Surfaces", eastl::to_string(Resource.GetNumSurfaces()));
+
+                    ImGui::EndTable();
+                }
+
+                ImGui::Unindent();
+            }
+
+            ImGuiX::Font::PushFont(ImGuiX::Font::EFont::Large);
+            ImGui::SeparatorText("Geometry Surfaces");
+            ImGuiX::Font::PopFont();
+            
+            for (size_t i = 0; i < Resource.GeometrySurfaces.size(); ++i)
+            {
+                const FGeometrySurface& Surface = Resource.GeometrySurfaces[i];
+                ImGui::PushID(i);
+                ImGui::Text("Name: %s", Surface.ID.c_str());
+                ImGui::Separator();
+                ImGui::PopID();
+            }
+
+            ImGui::SeparatorText("Asset Details");
+            
+            ImGuiX::DrawObjectProperties(StaticMesh);
+            
+            ImGui::SeparatorText("Directional Light Details");
 
             
-            ImGui::Separator();
-
             auto& Registry = Scene->GetMutableEntityRegistry();
             auto View = Registry.view<FDirectionalLightComponent, FTransformComponent>();
 
@@ -73,8 +121,6 @@ namespace Lumina
                     ImGui::TreePop();
                 }
             }
-
-            ImGuiX::DrawObjectProperties(StaticMesh);
         });
     }
 

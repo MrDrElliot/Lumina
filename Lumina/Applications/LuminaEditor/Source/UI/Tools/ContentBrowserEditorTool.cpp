@@ -28,12 +28,14 @@ namespace Lumina
 
     void FContentBrowserEditorTool::OnInitialize()
     {
+        using namespace Import::Textures;
         IRenderContext* RenderContext = GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext();
         FString Path = Paths::Combine(Paths::GetEngineResourceDirectory().c_str(), "Textures");
-        FolderIcon = ImportHelpers::CreateTextureFromImport(RenderContext, Path + "/Folder.png", false);
-        StaticMeshIcon = ImportHelpers::CreateTextureFromImport(RenderContext, Path + "/StaticMeshIcon.png", false);
-        TextureIcon = ImportHelpers::CreateTextureFromImport(RenderContext, Path + "/TextureIcon.png", false);
-        MaterialIcon = ImportHelpers::CreateTextureFromImport(RenderContext, Path + "/ShaderIcon.png", false);
+        FolderIcon          = CreateTextureFromImport(RenderContext, Path + "/Folder.png", false);
+        StaticMeshIcon      = CreateTextureFromImport(RenderContext, Path + "/StaticMeshIcon.png", false);
+        TextureIcon         = CreateTextureFromImport(RenderContext, Path + "/TextureIcon.png", false);
+        MaterialIcon        = CreateTextureFromImport(RenderContext, Path + "/ShaderIcon.png", false);
+        CorruptIcon        = CreateTextureFromImport(RenderContext, Path + "/CorruptAssetIcon.png", false);
 
         CreateToolWindow("Content", [this] (const FUpdateContext& Contxt, bool bIsFocused)
         {
@@ -51,24 +53,34 @@ namespace Lumina
         {
             FContentBrowserTileViewItem* ContentItem = static_cast<FContentBrowserTileViewItem*>(Item);
             ImTextureID ImTexture;
+            FString Path = ContentItem->GetPath().generic_string().c_str();
             
-            FAssetData Asset = GEngine->GetEngineSubsystem<FAssetRegistry>()->GetAsset(ContentItem->GetPath().generic_string().c_str());
-            if (Asset.ClassName == "CMaterial")
+            FAssetRegistry* Registry = GEngine->GetEngineSubsystem<FAssetRegistry>();
+            if (Registry->IsPathCorrupt(Path))
             {
-                ImTexture = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer()->GetOrCreateImTexture(MaterialIcon);
-            }
-            else if (Asset.ClassName == "CStaticMesh")
-            {
-                ImTexture = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer()->GetOrCreateImTexture(StaticMeshIcon);
-            }
-            else if (Asset.ClassName == "CTexture")
-            {
-                ImTexture = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer()->GetOrCreateImTexture(TextureIcon);
+                ImTexture = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer()->GetOrCreateImTexture(CorruptIcon);
             }
             else
             {
-                ImTexture = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer()->GetOrCreateImTexture(FolderIcon);
+                FAssetData Asset = Registry->GetAsset(Path);
+                if (Asset.ClassName == "CMaterial")
+                {
+                    ImTexture = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer()->GetOrCreateImTexture(MaterialIcon);
+                }
+                else if (Asset.ClassName == "CStaticMesh")
+                {
+                    ImTexture = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer()->GetOrCreateImTexture(StaticMeshIcon);
+                }
+                else if (Asset.ClassName == "CTexture")
+                {
+                    ImTexture = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer()->GetOrCreateImTexture(TextureIcon);
+                }
+                else
+                {
+                    ImTexture = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer()->GetOrCreateImTexture(FolderIcon);
+                }
             }
+            
 
             ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1, 1, 1, 0.05f)); 
             ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1, 1, 1, 0.3f));
@@ -464,7 +476,8 @@ namespace Lumina
                     MakeUniquePath(PathString);
                     PathString = Paths::RemoveExtension(PathString);
 
-                    FTaskSystem::Get()->ScheduleLambda([this, Factory, FilePath, PathString]
+                    
+                    FTaskSystem::Get()->ScheduleLambda(1, [this, Factory, FilePath, PathString] (enki::TaskSetPartition Range_, uint32 ThreadNum_)
                     {
                         Factory->TryImport(FilePath.generic_string().c_str(), PathString);
                         RefreshContentBrowser();

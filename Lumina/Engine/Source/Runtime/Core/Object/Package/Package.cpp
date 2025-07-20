@@ -45,7 +45,10 @@ namespace Lumina
     CPackage* CPackage::CreatePackage(const FString& InTopLevelClassName, const FString& FileName)
     {
         FString FullName = FileName;
-        Paths::AddPackageExtension(FullName);
+        if (!Paths::HasExtension(FullName, ".lasset"))
+        {
+            Paths::AddPackageExtension(FullName);
+        }
         
         FString VirtualPath = Paths::ConvertToVirtualPath(FileName.c_str());
         FName FileNameName = VirtualPath.c_str();

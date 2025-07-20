@@ -217,7 +217,7 @@ namespace Lumina
 
                     if (priorState == EResourceStates::Unknown && !stateExpanded)
                     {
-                        LOG_ERROR("Unknown prior state of texture {0} subresource (MipLevel = {1}, ArraySlice = {2}). Call CommandList::BeginTrackingTextureState(...) before using the texture or use the keepInitialState and initialState members of TextureDesc.",
+                        LOG_ERROR("Unknown prior state of texture \"{0}\" subresource (MipLevel = {1}, ArraySlice = {2}). Call CommandList::BeginTrackingTextureState(...) before using the texture or use the keepInitialState and initialState members of TextureDesc.",
                                   texture->DescRef.DebugName, mipLevel, arraySlice);
                     }
                     
@@ -275,7 +275,7 @@ namespace Lumina
 
         if (tracking->state == EResourceStates::Unknown)
         {
-            LOG_ERROR("Unknown prior state of buffer {0}. "
+            LOG_ERROR("Unknown prior state of buffer \"{0}\". "
                       "Call CommandList::BeginTrackingBufferState(...) before using the buffer or use the "
                       "keepInitialState and initialState members of BufferDesc.",
                       buffer->DescRef.DebugName);

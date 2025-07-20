@@ -49,7 +49,7 @@ namespace Lumina::Reflection::Visitor
         return Info;
     }
 
-    static FFieldInfo CreateSubFieldInfo(CXType FieldType)
+    static FFieldInfo CreateSubFieldInfo(const CXType& FieldType)
     {
         clang::QualType FieldQualType = ClangUtils::GetQualType(FieldType);
         eastl::string TypeSpelling = ClangUtils::GetString(clang_getTypeSpelling(FieldType));
@@ -68,6 +68,10 @@ namespace Lumina::Reflection::Visitor
             else if (FieldQualType->isStructureType())
             {
                 PropFlags = EPropertyTypeFlags::Struct;
+            }
+            else if (FieldQualType->isPointerType())
+            {
+                PropFlags = EPropertyTypeFlags::Object;
             }
         }
         
@@ -88,7 +92,7 @@ namespace Lumina::Reflection::Visitor
         return New;
     }
 
-    static void CreatePropertyForType(FClangParserContext* Context, FReflectedStruct* Struct, eastl::shared_ptr<FReflectedProperty>& NewProperty, const FFieldInfo& FieldInfo)
+    static bool CreatePropertyForType(FClangParserContext* Context, FReflectedStruct* Struct, eastl::shared_ptr<FReflectedProperty>& NewProperty, const FFieldInfo& FieldInfo)
     {
         switch (FieldInfo.Flags)
         {
@@ -173,7 +177,7 @@ namespace Lumina::Reflection::Visitor
                     FFieldInfo SubType = CreateSubFieldInfo(UnderlyingType);
                     if (!SubType.Validate(Context))
                     {
-                        return;
+                        return false;
                     }
 
                     SubType.Name = FieldInfo.Name + "_Inner";
@@ -197,14 +201,20 @@ namespace Lumina::Reflection::Visitor
                 FFieldInfo ParamFieldInfo = CreateSubFieldInfo(ArgType);
                 if (!ParamFieldInfo.Validate(Context))
                 {
-                    return;
+                    return false;
                 }
                 
                 ParamFieldInfo.Name = FieldInfo.Name + "_Inner";
                 ParamFieldInfo.PropertyFlags.emplace_back("PF_SubField");
                 
-                eastl::shared_ptr<FReflectedProperty> FieldProperty = nullptr;
+                eastl::shared_ptr<FReflectedProperty> FieldProperty;
                 CreatePropertyForType(Context, Struct, FieldProperty, ParamFieldInfo);
+                if (FieldProperty == nullptr)
+                {
+                    Context->LogError("Failed to create property for array. %s", FieldInfo.Name.c_str());
+                    Context->FlushLogs();
+                    return false;
+                }
                 FieldProperty->bInner = true; // This property "belongs" to the array.
             }
             break;
@@ -219,6 +229,9 @@ namespace Lumina::Reflection::Visitor
         {
             Struct->PushProperty(NewProperty);
         }
+
+        return NewProperty != nullptr;
+        
     }
     
     static CXChildVisitResult VisitStructureContents(CXCursor Cursor, CXCursor parent, CXClientData pClientData)

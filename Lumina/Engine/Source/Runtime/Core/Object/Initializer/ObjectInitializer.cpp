@@ -1,9 +1,11 @@
 ﻿#include "ObjectInitializer.h"
 
 #include "Containers/Array.h"
+#include "Core/Threading/Thread.h"
 
 namespace Lumina
 {
+    FMutex StackMutex;
     static TVector<FObjectInitializer*> InitializerStack;
 
     FObjectInitializer::FObjectInitializer(CObject* Obj, CPackage* InPackage, const FConstructCObjectParams& InParams)
@@ -16,6 +18,7 @@ namespace Lumina
 
     FObjectInitializer::~FObjectInitializer()
     {
+        FScopeLock Lock(StackMutex);
         InitializerStack.pop_back();
     }
 
@@ -26,8 +29,7 @@ namespace Lumina
 
     void FObjectInitializer::Construct()
     {
+        FScopeLock Lock(StackMutex);
         InitializerStack.push_back(this);
-        
-        
     }
 }

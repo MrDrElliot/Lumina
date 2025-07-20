@@ -37,7 +37,7 @@ namespace Lumina
 		
 		std::atomic<int32> OutstandingTasks =					0;
 		FMutex													RequestMutex;
-		std::mutex												FlushMutex;
+		FMutex													FlushMutex;
 		std::condition_variable									FlushCV;
 		
 	};

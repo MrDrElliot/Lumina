@@ -47,6 +47,10 @@ namespace Lumina
             StringView = FString(Char);
 #endif
         }
+        else
+        {
+            *this = NAME_None;
+        }
     }
 
     FName::FName(const TCHAR* Char)

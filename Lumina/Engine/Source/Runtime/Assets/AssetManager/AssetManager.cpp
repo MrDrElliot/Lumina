@@ -89,6 +89,7 @@ namespace Lumina
                 : Manager(InManager), Request(InRequest)
             {
                 m_SetSize = 1;
+                TaskDeleter.SetDependency(TaskDeleter.Dependency, this);
             }
 
             void ExecuteRange(enki::TaskSetPartition range, uint32_t threadnum) override
@@ -104,6 +105,9 @@ namespace Lumina
                     Manager->FlushCV.notify_all();
                 }
             }
+
+            CompletionActionDelete      TaskDeleter;
+
         };
 
         {
