@@ -87,7 +87,7 @@
 
 ## 🧭 Roadmap
 
-- ✅ Windows support
+- ✅ Linux and MacOS support
 - 🔄 Refactor to dynamic/shared libraries
 - 🔜 Multithreaded renderer
 - 🔜 Plugin system
