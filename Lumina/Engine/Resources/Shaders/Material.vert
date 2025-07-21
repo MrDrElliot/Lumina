@@ -21,9 +21,7 @@ layout(location = 3) out vec2 outUV;
 
 void main()
 {
-    uint ModelIndex = BatchToModel.Map[gl_DrawID];
-    
-    mat4 model = GetModelMatrix(ModelIndex);
+    mat4 model = GetModelMatrix(gl_InstanceIndex);
     vec4 worldPos = model * vec4(inPosition.xyz, 1.0f);
 
     mat3 normalMatrix = transpose(inverse(mat3(model)));

@@ -5,7 +5,7 @@
 #include "Scene/SceneManager.h"
 #include "Scene/Entity/Components/CameraComponent.h"
 #include "Scene/Entity/Components/EditorComponent.h"
-#include "Scene/Entity/Components/LightComponent.h"
+#include "Scene/Entity/Components/VelocityComponent.h"
 #include "Scene/Subsystems/FCameraManager.h"
 #include "TaskSystem/TaskSystem.h"
 #include "Tools/UI/ImGui/ImGuiX.h"
@@ -37,6 +37,7 @@ namespace Lumina
             EditorEntity = Scene->CreateEntity(EditorEntityTransform, FName("Editor Camera"));
             EditorEntity.AddComponent<FCameraComponent>();
             EditorEntity.AddComponent<FEditorComponent>();
+            EditorEntity.AddComponent<FVelocityComponent>().Speed = 50.0f;
             EditorEntity.AddComponent<FHiddenComponent>();
             
             
@@ -79,7 +80,7 @@ namespace Lumina
 
         if (ImGui::MenuItem(LE_ICON_CONTENT_SAVE"##Save"))
         {
-            FTaskSystem::Get()->ScheduleLambda(1, [this](enki::TaskSetPartition Partition, uint32 Thread)
+            FTaskSystem::Get()->ScheduleLambda(1, [this](uint32 Start, uint32 End, uint32 Thread)
             {
                 OnSave();
             });

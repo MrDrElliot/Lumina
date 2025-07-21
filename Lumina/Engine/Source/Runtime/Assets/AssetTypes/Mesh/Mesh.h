@@ -20,10 +20,12 @@ namespace Lumina
         void PostLoad() override;
 
         bool IsReadyForRender() const;
-        
+
+        uint32 GetNumMaterials() const { return Materials.size(); }
         CMaterial* GetMaterialAtSlot(SIZE_T Slot) const;
         const FGeometrySurface& GetSurface(SIZE_T Slot) { return MeshResources.GeometrySurfaces[Slot]; }
         const FMeshResource& GetMeshResource() const { return MeshResources; }
+        
         uint32 GetNumVertices() const { return MeshResources.Vertices.size(); }
         uint32 GetNumIndices() const { return MeshResources.Indices.size(); }
         

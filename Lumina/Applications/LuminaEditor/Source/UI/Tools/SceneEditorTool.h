@@ -1,6 +1,5 @@
 ﻿#pragma once
 #include "EditorTool.h"
-#include "ImGuizmo.h"
 #include "Tools/UI/ImGui/Widgets/TreeListView.h"
 
 namespace Lumina

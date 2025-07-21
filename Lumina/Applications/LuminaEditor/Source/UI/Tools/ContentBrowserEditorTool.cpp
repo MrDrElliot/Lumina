@@ -397,7 +397,7 @@ namespace Lumina
                 {
                     FileBrowser = ImGui::FileBrowser(ImGuiFileBrowserFlags_CloseOnEsc | ImGuiFileBrowserFlags_MultipleSelection);
                     FileBrowser.SetTitle("Select a file(s) to import.");
-                    FileBrowser.SetTypeFilters({".png", ".jpg", ".fbx", ".gltf"});
+                    FileBrowser.SetTypeFilters({".png", ".jpg", ".fbx", ".gltf", ".glb"});
 
                     FileBrowser.Open();
                 }
@@ -477,7 +477,7 @@ namespace Lumina
                     PathString = Paths::RemoveExtension(PathString);
 
                     
-                    FTaskSystem::Get()->ScheduleLambda(1, [this, Factory, FilePath, PathString] (enki::TaskSetPartition Range_, uint32 ThreadNum_)
+                    FTaskSystem::Get()->ScheduleLambda(1, [this, Factory, FilePath, PathString] (uint32 Start, uint32 End, uint32 ThreadNum_)
                     {
                         Factory->TryImport(FilePath.generic_string().c_str(), PathString);
                         RefreshContentBrowser();

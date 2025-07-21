@@ -108,6 +108,8 @@ namespace Lumina::ImGuiX
                 ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(ImGui::GetStyle().FramePadding.x, ImGui::GetStyle().FramePadding.y));
                 ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, ImGui::GetStyle().ItemSpacing.y));
 
+                ImGui::PushID(Asset.Path.c_str());
+
                 if (ImGui::Selectable(NameStr, false, 0, ImVec2(SelectableWidth, 0)))
                 {
                     FString VirtualPath = Paths::ConvertToVirtualPath(Asset.Path);
@@ -116,8 +118,16 @@ namespace Lumina::ImGuiX
                     OutSelected = LoadObject<T>(AssetName);
                     ImGui::CloseCurrentPopup();
                     ImGui::PopStyleVar(2);
+                    ImGui::PopID();
                     break;
                 }
+
+                if (ImGui::IsItemHovered())
+                {
+                    ImGui::SetTooltip("%s", Asset.Path.c_str());
+                }
+
+                ImGui::PopID();
 
                 ImGui::PopStyleVar(2);
             }

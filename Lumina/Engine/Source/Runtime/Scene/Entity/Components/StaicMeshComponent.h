@@ -7,6 +7,6 @@ namespace Lumina
 {
     struct FStaticMeshComponent : public FMeshComponent
     {
-        CStaticMesh* StaticMesh;
+        CStaticMesh* StaticMesh = nullptr;
     };
 }

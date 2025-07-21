@@ -40,6 +40,7 @@ namespace Lumina
 	{
 	public:
 
+		void ProjectLoaded();
 		void Initialize(FSubsystemManager& Manager) override;
 		void Deinitialize() override;
 
@@ -50,11 +51,23 @@ namespace Lumina
 
 		bool IsPathCorrupt(const FString& Path) { return CorruptedAssets.find(FName(Path)) != CorruptedAssets.end(); }
 
+		
 	private:
+		
+
+		void AddAsset(const FAssetData& Data);
+		void ClearAssets();
 
 		TSet<FName>					CorruptedAssets;
-		FMutex						Mutex;
+		
+		std::condition_variable		BuildCV;
+		bool bIsBuildingAssets =	false;
+		bool bBuildQueued =			false;
+
+		FMutex						BuildMutex;
+		FMutex						AssetsMutex;
 		TVector<FAssetData> 		Assets;
 		THashMap<FName, FAssetData> AssetPathMap;
+		FThread						ScanThread;
 	};
 }

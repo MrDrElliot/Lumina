@@ -48,7 +48,7 @@ namespace Lumina
         Request.CompileOptions = CompileOptions;
         Request.OnCompleted = Memory::Move(OnCompleted);
 
-        FTaskSystem::Get()->ScheduleLambda(1, [Request] (enki::TaskSetPartition Range_, uint32 ThreadNum_)
+        FTaskSystem::Get()->ScheduleLambda(1, [Request] (uint32 Start, uint32 End, uint32 ThreadNum_)
         {
             FString FileName = Paths::FileName(Request.Path);
             LOG_DEBUG("Compiling Shader: {0} - Thread: {1}", FileName, Threading::GetThreadID());
@@ -131,7 +131,7 @@ namespace Lumina
         Request.CompileOptions = CompileOptions;
         Request.OnCompleted = Memory::Move(OnCompleted);
 
-        FTaskSystem::Get()->ScheduleLambda(1, [Request] (enki::TaskSetPartition Range_, uint32 ThreadNum_)
+        FTaskSystem::Get()->ScheduleLambda(1, [Request] (uint32 Start, uint32 End, uint32 ThreadNum_)
         {
             FString VertexPath = std::filesystem::path(Paths::GetEngineResourceDirectory() / "Shaders/Material.frag").generic_string().c_str();
             

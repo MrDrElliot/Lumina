@@ -1,6 +1,5 @@
 ﻿#include "SceneEditorTool.h"
 
-#include "ImGuizmo.h"
 #include "glm/gtc/type_ptr.hpp"
 #define GLM_ENABLE_EXPERIMENTAL
 #include "EditorToolContext.h"
@@ -13,6 +12,7 @@
 #include "Scene/Entity/Components/EditorComponent.h"
 #include "Scene/Entity/Components/LightComponent.h"
 #include "Scene/Entity/Components/StaicMeshComponent.h"
+#include "Scene/Entity/Components/VelocityComponent.h"
 #include "Tools/UI/ImGui/ImGuiX.h"
 
 
@@ -166,9 +166,12 @@ namespace Lumina
 
     void FSceneEditorTool::DrawToolMenu(const FUpdateContext& UpdateContext)
     {
-        if (ImGui::MenuItem(LE_ICON_CAMERA_CONTROL" Camera Control"))
+        if (ImGui::BeginMenu(LE_ICON_CAMERA_CONTROL" Camera Control"))
         {
-            
+            float Speed = EditorEntity.GetComponent<FVelocityComponent>().Speed;
+            ImGui::SliderFloat("Camera Speed", &Speed, 1.0f, 200.0f);
+            EditorEntity.GetComponent<FVelocityComponent>().Speed = Speed;
+            ImGui::EndMenu();
         }
         
         // Gizmo Control Dropdown
@@ -200,6 +203,7 @@ namespace Lumina
             ImGui::Text("Draw Calls");    ImGui::SameLine(150); ImGui::Text("%u", Stats.NumDrawCalls);
             ImGui::Text("Vertices");      ImGui::SameLine(150); ImGui::Text("%llu", Stats.NumVertices);
             ImGui::Text("Indices");       ImGui::SameLine(150); ImGui::Text("%llu", Stats.NumIndices);
+            ImGui::Text("Mesh Proxies");   ImGui::SameLine(150); ImGui::Text("%llu", SceneRenderer->GetNumMeshProxies());
 
             ImGui::Spacing();
     

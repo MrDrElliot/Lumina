@@ -6,7 +6,9 @@
 #include "Renderer/DescriptorTableManager.h"
 #include "Renderer/RenderResource.h"
 #include "Renderer/RenderTypes.h"
-#include "Renderer/RenderGraph/RenderGraph.h"
+#include "Renderer/RenderGraph/RenderPasses/RenderPass.h"
+
+
 
 namespace Lumina
 {
@@ -50,14 +52,15 @@ namespace Lumina
         
         ESceneRenderGBuffer GetGBufferDebugMode() const { return GBufferDebugMode; }
         void SetGBufferDebugMode(ESceneRenderGBuffer Mode) { GBufferDebugMode = Mode; }
+
+        SIZE_T GetNumMeshProxies() const { return MeshProxies.size(); }
+        
+        void AddRenderPass(const FName& Name, FRenderPassFunction&& Function);
         
     protected:
 
-        void GeometryPass();
-        void LightingPass();
-        void SkyboxPass();
-        void DrawPrimitives();
-
+        void BuildPasses();
+        void ExecutePasses();
         void CreateIrradianceCube();
 
         void InitResources();
@@ -65,14 +68,10 @@ namespace Lumina
         void CreateImages();
         void OnSwapchainResized();
 
-        void CreateOrResizeGeometryBuffers(uint64 VertexSize, uint64 IndexSize, uint64 VertexSizeDesired, uint64 IndexSizeDesired);
+        bool ResizeBufferIfNeeded(FRHIBufferRef& Buffer, SIZE_T DesiredSize) const;
 
         void FullScreenPass(const FScene* Scene);
-
-    private:
-
-        void UpdateGeometryBuffersForNewMeshes(ICommandList* CommandList, const TVector<CStaticMesh*>& NewMeshes);
-        
+    
     private:
 
         FScene*                             Scene = nullptr;
@@ -83,9 +82,14 @@ namespace Lumina
         
         TVector<FVertex>                    CombinedVertex;
         TVector<uint32>                     CombinedIndex;
-        
+
+        std::atomic<SIZE_T>                 NextVertexBufferWritePos = {0};
         FRHIBufferRef                       VertexBuffer;
+        TVector<FVertex>                    Vertices;
+
+        std::atomic<SIZE_T>                 NextIndexBufferWritePos = {0};
         FRHIBufferRef                       IndexBuffer;
+        TVector<uint32>                     Indices;
         
         FRHIBufferRef                       SceneDataBuffer;
         FRHIBufferRef                       ModelDataBuffer;
@@ -101,8 +105,9 @@ namespace Lumina
         FRHIBindingLayoutRef                BindingLayout;
         FRHIBindingSetRef                   BindingSet;
         
-        FRenderGraph                        RenderGraph;
         FGBuffer                            GBuffer;
+
+        TVector<FRenderPass*>               RenderPasses;
         
         FRHIImageRef                        DepthAttachment;
         FRHIImageRef                        CubeMap;
@@ -114,17 +119,16 @@ namespace Lumina
         FModelData                          ModelData;
 
         TVector<FPointLightProxy>           PointLightProxies;
-        
-        TVector<FRenderProxy>               RenderProxies;
-        TVector<FRenderProxy>               SortedRenderProxies;
+        TVector<FMeshRenderProxy>           MeshProxies;
 
-        THashMap<SIZE_T, SIZE_T>            IndirectBatchMap;
-        TVector<FIndirectRenderBatch>       IndirectRenderBatch;
+        TVector<FIndirectRenderBatch>           RenderBatches;
+        TVector<FDrawIndexedIndirectArguments>  IndirectDrawArguments;
 
+        FRHIBufferRef                       IndirectDrawBuffer;
+        THashMap<CStaticMesh*, SIZE_T>      MeshVertexOffset;
+        THashMap<CStaticMesh*, SIZE_T>      MeshIndexOffset;
         TSet<CStaticMesh*>                  RegisteredMeshes;
         TSet<CMaterial*>                    RegisteredMaterials;
-        THashMap<CStaticMesh*, SIZE_T>      VertexStartMap;
-        THashMap<CStaticMesh*, SIZE_T>      IndexStartMap;
         
         
         TSharedPtr<FDescriptorTableManager> DescriptorTableManager;

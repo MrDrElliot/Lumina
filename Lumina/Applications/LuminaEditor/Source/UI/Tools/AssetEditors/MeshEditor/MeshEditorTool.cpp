@@ -6,9 +6,11 @@
 #include "Core/Reflection/Type/LuminaTypes.h"
 #include "glm/gtc/type_ptr.inl"
 #include "Scene/SceneManager.h"
+#include "Scene/SceneRenderer.h"
 #include "Scene/SceneRenderTypes.h"
 #include "Scene/Entity/Components/LightComponent.h"
 #include "Scene/Entity/Components/StaicMeshComponent.h"
+#include "Scene/Entity/Components/VelocityComponent.h"
 #include "Scene/Entity/Systems/DebugCameraEntitySystem.h"
 #include "Tools/UI/ImGui/ImGuiFonts.h"
 #include "Tools/UI/ImGui/ImGuiX.h"
@@ -29,11 +31,22 @@ namespace Lumina
         DirectionalLightEntity.AddComponent<FDirectionalLightComponent>();
         DirectionalLightEntity.AddComponent<FNeedsRenderProxyUpdate>();
         
-        MeshEntity = NewScene->CreateEntity(FTransform(), "MeshEntity");
-        
-        MeshEntity.AddComponent<FStaticMeshComponent>().StaticMesh = Cast<CStaticMesh>(InAsset);
-        MeshEntity.GetComponent<FTransformComponent>().SetLocation(glm::vec3(0.0f, 0.0f, -2.5f));
-        MeshEntity.AddComponent<FNeedsRenderProxyUpdate>();
+        int gridSize = sqrt(5000); // ≈ sqrt(1000)
+        float spacing = 2.0f;
+
+        for (int i = 0; i < 5000; ++i)
+        {
+            int x = i % gridSize;
+            int y = i / gridSize;
+
+            glm::vec3 position = glm::vec3(x * spacing, y * spacing, 0.0f);
+
+            MeshEntity = NewScene->CreateEntity(FTransform(), "MeshEntity");
+            FStaticMeshComponent& NewComponent = MeshEntity.AddComponent<FStaticMeshComponent>();
+
+            MeshEntity.GetComponent<FTransformComponent>().SetLocation(position);
+            NewComponent.StaticMesh = Cast<CStaticMesh>(InAsset);
+        }
         
         Scene = NewScene;
     }
@@ -85,6 +98,10 @@ namespace Lumina
                 const FGeometrySurface& Surface = Resource.GeometrySurfaces[i];
                 ImGui::PushID(i);
                 ImGui::Text("Name: %s", Surface.ID.c_str());
+                ImGui::Text("Material Index: %lld", Surface.MaterialIndex);
+                ImGui::Text("Index Count: %u", Surface.IndexCount);
+                ImGui::Text("Start Index: %llu", Surface.StartIndex);
+
                 ImGui::Separator();
                 ImGui::PopID();
             }
@@ -135,6 +152,71 @@ namespace Lumina
     void FMeshEditorTool::DrawToolMenu(const FUpdateContext& UpdateContext)
     {
         FAssetEditorTool::DrawToolMenu(UpdateContext);
+
+                if (ImGui::BeginMenu(LE_ICON_CAMERA_CONTROL" Camera Control"))
+        {
+            float Speed = EditorEntity.GetComponent<FVelocityComponent>().Speed;
+            ImGui::SliderFloat("Camera Speed", &Speed, 1.0f, 200.0f);
+            EditorEntity.GetComponent<FVelocityComponent>().Speed = Speed;
+            ImGui::EndMenu();
+        }
+        
+        // Gizmo Control Dropdown
+        if (ImGui::BeginMenu(LE_ICON_MOVE_RESIZE " Gizmo Control"))
+        {
+            const char* operations[] = { "Translate", "Rotate", "Scale" };
+            static int currentOp = 0;
+
+            if (ImGui::Combo("##", &currentOp, operations, IM_ARRAYSIZE(operations)))
+            {
+                switch (currentOp)
+                {
+                case 0: GuizmoOp = ImGuizmo::TRANSLATE; break;
+                case 1: GuizmoOp = ImGuizmo::ROTATE;    break;
+                case 2: GuizmoOp = ImGuizmo::SCALE;     break;
+                }
+            }
+
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu(LE_ICON_DEBUG_STEP_INTO " Render Debug"))
+        {
+            FSceneRenderer* SceneRenderer = UpdateContext.GetSubsystem<FSceneManager>()->GetSceneRendererForScene(Scene);
+            const FSceneRenderStats& Stats = SceneRenderer->GetSceneRenderStats();
+
+            ImGui::TextColored(ImVec4(1.0f, 0.78f, 0.16f, 1.0f), "Scene Statistics");
+            ImGui::Separator();
+            ImGui::Text("Draw Calls");    ImGui::SameLine(150); ImGui::Text("%u", Stats.NumDrawCalls);
+            ImGui::Text("Vertices");      ImGui::SameLine(150); ImGui::Text("%llu", Stats.NumVertices);
+            ImGui::Text("Indices");       ImGui::SameLine(150); ImGui::Text("%llu", Stats.NumIndices);
+            ImGui::Text("Mesh Proxies");  ImGui::SameLine(150); ImGui::Text("%llu", SceneRenderer->GetNumMeshProxies());
+
+            ImGui::Spacing();
+    
+            ImGui::TextColored(ImVec4(0.58f, 0.86f, 1.0f, 1.0f), "Debug Visualization");
+            ImGui::Separator();
+
+            static const char* GBufferDebugLabels[] =
+            {
+                "RenderTarget",
+                "Albedo",
+                "Position",
+                "Normals",
+                "Material"
+            };
+
+            ESceneRenderGBuffer DebugMode = SceneRenderer->GetGBufferDebugMode();
+            int DebugModeInt = static_cast<int>(DebugMode);
+            ImGui::PushItemWidth(200);
+            if (ImGui::Combo("GBuffer Mode", &DebugModeInt, GBufferDebugLabels, IM_ARRAYSIZE(GBufferDebugLabels)))
+            {
+                SceneRenderer->SetGBufferDebugMode(static_cast<ESceneRenderGBuffer>(DebugModeInt));
+            }
+            ImGui::PopItemWidth();
+
+            ImGui::EndMenu();
+        }
     }
 
     void FMeshEditorTool::InitializeDockingLayout(ImGuiID InDockspaceID, const ImVec2& InDockspaceSize) const

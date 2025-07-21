@@ -32,11 +32,11 @@ namespace Lumina
             CStaticMesh* NewMesh = NewObject<CStaticMesh>(NewPackage, FileName.c_str());
             NewMesh->MeshResources = MeshResource;
             
-            FLambdaTask* Task = FTaskSystem::Get()->ScheduleLambda((uint32)ImportData.Textures.size(), [ImportData, RawPath, FullPath] (const enki::TaskSetPartition Partition, uint32 Thread)
+            FLambdaTask* Task = FTaskSystem::Get()->ScheduleLambda((uint32)ImportData.Textures.size(), [ImportData, RawPath, FullPath] (uint32 Start, uint32 End, uint32 Thread)
             {
                 CTextureFactory* TextureFactory = CTextureFactory::StaticClass()->GetDefaultObject<CTextureFactory>();
                 
-                for(uint32 i = Partition.start; i < Partition.end; ++i)
+                for(uint32 i = Start; i < End; ++i)
                 {
                     const Import::Mesh::GLTF::FGLTFImage& Image = ImportData.Textures[i];
                     FString ParentPath = Paths::Parent(RawPath);
@@ -47,7 +47,6 @@ namespace Lumina
                     FString TextureDestination = DestinationParent + "/" + TextureFileName;
                                                  
                     TextureFactory->TryImport(TexturePath, TextureDestination);
-                    LOG_INFO("Index {}", i);   
                 }
             });
 

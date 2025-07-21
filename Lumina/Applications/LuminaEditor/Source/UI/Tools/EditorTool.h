@@ -11,6 +11,7 @@
 #include "Memory/RefCounted.h"
 #include "Scene/Scene.h"
 #include "Scene/Entity/Entity.h"
+#include "ImGuizmo.h"
 #include "Tools/UI/ImGui/ImGuiDesignIcons.h"
 
 namespace Lumina

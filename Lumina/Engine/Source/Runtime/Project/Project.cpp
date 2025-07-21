@@ -39,7 +39,7 @@ namespace Lumina
             LOG_ERROR("Failed to parse project JSON: {0}", e.what());
         }
 
-        GEngine->GetEngineSubsystem<FAssetRegistry>()->BuildAssetDictionary();
+        GEngine->GetEngineSubsystem<FAssetRegistry>()->ProjectLoaded();
         bHasProjectLoaded = true;
     }
 

@@ -11,14 +11,15 @@ namespace Lumina
     {
         FName ID;
         SIZE_T StartIndex = 0;
-        SIZE_T NumIndices = 0;
-        SIZE_T MaterialIndex = -1;
+        uint32 IndexCount = 0;
+        int64 MaterialIndex = -1;
 
         friend FArchive& operator << (FArchive& Ar, FGeometrySurface& Data)
         {
             Ar << Data.ID;
             Ar << Data.StartIndex;
-            Ar << Data.NumIndices;
+            Ar << Data.IndexCount;
+            Ar << Data.MaterialIndex;
 
             return Ar;
         }

@@ -35,8 +35,8 @@ namespace Lumina
         }
     };
     
-    // TaskSet - a utility task set for creating tasks based on std::function.
-    typedef TFunction<void (TaskSetPartition Range, uint32 Thread)> TaskSetFunction;
+
+    typedef TFunction<void (uint32 Start, uint32 End, uint32 Thread)> TaskSetFunction;
     class FLambdaTask : public ITaskSet
     {
     public:
@@ -54,39 +54,13 @@ namespace Lumina
 
         void ExecuteRange(TaskSetPartition range_, uint32_t threadnum_) override
         {
-            Function(range_, threadnum_);
+            Function(range_.start, range_.end, threadnum_);
         }
         
         TaskSetFunction             Function;
         CompletionActionDelete      TaskDeleter;
         enki::Dependency            Dependency;
     };
-
-    // TaskSet - a utility task set for creating tasks based on std::function.
-    typedef TFunction<void (TaskSetPartition Range, uint32 Thread)> TaskSetFunction;
-    class FParallelForTask : public ITaskSet
-    {
-    public:
-        FParallelForTask() = default;
-        FParallelForTask(uint32 setSize_, TaskSetFunction func_)
-            : ITaskSet(setSize_), Function(std::move(func_))
-        {
-            TaskDeleter.SetDependency(TaskDeleter.Dependency, this);
-        }
-
-        void ExecuteRange(TaskSetPartition range_, uint32_t threadnum_) override
-        {
-            for (uint32 i = range_.start; i < range_.end; ++i)
-            {
-                Function(range_, threadnum_);
-            }
-        }
-
-        TaskSetFunction             Function;
-        CompletionActionDelete      TaskDeleter;
-        enki::Dependency            Dependency;
-    };
-    
     
     class LUMINA_API FTaskSystem : public TSingleton<FTaskSystem>
     {
@@ -105,8 +79,32 @@ namespace Lumina
             Scheduler.WaitforAll(); 
         }
 
-        FLambdaTask* ScheduleLambda(uint32 Num, enki::TaskSetFunction&& Function)
+        /**
+         * When scheduling tasks, the number specified is the number of iterations you want. EnkiTS will -
+         * divide up the tasks between the available threads, it's important to note that these are *NOT*
+         * executed in order. The ranges will be random, but they will all be executed only once, but if you -
+         * need the index to be consistent. This will not work for you. Here's an example of a parallel for loop.
+         *
+         * FTaskSystem::Get()->ScheduleLambda(10, [](uint32 Start, uint32 End, uint32 Thread)
+         * {
+         *      for(uint32 i = Start; i < End; ++i)
+         *      {
+         *          //.... i will be randomly distributed.
+         *      }
+         * });
+         *
+         * 
+         * @param Num Number of executions.
+         * @param Function Callback
+         * @return The task you can wait on, but should not be saved as it will be cleaned up automatically.
+         */
+        FLambdaTask* ScheduleLambda(uint32 Num, TaskSetFunction&& Function)
         {
+            if (Num == 0)
+            {
+                return nullptr;
+            }
+            
             FLambdaTask* Task = Memory::New<FLambdaTask>(Num, std::move(Function));
             ScheduleTask(Task);
             return Task;

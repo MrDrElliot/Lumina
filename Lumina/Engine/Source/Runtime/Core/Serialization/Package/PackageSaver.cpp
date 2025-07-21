@@ -66,8 +66,16 @@ namespace Lumina
             }
             else
             {
-                Index = FObjectPackageIndex::FromImport(CurrentImportIndex);
-                CurrentImportIndex++;
+                if (ObjectToIndexMap.find(Value) != ObjectToIndexMap.end())
+                {
+                    Index = FObjectPackageIndex::FromImport(ObjectToIndexMap[Value]);
+                }
+                else
+                {
+                    Index = FObjectPackageIndex::FromImport(CurrentImportIndex);
+                    ObjectToIndexMap.emplace(Value, CurrentImportIndex);
+                    CurrentImportIndex++;
+                }
             }
         }
         

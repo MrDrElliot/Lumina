@@ -5,9 +5,9 @@
 
 namespace Lumina
 {
-    struct FRenderComponent : public FEntityComponent
+    struct FRenderComponent : FEntityComponent
     {
-        int64 ProxyID = INDEX_NONE;
+        TVector<int64> ProxyIDs;
     };
 
     struct FNeedsRenderProxyUpdate

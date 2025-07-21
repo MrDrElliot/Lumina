@@ -9,6 +9,7 @@
 
 #include "Core/Serialization/Package/PackageSaver.h"
 #include "Core/Serialization/Package/PackageLoader.h"
+#include "TaskSystem/TaskSystem.h"
 
 
 namespace Lumina

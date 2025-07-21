@@ -8,6 +8,7 @@
 #include "Scene/Entity/Entity.h"
 #include "Scene/Entity/Components/CameraComponent.h"
 #include "Scene/Entity/Components/EditorComponent.h"
+#include "Scene/Entity/Components/VelocityComponent.h"
 
 namespace Lumina
 {
@@ -23,90 +24,76 @@ namespace Lumina
 
     void FDebugCameraEntitySystem::Update(FEntityRegistry& EntityRegistry, const FSceneUpdateContext& UpdateContext)
     {
-        
         double DeltaTime = UpdateContext.GetDeltaTime();
-
+    
         for (auto CameraEntity : EntityRegistry.view<FEditorComponent, FCameraComponent>())
         {
-            float Speed = 5.0f;
-            FTransformComponent& TransformComponent =    EntityRegistry.get<FTransformComponent>(CameraEntity);
-            FCameraComponent& CameraComponent = EntityRegistry.get<FCameraComponent>(CameraEntity);
-            FEditorComponent& EditorComponent = EntityRegistry.get<FEditorComponent>(CameraEntity);
-
-
-            if (EditorComponent.bEnabled == false)
-            {
+            FTransformComponent& Transform = EntityRegistry.get<FTransformComponent>(CameraEntity);
+            FCameraComponent& Camera = EntityRegistry.get<FCameraComponent>(CameraEntity);
+            FEditorComponent& Editor = EntityRegistry.get<FEditorComponent>(CameraEntity);
+            FVelocityComponent& Velocity = EntityRegistry.get<FVelocityComponent>(CameraEntity);
+    
+            if (!Editor.bEnabled)
                 continue;
-            }
-            
-            glm::vec3 Forward = TransformComponent.Transform.Rotation * glm::vec3(0.0f, 0.0f, -1.0f);
-            glm::vec3 Right = TransformComponent.Transform.Rotation * glm::vec3(1.0f, 0.0f, 0.0f);
-
+    
+            glm::vec3 Forward = Transform.Transform.Rotation * glm::vec3(0.0f, 0.0f, -1.0f);
+            glm::vec3 Right   = Transform.Transform.Rotation * glm::vec3(1.0f, 0.0f,  0.0f);
+            glm::vec3 Up      = Transform.Transform.Rotation * glm::vec3(0.0f, 1.0f,  0.0f);
+    
+            float Speed = Velocity.Speed;
             if (Input::IsKeyPressed(Key::LeftShift))
-            {
-                Speed *= 3.0f;
-            }
-
-            if (Input::IsKeyPressed(Key::W)) // Move Forward
-            {
-                TransformComponent.Transform.Location += Forward * Speed * (float)DeltaTime;
-            }
-
-            if (Input::IsKeyPressed(Key::S)) // Move Backward
-            {
-                TransformComponent.Transform.Location -= Forward * Speed * (float)DeltaTime;
-            }
-
-            if (Input::IsKeyPressed(Key::A)) // Move Left
-            {
-                TransformComponent.Transform.Location -= Right * Speed * (float)DeltaTime;
-            }
-
-            if (Input::IsKeyPressed(Key::D)) // Move Right
-            {
-                TransformComponent.Transform.Location += Right * Speed * (float)DeltaTime;
-            }
-
-            if (Input::IsKeyPressed(Key::Q)) // Move Up (world space)
-            {
-                TransformComponent.Transform.Location += glm::vec3(0.0f, -1.0f, 0.0f) * Speed * (float)DeltaTime;
-            }
-
-            if (Input::IsKeyPressed(Key::E)) // Move Down (world space)
-            {
-                TransformComponent.Transform.Location += glm::vec3(0.0f, 1.0f, 0.0f) * Speed * (float)DeltaTime;
-            }
-
+                Speed *= 5.0f;
+    
+            glm::vec3 Acceleration(0.0f);
+    
+            if (Input::IsKeyPressed(Key::W)) Acceleration += Forward;
+            if (Input::IsKeyPressed(Key::S)) Acceleration -= Forward;
+            if (Input::IsKeyPressed(Key::D)) Acceleration += Right;
+            if (Input::IsKeyPressed(Key::A)) Acceleration -= Right;
+            if (Input::IsKeyPressed(Key::E)) Acceleration += Up;
+            if (Input::IsKeyPressed(Key::Q)) Acceleration -= Up;
+    
+            if (glm::length(Acceleration) > 0.0f)
+                Acceleration = glm::normalize(Acceleration) * Speed;
+    
+            // Integrate acceleration to velocity
+            Velocity.Velocity += Acceleration * (float)DeltaTime;
+    
+            // Apply simple linear drag
+            constexpr float Drag = 10.0f;
+            Velocity.Velocity -= Velocity.Velocity * Drag * (float)DeltaTime;
+    
+            // Apply velocity to position
+            Transform.Transform.Location += Velocity.Velocity * (float)DeltaTime;
+    
+            // Mouse look
             if (Input::IsMouseButtonPressed(Mouse::ButtonRight))
             {
-                //@TODO Fixme, better interface for the application window without needing to access the application itself.
                 glfwSetInputMode(Windowing::GetPrimaryWindowHandle()->GetWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
+    
                 float MousePitchDelta = UpdateContext.GetSubsystem<FInputSubsystem>()->GetMouseDeltaPitch();
-                float MouseYawDelta = UpdateContext.GetSubsystem<FInputSubsystem>()->GetMouseDeltaYaw();
-
-
+                float MouseYawDelta   = UpdateContext.GetSubsystem<FInputSubsystem>()->GetMouseDeltaYaw();
+    
                 constexpr float Sensitivity = 0.1f;
-                float YawDelta   = -MouseYawDelta * Sensitivity;
+                float YawDelta   = -MouseYawDelta   * Sensitivity;
                 float PitchDelta = -MousePitchDelta * Sensitivity;
-                
-                glm::quat yawQuat = glm::angleAxis(glm::radians(YawDelta), glm::vec3(0.0f, 1.0f, 0.0f));
-
-                glm::vec3 RightAxis = TransformComponent.Transform.Rotation * glm::vec3(1.0f, 0.0f, 0.0f);
+    
+                glm::quat yawQuat   = glm::angleAxis(glm::radians(YawDelta), glm::vec3(0.0f, 1.0f, 0.0f));
+                glm::vec3 RightAxis = Transform.Transform.Rotation * glm::vec3(1.0f, 0.0f, 0.0f);
                 glm::quat pitchQuat = glm::angleAxis(glm::radians(PitchDelta), RightAxis);
-
-                TransformComponent.Transform.Rotation = yawQuat * pitchQuat * TransformComponent.Transform.Rotation;
+    
+                Transform.Transform.Rotation = glm::normalize(yawQuat * pitchQuat * Transform.Transform.Rotation);
             }
             else
             {
                 glfwSetInputMode(Windowing::GetPrimaryWindowHandle()->GetWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
             }
-            
-            glm::vec3 updatedForward = TransformComponent.Transform.Rotation * glm::vec3(0.0f, 0.0f, -1.0f);
-            glm::vec3 updatedUp = TransformComponent.Transform.Rotation * glm::vec3(0.0f, 1.0f, 0.0f);
     
-            CameraComponent.SetView(TransformComponent.Transform.Location, TransformComponent.Transform.Location + updatedForward, updatedUp);            
+            // Update camera view
+            glm::vec3 updatedForward = Transform.Transform.Rotation * glm::vec3(0.0f, 0.0f, -1.0f);
+            glm::vec3 updatedUp      = Transform.Transform.Rotation * glm::vec3(0.0f, 1.0f,  0.0f);
+    
+            Camera.SetView(Transform.Transform.Location, Transform.Transform.Location + updatedForward, updatedUp);
         }
     }
-
 }

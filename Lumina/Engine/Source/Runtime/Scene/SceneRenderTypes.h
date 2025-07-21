@@ -4,6 +4,7 @@
 
 #include "Core/Math/Transform.h"
 #include "Platform/GenericPlatform.h"
+#include "Renderer/MeshData.h"
 #include "Renderer/RenderResource.h"
 #include "Renderer/RHIFwd.h"
 
@@ -65,6 +66,13 @@ namespace Lumina
         TVector<glm::mat4> ModelMatrices;
     };
 
+    struct FSceneRegisteredMeshAsset
+    {
+        CStaticMesh* Mesh;
+        SIZE_T VertexOffset;
+        SIZE_T IndexOffset;
+    };
+    
     struct FGBuffer
     {
         FRHIImageRef Position;
@@ -73,41 +81,32 @@ namespace Lumina
         FRHIImageRef AlbedoSpec;
     };
 
-    struct FRenderProxy
+    struct FIndirectRenderBatch
     {
-        CStaticMesh*    Mesh = nullptr;
-        CMaterial*      Material = nullptr;
-        glm::mat4       Matrix;
-        SIZE_T          ProxyID = 0;
-        SIZE_T          SortKey = 0;
-        int64           ModelMatrixIndex = INDEX_NONE;
-        
-        bool operator < (const FRenderProxy& Other) const
+        CMaterial* Material = nullptr;
+        SIZE_T      NumDraws;
+        SIZE_T      Offset;
+    };
+
+    struct FMeshRenderProxy
+    {
+        CMaterial*          Material = nullptr;
+        FGeometrySurface    Surface;
+        glm::mat4           Matrix;
+        uint32              VertexOffset;
+        uint32              FirstIndex;
+        SIZE_T              SortKey;
+
+        bool operator < (const FMeshRenderProxy& Other) const
         {
             return SortKey < Other.SortKey;
         }
+        
     };
 
     struct FPointLightProxy
     {
         SIZE_T ProxyIndex;
-    };
-    
-    struct FIndirectRenderBatch
-    {
-        CMaterial*  Material;
-
-        
-        FRHIBindingLayoutRef                    BindingLayout;
-        FRHIBindingSetRef                       BindingSet;
-                                                
-        FRHIBufferRef                           IndirectDrawBuffer;
-        FRHIBufferRef                           BatchToModelBuffer;
-
-        THashMap<CStaticMesh*, int32>           MeshDrawIndex;
-
-        TVector<uint32>                         DrawCallToModelIndexMap;
-        TVector<FDrawIndexedIndirectArguments>  DrawIndexedArguments;
     };
     
     struct FSceneRenderStats
@@ -134,6 +133,16 @@ namespace Lumina
         float          Time;
         float          DeltaTime;
     };
+}
 
-
+namespace eastl
+{
+    template <>
+    struct hash<FSceneRegisteredMeshAsset>
+    {
+        size_t operator()(const FSceneRegisteredMeshAsset& Asset) const noexcept
+        {
+            return eastl::hash<void*>{}(Asset.Mesh);
+        }
+    };
 }

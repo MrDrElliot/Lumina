@@ -15,13 +15,12 @@
 #include "glm/gtx/quaternion.hpp"
 #include "Core/Engine/Engine.h"
 #include "Core/Profiler/Profile.h"
+#include "Entity/Entity.h"
 #include "Entity/Components/LightComponent.h"
 #include "Entity/Components/StaicMeshComponent.h"
 #include "Paths/Paths.h"
 #include "Renderer/RenderContext.h"
 #include "Renderer/RenderManager.h"
-#include "Rendering/RenderGraphResources.h"
-#include "Rendering/SkyboxRenderPass.h"
 #include "Subsystems/FCameraManager.h"
 #include "TaskSystem/TaskSystem.h"
 #include "Tools/Import/ImportHelpers.h"
@@ -31,22 +30,23 @@ namespace Lumina
     
     FSceneRenderer::FSceneRenderer(FScene* InScene)
         : Scene(InScene)
+        , SceneRenderStats()
         , SceneGlobalData()
-        , RenderGraph(GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext())
+        , LightData()
     {
         SceneViewport = GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext()->CreateViewport(Windowing::GetPrimaryWindowHandle()->GetExtent());
     }
 
     FSceneRenderer::~FSceneRenderer()
     {
-        
     }
 
     void FSceneRenderer::Initialize()
     {
         LUMINA_PROFILE_SCOPE();
         RenderContext = GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext();
-
+        LOG_TRACE("Initializing Scene Renderer");
+        
         // Wait for shader tasks.
         FTaskSystem::Get()->WaitForAll();
         
@@ -55,15 +55,361 @@ namespace Lumina
         //CreateIrradianceCube();
         InitResources();
 
-        RenderGraph.AddResource<PrimaryRenderTargetTag>(GetRenderTarget());
-        RenderGraph.AddResource<DepthBufferTargetTag>(DepthAttachment);
-        RenderGraph.AddResource<SceneGlobalDataTag>(SceneDataBuffer);
-        RenderGraph.AddResource<CubeMapImageTag>(CubeMap);
+        AddRenderPass("Geometry Pass", [this]()
+        {
+            LUMINA_PROFILE_SCOPE_COLORED(tracy::Color::Red);
+        
+            ICommandList* CommandList = RenderContext->GetCommandList(ECommandQueue::Graphics);
+            
+            if (RenderBatches.empty())
+            {
+                return;
+            }
+            
+            CommandList->SetBufferState(IndirectDrawBuffer , EResourceStates::IndirectArgument);
+            CommandList->CommitBarriers();
+            
+            
+            FRenderPassBeginInfo BeginInfo; BeginInfo
+            .AddColorAttachment(GBuffer.Position)
+            .SetColorLoadOp(ERenderLoadOp::Clear)
+            .SetColorStoreOp(ERenderStoreOp::Store)
+            .SetColorClearColor(FColor::Black)
+            
+            .AddColorAttachment(GBuffer.Normals)
+            .SetColorLoadOp(ERenderLoadOp::Clear)
+            .SetColorStoreOp(ERenderStoreOp::Store)
+            .SetColorClearColor(FColor::Black)
+            
+            .AddColorAttachment(GBuffer.Material)
+            .SetColorLoadOp(ERenderLoadOp::Clear)
+            .SetColorStoreOp(ERenderStoreOp::Store)
+            .SetColorClearColor(FColor::Black)
+            
+            .AddColorAttachment(GBuffer.AlbedoSpec)
+            .SetColorLoadOp(ERenderLoadOp::Clear)
+            .SetColorStoreOp(ERenderStoreOp::Store)
+            .SetColorClearColor(FColor::Black)
+            
+            .SetDepthAttachment(DepthAttachment)
+            .SetDepthClearValue(0.0f)
+            .SetDepthLoadOp(ERenderLoadOp::Clear)
+            .SetDepthStoreOp(ERenderStoreOp::Store)        
+                
+            .SetRenderArea(GetRenderTarget()->GetExtent());
+            BeginInfo.DebugName = "Geometry Pass";
+            CommandList->BeginRenderPass(BeginInfo);
+            
+            float SizeY = (float)GBuffer.AlbedoSpec->GetSizeY();
+            float SizeX = (float)GBuffer.AlbedoSpec->GetSizeX();
+            CommandList->SetViewport(0.0f, 0.0f, 0.0f, SizeX, SizeY, 1.0f);
+            CommandList->SetScissorRect(0, 0, SizeX, SizeY);
+            
+            FDepthStencilState DepthState;
+            DepthState.SetDepthFunc(EComparisonFunc::Greater);
+            
+            FBlendState BlendState;
+            FBlendState::RenderTarget AlbedoTarget;
+            AlbedoTarget.DisableBlend();
+            AlbedoTarget.SetFormat(EFormat::RGBA16_FLOAT);
+            BlendState.SetRenderTarget(0, AlbedoTarget);
+            
+            FBlendState::RenderTarget NormalTarget;
+            NormalTarget.DisableBlend();
+            NormalTarget.SetFormat(EFormat::RGBA16_FLOAT);
+            BlendState.SetRenderTarget(1, NormalTarget);
+            
+            FBlendState::RenderTarget MaterialTarget;
+            MaterialTarget.DisableBlend();
+            MaterialTarget.SetFormat(EFormat::RGBA8_UNORM);
+            BlendState.SetRenderTarget(2, MaterialTarget);
+            
+            FBlendState::RenderTarget AlbedoSpecTarget;
+            AlbedoSpecTarget.DisableBlend();
+            AlbedoSpecTarget.SetFormat(EFormat::RGBA8_UNORM);
+            BlendState.SetRenderTarget(3, AlbedoSpecTarget);
+            
+            FRasterState RasterState;
+            RasterState.SetDepthClipEnable(true);
+                
+            FRenderState RenderState;
+            RenderState.SetBlendState(BlendState);
+            RenderState.SetRasterState(RasterState);
+            RenderState.SetDepthStencilState(DepthState);
+            
+            CommandList->BindVertexBuffer(VertexBuffer, 0, 0);
+            SceneRenderStats.NumVertices = Vertices.size();
+            SceneRenderStats.NumIndices = Indices.size();
+            
+            for (SIZE_T CurrentDraw = 0; CurrentDraw < RenderBatches.size(); ++CurrentDraw)
+            {
+                const FIndirectRenderBatch& Batch = RenderBatches[CurrentDraw];
+                
+                CMaterial* Material = Batch.Material;
+            
+                FGraphicsPipelineDesc Desc;
+                Desc.SetRenderState(RenderState);
+                Desc.SetInputLayout(VertexLayoutInput);
+                Desc.AddBindingLayout(BindingLayout);
+                Desc.AddBindingLayout(Material->BindingLayout);
+                Desc.SetVertexShader(Material->VertexShader);
+                Desc.SetPixelShader(Material->PixelShader);
+                
+                FRHIGraphicsPipelineRef Pipeline = RenderContext->CreateGraphicsPipeline(Desc);
+                
+                CommandList->SetGraphicsPipeline(Pipeline);
+            
+                CommandList->BindBindingSets(ERHIBindingPoint::Graphics, {{BindingSet, 0}, {Material->BindingSet, 1}});
+
+                SceneRenderStats.NumDrawCalls++;
+                CommandList->DrawIndexedIndirect(IndirectDrawBuffer, IndexBuffer, Batch.NumDraws, Batch.Offset * sizeof(FDrawIndexedIndirectArguments));
+            }
+            
+            CommandList->EndRenderPass();
+        });
+
+
+        AddRenderPass("Lighting Pass", [this] ()
+        {
+            LUMINA_PROFILE_SCOPE_COLORED(tracy::Color::Blue);
+            FRHIVertexShaderRef VertexShader = RenderContext->GetShaderLibrary()->GetShader<FRHIVertexShader>("DeferredLighting.vert");
+            FRHIPixelShaderRef PixelShader = RenderContext->GetShaderLibrary()->GetShader<FRHIPixelShader>("DeferredLighting.frag");
+            if (!VertexShader || !PixelShader)
+            {
+                return;
+            }
+            
+            ICommandList* CommandList = RenderContext->GetCommandList(Q_Graphics);
+            
+            FRasterState RasterState;
+            RasterState.SetCullNone();
+    
+            FBlendState BlendState;
+            FBlendState::RenderTarget RenderTarget;
+            RenderTarget.DisableBlend();
+            BlendState.SetRenderTarget(0, RenderTarget);
+    
+            FDepthStencilState DepthState;
+            DepthState.DisableDepthTest();
+            DepthState.DisableDepthWrite();
+            
+            FRenderState RenderState;
+            RenderState.SetRasterState(RasterState);
+            RenderState.SetDepthStencilState(DepthState);
+            RenderState.SetBlendState(BlendState);
+            
+            FGraphicsPipelineDesc Desc;
+            Desc.SetRenderState(RenderState);
+            Desc.AddBindingLayout(BindingLayout);
+            Desc.AddBindingLayout(LightingPassLayout);
+            Desc.SetVertexShader(VertexShader);
+            Desc.SetPixelShader(PixelShader);
+    
+            FRHIGraphicsPipelineRef Pipeline = RenderContext->CreateGraphicsPipeline(Desc);
+                
+            CommandList->SetGraphicsPipeline(Pipeline);
+            CommandList->BindBindingSets(ERHIBindingPoint::Graphics, {{BindingSet, 0}, {LightingPassSet, 1}});
+            
+            FRenderPassBeginInfo BeginInfo; BeginInfo
+            .AddColorAttachment(GetRenderTarget())
+            .SetColorLoadOp(ERenderLoadOp::Load)
+            .SetColorStoreOp(ERenderStoreOp::Store)
+            .SetColorClearColor(FColor::Black)
+    
+            .SetDepthAttachment(DepthAttachment)
+            .SetDepthLoadOp(ERenderLoadOp::Load)
+            .SetDepthStoreOp(ERenderStoreOp::Store)
+            
+            .SetRenderArea(GetRenderTarget()->GetExtent());
+            BeginInfo.DebugName = "Lighting Pass";
+            CommandList->BeginRenderPass(BeginInfo);
+            
+                
+            float SizeY = (float)GBuffer.AlbedoSpec->GetSizeY();
+            float SizeX = (float)GBuffer.AlbedoSpec->GetSizeX();
+            CommandList->SetViewport(0.0f, 0.0f, 0.0f, SizeX, SizeY, 1.0f);
+            CommandList->SetScissorRect(0, 0, SizeX, SizeY);
+
+            SceneRenderStats.NumDrawCalls++;
+            SceneRenderStats.NumVertices += 3;
+            CommandList->Draw(3, 1, 0, 0);
+    
+            CommandList->EndRenderPass(); 
+        });
+
+        AddRenderPass("Skybox Pass", [this]()
+        {
+            LUMINA_PROFILE_SCOPE_COLORED(tracy::Color::Green);
+
+            ICommandList* CommandList = RenderContext->GetCommandList(ECommandQueue::Graphics);
+            
+            FRHIVertexShaderRef VertexShader = RenderContext->GetShaderLibrary()->GetShader<FRHIVertexShader>("Skybox.vert");
+            FRHIPixelShaderRef PixelShader = RenderContext->GetShaderLibrary()->GetShader<FRHIPixelShader>("Skybox.frag");
+            if (!VertexShader || !PixelShader)
+            {
+                return;
+            }
+            
+            FRHIImageRef ColorAttachment = GetRenderTarget();
+            
+            FDepthStencilState DepthState;
+            DepthState.SetDepthTestEnable(true);
+            DepthState.SetDepthWriteEnable(false);
+            DepthState.SetDepthFunc(EComparisonFunc::GreaterOrEqual);
+            
+            FBlendState BlendState;
+            FBlendState::RenderTarget RenderTarget;
+            RenderTarget.DisableBlend();
+            RenderTarget.SetFormat(EFormat::BGRA8_UNORM);
+            BlendState.SetRenderTarget(0, RenderTarget);
+            
+            FRasterState RasterState;
+            RasterState.SetCullFront();
+            RasterState.SetDepthClipEnable(false);
+            
+            FRenderState RenderState;
+            RenderState.SetBlendState(BlendState);
+            RenderState.SetRasterState(RasterState);
+            RenderState.SetDepthStencilState(DepthState);
+            
+            FGraphicsPipelineDesc Desc;
+            Desc.SetRenderState(RenderState);
+            Desc.AddBindingLayout(BindingLayout);
+            Desc.AddBindingLayout(SkyboxBindingLayout);
+            Desc.SetVertexShader(VertexShader);
+            Desc.SetPixelShader(PixelShader);
+            
+            FRHIGraphicsPipelineRef Pipeline = RenderContext->CreateGraphicsPipeline(Desc);
+            
+            CommandList->SetGraphicsPipeline(Pipeline);
+            
+            CommandList->BindBindingSets(ERHIBindingPoint::Graphics, {{SkyboxBindingSet, 1}});
+            
+            FRenderPassBeginInfo BeginInfo; BeginInfo
+            .AddColorAttachment(ColorAttachment)
+            .SetColorLoadOp(ERenderLoadOp::Load)
+            .SetColorStoreOp(ERenderStoreOp::Store)
+            .SetColorClearColor(FColor::Black)
+                    
+            .SetDepthAttachment(DepthAttachment)
+            .SetDepthLoadOp(ERenderLoadOp::Load)
+            .SetDepthStoreOp(ERenderStoreOp::Store)
+                    
+            .SetRenderArea(ColorAttachment->GetExtent());
+            BeginInfo.DebugName = "Skybox Pass";
+            
+            CommandList->BeginRenderPass(BeginInfo);
+            
+            CommandList->SetViewport(0.0f, 0.0f, 0.0f, (float)ColorAttachment->GetSizeX(), (float)ColorAttachment->GetSizeY(), 1.0f);
+            CommandList->SetScissorRect(0, 0, ColorAttachment->GetSizeX(), ColorAttachment->GetSizeY());
+
+            SceneRenderStats.NumDrawCalls++;
+            SceneRenderStats.NumVertices += 36;
+            CommandList->Draw(36, 1, 0, 0);
+            
+            CommandList->EndRenderPass();
+        });
+
+        AddRenderPass("Debug Primitives", [this]()
+        {
+            LUMINA_PROFILE_SCOPE();
+
+            ICommandList* CommandList = RenderContext->GetCommandList(Q_Graphics);
+            
+            FRHIVertexShaderRef VertexShader = RenderContext->GetShaderLibrary()->GetShader<FRHIVertexShader>("Simple.vert");
+            FRHIPixelShaderRef PixelShader = RenderContext->GetShaderLibrary()->GetShader<FRHIPixelShader>("Simple.frag");
+            if (!VertexShader || !PixelShader)
+            {
+                return;
+            }
+            
+            FRenderPassBeginInfo BeginInfo; BeginInfo
+            .AddColorAttachment(GetRenderTarget())
+            .SetColorLoadOp(ERenderLoadOp::Load)
+            .SetColorStoreOp(ERenderStoreOp::Store)
+            
+            .SetDepthAttachment(DepthAttachment)
+            .SetDepthLoadOp(ERenderLoadOp::Load)
+            .SetDepthStoreOp(ERenderStoreOp::Store)        
+                
+            .SetRenderArea(GetRenderTarget()->GetExtent());
+            BeginInfo.DebugName = "Primitive Pass";
+            CommandList->BeginRenderPass(BeginInfo);
+            
+            FDepthStencilState DepthState;
+            DepthState.SetDepthFunc(EComparisonFunc::Greater);
+            
+            FBlendState BlendState;
+            FBlendState::RenderTarget RenderTarget;
+            RenderTarget.DisableBlend();
+            RenderTarget.SetSrcBlend(EBlendFactor::SrcAlpha);
+            RenderTarget.SetDestBlend(EBlendFactor::OneMinusSrcAlpha);
+            RenderTarget.SetSrcBlendAlpha(EBlendFactor::One);
+            RenderTarget.SetDestBlendAlpha(EBlendFactor::Zero);
+            RenderTarget.SetFormat(EFormat::BGRA8_UNORM);
+            BlendState.SetRenderTarget(0, RenderTarget);
+            
+            FRasterState RasterState;
+            RasterState.SetDepthClipEnable(true);
+                
+            FRenderState RenderState;
+            RenderState.SetBlendState(BlendState);
+            RenderState.SetRasterState(RasterState);
+            RenderState.SetDepthStencilState(DepthState);
+                
+            FGraphicsPipelineDesc Desc;
+            Desc.SetRenderState(RenderState);
+            Desc.AddBindingLayout(BindingLayout);
+            Desc.SetVertexShader(VertexShader);
+            Desc.SetPixelShader(PixelShader);
+                
+            FRHIGraphicsPipelineRef Pipeline = RenderContext->CreateGraphicsPipeline(Desc);
+                
+            CommandList->SetGraphicsPipeline(Pipeline);
+            
+            for (uint32 CurrentDraw = 0; CurrentDraw < LightData.NumPointLights; ++CurrentDraw)
+            {
+                FPointLight Light = LightData.PointLights[CurrentDraw];
+            
+                struct FPC
+                {
+                    glm::mat4 ModelMatrix;
+                    glm::vec4 Color;
+                } PC;
+                
+                FTransform Transform;
+                Transform.Location = Light.Position;
+                PC.ModelMatrix = Transform.GetMatrix();
+                PC.ModelMatrix = glm::scale(PC.ModelMatrix, glm::vec3(0.15f));
+            
+                PC.Color = Light.Color;
+                
+                float SizeY = (float)GBuffer.AlbedoSpec->GetSizeY();
+                float SizeX = (float)GBuffer.AlbedoSpec->GetSizeX();
+                CommandList->SetViewport(0.0f, 0.0f, 0.0f, SizeX, SizeY, 1.0f);
+                CommandList->SetScissorRect(0, 0, SizeX, SizeY);
+                
+                CommandList->SetPushConstants(&PC, sizeof(FPC));
+
+                SceneRenderStats.NumDrawCalls++;
+                SceneRenderStats.NumVertices += 36;
+                CommandList->Draw(36, 1, 0, 0);
+                
+            }
+            
+            CommandList->EndRenderPass();
+        });
     }
 
     void FSceneRenderer::Deinitialize()
     {
-        RenderGraph.ClearPasses();
+        LOG_TRACE("Shutting down scene renderer");
+
+        for (FRenderPass* Pass : RenderPasses)
+        {
+            Memory::Delete(Pass);
+        }
+        RenderPasses.clear();
     }
 
     void FSceneRenderer::StartScene(const FUpdateContext& UpdateContext)
@@ -74,10 +420,9 @@ namespace Lumina
     void FSceneRenderer::EndScene(const FUpdateContext& UpdateContext)
     {
         LUMINA_PROFILE_SCOPE();
+        SceneRenderStats = {};
 
         ICommandList* CommandList = RenderContext->GetCommandList(Q_Graphics);
-        uint32 FrameIndex = UpdateContext.GetSubsystem<FRenderManager>()->GetCurrentFrameIndex();
-        SceneRenderStats = {};
         
         FCameraManager* CameraManager = Scene->GetSceneSubsystem<FCameraManager>();
         FCameraComponent& CameraComponent = CameraManager->GetActiveCameraEntity().GetComponent<FCameraComponent>();
@@ -91,248 +436,10 @@ namespace Lumina
         SceneViewport->SetViewVolume(CameraComponent.GetViewVolume());
 
         CommandList->WriteBuffer(SceneDataBuffer, &SceneGlobalData, 0, sizeof(FSceneGlobalData));
-
-        TVector<SIZE_T> DirtyLightProxies;
-
-        {
-            LUMINA_PROFILE_SECTION("Process Dirty Point Light Proxies");
-            auto PointLightView = Scene->GetMutableEntityRegistry().view<FNeedsRenderProxyUpdate, FTransformComponent, FPointLightComponent>();
-            for (auto& DirtyEntity : PointLightView)
-            {
-                Entity Entity(DirtyEntity, Scene);
-                
-                FPointLightComponent& PointLightComponent = Entity.GetComponent<FPointLightComponent>();
-                FTransformComponent& TransformComponent = Entity.GetComponent<FTransformComponent>();
-
-                if (PointLightComponent.ProxyID == INDEX_NONE)
-                {
-                    FPointLight PointLight;
-                    PointLight.Position = glm::vec4(TransformComponent.GetLocation(), 1.0f);
-                    PointLight.Color = PointLightComponent.LightColor;
-                    LightData.PointLights[LightData.NumPointLights] = PointLight;
-                            
-                    LightData.NumPointLights++;
-                    PointLightComponent.ProxyID = (int64)PointLightProxies.size();
-                }
-                else
-                {
-                    FPointLight PointLight;
-                    PointLight.Position = glm::vec4(TransformComponent.GetLocation(), 1.0f);
-                    PointLight.Color = PointLightComponent.LightColor;
-                    LightData.PointLights[PointLightComponent.ProxyID] = PointLight;
-                }
-
-                DirtyLightProxies.push_back(PointLightComponent.ProxyID);
-                (void)Entity.RemoveComponent<FNeedsRenderProxyUpdate>();
-            }
-        }
-
-        bool bDirectionalLightDirty = false;
         
-        {
-            LUMINA_PROFILE_SECTION("Process Dirty Directional Light Proxies");
-
-            auto LightView = Scene->GetMutableEntityRegistry().view<FNeedsRenderProxyUpdate, FDirectionalLightComponent>();
-            for (auto& DirtyEntity : LightView)
-            {
-                Entity Entity(DirtyEntity, Scene);
-                FDirectionalLightComponent& DirectionalLightComponent = Entity.GetComponent<FDirectionalLightComponent>();
-
-                FDirectionalLight DirectionalLight;
-                DirectionalLight.Direction = DirectionalLightComponent.Direction;
-                DirectionalLight.Color = DirectionalLightComponent.Color;
-                LightData.bHasDirectionalLight = true;
-                LightData.DirectionalLight = DirectionalLight;
-
-                bDirectionalLightDirty = true;
-                (void)Entity.RemoveComponent<FNeedsRenderProxyUpdate>();
-            }
-        }
-
-        if (!DirtyLightProxies.empty() || bDirectionalLightDirty)
-        {
-            CommandList->WriteBuffer(LightDataBuffer, &LightData, 0, sizeof(FSceneLightData));
-        }
+        BuildPasses();
+        ExecutePasses();
         
-        
-        TVector<SIZE_T> DirtyRenderProxies;
-        TVector<CStaticMesh*> NewMeshes;
-        TVector<CMaterial*> NewMaterials;
-
-        auto DirtyGroup = Scene->GetMutableEntityRegistry().view<FNeedsRenderProxyUpdate, FStaticMeshComponent, FTransformComponent>();
-        
-        for (const auto& DirtyEntity : DirtyGroup)
-        {
-            LUMINA_PROFILE_SECTION("Process Dirty Static Meshes");
-
-            Entity Entity(DirtyEntity, Scene);
-            FStaticMeshComponent& MeshComponent = Entity.GetComponent<FStaticMeshComponent>();
-            FTransformComponent& TransformComponent = Entity.GetComponent<FTransformComponent>();
-        
-            CStaticMesh* Mesh = MeshComponent.StaticMesh;
-            if (!IsValid(Mesh) || !Mesh->IsReadyForRender())
-            {
-                (void)Entity.RemoveComponent<FNeedsRenderProxyUpdate>();
-                continue;
-            }
-
-            CMaterial* Material = Mesh->GetMaterialAtSlot(0);
-            
-            if (RegisteredMeshes.find(Mesh) == RegisteredMeshes.end())
-            {
-                RegisteredMeshes.emplace(Mesh);
-                NewMeshes.push_back(Mesh);
-            }
-
-            if (RegisteredMaterials.find(Material) == RegisteredMaterials.end())
-            {
-                RegisteredMaterials.emplace(Material);
-                NewMaterials.push_back(Material);
-            }
-
-            if (MeshComponent.ProxyID == INDEX_NONE)
-            {
-                FRenderProxy Proxy;
-                Proxy.Material = Material;
-                Proxy.Mesh = Mesh;
-                Proxy.SortKey = (uintptr_t)Material;
-                Proxy.Matrix = TransformComponent.GetTransform().GetMatrix();
-                Proxy.ProxyID = RenderProxies.size();
-
-                MeshComponent.ProxyID = (int64)Proxy.ProxyID;
-                RenderProxies.push_back(Proxy);
-            }
-            else
-            {
-                FRenderProxy& Proxy = RenderProxies[MeshComponent.ProxyID];
-                Proxy.Material = Material;
-                Proxy.Mesh = Mesh;
-                Proxy.SortKey = (uintptr_t)Material;
-                Proxy.Matrix = TransformComponent.GetTransform().GetMatrix();
-            }
-
-            DirtyRenderProxies.emplace_back(MeshComponent.ProxyID);
-            
-            (void)Entity.RemoveComponent<FNeedsRenderProxyUpdate>();
-        }
-
-
-        UpdateGeometryBuffersForNewMeshes(CommandList, NewMeshes);
-
-        
-        if (!DirtyRenderProxies.empty())
-        {
-            LUMINA_PROFILE_SECTION("Update Dirty Render Proxies");
-
-            SIZE_T SizeBefore = ModelData.ModelMatrices.empty() ? 0 : ModelData.ModelMatrices.size() - 1;
-            
-            for (SIZE_T ProxyIndex : DirtyRenderProxies)
-            {
-                FRenderProxy& Proxy = RenderProxies[ProxyIndex];
-
-                // Create batch if it doesn't exist
-                if (IndirectBatchMap.find(Proxy.SortKey) == IndirectBatchMap.end())
-                {
-                    IndirectBatchMap[Proxy.SortKey] = IndirectRenderBatch.size();
-                    FIndirectRenderBatch NewBatch;
-
-                    FRHIBufferDesc BufferDesc;
-                    BufferDesc.Size = sizeof(FDrawIndexedIndirectArguments) * 1000;
-                    BufferDesc.Stride = sizeof(FDrawIndexedIndirectArguments);
-                    BufferDesc.Usage.SetMultipleFlags(BUF_Indirect);
-                    BufferDesc.InitialState = EResourceStates::IndirectArgument;
-                    BufferDesc.bKeepInitialState = true;
-                    BufferDesc.DebugName = "Draw Indirect Buffer: " + Proxy.Material->GetName().ToString();
-                    NewBatch.IndirectDrawBuffer = RenderContext->CreateBuffer(BufferDesc);
-                    RenderContext->SetObjectName(NewBatch.IndirectDrawBuffer, BufferDesc.DebugName.c_str(), EAPIResourceType::Buffer);
-
-                    BufferDesc.Size = sizeof(uint32) * 1000;
-                    BufferDesc.Stride = sizeof(uint32);
-                    BufferDesc.Usage.SetMultipleFlags(BUF_StorageBuffer);
-                    BufferDesc.InitialState = EResourceStates::ShaderResource;
-                    BufferDesc.bKeepInitialState = true;
-                    BufferDesc.DebugName = " Batch To Model Buffer: " + Proxy.Material->GetName().ToString();
-                    NewBatch.BatchToModelBuffer = RenderContext->CreateBuffer(BufferDesc);
-                    RenderContext->SetObjectName(NewBatch.BatchToModelBuffer, BufferDesc.DebugName.c_str(), EAPIResourceType::Buffer);
-                    
-                    FBindingLayoutDesc BindingLayoutDesc;
-                    BindingLayoutDesc.StageFlags.SetMultipleFlags(ERHIShaderType::Vertex, ERHIShaderType::Fragment);
-                    BindingLayoutDesc.AddItem(FBindingLayoutItem(0, ERHIBindingResourceType::Buffer_SRV));
-                    NewBatch.BindingLayout = RenderContext->CreateBindingLayout(BindingLayoutDesc);
-
-                    FBindingSetDesc BindingSetDesc;
-                    BindingSetDesc.AddItem(FBindingSetItem::BufferSRV(0, NewBatch.BatchToModelBuffer));
-                    NewBatch.BindingSet = RenderContext->CreateBindingSet(BindingSetDesc, NewBatch.BindingLayout);                    
-        
-                    NewBatch.Material = Proxy.Material;
-                    IndirectRenderBatch.push_back(NewBatch);
-                }
-
-                FIndirectRenderBatch& Batch = IndirectRenderBatch[IndirectBatchMap[Proxy.SortKey]];
-
-                if (Proxy.ModelMatrixIndex == INDEX_NONE)
-                {
-                    Proxy.ModelMatrixIndex = (int64)ModelData.ModelMatrices.size();
-                    ModelData.ModelMatrices.push_back(Proxy.Matrix);
-
-                    FDrawIndexedIndirectArguments Args;
-                    Args.BaseVertexLocation     = (int32)VertexStartMap[Proxy.Mesh];
-                    Args.StartIndexLocation     = (uint32)IndexStartMap[Proxy.Mesh];
-                    Args.IndexCount             = Proxy.Mesh->GetMeshResource().Indices.size();
-                    Args.StartInstanceLocation  = 0;
-                    Args.InstanceCount          = 1;
-                    
-                    Batch.DrawCallToModelIndexMap.push_back(Proxy.ModelMatrixIndex);
-                    Batch.DrawIndexedArguments.push_back(Args);
-                    
-                    // If the current buffer cannot contain all the draws, recreate it.
-                    if (Batch.IndirectDrawBuffer->GetSize() < (Batch.DrawIndexedArguments.size() * sizeof(FDrawIndexedIndirectArguments)))
-                    {
-                        FRHIBufferDesc BufferDesc;
-                        BufferDesc.Size = (Batch.DrawIndexedArguments.size() * sizeof(FDrawIndexedIndirectArguments)) * 4;
-                        BufferDesc.Stride = sizeof(FDrawIndexedIndirectArguments);
-                        BufferDesc.Usage.SetMultipleFlags(BUF_Indirect);
-                        BufferDesc.InitialState = EResourceStates::IndirectArgument;
-                        BufferDesc.bKeepInitialState = true;
-                        BufferDesc.DebugName = "Draw Indirect Buffer: " + Proxy.Material->GetName().ToString();
-                        Batch.IndirectDrawBuffer = RenderContext->CreateBuffer(BufferDesc);
-                        RenderContext->SetObjectName(Batch.IndirectDrawBuffer, BufferDesc.DebugName.c_str(), EAPIResourceType::Buffer);
-
-                        BufferDesc.Size = (sizeof(uint32) * sizeof(FDrawIndexedIndirectArguments)) * 4;
-                        BufferDesc.Stride = sizeof(uint32);
-                        BufferDesc.Usage.SetMultipleFlags(BUF_StorageBuffer);
-                        BufferDesc.InitialState = EResourceStates::ShaderResource;
-                        BufferDesc.bKeepInitialState = true;
-                        BufferDesc.DebugName = " Batch To Model Buffer: " + Proxy.Material->GetName().ToString();
-                        Batch.BatchToModelBuffer = RenderContext->CreateBuffer(BufferDesc);
-                        RenderContext->SetObjectName(Batch.BatchToModelBuffer, BufferDesc.DebugName.c_str(), EAPIResourceType::Buffer);
-
-                        FBindingSetDesc BindingSetDesc;
-                        BindingSetDesc.AddItem(FBindingSetItem::BufferSRV(0, Batch.BatchToModelBuffer));
-                        Batch.BindingSet = RenderContext->CreateBindingSet(BindingSetDesc, Batch.BindingLayout);     
-                    }
-
-                    CommandList->SetBufferState(Batch.IndirectDrawBuffer , EResourceStates::IndirectArgument);
-                    CommandList->CommitBarriers();
-                    
-                    CommandList->WriteBuffer(Batch.BatchToModelBuffer, Batch.DrawCallToModelIndexMap.data(), 0, Batch.DrawCallToModelIndexMap.size() * sizeof(uint32));
-                    CommandList->WriteBuffer(Batch.IndirectDrawBuffer, Batch.DrawIndexedArguments.data(), 0, Batch.DrawIndexedArguments.size() * sizeof(FDrawIndexedIndirectArguments));
-                }
-                else
-                {
-                    ModelData.ModelMatrices[Proxy.ModelMatrixIndex] = Proxy.Matrix;
-                }
-            }
-
-            CommandList->WriteBuffer(ModelDataBuffer,ModelData.ModelMatrices.data(), 0, ModelData.ModelMatrices.size() * sizeof(glm::mat4));
-        }
-        
-        
-        GeometryPass();
-        LightingPass();
-        SkyboxPass();
-        DrawPrimitives();
-
         CommandList->SetImageState(GetRenderTarget(), AllSubresources, EResourceStates::ShaderResource);
         CommandList->CommitBarriers();
     }
@@ -342,286 +449,204 @@ namespace Lumina
         CreateImages();
     }
 
-    void FSceneRenderer::CreateOrResizeGeometryBuffers(uint64 VertexSize, uint64 IndexSize, uint64 VertexSizeDesired, uint64 IndexSizeDesired)
+    bool FSceneRenderer::ResizeBufferIfNeeded(FRHIBufferRef& Buffer, SIZE_T DesiredSize) const
     {
-        if (VertexSizeDesired != 0 && (VertexBuffer == nullptr || VertexBuffer->GetSize() < VertexSize))
+        if (DesiredSize != 0)
         {
-            FRHIBufferDesc VertexBufferDesc;
-            VertexBufferDesc.Size = VertexSizeDesired;
-            VertexBufferDesc.Stride = sizeof(FVertex);
-            VertexBufferDesc.Usage.SetMultipleFlags(BUF_VertexBuffer);
-            VertexBufferDesc.InitialState = EResourceStates::VertexBuffer;
-            VertexBufferDesc.bKeepInitialState = true;
-            VertexBufferDesc.DebugName = "Vertex Buffer";
-            VertexBuffer = RenderContext->CreateBuffer(VertexBufferDesc);
-            RenderContext->SetObjectName(VertexBuffer, VertexBufferDesc.DebugName.c_str(), EAPIResourceType::Buffer);
+            if (Buffer->GetSize() < DesiredSize)
+            {
+                FRHIBufferDesc BufferDesc = Buffer->GetDescription();
+                BufferDesc.Size = DesiredSize;
+                Buffer = RenderContext->CreateBuffer(BufferDesc);
+                RenderContext->SetObjectName(VertexBuffer, BufferDesc.DebugName.c_str(), EAPIResourceType::Buffer);
+                return true;
+            }
         }
 
-        if (IndexSizeDesired != 0 && (IndexBuffer == nullptr || IndexBuffer->GetSize() < IndexSize))
-        {
-            FRHIBufferDesc IndexBufferDesc;
-            IndexBufferDesc.Size = IndexSizeDesired;
-            IndexBufferDesc.Stride = sizeof(uint32);
-            IndexBufferDesc.Usage.SetMultipleFlags(BUF_IndexBuffer);
-            IndexBufferDesc.InitialState = EResourceStates::IndexBuffer;
-            IndexBufferDesc.bKeepInitialState = true;
-            IndexBufferDesc.DebugName = "Index Buffer";
-            IndexBuffer = RenderContext->CreateBuffer(IndexBufferDesc);
-            RenderContext->SetObjectName(IndexBuffer, IndexBufferDesc.DebugName.c_str(), EAPIResourceType::Buffer);
-        }
+        return false;
+    }
+    
+    void FSceneRenderer::AddRenderPass(const FName& Name, FRenderPassFunction&& Function)
+    {
+        FRenderPass* Pass = Memory::New<FRenderPass>(Name);
+        RenderPasses.push_back(Pass);
+        Pass->SetPassFunc(std::move(Function));
     }
 
-    void FSceneRenderer::GeometryPass()
+    void FSceneRenderer::BuildPasses()
     {
-        LUMINA_PROFILE_SCOPE_COLORED(tracy::Color::Red);
-        
         ICommandList* CommandList = RenderContext->GetCommandList(ECommandQueue::Graphics);
-
-        if (IndirectRenderBatch.empty())
         {
-            return;
-        }
-
-        for (SIZE_T CurrentDraw = 0; CurrentDraw < IndirectRenderBatch.size(); ++CurrentDraw)
-        {
-            FIndirectRenderBatch& Batch = IndirectRenderBatch[CurrentDraw];
-
-            CommandList->SetBufferState(Batch.IndirectDrawBuffer , EResourceStates::IndirectArgument);
-            CommandList->CommitBarriers();
-        }
-        
-        FRenderPassBeginInfo BeginInfo; BeginInfo
-        .AddColorAttachment(GBuffer.Position)
-        .SetColorLoadOp(ERenderLoadOp::Clear)
-        .SetColorStoreOp(ERenderStoreOp::Store)
-        .SetColorClearColor(FColor::Black)
-        
-        .AddColorAttachment(GBuffer.Normals)
-        .SetColorLoadOp(ERenderLoadOp::Clear)
-        .SetColorStoreOp(ERenderStoreOp::Store)
-        .SetColorClearColor(FColor::Black)
-
-        .AddColorAttachment(GBuffer.Material)
-        .SetColorLoadOp(ERenderLoadOp::Clear)
-        .SetColorStoreOp(ERenderStoreOp::Store)
-        .SetColorClearColor(FColor::Black)
-
-        .AddColorAttachment(GBuffer.AlbedoSpec)
-        .SetColorLoadOp(ERenderLoadOp::Clear)
-        .SetColorStoreOp(ERenderStoreOp::Store)
-        .SetColorClearColor(FColor::Black)
-
-        .SetDepthAttachment(DepthAttachment)
-        .SetDepthClearValue(0.0f)
-        .SetDepthLoadOp(ERenderLoadOp::Clear)
-        .SetDepthStoreOp(ERenderStoreOp::Store)        
+            auto Group = Scene->GetMutableEntityRegistry().group<FStaticMeshComponent>(entt::get<FTransformComponent>);
+            SIZE_T WorkSize = Group.size();
             
-        .SetRenderArea(GetRenderTarget()->GetExtent());
-        BeginInfo.DebugName = "Geometry Pass";
-        CommandList->BeginRenderPass(BeginInfo);
-        
-        float SizeY = (float)GBuffer.AlbedoSpec->GetSizeY();
-        float SizeX = (float)GBuffer.AlbedoSpec->GetSizeX();
-        CommandList->SetViewport(0.0f, 0.0f, 0.0f, SizeX, SizeY, 1.0f);
-        CommandList->SetScissorRect(0, 0, SizeX, SizeY);
+            RenderBatches.clear();
+            MeshProxies.clear();
+            IndirectDrawArguments.clear();
+            ModelData.ModelMatrices.clear();
 
-        FDepthStencilState DepthState;
-        DepthState.SetDepthFunc(EComparisonFunc::Greater);
-        
-        FBlendState BlendState;
-        FBlendState::RenderTarget AlbedoTarget;
-        AlbedoTarget.DisableBlend();
-        AlbedoTarget.SetFormat(EFormat::RGBA16_FLOAT);
-        BlendState.SetRenderTarget(0, AlbedoTarget);
+            if (WorkSize == 0)
+                return;
+            {
+                LUMINA_PROFILE_SECTION("Process Mesh Components");
 
-        FBlendState::RenderTarget NormalTarget;
-        NormalTarget.DisableBlend();
-        NormalTarget.SetFormat(EFormat::RGBA16_FLOAT);
-        BlendState.SetRenderTarget(1, NormalTarget);
+                for (uint32 i = 0; i < WorkSize; ++i)
+                {
+                    entt::entity Entity = Group[i];
+                    FTransformComponent& TransformComponent = Group.get<FTransformComponent>(Entity);
+                    FStaticMeshComponent& MeshComponent = Group.get<FStaticMeshComponent>(Entity);
 
-        FBlendState::RenderTarget MaterialTarget;
-        MaterialTarget.DisableBlend();
-        MaterialTarget.SetFormat(EFormat::RGBA8_UNORM);
-        BlendState.SetRenderTarget(2, MaterialTarget);
+                    CStaticMesh* Mesh = MeshComponent.StaticMesh;
+                    
+                    if (!IsValid(Mesh) || !MeshComponent.StaticMesh->IsReadyForRender())
+                        continue;
 
-        FBlendState::RenderTarget AlbedoSpecTarget;
-        AlbedoSpecTarget.DisableBlend();
-        AlbedoSpecTarget.SetFormat(EFormat::RGBA8_UNORM);
-        BlendState.SetRenderTarget(3, AlbedoSpecTarget);
+                    if (RegisteredMeshes.find(Mesh) == RegisteredMeshes.end())
+                    {
+                        RegisteredMeshes.emplace(Mesh);
 
-        FRasterState RasterState;
-        RasterState.SetDepthClipEnable(true);
-            
-        FRenderState RenderState;
-        RenderState.SetBlendState(BlendState);
-        RenderState.SetRasterState(RasterState);
-        RenderState.SetDepthStencilState(DepthState);
-        
-        CommandList->BindVertexBuffer(VertexBuffer, 0, 0);
-        for (SIZE_T CurrentDraw = 0; CurrentDraw < IndirectRenderBatch.size(); ++CurrentDraw)
-        {
-            FIndirectRenderBatch& Batch = IndirectRenderBatch[CurrentDraw];
-            CMaterial* Material = Batch.Material;
+                        const auto& MeshVertices = Mesh->GetMeshResource().Vertices;
+                        const auto& MeshIndices  = Mesh->GetMeshResource().Indices;
 
-            FGraphicsPipelineDesc Desc;
-            Desc.SetRenderState(RenderState);
-            Desc.SetInputLayout(VertexLayoutInput);
-            Desc.AddBindingLayout(BindingLayout);
-            Desc.AddBindingLayout(Material->BindingLayout);
-            Desc.AddBindingLayout(Batch.BindingLayout);
-            Desc.SetVertexShader(Material->VertexShader);
-            Desc.SetPixelShader(Material->PixelShader);
-            
-            FRHIGraphicsPipelineRef Pipeline = RenderContext->CreateGraphicsPipeline(Desc);
-            
-            CommandList->SetGraphicsPipeline(Pipeline);
+                        {
+                            LUMINA_PROFILE_SECTION("Write Vertex Buffer");
 
-            CommandList->BindBindingSets(ERHIBindingPoint::Graphics, {{BindingSet, 0}, {Material->BindingSet, 1}, {Batch.BindingSet, 2}});
-            
-            CommandList->DrawIndexedIndirect(Batch.IndirectDrawBuffer, IndexBuffer, IndirectRenderBatch.size(), 0);
-        }
-        
-        CommandList->EndRenderPass();
-    }
+                            SIZE_T WriteSize = MeshVertices.size() * sizeof(FVertex);
+                            MeshVertexOffset.emplace(Mesh, NextVertexBufferWritePos);
 
-    void FSceneRenderer::LightingPass()
-    {
-        LUMINA_PROFILE_SCOPE_COLORED(tracy::Color::Blue);
-        FRHIVertexShaderRef VertexShader = RenderContext->GetShaderLibrary()->GetShader<FRHIVertexShader>("DeferredLighting.vert");
-        FRHIPixelShaderRef PixelShader = RenderContext->GetShaderLibrary()->GetShader<FRHIPixelShader>("DeferredLighting.frag");
-        if (!VertexShader || !PixelShader)
-        {
-            return;
-        }
-        
-        ICommandList* CommandList = RenderContext->GetCommandList(Q_Graphics);
-        
-        FRasterState RasterState;
-        RasterState.SetCullNone();
+                            Vertices.insert(Vertices.end(), MeshVertices.begin(), MeshVertices.end());
+                            SIZE_T RequiredSize = (Vertices.size() * sizeof(FVertex)) * 1.25;
 
-        FBlendState BlendState;
-        FBlendState::RenderTarget RenderTarget;
-        RenderTarget.DisableBlend();
-        BlendState.SetRenderTarget(0, RenderTarget);
+                            if (ResizeBufferIfNeeded(VertexBuffer, RequiredSize))
+                            {
+                                CommandList->WriteBuffer(VertexBuffer, Vertices.data(), 0, RequiredSize);
+                            }
+                            else
+                            {
+                                CommandList->WriteBuffer(VertexBuffer, MeshVertices.data(), NextVertexBufferWritePos, WriteSize);
+                            }
 
-        FDepthStencilState DepthState;
-        DepthState.DisableDepthTest();
-        DepthState.DisableDepthWrite();
-        
-        FRenderState RenderState;
-        RenderState.SetRasterState(RasterState);
-        RenderState.SetDepthStencilState(DepthState);
-        RenderState.SetBlendState(BlendState);
-        
-        FGraphicsPipelineDesc Desc;
-        Desc.SetRenderState(RenderState);
-        Desc.AddBindingLayout(BindingLayout);
-        Desc.AddBindingLayout(LightingPassLayout);
-        Desc.SetVertexShader(VertexShader);
-        Desc.SetPixelShader(PixelShader);
+                            NextVertexBufferWritePos += WriteSize;
+                        }
 
-        FRHIGraphicsPipelineRef Pipeline = RenderContext->CreateGraphicsPipeline(Desc);
-            
-        CommandList->SetGraphicsPipeline(Pipeline);
-        CommandList->BindBindingSets(ERHIBindingPoint::Graphics, {{BindingSet, 0}, {LightingPassSet, 1}});
-        
-        FRenderPassBeginInfo BeginInfo; BeginInfo
-        .AddColorAttachment(GetRenderTarget())
-        .SetColorLoadOp(ERenderLoadOp::Load)
-        .SetColorStoreOp(ERenderStoreOp::Store)
-        .SetColorClearColor(FColor::Black)
+                        {
+                            LUMINA_PROFILE_SECTION("Write Index Buffer");
 
-        .SetDepthAttachment(DepthAttachment)
-        .SetDepthLoadOp(ERenderLoadOp::Load)
-        .SetDepthStoreOp(ERenderStoreOp::Store)
-        
-        .SetRenderArea(GetRenderTarget()->GetExtent());
-        BeginInfo.DebugName = "Lighting Pass";
-        CommandList->BeginRenderPass(BeginInfo);
-        
-            
-        float SizeY = (float)GBuffer.AlbedoSpec->GetSizeY();
-        float SizeX = (float)GBuffer.AlbedoSpec->GetSizeX();
-        CommandList->SetViewport(0.0f, 0.0f, 0.0f, SizeX, SizeY, 1.0f);
-        CommandList->SetScissorRect(0, 0, SizeX, SizeY);
-        
-        CommandList->Draw(3, 1, 0, 0);
+                            SIZE_T WriteSize = MeshIndices.size() * sizeof(uint32);
+                            MeshIndexOffset.emplace(Mesh, NextIndexBufferWritePos);
 
-        CommandList->EndRenderPass();
+                            Indices.insert(Indices.end(), MeshIndices.begin(), MeshIndices.end());
+                            SIZE_T RequiredSize = (Indices.size() * sizeof(uint32)) * 1.25;
 
-    }
+                            if (ResizeBufferIfNeeded(IndexBuffer, RequiredSize))
+                            {
+                                CommandList->WriteBuffer(IndexBuffer, Indices.data(), 0, RequiredSize);
+                            }
+                            else
+                            {
+                                CommandList->WriteBuffer(IndexBuffer, MeshIndices.data(), NextIndexBufferWritePos, WriteSize);
+                            }
 
-    void FSceneRenderer::SkyboxPass()
-    {
-        LUMINA_PROFILE_SCOPE_COLORED(tracy::Color::Green);
+                            NextIndexBufferWritePos += WriteSize;
+                        }
+                    }
 
-        ICommandList* CommandList = RenderContext->GetCommandList(ECommandQueue::Graphics);
+                    {
+                        LUMINA_PROFILE_SECTION("Build Render Proxies");
 
-        FRHIVertexShaderRef VertexShader = RenderContext->GetShaderLibrary()->GetShader<FRHIVertexShader>("Skybox.vert");
-        FRHIPixelShaderRef PixelShader = RenderContext->GetShaderLibrary()->GetShader<FRHIPixelShader>("Skybox.frag");
-        if (!VertexShader || !PixelShader)
-        {
-            return;
-        }
+                        SIZE_T Surfaces = Mesh->GetMeshResource().GetNumSurfaces();
+                        for (SIZE_T i = 0; i < Surfaces; ++i)
+                        {
+                            const FGeometrySurface& Surface = MeshComponent.StaticMesh->GetMeshResource().GeometrySurfaces[i];
 
-        FRHIImageRef ColorAttachment = GetRenderTarget();
-        
-        FDepthStencilState DepthState;
-        DepthState.SetDepthTestEnable(true);
-        DepthState.SetDepthWriteEnable(false);
-        DepthState.SetDepthFunc(EComparisonFunc::GreaterOrEqual);
+                            SIZE_T VertexLocation = MeshVertexOffset[Mesh];
+                            SIZE_T StartIndex = MeshIndexOffset[Mesh] + Surface.StartIndex;
+                        
+                            FMeshRenderProxy Proxy;
+                            Proxy.Material = MeshComponent.StaticMesh->GetMaterialAtSlot(Surface.MaterialIndex);
+                            Proxy.VertexOffset = (VertexLocation / sizeof(FVertex));
+                            Proxy.FirstIndex = (StartIndex / sizeof(uint32));
+                            Proxy.Surface = Surface;
+                            Proxy.Matrix = TransformComponent.Transform.GetMatrix();
 
-        FBlendState BlendState;
-        FBlendState::RenderTarget RenderTarget;
-        RenderTarget.DisableBlend();
-        RenderTarget.SetFormat(EFormat::BGRA8_UNORM);
-        BlendState.SetRenderTarget(0, RenderTarget);
+                            uint64 MaterialID = reinterpret_cast<uintptr_t>(Proxy.Material) & 0xFFFFFFFF;
+                            Proxy.SortKey = (uint64(MaterialID) << 32) | (uint64(Proxy.VertexOffset) << 16) | (Proxy.FirstIndex & 0xFFFF);
 
-        FRasterState RasterState;
-        RasterState.SetCullFront();
-        RasterState.SetDepthClipEnable(false);
+                            MeshProxies.push_back(Proxy);
+                        }
+                    }
+                }
+            }
 
-        FRenderState RenderState;
-        RenderState.SetBlendState(BlendState);
-        RenderState.SetRasterState(RasterState);
-        RenderState.SetDepthStencilState(DepthState);
-        
-        FGraphicsPipelineDesc Desc;
-        Desc.SetRenderState(RenderState);
-        Desc.AddBindingLayout(BindingLayout);
-        Desc.AddBindingLayout(SkyboxBindingLayout);
-        Desc.SetVertexShader(VertexShader);
-        Desc.SetPixelShader(PixelShader);
-  
-        FRHIGraphicsPipelineRef Pipeline = RenderContext->CreateGraphicsPipeline(Desc);
-        
-        CommandList->SetGraphicsPipeline(Pipeline);
+            {
+                LUMINA_PROFILE_SECTION("Sort Render Proxies");
+                eastl::sort(MeshProxies.begin(), MeshProxies.end());
+            }
 
-        CommandList->BindBindingSets(ERHIBindingPoint::Graphics, {{SkyboxBindingSet, 1}});
-
-        FRenderPassBeginInfo BeginInfo; BeginInfo
-        .AddColorAttachment(ColorAttachment)
-        .SetColorLoadOp(ERenderLoadOp::Load)
-        .SetColorStoreOp(ERenderStoreOp::Store)
-        .SetColorClearColor(FColor::Black)
+            {
+                LUMINA_PROFILE_SECTION("Build Indirect Draw Arguments");
                 
-        .SetDepthAttachment(DepthAttachment)
-        .SetDepthLoadOp(ERenderLoadOp::Load)
-        .SetDepthStoreOp(ERenderStoreOp::Store)
-                
-        .SetRenderArea(ColorAttachment->GetExtent());
-        BeginInfo.DebugName = "Skybox Pass";
+                CMaterial* PrevMaterial = nullptr;
+                uint64 PrevSortKey = ~0ull;
+                uint32 CurrentInstanceCount = 0;
+            
+                for (SIZE_T i = 0; i < MeshProxies.size(); ++i)
+                {
+                    const FMeshRenderProxy& Proxy = MeshProxies[i];
 
-        CommandList->BeginRenderPass(BeginInfo);
+                    ModelData.ModelMatrices.push_back(Proxy.Matrix);
 
-        CommandList->SetViewport(0.0f, 0.0f, 0.0f, (float)ColorAttachment->GetSizeX(), (float)ColorAttachment->GetSizeY(), 1.0f);
-        CommandList->SetScissorRect(0, 0, ColorAttachment->GetSizeX(), ColorAttachment->GetSizeY());
+                    if (Proxy.Material != PrevMaterial)
+                    {
+                        FIndirectRenderBatch Batch;
+                        Batch.NumDraws = 1;
+                        Batch.Material = Proxy.Material;
+                        Batch.Offset = IndirectDrawArguments.size();
+                        RenderBatches.push_back(Batch);
 
-        CommandList->Draw(36, 1, 0, 0);
-        
-        CommandList->EndRenderPass();
+                        PrevMaterial = Proxy.Material;
+                        PrevSortKey = ~0ull;
+                    }
+                    else
+                    {
+                        RenderBatches.back().NumDraws++;
+                    }
+
+                    if (Proxy.SortKey != PrevSortKey)
+                    {
+                        FDrawIndexedIndirectArguments DrawArgument;
+                        DrawArgument.BaseVertexLocation     = Proxy.VertexOffset;
+                        DrawArgument.StartIndexLocation     = Proxy.FirstIndex;
+                        DrawArgument.IndexCount             = Proxy.Surface.IndexCount;
+                        DrawArgument.StartInstanceLocation  = CurrentInstanceCount;
+                        DrawArgument.InstanceCount          = 1;
+
+                        IndirectDrawArguments.push_back(DrawArgument);
+
+                        PrevSortKey = Proxy.SortKey;
+                    }
+                    else
+                    {
+                        IndirectDrawArguments.back().InstanceCount++;
+                    }
+
+                    CurrentInstanceCount++;
+                }
+            }
+
+            LUMINA_PROFILE_SECTION("Write Buffers");
+            CommandList->WriteBuffer(ModelDataBuffer, ModelData.ModelMatrices.data(), 0, ModelData.ModelMatrices.size() * sizeof(glm::mat4));
+            CommandList->WriteBuffer(IndirectDrawBuffer, IndirectDrawArguments.data(), 0, IndirectDrawArguments.size() * sizeof(FDrawIndexedIndirectArguments));
+        }
     }
 
+    void FSceneRenderer::ExecutePasses()
+    {
+        for (FRenderPass* Pass : RenderPasses)
+        {
+            Pass->Execute();
+        }
+    }
 
     void FSceneRenderer::FullScreenPass(const FScene* Scene)
     {
@@ -701,93 +726,6 @@ namespace Lumina
 #endif
     }
     
-
-    void FSceneRenderer::DrawPrimitives()
-    {
-        LUMINA_PROFILE_SCOPE();
-
-        ICommandList* CommandList = RenderContext->GetCommandList(Q_Graphics);
-
-        FRHIVertexShaderRef VertexShader = RenderContext->GetShaderLibrary()->GetShader<FRHIVertexShader>("Simple.vert");
-        FRHIPixelShaderRef PixelShader = RenderContext->GetShaderLibrary()->GetShader<FRHIPixelShader>("Simple.frag");
-        if (!VertexShader || !PixelShader)
-        {
-            return;
-        }
-        
-        FRenderPassBeginInfo BeginInfo; BeginInfo
-        .AddColorAttachment(GetRenderTarget())
-        .SetColorLoadOp(ERenderLoadOp::Load)
-        .SetColorStoreOp(ERenderStoreOp::Store)
-
-        .SetDepthAttachment(DepthAttachment)
-        .SetDepthLoadOp(ERenderLoadOp::Load)
-        .SetDepthStoreOp(ERenderStoreOp::Store)        
-            
-        .SetRenderArea(GetRenderTarget()->GetExtent());
-        BeginInfo.DebugName = "Primitive Pass";
-        CommandList->BeginRenderPass(BeginInfo);
-        
-        FDepthStencilState DepthState;
-        DepthState.SetDepthFunc(EComparisonFunc::Greater);
-        
-        FBlendState BlendState;
-        FBlendState::RenderTarget RenderTarget;
-        RenderTarget.DisableBlend();
-        RenderTarget.SetSrcBlend(EBlendFactor::SrcAlpha);
-        RenderTarget.SetDestBlend(EBlendFactor::OneMinusSrcAlpha);
-        RenderTarget.SetSrcBlendAlpha(EBlendFactor::One);
-        RenderTarget.SetDestBlendAlpha(EBlendFactor::Zero);
-        RenderTarget.SetFormat(EFormat::BGRA8_UNORM);
-        BlendState.SetRenderTarget(0, RenderTarget);
-
-        FRasterState RasterState;
-        RasterState.SetDepthClipEnable(true);
-            
-        FRenderState RenderState;
-        RenderState.SetBlendState(BlendState);
-        RenderState.SetRasterState(RasterState);
-        RenderState.SetDepthStencilState(DepthState);
-            
-        FGraphicsPipelineDesc Desc;
-        Desc.SetRenderState(RenderState);
-        Desc.AddBindingLayout(BindingLayout);
-        Desc.SetVertexShader(VertexShader);
-        Desc.SetPixelShader(PixelShader);
-            
-        FRHIGraphicsPipelineRef Pipeline = RenderContext->CreateGraphicsPipeline(Desc);
-            
-        CommandList->SetGraphicsPipeline(Pipeline);
-        
-        for (uint32 CurrentDraw = 0; CurrentDraw < LightData.NumPointLights; ++CurrentDraw)
-        {
-            FPointLight Light = LightData.PointLights[CurrentDraw];
-
-            struct FPC
-            {
-                glm::mat4 ModelMatrix;
-                glm::vec4 Color;
-            } PC;
-            
-            FTransform Transform;
-            Transform.Location = Light.Position;
-            PC.ModelMatrix = Transform.GetMatrix();
-            PC.ModelMatrix = glm::scale(PC.ModelMatrix, glm::vec3(0.15f));
-
-            PC.Color = Light.Color;
-            
-            float SizeY = (float)GBuffer.AlbedoSpec->GetSizeY();
-            float SizeX = (float)GBuffer.AlbedoSpec->GetSizeX();
-            CommandList->SetViewport(0.0f, 0.0f, 0.0f, SizeX, SizeY, 1.0f);
-            CommandList->SetScissorRect(0, 0, SizeX, SizeY);
-            
-            CommandList->SetPushConstants(&PC, sizeof(FPC));
-            CommandList->Draw(36, 1, 0, 0);
-            
-        }
-        
-        CommandList->EndRenderPass();
-    }
 
     // https://github.com/SaschaWillems/Vulkan/blob/master/examples/pbrtexture/pbrtexture.cpp
     void FSceneRenderer::CreateIrradianceCube()
@@ -917,7 +855,9 @@ namespace Lumina
                 CommandList->SetScissorRect(0, 0, Dim, Dim);
 
                 CommandList->SetPushConstants(&PushBlock, sizeof(struct PushBlock));
-                
+
+                SceneRenderStats.NumDrawCalls++;
+                SceneRenderStats.NumVertices += 36;
                 CommandList->Draw(36, 1, 0, 0);
                 
                 CommandList->EndRenderPass();
@@ -1041,6 +981,38 @@ namespace Lumina
         LightBufferDesc.DebugName = "Light Data Buffer";
         LightDataBuffer = RenderContext->CreateBuffer(LightBufferDesc);
         RenderContext->SetObjectName(LightDataBuffer, LightBufferDesc.DebugName.c_str(), EAPIResourceType::Buffer);
+
+        FRHIBufferDesc VertexBufferDesc;
+        VertexBufferDesc.Size = sizeof(FVertex) * (1024 * 1024 * 10);
+        VertexBufferDesc.Stride = sizeof(FVertex);
+        VertexBufferDesc.Usage.SetMultipleFlags(BUF_VertexBuffer);
+        VertexBufferDesc.InitialState = EResourceStates::VertexBuffer;
+        VertexBufferDesc.bKeepInitialState = true;
+        VertexBufferDesc.DebugName = "Vertex Buffer";
+        VertexBuffer = RenderContext->CreateBuffer(VertexBufferDesc);
+        RenderContext->SetObjectName(VertexBuffer, VertexBufferDesc.DebugName.c_str(), EAPIResourceType::Buffer);
+
+        
+        FRHIBufferDesc IndexBufferDesc;
+        IndexBufferDesc.Size = sizeof(uint32) * (1024 * 1024 * 10);
+        IndexBufferDesc.Stride = sizeof(uint32);
+        IndexBufferDesc.Usage.SetMultipleFlags(BUF_IndexBuffer);
+        IndexBufferDesc.InitialState = EResourceStates::IndexBuffer;
+        IndexBufferDesc.bKeepInitialState = true;
+        IndexBufferDesc.DebugName = "Index Buffer";
+        IndexBuffer = RenderContext->CreateBuffer(IndexBufferDesc);
+        RenderContext->SetObjectName(IndexBuffer, IndexBufferDesc.DebugName.c_str(), EAPIResourceType::Buffer);
+
+        
+        FRHIBufferDesc IndirectBufferDesc;
+        IndirectBufferDesc.Size = sizeof(FDrawIndexedIndirectArguments) * (1024 * 1024 * 10);
+        IndirectBufferDesc.Stride = sizeof(uint32);
+        IndirectBufferDesc.Usage.SetMultipleFlags(BUF_Indirect);
+        IndirectBufferDesc.InitialState = EResourceStates::IndexBuffer;
+        IndirectBufferDesc.bKeepInitialState = true;
+        IndirectBufferDesc.DebugName = "Indirect Draw Buffer";
+        IndirectDrawBuffer = RenderContext->CreateBuffer(IndirectBufferDesc);
+        RenderContext->SetObjectName(IndexBuffer, IndirectBufferDesc.DebugName.c_str(), EAPIResourceType::Buffer);
     }
     
     void FSceneRenderer::CreateImages()
@@ -1148,35 +1120,6 @@ namespace Lumina
         
         CommandList->Close();
     	RenderContext->ExecuteCommandList(CommandList, ECommandQueue::Transfer);
-    }
-
-    void FSceneRenderer::UpdateGeometryBuffersForNewMeshes(ICommandList* CommandList, const TVector<CStaticMesh*>& NewMeshes)
-    {
-        SIZE_T VertexOffset = CombinedVertex.size() * sizeof(FVertex);
-        SIZE_T IndexOffset  = CombinedIndex.size() * sizeof(uint32);
-        CreateOrResizeGeometryBuffers(VertexOffset, IndexOffset, VertexOffset + (100000 * sizeof(FVertex)), IndexOffset + (100000 * sizeof(uint32)));
-        
-        for (CStaticMesh* NewMesh : NewMeshes)
-        {
-            const TVector<FVertex>& Vertices = NewMesh->GetMeshResource().Vertices;
-            const TVector<uint32>& Indices = NewMesh->GetMeshResource().Indices;
-
-            SIZE_T VertexSizeBytes = Vertices.size() * sizeof(FVertex);
-            SIZE_T IndexSizeBytes  = Indices.size()  * sizeof(uint32);
-            
-            CombinedVertex.insert(CombinedVertex.end(), Vertices.begin(), Vertices.end());
-            CombinedIndex.insert(CombinedIndex.end(), Indices.begin(), Indices.end());
-
-            CommandList->WriteBuffer(VertexBuffer, Vertices.data(), VertexOffset, VertexSizeBytes);
-            CommandList->WriteBuffer(IndexBuffer, Indices.data(), IndexOffset, IndexSizeBytes);
-
-            VertexStartMap.insert_or_assign(NewMesh, VertexOffset / sizeof(FVertex));
-            IndexStartMap.insert_or_assign(NewMesh, IndexOffset / sizeof(uint32));
-            
-            VertexOffset += Vertices.size();
-            IndexOffset += Indices.size();
-        }
-        
     }
     
 }

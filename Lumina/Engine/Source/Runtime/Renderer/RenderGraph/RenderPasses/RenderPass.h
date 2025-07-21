@@ -3,37 +3,42 @@
 #include "Containers/Name.h"
 #include "Core/Functional/Function.h"
 #include "Renderer/RHIFwd.h"
-#include "Renderer/RenderGraph/RenderGraph.h"
+#include "Scene/SceneRenderTypes.h"
 
 namespace Lumina
 {
     class IRenderContext;
-    class FRenderGraphBuilder;
-    class FRenderGraphScope;
 }
 
 namespace Lumina
 {
-    enum class ERenderPassAccess : uint8
-    {
-        Read,
-        Write,
-    };
+    using FRenderPassFunction = TFunction<void()>;
     
-    class IRenderPass
+    class FRenderPass
     {
-        friend class FRenderGraph;
     public:
+
+        FRenderPass(const FName& Name)
+            :PassName(Name)
+        {}
         
-        virtual ~IRenderPass() = default;
+        virtual ~FRenderPass() = default;
         
+        virtual void SetPassFunc(FRenderPassFunction&& Function) { PassFunction = Function; }
+        void Execute() { PassFunction(); }
+        
+
         FName GetPassName() const { return PassName; }
 
-        virtual void Execute(FRenderGraphScope& Scope) = 0;
+        void AddProxy(FMeshRenderProxy&& Proxy);
+        void ClearProxies();
 
-    private:
-        
+    protected:
+
+        FRenderPassFunction PassFunction;
         FName PassName;
-        TFunction<void(FRenderGraphBuilder&)> BuildFunctor;
+        FMutex ProxyMutex;
+        TFixedVector<FMeshRenderProxy, 100> RenderProxies;
+        
     };
 }

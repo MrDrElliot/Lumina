@@ -24,20 +24,18 @@ namespace Lumina::Import::Mesh::GLTF
         {
             std::filesystem::path FSPath = InPath.c_str();
         
-            // Allocate crucial fastgltf objects
             fastgltf::Parser gltf_parser;
             fastgltf::GltfDataBuffer data_buffer;
 
-            // Try to load asset data
             if (!data_buffer.loadFromFile(FSPath))
             {
                 LOG_ERROR("Failed to load glTF model with path: {0}. Aborting import.", FSPath.string());
                 return;
             }
 
-            fastgltf::GltfType source_type = fastgltf::determineGltfFileType(&data_buffer);
+            fastgltf::GltfType SourceType = fastgltf::determineGltfFileType(&data_buffer);
 
-            if (source_type == fastgltf::GltfType::Invalid)
+            if (SourceType == fastgltf::GltfType::Invalid)
             {
                 LOG_ERROR("Failed to determine glTF file type with path: {0}. Aborting import.", FSPath.string());
                 return;
@@ -48,8 +46,19 @@ namespace Lumina::Import::Mesh::GLTF
 
             fastgltf::Expected<fastgltf::Asset> expected_asset(fastgltf::Error::None);
 
-            source_type == fastgltf::GltfType::glTF ? expected_asset = gltf_parser.loadGltf(&data_buffer, FSPath.parent_path(), options) :
+            if (SourceType == fastgltf::GltfType::glTF)
+            {
+                expected_asset = gltf_parser.loadGltf(&data_buffer, FSPath.parent_path(), options);
+            }
+            else if (SourceType == fastgltf::GltfType::GLB)
+            {
                 expected_asset = gltf_parser.loadGltfBinary(&data_buffer, FSPath.parent_path(), options);
+            }
+            else
+            {
+                LOG_ERROR("GLTF Source Type Invalid");
+                return;
+            }
 
             if (const auto error = expected_asset.error(); error != fastgltf::Error::None)
             {
@@ -104,7 +113,7 @@ namespace Lumina::Import::Mesh::GLTF
                 
                 if (Primitive.materialIndex.has_value())
                 {
-                    NewSurface.MaterialIndex = Primitive.materialIndex.value();
+                    NewSurface.MaterialIndex = (int64)Primitive.materialIndex.value();
                 }
                 
                 SIZE_T InitialVert = 0;
@@ -115,8 +124,8 @@ namespace Lumina::Import::Mesh::GLTF
                 fastgltf::iterateAccessor<uint32>(Asset, IndexAccessor, [&](uint32 Index)
                 {
                     NewResource.Indices.push_back(Index);
+                    NewSurface.IndexCount++;
                     IndexCount++;
-                    NewSurface.NumIndices++;
                 });
         
                 fastgltf::Accessor& PosAccessor = Asset.accessors[Primitive.findAttribute("POSITION")->second];
