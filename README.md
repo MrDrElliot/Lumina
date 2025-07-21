@@ -89,6 +89,7 @@
 
 - ✅ Windows support
 - 🔄 Refactor to dynamic/shared libraries
+- 🔄 Scene batched rendering
 - 🔜 Multithreaded renderer
 - 🔜 Plugin system
 - 🔜 macOS/Linux support
