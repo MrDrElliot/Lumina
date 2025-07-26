@@ -47,6 +47,9 @@
 |:---:|:---:|
 | [<img src="https://github.com/user-attachments/assets/c4ec5ced-4f1c-4387-8836-78c8cbeda179" width="400"/>](https://github.com/user-attachments/assets/c4ec5ced-4f1c-4387-8836-78c8cbeda179) | *(More coming soon.)* |
 
+| Editor (Full) | |
+|:---:|:--:|
+| <img src="https://github.com/user-attachments/assets/be38f2ad-f7f1-4947-87ab-2584f1bc4616" width="800"/> | |
 
 
 ---
