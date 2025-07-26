@@ -37,15 +37,20 @@
 
 ---
 
+
 ## 📸 Screenshots
 
 | Render Pipeline | Editor |
 |:---:|:---:|
 | [<img src="https://github.com/user-attachments/assets/12ddaeac-ad21-4804-bac9-fa269e3d35c6" width="400"/>](https://github.com/user-attachments/assets/12ddaeac-ad21-4804-bac9-fa269e3d35c6) | [<img src="https://github.com/user-attachments/assets/283c9475-c1b7-4b6b-bbc8-781dc2aeb000" width="400"/>](https://github.com/user-attachments/assets/283c9475-c1b7-4b6b-bbc8-781dc2aeb000) |
 
-| Material Editor | GBuffer |
-|:---:|:---:|
-| [<img src="https://github.com/user-attachments/assets/c4ec5ced-4f1c-4387-8836-78c8cbeda179" width="400"/>](https://github.com/user-attachments/assets/c4ec5ced-4f1c-4387-8836-78c8cbeda179) | *(More coming soon.)* |
+| Material Editor |
+|:---:|
+| [<img src="https://github.com/user-attachments/assets/c4ec5ced-4f1c-4387-8836-78c8cbeda179" width="400"/>](https://github.com/user-attachments/assets/c4ec5ced-4f1c-4387-8836-78c8cbeda179) |
+
+| Editor (Full) |
+|:---:|
+| <img src="https://github.com/user-attachments/assets/be38f2ad-f7f1-4947-87ab-2584f1bc4616" width="800"/> |
 
 
 
