@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "EditorTool.h"
 #include "Tools/UI/ImGui/Widgets/TreeListView.h"
+#include "UI/Properties/PropertyTable.h"
 
 namespace Lumina
 {
@@ -29,7 +30,7 @@ namespace Lumina
 
             FName GetName() const override
             {
-                return Entity.GetConstComponent<FNameComponent>().Name;
+                return Entity.GetConstComponent<SNameComponent>().Name;
             }
 
             Entity GetEntity() const { return Entity; }
@@ -61,6 +62,7 @@ namespace Lumina
 
         void DrawPropertyEditor(const FUpdateContext& UpdateContext, bool bFocused);
 
+        void RebuildPropertyTables();
         void CreateEntity();
 
 
@@ -71,5 +73,6 @@ namespace Lumina
         FTreeListView               OutlinerListView;
         FTreeListViewContext        OutlinerContext;
         TQueue<Entity>              EntityDestroyRequests;
+        TVector<FPropertyTable*>    PropertyTables;
     };
 }

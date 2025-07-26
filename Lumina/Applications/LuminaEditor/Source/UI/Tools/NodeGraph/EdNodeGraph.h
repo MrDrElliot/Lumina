@@ -54,6 +54,8 @@ namespace Lumina
         virtual CEdGraphNode* CreateNode(CClass* NodeClass);
 
         virtual CEdGraphNode* OnNodeRemoved(CEdGraphNode* Node) { return nullptr; }
+
+        void SetNodeSelectedCallback(const TFunction<CEdGraphNode*()>& Callback) { NodeSelectedCallback = Callback; }
         
     protected:
 
@@ -66,6 +68,7 @@ namespace Lumina
         TVector<CClass*>                                SupportedNodes;
         TVector<FAction>                                Actions;
 
+        TFunction<CEdGraphNode*()>                      NodeSelectedCallback;
     private:
         
         ImNodesEditorContext* ImNodesContext = nullptr;

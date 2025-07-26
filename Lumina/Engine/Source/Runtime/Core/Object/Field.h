@@ -1,10 +1,11 @@
 #pragma once
+#include "Lumina.h"
 #include "Containers/String.h"
 #include "Core/LuminaMacros.h"
 #include "Core/Assertions/Assert.h"
+#include "Core/Reflection/Type/Metadata/PropertyMetadata.h"
 #include "Core/Variant/Variant.h"
 #include "Platform/GenericPlatform.h"
-
 
 namespace Lumina
 {
@@ -33,7 +34,7 @@ namespace Lumina
     {
     public:
 
-        FField(FFieldOwner InOwner)
+        FField(const FFieldOwner& InOwner)
             :Owner(InOwner)
         {
             Offset = 0;
@@ -46,10 +47,10 @@ namespace Lumina
         LUMINA_API virtual void AddProperty(FProperty* Property) { LUMINA_NO_ENTRY(); }
 
         
-        FName           Name;
-        uint32          Offset;
-        FField*         Next;
-        FFieldOwner     Owner;
+        FName               Name;
+        uint32              Offset;
+        FField*             Next;
+        FFieldOwner         Owner;
     };
     
 }

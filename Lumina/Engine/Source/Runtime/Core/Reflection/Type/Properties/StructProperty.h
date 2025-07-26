@@ -9,6 +9,7 @@ namespace Lumina
     class FStructProperty : public FProperty
     {
     public:
+        DECLARE_FPROPERTY(EPropertyTypeFlags::Struct)
 
         FStructProperty(FFieldOwner InOwner, const FPropertyParams* Params)
             :FProperty(InOwner, Params)
@@ -23,8 +24,7 @@ namespace Lumina
         void SetStruct(CStruct* InStruct) { Struct = InStruct; }
         CStruct* GetStruct() const { return Struct; }
 
-
-
+        
         CStruct* Struct = nullptr;
     
     };

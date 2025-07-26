@@ -72,21 +72,25 @@ namespace Lumina::Reflection
 
     bool FTypeReflector::Build(FClangParser& Parser)
     {
+        Parser.ParsingContext.bInitialPass = true;
+        
+        // Initial Pass. Register Types and create types only.
         for (FReflectedProject& Project : Projects)
         {
             Parser.ParsingContext.ReflectionDatabase.AddReflectedProject(Project);
 
-            // Initial Pass. Register Types and create types only.
-            Parser.ParsingContext.bInitialPass = true;
             
             if (!Parser.Parse(Project.SolutionPath, Project.Headers, Project))
             {
                 std::cout << "Failed to parse\n";
             }
+        }
 
-            Parser.ParsingContext.bInitialPass = false;
+        Parser.ParsingContext.bInitialPass = false;
 
-            // Second Pass. Traverse children and finish building types.
+        // Second Pass. Traverse children and finish building types.
+        for (FReflectedProject& Project : Projects)
+        {
             if (!Parser.Parse(Project.SolutionPath, Project.Headers, Project))
             {
                 std::cout << "Failed to parse\n";

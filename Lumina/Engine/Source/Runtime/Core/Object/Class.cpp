@@ -1,5 +1,6 @@
 ﻿#include "Class.h"
 #include "Core/Reflection/Type/LuminaTypes.h"
+#include "glm/glm.hpp"
 #include "Package/Package.h"
 
 namespace Lumina
@@ -25,20 +26,19 @@ namespace Lumina
         
         CClass* NewClass = *OutClass;
         CClass* SuperClass = SuperClassFn();
-        
         bool bValidSuperClass = (SuperClass != NewClass);
+        
         NewClass->SetSuperStruct(bValidSuperClass ? SuperClass : nullptr);
 
         NewClass->RegisterDependencies();
         NewClass->BeginRegister();
     }
-
+    
 
     //-----------------------------------------------------------------------------------------------------------------------------------------
 
     
     IMPLEMENT_INTRINSIC_CLASS(CClass, CStruct, LUMINA_API)
-
 
     //-----------------------------------------------------------------------------------------------
 
@@ -57,6 +57,11 @@ namespace Lumina
     CObject* CClass::CreateDefaultObject()
     {
         Assert(ClassDefaultObject == nullptr)
+
+
+        Link();
+        
+        
         FString DefaultObjectName = GetName().c_str();
         DefaultObjectName += "_CDO";
         
@@ -75,6 +80,33 @@ namespace Lumina
         
         return ClassDefaultObject;
         
+    }
+
+
+    static CStruct* StaticGetBaseStructureInternal(FName Name)
+    {
+        FName QualifiedName = FName(FString("script://lumina.") + Name.c_str());
+        CStruct* Result = (CStruct*)FindObjectFast(CStruct::StaticClass(), QualifiedName);
+        
+        return Result;
+    }
+
+    CStruct* TBaseStructure<glm::vec<2, float>>::Get()
+    {
+	    static CStruct* Struct = StaticGetBaseStructureInternal("vec2");
+        return Struct;
+    }
+
+    CStruct* TBaseStructure<glm::vec<3, float>>::Get()
+    {
+        static CStruct* Struct = StaticGetBaseStructureInternal("vec3");
+        return Struct;
+    }
+
+    CStruct* TBaseStructure<glm::vec<4, float>>::Get()
+    {
+        static CStruct* Struct = StaticGetBaseStructureInternal("vec4");
+        return Struct;   
     }
 
 }

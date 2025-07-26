@@ -184,10 +184,32 @@ namespace Lumina::ClangUtils
             const clang::QualType QualType = pType->getAs<clang::PointerType>()->getPointeeType();
             QualifiedName = QualType.getAsString().c_str();
         }
-        else if (pType->isRecordType())
+        if (pType->isRecordType())
         {
-            const clang::RecordDecl* pRecordDecl = pType->getAs<clang::RecordType>()->getDecl();
-            QualifiedName = pRecordDecl->getQualifiedNameAsString().c_str();
+            if (pType->isTypedefNameType())
+            {
+                if (const auto* TypedefType = pType->getAs<clang::TypedefType>())
+                {
+                    const clang::TypedefNameDecl* Typedef = TypedefType->getDecl();
+                    QualifiedName = Typedef->getQualifiedNameAsString().c_str();
+                }
+                else
+                {
+                    if (const auto* RecordType = pType->getAs<clang::RecordType>())
+                    {
+                        const clang::RecordDecl* Record = RecordType->getDecl();
+                        QualifiedName = Record->getQualifiedNameAsString().c_str();
+                    }
+                }
+            }
+            else
+            {
+                if (const auto* RecordType = pType->getAs<clang::RecordType>())
+                {
+                    const clang::RecordDecl* Record = RecordType->getDecl();
+                    QualifiedName = Record->getQualifiedNameAsString().c_str();
+                }
+            }
         }
         else if (pType->isEnumeralType())
         {
@@ -199,7 +221,7 @@ namespace Lumina::ClangUtils
             const clang::NamedDecl* pNamedDecl = pType->getAs<clang::TypedefType>()->getDecl();
             QualifiedName = pNamedDecl->getQualifiedNameAsString().c_str();
         }
-
+        
         if (QualifiedName == "eastl::vector")
         {
             QualifiedName = "Lumina::TVector";
@@ -220,6 +242,11 @@ namespace Lumina::ClangUtils
             QualifiedName = "Lumina::FString";
         }
 
+        if (QualifiedName == "FName")
+        {
+            QualifiedName = "Lumina::FName";
+        }
+        
         if (QualifiedName == "TObjectPtr")
         {
             QualifiedName = "Lumina::TObjectPtr";
@@ -230,6 +257,11 @@ namespace Lumina::ClangUtils
             QualifiedName = "Lumina::CObject";
         }
 
+        if (QualifiedName == "CClass")
+        {
+            QualifiedName = "Lumina::CClass";
+        }
+        
         return !QualifiedName.empty();
     }
     

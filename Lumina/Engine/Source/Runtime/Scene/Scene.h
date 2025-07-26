@@ -6,14 +6,9 @@
 #include "Core/UpdateContext.h"
 #include "Core/Functional/Function.h"
 #include "Entity/Registry/EntityRegistry.h"
-#include "glm/vec3.hpp"
 #include "Subsystems/Subsystem.h"
 
 
-namespace Lumina
-{
-    class FEntityComponent;
-}
 
 namespace Lumina
 {
@@ -22,7 +17,6 @@ namespace Lumina
     class FSubsystemManager;
     class FTransform;
     class Entity;
-    class Material;
     class AStaticMesh;
     class FEntitySystem;
 }

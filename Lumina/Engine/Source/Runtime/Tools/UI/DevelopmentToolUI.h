@@ -4,6 +4,7 @@
 
 namespace Lumina
 {
+    class FPropertyCustomizationRegistry;
     class IImGuiRenderer;
     class FUpdateContext;
 }
@@ -34,8 +35,12 @@ namespace Lumina
         virtual void OnStartFrame(const FUpdateContext& UpdateContext)  { }
         virtual void OnUpdate(const FUpdateContext& UpdateContext)      { }
         virtual void OnEndFrame(const FUpdateContext& UpdateContext)    { }
+
+        FPropertyCustomizationRegistry* GetPropertyCustomizationRegistry() const { return PropertyCustomizationRegistry; }
         
-    private:
+    protected:
+
+        FPropertyCustomizationRegistry* PropertyCustomizationRegistry = nullptr;
 
     };
     

@@ -1,5 +1,4 @@
 ﻿#include "ArrayProperty.h"
-#include "imgui.h"
 
 namespace Lumina
 {
@@ -56,36 +55,4 @@ namespace Lumina
         
     }
 
-    void FArrayProperty::DrawProperty(void* Object)
-    {
-        FReflectArrayHelper Helper(this, Object);
-        SIZE_T ElementCount = Helper.Num();
-
-        FString HeaderLabel = Name.c_str();
-        if (ImGui::CollapsingHeader(HeaderLabel.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
-        {
-            ImGui::Indent();
-            ImGui::PushID(this);
-
-            for (SIZE_T i = 0; i < ElementCount; ++i)
-            {
-                FString ElementLabel = "Element " + eastl::to_string(i);
-
-                if (ImGui::CollapsingHeader(ElementLabel.c_str(), ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth))
-                {
-                    ImGui::PushID(static_cast<int>(i));
-
-                    void* ElementPtr = Helper.GetRawAt(i);
-                    ImGui::Indent();
-                    Inner->DrawProperty(ElementPtr);
-                    ImGui::Unindent();
-
-                    ImGui::PopID();
-                }
-            }
-
-            ImGui::PopID();
-            ImGui::Unindent();
-        }
-    }
 }

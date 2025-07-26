@@ -9,7 +9,7 @@
 #include "Scene/SceneRenderer.h"
 #include "Scene/SceneRenderTypes.h"
 #include "Scene/Entity/Components/LightComponent.h"
-#include "Scene/Entity/Components/StaicMeshComponent.h"
+#include "Scene/Entity/Components/StaticMeshComponent.h"
 #include "Scene/Entity/Components/VelocityComponent.h"
 #include "Scene/Entity/Systems/DebugCameraEntitySystem.h"
 #include "Tools/UI/ImGui/ImGuiFonts.h"
@@ -28,25 +28,14 @@ namespace Lumina
         NewScene->RegisterSystem(Memory::New<FDebugCameraEntitySystem>());
 
         Entity DirectionalLightEntity = NewScene->CreateEntity(FTransform(), "Directional Light");
-        DirectionalLightEntity.AddComponent<FDirectionalLightComponent>();
+        DirectionalLightEntity.AddComponent<SDirectionalLightComponent>();
         DirectionalLightEntity.AddComponent<FNeedsRenderProxyUpdate>();
         
-        int gridSize = sqrt(5000); // ≈ sqrt(1000)
-        float spacing = 2.0f;
-
-        for (int i = 0; i < 5000; ++i)
-        {
-            int x = i % gridSize;
-            int y = i / gridSize;
-
-            glm::vec3 position = glm::vec3(x * spacing, y * spacing, 0.0f);
-
-            MeshEntity = NewScene->CreateEntity(FTransform(), "MeshEntity");
-            FStaticMeshComponent& NewComponent = MeshEntity.AddComponent<FStaticMeshComponent>();
-
-            MeshEntity.GetComponent<FTransformComponent>().SetLocation(position);
-            NewComponent.StaticMesh = Cast<CStaticMesh>(InAsset);
-        }
+        MeshEntity = NewScene->CreateEntity(FTransform(), "MeshEntity");
+        
+        MeshEntity.AddComponent<SStaticMeshComponent>().StaticMesh = Cast<CStaticMesh>(InAsset);
+        MeshEntity.GetComponent<STransformComponent>().SetLocation(glm::vec3(0.0f, 0.0f, -2.5f));
+        MeshEntity.AddComponent<FNeedsRenderProxyUpdate>();
         
         Scene = NewScene;
     }
@@ -107,37 +96,9 @@ namespace Lumina
             }
 
             ImGui::SeparatorText("Asset Details");
+
+            PropertyTable.DrawTree();
             
-            ImGuiX::DrawObjectProperties(StaticMesh);
-            
-            ImGui::SeparatorText("Directional Light Details");
-
-            
-            auto& Registry = Scene->GetMutableEntityRegistry();
-            auto View = Registry.view<FDirectionalLightComponent, FTransformComponent>();
-
-            for (auto Entity : View)
-            {
-                auto& DLC = Registry.get<FDirectionalLightComponent>(Entity);
-                auto& TC  = Registry.get<FTransformComponent>(Entity);
-
-
-                if (ImGui::TreeNode("Directional Light"))
-                {
-                    ImGui::SetNextItemWidth(150.0f);
-                    ImGui::ColorPicker3("Color", glm::value_ptr(DLC.Color),
-                                        ImGuiColorEditFlags_DisplayRGB | ImGuiColorEditFlags_NoSidePreview);
-
-                    ImGui::SliderFloat("Intensity", &DLC.Color.a, 0.1f, 200.0f);
-
-                    if (ImGui::DragFloat3("Direction", glm::value_ptr(DLC.Direction)))
-                    {
-                        
-                    }
-
-                    ImGui::TreePop();
-                }
-            }
         });
     }
 
@@ -155,9 +116,9 @@ namespace Lumina
 
                 if (ImGui::BeginMenu(LE_ICON_CAMERA_CONTROL" Camera Control"))
         {
-            float Speed = EditorEntity.GetComponent<FVelocityComponent>().Speed;
+            float Speed = EditorEntity.GetComponent<SVelocityComponent>().Speed;
             ImGui::SliderFloat("Camera Speed", &Speed, 1.0f, 200.0f);
-            EditorEntity.GetComponent<FVelocityComponent>().Speed = Speed;
+            EditorEntity.GetComponent<SVelocityComponent>().Speed = Speed;
             ImGui::EndMenu();
         }
         

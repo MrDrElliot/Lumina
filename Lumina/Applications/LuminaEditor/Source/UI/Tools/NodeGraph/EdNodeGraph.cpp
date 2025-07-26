@@ -164,7 +164,7 @@ namespace Lumina
         
         THashMap<uint32, CEdNodeGraphPin*> PinMap;
         PinMap.reserve(40);
-    
+
         for (uint64 i = 0; i < Nodes.size(); ++i)
         {
             CEdGraphNode* Node = Nodes[i];

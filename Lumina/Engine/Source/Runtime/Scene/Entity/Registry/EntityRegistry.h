@@ -11,7 +11,8 @@ namespace Lumina
 
         FEntityRegistry() = default;
         ~FEntityRegistry() = default;
-    
+
+        
 
     private:
         

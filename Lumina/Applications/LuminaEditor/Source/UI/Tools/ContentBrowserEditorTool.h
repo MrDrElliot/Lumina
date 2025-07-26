@@ -79,7 +79,6 @@ namespace Lumina
 
         FContentBrowserEditorTool(IEditorToolContext* Context)
             : FEditorTool(Context, "Content Browser", nullptr)
-            , OutlinerListView()
             , OutlinerContext()
             , ContentBrowserTileView()
             , ContentBrowserTileViewContext()
@@ -110,12 +109,5 @@ namespace Lumina
 
         std::filesystem::path       SelectedPath;
         ImGui::FileBrowser          FileBrowser;
-
-        FRHIImageRef                FolderIcon;
-        FRHIImageRef                MaterialIcon;
-        FRHIImageRef                CorruptIcon;
-        FRHIImageRef                StaticMeshIcon;
-        FRHIImageRef                TextureIcon;
-
     };
 }

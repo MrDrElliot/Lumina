@@ -29,13 +29,13 @@ namespace Lumina
 
         void PostLoad() override;
         
-        LUM_PROPERTY(Editable, Category = "Graph")
+        LUM_PROPERTY()
         TVector<CObject*> MaterialNodes;
 
         LUM_PROPERTY()
         TVector<uint16> Connections;
         
-        LUM_PROPERTY()
+        LUM_PROPERTY(Editable)
         EMaterialType MaterialType;
 
         

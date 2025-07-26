@@ -26,12 +26,12 @@ namespace Lumina
     {
         double DeltaTime = UpdateContext.GetDeltaTime();
     
-        for (auto CameraEntity : EntityRegistry.view<FEditorComponent, FCameraComponent>())
+        for (auto CameraEntity : EntityRegistry.view<SEditorComponent, SCameraComponent>())
         {
-            FTransformComponent& Transform = EntityRegistry.get<FTransformComponent>(CameraEntity);
-            FCameraComponent& Camera = EntityRegistry.get<FCameraComponent>(CameraEntity);
-            FEditorComponent& Editor = EntityRegistry.get<FEditorComponent>(CameraEntity);
-            FVelocityComponent& Velocity = EntityRegistry.get<FVelocityComponent>(CameraEntity);
+            STransformComponent& Transform = EntityRegistry.get<STransformComponent>(CameraEntity);
+            SCameraComponent& Camera = EntityRegistry.get<SCameraComponent>(CameraEntity);
+            SEditorComponent& Editor = EntityRegistry.get<SEditorComponent>(CameraEntity);
+            SVelocityComponent& Velocity = EntityRegistry.get<SVelocityComponent>(CameraEntity);
     
             if (!Editor.bEnabled)
                 continue;

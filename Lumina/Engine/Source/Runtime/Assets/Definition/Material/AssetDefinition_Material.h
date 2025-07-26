@@ -5,13 +5,6 @@
 #include "Assets/Factories/MaterialFactory/MaterialFactory.h"
 #include "AssetDefinition_Material.generated.h"
 
-
-namespace Lumina
-{
-    class CMaterialFactory;
-    class CMaterial;
-}
-
 namespace Lumina
 {
     LUM_CLASS()
@@ -21,7 +14,7 @@ namespace Lumina
     public:
 
         FString GetAssetDisplayName() const override { return "Material"; }
-        FString GetAssetDescription() const override { return "A materal."; }
+        FString GetAssetDescription() const override { return "A material."; }
         CClass* GetAssetClass() const override { return CMaterial::StaticClass(); }
         CFactory* GetFactory() const override { return GetMutableDefault<CMaterialFactory>(); }
         

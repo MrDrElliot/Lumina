@@ -248,22 +248,6 @@ namespace Lumina::ImGuiX
         ImGui::Dummy( seperatorSize );
         ImGui::SameLine( 0, 0 );
     }
-
-    void DrawObjectProperties(CObject* Object)
-    {
-        CClass* Class = Object->GetClass();
-        FProperty* Current = Class->LinkedProperty;
-        while (Current != nullptr)
-        {
-            ImGui::SeparatorText(Current->Name.c_str());
-
-            // Gets the address of the actual property.
-            void* ValuePtr = Current->GetValuePtr<void>(Object);
-            Current->DrawProperty(ValuePtr);
-            
-            Current = (FProperty*)Current->Next;
-        }
-    }
     
     void ApplicationTitleBar::DrawWindowControls()
     {

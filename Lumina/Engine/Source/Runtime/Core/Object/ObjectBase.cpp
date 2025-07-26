@@ -4,6 +4,7 @@
 #include "Class.h"
 #include "DeferredRegistry.h"
 #include "Lumina.h"
+#include "EASTL/sort.h"
 #include "GarbageCollection/GarbageCollector.h"
 #include "Log/Log.h"
 #include "Memory/Memory.h"
@@ -254,10 +255,39 @@ namespace Lumina
 
             if (ClassRegistry.HasPendingRegistrations())
             {
-                ClassRegistry.ProcessRegistrations([] (CClass& Class)
+                TVector<CClass*> NewClasses;
+                ClassRegistry.ProcessRegistrations([&NewClasses](CClass& Class)
                 {
-                    Class.GetDefaultObject();
+                    NewClasses.push_back(&Class);
                 });
+
+                THashMap<const CClass*, int32> DepthMemo;
+
+                TFunction<int32(const CClass*)> GetClassDepth;
+                GetClassDepth = [&](const CClass* Cls) -> int32
+                {
+                    if (!Cls) return 0;
+
+                    int32& Memo = DepthMemo[Cls];
+                    if (Memo != 0)
+                    {
+                        return Memo;
+                    }
+
+                    Memo = 1 + GetClassDepth(Cls->GetSuperClass());
+                    return Memo;
+                };
+                
+                // Sort by class depth so that base classes come before derived ones
+                eastl::sort(NewClasses.begin(), NewClasses.end(), [&](const CClass* A, const CClass* B)
+                {
+                    return GetClassDepth(A) < GetClassDepth(B);
+                });
+
+                for (CClass* NewClass : NewClasses)
+                {
+                    NewClass->GetDefaultObject();
+                }
             }
         }
         

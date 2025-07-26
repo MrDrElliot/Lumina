@@ -54,6 +54,7 @@ namespace Lumina::Reflection
 {
     inline EPropertyTypeFlags GetCoreTypeFromName(const char* Name)
     {
+        if (Name == nullptr)                            return EPropertyTypeFlags::None;
         if (strcmp(Name, "bool") == 0)                  return EPropertyTypeFlags::Bool;
         if (strcmp(Name, "uint8") == 0)                 return EPropertyTypeFlags::UInt8;
         if (strcmp(Name, "uint16") == 0)                return EPropertyTypeFlags::UInt16;
@@ -65,7 +66,7 @@ namespace Lumina::Reflection
         if (strcmp(Name, "int64") == 0)                 return EPropertyTypeFlags::Int64;
         if (strcmp(Name, "float") == 0)                 return EPropertyTypeFlags::Float;
         if (strcmp(Name, "double") == 0)                return EPropertyTypeFlags::Double;
-        if (strcmp(Name, "CClass") == 0)                return EPropertyTypeFlags::Class;
+        if (strcmp(Name, "Lumina::CClass") == 0)        return EPropertyTypeFlags::Class;
         if (strcmp(Name, "Lumina::FName") == 0)         return EPropertyTypeFlags::Name;
         if (strcmp(Name, "Lumina::FString") == 0)       return EPropertyTypeFlags::String;
         if (strcmp(Name, "Lumina::TVector") == 0)       return EPropertyTypeFlags::Vector;
@@ -95,6 +96,7 @@ namespace Lumina::Reflection
         virtual void DefineSecondaryHeader(eastl::string& Stream, const eastl::string& FileID) = 0;
         virtual void DeclareImplementation(eastl::string& Stream) = 0;
         virtual void DeclareStaticRegistration(eastl::string& Stream) = 0;
+        
         void GenerateMetadata(const eastl::string& InMetadata);
 
         eastl::string                   Project;
@@ -153,7 +155,7 @@ namespace Lumina::Reflection
             Type = EType::Structure;
         }
 
-        void PushProperty(eastl::shared_ptr<FReflectedProperty> NewProperty);
+        void PushProperty(const eastl::shared_ptr<FReflectedProperty>& NewProperty);
 
         eastl::string GetTypeName() const override { return "CStruct"; }
         

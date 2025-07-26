@@ -1,11 +1,12 @@
 #pragma once
 
 #include "RenderComponent.h"
-
+#include "MeshComponent.generated.h"
 namespace Lumina
 {
-    struct FMeshComponent : public FRenderComponent
+    LUM_STRUCT()
+    struct SMeshComponent : SRenderComponent
     {
-        
+        GENERATED_BODY()
     };
 }

@@ -71,7 +71,7 @@ namespace Lumina::Import::Mesh::GLTF
     }
     
 
-    void ImportGLTF(FGLTFImportData& OutData, const FString& RawFilePath)
+    void ImportGLTF(FGLTFImportData& OutData, const FGLTFImportOptions& ImportOptions, const FString& RawFilePath)
     {
         fastgltf::Asset Asset;
         ExtractAsset(&Asset, RawFilePath);
@@ -88,6 +88,7 @@ namespace Lumina::Import::Mesh::GLTF
 
             SIZE_T IndexCount = 0;
 
+            
             for (auto& Material : Asset.materials)
             {
                 FGLTFMaterial NewMaterial;
@@ -96,13 +97,16 @@ namespace Lumina::Import::Mesh::GLTF
                 OutData.Materials[OutData.Resources.size()].push_back(NewMaterial);
             }
 
-            for (auto& Image : Asset.images)
+            if (ImportOptions.bImportTextures)
             {
-                auto& URI = std::get<fastgltf::sources::URI>(Image.data);
-                FGLTFImage GLTFImage;
-                GLTFImage.ByteOffset = URI.fileByteOffset;
-                GLTFImage.RelativePath = URI.uri.c_str();
-                OutData.Textures.push_back(GLTFImage);
+                for (auto& Image : Asset.images)
+                {
+                    auto& URI = std::get<fastgltf::sources::URI>(Image.data);
+                    FGLTFImage GLTFImage;
+                    GLTFImage.ByteOffset = URI.fileByteOffset;
+                    GLTFImage.RelativePath = URI.uri.c_str();
+                    OutData.Textures.push_back(GLTFImage);
+                }
             }
             
             for (auto& Primitive : Mesh.primitives)

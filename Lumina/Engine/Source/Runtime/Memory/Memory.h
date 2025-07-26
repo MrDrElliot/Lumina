@@ -192,7 +192,7 @@ namespace Lumina::Memory
 
     template< typename T, typename ... ConstructorParams >
     requires std::is_constructible_v<T, ConstructorParams...> && (!eastl::is_array_v<T>)
-    NODISCARD inline T* New(ConstructorParams&&... params)
+    NODISCARD T* New(ConstructorParams&&... params)
     {
         void* Memory = Malloc(sizeof(T), alignof(T));
         // std::forward is used instead of eastl::forward to suppress static analysis warnings

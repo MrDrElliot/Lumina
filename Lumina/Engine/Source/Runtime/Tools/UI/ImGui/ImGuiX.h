@@ -49,9 +49,7 @@ namespace Lumina::ImGuiX
     LUMINA_API TPair<bool, uint32> DirectoryTreeViewRecursive(const std::filesystem::path& Path, uint32* Count, int* SelectionMask);
 
     LUMINA_API void SameLineSeparator( float width = 0, const ImColor& color = ImColor(0));
-
-    LUMINA_API void DrawObjectProperties(CObject* Object);
-
+    
     template<typename T>
     bool ObjectSelector(FARFilter& Filter, T*& OutSelected)
     {
@@ -136,6 +134,14 @@ namespace Lumina::ImGuiX
         }
         
         return true;
+    }
+
+    namespace Notifications
+    {
+        LUMINA_API void NotifyInfo( const char* format, ... );
+        LUMINA_API void NotifySuccess( const char* format, ... );
+        LUMINA_API void NotifyWarning( const char* format, ... );
+        LUMINA_API void NotifyError( const char* format, ... );
     }
     
     struct LUMINA_API ApplicationTitleBar

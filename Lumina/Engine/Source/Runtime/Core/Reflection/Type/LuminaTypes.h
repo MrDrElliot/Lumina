@@ -1,6 +1,7 @@
 #pragma once
 #include "imgui.h"
 #include "Core/Object/Field.h"
+#include "Core/Object/ObjectCore.h"
 #include "Core/Serialization/Structured/StructuredArchive.h"
 #include "Core/Templates/Align.h"
 #include "Platform/GenericPlatform.h"
@@ -14,13 +15,23 @@ namespace Lumina
 
 namespace Lumina
 {
+
+#define DECLARE_FPROPERTY(Type) \
+    static EPropertyTypeFlags StaticType() { return Type; } \
+    virtual EPropertyTypeFlags GetType() override { return StaticType(); }
+    
     class FProperty : public FField
     {
     public:
 
-        FProperty(FFieldOwner InOwner, const FPropertyParams* Params)
+        FProperty(const FFieldOwner& InOwner, const FPropertyParams* Params)
             :FField(InOwner)
         {
+            Offset = Params->Offset;
+            Name = Params->Name;
+            Owner = InOwner;
+            TypeFlags = Params->TypeFlags;
+            
             Init();
         }
         
@@ -29,6 +40,7 @@ namespace Lumina
 
         LUMINA_API SIZE_T GetElementSize() const { return ElementSize; }
         LUMINA_API void SetElementSize(SIZE_T Size, SIZE_T Align) { ElementSize = Lumina::Align(ElementSize, Align); }
+        LUMINA_API virtual EPropertyTypeFlags GetType() { return TypeFlags; }
 
         template<typename ValueType>
         ValueType* SetValuePtr(void* ContainerPtr, const ValueType& Value, int32 ArrayIndex = 0)
@@ -61,8 +73,10 @@ namespace Lumina
 
         virtual void Serialize(FArchive& Ar, void* Value) { }
         virtual void SerializeItem(IStructuredArchive::FSlot Slot, void* Value, void const* Defaults = nullptr) { }
+        
+        FString GetTypeAsString() const;
 
-        virtual void DrawProperty(void* ValuePtr) { }
+        const FPropertyMetadata& GetMetadata() const { return Metadata; }
 
     private:
 
@@ -74,6 +88,15 @@ namespace Lumina
 
         /** Linked list of properties from most-derived to base */
         FProperty* PropertyLinkNext;
+
+        /** Specifies the type of property this is */
+        EPropertyTypeFlags  TypeFlags;
+        
+        EPropertyFlags      Flags;
+
+        #ifdef WITH_DEVELOPMENT_TOOLS
+        FPropertyMetadata Metadata;
+        #endif
         
     };
 
@@ -155,8 +178,6 @@ namespace Lumina
         {
             Slot.Serialize(*TTypeInfo::GetPropertyValuePtr(Value));
         }
-
-        void DrawProperty(void* Object) override;
         
     };
 
@@ -187,17 +208,6 @@ namespace Lumina
 
         
     };
-
-    template <typename TBacking, typename TCPPType>
-    void TProperty<TBacking, TCPPType>::DrawProperty(void* Object)
-    {
-        ImGui::PushID(this);
-        TCPPType* Type = (TCPPType*)Object;
-
-        ImGui::Text("%i", *Type);
-
-        ImGui::PopID();
-    }
 
     template <typename TCPPType> requires std::is_arithmetic_v<TCPPType>
     void TProperty_Numeric<TCPPType>::SetIntPropertyValue(void* Data, uint64 Value) const
@@ -247,6 +257,8 @@ namespace Lumina
     public:
         using Super = TProperty_Numeric<bool>;
 
+        DECLARE_FPROPERTY(EPropertyTypeFlags::Bool)
+        
         FBoolProperty(FFieldOwner InOwner, const FPropertyParams* Params)
             : Super(InOwner, Params)
         {}
@@ -256,6 +268,7 @@ namespace Lumina
     {
     public:
         using Super = TProperty_Numeric<int8>;
+        DECLARE_FPROPERTY(EPropertyTypeFlags::Int8)
 
         FInt8Property(FFieldOwner InOwner, const FPropertyParams* Params)
             : Super(InOwner, Params)
@@ -266,6 +279,7 @@ namespace Lumina
     {
     public:
         using Super = TProperty_Numeric<int16>;
+        DECLARE_FPROPERTY(EPropertyTypeFlags::Int16)
 
         FInt16Property(FFieldOwner InOwner, const FPropertyParams* Params)
             : Super(InOwner, Params)
@@ -276,6 +290,7 @@ namespace Lumina
     {
     public:
         using Super = TProperty_Numeric<int32>;
+        DECLARE_FPROPERTY(EPropertyTypeFlags::Int32)
 
         FInt32Property(FFieldOwner InOwner, const FPropertyParams* Params)
             : Super(InOwner, Params)
@@ -286,6 +301,7 @@ namespace Lumina
     {
     public:
         using Super = TProperty_Numeric<int64>;
+        DECLARE_FPROPERTY(EPropertyTypeFlags::Int64)
 
         FInt64Property(FFieldOwner InOwner, const FPropertyParams* Params)
             : Super(InOwner, Params)
@@ -296,6 +312,7 @@ namespace Lumina
     {
     public:
         using Super = TProperty_Numeric<uint8>;
+        DECLARE_FPROPERTY(EPropertyTypeFlags::UInt8)
 
         FUInt8Property(FFieldOwner InOwner, const FPropertyParams* Params)
             : Super(InOwner, Params)
@@ -306,6 +323,7 @@ namespace Lumina
     {
     public:
         using Super = TProperty_Numeric<uint16>;
+        DECLARE_FPROPERTY(EPropertyTypeFlags::UInt16)
 
         FUInt16Property(FFieldOwner InOwner, const FPropertyParams* Params)
             : Super(InOwner, Params)
@@ -316,6 +334,7 @@ namespace Lumina
     {
     public:
         using Super = TProperty_Numeric<uint32>;
+        DECLARE_FPROPERTY(EPropertyTypeFlags::UInt32)
 
         FUInt32Property(FFieldOwner InOwner, const FPropertyParams* Params)
             : Super(InOwner, Params)
@@ -326,6 +345,7 @@ namespace Lumina
     {
     public:
         using Super = TProperty_Numeric<uint64>;
+        DECLARE_FPROPERTY(EPropertyTypeFlags::UInt64)
 
         FUInt64Property(FFieldOwner InOwner, const FPropertyParams* Params)
             : Super(InOwner, Params)
@@ -336,6 +356,7 @@ namespace Lumina
     {
     public:
         using Super = TProperty_Numeric<float>;
+        DECLARE_FPROPERTY(EPropertyTypeFlags::Float)
 
         FFloatProperty(FFieldOwner InOwner, const FPropertyParams* Params)
             : Super(InOwner, Params)
@@ -346,6 +367,7 @@ namespace Lumina
     {
     public:
         using Super = TProperty_Numeric<double>;
+        DECLARE_FPROPERTY(EPropertyTypeFlags::Double)
 
         FDoubleProperty(FFieldOwner InOwner, const FPropertyParams* Params)
             : Super(InOwner, Params)

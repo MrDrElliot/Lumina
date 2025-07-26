@@ -93,7 +93,13 @@ namespace Lumina
 
         TQueue<FEditorTool*>                            ToolsPendingAdd;
 
-    protected:
+    public:
+
+        static FRHIImageRef                             FolderIcon;
+        static FRHIImageRef                             MaterialIcon;
+        static FRHIImageRef                             CorruptIcon;
+        static FRHIImageRef                             StaticMeshIcon;
+        static FRHIImageRef                             TextureIcon;
         
     };
 

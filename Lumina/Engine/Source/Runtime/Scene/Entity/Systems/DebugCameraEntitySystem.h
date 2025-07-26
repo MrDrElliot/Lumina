@@ -2,10 +2,6 @@
 #include "EntitySystem.h"
 #include "glm/glm.hpp"
 
-namespace Lumina
-{
-    class FCameraComponent;
-}
 
 namespace Lumina
 {

@@ -9,7 +9,8 @@ namespace Lumina::Paths
     
     /** Gets the directory where the Lumina engine is installed. */
     LUMINA_API std::filesystem::path GetEngineDirectory();
-    
+
+    LUMINA_API std::filesystem::path GetEngineBinariesDirectory();
 
     /** Returns the parent directory of the given path. */
     LUMINA_API FString Parent(const FString& Path);

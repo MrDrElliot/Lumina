@@ -20,12 +20,13 @@ namespace Lumina::Reflection
     {
         switch (Macro)
         {
-            case EReflectionMacro::Field: return "LUM_PROPERTY";
-            case EReflectionMacro::Method: return "LUM_FUNCTION";
-            case EReflectionMacro::Class: return "LUM_CLASS";
-            case EReflectionMacro::Struct: return "LUM_STRUCT";
-            case EReflectionMacro::Enum: return "LUM_ENUM";
-            case EReflectionMacro::GeneratedBody: return "GENERATED_BODY";
+            case EReflectionMacro::Field:               return "LUM_PROPERTY";
+            case EReflectionMacro::Method:              return "LUM_FUNCTION";
+            case EReflectionMacro::Class:               return "LUM_CLASS";
+            case EReflectionMacro::Struct:              return "LUM_STRUCT";
+            case EReflectionMacro::Enum:                return "LUM_ENUM";
+            case EReflectionMacro::GeneratedBody:       return "GENERATED_BODY";
+            default:                                    return "NONE";
         }
         
         return nullptr;

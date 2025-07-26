@@ -1,7 +1,7 @@
 ﻿#pragma once
 
 #include "Lumina.h"
-#include "Module/Api.h"
+#include "Module/API.h"
 #include "Object.h"
 #include "Core/Functional/Function.h"
 #include "Initializer/ObjectInitializer.h"
@@ -91,6 +91,7 @@ namespace Lumina
 
         
         virtual void SetSuperStruct(CStruct* InSuper);
+        
 
         void RegisterDependencies() override;
         
@@ -173,6 +174,10 @@ namespace Lumina
         {}
         //~ End Internal Use Only Constructors
 
+        CClass* GetSuperClass() const
+        {
+            return (CClass*)GetSuperStruct();
+        }
 
 
         LUMINA_API void SerializeClassProperties(FArchive& Ar, void* Data);
@@ -218,4 +223,35 @@ namespace Lumina
     LUMINA_API void AllocateStaticClass(const TCHAR* Package, const TCHAR* Name, CClass** OutClass, uint32 Size, uint32 Alignment, CClass* (*SuperClassFn)(), CClass::ClassConstructorType InClassConstructor);
 
 
+
+
+    template <typename T>
+    struct TBaseStructureBase
+    {
+        static CStruct* Get()
+        {
+            return T::StaticStruct();
+        }
+    };
+
+    template <typename T>
+    struct TBaseStructure : TBaseStructureBase<T>
+    {
+    };
+
+    template<> struct TBaseStructure<glm::vec2> 
+    {
+        static LUMINA_API CStruct* Get(); 
+    };
+
+    template<> struct TBaseStructure<glm::vec3> 
+    {
+        static LUMINA_API CStruct* Get(); 
+    };
+    
+    template<> struct TBaseStructure<glm::vec4> 
+    {
+        static LUMINA_API CStruct* Get(); 
+    };
+    
 }

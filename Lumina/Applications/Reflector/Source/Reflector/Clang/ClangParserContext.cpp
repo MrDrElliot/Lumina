@@ -82,6 +82,12 @@ namespace Lumina::Reflection
 
     bool FClangParserContext::TryFindGeneratedBodyMacro(eastl::string HeaderID, const CXCursor& Cursor, FReflectionMacro& Macro)
     {
+        // Exported types, we don't care.
+        if (HeaderID.find("manualreflecttypes") != eastl::string::npos)
+        {
+            return true;
+        }
+        
         uint64 Hash = XXH64(HeaderID.c_str(), strlen(HeaderID.c_str()), 0);
         auto headerIter = GeneratedBodyMacros.find(Hash);
         if (headerIter == GeneratedBodyMacros.end())

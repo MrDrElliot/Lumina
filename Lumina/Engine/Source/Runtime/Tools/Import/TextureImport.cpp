@@ -3,6 +3,7 @@
 #include "Paths/Paths.h"
 #include "Renderer/RenderContext.h"
 #include "Renderer/RenderResource.h"
+#define STB_IMAGE_IMPLEMENTATION
 #include "stb_image/stb_image.h"
 
 namespace Lumina::Import::Textures

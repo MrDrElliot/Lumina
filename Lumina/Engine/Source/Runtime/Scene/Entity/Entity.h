@@ -28,11 +28,11 @@ namespace Lumina
         FORCEINLINE entt::entity GetHandle() const          { return EntityHandle; }
         FORCEINLINE entt::entity GetHandleChecked() const   { Assert(EntityHandle != entt::null) return EntityHandle; }
 
-        FORCEINLINE const FName& GetName() const     { return GetConstComponent<FNameComponent>().Name; }
-        FORCEINLINE FTransform GetTransform()        { return GetComponent<FTransformComponent>().GetTransform(); }
-        FORCEINLINE glm::vec3 GetLocation()          { return GetComponent<FTransformComponent>().GetLocation(); }
-        FORCEINLINE glm::quat GetRotation()          { return GetComponent<FTransformComponent>().GetRotation(); }
-        FORCEINLINE glm::vec3 GetScale()             { return GetComponent<FTransformComponent>().GetScale(); }
+        FORCEINLINE const FName& GetName() const     { return GetConstComponent<SNameComponent>().Name; }
+        FORCEINLINE FTransform GetTransform()        { return GetComponent<STransformComponent>().GetTransform(); }
+        FORCEINLINE glm::vec3 GetLocation()          { return GetComponent<STransformComponent>().GetLocation(); }
+        FORCEINLINE glm::quat GetRotation()          { return GetComponent<STransformComponent>().GetRotation(); }
+        FORCEINLINE glm::vec3 GetScale()             { return GetComponent<STransformComponent>().GetScale(); }
 
         FORCEINLINE void Destroy() const             { Assert(Scene != nullptr) Scene->DestroyEntity(*this);  }
 

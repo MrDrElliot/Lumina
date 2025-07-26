@@ -1,7 +1,9 @@
 ﻿#pragma once
 
 #include "Assets/AssetManager/AssetManager.h"
+#include "Core/Object/Class.h"
 #include "Core/Object/Object.h"
+#include "UI/Properties/PropertyTable.h"
 #include "UI/Tools/EditorTool.h"
 
 namespace Lumina
@@ -13,8 +15,10 @@ namespace Lumina
         FAssetEditorTool(IEditorToolContext* Context, const FString& AssetName, CObject* InAsset)
             : FEditorTool(Context, AssetName, nullptr)
             , bAssetLoadBroadcasted(false)
+            , PropertyTable(FPropertyTable(InAsset, InAsset->GetClass()))
         {
             Asset = InAsset;
+            PropertyTable.RebuildTree();
         }
 
         void Deinitialize(const FUpdateContext& UpdateContext) override;
@@ -38,6 +42,6 @@ namespace Lumina
 
         CObject*                    Asset;
         uint8                       bAssetLoadBroadcasted:1;
-
+        FPropertyTable              PropertyTable;
     };
 }

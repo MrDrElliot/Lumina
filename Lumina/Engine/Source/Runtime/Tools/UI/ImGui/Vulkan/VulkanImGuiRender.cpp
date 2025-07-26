@@ -7,7 +7,6 @@
 #include "Core/Engine/Engine.h"
 #include "Core/Profiler/Profile.h"
 #include "Core/Windows/Window.h"
-#include "GUID/GUID.h"
 #include "Renderer/RenderManager.h"
 #include "Renderer/API/Vulkan/VulkanMacros.h"
 #include "Renderer/API/Vulkan/VulkanRenderContext.h"

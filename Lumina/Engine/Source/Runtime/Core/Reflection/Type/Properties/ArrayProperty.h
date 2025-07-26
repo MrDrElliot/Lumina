@@ -11,7 +11,7 @@ namespace Lumina
     public:
 
         
-        FArrayProperty(FFieldOwner InOwner, const FPropertyParams* Params)
+        FArrayProperty(const FFieldOwner& InOwner, const FPropertyParams* Params)
             :FProperty(InOwner, Params)
         {
         }
@@ -24,8 +24,6 @@ namespace Lumina
         void SerializeItem(IStructuredArchive::FSlot Slot, void* Value, void const* Defaults) override;
 
         FProperty* GetInternalProperty() const { return Inner; }
-
-        void DrawProperty(void* Object) override;
     
     private:
 

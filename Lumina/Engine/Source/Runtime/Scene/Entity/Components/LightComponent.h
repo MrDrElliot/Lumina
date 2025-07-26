@@ -1,19 +1,47 @@
 #pragma once
-#include "Component.h"
+
 #include "RenderComponent.h"
-#include "glm/vec4.hpp"
+#include "glm/glm.hpp"
+#include "LightComponent.generated.h"
 
 namespace Lumina
 {
-    struct FPointLightComponent : FRenderComponent
+    LUM_STRUCT()
+    struct LUMINA_API SPointLightComponent : SRenderComponent
     {
-        glm::vec4 LightColor = glm::vec4(1.0f);
+        GENERATED_BODY()
+        ENTITY_COMPONENT()
+        
+        LUM_PROPERTY(Editable, Color, Category = "Light")
+        glm::vec3 LightColor = glm::vec3(1.0f);
+
+        LUM_PROPERTY(Editable, Category = "Light")
+        float Intensity = 1.0f;
+
+        LUM_PROPERTY(Editable, Category = "Light")
+        float Attenuation = 1.0f;
+        
     };
 
-    struct FDirectionalLightComponent : FRenderComponent
+    LUM_STRUCT()
+    struct LUMINA_API SDirectionalLightComponent : SRenderComponent
     {
-        glm::vec4 Direction = glm::vec4(0.0f, -1.0f, 0.0f, 1.0f);
-        glm::vec4 Color = glm::vec4(1.0f);
-        bool CastShadows = true;
+        GENERATED_BODY()
+        ENTITY_COMPONENT()
+
+        LUM_PROPERTY(Editable, Category = "Light")
+        glm::vec3 Direction = glm::vec3(1.0f, 0.0f, 0.0f);
+
+        LUM_PROPERTY(Editable, Color, Category = "Light")
+        glm::vec3 Color = glm::vec4(1.0f);
+
+        LUM_PROPERTY(Editable, Category = "Light")
+        float Intensity = 1.0f;
+
+        LUM_PROPERTY(Editable)
+        bool CastShadows;
     };
+
+    DECLARE_ENTITY_COMPONENT(SPointLightComponent);
+    DECLARE_ENTITY_COMPONENT(SDirectionalLightComponent);
 }

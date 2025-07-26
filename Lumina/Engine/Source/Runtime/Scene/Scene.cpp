@@ -33,7 +33,6 @@ namespace Lumina
 
     void FScene::StartFrame()
     {
-        
     }
     
     void FScene::Update(const FUpdateContext& UpdateContext)
@@ -107,27 +106,27 @@ namespace Lumina
 
         FInlineString desiredName = Name.c_str();
         FInlineString finalName = desiredName;
-        FName finalNameID(finalName.c_str());
+        FName FinalNameID(finalName.c_str());
 
         uint32 counter = 1;
         bool isUniqueName = false;
 
         while (!isUniqueName)
         {
-            isUniqueName = EntityNameMap.find(finalNameID) == EntityNameMap.end();
+            isUniqueName = EntityNameMap.find(FinalNameID) == EntityNameMap.end();
 
             if (!isUniqueName)
             {
                 finalName = GenerateUniqueName(desiredName, counter++);
-                finalNameID = FName(finalName.c_str());
+                FinalNameID = FName(finalName.c_str());
             }
         }
 
         entt::entity NewEntity = EntityRegistry.create();
-        EntityRegistry.emplace<FNameComponent>(NewEntity, finalNameID);
-        EntityRegistry.emplace<FTransformComponent>(NewEntity, Transform);
+        EntityRegistry.emplace<SNameComponent>(NewEntity).Name = FinalNameID;
+        EntityRegistry.emplace<STransformComponent>(NewEntity).Transform = Transform;
         
-        EntityNameMap.insert(TPair<FName, entt::entity>(finalNameID, NewEntity));
+        EntityNameMap.insert(TPair<FName, entt::entity>(FinalNameID, NewEntity));
 
         return Entity(NewEntity, this);
     }

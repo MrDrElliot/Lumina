@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "ObjectCore.h"
+#include "Lumina.h"
 
 enum EInternal { EC_InternalUseOnlyConstructor };
 
@@ -12,8 +13,46 @@ enum EInternal { EC_InternalUseOnlyConstructor };
 #define LUM_CLASS(...)
 #define LUM_STRUCT(...)
 #define LUM_ENUM(...)
-#define LUM_PROPERTY(...)
 #define LUM_FUNCTION(...)
+
+// Define property flags for reflected properties. See ObjectMacros.h for a list.
+#define LUM_PROPERTY(...)
+
+namespace PF
+{
+    /// Flags used to annotate properties with metadata for tooling, editor visibility, serialization, etc.
+    enum
+    {
+        Unknown,
+
+        /** Custom display name for the property */
+        DisplayName,         
+
+        /** This property cannot be edited in editor windows */
+        ReadOnly,
+
+        /** This property can be edited in editor windows */
+        Editable,
+
+        /** Marks this property as representing a color (enables color picker UI, for example) */
+        Color,
+
+        /** Specifies the minimum allowed value (usually used with numeric properties) */
+        Min,
+
+        /** Specifies the maximum allowed value (usually used with numeric properties) */
+        Max,
+
+        /** This property will not be serialized */
+        NotSerialized,
+
+        /** Organizes this property under a named category in the editor UI */
+        Category,
+
+        Count
+    };
+}
+
 
 #define CONCAT_INNER(a, b) a##b
 #define CONCAT(a, b) CONCAT_INNER(a, b)
@@ -46,6 +85,11 @@ enum EInternal { EC_InternalUseOnlyConstructor };
 #if defined(REFLECTION_PARSER)
 
     #define GENERATED_BODY(...)
+    #define LUM_CLASS(...)
+    #define LUM_STRUCT(...)
+    #define LUM_ENUM(...)
+    #define LUM_PROPERTY(...)
+    #define LUM_FUNCTION(...)
 
 #else
 
@@ -146,14 +190,11 @@ public: \
     IMPLEMENT_CLASS(Lumina, TClass) \
     static Lumina::FRegisterCompiledInInfo AutoInitialize_##TClass(&Construct_CClass_Lumina_##TClass, Lumina::TClass::StaticPackage(), TEXT(#TClass));
 
-
-
-enum
-{
-    DisplayName,
-    Editable,
-    
-};
+#ifdef WITH_DEVELOPMENT_TOOLS
+    #define METADATA_PARAMS(x, y) x, y,
+#else
+    #define METADATA_PARAMS(x, y)
+#endif
 
 
 namespace LuminaAsserts_Private

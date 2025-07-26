@@ -17,7 +17,7 @@
 #include "Core/Profiler/Profile.h"
 #include "Entity/Entity.h"
 #include "Entity/Components/LightComponent.h"
-#include "Entity/Components/StaicMeshComponent.h"
+#include "Entity/Components/StaticMeshComponent.h"
 #include "Paths/Paths.h"
 #include "Renderer/RenderContext.h"
 #include "Renderer/RenderManager.h"
@@ -425,7 +425,7 @@ namespace Lumina
         ICommandList* CommandList = RenderContext->GetCommandList(Q_Graphics);
         
         FCameraManager* CameraManager = Scene->GetSceneSubsystem<FCameraManager>();
-        FCameraComponent& CameraComponent = CameraManager->GetActiveCameraEntity().GetComponent<FCameraComponent>();
+        SCameraComponent& CameraComponent = CameraManager->GetActiveCameraEntity().GetComponent<SCameraComponent>();
 
         SceneGlobalData.CameraData.Location =   glm::vec4(CameraComponent.GetPosition(), 1.0f);
         SceneGlobalData.CameraData.View =       CameraComponent.GetViewMatrix();
@@ -477,7 +477,7 @@ namespace Lumina
     {
         ICommandList* CommandList = RenderContext->GetCommandList(ECommandQueue::Graphics);
         {
-            auto Group = Scene->GetMutableEntityRegistry().group<FStaticMeshComponent>(entt::get<FTransformComponent>);
+            auto Group = Scene->GetMutableEntityRegistry().group<SStaticMeshComponent>(entt::get<STransformComponent>);
             SIZE_T WorkSize = Group.size();
             
             RenderBatches.clear();
@@ -493,8 +493,8 @@ namespace Lumina
                 for (uint32 i = 0; i < WorkSize; ++i)
                 {
                     entt::entity Entity = Group[i];
-                    FTransformComponent& TransformComponent = Group.get<FTransformComponent>(Entity);
-                    FStaticMeshComponent& MeshComponent = Group.get<FStaticMeshComponent>(Entity);
+                    STransformComponent& TransformComponent = Group.get<STransformComponent>(Entity);
+                    SStaticMeshComponent& MeshComponent = Group.get<SStaticMeshComponent>(Entity);
 
                     CStaticMesh* Mesh = MeshComponent.StaticMesh;
                     
@@ -638,6 +638,35 @@ namespace Lumina
             CommandList->WriteBuffer(ModelDataBuffer, ModelData.ModelMatrices.data(), 0, ModelData.ModelMatrices.size() * sizeof(glm::mat4));
             CommandList->WriteBuffer(IndirectDrawBuffer, IndirectDrawArguments.data(), 0, IndirectDrawArguments.size() * sizeof(FDrawIndexedIndirectArguments));
         }
+
+        {
+            auto Group = Scene->GetMutableEntityRegistry().group<SPointLightComponent>(entt::get<STransformComponent>);
+            uint32 Index = 0;
+            Group.each([&](auto& PointLightComponent, auto& TransformComponent)
+            {
+                FPointLight Light;
+                Light.Color = glm::vec4(PointLightComponent.LightColor, PointLightComponent.Intensity);
+                Light.Position = glm::vec4(TransformComponent.GetLocation(), 1.0f);
+                LightData.PointLights[Index] = Memory::Move(Light);
+
+                Index++;
+            });
+            LightData.NumPointLights = Group.size();
+        }
+
+        {
+            auto Group = Scene->GetMutableEntityRegistry().group<SDirectionalLightComponent>();
+            Group.each([&](auto& DirectionalLightComponent)
+            {
+                FDirectionalLight DirectionalLight;
+                DirectionalLight.Color = glm::vec4(DirectionalLightComponent.Color, DirectionalLightComponent.Intensity);
+                DirectionalLight.Direction = glm::vec4(DirectionalLightComponent.Direction, 1.0f);
+                LightData.DirectionalLight = Memory::Move(DirectionalLight);
+                LightData.bHasDirectionalLight = true;
+            });
+        }
+
+        CommandList->WriteBuffer(LightDataBuffer, &LightData, 0, sizeof(FSceneLightData));
     }
 
     void FSceneRenderer::ExecutePasses()

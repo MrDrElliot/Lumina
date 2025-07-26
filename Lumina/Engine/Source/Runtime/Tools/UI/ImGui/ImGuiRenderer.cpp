@@ -10,6 +10,7 @@
 #include "Tools/UI/Fonts/FontData_Lexend.h"
 #include "Tools/UI/Fonts/FontData_MaterialDesign.h"
 #include "Tools/UI/Fonts/FontDecompressor.h"
+#include "Tools/UI/Notification/ImGuiNotifications.h"
 
 namespace Lumina
 {
@@ -110,9 +111,9 @@ namespace Lumina
         style.Colors[ImGuiCol_PopupBg] =                ImVec4(0.13f, 0.14f, 0.15f, 1.00f);
         style.Colors[ImGuiCol_Border] =                 ImVec4(0.43f, 0.43f, 0.50f, 0.50f);
         style.Colors[ImGuiCol_BorderShadow] =           ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
-        style.Colors[ImGuiCol_FrameBg] =                ImVec4(0.25f, 0.25f, 0.25f, 1.00f);
-        style.Colors[ImGuiCol_FrameBgHovered] =         ImVec4(0.38f, 0.38f, 0.38f, 1.00f);
-        style.Colors[ImGuiCol_FrameBgActive] =          ImVec4(0.67f, 0.67f, 0.67f, 0.39f);
+        style.Colors[ImGuiCol_FrameBg] =                ImVec4(0.08f, 0.08f, 0.08f, 1.00f);
+        style.Colors[ImGuiCol_FrameBgHovered] =         ImVec4(0.18f, 0.18f, 0.18f, 1.00f);
+        style.Colors[ImGuiCol_FrameBgActive] =          ImVec4(0.37f, 0.37f, 0.37f, 0.39f);
         style.Colors[ImGuiCol_TitleBg] =                ImVec4(0.08f, 0.08f, 0.09f, 1.00f);
         style.Colors[ImGuiCol_TitleBgActive] =          ImVec4(0.08f, 0.08f, 0.09f, 1.00f);
         style.Colors[ImGuiCol_TitleBgCollapsed] =       ImVec4(0.00f, 0.00f, 0.00f, 0.51f);
@@ -138,9 +139,9 @@ namespace Lumina
         style.Colors[ImGuiCol_ResizeGripActive] =       ImVec4(0.26f, 0.59f, 0.98f, 0.95f);
         style.Colors[ImGuiCol_Tab] =                    ImVec4(0.08f, 0.08f, 0.09f, 0.83f);
         style.Colors[ImGuiCol_TabHovered] =             ImVec4(0.33f, 0.34f, 0.36f, 0.83f);
-        style.Colors[ImGuiCol_TabSelected] =              ImVec4(0.23f, 0.23f, 0.24f, 1.00f);
-        style.Colors[ImGuiCol_TabDimmed] =           ImVec4(0.08f, 0.08f, 0.09f, 1.00f);
-        style.Colors[ImGuiCol_TabDimmedSelected] =     ImVec4(0.13f, 0.14f, 0.15f, 1.00f);
+        style.Colors[ImGuiCol_TabSelected] =            ImVec4(0.23f, 0.23f, 0.24f, 1.00f);
+        style.Colors[ImGuiCol_TabDimmed] =				ImVec4(0.08f, 0.08f, 0.09f, 1.00f);
+        style.Colors[ImGuiCol_TabDimmedSelected] =		ImVec4(0.13f, 0.14f, 0.15f, 1.00f);
         style.Colors[ImGuiCol_DockingPreview] =         ImVec4(0.26f, 0.49f, 0.28f, 0.70f);
         style.Colors[ImGuiCol_DockingEmptyBg] =         ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
         style.Colors[ImGuiCol_PlotLines] =              ImVec4(0.61f, 0.61f, 0.61f, 1.00f);
@@ -149,10 +150,13 @@ namespace Lumina
         style.Colors[ImGuiCol_PlotHistogramHovered] =   ImVec4(1.00f, 0.60f, 0.00f, 1.00f);
         style.Colors[ImGuiCol_TextSelectedBg] =         ImVec4(0.26f, 0.59f, 0.98f, 0.35f);
         style.Colors[ImGuiCol_DragDropTarget] =         ImVec4(0.11f, 0.64f, 0.92f, 1.00f);
-        style.Colors[ImGuiCol_NavCursor] =           ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+        style.Colors[ImGuiCol_NavCursor] =				ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
         style.Colors[ImGuiCol_NavWindowingHighlight] =  ImVec4(1.00f, 1.00f, 1.00f, 0.70f);
         style.Colors[ImGuiCol_NavWindowingDimBg] =      ImVec4(0.80f, 0.80f, 0.80f, 0.20f);
         style.Colors[ImGuiCol_ModalWindowDimBg] =       ImVec4(0.80f, 0.80f, 0.80f, 0.35f);
+    	style.Colors[ImGuiCol_CheckMark]        		= ImVec4(0.25f, 1.0f, 0.25f, 1.0f);
+
+    	
         style.GrabRounding = style.FrameRounding =      2.3f;
 
     	style.FramePadding = ImVec2( 6, 6 );
@@ -184,11 +188,12 @@ namespace Lumina
 
     void IImGuiRenderer::EndFrame(const FUpdateContext& UpdateContext)
     {
-
+		
     	ImGuiIO& Io = ImGui::GetIO();
     	Io.DisplaySize.x = (float)GEngine->GetEngineViewport()->GetSize().X;
     	Io.DisplaySize.y = (float)GEngine->GetEngineViewport()->GetSize().Y;
-    	
+
+    	ImGuiX::Notifications::Render();
 		ImGui::Render();
 
     	ImGuiIO& io = ImGui::GetIO();

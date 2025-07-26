@@ -19,9 +19,9 @@ namespace Lumina::Reflection
         void AddReflectedProject(const FReflectedProject& Project);
         void AddReflectedType(FReflectedType* Type);
 
-        bool IsTypeRegistered(const FStringHash& Str);
+        bool IsTypeRegistered(const FStringHash& Str) const;
 
-        bool IsCoreType(const FStringHash& Hash);
+        bool IsCoreType(const FStringHash& Hash) const;
         
         template<typename T>
         requires(eastl::is_base_of_v<FReflectedType, T>)
@@ -29,7 +29,10 @@ namespace Lumina::Reflection
 
         template<typename T>
         requires(eastl::is_base_of_v<FReflectedType, T>)
-        T* GetReflectedTypeChecked(const FStringHash& TypeName);
+        T* GetReflectedTypeChecked(const FStringHash& TypeName) const;
+
+        template<typename T>
+        T* GetReflectedType(const FStringHash& TypeName) const;
 
         eastl::vector<FReflectedProject>                                    ReflectedProjects;
         eastl::hash_map<FStringHash, eastl::vector<FReflectedType*>>        ReflectedTypes;
@@ -59,13 +62,24 @@ namespace Lumina::Reflection
     }
 
     template <typename T> requires (eastl::is_base_of_v<FReflectedType, T>)
-    T* FReflectionDatabase::GetReflectedTypeChecked(const FStringHash& TypeName)
+    T* FReflectionDatabase::GetReflectedTypeChecked(const FStringHash& TypeName) const
     {
         if (!IsTypeRegistered(TypeName))
         {
             std::abort();
         }
         
+        return (T*)TypeHashMap.at(TypeName);
+    }
+
+    template <typename T>
+    T* FReflectionDatabase::GetReflectedType(const FStringHash& TypeName) const
+    {
+        if (TypeHashMap.find(TypeName) == TypeHashMap.end())
+        {
+            return nullptr;
+        }
+
         return (T*)TypeHashMap.at(TypeName);
     }
 }

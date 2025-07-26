@@ -15,6 +15,7 @@
 #include "Tools/UI/ImGui/ImGuiMemoryEditor.h"
 #include "Tools/UI/ImGui/ImGuiRenderer.h"
 #include "Tools/UI/ImGui/ImGuiX.h"
+#include "UI/EditorUI.h"
 
 namespace Lumina
 {
@@ -29,13 +30,7 @@ namespace Lumina
     void FContentBrowserEditorTool::OnInitialize()
     {
         using namespace Import::Textures;
-        IRenderContext* RenderContext = GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext();
-        FString Path = Paths::Combine(Paths::GetEngineResourceDirectory().c_str(), "Textures");
-        FolderIcon          = CreateTextureFromImport(RenderContext, Path + "/Folder.png", false);
-        StaticMeshIcon      = CreateTextureFromImport(RenderContext, Path + "/StaticMeshIcon.png", false);
-        TextureIcon         = CreateTextureFromImport(RenderContext, Path + "/TextureIcon.png", false);
-        MaterialIcon        = CreateTextureFromImport(RenderContext, Path + "/ShaderIcon.png", false);
-        CorruptIcon        = CreateTextureFromImport(RenderContext, Path + "/CorruptAssetIcon.png", false);
+
 
         CreateToolWindow("Content", [this] (const FUpdateContext& Contxt, bool bIsFocused)
         {
@@ -52,32 +47,32 @@ namespace Lumina
         ContentBrowserTileViewContext.DrawItemOverrideFunction = [this] (FTileViewItem* Item) -> bool
         {
             FContentBrowserTileViewItem* ContentItem = static_cast<FContentBrowserTileViewItem*>(Item);
-            ImTextureID ImTexture;
             FString Path = ContentItem->GetPath().generic_string().c_str();
+            ImTextureID ImTexture;
             
             FAssetRegistry* Registry = GEngine->GetEngineSubsystem<FAssetRegistry>();
             if (Registry->IsPathCorrupt(Path))
             {
-                ImTexture = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer()->GetOrCreateImTexture(CorruptIcon);
+                ImTexture = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer()->GetOrCreateImTexture(FEditorUI::CorruptIcon);
             }
             else
             {
                 FAssetData Asset = Registry->GetAsset(Path);
                 if (Asset.ClassName == "CMaterial")
                 {
-                    ImTexture = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer()->GetOrCreateImTexture(MaterialIcon);
+                    ImTexture = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer()->GetOrCreateImTexture(FEditorUI::MaterialIcon);
                 }
                 else if (Asset.ClassName == "CStaticMesh")
                 {
-                    ImTexture = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer()->GetOrCreateImTexture(StaticMeshIcon);
+                    ImTexture = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer()->GetOrCreateImTexture(FEditorUI::StaticMeshIcon);
                 }
                 else if (Asset.ClassName == "CTexture")
                 {
-                    ImTexture = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer()->GetOrCreateImTexture(TextureIcon);
+                    ImTexture = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer()->GetOrCreateImTexture(FEditorUI::TextureIcon);
                 }
                 else
                 {
-                    ImTexture = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer()->GetOrCreateImTexture(FolderIcon);
+                    ImTexture = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer()->GetOrCreateImTexture(FEditorUI::FolderIcon);
                 }
             }
             
@@ -372,9 +367,6 @@ namespace Lumina
         
         if (ImGui::BeginPopup("ContentContextMenu"))
         {
-            ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(10.0f, 5.0f));
-            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(8.0f, 5.0f));
-            
             {
                 const char* FolderIcon = LE_ICON_FOLDER;
                 FString MenuItemName = FString(FolderIcon) + " " + "New Folder";
@@ -428,18 +420,42 @@ namespace Lumina
                         Paths::AddPackageExtension(PathString);
                         MakeUniquePath(PathString);
                         PathString = Paths::RemoveExtension(PathString);
-                        
-                        CObject* Object = Factory->TryCreateNew(PathString);
-                        ToolContext->OpenAssetEditor(Object);
-                        bWroteSomething = true;
 
+                        if (Factory->HasCreationDialogue())
+                        {
+                            ToolContext->PushModal("Create New", {500, 500}, [&](const FUpdateContext& DrawContext)
+                            {
+                                bool bShouldClose = CFactory::ShowCreationDialogue(Factory, PathString);
+                                if (bShouldClose)
+                                {
+                                    RefreshContentBrowser();
+                                    ImGuiX::Notifications::NotifySuccess("Successfully Created: \"%s\"", PathString.c_str());
+                                }
+                        
+                                return bShouldClose;
+                            });
+                        }
+                        else
+                        {
+                            CObject* Object = Factory->TryCreateNew(PathString);
+                            if (Object)
+                            {
+                                ImGuiX::Notifications::NotifySuccess("Successfully Created: \"%s\"", PathString.c_str());
+                                ToolContext->OpenAssetEditor(Object);
+                                bWroteSomething = true;
+                            }
+                            else
+                            {
+                                ImGuiX::Notifications::NotifyError("Failed to create new: \"%s\"", PathString.c_str());
+
+                            }
+                        }
                     }
                 }
                 
                 ImGui::EndMenu();
             }
-            
-            ImGui::PopStyleVar(2);
+
             ImGui::EndPopup();
         }
         
@@ -468,7 +484,8 @@ namespace Lumina
                     }
                 
                     CFactory* Factory = Definition->GetFactory();
-                
+
+                    FString FStringFileName = FilePath.generic_string().c_str();
                     FString NoExtFileName = Paths::RemoveExtension(FilePath.filename().generic_string().c_str());
                     FString PathString = Paths::Combine(SelectedPath.generic_string().c_str(), NoExtFileName.c_str());
                 
@@ -476,13 +493,29 @@ namespace Lumina
                     MakeUniquePath(PathString);
                     PathString = Paths::RemoveExtension(PathString);
 
-                    
-                    FTaskSystem::Get()->ScheduleLambda(1, [this, Factory, FilePath, PathString] (uint32 Start, uint32 End, uint32 ThreadNum_)
+                    if (Factory->HasImportDialogue())
                     {
-                        Factory->TryImport(FilePath.generic_string().c_str(), PathString);
-                        RefreshContentBrowser();
-                    });
-                    bWroteSomething = true;
+                        ToolContext->PushModal("Import", {500, 500}, [this, Factory, FStringFileName, PathString](const FUpdateContext& DrawContext)
+                        {
+                            bool bShouldClose = CFactory::ShowImportDialogue(Factory, FStringFileName, PathString);
+                            if (bShouldClose)
+                            {
+                                RefreshContentBrowser();
+                                ImGuiX::Notifications::NotifySuccess("Successfully Imported: \"%s\"", PathString.c_str());
+                            }
+                    
+                            return bShouldClose;
+                        });
+                    }
+                    else
+                    {
+                        FTaskSystem::Get()->ScheduleLambda(1, [this, Factory, FStringFileName, PathString] (uint32 Start, uint32 End, uint32 ThreadNum_)
+                        {
+                            Factory->TryImport(FStringFileName, PathString);
+                            RefreshContentBrowser();
+                            ImGuiX::Notifications::NotifySuccess("Successfully Imported: \"%s\"", PathString.c_str());
+                        });
+                    }
                 }
             }
         }

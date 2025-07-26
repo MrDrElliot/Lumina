@@ -77,6 +77,7 @@ namespace Lumina
 
     void FMaterialEditorTool::DrawMaterialProperties(const FUpdateContext& UpdateContext)
     {
+        PropertyTable.DrawTree();
     }
 
     void FMaterialEditorTool::DrawMaterialPreview(const FUpdateContext& UpdateContext)
@@ -86,7 +87,7 @@ namespace Lumina
             return;
         }
         
-        ImGuiX::DrawObjectProperties(Asset);
+        //ImGuiX::DrawObjectProperties(Asset);
 
     }
 

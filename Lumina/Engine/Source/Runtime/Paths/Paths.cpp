@@ -16,6 +16,21 @@ namespace Lumina::Paths
         return std::filesystem::canonical(std::filesystem::current_path().parent_path().parent_path() / "Lumina" / "Engine");
     }
 
+    std::filesystem::path GetEngineBinariesDirectory()
+    {
+        const char* luminaDirEnv = std::getenv("LUMINA_DIR");
+
+        if (luminaDirEnv && std::strlen(luminaDirEnv) > 0)
+        {
+#if defined (_DEBUG)
+            return std::filesystem::path(luminaDirEnv) / "Binaries" / "Debug-windows-x86_64";
+#endif
+        }
+
+        // Fallback: Assume the engine is two levels up from the executable
+        return std::filesystem::canonical(std::filesystem::current_path().parent_path().parent_path() / "Lumina" / "Engine");
+    }
+
     FString Parent(const FString& Path)
     {
         return std::filesystem::path(Path.c_str()).parent_path().string().c_str();

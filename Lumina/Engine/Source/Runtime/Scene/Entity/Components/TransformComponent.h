@@ -1,17 +1,29 @@
 #pragma once
 
 #include "Component.h"
+#include "glm/glm.hpp"
 #include "Core/Math/Transform.h"
+#include "TransformComponent.generated.h"
 
 namespace Lumina
 {
-    struct FTransformComponent : public FEntityComponent
+    LUM_STRUCT()
+    struct LUMINA_API STransformComponent : SEntityComponent
     {
-        FTransformComponent(const FTransform& InTransform = FTransform()) : Transform(InTransform) {}
-        FTransformComponent(const glm::vec3& InPosition)
+        GENERATED_BODY()
+        ENTITY_COMPONENT()
+
+        STransformComponent() = default;
+        STransformComponent(const FTransform& InTransform)
+            : Transform(InTransform)
+        {}
+        
+        STransformComponent(const glm::vec3& InPosition)
             :Transform(InPosition)
-        {
-        }
+        {}
+
+        LUM_PROPERTY(Editable, Category = "Transform")
+        FTransform Transform;
         
         inline FTransform& GetTransform() { return Transform; }
         inline void SetTransform(const FTransform& InTransform) { Transform = InTransform; }
@@ -44,8 +56,8 @@ namespace Lumina
         {
             return glm::degrees(glm::eulerAngles(Transform.Rotation));
         }
-
-        FTransform Transform;
     };
+
+    DECLARE_ENTITY_COMPONENT(STransformComponent);
 
 }

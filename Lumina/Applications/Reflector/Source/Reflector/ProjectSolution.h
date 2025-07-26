@@ -2,6 +2,7 @@
 #include <filesystem>
 
 #include "EASTL/string.h"
+#include "ReflectionCore/ReflectedProject.h"
 
 namespace Lumina::Reflection
 {
@@ -14,11 +15,13 @@ namespace Lumina::Reflection
         
         const eastl::string& GetPath() const { return Path; }
         const eastl::string& GetParentPath() const { return ParentPath; }
+        bool DirtyProjectFiles();
 
     private:
 
         eastl::string Path;
         eastl::string ParentPath;
-    
+        eastl::vector<FReflectedProject> ReflectedProjects;
+        
     };
 }

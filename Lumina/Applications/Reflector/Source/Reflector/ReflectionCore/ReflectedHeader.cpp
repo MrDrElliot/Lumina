@@ -2,6 +2,7 @@
 
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 
 #include "Reflector/ReflectionConfig.h"
 
@@ -15,20 +16,27 @@ namespace Lumina::Reflection
         std::filesystem::path FilesystemPath = Path.c_str();
         FileName = FilesystemPath.stem().string().c_str();
     }
+    
     bool FReflectedHeader::Parse()
     {
         std::ifstream HeaderFile(HeaderPath.c_str(), std::ios::in | std::ios::binary | std::ios::ate);
         if (!HeaderFile.is_open())
+        {
             return false;
+        }
 
         std::streamsize FileSize = HeaderFile.tellg();
         if (FileSize <= 0)
+        {
             return false;
+        }
 
         HeaderFile.seekg(0, std::ios::beg);
         eastl::string FileData(FileSize, '\0');
-        if (!HeaderFile.read(&FileData[0], FileSize))
+        if (!HeaderFile.read(FileData.data(), FileSize))
+        {
             return false;
+        }
 
         // Search for any of the macro strings directly in the buffer
         for (uint32_t i = 0; i < (uint32_t)EReflectionMacro::Size; ++i)
@@ -38,7 +46,6 @@ namespace Lumina::Reflection
                 return true;
             }
         }
-
         return false;
     }
 

@@ -14,12 +14,22 @@ namespace Lumina
         }
         else
         {
-            Stream += "{ \"" +  Name + "\"" + ", " + PropertyFlags + ", " + TypeFlags + ", offsetof(" + Outer + ", " + Name + "), };\n";
+            if (Metadata.empty())
+            {
+                Stream += "{ \"" +  Name + "\"" + ", " + PropertyFlags + ", " + TypeFlags + ", offsetof(" + Outer + ", " + Name + "), ""};\n";
+            }
+            else
+            {
+                Stream += "{ \"" +  Name + "\"" + ", " + PropertyFlags + ", " + TypeFlags + ", offsetof(" + Outer + ", " + Name + "), " + "METADATA_PARAMS(std::size(" + Name + "_Metadata), " + Name + "_Metadata)" + "};\n";
+            }
         }
     }
 
     void FReflectedProperty::GenerateMetadata(const eastl::string& InMetadata)
     {
+        if (InMetadata.empty())
+            return;
+        
         FMetadataParser Parser(InMetadata);
         Metadata = eastl::move(Parser.Metadata);
     }

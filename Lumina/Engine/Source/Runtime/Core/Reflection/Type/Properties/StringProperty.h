@@ -7,7 +7,7 @@ namespace Lumina
     {
     public:
 
-        FStringProperty(FFieldOwner InOwner, const FPropertyParams* Params)
+        FStringProperty(const FFieldOwner& InOwner, const FPropertyParams* Params)
             :FProperty(InOwner, Params)
         {
         }

@@ -12,8 +12,8 @@ namespace Lumina
     {
         GENERATED_BODY()
         friend class CStaticMeshFactory;
-    public:
         
+    public:
         
         void Serialize(FArchive& Ar) override;
         void Serialize(IStructuredArchive::FSlot Slot) override;
@@ -21,15 +21,15 @@ namespace Lumina
 
         bool IsReadyForRender() const;
 
-        uint32 GetNumMaterials() const { return Materials.size(); }
+        uint32 GetNumMaterials() const { return (uint32)Materials.size(); }
         CMaterial* GetMaterialAtSlot(SIZE_T Slot) const;
         const FGeometrySurface& GetSurface(SIZE_T Slot) { return MeshResources.GeometrySurfaces[Slot]; }
         const FMeshResource& GetMeshResource() const { return MeshResources; }
         
-        uint32 GetNumVertices() const { return MeshResources.Vertices.size(); }
-        uint32 GetNumIndices() const { return MeshResources.Indices.size(); }
+        SIZE_T GetNumVertices() const { return MeshResources.Vertices.size(); }
+        SIZE_T GetNumIndices() const { return MeshResources.Indices.size(); }
         
-        LUM_PROPERTY(Editable, Category = "Graph")
+        LUM_PROPERTY(Editable, Category = "Materials")
         TVector<CMaterial*> Materials;
     
     private:

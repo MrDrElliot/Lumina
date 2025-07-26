@@ -139,7 +139,7 @@ namespace Lumina::Reflection
         Stream += "#define " + FileID + "_generated_h\n";
 
         Stream += "\n\n\n";
-
+        
         for (FReflectedType* Type : ReflectedTypes)
         {
             Type->DefineInitialHeader(Stream, FileID);
@@ -184,11 +184,18 @@ namespace Lumina::Reflection
         Stream += "#include \"../../../Lumina/Engine/Source/Runtime/Core/Object/Class.h\"\n";
         Stream += "#include \"Renderer/RHIIncl.h\" //@TODO REMOVE THIS CRAP \n";
         Stream += "\n\n";
-    
+
+        eastl::string ProjectAPI = CurrentProject.Name + "_api";
+        ProjectAPI.make_upper();
         // Cross-module references
         Stream += "// Begin Cross-Module References\n";
         for (FReflectedType* Type : ReflectedTypes)
         {
+            if (ProjectAPI == "LUMINA_API")
+            {
+                Stream += ProjectAPI + " "; 
+            }
+            
             Stream += "Lumina::";
             Stream += Type->GetTypeName();
             Stream += "* Construct_";
@@ -201,6 +208,44 @@ namespace Lumina::Reflection
             }
             Stream += Type->DisplayName;
             Stream += "();\n";
+
+            if (FReflectedStruct* Struct = dynamic_cast<FReflectedStruct*>(Type))
+            {
+                for (auto& Property : Struct->Props)
+                {
+                    if (FReflectedType* PropType = ReflectionDatabase->GetReflectedType<FReflectedType>(FStringHash(Property->TypeName)))
+                    {
+                        eastl::string PropProjectAPI = PropType->Project + "_api";
+                        PropProjectAPI.make_upper();
+                    
+                        if (PropProjectAPI != "LUMINA_API")
+                        {
+                            PropProjectAPI = "";
+                        }
+                    
+                        Property->DeclareCrossModuleReference(PropProjectAPI, Stream);
+                    }
+                }
+            }
+
+            if (FReflectedClass* Class = dynamic_cast<FReflectedClass*>(Type))
+            {
+                for (auto& Property : Class->Props)
+                {
+                    if (FReflectedType* PropType = ReflectionDatabase->GetReflectedType<FReflectedType>(FStringHash(Property->TypeName)))
+                    {
+                        eastl::string PropProjectAPI = PropType->Project + "_api";
+                        PropProjectAPI.make_upper();
+                    
+                        if (PropProjectAPI != "LUMINA_API")
+                        {
+                            PropProjectAPI = "";
+                        }
+                    
+                        Property->DeclareCrossModuleReference(PropProjectAPI, Stream);
+                    }
+                }
+            }
         }
         Stream += "// End Cross-Module References\n\n";
     

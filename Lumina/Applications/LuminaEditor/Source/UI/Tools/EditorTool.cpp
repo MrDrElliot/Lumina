@@ -32,13 +32,11 @@ namespace Lumina
         
         if (HasScene())
         {
-            FTransform EditorEntityTransform = FTransform();
-            EditorEntityTransform.Location = {0.0f, 1.0f, 0.0f};
-            EditorEntity = Scene->CreateEntity(EditorEntityTransform, FName("Editor Camera"));
-            EditorEntity.AddComponent<FCameraComponent>();
-            EditorEntity.AddComponent<FEditorComponent>();
-            EditorEntity.AddComponent<FVelocityComponent>().Speed = 50.0f;
-            EditorEntity.AddComponent<FHiddenComponent>();
+            EditorEntity = Scene->CreateEntity(FTransform(), FName("Editor Camera"));
+            EditorEntity.AddComponent<SCameraComponent>();
+            EditorEntity.AddComponent<SEditorComponent>();
+            EditorEntity.AddComponent<SVelocityComponent>().Speed = 50.0f;
+            EditorEntity.AddComponent<SHiddenComponent>();
             
             
             Scene->GetSceneCameraManager()->SetActiveCamera(EditorEntity);
@@ -124,7 +122,7 @@ namespace Lumina
         t = glm::clamp(t, 0.0f, 1.0f);
         float NewFOV = glm::mix(120.0f, 50.0f, t);
 
-        FCameraComponent& CameraComponent = EditorEntity.GetComponent<FCameraComponent>();
+        SCameraComponent& CameraComponent = EditorEntity.GetComponent<SCameraComponent>();
         CameraComponent.SetAspectRatio(AspectRatio);
         CameraComponent.SetFOV(NewFOV);
         
@@ -182,7 +180,7 @@ namespace Lumina
 
     void FEditorTool::SetEditorCameraEnabled(bool bNewEnable)
     {
-        EditorEntity.GetComponent<FEditorComponent>().bEnabled = bNewEnable;
+        EditorEntity.GetComponent<SEditorComponent>().bEnabled = bNewEnable;
     }
 
     void FEditorTool::DrawHelpTextRow(const char* pLabel, const char* pText) const

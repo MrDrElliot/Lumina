@@ -10,30 +10,26 @@ namespace Lumina
     {
     public:
     
-        glm::vec3 Location;   // Position in world space
-        glm::quat Rotation;   // Rotation as a quaternion (no gimbal lock)
-        glm::vec3 Scale;      // Scaling factors
-        glm::mat4 Matrix;
+        glm::vec3 Location;
+        glm::quat Rotation;
+        glm::vec3 Scale;
         
         FTransform()
             : Location(0.0f),
               Rotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f)),
               Scale(1.0f, 1.0f, 1.0f)
-            , Matrix()
         {}
 
         FTransform(const glm::vec3& InPosition)
             : Location(InPosition),
               Rotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f)),
               Scale(1.0f, 1.0f, 1.0f)
-            , Matrix()
         {}
 
         FTransform(const glm::vec3& location, const glm::vec3& eulerAngles, const glm::vec3& scale)
             : Location(location),
               Rotation(glm::quat(glm::radians(eulerAngles))),
               Scale(scale)
-            , Matrix()
         {
         }
 

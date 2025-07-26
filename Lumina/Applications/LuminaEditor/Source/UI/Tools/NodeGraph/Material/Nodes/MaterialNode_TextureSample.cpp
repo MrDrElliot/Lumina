@@ -8,8 +8,6 @@ namespace Lumina
     void CMaterialExpression_TextureSample::Serialize(FArchive& Ar)
     {
         CMaterialExpression::Serialize(Ar);
-
-        Ar << Texture;
     }
 
     void CMaterialExpression_TextureSample::BuildNode()

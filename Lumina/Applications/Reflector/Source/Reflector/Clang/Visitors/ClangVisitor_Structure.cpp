@@ -15,7 +15,7 @@
 namespace Lumina::Reflection::Visitor
 {
 
-    static FFieldInfo CreateFieldInfo(CXCursor Cursor)
+    static FFieldInfo CreateFieldInfo(FClangParserContext* Context, const CXCursor& Cursor)
     {
         eastl::string CursorName = ClangUtils::GetCursorDisplayName(Cursor);
 
@@ -30,6 +30,13 @@ namespace Lumina::Reflection::Visitor
         // Is not a core type.
         if (PropFlags == EPropertyTypeFlags::None)
         {
+            // Try finding it with the current namespace scope.
+            FStringHash TestHash = FStringHash(Context->CurrentNamespace + "::" + TypeSpelling);
+            if (Context->ReflectionDatabase.IsTypeRegistered(TestHash))
+            {
+                TypeSpelling = (Context->CurrentNamespace + "::" + TypeSpelling);
+            }
+            
             if (FieldQualType->isEnumeralType())
             {
                 PropFlags = EPropertyTypeFlags::Enum;
@@ -37,6 +44,10 @@ namespace Lumina::Reflection::Visitor
             else if (FieldQualType->isStructureType())
             {
                 PropFlags = EPropertyTypeFlags::Struct;
+            }
+            else if (FieldQualType->isPointerType())
+            {
+                PropFlags = EPropertyTypeFlags::Object;
             }
         }
 
@@ -49,18 +60,25 @@ namespace Lumina::Reflection::Visitor
         return Info;
     }
 
-    static FFieldInfo CreateSubFieldInfo(const CXType& FieldType)
+    static FFieldInfo CreateSubFieldInfo(FClangParserContext* Context, const CXType& FieldType)
     {
         clang::QualType FieldQualType = ClangUtils::GetQualType(FieldType);
-        eastl::string TypeSpelling = ClangUtils::GetString(clang_getTypeSpelling(FieldType));
-
+        
         eastl::string FieldName; 
         ClangUtils::GetQualifiedNameForType(FieldQualType, FieldName);
+        
         EPropertyTypeFlags PropFlags = GetCoreTypeFromName(FieldName.c_str());
 
         // Is not a core type.
         if (PropFlags == EPropertyTypeFlags::None)
         {
+            // Try finding it with the current namespace scope.
+            FStringHash TestHash = FStringHash(Context->CurrentNamespace + "::" + FieldName);
+            if (Context->ReflectionDatabase.IsTypeRegistered(TestHash))
+            {
+                FieldName = (Context->CurrentNamespace + "::" + FieldName);
+            }
+
             if (FieldQualType->isEnumeralType())
             {
                 PropFlags = EPropertyTypeFlags::Enum;
@@ -174,7 +192,7 @@ namespace Lumina::Reflection::Visitor
                 if (clang_getCursorKind(EnumCursor) == CXCursor_EnumDecl)
                 {
                     CXType UnderlyingType = clang_getEnumDeclIntegerType(EnumCursor);
-                    FFieldInfo SubType = CreateSubFieldInfo(UnderlyingType);
+                    FFieldInfo SubType = CreateSubFieldInfo(Context, UnderlyingType);
                     if (!SubType.Validate(Context))
                     {
                         return false;
@@ -198,7 +216,7 @@ namespace Lumina::Reflection::Visitor
             {
                 NewProperty = CreateProperty<FReflectedArrayProperty>(FieldInfo.Name, FieldInfo.TypeName);
                 const CXType ArgType = clang_Type_getTemplateArgumentAsType(FieldInfo.Type, 0);
-                FFieldInfo ParamFieldInfo = CreateSubFieldInfo(ArgType);
+                FFieldInfo ParamFieldInfo = CreateSubFieldInfo(Context, ArgType);
                 if (!ParamFieldInfo.Validate(Context))
                 {
                     return false;
@@ -243,7 +261,7 @@ namespace Lumina::Reflection::Visitor
         CXCursorKind Kind = clang_getCursorKind(Cursor);
 
         FReflectedStruct* Struct = Context->GetParentReflectedType<FReflectedStruct>();
-        
+
         switch (Kind)
         {
         case(CXCursor_CXXBaseSpecifier):
@@ -259,7 +277,7 @@ namespace Lumina::Reflection::Visitor
                     return CXChildVisit_Continue;
                 }
 
-                FFieldInfo FieldInfo = CreateFieldInfo(Cursor);
+                FFieldInfo FieldInfo = CreateFieldInfo(Context, Cursor);
                 if (!FieldInfo.Validate(Context))
                 {
                     return CXChildVisit_Continue;
@@ -303,11 +321,12 @@ namespace Lumina::Reflection::Visitor
                     return CXChildVisit_Continue;
                 }
                 
-                FFieldInfo FieldInfo = CreateFieldInfo(Cursor);
+                FFieldInfo FieldInfo = CreateFieldInfo(Context, Cursor);
                 if (!FieldInfo.Validate(Context))
                 {
                     return CXChildVisit_Continue;
                 }
+                
                 eastl::shared_ptr<FReflectedProperty> NewProperty;
                 CreatePropertyForType(Context, Class, NewProperty, FieldInfo);
                 NewProperty->GenerateMetadata(Macro.MacroContents);
@@ -343,7 +362,7 @@ namespace Lumina::Reflection::Visitor
         {
             return CXChildVisit_Break;
         }
-
+        
         FReflectedStruct* ReflectedStruct = Context->ReflectionDatabase.GetOrCreateReflectedType<FReflectedStruct>(FStringHash(FullyQualifiedCursorName));
         ReflectedStruct->DisplayName = CursorName;
         ReflectedStruct->Project = Context->Project.Name;
@@ -352,7 +371,7 @@ namespace Lumina::Reflection::Visitor
         ReflectedStruct->LineNumber = ClangUtils::GetCursorLineNumber(Cursor);
         ReflectedStruct->HeaderID = Context->ReflectedHeader.HeaderPath;
         ReflectedStruct->GenerateMetadata(Macro.MacroContents);
-
+        
         if (!Context->CurrentNamespace.empty())
         {
             ReflectedStruct->Namespace = Context->CurrentNamespace;

@@ -107,6 +107,14 @@ namespace Lumina
     {
         SetGameFromCommandLine(argc, argv);
 
+        FString DLLName = ".dll";
+        FString ProjectBinariesPath = Paths::GetEngineBinariesDirectory().generic_string().c_str();
+
+        Platform::PushDLLDirectory(StringUtils::ToWideString(ProjectBinariesPath).c_str());
+        FModuleManager::Get()->LoadModule("PropertyCustomization.dll");
+        Platform::PopDLLDirectory();
+
+        
         // Must be called after module initialization.
         ProcessNewlyLoadedCObjects();
 

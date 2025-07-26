@@ -272,13 +272,24 @@ namespace Lumina
         }
     }
 
-    template<typename TPropertyType>
+    
+    static void ConstructPropertyMetadata(FProperty* NewProperty, uint16 NumMetadata, const FMetaDataPairParam* ParamArray)
+    {
+        for (uint16 i = 0; i < NumMetadata; ++i)
+        {
+            const FMetaDataPairParam& Param = ParamArray[i];
+            NewProperty->Metadata.AddValue(Param.NameUTF8, Param.ValueUTF8);
+        }
+    }
+
+    template<typename TPropertyType, typename TPropertyParamType>
     TPropertyType* NewFProperty(FFieldOwner Owner, const FPropertyParams* Param)
     {
-        TPropertyType* Type = Memory::New<TPropertyType>(Owner, Param);
-        Type->Name = Param->Name;
-        Type->Offset = Param->Offset;
-        Type->Owner = Owner;
+        const TPropertyParamType* TypedParam = static_cast<const TPropertyParamType*>(Param);
+        
+        TPropertyType* Type = Memory::New<TPropertyType>(Owner, TypedParam);
+
+        ConstructPropertyMetadata(Type, TypedParam->NumMetaData, TypedParam->MetaDataArray);
 
         return Type;
     }
@@ -288,7 +299,7 @@ namespace Lumina
     {
         const FPropertyParams* Param = *--Properties;
 
-        // Indicates the property has an assosicated inner property, which would be next in the Properties list.
+        // Indicates the property has an associated inner property, which would be next in the Properties list.
         uint32 ReadMore = 0;
 
         
@@ -297,62 +308,62 @@ namespace Lumina
         switch (Param->TypeFlags)
         {
         case EPropertyTypeFlags::Int8:
-            NewFProperty<FInt8Property>(FieldOwner, Param);
+            NewFProperty<FInt8Property, FNumericPropertyParams>(FieldOwner, Param);
             break;
         case EPropertyTypeFlags::Int16:
-            NewFProperty<FInt16Property>(FieldOwner, Param);
+            NewFProperty<FInt16Property, FNumericPropertyParams>(FieldOwner, Param);
             break;
         case EPropertyTypeFlags::Int32:
-            NewFProperty<FInt32Property>(FieldOwner, Param);
+            NewFProperty<FInt32Property, FNumericPropertyParams>(FieldOwner, Param);
             break;
         case EPropertyTypeFlags::Int64:
-            NewFProperty<FInt64Property>(FieldOwner, Param);
+            NewFProperty<FInt64Property, FNumericPropertyParams>(FieldOwner, Param);
             break;
         case EPropertyTypeFlags::UInt8:
-            NewFProperty<FUInt8Property>(FieldOwner, Param);
+            NewFProperty<FUInt8Property, FNumericPropertyParams>(FieldOwner, Param);
             break;
         case EPropertyTypeFlags::UInt16:
-            NewFProperty<FUInt16Property>(FieldOwner, Param);
+            NewFProperty<FUInt16Property, FNumericPropertyParams>(FieldOwner, Param);
             break;
         case EPropertyTypeFlags::UInt32:
-            NewFProperty<FUInt32Property>(FieldOwner, Param);
+            NewFProperty<FUInt32Property, FNumericPropertyParams>(FieldOwner, Param);
             break;
         case EPropertyTypeFlags::UInt64:
-            NewFProperty<FUInt64Property>(FieldOwner, Param);
+            NewFProperty<FUInt64Property, FNumericPropertyParams>(FieldOwner, Param);
             break;
         case EPropertyTypeFlags::Float:
-            NewFProperty<FFloatProperty>(FieldOwner, Param);
+            NewFProperty<FFloatProperty, FNumericPropertyParams>(FieldOwner, Param);
             break;
         case EPropertyTypeFlags::Double:
-            NewFProperty<FDoubleProperty>(FieldOwner, Param);
+            NewFProperty<FDoubleProperty, FNumericPropertyParams>(FieldOwner, Param);
             break;
         case EPropertyTypeFlags::Bool:
-            NewFProperty<FBoolProperty>(FieldOwner, Param);
+            NewFProperty<FBoolProperty, FNumericPropertyParams>(FieldOwner, Param);
             break;
         case EPropertyTypeFlags::Object:
-            NewFProperty<FObjectProperty>(FieldOwner, Param);
+            NewFProperty<FObjectProperty, FObjectPropertyParams>(FieldOwner, Param);
             break;
         case EPropertyTypeFlags::Class:
             break;
         case EPropertyTypeFlags::Name:
-            NewFProperty<FNameProperty>(FieldOwner, Param);
+            NewFProperty<FNameProperty, FNamePropertyParams>(FieldOwner, Param);
             break;
         case EPropertyTypeFlags::String:
-            NewFProperty<FStringProperty>(FieldOwner, Param);
+            NewFProperty<FStringProperty, FStringPropertyParams>(FieldOwner, Param);
             break;
         case EPropertyTypeFlags::Struct:
-            NewFProperty<FStructProperty>(FieldOwner, Param);
+            NewFProperty<FStructProperty, FStructPropertyParams>(FieldOwner, Param);
             break;
         case EPropertyTypeFlags::Enum:
             {
-                NewProperty = NewFProperty<FEnumProperty>(FieldOwner, Param);
+                NewProperty = NewFProperty<FEnumProperty, FEnumPropertyParams>(FieldOwner, Param);
                 
                 ReadMore = 1;
             }
             break;
         case EPropertyTypeFlags::Vector:
             {
-                NewProperty = NewFProperty<FArrayProperty>(FieldOwner, Param);
+                NewProperty = NewFProperty<FArrayProperty, FArrayPropertyParams>(FieldOwner, Param);
 
                 ReadMore = 1;
             }
@@ -365,7 +376,6 @@ namespace Lumina
         }
 
         --NumProperties;
-        
         for (; ReadMore; --ReadMore)
         {
             FFieldOwner Owner;
@@ -388,21 +398,20 @@ namespace Lumina
 
     void ConstructCClass(CClass** OutClass, const FClassParams& Params)
     {
-        CClass* FinalClass = *OutClass;
+        CClass*& FinalClass = *OutClass;
         if (FinalClass != nullptr)
         {
             return;
         }
         
         FinalClass = Params.RegisterFunc();
-        *OutClass = FinalClass;
 
         CObjectForceRegistration(FinalClass);
         
         InitializeAndCreateFProperties(FinalClass, Params.Params, Params.NumProperties);
-
+        
         // Link this class to its parent. (if it has one).
-        FinalClass->Link();
+        //FinalClass->Link();
     }
 
     void ConstructCEnum(CEnum** OutEnum, const FEnumParams& Params)
@@ -424,21 +433,24 @@ namespace Lumina
 
     void ConstructCStruct(CStruct** OutStruct, const FStructParams& Params)
     {
-        CStruct* FinalClass = *OutStruct;
-        if (FinalClass != nullptr)
-        {
-            return;
-        }
-
-        FinalClass = (CStruct*)Memory::Malloc(Params.SizeOf, Params.AlignOf);
-        FinalClass = ::new (FinalClass) CStruct(nullptr, FName(Params.Name), Params.SizeOf, Params.AlignOf, EObjectFlags::OF_None);
+        FConstructCObjectParams ObjectParms(CStruct::StaticClass());
+        ObjectParms.Name = Params.Name;
+        ObjectParms.Flags = OF_None;
+        ObjectParms.Package = CStruct::StaticPackage();
+        
+        CStruct* FinalClass = (CStruct*)StaticAllocateObject(ObjectParms);
         *OutStruct = FinalClass;
-
+        
         CObjectForceRegistration(FinalClass);
         
         InitializeAndCreateFProperties(FinalClass, Params.Params, Params.NumProperties);
 
-        // Link this class to its parent. (if it has one).
+        if (Params.SuperFunc)
+        {
+            CStruct* SuperStruct = Params.SuperFunc();
+            FinalClass->SetSuperStruct(SuperStruct);
+        }
+        
         FinalClass->Link();
     }
 }

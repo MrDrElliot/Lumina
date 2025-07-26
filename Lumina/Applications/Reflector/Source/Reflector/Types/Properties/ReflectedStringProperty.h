@@ -11,9 +11,25 @@ namespace Lumina
 
         void AppendDefinition(eastl::string& Stream) const override
         {
-            Stream += "{ \"" +  Name + "\"" + ", Lumina::EPropertyFlags::None, " + "Lumina::EPropertyTypeFlags::String," +  " offsetof(" + Outer + ", " + Name + ") };\n";
+            if (bInner)
+            {
+                Stream += "{ \"" +  Name + "\"" + ", Lumina::EPropertyFlags::None, " + "Lumina::EPropertyTypeFlags::String," +  " 0, " " };\n";
+            }
+            else
+            {
+                if (Metadata.empty())
+                {
+                    Stream += "{ \"" +  Name + "\"" + ", Lumina::EPropertyFlags::None, " + "Lumina::EPropertyTypeFlags::String,," +  " offsetof(" + Outer + ", " + Name + ") " " };\n";
+                }
+                else
+                {
+                    Stream += "{ \"" +  Name + "\"" + ", Lumina::EPropertyFlags::None, " + "Lumina::EPropertyTypeFlags::String,," +  " offsetof(" + Outer + ", " + Name + "), " + " METADATA_PARAMS(std::size(" + Name + "_Metadata), " + Name + "_Metadata) " + "};\n";
+                }
+            }
         }
-    
+
+        virtual const char* GetPropertyParamType() const override { return "FStringPropertyParams"; } \
+
     };
 
     class FReflectedNameProperty : public FReflectedProperty
@@ -24,7 +40,24 @@ namespace Lumina
 
         void AppendDefinition(eastl::string& Stream) const override
         {
-            Stream += "{ \"" +  Name + "\"" + ", Lumina::EPropertyFlags::None, " + "Lumina::EPropertyTypeFlags::Name," +  " offsetof(" + Outer + ", " + Name + ") };\n";
+            if (bInner)
+            {
+                Stream += "{ \"" +  Name + "\"" + ", Lumina::EPropertyFlags::None, " + "Lumina::EPropertyTypeFlags::Name," +  " 0, " " };\n";
+            }
+            else
+            {
+                if (Metadata.empty())
+                {
+                    Stream += "{ \"" +  Name + "\"" + ", Lumina::EPropertyFlags::None, " + "Lumina::EPropertyTypeFlags::Name," +  " offsetof(" + Outer + ", " + Name + ") " " };\n";
+                }
+                else
+                {
+                    Stream += "{ \"" +  Name + "\"" + ", Lumina::EPropertyFlags::None, " + "Lumina::EPropertyTypeFlags::Name," +  " offsetof(" + Outer + ", " + Name + "), " + " METADATA_PARAMS(std::size(" + Name + "_Metadata), " + Name + "_Metadata) " + "};\n";
+                }
+            }
         }
+
+        virtual const char* GetPropertyParamType() const override { return "FNamePropertyParams"; } \
+
     };
 }

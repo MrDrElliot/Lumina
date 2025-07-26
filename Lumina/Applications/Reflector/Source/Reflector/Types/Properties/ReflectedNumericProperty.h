@@ -14,7 +14,8 @@ namespace Lumina
             AppendPropertyDef(Stream, "Lumina::EPropertyFlags::None", #TypeFlag); \
         } \
         const char* GetTypeName() override { return TypeNameStr; } \
-    };
+        virtual const char* GetPropertyParamType() const override { return "FNumericPropertyParams"; } \
+    }; \
 
     // Unsigned integer properties
     DEFINE_REFLECTED_NUMERIC_PROPERTY(FReflectedUInt8Property,  Lumina::EPropertyTypeFlags::UInt8,  "UInt8")

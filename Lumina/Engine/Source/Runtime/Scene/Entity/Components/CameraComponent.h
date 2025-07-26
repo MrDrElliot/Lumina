@@ -2,13 +2,18 @@
 #include "Component.h"
 #include "Platform/WindowsPlatform.h"
 #include "Renderer/ViewVolume.h"
+#include "CameraComponent.generated.h"
 
 
 namespace Lumina
 {
-    struct FCameraComponent : FEntityComponent
+    LUM_PROPERTY()
+    struct LUMINA_API SCameraComponent : SEntityComponent
     {
-        FCameraComponent(float fov = 90.0f, float aspect = 16.0f / 9.0f)
+        GENERATED_BODY()
+        ENTITY_COMPONENT()
+        
+        SCameraComponent(float fov = 90.0f, float aspect = 16.0f / 9.0f)
             :ViewVolume(fov, aspect)
         {}
 
@@ -44,5 +49,6 @@ namespace Lumina
         
         FViewVolume ViewVolume;
     };
-    
+
+    DECLARE_ENTITY_COMPONENT(SCameraComponent)
 }

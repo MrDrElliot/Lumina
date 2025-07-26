@@ -15,10 +15,16 @@ namespace Lumina
                 eastl::string CurrentNamespaceScope = Context->CurrentNamespace;
                 if (!CurrentNamespaceScope.empty())
                 {
-                    if (!Context->ReflectionDatabase.IsTypeRegistered(FStringHash(CurrentNamespaceScope + "::" + TypeName)))
+                    eastl::string QualifiedName = eastl::string(CurrentNamespaceScope + "::" + TypeName);
+                    if (!Context->ReflectionDatabase.IsTypeRegistered(FStringHash(QualifiedName)))
                     {
-                        Context->LogError("Failed to find reflected type: Class: %s | Property: %s | Type: %s. Please check the "
-                                          "namespace scope, or specify the fully qualified type.", Context->ReflectedHeader.FileName.c_str(), Name.c_str(), TypeName.c_str());
+                        Context->LogError("Failed to find reflected type: Class: %s | Property: %s | Type: %s or %s. Please check the "
+                                          "namespace scope \"%s\", or specify the fully qualified type.",
+                                          Context->ReflectedHeader.FileName.c_str(),
+                                          Name.c_str(),
+                                          TypeName.c_str(),
+                                          QualifiedName.c_str(),
+                                          CurrentNamespaceScope.c_str());
                         return false;
                     }
                 }

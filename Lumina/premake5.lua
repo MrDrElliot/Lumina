@@ -66,7 +66,6 @@ project "Lumina"
 
 	includedirs
 	{ 
-		"Engine",
 		"Engine/Source",
 		"Engine/Source/Runtime",
 		"Engine/ThirdParty/",
@@ -110,7 +109,7 @@ project "Lumina"
 		defines { "LE_PLATFORM_WINDOWS", }
 		flags { "NoRuntimeChecks", "NoIncrementalLink" }
 		links { "Dbghelp", }
-	    --prebuildcommands { '"%LUMINA_DIR%/Binaries/Release-windows-x86_64/Reflector.exe"' }
+	    prebuildcommands { '"%LUMINA_DIR%/Binaries/Release-windows-x86_64/Reflector.exe"' }
 
 	filter "configurations:Debug"
 		links { "%{VULKAN_SDK}/lib/shaderc_combinedd.lib", }

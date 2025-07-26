@@ -81,7 +81,7 @@ namespace Lumina::Reflection
     {
     }
 
-    void FReflectedStruct::PushProperty(eastl::shared_ptr<FReflectedProperty> NewProperty)
+    void FReflectedStruct::PushProperty(const eastl::shared_ptr<FReflectedProperty>& NewProperty)
     {
         if (Namespace.empty())
         {
@@ -101,13 +101,41 @@ namespace Lumina::Reflection
 
     void FReflectedStruct::DefineInitialHeader(eastl::string& Stream, const eastl::string& FileID)
     {
+        if (!Namespace.empty())
+        {
+            Stream += "namespace " + Namespace + " { struct " + DisplayName + "; }\n";
+        }
+        else
+        {
+            Stream += "\tclass " + DisplayName + ";\n";
+        }
+        eastl::string ProjectAPI = Project + "_api";
+        ProjectAPI.make_upper();
+
+        if (ProjectAPI == "LUMINA_API")
+        {
+            Stream += "LUMINA_API ";
+        }
+        Stream += "Lumina::CStruct* Construct_CStruct_" + Namespace + "_" + DisplayName + "();\n";
+
         
     }
 
     void FReflectedStruct::DefineSecondaryHeader(eastl::string& Stream, const eastl::string& FileID)
     {
+        if (FileID.find("manualreflecttypes") != eastl::string::npos)
+        {
+            Stream += "\n\n";
+            return;
+        }
+
+        
         Stream += "#define " + FileID + "_" + eastl::to_string(GeneratedBodyLineNumber) + "_GENERATED_BODY \\\n";
-        Stream += "\tstatic class CStruct* StaticStruct();\n\n";
+        Stream += "\tstatic class Lumina::CStruct* StaticStruct();\\\n";
+        if (!Parent.empty())
+        {
+            Stream += "\tusing Super = " + Namespace + "::" + Parent + ";\\\n\n";
+        }
 
         Stream += "\n\n";
     }
@@ -123,8 +151,28 @@ namespace Lumina::Reflection
 
         for (const eastl::shared_ptr<FReflectedProperty>& Prop : Props)
         {
+            if (Prop->Metadata.empty())
+            {
+                continue;
+            }
+            
+            Stream += "\tstatic constexpr Lumina::FMetaDataPairParam " + Prop->Name + "_Metadata[] = {\n";
+
+            for (const FMetadataPair& Metadata : Prop->Metadata)
+            {
+                Stream += "\t\t{ \"" + Metadata.Key + "\", \"" + Metadata.Value + "\" },\n";    
+            }
+            
+            Stream += "\n\t};\n";
+        }
+        
+        Stream += "\n";
+
+        for (const eastl::shared_ptr<FReflectedProperty>& Prop : Props)
+        {
             Stream += "\tstatic const Lumina::" + eastl::string(Prop->GetPropertyParamType()) + " " + Prop->Name + ";\n";
         }
+        
         Stream += "\t//...\n\n";
         
         Stream += "\tstatic const Lumina::FStructParams StructParams;\n";
@@ -136,21 +184,24 @@ namespace Lumina::Reflection
         
         Stream += "Lumina::CStruct* Construct_CStruct_" + Namespace + "_" + DisplayName + "()\n";
         Stream += "{\n";
-        Stream += "\tif (!Registration_Info_CStruct_" + Namespace + "_" + DisplayName + ".OuterSingleton)\n";
+        Stream += "\tif (!Registration_Info_CStruct_" + Namespace + "_" + DisplayName + ".InnerSingleton)\n";
         Stream += "\t{\n";
-        Stream += "\t\tLumina::ConstructCStruct(&Registration_Info_CStruct_" + Namespace + "_" + DisplayName + ".OuterSingleton, Construct_CStruct_" + Namespace + "_" + DisplayName + "_Statics::StructParams);\n";
+        Stream += "\t\tLumina::ConstructCStruct(&Registration_Info_CStruct_" + Namespace + "_" + DisplayName + ".InnerSingleton, Construct_CStruct_" + Namespace + "_" + DisplayName + "_Statics::StructParams);\n";
         Stream += "\t}\n";
-        Stream += "\treturn Registration_Info_CStruct_" + Namespace + "_" + DisplayName + ".OuterSingleton;\n";
+        Stream += "\treturn Registration_Info_CStruct_" + Namespace + "_" + DisplayName + ".InnerSingleton;\n";
         Stream += "}\n\n";
-        
-        Stream += "class Lumina::CStruct* " + Namespace + "::" + DisplayName + "::StaticStruct()\n";
-        Stream += "{\n";
-        Stream += "\tif (!Registration_Info_CStruct_" + Namespace + "_" + DisplayName + ".OuterSingleton)\n";
-        Stream += "\t{\n";
-        Stream += "\t\tRegistration_Info_CStruct_" + Namespace + "_" + DisplayName + ".OuterSingleton = Construct_CStruct_" + Namespace + "_" + DisplayName + "();\n";
-        Stream += "\t}\n";
-        Stream += "\treturn Registration_Info_CStruct_" + Namespace + "_" + DisplayName + ".OuterSingleton;\n";
-        Stream += "}\n";
+
+        if (HeaderID.find("manualreflecttypes") == eastl::string::npos)
+        {
+            Stream += "class Lumina::CStruct* " + Namespace + "::" + DisplayName + "::StaticStruct()\n";
+            Stream += "{\n";
+            Stream += "\tif (!Registration_Info_CStruct_" + Namespace + "_" + DisplayName + ".OuterSingleton)\n";
+            Stream += "\t{\n";
+            Stream += "\t\tRegistration_Info_CStruct_" + Namespace + "_" + DisplayName + ".OuterSingleton = Construct_CStruct_" + Namespace + "_" + DisplayName + "();\n";
+            Stream += "\t}\n";
+            Stream += "\treturn Registration_Info_CStruct_" + Namespace + "_" + DisplayName + ".OuterSingleton;\n";
+            Stream += "}\n";
+        }
 
         if (!Props.empty())
         {
@@ -172,7 +223,14 @@ namespace Lumina::Reflection
         }
 
         Stream += "const Lumina::FStructParams Construct_CStruct_" + Namespace + "_" + DisplayName + "_Statics::StructParams = {\n";
-        Stream += "\tnullptr,\n";
+        if (Parent.empty())
+        {
+            Stream += "\tnullptr,\n";
+        }
+        else
+        {
+            Stream += "\t" + Namespace + "::" + DisplayName + "::" + "Super::StaticStruct,\n";
+        }
         Stream += "\t\"" + DisplayName + "\",\n";
         
         if (!Props.empty())
@@ -183,7 +241,7 @@ namespace Lumina::Reflection
         else
         {
             Stream += "\tnullptr,\n";
-            Stream += "\t0\n";
+            Stream += "\t0,\n";
         }
 
         Stream += "\tsizeof(" + Namespace + "::" + DisplayName + "),\n";
@@ -218,16 +276,18 @@ namespace Lumina::Reflection
 
         if (!Namespace.empty())
         {
-            Stream += "namespace " + Namespace + "\n";
-            Stream += "{\n";
-            Stream += "\tclass " + DisplayName + ";\n";
-            Stream += "}\n";
+            Stream += "namespace " + Namespace + " { class " + DisplayName + "; }\n";
         }
         else
         {
             Stream += "\tclass " + DisplayName + ";\n";
         }
 
+        if (LowerProject == "lumina")
+        {
+            Stream += "LUMINA_API ";
+        }
+        Stream += "Lumina::CClass* Construct_CClass_" + Namespace + "_" + DisplayName + "();\n";
         
         Stream += "#define " + FileID + "_" + eastl::to_string(LineNumber) + "_CLASS \\\n";
         Stream += "private: \\\n";
@@ -339,6 +399,6 @@ namespace Lumina::Reflection
 
     void FReflectedClass::DeclareStaticRegistration(eastl::string& Stream)
     {
-        Stream += "\t{ Construct_CClass_" + Namespace + "_" + DisplayName + ", TEXT(\"script://\"), TEXT(\"" + DisplayName + "\") },\n";
+        Stream += "\t{ Construct_CClass_" + Namespace + "_" + DisplayName + ", " + "TEXT(\"script://\"), TEXT(\"" + DisplayName + "\") },\n";
     }
 }

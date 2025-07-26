@@ -4,6 +4,7 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include "EditorToolContext.h"
 #include "Assets/AssetRegistry/AssetRegistry.h"
+#include "Core/Object/ObjectIterator.h"
 #include "glm/gtx/matrix_decompose.hpp"
 #include "Scene/SceneManager.h"
 #include "Scene/SceneRenderer.h"
@@ -11,7 +12,7 @@
 #include "Scene/Entity/Components/NameComponent.h"
 #include "Scene/Entity/Components/EditorComponent.h"
 #include "Scene/Entity/Components/LightComponent.h"
-#include "Scene/Entity/Components/StaicMeshComponent.h"
+#include "Scene/Entity/Components/StaticMeshComponent.h"
 #include "Scene/Entity/Components/VelocityComponent.h"
 #include "Tools/UI/ImGui/ImGuiX.h"
 
@@ -46,7 +47,7 @@ namespace Lumina
             for (FTreeListViewItem* Item : Items)
             {
                 FEntityListViewItem* EntityListItem = static_cast<FEntityListViewItem*>(Item);
-                if (EntityListItem->GetEntity().HasComponent<FEditorComponent>())
+                if (EntityListItem->GetEntity().HasComponent<SEditorComponent>())
                 {
                     continue;
                 }
@@ -61,11 +62,9 @@ namespace Lumina
 
                         bool bComponentAdded = false;
 
-                        ImGuiTableFlags TableFlags = ImGuiTableFlags_Resizable | ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_ScrollY;
-                        TableFlags |= ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuterH | ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_BordersV;
-
-                        ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(2, 2));
-                        if (ImGui::BeginTable("AddComponentTable", 1, TableFlags, ImVec2(ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x / 2, -1)))
+                        float const tableHeight = ImGui::GetContentRegionAvail().y - ImGui::GetFrameHeightWithSpacing() - ImGui::GetStyle().ItemSpacing.y;
+                        ImGui::PushStyleColor(ImGuiCol_Header, IM_COL32(40, 40, 40, 255));
+                        if (ImGui::BeginTable("Options List", 1, ImGuiTableFlags_NoSavedSettings | ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollY, ImVec2(ImGui::GetContentRegionAvail().x, tableHeight)))
                         {
                             ImGui::PushID(Item);
                             ImGui::TableSetupColumn("Label", ImGuiTableColumnFlags_WidthStretch);
@@ -73,32 +72,39 @@ namespace Lumina
                             ImGui::TableNextRow();
                             ImGui::TableSetColumnIndex(0);
 
-                            if (ImGui::Selectable("Directional Light"))
+                            for (TObjectIterator<CStruct> It; It; ++It)
                             {
-                                Ent.AddComponent<FDirectionalLightComponent>();
-                                Ent.AddComponent<FNeedsRenderProxyUpdate>();
-                                bComponentAdded = true;
+                                CStruct* Struct = *It;
+                                if (Struct->IsChildOf(SEntityComponent::StaticStruct()))
+                                {
+                                    Components::ComponentAddFn Fn = Components::GetEntityComponentCreationFn(Struct);
+                                    if (Fn)
+                                    {
+                                        if (ImGui::Selectable(Struct->GetName().c_str(), false, ImGuiSelectableFlags_SpanAllColumns))
+                                        {
+                                            Fn(Scene->GetMutableEntityRegistry(), SelectedEntity.GetHandle());
+                                            bComponentAdded = true;
+                                        }
+                                    }
+                                }
                             }
                             
-                            if (ImGui::Selectable("Point Light"))
-                            {
-                                Ent.AddComponent<FPointLightComponent>();
-                                Ent.AddComponent<FNeedsRenderProxyUpdate>();
-                                bComponentAdded = true;
-                            }
-
-                            if (ImGui::Selectable("Static Mesh"))
-                            {
-                                Ent.AddComponent<FStaticMeshComponent>();
-                                Ent.AddComponent<FNeedsRenderProxyUpdate>();
-                                bComponentAdded = true;
-                            }
-
                             ImGui::PopID();
                             ImGui::EndTable();
                         }
-                        ImGui::PopStyleVar();
+                        
+                        ImGui::PopStyleColor();
 
+                        if (ImGui::Button("Cancel"))
+                        {
+                            return true;
+                        }
+                        
+                        if (bComponentAdded)
+                        {
+                            RebuildPropertyTables();
+                        }
+                        
                         return bComponentAdded;
                     });
                 }
@@ -122,7 +128,7 @@ namespace Lumina
 
         OutlinerContext.RebuildTreeFunction = [this](FTreeListView* Tree)
         {
-            for (auto entity : Scene->GetConstEntityRegistry().view<FNameComponent>(entt::exclude<FHiddenComponent>))
+            for (auto entity : Scene->GetConstEntityRegistry().view<SNameComponent>(entt::exclude<SHiddenComponent>))
             {
                 Entity NewEntity(entity, Scene);
                 OutlinerListView.AddItemToTree<FEntityListViewItem>(nullptr, eastl::move(NewEntity));
@@ -131,6 +137,7 @@ namespace Lumina
         
         OutlinerContext.ItemSelectedFunction = [this](FTreeListViewItem* Item)
         {
+            
             if (Item == nullptr)
             {
                 SelectedEntity = Entity();
@@ -140,6 +147,8 @@ namespace Lumina
             FEntityListViewItem* EntityListItem = static_cast<FEntityListViewItem*>(Item);
             
             SelectedEntity = EntityListItem->GetEntity();
+
+            RebuildPropertyTables();
         };
 
         OutlinerListView.MarkTreeDirty();
@@ -168,9 +177,9 @@ namespace Lumina
     {
         if (ImGui::BeginMenu(LE_ICON_CAMERA_CONTROL" Camera Control"))
         {
-            float Speed = EditorEntity.GetComponent<FVelocityComponent>().Speed;
+            float Speed = EditorEntity.GetComponent<SVelocityComponent>().Speed;
             ImGui::SliderFloat("Camera Speed", &Speed, 1.0f, 200.0f);
-            EditorEntity.GetComponent<FVelocityComponent>().Speed = Speed;
+            EditorEntity.GetComponent<SVelocityComponent>().Speed = Speed;
             ImGui::EndMenu();
         }
         
@@ -255,8 +264,8 @@ namespace Lumina
         
         ImGuizmo::SetDrawlist(ImGui::GetCurrentWindow()->DrawList);
     
-        FCameraComponent& CameraComponent = EditorEntity.GetComponent<FCameraComponent>();
-        FTransformComponent& TransformComponent = SelectedEntity.GetComponent<FTransformComponent>();
+        SCameraComponent& CameraComponent = EditorEntity.GetComponent<SCameraComponent>();
+        STransformComponent& TransformComponent = SelectedEntity.GetComponent<STransformComponent>();
     
         glm::mat4 Matrix = TransformComponent.Transform.GetMatrix();
     
@@ -289,15 +298,14 @@ namespace Lumina
 
     void FSceneEditorTool::DrawOutliner(const FUpdateContext& UpdateContext, bool bFocused)
     {
-        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.15f, 0.65f, 0.15f, 1.0f));
-        if (ImGui::Button("Create New Entity", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f)))
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.15f, 0.35f, 0.15f, 1.0f));
+        if (ImGui::Button("Create New Entity", ImVec2(ImGui::GetContentRegionAvail().x / 2, 0.0f)))
         {
             CreateEntity();
         }
         ImGui::PopStyleColor();
         
         OutlinerListView.Draw(OutlinerContext);
-        
     }
 
     void FSceneEditorTool::DrawEntityEditor(const FUpdateContext& UpdateContext, bool bFocused)
@@ -308,108 +316,74 @@ namespace Lumina
             return;
         }
 
-        ImGui::BeginChild("EntityEditor", ImVec2(0, 200), true);
+        ImGui::BeginChild("EntityEditor", ImGui::GetContentRegionAvail(), true);
 
-        if (SelectedEntity.HasComponent<FPointLightComponent>())
+        for (FPropertyTable* Table : PropertyTables)
         {
-            auto& Light = SelectedEntity.GetComponent<FPointLightComponent>();
+            ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.0f);
+            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(4, 6));
 
-            ImGui::Text("Point Light Component");
+            ImVec2 cursor = ImGui::GetCursorScreenPos();
+            ImVec2 size = ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetFrameHeight());
+            ImU32 bgColor = IM_COL32(60, 60, 60, 255);
+            ImGui::GetWindowDrawList()->AddRectFilled(cursor, ImVec2(cursor.x + size.x, cursor.y + size.y), bgColor);
 
-            glm::vec3 color = glm::vec3(Light.LightColor);
-            float intensity = Light.LightColor.a;
+            ImGui::PushStyleColor(ImGuiCol_Header,        0);
+            ImGui::PushStyleColor(ImGuiCol_HeaderHovered, 0);
+            ImGui::PushStyleColor(ImGuiCol_HeaderActive,  0);
 
-            if (ImGui::ColorEdit3("Color", glm::value_ptr(color)))
+            if (ImGui::CollapsingHeader(Table->GetType()->GetName().c_str(), ImGuiTreeNodeFlags_DefaultOpen))
             {
-                Light.LightColor.r = color.r;
-                Light.LightColor.g = color.g;
-                Light.LightColor.b = color.b;
-                SelectedEntity.AddComponent<FNeedsRenderProxyUpdate>();
-            }
-
-            if (ImGui::DragFloat("Intensity", &intensity, 0.1f, 0.0f, 100.0f))
-            {
-                Light.LightColor.a = intensity;
-                SelectedEntity.AddComponent<FNeedsRenderProxyUpdate>();
-            }
-
-            ImGui::Separator();
-        }
-
-        if (SelectedEntity.HasComponent<FDirectionalLightComponent>())
-        {
-            auto& Light = SelectedEntity.GetComponent<FDirectionalLightComponent>();
-
-            ImGui::Text("Directional Light Component");
-            float Intensity = Light.Color.a;
-
-            glm::vec4 dir = Light.Direction;
-            if (ImGui::SliderFloat3("Direction", &dir.x, -1.0f, 1.0f))
-            {
-                Light.Direction = dir;
-                SelectedEntity.AddComponent<FNeedsRenderProxyUpdate>();
-            }
-
-            glm::vec3 Color = glm::vec3(Light.Color);
-            if (ImGui::ColorEdit3("Color", glm::value_ptr(Light.Color)))
-            {
-                Light.Color.r = Color.r;
-                Light.Color.g = Color.g;
-                Light.Color.b = Color.b;
-                SelectedEntity.AddComponent<FNeedsRenderProxyUpdate>();
-            }
-            
-            if (ImGui::DragFloat("Intensity", &Intensity, 0.1f, 0.0f, 100.0f))
-            {
-                Light.Color.a = Intensity;
-                SelectedEntity.AddComponent<FNeedsRenderProxyUpdate>();
-            }
-        }
-
-        // Static Mesh Component UI
-        if (SelectedEntity.HasComponent<FStaticMeshComponent>())
-        {
-            auto& MeshComp = SelectedEntity.GetComponent<FStaticMeshComponent>();
-
-            float ButtonWidth = ImGui::GetContentRegionAvail().x;
-
-            const char* Label = MeshComp.StaticMesh ? MeshComp.StaticMesh->GetName().c_str() : "nullptr";
-
-            ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.0f);
-            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(8, 4));
-            ImVec4 BgColor = MeshComp.StaticMesh ? ImVec4(0.2f, 0.25f, 0.3f, 1.0f) : ImVec4(0.3f, 0.1f, 0.1f, 1.0f);
-            ImGui::PushStyleColor(ImGuiCol_Button, BgColor);
-            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(BgColor.x + 0.1f, BgColor.y + 0.1f, BgColor.z + 0.1f, 1.0f));
-            ImGui::PushStyleColor(ImGuiCol_ButtonActive, BgColor);
-
-            if (ImGui::Button(Label, ImVec2(ButtonWidth, 0)))
-            {
-                ImGui::OpenPopup("ObjectSelectorPopup");
+                ImGui::Indent();
+                Table->DrawTree();
+                ImGui::Unindent();
             }
 
             ImGui::PopStyleColor(3);
             ImGui::PopStyleVar(2);
 
-            if (ImGui::BeginPopup("ObjectSelectorPopup"))
-            {
-                FARFilter Filter;
-                if (ImGuiX::ObjectSelector(Filter, MeshComp.StaticMesh))
-                {
-                    SelectedEntity.AddComponent<FNeedsRenderProxyUpdate>();
-                }
-            
-                ImGui::EndPopup();
-            }
-            
-            ImGui::Separator();
+            ImGui::Spacing();
         }
-        
+
         ImGui::EndChild();
     }
 
     void FSceneEditorTool::DrawPropertyEditor(const FUpdateContext& UpdateContext, bool bFocused)
     {
         
+    }
+
+    void FSceneEditorTool::RebuildPropertyTables()
+    {
+        for (FPropertyTable* Table : PropertyTables)
+        {
+            Memory::Delete(Table);
+        }
+
+        PropertyTables.clear();
+
+        if (SelectedEntity)
+        {
+            for (auto&& Curr : Scene->GetMutableEntityRegistry().storage())
+            {
+                auto& Storage = Curr.second;
+                if (Storage.contains(SelectedEntity.GetHandle()))
+                {
+                    void* ComponentPtr = Storage.value(SelectedEntity.GetHandle());
+                    if (ComponentPtr == nullptr)
+                    {
+                        continue;
+                    }
+                    
+                    SEntityComponent* EntityComponent = (SEntityComponent*)ComponentPtr;
+                    CStruct* Type = EntityComponent->GetType();
+                    if (Type != nullptr)
+                    {
+                        PropertyTables.emplace_back(Memory::New<FPropertyTable>(ComponentPtr, Type))->RebuildTree();
+                    }
+                }
+            }
+        }
     }
 
     void FSceneEditorTool::CreateEntity()

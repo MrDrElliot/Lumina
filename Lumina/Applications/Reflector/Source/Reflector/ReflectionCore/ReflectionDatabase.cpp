@@ -45,12 +45,12 @@ namespace Lumina::Reflection
         
     }
 
-    bool FReflectionDatabase::IsTypeRegistered(const FStringHash& Str)
+    bool FReflectionDatabase::IsTypeRegistered(const FStringHash& Str) const
     {
         return TypeHashMap.find(Str) != TypeHashMap.end() || IsCoreType(Str);
     }
 
-    bool FReflectionDatabase::IsCoreType(const FStringHash& Hash)
+    bool FReflectionDatabase::IsCoreType(const FStringHash& Hash) const
     {
         EPropertyTypeFlags Flags = GetCoreTypeFromName(Hash.c_str());
 

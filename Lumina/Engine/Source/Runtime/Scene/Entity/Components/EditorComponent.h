@@ -4,10 +4,10 @@
 namespace Lumina
 {
 
-    struct FEditorComponent : FEntityComponent
+    struct SEditorComponent : SEntityComponent
     {
         bool bEnabled = true;
     };
 
-    struct FHiddenComponent : FEntityComponent { };
+    struct SHiddenComponent : SEntityComponent { };
 }

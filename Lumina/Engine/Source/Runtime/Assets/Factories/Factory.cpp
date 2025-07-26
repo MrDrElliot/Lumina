@@ -2,6 +2,7 @@
 
 #include "Core/Object/Package/Package.h"
 #include "Paths/Paths.h"
+#include "TaskSystem/TaskSystem.h"
 
 namespace Lumina
 {
@@ -16,4 +17,23 @@ namespace Lumina
         return New;
     }
 
+    bool CFactory::ShowImportDialogue(CFactory* Factory, const FString& RawPath, const FString& DestinationPath)
+    {
+        bool bShouldClose = false;
+        if (Factory->DrawImportDialogue(RawPath, DestinationPath, bShouldClose))
+        {
+            FTaskSystem::Get()->ScheduleLambda(1, [Factory, RawPath, DestinationPath](uint32 Start, uint32 End, uint32 Thread)
+            {
+                Factory->TryImport(RawPath, DestinationPath);
+            });
+        }
+
+        return bShouldClose;
+    }
+
+    bool CFactory::ShowCreationDialogue(CFactory* Factory, const FString& Path)
+    {
+        bool bBah = false;
+        return Factory->DrawCreationDialogue(Path, bBah);
+    }
 }

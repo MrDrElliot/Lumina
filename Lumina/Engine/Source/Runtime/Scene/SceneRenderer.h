@@ -13,13 +13,11 @@
 namespace Lumina
 {
     class CStaticMesh;
-    struct FStaticMeshComponent;
     class FPrimitiveDrawManager;
     struct FMaterialTexturesData;
     class FSceneUpdateContext;
     class AMaterialInstance;
     class FScene;
-    class Material;
     class FRenderer;
     class AStaticMesh;
     class FBuffer;

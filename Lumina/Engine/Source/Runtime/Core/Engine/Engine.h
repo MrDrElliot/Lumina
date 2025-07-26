@@ -53,6 +53,10 @@ namespace Lumina
 
         void SetEngineViewportSize(const FIntVector2D& InSize);
 
+        #if WITH_DEVELOPMENT_TOOLS
+        IDevelopmentToolUI* GetDevelopmentToolsUI() const { return DeveloperToolUI; }
+        #endif
+
         template<typename T>
         T* GetEngineSubsystem()
         {

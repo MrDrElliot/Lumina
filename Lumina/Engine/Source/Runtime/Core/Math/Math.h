@@ -4,6 +4,8 @@
 #include "Core/Serialization/Archiver.h"
 #include <random>
 
+#include "glm/glm.hpp"
+
 namespace Lumina
 {
     namespace Math
@@ -305,5 +307,9 @@ namespace Lumina
     using FIntVector2D = TVector2D<int>;
     using FIntVector3D = TVector2D<int>;
     using FIntVector4D = TVector2D<int>;
+
+    static_assert(sizeof(FVector2D) == sizeof(glm::vec2));
+    static_assert(sizeof(FVector3D) == sizeof(glm::vec3));
+    static_assert(sizeof(FVector4D) == sizeof(glm::vec4));
 
 }

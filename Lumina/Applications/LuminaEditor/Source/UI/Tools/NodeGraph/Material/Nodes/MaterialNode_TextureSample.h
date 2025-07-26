@@ -23,7 +23,8 @@ namespace Lumina
         uint32 GenerateExpression(FMaterialCompiler* Compiler) override;
         void GenerateDefinition(FMaterialCompiler* Compiler) override;
         void SetNodeValue(void* Value) override { Texture = (CTexture*)Value; }
-        
+
+        LUM_PROPERTY()
         CTexture* Texture = nullptr;
     };
 }

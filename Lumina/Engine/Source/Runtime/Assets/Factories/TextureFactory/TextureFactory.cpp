@@ -1,7 +1,6 @@
 #include "TextureFactory.h"
 
 #define STB_IMAGE_IMPLEMENTATION
-#include <ThirdParty/stb_image/stb_image.h>
 
 #include "Assets/AssetHeader.h"
 #include "Assets/AssetTypes/Textures/Texture.h"

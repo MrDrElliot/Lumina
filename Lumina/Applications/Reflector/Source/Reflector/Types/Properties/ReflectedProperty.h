@@ -18,6 +18,8 @@ namespace Lumina
         virtual const char* GetTypeName() = 0;
         eastl::string GetDisplayName() const { return Name; }
         void GenerateMetadata(const eastl::string& InMetadata);
+
+        virtual void DeclareCrossModuleReference(const eastl::string& API, eastl::string& Stream) { }
         
         eastl::string                   TypeName;
         eastl::string                   Namespace;

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Source/Runtime/Events/KeyCodes.h"
+#include "Events/KeyCodes.h"
 #include "Core/Windows/Window.h"
 #include <GLFW/glfw3.h>
 

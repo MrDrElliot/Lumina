@@ -45,6 +45,7 @@ namespace Lumina
 
     void CStruct::Link()
     {
+
         if (bLinked) return;
         bLinked = true;
 
@@ -72,6 +73,7 @@ namespace Lumina
             }
         }
     }
+
 
     FProperty* CStruct::GetProperty(const FName& Name)
     {
@@ -103,6 +105,7 @@ namespace Lumina
             }
             Current->Next = Property;
         }
+        
         Property->Next = nullptr;
     }
 

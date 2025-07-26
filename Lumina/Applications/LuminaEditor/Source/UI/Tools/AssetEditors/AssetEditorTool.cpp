@@ -3,6 +3,7 @@
 #include "Paths/Paths.h"
 #include "Platform/Filesystem/FileHelper.h"
 #include "Core/Object/Package/Package.h"
+#include "Tools/UI/ImGui/ImGuiX.h"
 
 namespace Lumina
 {
@@ -16,6 +17,16 @@ namespace Lumina
     {
         FString FullPath = Paths::ResolveVirtualPath(Asset->GetPathName());
         Paths::AddPackageExtension(FullPath);
-        CPackage::SavePackage(Asset->GetPackage(), Asset, FullPath.c_str());
+        bool bSuccess = CPackage::SavePackage(Asset->GetPackage(), Asset, FullPath.c_str());
+
+        if (bSuccess)
+        {
+            ImGuiX::Notifications::NotifySuccess("Successfully saved package: \"%s\"", Asset->GetPathName().c_str());
+        }
+        else
+        {
+            ImGuiX::Notifications::NotifyError("Failed to save package: \"%s\"", Asset->GetPathName().c_str());
+        }
+
     }
 }

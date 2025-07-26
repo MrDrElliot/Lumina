@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "ConstructObjectParams.h"
+#include "Lumina.h"
 #include "Module/API.h"
 #include "ObjectFlags.h"
 #include "Containers/Array.h"
@@ -91,38 +92,75 @@ namespace Lumina
     ENUM_CLASS_FLAGS(EPropertyFlags);
 
     /** This must reflect EPropertyTypeFlags found in ReflectedType.h */
-    enum class EPropertyTypeFlags : uint64_t
+    enum class EPropertyTypeFlags : uint64
     {
         None = 0,
 
         // Signed integers
-        Int8                = 1 << 0,
-        Int16               = 1 << 1,
-        Int32               = 1 << 2,
-        Int64               = 1 << 3,
+        Int8,
+        Int16,
+        Int32,
+        Int64,
 
         // Unsigned integers
-        UInt8               = 1 << 4,
-        UInt16              = 1 << 5,
-        UInt32              = 1 << 6,
-        UInt64              = 1 << 7,
+        UInt8,
+        UInt16,
+        UInt32,
+        UInt64,
 
         // Floats
-        Float               = 1 << 8,
-        Double              = 1 << 9,
+        Float,
+        Double,
 
         // Other types
-        Bool                = 1 << 10,
-        Object              = 1 << 12,
-        Class               = 1 << 13,
-        Name                = 1 << 14,
-        String              = 1 << 15,
-        Enum                = 1 << 16,
-        Vector              = 1 << 17,
-        Struct              = 1 << 18,
+        Bool,
+        Object,
+        Class,
+        Name,
+        String,
+        Enum,
+        Vector,
+        Struct,
+
+        Count,
     };
 
     ENUM_CLASS_FLAGS(EPropertyTypeFlags);
+    
+    inline constexpr const char* PropertyTypeFlagNames[] = {
+        "None",
+        "Int8",
+        "Int16",
+        "Int32",
+        "Int64",
+
+        "UInt8",
+        "UInt16",
+        "UInt32",
+        "UInt64",
+
+        "Float",
+        "Double",
+
+        "Bool",
+        "Object",
+        "Class",
+        "Name",
+        "String",
+        "Enum",
+        "Vector",
+        "Struct"
+    };
+
+    static_assert(std::size(PropertyTypeFlagNames) == (SIZE_T)EPropertyTypeFlags::Count, "PropertyTypeFlagStrings must match number of flags in EPropertyTypeFlags");
+    
+    inline const char* PropertyTypeToString(EPropertyTypeFlags Flag)
+    {
+        size_t index = static_cast<size_t>(Flag);
+        if (index >= std::size(PropertyTypeFlagNames))
+            return "Invalid";
+        return PropertyTypeFlagNames[index];
+    }
     
     template <typename T>
     struct TRegistrationInfo
@@ -155,24 +193,76 @@ namespace Lumina
         uint16              Offset;
     };
 
+    struct FNumericPropertyParams : public FPropertyParams
+    {
+        #ifdef WITH_DEVELOPMENT_TOOLS
+        uint16 NumMetaData;
+        const FMetaDataPairParam* MetaDataArray;
+        #endif
+    };
+
+    struct FStringPropertyParams : public FPropertyParams
+    {
+        #ifdef WITH_DEVELOPMENT_TOOLS
+        uint16 NumMetaData;
+        const FMetaDataPairParam* MetaDataArray;
+        #endif
+    };
+
+    struct FNamePropertyParams : public FPropertyParams
+    {
+        #ifdef WITH_DEVELOPMENT_TOOLS
+        uint16 NumMetaData;
+        const FMetaDataPairParam* MetaDataArray;
+        #endif
+    };
+
     struct FObjectPropertyParams : public FPropertyParams
     {
         CClass*            (*ClassFunc)();
+
+        #ifdef WITH_DEVELOPMENT_TOOLS
+        uint16 NumMetaData;
+        const FMetaDataPairParam* MetaDataArray;
+        #endif
+    };
+
+    struct FClassPropertyParams : public FPropertyParams
+    {
+        CClass*            (*ClassFunc)();
+
+        #ifdef WITH_DEVELOPMENT_TOOLS
+        uint16 NumMetaData;
+        const FMetaDataPairParam* MetaDataArray;
+        #endif
     };
 
     struct FStructPropertyParams : public FPropertyParams
     {
         CStruct*            (*StructFunc)();
+
+        #ifdef WITH_DEVELOPMENT_TOOLS
+        uint16 NumMetaData;
+        const FMetaDataPairParam* MetaDataArray;
+        #endif
     };
 
     struct FEnumPropertyParams : public FPropertyParams
     {
         CEnum*              (*EnumFunc)();
+
+        #ifdef WITH_DEVELOPMENT_TOOLS
+        uint16 NumMetaData;
+        const FMetaDataPairParam* MetaDataArray;
+        #endif
     };
 
     struct FArrayPropertyParams : public FPropertyParams
     {
-        
+        #ifdef WITH_DEVELOPMENT_TOOLS
+        uint16 NumMetaData;
+        const FMetaDataPairParam* MetaDataArray;
+        #endif
     };
     
     struct FClassParams

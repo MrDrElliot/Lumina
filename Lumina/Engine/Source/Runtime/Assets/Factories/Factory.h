@@ -25,7 +25,16 @@ namespace Lumina
         virtual void TryImport(const FString& RawPath, const FString& DestinationPath) { }
 
         virtual CClass* GetSupportedType() const { return nullptr; }
-    protected:
 
+        LUMINA_API static bool ShowImportDialogue(CFactory* Factory, const FString& RawPath, const FString& DestinationPath);
+        LUMINA_API static bool ShowCreationDialogue(CFactory* Factory, const FString& Path);
+
+        virtual bool HasImportDialogue() const { return false; }
+        virtual bool HasCreationDialogue() const { return false; }
+    protected:
+        
+        virtual bool DrawImportDialogue(const FString& RawPath, const FString& DestinationPath, bool& bShouldClose) { return true; }
+        virtual bool DrawCreationDialogue(const FString& Path, bool& bShouldClose) { return true; }
+        
     };
 }

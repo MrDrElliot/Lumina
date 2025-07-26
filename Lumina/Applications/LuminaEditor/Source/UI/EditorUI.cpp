@@ -22,18 +22,29 @@
 #include <Assets/AssetHeader.h>
 #include <client/TracyProfiler.hpp>
 #include "Assets/AssetTypes/Material/Material.h"
+#include "Assets/AssetTypes/Material/MaterialInstance.h"
 #include "Assets/AssetTypes/Mesh/StaticMesh/StaticMesh.h"
 #include "Assets/AssetTypes/Textures/Texture.h"
 #include "Core/Object/Package/Package.h"
 #include "Core/Profiler/Profile.h"
+#include "Core/Reflection/PropertyCustomization/PropertyCustomization.h"
+#include "Properties/Customizations/CoreTypeCustomization.h"
 #include "Renderer/RenderManager.h"
 #include "Scene/SceneRenderer.h"
+#include "Tools/AssetEditors/MaterialEditor/MaterialInstanceEditorTool.h"
 #include "Tools/AssetEditors/MeshEditor/MeshEditorTool.h"
 #include "Tools/AssetEditors/TextureEditor/TextureEditorTool.h"
+#include "Tools/Import/ImportHelpers.h"
 #include "Tools/UI/ImGui/ImGuiRenderer.h"
 
 namespace Lumina
 {
+    FRHIImageRef FEditorUI::FolderIcon;
+    FRHIImageRef FEditorUI::StaticMeshIcon;
+    FRHIImageRef FEditorUI::TextureIcon;
+    FRHIImageRef FEditorUI::MaterialIcon;
+    FRHIImageRef FEditorUI::CorruptIcon;
+
     FEditorUI::FEditorUI()
     {
     }
@@ -45,6 +56,33 @@ namespace Lumina
     void FEditorUI::Initialize(const FUpdateContext& UpdateContext)
     {
         ImNodes::CreateContext();
+
+        IRenderContext* RenderContext = GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext();
+        FString Path = Paths::Combine(Paths::GetEngineResourceDirectory().c_str(), "Textures");
+        
+        FolderIcon          = Import::Textures::CreateTextureFromImport(RenderContext, Path + "/Folder.png", false);
+        StaticMeshIcon      = Import::Textures::CreateTextureFromImport(RenderContext, Path + "/StaticMeshIcon.png", false);
+        TextureIcon         = Import::Textures::CreateTextureFromImport(RenderContext, Path + "/TextureIcon.png", false);
+        MaterialIcon        = Import::Textures::CreateTextureFromImport(RenderContext, Path + "/ShaderIcon.png", false);
+        CorruptIcon         = Import::Textures::CreateTextureFromImport(RenderContext, Path + "/CorruptAssetIcon.png", false);
+
+        PropertyCustomizationRegistry = Memory::New<FPropertyCustomizationRegistry>();
+        PropertyCustomizationRegistry->RegisterPropertyCustomization("vec2", [this]()
+        {
+            return FVec2PropertyCustomization::MakeInstance();
+        });
+        PropertyCustomizationRegistry->RegisterPropertyCustomization("vec3", [this]()
+        {
+            return FVec3PropertyCustomization::MakeInstance();
+        });
+        PropertyCustomizationRegistry->RegisterPropertyCustomization("vec4", [this]()
+        {
+            return FVec4PropertyCustomization::MakeInstance();
+        });
+        PropertyCustomizationRegistry->RegisterPropertyCustomization("FTransform", [this]()
+        {
+            return FTransformPropertyCustomization::MakeInstance();
+        });
         
         EditorWindowClass.ClassId = ImHashStr("EditorWindowClass");
         EditorWindowClass.DockingAllowUnclassed = false;
@@ -345,6 +383,10 @@ namespace Lumina
             else if (InAsset->IsA<CStaticMesh>())
             {
                 NewTool = CreateTool<FMeshEditorTool>(this, InAsset);
+            }
+            else if (InAsset->IsA<CMaterialInstance>())
+            {
+                NewTool = CreateTool<FMaterialInstanceEditorTool>(this, InAsset);
             }
             
             ActiveAssetTools.insert_or_assign(InAsset, NewTool);
