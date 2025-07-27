@@ -53,4 +53,9 @@ namespace Lumina
     {
         Compiler->TextureSample(FullName, Texture);
     }
+
+    void CMaterialExpression_TextureSample::SetNodeValue(void* Value)
+    {
+        Texture = (CTexture*)Value;
+    }
 }

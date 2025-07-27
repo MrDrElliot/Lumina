@@ -3,6 +3,7 @@
 #include "MeshComponent.h"
 #include "Assets/AssetTypes/Mesh/StaticMesh/StaticMesh.h"
 #include "StaticMeshComponent.generated.h"
+#include "Core/Object/ObjectHandleTyped.h"
 
 namespace Lumina
 {
@@ -14,7 +15,7 @@ namespace Lumina
 
         
         LUM_PROPERTY(Editable, Category = "Mesh")
-        CStaticMesh* StaticMesh = nullptr;
+        TObjectHandle<CStaticMesh> StaticMesh;
     };
 
     DECLARE_ENTITY_COMPONENT(SStaticMeshComponent);

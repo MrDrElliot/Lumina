@@ -1,7 +1,6 @@
 ﻿#pragma once
 #include "Core/Object/Class.h"
 #include "Core/Object/ObjectCore.h"
-#include "Core/Object/ObjectPtr.h"
 #include "Core/Reflection/Type/LuminaTypes.h"
 
 namespace Lumina

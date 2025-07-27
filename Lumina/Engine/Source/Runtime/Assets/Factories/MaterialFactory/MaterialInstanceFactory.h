@@ -16,7 +16,12 @@ namespace Lumina
         FString GetAssetName() const override { return "Material Instance"; }
         FString GetDefaultAssetCreationName(const FString& InPath) override { return "NewMaterialInstance"; }
 
+        bool HasCreationDialogue() const override;
+        bool DrawCreationDialogue(const FString& Path, bool& bShouldClose) override;
         CObject* CreateNew(const FName& Name, CPackage* Package) override;
-    
+
+    private:
+
+        CMaterial* SelectedMaterial = nullptr;
     };
 }

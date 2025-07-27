@@ -1,5 +1,6 @@
 ﻿#include "MaterialNodeGetTime.h"
 
+#include "Renderer/RHIIncl.h"
 #include "UI/Tools/NodeGraph/Material/MaterialCompiler.h"
 
 namespace Lumina

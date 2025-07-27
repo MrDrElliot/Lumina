@@ -4,6 +4,7 @@
 #include "Assets/AssetTypes/Textures/Texture.h"
 #include "Core/Engine/Engine.h"
 #include "Core/Object/Cast.h"
+#include "Core/Object/ObjectArray.h"
 #include "Nodes/MaterialGraphNode.h"
 #include "Renderer/RenderManager.h"
 #include "Tools/UI/ImGui/ImGuiRenderer.h"
@@ -50,13 +51,14 @@ namespace Lumina
                 break;
             case EMaterialInputType::Texture:
                 {
-                    CObject* TextureValue = static_cast<CObject*>(NodeValue);
-
+                    FObjectHandle* TextureValue = static_cast<FObjectHandle*>(NodeValue);
+                    CTexture* Texture = (CTexture*)TextureValue->Resolve();
+                    
                     ImGui::SetNextItemWidth(200.0f);
 
-                    if (TextureValue != nullptr)
+                    if (Texture != nullptr)
                     {
-                        FRHIImageRef Image = Cast<CTexture>(TextureValue)->RHIImage;
+                        FRHIImageRef Image = Texture->RHIImage;
                         if (Image)
                         {
                             ImTextureRef ImText = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer()->GetOrCreateImTexture(Image);
@@ -76,13 +78,11 @@ namespace Lumina
                         FARFilter Filter;
                         Filter.ClassNames.push_back("CTexture");
 
-                        ImGuiX::ObjectSelector(Filter, TextureValue);
-
-                        if (TextureValue != MaterialNode->GetNodeDefaultValue())
+                        if (ImGuiX::ObjectSelector(Filter, Texture))
                         {
-                            MaterialNode->SetNodeValue(TextureValue);
+                            MaterialNode->SetNodeValue(Texture);    
                         }
-
+                        
                         ImGui::EndPopup();
                     }
 

@@ -2,6 +2,7 @@
 
 #include "Core/Object/Class.h"
 #include "Core/Object/Cast.h"
+#include "Renderer/RHIIncl.h"
 #include "UI/Tools/NodeGraph/Material/MaterialOutput.h"
 #include "UI/Tools/NodeGraph/Material/MaterialCompiler.h"
 
@@ -18,9 +19,6 @@ namespace Lumina
     void CMaterialExpression_Math::Serialize(FArchive& Ar)
     {
         CMaterialExpression::Serialize(Ar);
-
-        Ar << ConstA;
-        Ar << ConstB;
     }
 
     void CMaterialExpression_Math::BuildNode()
@@ -51,8 +49,35 @@ namespace Lumina
     void CMaterialExpression_Constant::Serialize(FArchive& Ar)
     {
         CMaterialExpression::Serialize(Ar);
+    }
 
-        Ar << Value;
+    void CMaterialExpression_Constant::DrawContextMenu()
+    {
+        const char* MenuItem = bDynamic ? "Make Constant" : "Make Parameter";
+        if (ImGui::MenuItem(MenuItem))
+        {
+            bDynamic = !bDynamic;
+            if (bDynamic)
+            {
+                ParameterName = GetNodeDisplayName() + "_Param";
+            }
+        }
+    }
+
+    void CMaterialExpression_Constant::DrawNodeTitleBar()
+    {
+        if (bDynamic)
+        {
+            ImGui::SetNextItemWidth(125);
+            if (ImGui::InputText("##", const_cast<char*>(ParameterName.c_str()), 256))
+            {
+                
+            }
+        }
+        else
+        {
+            CMaterialExpression::DrawNodeTitleBar();
+        }
     }
 
     void CMaterialExpression_Constant::BuildNode()
@@ -164,7 +189,14 @@ namespace Lumina
 
     void CMaterialExpression_ConstantFloat::GenerateDefinition(FMaterialCompiler* Compiler)
     {
-        Compiler->DefineConstantFloat(FullName, Value.R);
+        if (bDynamic)
+        {
+            Compiler->DefineFloatParameter(FullName, ParameterName, Value.r);
+        }
+        else
+        {
+            Compiler->DefineConstantFloat(FullName, Value.r);
+        }
     }
 
     uint32 CMaterialExpression_ConstantFloat2::GenerateExpression(FMaterialCompiler* Compiler)
@@ -174,7 +206,14 @@ namespace Lumina
 
     void CMaterialExpression_ConstantFloat2::GenerateDefinition(FMaterialCompiler* Compiler)
     {
-        Compiler->DefineConstantFloat2(FullName, &Value.R);
+        if (bDynamic)
+        {
+            Compiler->DefineFloat2Parameter(FullName, ParameterName, &Value.r);
+        }
+        else
+        {
+            Compiler->DefineConstantFloat2(FullName, &Value.r);
+        }
     }
 
 
@@ -185,7 +224,14 @@ namespace Lumina
 
     void CMaterialExpression_ConstantFloat3::GenerateDefinition(FMaterialCompiler* Compiler)
     {
-        Compiler->DefineConstantFloat3(FullName, &Value.R);
+        if (bDynamic)
+        {
+            Compiler->DefineFloat3Parameter(FullName, ParameterName, &Value.r);
+        }
+        else
+        {
+            Compiler->DefineConstantFloat3(FullName, &Value.r);
+        }
     }
 
 
@@ -196,7 +242,14 @@ namespace Lumina
     
     void CMaterialExpression_ConstantFloat4::GenerateDefinition(FMaterialCompiler* Compiler)
     {
-        Compiler->DefineConstantFloat4(FullName, &Value.R);
+        if (bDynamic)
+        {
+            Compiler->DefineFloat4Parameter(FullName, ParameterName, &Value.r);
+        }
+        else
+        {
+            Compiler->DefineConstantFloat4(FullName, &Value.r);
+        }
     }
 
 
@@ -409,8 +462,6 @@ namespace Lumina
     void CMaterialExpression_Lerp::Serialize(FArchive& Ar)
     {
         CMaterialExpression_Math::Serialize(Ar);
-
-        Ar << ConstC;
     }
 
     void CMaterialExpression_Lerp::BuildNode()

@@ -19,9 +19,6 @@
 
 namespace Lumina
 {
-    class FSceneRenderer;
-    class FSceneManager;
-
     FSceneEditorTool::FSceneEditorTool(IEditorToolContext* Context, FScene* InScene)
         : FEditorTool(Context, "Scene Editor", InScene)
         , SelectedEntity()

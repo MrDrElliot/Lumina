@@ -68,6 +68,27 @@ namespace Lumina
         return Package;
     }
 
+    bool CPackage::DestroyPackage(const FString& PackageName)
+    {
+        CPackage* Package = FindObject<CPackage>(FName(PackageName));
+        if (Package == nullptr)
+        {
+            return true;
+        }
+
+        for (FObjectExport& Export : Package->ExportTable)
+        {
+            if (Export.Object)
+            {
+                Export.Object->MarkGarbage();
+            }
+        }
+
+        Package->MarkGarbage();
+
+        return true;
+    }
+
     CPackage* CPackage::LoadPackage(const FName& FileName)
     {
         LUMINA_PROFILE_SCOPE();

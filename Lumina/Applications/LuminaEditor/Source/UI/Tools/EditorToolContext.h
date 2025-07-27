@@ -24,6 +24,9 @@ namespace Lumina
 
         virtual void OpenAssetEditor(CObject* InAsset) = 0;
 
+        /** Called just before an asset is marked for destroy, mostly to close any asset editors that may be using it */
+        virtual void OnDestroyAsset(CObject* InAsset) = 0;
+
     protected:
     
     public:

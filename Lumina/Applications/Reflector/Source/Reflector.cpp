@@ -93,10 +93,25 @@ int main(int argc, char* argv[])
         std::cout << "[Reflection] Code Generation completed in " << GenTime << " seconds.\n";
     }
 
+    double BumpTime = 0.0;
+    {
+        std::cout << "[Reflection] Bumping Project Files...\n";
+        auto start = std::chrono::high_resolution_clock::now();
+        
+        TypeReflector.Bump();
+
+        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> duration = end - start;
+        BumpTime = duration.count();
+
+        std::cout << "[Reflection] Project file bump completed in " << BumpTime << " seconds.\n";
+
+    }
+    
     std::cout << "\n";
     
     std::cout << "===============================================\n";
-    std::cout << "Total Time: " << (parseTime + buildTime + GenTime) << " seconds\n";
+    std::cout << "Total Time: " << (parseTime + buildTime + GenTime + BumpTime) << " seconds\n";
     std::cout << "===============================================\n";
 
     Lumina::FStringHash::Shutdown();

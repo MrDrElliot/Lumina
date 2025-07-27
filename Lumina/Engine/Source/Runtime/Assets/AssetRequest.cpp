@@ -9,7 +9,7 @@ namespace Lumina
     bool FAssetRequest::Process()
     {
         FString FullPath = Paths::RemoveExtension(AssetPath);
-        FString Name = Paths::FileName(FullPath);
+        FString Name = Paths::GetExtension(AssetPath);
         FullPath = Paths::ResolveVirtualPath(FullPath);
 
         CPackage* Package = CPackage::LoadPackage(FullPath.c_str());

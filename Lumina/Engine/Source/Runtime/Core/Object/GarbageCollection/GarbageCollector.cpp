@@ -4,6 +4,7 @@
 
 #include "Containers/Array.h"
 #include "Core/Assertions/Assert.h"
+#include "Core/Object/ObjectAllocator.h"
 #include "Core/Object/ObjectBase.h"
 #include "Core/Profiler/Profile.h"
 #include "Core/Threading/Thread.h"
@@ -42,7 +43,7 @@ namespace Lumina::GarbageCollection
             Assert(Obj->IsMarkedGarbage())
 
             Obj->OnDestroy();
-            Memory::Delete(Obj);
+            GCObjectAllocator.FreeCObject(Obj);
         }
     }
 }

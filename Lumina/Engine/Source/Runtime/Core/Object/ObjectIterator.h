@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include "ObjectArray.h"
 #include "ObjectBase.h"
 #include "Containers/Array.h"
 
@@ -7,6 +8,7 @@ namespace Lumina
     class CObjectBase;
 
     template<typename T>
+    requires !std::is_same_v<T, CObjectBase>
     class TObjectIterator
     {
     public:
@@ -15,8 +17,10 @@ namespace Lumina
         explicit TObjectIterator(bool bIncludeDerivedClasses = true)
             : Index(0)
         {
-            for (CObjectBase* Obj : GObjectVector)
+            for (FCObjectArray::FEntry& Entry : GObjectArray.Objects)
             {
+                CObjectBase* Obj = Entry.Object;
+                
                 if (!Obj) continue;
 
                 if (bIncludeDerivedClasses)

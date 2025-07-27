@@ -47,6 +47,9 @@ namespace Lumina
         void SetDebugExecutionOrder(uint32 Order) { DebugExecutionOrder = Order; }
         uint32 GetDebugExecutionOrder() const { return DebugExecutionOrder; }
 
+        virtual void DrawContextMenu() { }
+        virtual void DrawNodeTitleBar();
+
         void SetError(const FString& InError) { Error = InError; bHasError = true; }
         FString GetError() const { return Error; }
         bool HasError() const { return bHasError; }
@@ -80,6 +83,7 @@ namespace Lumina
 
 
         uint64      NodeID = 0;
+        SIZE_T      Index = 0;
         FString     FullName;
         FString     Error;
         bool        bHasError;

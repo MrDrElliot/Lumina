@@ -17,7 +17,7 @@ namespace Lumina
 
     template<typename To, typename From>
     requires eastl::is_base_of_v<From, To> && (sizeof(From) > 0 && sizeof(To) > 0)
-    FORCEINLINE TCopyQualifiersFromTo_T<From, To>* Cast(From* Src)
+    TCopyQualifiersFromTo_T<From, To>* Cast(From* Src)
     {
         if (Src)
         {
@@ -29,5 +29,4 @@ namespace Lumina
 
         return nullptr;
     }
-    
 }

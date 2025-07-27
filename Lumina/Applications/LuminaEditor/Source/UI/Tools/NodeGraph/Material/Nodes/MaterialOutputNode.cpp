@@ -1,5 +1,6 @@
 ﻿#include "MaterialOutputNode.h"
 
+#include "Renderer/RHIIncl.h"
 #include "UI/Tools/NodeGraph/Material/MaterialInput.h"
 #include "UI/Tools/NodeGraph/Material/MaterialCompiler.h"
 

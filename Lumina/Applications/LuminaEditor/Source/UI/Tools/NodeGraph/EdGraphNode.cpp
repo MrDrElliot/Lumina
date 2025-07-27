@@ -41,7 +41,12 @@ namespace Lumina
             }
         }
     }
-    
+
+    void CEdGraphNode::DrawNodeTitleBar()
+    {
+        ImGui::TextUnformatted(GetNodeDisplayName().c_str());
+    }
+
     CEdNodeGraphPin* CEdGraphNode::GetPin(uint16 ID, ENodePinDirection Direction)
     {
         for (CEdNodeGraphPin* Pin : NodePins[uint32(Direction)])

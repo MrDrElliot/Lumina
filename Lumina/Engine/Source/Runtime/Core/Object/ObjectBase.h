@@ -11,56 +11,12 @@ namespace Lumina
     class CPackage;
     class CObjectBase;
     class CClass;
-
-    class FObjectNameHashBucket
-    {
-    public:
-
-        void AddObject(const FName& PackageName, const FName& ObjectName, CObjectBase* Object)
-        {
-            ObjectNameHash[PackageName][ObjectName] = Object;
-        }
-
-        void RemoveObject(const FName& PackageName, const FName& ObjectName)
-        {
-            if (ObjectNameHash.find(PackageName) != ObjectNameHash.end())
-            {
-                auto& Hash = ObjectNameHash.at(PackageName);
-                Hash.erase(ObjectName);
-            }
-        }
-
-        CObjectBase* FindObject(const FName& PackageName, const FName& ObjectName) const
-        {
-            auto OuterIt = ObjectNameHash.find(PackageName);
-            if (OuterIt != ObjectNameHash.end())
-            {
-                auto InnerIt = OuterIt->second.find(ObjectName);
-                if (InnerIt != OuterIt->second.end())
-                {
-                    return InnerIt->second;
-                }
-            }
-            return nullptr;
-        }
-
-        void Clear()
-        {
-            ObjectNameHash.clear();
-        }
-        
-        THashMap<FName, THashMap<FName, CObjectBase*>> ObjectNameHash;
-    };
-    
-    
-    extern LUMINA_API FObjectNameHashBucket ObjectNameHashBucket;
-    extern LUMINA_API TFixedVector<CObjectBase*, 2024> GObjectVector;
     
     /** Low level implementation of a CObject */
     class CObjectBase : public IRefCountedObject
     {
     public:
-
+        friend class FCObjectArray;
         friend class CPackage;
         
         LUMINA_API CObjectBase();
@@ -95,7 +51,7 @@ namespace Lumina
         /** Forcefully destroys this object now, without adding to the queue. Recommended to manually null the memory to avoid stale access */
         LUMINA_API void DestroyNow();
 
-        /** Has this object previously been marked for desctruction? */
+        /** Has this object previously been marked for destruction? */
         LUMINA_API bool IsMarkedGarbage() const { return HasAnyFlag(OF_MarkedGarbage); }
 
         /** Called just before the destructor is called and the memory is freed */
@@ -106,7 +62,7 @@ namespace Lumina
         
     private:
 
-        LUMINA_API void AddObject(const FName& Name, SIZE_T InInternalIndex = -1);
+        LUMINA_API void AddObject(const FName& Name, uint32 InInternalIndex = -1);
         
     public:
         
@@ -185,7 +141,7 @@ namespace Lumina
         CPackage*               PackagePrivate = nullptr;
         
         /** Internal index into the global object array. */
-        SIZE_T                  InternalIndex;
+        uint32                  InternalIndex;
 
         /** Index into this object's package export map */
         int64                   LoaderIndex;

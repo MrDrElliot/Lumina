@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include "Core/Object/ManualReflectTypes.h"
 #include "ObjectBase.h"
 #include "ObjectMacros.h"
 #include "Core/Serialization/Archiver.h"

@@ -2,6 +2,7 @@
 
 #include "Core/Object/Object.h"
 #include "Renderer/MeshData.h"
+#include "Core/Object/ObjectHandleTyped.h"
 #include "Mesh.generated.h"
 
 namespace Lumina
@@ -30,7 +31,7 @@ namespace Lumina
         SIZE_T GetNumIndices() const { return MeshResources.Indices.size(); }
         
         LUM_PROPERTY(Editable, Category = "Materials")
-        TVector<CMaterial*> Materials;
+        TVector<TObjectHandle<CMaterial>> Materials;
     
     private:
         

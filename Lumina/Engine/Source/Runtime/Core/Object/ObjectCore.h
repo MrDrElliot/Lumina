@@ -40,17 +40,30 @@ namespace Lumina
     LUMINA_API bool IsValid(CObjectBase* Obj);
     
     template<typename T>
-    inline T* FindObject(const FName& QualifiedName)
+    T* FindObject(const FName& QualifiedName)
     {
         return (T*)FindObjectFast(T::StaticClass(), QualifiedName);
     }
 
     template<typename T>
-    inline T* LoadObject(const FName& QualifiedName)
+    T* FindObject(const FName& Package, const FName& Name)
+    {
+        FString QualifiedName = Package.ToString() + "." + Name.ToString();
+        return (T*)FindObjectFast(T::StaticClass(), FName(QualifiedName));
+    }
+    
+    template<typename T>
+    T* LoadObject(const FName& QualifiedName)
     {
         return (T*)StaticLoadObject(T::StaticClass(), QualifiedName);
     }
-    
+
+    template<typename T>
+    T* LoadObject(const FName& Package, const FName& Name)
+    {
+        FString QualifiedName = Package.ToString() + "." + Name.ToString();
+        return (T*)StaticLoadObject(T::StaticClass(), FName(QualifiedName));
+    }
     
     LUMINA_API CObject* NewObject(CClass* InClass, const CPackage* Package = nullptr, const FName& Name = NAME_None, EObjectFlags Flags = OF_None);
     LUMINA_API void GetObjectsWithPackage(CPackage* Package, TVector<CObject*>& OutObjects);

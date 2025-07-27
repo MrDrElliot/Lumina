@@ -1,9 +1,9 @@
 ﻿#pragma once
 
-#include "Assets/AssetManager/AssetManager.h"
 #include "Core/Object/Class.h"
 #include "Core/Object/Object.h"
 #include "UI/Properties/PropertyTable.h"
+#include "Core/Object/ObjectHandleTyped.h"
 #include "UI/Tools/EditorTool.h"
 
 namespace Lumina
@@ -22,25 +22,17 @@ namespace Lumina
         }
 
         void Deinitialize(const FUpdateContext& UpdateContext) override;
-        FString GetToolName() const override { return Asset->GetName().c_str(); }
-
-        void Update(const FUpdateContext& UpdateContext) override
-        {
-            if (!bAssetLoadBroadcasted && Asset != nullptr)
-            {
-                OnAssetLoadFinished();
-                bAssetLoadBroadcasted = true;
-            }
-        }
+        void Update(const FUpdateContext& UpdateContext) override;
+        FPropertyTable* GetPropertyTable() { return &PropertyTable; }
         
-        virtual void OnAssetLoadFinished() = 0;
-
+        FString GetToolName() const override;
+        virtual void OnAssetLoadFinished() { }
         void OnSave() override;
         
 
     protected:
 
-        CObject*                    Asset;
+        TObjectHandle<CObject>      Asset;
         uint8                       bAssetLoadBroadcasted:1;
         FPropertyTable              PropertyTable;
     };

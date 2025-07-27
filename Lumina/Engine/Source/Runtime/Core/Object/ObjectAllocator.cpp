@@ -5,10 +5,15 @@
 
 namespace Lumina
 {
+    /** Global CObject allocator */
     LUMINA_API FCObjectAllocator GCObjectAllocator;
 
-    
-    CObjectBase* FCObjectAllocator::AllocateCObject(int32 Size, int32 Alignment)
+
+    FCObjectAllocator::FCObjectAllocator()
+    {
+    }
+
+    CObjectBase* FCObjectAllocator::AllocateCObject(uint32 Size, uint32 Alignment)
     {
         void* RawMemory = Memory::Malloc(Size + Alignment - 1);
         void* AlignedMemory = RawMemory;
@@ -23,7 +28,6 @@ namespace Lumina
 
     void FCObjectAllocator::FreeCObject(CObjectBase* Ptr)
     {
-        Assert(Ptr);
-        Memory::Free(Ptr);
+        Memory::Delete(Ptr);
     }
 }

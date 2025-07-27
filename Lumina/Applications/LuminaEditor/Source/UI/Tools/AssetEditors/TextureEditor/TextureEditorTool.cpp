@@ -1,6 +1,5 @@
 ﻿#include "TextureEditorTool.h"
 
-#include "Core/Object/Class.h"
 #include "Assets/AssetTypes/Textures/Texture.h"
 #include "Core/Object/Cast.h"
 #include "Renderer/RenderContext.h"
@@ -16,7 +15,7 @@ namespace Lumina
     {
         CreateToolWindow(TexturePreviewName, [this](const FUpdateContext& Cxt, bool bFocused)
         {
-            CTexture* Texture = Cast<CTexture>(Asset);
+            CTexture* Texture = Cast<CTexture>(Asset.Get());
             FRenderManager* RenderManager = Cxt.GetSubsystem<FRenderManager>();
             ImTextureID TextureID = RenderManager->GetImGuiRenderer()->GetOrCreateImTexture(Texture->RHIImage);
             
@@ -59,7 +58,7 @@ namespace Lumina
     
         CreateToolWindow(TexturePropertiesName, [this](const FUpdateContext& Cxt, bool bFocused)
         {
-            CTexture* Texture = Cast<CTexture>(Asset);
+            CTexture* Texture = Cast<CTexture>(Asset.Get());
         
             ImGui::Text("Texture: %s", Texture->GetName().c_str());
             ImGui::Text("Num Pixels: %zu", Texture->Pixels.size());

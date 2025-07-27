@@ -25,7 +25,7 @@ namespace Lumina
 
     CMaterial* CMesh::GetMaterialAtSlot(SIZE_T Slot) const
     {
-        return Materials.empty() ? nullptr : Cast<CMaterial>(Materials[Slot]);
+        return Materials.empty() ? nullptr : Cast<CMaterial>(Materials[Slot].Get());
     }
 
     bool CMesh::IsReadyForRender() const

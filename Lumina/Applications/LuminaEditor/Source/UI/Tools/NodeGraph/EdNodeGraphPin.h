@@ -42,6 +42,8 @@ namespace Lumina
         void AddConnection(CEdNodeGraphPin* Pin) { Connections.push_back(Pin); }
         void RemoveConnection(CEdNodeGraphPin* Pin);
         TVector<CEdNodeGraphPin*> GetConnections() const { return Connections; }
+        void DisconnectFrom(CEdNodeGraphPin* OtherPin);
+        void ClearConnections();
 
         bool IsSingleInput() const { return bSingleInput; }
         bool HasConnection() const { return !Connections.empty(); }

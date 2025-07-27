@@ -18,7 +18,8 @@ namespace Lumina
     void FCObjectPropertyCustomization::DrawProperty(TSharedPtr<FPropertyHandle> Property)
     {
         FObjectProperty* ObjectProperty = static_cast<FObjectProperty*>(Property->Property);
-        CObject*& Obj = *(CObject**)Property->PropertyPointer;
+        FObjectHandle* Ptr = (FObjectHandle*)Property->PropertyPointer;
+        CObject* Obj = Ptr->Resolve();
         
         ImGui::PushID(this);
         if (ImGui::BeginChild("OP", ImVec2(-1, 0), ImGuiChildFlags_AutoResizeY, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse))
@@ -30,19 +31,16 @@ namespace Lumina
 
             // Temporary stuff.
             ImTextureID ButtonTexture = 0;
-            if (ObjectProperty->GetPropertyClass() == CMaterial::StaticClass())
+            CClass* Class = ObjectProperty->GetPropertyClass();
+            if (Class == CMaterial::StaticClass() || Class == CMaterialInstance::StaticClass())
             {
                 ButtonTexture = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer()->GetOrCreateImTexture(FEditorUI::MaterialIcon);
             }
-            else if (ObjectProperty->GetPropertyClass() == CMaterialInstance::StaticClass())
-            {
-                ButtonTexture = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer()->GetOrCreateImTexture(FEditorUI::MaterialIcon);
-            }
-            else if (ObjectProperty->GetPropertyClass() == CTexture::StaticClass())
+            else if (Class == CTexture::StaticClass())
             {
                 ButtonTexture = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer()->GetOrCreateImTexture(FEditorUI::TextureIcon);
             }
-            else if (ObjectProperty->GetPropertyClass() == CStaticMesh::StaticClass())
+            else if (Class == CStaticMesh::StaticClass())
             {
                 ButtonTexture = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer()->GetOrCreateImTexture(FEditorUI::StaticMeshIcon);
             }
@@ -118,6 +116,7 @@ namespace Lumina
                             VirtualPath += "." + Asset.Name.ToString();
                             FName AssetName = VirtualPath.c_str();
                             Obj = LoadObject<CObject>(AssetName);
+                            *Ptr = GObjectArray.ToHandle(Obj);
                             ImGui::CloseCurrentPopup();
                         }
                     }
@@ -137,14 +136,14 @@ namespace Lumina
 
             if (ImGui::Button(LE_ICON_COG "##Options", GButtonSize))
             {
-            
+                
             }
 
             ImGui::SameLine();
         
             if (ImGui::Button(LE_ICON_CLOSE_CIRCLE "##Clear", GButtonSize))
             {
-                Obj = nullptr;
+                *Ptr = FObjectHandle();
             }
         
             ImGui::EndDisabled();

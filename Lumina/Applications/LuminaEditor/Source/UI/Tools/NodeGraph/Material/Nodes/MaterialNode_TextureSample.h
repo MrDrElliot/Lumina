@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "MaterialNodeExpression.h"
+#include "Core/Object/ObjectHandleTyped.h"
 #include "MaterialNode_TextureSample.generated.h"
 
 namespace Lumina
@@ -18,13 +19,13 @@ namespace Lumina
         void Serialize(FArchive& Ar) override;
         
         void BuildNode() override;
-        void* GetNodeDefaultValue() override { return Texture; }
+        void* GetNodeDefaultValue() override { return &Texture; }
         FString GetNodeDisplayName() const override { return "TextureSample"; }
         uint32 GenerateExpression(FMaterialCompiler* Compiler) override;
         void GenerateDefinition(FMaterialCompiler* Compiler) override;
-        void SetNodeValue(void* Value) override { Texture = (CTexture*)Value; }
+        void SetNodeValue(void* Value) override;
 
-        LUM_PROPERTY()
-        CTexture* Texture = nullptr;
+        LUM_PROPERTY(Editable, Category = "Texture")
+        TObjectHandle<CTexture> Texture;
     };
 }

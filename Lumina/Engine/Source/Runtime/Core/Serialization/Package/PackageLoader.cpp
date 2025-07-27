@@ -1,5 +1,6 @@
 ﻿#include "PackageLoader.h"
 
+#include "Core/Object/ObjectArray.h"
 #include "Core/Object/Package/Package.h"
 
 namespace Lumina
@@ -15,4 +16,16 @@ namespace Lumina
         
         return Ar;
     }
+
+    FArchive& FPackageLoader::operator<<(FObjectHandle& Value)
+    {
+        FObjectPackageIndex Index;
+        FArchive& Ar = *this;
+        Ar << Index;
+
+        CObject* Object = Package->IndexToObject(Index);
+        Value = GObjectArray.ToHandle(Object);
+        Package->LoadObject(Object);
+        
+        return Ar;    }
 }

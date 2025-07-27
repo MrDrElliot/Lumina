@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "Core/Object/Object.h"
 #include "Core/Object/ObjectMacros.h"
+#include "Core/Object/ObjectHandleTyped.h"
 #include "MaterialInstance.generated.h"
 
 namespace Lumina { class CMaterial; };
@@ -16,6 +17,6 @@ namespace Lumina
         
 
         LUM_PROPERTY()
-        CMaterial* Material;
+        TObjectHandle<CMaterial> Material;
     };
 }

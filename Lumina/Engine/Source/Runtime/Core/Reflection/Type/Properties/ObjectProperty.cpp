@@ -1,6 +1,7 @@
 ﻿#include "ObjectProperty.h"
 
 #include "Core/Object/Object.h"
+#include "Core/Object/ObjectHandleTyped.h"
 
 
 namespace Lumina
@@ -8,24 +9,14 @@ namespace Lumina
     
     void FObjectProperty::Serialize(FArchive& Ar, void* Value)
     {
-        CObject* Object = *(CObject**)Value;
-        Ar << Object;
-        *(CObject**)Value = Object;
-
+        TObjectHandle<CObject>* ObjectHandle = (TObjectHandle<CObject>*)Value;
+        FObjectHandle* Ptr = (FObjectHandle*)ObjectHandle;
+        Ar << *Ptr;
     }
 
     void FObjectProperty::SerializeItem(IStructuredArchive::FSlot Slot, void* Value, void const* Defaults)
     {
-        CObject* Object = *(CObject**)Value;
         
-        Slot.Serialize(Object);
-
-        *(CObject**)Value = Object;
-
-        if (Object)
-        {
-            Object->Serialize(Slot);
-        }
     }
     
 }

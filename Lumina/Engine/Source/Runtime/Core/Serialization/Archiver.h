@@ -4,6 +4,7 @@
 #include "Core/Templates/IsSigned.h"
 #include "Core/Versioning/CoreVersion.h"
 #include "Containers/String.h"
+#include "Core/Object/ObjectHandle.h"
 #include "Core/Templates/CanBulkSerialize.h"
 #include "Log/Log.h"
 
@@ -84,6 +85,12 @@ namespace Lumina
 
         
         virtual FArchive& operator<<(CObject*& Value)
+        {
+            LOG_ERROR("Serializing CObjects is not supported by this archive.");
+            return *this;
+        }
+
+        virtual FArchive& operator<<(FObjectHandle& Value)
         {
             LOG_ERROR("Serializing CObjects is not supported by this archive.");
             return *this;

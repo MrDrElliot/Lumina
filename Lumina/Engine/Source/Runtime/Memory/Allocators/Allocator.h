@@ -36,17 +36,18 @@ namespace Lumina
         void Reset() override { }
     };
     
-    class FFrameAllocator : public IAllocator
+    class FLinearAllocator : public IAllocator
     {
     public:
-        explicit FFrameAllocator(SIZE_T CapacityBytes)
+        
+        explicit FLinearAllocator(SIZE_T CapacityBytes)
             : Capacity(CapacityBytes)
         {
             Base = (uint8*)Memory::Malloc(Capacity);
             Offset = 0;
         }
 
-        ~FFrameAllocator() override
+        ~FLinearAllocator() override
         {
             Memory::Free(Base);
             Base = nullptr;

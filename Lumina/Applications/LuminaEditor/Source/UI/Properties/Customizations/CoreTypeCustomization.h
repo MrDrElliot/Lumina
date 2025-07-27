@@ -64,6 +64,18 @@ namespace Lumina
         void DrawProperty(TSharedPtr<FPropertyHandle> Property) override;
     };
 
+    class FStringPropertyCustomization : public IPropertyTypeCustomization
+    {
+    public:
+        
+        static TSharedPtr<FStringPropertyCustomization> MakeInstance()
+        {
+            return MakeSharedPtr<FStringPropertyCustomization>();
+        }
+
+        void DrawProperty(TSharedPtr<FPropertyHandle> Property) override;
+    };
+
     class FVec2PropertyCustomization : public IPropertyTypeCustomization
     {
     public:

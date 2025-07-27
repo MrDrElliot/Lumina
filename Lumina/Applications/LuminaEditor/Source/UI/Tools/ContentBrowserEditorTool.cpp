@@ -182,12 +182,29 @@ namespace Lumina
                 {
                     try
                     {
-                        std::filesystem::remove(ContentItem->GetPath().c_str());
-                        RefreshContentBrowser();
+                        FString PackagePath = ContentItem->GetVirtualPath();
+                        FString ObjectName = ContentItem->GetName().ToString();
+                        FString QualifiedName = ContentItem->GetVirtualPath() + "." + ObjectName;
+
+                        if (CObject* AliveObject = FindObject<CObject>(FName(QualifiedName)))
+                        {
+                            ToolContext->OnDestroyAsset(AliveObject);
+                        }
+                        
+                        if (CPackage::DestroyPackage(PackagePath) && std::filesystem::remove(ContentItem->GetPath().c_str()))
+                        {
+                            RefreshContentBrowser();
+                            ImGuiX::Notifications::NotifySuccess("Successfully deleted: \"%s\"", PackagePath.c_str());
+                        }
+                        else
+                        {
+                            ImGuiX::Notifications::NotifyError("Failed to delete: \"%s\"", PackagePath.c_str());
+                        }
                     }
                     catch (const std::filesystem::filesystem_error& e)
                     {
                         LOG_ERROR("Failed to delete file: {0}", e.what());
+                        ImGuiX::Notifications::NotifyError("Failed to delete: \"%s\"", e.what());
                     }
                 }
             }
@@ -423,7 +440,7 @@ namespace Lumina
 
                         if (Factory->HasCreationDialogue())
                         {
-                            ToolContext->PushModal("Create New", {500, 500}, [&](const FUpdateContext& DrawContext)
+                            ToolContext->PushModal("Create New", {500, 500}, [this, Factory, PathString](const FUpdateContext& DrawContext)
                             {
                                 bool bShouldClose = CFactory::ShowCreationDialogue(Factory, PathString);
                                 if (bShouldClose)
@@ -440,9 +457,8 @@ namespace Lumina
                             CObject* Object = Factory->TryCreateNew(PathString);
                             if (Object)
                             {
-                                ImGuiX::Notifications::NotifySuccess("Successfully Created: \"%s\"", PathString.c_str());
-                                ToolContext->OpenAssetEditor(Object);
                                 bWroteSomething = true;
+                                ImGuiX::Notifications::NotifySuccess("Successfully Created: \"%s\"", PathString.c_str());
                             }
                             else
                             {

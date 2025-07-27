@@ -75,11 +75,6 @@ namespace Lumina
 
     void CEdNodeGraph::Shutdown()
     {
-        for (CEdGraphNode* Node : Nodes)
-        {
-            Node->Release();
-        }
-
         ImNodes::EditorContextFree(ImNodesContext);
     }
 
@@ -91,9 +86,7 @@ namespace Lumina
     void CEdNodeGraph::DrawGraph()
     {
         //ImNodes::EditorContextSet(ImNodesContext);
-        LUMINA_PROFILE_SCOPE();
-
-        TVector<CEdGraphNode*> NodesToDestroy;
+        LUMINA_PROFILE_SCOPE()
         
         ImNodes::BeginNodeEditor();
 
@@ -108,11 +101,13 @@ namespace Lumina
             const ImVec2 MousePos = ImGui::GetMousePosOnOpeningCurrentPopup();
 
             bool bWasHoveringNode = false;
-            for (int i = 0; i < Nodes.size(); ++i)
+            for (SIZE_T i = 0; i < Nodes.size(); ++i)
             {
                 CEdGraphNode* Node = Nodes[i];
+                if (Node == nullptr)
+                    continue;
                 
-                const int NodeID = Node->GetNodeID();
+                const int NodeID = (int)Node->GetNodeID();
                 const ImVec2 NodePos = ImNodes::GetNodeScreenSpacePos(NodeID);
                 const ImVec2 NodeSize = ImNodes::GetNodeDimensions(NodeID);
 
@@ -124,8 +119,10 @@ namespace Lumina
                     {
                         if (ImGui::MenuItem("Destroy"))
                         {
-                            NodesToDestroy.push_back(Node);
+                            NodesToDestroy.push(Node);
                         }
+
+                        Node->DrawContextMenu();
                         
                         ImGui::EndMenu();
                     }
@@ -168,13 +165,15 @@ namespace Lumina
         for (uint64 i = 0; i < Nodes.size(); ++i)
         {
             CEdGraphNode* Node = Nodes[i];
+            if (Node == nullptr)
+                continue;
+            
+            uint64 NodeID = Node->GetNodeID();
             
             ImNodes::PushColorStyle(ImNodesCol_TitleBar, Node->GetNodeTitleColor());
 
-            ImNodes::BeginNode(i);
-            ImNodes::BeginNodeTitleBar();
+            ImNodes::BeginNode(NodeID);
 
-            uint64 NodeID = Node->GetNodeID();
             if (!Node->bInitialPosSet)
             {
                 ImNodes::SetNodeGridSpacePos(NodeID, { Node->GetNodeX(), Node->GetNodeY() });
@@ -184,14 +183,11 @@ namespace Lumina
             ImVec2 NodePos = ImNodes::GetNodeGridSpacePos(NodeID);
             Node->SetGridPos(NodePos.x, NodePos.y);
 
-            #if SHOW_DEBUG
-            ImGui::TextColored(ImVec4(1.0f, 1.0f, 1.0f, 1.0f), "%s - %i", Node->GetNodeFullName().c_str(), Node->GetDebugExecutionOrder());
-            ImGui::TextUnformatted(Node->GetName().c_str());
-            #else
-            ImGui::TextUnformatted(Node->GetNodeDisplayName().c_str());
-            #endif
-
+            ImNodes::BeginNodeTitleBar();
+            
+            Node->DrawNodeTitleBar();
             ImGui::Dummy(ImVec2(Node->GetMinNodeSize().x, 0.1f));
+            
             ImNodes::EndNodeTitleBar();
 
             const TVector<CEdNodeGraphPin*>& OutputPins = Node->GetOutputPins();
@@ -296,6 +292,27 @@ namespace Lumina
 
         }
 
+        bool bAnyNodeSelected = false;
+        for (CEdGraphNode* Node : Nodes)
+        {
+            if (ImNodes::IsNodeSelected(Node->GetNodeID()))
+            {
+                bAnyNodeSelected = true;
+                if (NodeSelectedCallback)
+                {
+                    NodeSelectedCallback(Node);
+                }
+            }
+        }
+
+        if (!bAnyNodeSelected)
+        {
+            if (NodeSelectedCallback)
+            {
+                NodeSelectedCallback(nullptr);
+            }
+        }
+
         for (int i = 0; i < Links.size(); ++i)
         {
             const TPair<CEdNodeGraphPin*, CEdNodeGraphPin*>& Pair = Links[i];
@@ -346,8 +363,7 @@ namespace Lumina
             
             ValidateGraph();
         }
-
-
+        
         {
             int ID;
             if (ImNodes::IsLinkDestroyed(&ID))
@@ -356,24 +372,47 @@ namespace Lumina
 
                 Pair.first->RemoveConnection(Pair.second);
                 Pair.second->RemoveConnection(Pair.first);
-
                 ValidateGraph();
             }
         }
 
-        for (CEdGraphNode* ToDestroy : NodesToDestroy)
+        while (!NodesToDestroy.empty())
         {
-            ToDestroy->MarkGarbage();
-
-            auto it = eastl::find(Nodes.begin(), Nodes.end(), ToDestroy);
-            if (it != Nodes.end())
+            CEdGraphNode* ToDestroy = NodesToDestroy.front();
+            NodesToDestroy.pop();
+            
+            // Remove links from input pins
+            for (CEdNodeGraphPin* Pin : ToDestroy->GetInputPins())
             {
-                Nodes.erase(it);
+                if (Pin->HasConnection())
+                {
+                    for (CEdNodeGraphPin* ConnectedPin : Pin->GetConnections())
+                    {
+                        ConnectedPin->DisconnectFrom(Pin);
+                    }
+                    Pin->ClearConnections();
+                }
             }
 
-        }
-        if (!NodesToDestroy.empty())
-        {
+            // Remove links from output pins
+            for (CEdNodeGraphPin* Pin : ToDestroy->GetOutputPins())
+            {
+                if (Pin->HasConnection())
+                {
+                    for (CEdNodeGraphPin* ConnectedPin : Pin->GetConnections())
+                    {
+                        ConnectedPin->DisconnectFrom(Pin);
+                    }
+                    Pin->ClearConnections();
+                }
+            }
+
+            CEdGraphNode* BackNode = Nodes.back();
+            Nodes.erase(Nodes.begin() + ToDestroy->Index);
+            BackNode->Index = ToDestroy->Index;
+            BackNode->bInitialPosSet = false;
+            
+            ToDestroy->MarkGarbage();
             ValidateGraph();
         }
     }
@@ -399,14 +438,22 @@ namespace Lumina
         AddNode(NewNode);
         return NewNode;
     }
-    
+
+
+    void CEdNodeGraph::RegisterGraphNode(CClass* InClass)
+    {
+        if (SupportedNodes.find(InClass) == SupportedNodes.end())
+        {
+            SupportedNodes.emplace(InClass);
+        }
+    }
 
     uint64 CEdNodeGraph::AddNode(CEdGraphNode* InNode)
     {
-        InNode->AddRef();
         SIZE_T NewID = Nodes.size();
         InNode->FullName = InNode->GetNodeDisplayName() + "_" + eastl::to_string(NewID);
         InNode->NodeID = NewID;
+        InNode->Index = NewID;
 
         Nodes.push_back(InNode);
 
@@ -420,6 +467,7 @@ namespace Lumina
 
         return NewID;
     }
+    
 }
 
 #undef SHOW_DEBUG

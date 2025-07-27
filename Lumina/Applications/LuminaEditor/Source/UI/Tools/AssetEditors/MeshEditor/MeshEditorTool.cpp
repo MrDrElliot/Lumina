@@ -18,7 +18,7 @@
 
 namespace Lumina
 {
-    const char* MeshPropertiesName        = "MeshProperties";
+    static const char* MeshPropertiesName        = "MeshProperties";
 
     FMeshEditorTool::FMeshEditorTool(IEditorToolContext* Context, CObject* InAsset)
     : FAssetEditorTool(Context, InAsset->GetName().c_str(), InAsset)
@@ -44,7 +44,7 @@ namespace Lumina
     {
         CreateToolWindow(MeshPropertiesName, [this](const FUpdateContext& Cxt, bool bFocused)
         {
-            CStaticMesh* StaticMesh = Cast<CStaticMesh>(Asset);
+            CStaticMesh* StaticMesh = Cast<CStaticMesh>(Asset.Get());
 
             const FMeshResource& Resource = StaticMesh->GetMeshResource();
             TVector<FGeometrySurface> Surfaces = Resource.GeometrySurfaces;
@@ -114,7 +114,7 @@ namespace Lumina
     {
         FAssetEditorTool::DrawToolMenu(UpdateContext);
 
-                if (ImGui::BeginMenu(LE_ICON_CAMERA_CONTROL" Camera Control"))
+        if (ImGui::BeginMenu(LE_ICON_CAMERA_CONTROL" Camera Control"))
         {
             float Speed = EditorEntity.GetComponent<SVelocityComponent>().Speed;
             ImGui::SliderFloat("Camera Speed", &Speed, 1.0f, 200.0f);

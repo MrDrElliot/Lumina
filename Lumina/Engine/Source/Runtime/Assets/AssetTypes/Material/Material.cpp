@@ -4,16 +4,8 @@
 
 namespace Lumina
 {
-
-    void CMaterial::PostLoad()
+    CMaterial::CMaterial()
     {
-        for (const CObject* Node : MaterialNodes)
-        {
-            if (Node)
-            {
-                Node->AddRef();
-            }
-        }
+        MaterialType = EMaterialType::PBR;
     }
-
 }

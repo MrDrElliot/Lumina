@@ -12,10 +12,11 @@ namespace Lumina
         TVector<FString> MacroDefinitions;
     };
     
+    using ShaderBinaries = TVector<uint32>;
+    
     class IShaderCompiler
     {
     public:
-        
         using CompletedFunc = TFunction<void(const TVector<uint32>& Binaries)>;
 
         virtual ~IShaderCompiler() = default;

@@ -16,6 +16,9 @@ namespace Lumina
         void BuildNode() override;
         
         CMaterialOutput* Output;
+
+        LUM_PROPERTY(Editable, Category = "Dynamic")
+        bool bDynamic = false;
         
     };
 
@@ -31,7 +34,10 @@ namespace Lumina
         CMaterialInput* A;
         CMaterialInput* B;
 
+        LUM_PROPERTY(Editable, Category = "Value")
         float ConstA = 0;
+
+        LUM_PROPERTY(Editable, Category = "Value")
         float ConstB = 0;
     };
 
@@ -50,9 +56,6 @@ namespace Lumina
         uint32 GenerateExpression(FMaterialCompiler* Compiler) override { return 0; }
         void GenerateDefinition(FMaterialCompiler* Compiler) override;
         
-
-        float ConstA;
-        float ConstB;
     };
 
     LUM_CLASS()
@@ -244,10 +247,12 @@ namespace Lumina
         void* GetNodeDefaultValue() override { return &ConstA; }
         uint32 GenerateExpression(FMaterialCompiler* Compiler) override { return 0; }
         void GenerateDefinition(FMaterialCompiler* Compiler) override;
-        
-        float ConstC = 0;
-        CMaterialInput* C = nullptr;
 
+        LUM_PROPERTY(Editable, Category = "Value")
+        float Alpha = 0;
+
+        
+        CMaterialInput* C = nullptr;
     };
     
     
@@ -309,14 +314,19 @@ namespace Lumina
 
         void Serialize(FArchive& Ar) override;
 
-        
+        void DrawContextMenu() override;
+        void DrawNodeTitleBar() override;
         void BuildNode() override;
         
-        void* GetNodeDefaultValue() override { return &Value.R; }
+        void* GetNodeDefaultValue() override { return &Value.r; }
 
-        FColor              Value;
-        EMaterialInputType  ValueType = EMaterialInputType::Wildcard;
+        LUM_PROPERTY(Editable, Category = "Parameter")
+        FName               ParameterName;
+
+        LUM_PROPERTY(Editable, Color, Category = "Value")
+        glm::vec4           Value;
         
+        EMaterialInputType  ValueType = EMaterialInputType::Wildcard;
     };
 
     LUM_CLASS()

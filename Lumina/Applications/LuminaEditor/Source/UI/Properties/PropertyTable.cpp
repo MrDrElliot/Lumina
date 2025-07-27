@@ -322,16 +322,16 @@ namespace Lumina
         FProperty* Current = Struct->LinkedProperty;
         while (Current != nullptr)
         {
-            FName Category = "General";
-            if (Current->Metadata.HasMetadata("Category"))
-            {
-                Category = Current->Metadata.GetMetadata("Category");
-            }
-
-            FCategoryPropertyRow* CategoryRow = FindOrCreateCategoryRow(Category);
-
             if (Current->Metadata.HasMetadata("Editable") || Current->Metadata.HasMetadata("ReadOnly"))
             {
+                FName Category = "General";
+                if (Current->Metadata.HasMetadata("Category"))
+                {
+                    Category = Current->Metadata.GetMetadata("Category");
+                }
+                
+                FCategoryPropertyRow* CategoryRow = FindOrCreateCategoryRow(Category);
+            
                 CategoryRow->AddProperty(Current);
             }
             

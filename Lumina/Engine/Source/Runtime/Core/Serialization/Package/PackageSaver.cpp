@@ -53,6 +53,16 @@ namespace Lumina
         return *this;
     }
 
+    FArchive& FSaveReferenceBuilderArchive::operator<<(FObjectHandle& Value)
+    {
+        if (CObject* Object = Value.Resolve())
+        {
+            return FSaveReferenceBuilderArchive::operator<<(Object);
+        }
+
+        return *this;
+    }
+
     //---------------------------------------------------------------------------------------------
     
     FArchive& FPackageSaver::operator<<(CObject*& Value)
@@ -74,6 +84,35 @@ namespace Lumina
                 {
                     Index = FObjectPackageIndex::FromImport(CurrentImportIndex);
                     ObjectToIndexMap.emplace(Value, CurrentImportIndex);
+                    CurrentImportIndex++;
+                }
+            }
+        }
+        
+        *this << Index;
+        
+        return *this;
+    }
+
+    FArchive& FPackageSaver::operator<<(FObjectHandle& Value)
+    {
+        FObjectPackageIndex Index;
+        if (CObject* Obj = Value.Resolve())
+        {
+            if (Obj->GetPackage() == Package)
+            {
+                Index = FObjectPackageIndex(Obj->GetLoaderIndex());
+            }
+            else
+            {
+                if (ObjectToIndexMap.find(Obj) != ObjectToIndexMap.end())
+                {
+                    Index = FObjectPackageIndex::FromImport(ObjectToIndexMap[Obj]);
+                }
+                else
+                {
+                    Index = FObjectPackageIndex::FromImport(CurrentImportIndex);
+                    ObjectToIndexMap.emplace(Obj, CurrentImportIndex);
                     CurrentImportIndex++;
                 }
             }

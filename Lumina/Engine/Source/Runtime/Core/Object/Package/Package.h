@@ -315,6 +315,13 @@ namespace Lumina
         LUMINA_API static CPackage* CreatePackage(const FString& InTopLevelClassName, const FString& FileName);
 
         /**
+         * 
+         * @param PackageName 
+         * @return 
+         */
+        LUMINA_API static bool DestroyPackage(const FString& PackageName);
+
+        /**
          * Will load the package and create the package loader. If called twice, nothing will happen.
          * Objects loaded from this package are not yet serialized, and are essentially shells marked with OF_NeedsLoad.
          * @param FileName File name to load the linker from.

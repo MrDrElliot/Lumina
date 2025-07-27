@@ -70,8 +70,8 @@ namespace Lumina::Reflection
         if (strcmp(Name, "Lumina::FName") == 0)         return EPropertyTypeFlags::Name;
         if (strcmp(Name, "Lumina::FString") == 0)       return EPropertyTypeFlags::String;
         if (strcmp(Name, "Lumina::TVector") == 0)       return EPropertyTypeFlags::Vector;
+        if (strcmp(Name, "Lumina::TObjectHandle") == 0) return EPropertyTypeFlags::Object;
         if (strcmp(Name, "Lumina::CObject") == 0)       return EPropertyTypeFlags::Object;
-        if (strcmp(Name, "Lumina::TObjectPtr") == 0)    return EPropertyTypeFlags::Object;
 
         return EPropertyTypeFlags::None;
     }

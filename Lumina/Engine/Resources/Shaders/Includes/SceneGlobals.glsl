@@ -38,11 +38,6 @@ layout(set = 0, binding = 2) readonly buffer FLightData
     FPointLight         PointLights[];
 } LightData;
 
-layout(set = 2, binding = 0) readonly buffer FBatchToModelBuffer
-{
-    uint Map[];
-} BatchToModel;
-
 float GetTime()
 {
     return SceneUBO.Time;
@@ -108,3 +103,4 @@ FDirectionalLight GetDirectionalLight()
 {
     return LightData.DirectionalLight;
 }
+

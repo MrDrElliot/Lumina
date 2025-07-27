@@ -47,7 +47,9 @@ namespace Lumina::Reflection::Visitor
             }
             else if (FieldQualType->isPointerType())
             {
-                PropFlags = EPropertyTypeFlags::Object;
+                Context->LogError("[%s] Object properties as pointers are *NOT* supported, use TObjectHandle instead", CursorName.c_str());
+                Context->FlushLogs();
+                return FFieldInfo();
             }
         }
 
@@ -89,7 +91,8 @@ namespace Lumina::Reflection::Visitor
             }
             else if (FieldQualType->isPointerType())
             {
-                PropFlags = EPropertyTypeFlags::Object;
+                Context->LogError("[%s] Object properties as pointers are *NOT* supported, use TObjectHandle instead", FieldName.c_str());
+                Context->FlushLogs();
             }
         }
         
@@ -209,7 +212,15 @@ namespace Lumina::Reflection::Visitor
             break;
         case EPropertyTypeFlags::Object:
             {
-                NewProperty = CreateProperty<FReflectedObjectProperty>(FieldInfo.Name, FieldInfo.TypeName);
+                const CXType ArgType = clang_Type_getTemplateArgumentAsType(FieldInfo.Type, 0);
+                FFieldInfo ParamFieldInfo = CreateSubFieldInfo(Context, ArgType);
+                ParamFieldInfo.Name = FieldInfo.Name; // Replace the empty template property name with the parent.
+                if (!ParamFieldInfo.Validate(Context))
+                {
+                    return false;
+                }
+                
+                NewProperty = CreateProperty<FReflectedObjectProperty>(ParamFieldInfo.Name, ParamFieldInfo.TypeName);
             }
             break;
         case EPropertyTypeFlags::Vector:
@@ -229,7 +240,7 @@ namespace Lumina::Reflection::Visitor
                 CreatePropertyForType(Context, Struct, FieldProperty, ParamFieldInfo);
                 if (FieldProperty == nullptr)
                 {
-                    Context->LogError("Failed to create property for array. %s", FieldInfo.Name.c_str());
+                    Context->LogError("Failed to create property for array. %s [%s]", FieldInfo.Name.c_str(), ParamFieldInfo.Name.c_str());
                     Context->FlushLogs();
                     return false;
                 }

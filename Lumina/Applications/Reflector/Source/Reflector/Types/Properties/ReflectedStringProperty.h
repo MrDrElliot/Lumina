@@ -19,11 +19,11 @@ namespace Lumina
             {
                 if (Metadata.empty())
                 {
-                    Stream += "{ \"" +  Name + "\"" + ", Lumina::EPropertyFlags::None, " + "Lumina::EPropertyTypeFlags::String,," +  " offsetof(" + Outer + ", " + Name + ") " " };\n";
+                    Stream += "{ \"" +  Name + "\"" + ", Lumina::EPropertyFlags::None, " + "Lumina::EPropertyTypeFlags::String," +  " offsetof(" + Outer + ", " + Name + ") " " };\n";
                 }
                 else
                 {
-                    Stream += "{ \"" +  Name + "\"" + ", Lumina::EPropertyFlags::None, " + "Lumina::EPropertyTypeFlags::String,," +  " offsetof(" + Outer + ", " + Name + "), " + " METADATA_PARAMS(std::size(" + Name + "_Metadata), " + Name + "_Metadata) " + "};\n";
+                    Stream += "{ \"" +  Name + "\"" + ", Lumina::EPropertyFlags::None, " + "Lumina::EPropertyTypeFlags::String," +  " offsetof(" + Outer + ", " + Name + "), " + " METADATA_PARAMS(std::size(" + Name + "_Metadata), " + Name + "_Metadata) " + "};\n";
                 }
             }
         }

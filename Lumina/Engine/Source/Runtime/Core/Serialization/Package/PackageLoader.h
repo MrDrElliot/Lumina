@@ -19,6 +19,7 @@ namespace Lumina
         }
         
         virtual FArchive& operator<<(CObject*& Value) override;
+        virtual FArchive& operator<<(FObjectHandle& Value) override;
 
 
     private:

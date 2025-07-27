@@ -33,9 +33,6 @@ namespace Lumina::Reflection
         const eastl::string AmalgamationPath = ProjectReflectionDirectory + "/ReflectHeaders.h";
         std::filesystem::create_directories(ProjectReflectionDirectory.c_str());
 
-        std::ofstream AmalgamationFile(AmalgamationPath.c_str());
-        AmalgamationFile << "#pragma once\n\n";
-
 #if OPTIMIZE_HEADER_WRITES // Only parse recently modified headers.
         
         for (const FReflectedHeader& Header : Headers)
@@ -90,6 +87,20 @@ namespace Lumina::Reflection
         }
         
 #else
+        // Clean the intermediate reflection directory
+        for (const auto& Entry : std::filesystem::directory_iterator(ProjectReflectionDirectory.c_str()))
+        {
+            std::error_code ec;
+            std::filesystem::remove_all(Entry, ec);
+            if (ec)
+            {
+                std::cout << "Failed to delete: " << Entry.path() << " (" << ec.message() << ")\n";
+            }
+        }
+
+        std::ofstream AmalgamationFile(AmalgamationPath.c_str());
+        AmalgamationFile << "#pragma once\n\n";
+        
         for (const FReflectedHeader& Header : Headers)
         {
             AmalgamationFile << "#include \"" << Header.HeaderPath.c_str() << "\"\n";

@@ -12,12 +12,6 @@ namespace Lumina
 {
     FString FMaterialCompiler::BuildTree()
     {
-        FString Result;
-        for (const FShaderChunk& Chunk : ShaderChunks)
-        {
-            Result += Chunk.Data + "\n";
-        }
-
         FString FragmentPath = std::filesystem::path(Paths::GetEngineResourceDirectory() / "MaterialShader/Material.frag").generic_string().c_str();
 
         FString LoadedString;
@@ -28,10 +22,55 @@ namespace Lumina
 
         if (Pos != FString::npos)
         {
-            LoadedString.replace(Pos, strlen(Token), Result);
+            LoadedString.replace(Pos, strlen(Token), ShaderChunks);
         }
         
         return LoadedString;
+    }
+
+    void FMaterialCompiler::DefineFloatParameter(const FString& NodeID, const FName& ParamID, float Value)
+    {
+        if (ScalarParameters.find(ParamID) == ScalarParameters.end())
+        {
+            ScalarParameters[ParamID] = NumScalarParams++;
+        }
+
+        FString ValueString = eastl::to_string(ScalarParameters[ParamID]);
+        ShaderChunks.append("float " + NodeID + " = GetMaterialScalar(" + ValueString + ");\n");
+    }
+
+    void FMaterialCompiler::DefineFloat2Parameter(const FString& NodeID, const FName& ParamID, float Value[2])
+    {
+        if (Vec2Parameters.find(ParamID) == Vec2Parameters.end())
+        {
+            Vec2Parameters[ParamID] = NumVec2Params++;
+        }
+
+        FString ValueString = eastl::to_string(Vec2Parameters[ParamID]);
+        
+        ShaderChunks.append("vec4 " + NodeID + " = GetMaterialVec4(" + ValueString + ");\n");
+    }
+
+    void FMaterialCompiler::DefineFloat3Parameter(const FString& NodeID, const FName& ParamID, float Value[3])
+    {
+        if (Vec3Parameters.find(ParamID) == Vec3Parameters.end())
+        {
+            Vec3Parameters[ParamID] = NumVec3Params++;
+        }
+        
+        FString ValueString = eastl::to_string(Vec3Parameters[ParamID]);
+        ShaderChunks.append("vec4 " + NodeID + " = GetMaterialVec4(" + ValueString + ");\n");
+    }
+
+    void FMaterialCompiler::DefineFloat4Parameter(const FString& NodeID, const FName& ParamID, float Value[4])
+    {
+        if (Vec4Parameters.find(ParamID) == Vec4Parameters.end())
+        {
+            Vec4Parameters[ParamID] = NumVec4Params++;
+        }
+        
+        FString ValueString = eastl::to_string(Vec4Parameters[ParamID]);
+        ShaderChunks.append("vec4 " + NodeID + " = GetMaterialVec4(" + ValueString + ");\n");
     }
 
 
@@ -39,10 +78,7 @@ namespace Lumina
     {
         FString ValueString = eastl::to_string(Value);
     
-        FShaderChunk Chunk;
-        Chunk.Data = "float " + ID + " = " + ValueString + ";";
-        
-        ShaderChunks.push_back(Chunk);
+        ShaderChunks.append("float " + ID + " = " + ValueString + ";\n");
     }
 
     void FMaterialCompiler::DefineConstantFloat2(const FString& ID, float Value[2])
@@ -50,9 +86,7 @@ namespace Lumina
         FString ValueStringX = eastl::to_string(Value[0]);
         FString ValueStringY = eastl::to_string(Value[1]);
 
-        FShaderChunk Chunk;
-        Chunk.Data = "vec4 " + ID + " = vec4(" + ValueStringX + ", " + ValueStringY + ", 0.0, 1.0);";
-        ShaderChunks.push_back(Chunk);
+        ShaderChunks.append("vec4 " + ID + " = vec4(" + ValueStringX + ", " + ValueStringY + ", 0.0, 1.0);\n");
     }
 
     void FMaterialCompiler::DefineConstantFloat3(const FString& ID, float Value[3])
@@ -61,9 +95,7 @@ namespace Lumina
         FString ValueStringY = eastl::to_string(Value[1]);
         FString ValueStringZ = eastl::to_string(Value[2]);
 
-        FShaderChunk Chunk;
-        Chunk.Data = "vec4 " + ID + " = vec4(" + ValueStringX + ", " + ValueStringY + ", " + ValueStringZ + ", 1.0);";
-        ShaderChunks.push_back(Chunk);
+        ShaderChunks.append("vec4 " + ID + " = vec4(" + ValueStringX + ", " + ValueStringY + ", " + ValueStringZ + ", 1.0);\n");
     }
 
     void FMaterialCompiler::DefineConstantFloat4(const FString& ID, float Value[4])
@@ -73,16 +105,12 @@ namespace Lumina
         FString ValueStringZ = eastl::to_string(Value[2]);
         FString ValueStringW = eastl::to_string(Value[3]);
 
-        FShaderChunk Chunk;
-        Chunk.Data = "vec4 " + ID + " = vec4(" + ValueStringX + ", " + ValueStringY + ", " + ValueStringZ + ", " + ValueStringW + ");";
-        ShaderChunks.push_back(Chunk);
+        ShaderChunks.append("vec4 " + ID + " = vec4(" + ValueStringX + ", " + ValueStringY + ", " + ValueStringZ + ", " + ValueStringW + ");\n");
     }
 
     void FMaterialCompiler::DefineTextureSample(const FString& ID)
     {
-        FShaderChunk Chunk;
-        Chunk.Data = "layout(set = 1, binding = " + eastl::to_string(BindingIndex) + ") uniform sampler2D " + ID + "_sample;";
-        ShaderChunks.push_back(Chunk);
+        ShaderChunks.append("layout(set = 1, binding = " + eastl::to_string(BindingIndex) + ") uniform sampler2D " + ID + "_sample;\n");
         BindingIndex++;
     }
 
@@ -97,38 +125,28 @@ namespace Lumina
             return;
         }
         
-        FShaderChunk Chunk;
-        Chunk.Data = "vec4 " + ID + " = texture(" + ID + "_sample" + ", inUV.xy);";
-        ShaderChunks.push_back(Chunk);
-        BoundImages.push_back(Texture->RHIImage);
+        ShaderChunks.append("vec4 " + ID + " = texture(" + ID + "_sample" + ", inUV.xy);\n");
+        BoundImages.push_back(Texture);
     }
 
     void FMaterialCompiler::NewLine()
     {
-        FShaderChunk Chunk;
-        Chunk.Data = "\n";
-        ShaderChunks.push_back(Chunk);
+        ShaderChunks.append("\n");
     }
 
     void FMaterialCompiler::WorldPos(const FString& ID)
     {
-        FShaderChunk Chunk;
-        Chunk.Data = "vec4 " + ID + " = vec4(GetModelLocation(), 1.0);";
-        ShaderChunks.push_back(Chunk);
+        ShaderChunks.append("vec4 " + ID + " = vec4(inModelMatrix[3].xyz, 1.0);\n");
     }
 
     void FMaterialCompiler::CameraPos(const FString& ID)
     {
-        FShaderChunk Chunk;
-        Chunk.Data = "vec4 " + ID + " = vec4(GetCameraPosition(), 1.0);";
-        ShaderChunks.push_back(Chunk);
+        ShaderChunks.append("vec4 " + ID + " = vec4(GetCameraPosition(), 1.0);\n");
     }
 
     void FMaterialCompiler::Time(const FString& ID)
     {
-        FShaderChunk Chunk;
-        Chunk.Data = "vec4 " + ID + " = vec4(GetTime());";
-        ShaderChunks.push_back(Chunk);
+        ShaderChunks.append("vec4 " + ID + " = vec4(GetTime());\n");
     }
 
     void FMaterialCompiler::Multiply(CMaterialInput* A, CMaterialInput* B)
@@ -164,9 +182,7 @@ namespace Lumina
 
         FString ResultType = "vec4";
 
-        FShaderChunk Chunk;
-        Chunk.Data = ResultType + " " + OwningNode + " = " + AValue + " * " + BValue + ";";
-        ShaderChunks.push_back(Chunk);
+        ShaderChunks.append(ResultType + " " + OwningNode + " = " + AValue + " * " + BValue + ";\n");
     }
 
 
@@ -199,9 +215,7 @@ namespace Lumina
             BValue = "vec4(" + eastl::to_string(Node->ConstB) + ")";
         }
 
-        FShaderChunk Chunk;
-        Chunk.Data = "vec4 " + OwningNode + " = " + AValue + " / " + BValue + ";";
-        ShaderChunks.push_back(Chunk);
+        ShaderChunks.append("vec4 " + OwningNode + " = " + AValue + " / " + BValue + ";\n");
     }
 
 
@@ -234,9 +248,7 @@ namespace Lumina
             BValue = "vec4(" + eastl::to_string(Node->ConstB) + ")";
         }
 
-        FShaderChunk Chunk;
-        Chunk.Data = "vec4 " + OwningNode + " = " + AValue + " + " + BValue + ";";
-        ShaderChunks.push_back(Chunk);
+        ShaderChunks.append("vec4 " + OwningNode + " = " + AValue + " + " + BValue + ";\n");
     }
 
 
@@ -270,9 +282,7 @@ namespace Lumina
             BValue = "vec4(" + eastl::to_string(Node->ConstB) + ")";
         }
 
-        FShaderChunk Chunk;
-        Chunk.Data = "vec4 " + OwningNode + " = " + AValue + " - " + BValue + ";";
-        ShaderChunks.push_back(Chunk);
+        ShaderChunks.append("vec4 " + OwningNode + " = " + AValue + " - " + BValue + ";\n");
     }
     
     void FMaterialCompiler::Sin(CMaterialInput* A, CMaterialInput* B)
@@ -293,9 +303,7 @@ namespace Lumina
             AValue = "vec4(" + ConstAString + ")";
         }
 
-        FShaderChunk Chunk;
-        Chunk.Data = "vec4 " + OwningNode + " = sin(" + AValue + ");";
-        ShaderChunks.push_back(Chunk);
+        ShaderChunks.append("vec4 " + OwningNode + " = sin(" + AValue + ");\n");
     }
 
     void FMaterialCompiler::Cos(CMaterialInput* A, CMaterialInput* B)
@@ -316,9 +324,7 @@ namespace Lumina
             AValue = "vec4(" + ConstAString + ")";
         }
 
-        FShaderChunk Chunk;
-        Chunk.Data = "vec4 " + OwningNode + " = cos(" + AValue + ");";
-        ShaderChunks.push_back(Chunk);
+        ShaderChunks.append("vec4 " + OwningNode + " = cos(" + AValue + ");");
     }
 
     void FMaterialCompiler::Floor(CMaterialInput* A, CMaterialInput* B)
@@ -339,9 +345,7 @@ namespace Lumina
             AValue = "vec4(" + ConstAString + ")";
         }
 
-        FShaderChunk Chunk;
-        Chunk.Data = "vec4 " + OwningNode + " = floor(" + AValue + ");";
-        ShaderChunks.push_back(Chunk);
+        ShaderChunks.append("vec4 " + OwningNode + " = floor(" + AValue + ");\n");
     }
 
     void FMaterialCompiler::Ceil(CMaterialInput* A, CMaterialInput* B)
@@ -362,9 +366,7 @@ namespace Lumina
             AValue = "vec4(" + ConstAString + ")";
         }
 
-        FShaderChunk Chunk;
-        Chunk.Data = "vec4 " + OwningNode + " = ceil(" + AValue + ");";
-        ShaderChunks.push_back(Chunk);
+        ShaderChunks.append("vec4 " + OwningNode + " = ceil(" + AValue + ");\n");
     }
 
     void FMaterialCompiler::Power(CMaterialInput* A, CMaterialInput* B)
@@ -397,9 +399,7 @@ namespace Lumina
             BValue = "vec4(" + ConstBString + ")";
         }
 
-        FShaderChunk Chunk;
-        Chunk.Data = "vec4 " + OwningNode + " = pow(" + AValue + ", " + BValue + ");";
-        ShaderChunks.push_back(Chunk);
+        ShaderChunks.append("vec4 " + OwningNode + " = pow(" + AValue + ", " + BValue + ");\n");
     }
 
     void FMaterialCompiler::Mod(CMaterialInput* A, CMaterialInput* B)
@@ -432,9 +432,7 @@ namespace Lumina
             BValue = "vec4(" + ConstBString + ")";
         }
 
-        FShaderChunk Chunk;
-        Chunk.Data = "vec4 " + OwningNode + " = mod(" + AValue + ", " + BValue + ");";
-        ShaderChunks.push_back(Chunk);
+        ShaderChunks.append("vec4 " + OwningNode + " = mod(" + AValue + ", " + BValue + ");\n");
     }
 
     void FMaterialCompiler::Min(CMaterialInput* A, CMaterialInput* B)
@@ -453,9 +451,7 @@ namespace Lumina
         if (B->HasConnection())
             BValue = B->GetConnections()[0]->GetOwningNode()->GetNodeFullName();
 
-        FShaderChunk Chunk;
-        Chunk.Data = "vec4 " + OwningNode + " = min(" + AValue + ", " + BValue + ");";
-        ShaderChunks.push_back(Chunk);
+        ShaderChunks.append("vec4 " + OwningNode + " = min(" + AValue + ", " + BValue + ");\n");
     }
 
     void FMaterialCompiler::Max(CMaterialInput* A, CMaterialInput* B)
@@ -488,9 +484,7 @@ namespace Lumina
             BValue = "vec4(" + ConstBString + ")";
         }
 
-        FShaderChunk Chunk;
-        Chunk.Data = "vec4 " + OwningNode + " = max(" + AValue + ", " + BValue + ");";
-        ShaderChunks.push_back(Chunk);
+        ShaderChunks.append("vec4 " + OwningNode + " = max(" + AValue + ", " + BValue + ");\n");
     }
 
     void FMaterialCompiler::Step(CMaterialInput* A, CMaterialInput* B)
@@ -523,9 +517,7 @@ namespace Lumina
             BValue = "vec4(" + ConstBString + ")";
         }
 
-        FShaderChunk Chunk;
-        Chunk.Data = "vec4 " + OwningNode + " = step(" + AValue + ", " + BValue + ");";
-        ShaderChunks.push_back(Chunk);
+        ShaderChunks.append("vec4 " + OwningNode + " = step(" + AValue + ", " + BValue + ");\n");
     }
 
     void FMaterialCompiler::Lerp(CMaterialInput* A, CMaterialInput* B, CMaterialInput* C)
@@ -570,24 +562,20 @@ namespace Lumina
         }
         else
         {
-            FString ConstCString = eastl::to_string(Node->ConstC);
+            FString ConstCString = eastl::to_string(Node->Alpha);
             CValue = "vec4(" + ConstCString + ")";
         }
 
-        FShaderChunk Chunk;
-        Chunk.Data = "vec4 " + OwningNode + " = mix(" + AValue + ", " + BValue + ", " + CValue + ");";
-        ShaderChunks.push_back(Chunk);
+        ShaderChunks.append("vec4 " + OwningNode + " = mix(" + AValue + ", " + BValue + ", " + CValue + ");\n");
     }
 
-    void FMaterialCompiler::GetBoundImages(TVector<FRHIImageRef>& Images)
+    void FMaterialCompiler::GetBoundTextures(TVector<TObjectHandle<CTexture>>& Images)
     {
         Images = BoundImages;
     }
 
     void FMaterialCompiler::AddRaw(const FString& Raw)
     {
-        FShaderChunk Chunk;
-        Chunk.Data = Raw;
-        ShaderChunks.push_back(Chunk);
+        ShaderChunks.append(Raw);
     }
 }

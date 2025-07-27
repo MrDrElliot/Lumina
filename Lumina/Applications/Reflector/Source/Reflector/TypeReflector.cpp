@@ -55,14 +55,13 @@ namespace Lumina::Reflection
         {
             FReflectedProject Project(Solution.GetPath(), FilePath);
             
-            
             if (Project.Parse())
             {
-                Projects.push_back(Project);
+                Solution.AddReflectedProject(Project);
             }
         }
         
-        return !Projects.empty();
+        return true;
     }
 
     bool FTypeReflector::Clean()
@@ -74,11 +73,13 @@ namespace Lumina::Reflection
     {
         Parser.ParsingContext.bInitialPass = true;
         
-        // Initial Pass. Register Types and create types only.
+        // Initial Pass. Register types only.
+        eastl::vector<FReflectedProject> Projects;
+        Solution.GetProjects(Projects);
+        
         for (FReflectedProject& Project : Projects)
         {
             Parser.ParsingContext.ReflectionDatabase.AddReflectedProject(Project);
-
             
             if (!Parser.Parse(Project.SolutionPath, Project.Headers, Project))
             {
@@ -104,7 +105,6 @@ namespace Lumina::Reflection
         {
             std::cout << "\033[31m" << Parser.ParsingContext.ErrorMessage.c_str() << "\033[0m\n";
         }
-
         
         return true;
     }
@@ -114,6 +114,11 @@ namespace Lumina::Reflection
         WriteGeneratedFiles(Parser);
 
         return true;
+    }
+
+    void FTypeReflector::Bump()
+    {
+        Solution.DirtyProjectFiles();
     }
 
 

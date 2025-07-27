@@ -25,6 +25,7 @@
 #include "Assets/AssetTypes/Material/MaterialInstance.h"
 #include "Assets/AssetTypes/Mesh/StaticMesh/StaticMesh.h"
 #include "Assets/AssetTypes/Textures/Texture.h"
+#include "Core/Object/ObjectIterator.h"
 #include "Core/Object/Package/Package.h"
 #include "Core/Profiler/Profile.h"
 #include "Core/Reflection/PropertyCustomization/PropertyCustomization.h"
@@ -225,21 +226,24 @@ namespace Lumina
         if (bShowObjectDebug)
         {
             ImGui::SetNextWindowSize({ 700.0f, 600.0f }, ImGuiCond_FirstUseEver);
-            FString Name = "CObject List - Num: " + eastl::to_string(GObjectVector.size());
+            FString Name = "CObject List - Num: " + eastl::to_string(GObjectArray.GetNumObjectsAlive());
 
             if (ImGui::Begin(Name.c_str(), &bShowObjectDebug))
             {
-                THashMap<FString, TVector<CObjectBase*>> PackageToObjects;
-                for (CObjectBase* Object : GObjectVector)
+                THashMap<FString, TVector<CObject*>> PackageToObjects;
+                for (TObjectIterator<CObject> It; It; ++It)
                 {
+                    CObject* Object = *It;
+                    if (Object == nullptr) continue;
+                    
                     FString PackageName = Object->GetPackage() ? Object->GetPackage()->GetName().ToString() : "None";
                     PackageToObjects[PackageName].push_back(Object);
                 }
-
+                
                 for (const auto& Pair : PackageToObjects)
                 {
                     const FString& PackageName = Pair.first;
-                    const TVector<CObjectBase*>& Objects = Pair.second;
+                    const TVector<CObject*>& Objects = Pair.second;
 
                     ImGuiTreeNodeFlags Flags = 0;
                     if (ImGui::TreeNodeEx(PackageName.c_str(), Flags))
@@ -249,7 +253,7 @@ namespace Lumina
                             ImGui::TableSetupColumn("Object Name");
                             ImGui::TableHeadersRow();
 
-                            for (CObjectBase* Object : Objects)
+                            for (CObject* Object : Objects)
                             {
                                 ImGui::TableNextRow();
                                 ImGui::TableSetColumnIndex(0);
@@ -286,11 +290,20 @@ namespace Lumina
             DrawToolContents(UpdateContext, Tool);
         }
 
+        
         if (ToolToClose)
         {
-            DestroyTool(UpdateContext, ToolToClose);
+            ToolsPendingDestroy.push(ToolToClose);
         }
 
+        while (!ToolsPendingDestroy.empty())
+        {
+            FEditorTool* Tool = ToolsPendingDestroy.front();
+            ToolsPendingDestroy.pop();
+
+            DestroyTool(UpdateContext, Tool);
+        }
+        
         while (!ToolsPendingAdd.empty())
         {
             FEditorTool* NewTool = ToolsPendingAdd.front();
@@ -326,7 +339,7 @@ namespace Lumina
 
     void FEditorUI::OnUpdate(const FUpdateContext& UpdateContext)
     {
-        LUMINA_PROFILE_SCOPE();
+        LUMINA_PROFILE_SCOPE()
         for (FEditorTool* Tool : EditorTools)
         {
             if (Tool->HasScene())
@@ -338,7 +351,7 @@ namespace Lumina
 
     void FEditorUI::OnEndFrame(const FUpdateContext& UpdateContext)
     {
-        LUMINA_PROFILE_SCOPE();
+        LUMINA_PROFILE_SCOPE()
     }
     
     void FEditorUI::DestroyTool(const FUpdateContext& UpdateContext, FEditorTool* Tool)
@@ -392,7 +405,15 @@ namespace Lumina
             ActiveAssetTools.insert_or_assign(InAsset, NewTool);
         }
     }
-    
+
+    void FEditorUI::OnDestroyAsset(CObject* InAsset)
+    {
+        if (ActiveAssetTools.find(InAsset) != ActiveAssetTools.end())
+        {
+            ToolsPendingDestroy.push(ActiveAssetTools.at(InAsset));
+        }
+    }
+
     void FEditorUI::EditorToolLayoutCopy(FEditorTool* SourceTool)
     {
         LUMINA_PROFILE_SCOPE();
@@ -450,7 +471,7 @@ namespace Lumina
 
     bool FEditorUI::SubmitToolMainWindow(const FUpdateContext& UpdateContext, FEditorTool* EditorTool, ImGuiID TopLevelDockspaceID)
     {
-        LUMINA_PROFILE_SCOPE();
+        LUMINA_PROFILE_SCOPE()
         Assert(EditorTool != nullptr)
         Assert(TopLevelDockspaceID != 0)
 
@@ -519,7 +540,7 @@ namespace Lumina
 
     void FEditorUI::DrawToolContents(const FUpdateContext& UpdateContext, FEditorTool* Tool)
     {
-        LUMINA_PROFILE_SCOPE();
+        LUMINA_PROFILE_SCOPE()
 
         // This is the second Begin(), as MyEditor_UpdateDocLocationAndLayout() has already done one
         // (Therefore only the p_open and flags of the first call to Begin() applies)
@@ -904,7 +925,7 @@ namespace Lumina
 
         
         ImGui::SameLine();
-        SIZE_T CObjectCount = GObjectVector.size();
+        SIZE_T CObjectCount = GObjectArray.GetNumObjectsAlive();
         TInlineString<100> const ObjectStats(TInlineString<100>::CtorSprintf(),  "CObject Count: %i", CObjectCount);
         ImGui::Text(ObjectStats.c_str());
         

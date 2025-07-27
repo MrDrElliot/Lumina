@@ -32,7 +32,7 @@ namespace Lumina
         FName(const char* Char);
         FName(const TCHAR* Char);
         explicit FName(uint64 InID) :ID(InID) {}
-        explicit FName(const FString& Str);
+        FName(const FString& Str);
         explicit FName(const FInlineString& Str);
 
         FORCEINLINE bool IsValid() const;
@@ -47,7 +47,6 @@ namespace Lumina
 
         FORCEINLINE bool operator==(const FName& Other) const { return ID == Other.ID; }
         FORCEINLINE bool operator!=(const FName& Other) const { return ID != Other.ID; }
-    
         
     private:
         FString     StringView;

@@ -1,10 +1,12 @@
 ﻿#include "MaterialEditorTool.h"
 #include "imnodes/imnodes.h"
 #include "Assets/AssetTypes/Material/Material.h"
+#include "Assets/AssetTypes/Textures/Texture.h"
 #include "Core/Engine/Engine.h"
 #include "Core/Object/Cast.h"
 #include "Renderer/RHIIncl.h"
 #include "Core/Object/Class.h"
+#include "Core/Object/Package/Package.h"
 #include "Paths/Paths.h"
 #include "Platform/Filesystem/FileHelper.h"
 #include "Renderer/RenderContext.h"
@@ -18,10 +20,10 @@
 
 namespace Lumina
 {
-    const char* MaterialGraphName           = "Material Graph";
-    const char* MaterialPropertiesName      = "Material Properties";
-    const char* MaterialPreviewName         = "Material Preview";
-    const char* GLSLPreviewName             = "GLSL Preview";
+    static const char* MaterialGraphName           = "Material Graph";
+    static const char* MaterialPropertiesName      = "Material Properties";
+    static const char* MaterialPreviewName         = "Material Preview";
+    static const char* GLSLPreviewName             = "GLSL Preview";
 
     void FMaterialEditorTool::OnInitialize()
     {
@@ -45,17 +47,40 @@ namespace Lumina
             DrawGLSLPreview(Cxt);
         });
 
-        NodeGraph = NewObject<CMaterialNodeGraph>();
-        NodeGraph->SetMaterial(static_cast<CMaterial*>(Asset));
+        FString GraphName = Asset->GetName().ToString() + "MaterialGraph";
+        NodeGraph = LoadObject<CMaterialNodeGraph>(Asset->GetPackage()->GetName(), FName(GraphName));
+        if (NodeGraph == nullptr)
+        {
+            NodeGraph = NewObject<CMaterialNodeGraph>(Asset->GetPackage(), FName(GraphName));
+        }
+        
+        NodeGraph->SetMaterial(Cast<CMaterial>(Asset.Get()));
         NodeGraph->Initialize();
+        NodeGraph->SetNodeSelectedCallback( [this] (CEdGraphNode* Node)
+        {
+            if (Node != SelectedNode)
+            {
+                SelectedNode = Node;
+
+                if (SelectedNode == nullptr)
+                {
+                    GetPropertyTable()->SetObject(Asset, CMaterial::StaticClass());
+                }
+                else
+                {
+                    GetPropertyTable()->SetObject(Node, Node->GetClass());
+                }
+            }
+        });
     }
-
-
+    
     void FMaterialEditorTool::OnDeinitialize(const FUpdateContext& UpdateContext)
     {
-        NodeGraph->Shutdown();
-        NodeGraph->MarkGarbage();
-        NodeGraph = nullptr;
+        if (NodeGraph)
+        {
+            NodeGraph->Shutdown();
+            NodeGraph = nullptr;
+        }
     }
 
     void FMaterialEditorTool::OnAssetLoadFinished()
@@ -87,8 +112,6 @@ namespace Lumina
             return;
         }
         
-        //ImGuiX::DrawObjectProperties(Asset);
-
     }
 
     void FMaterialEditorTool::DrawGLSLPreview(const FUpdateContext& UpdateContext)
@@ -142,46 +165,67 @@ namespace Lumina
             FString Tree = Compiler.BuildTree();
             CompilationResult.CompilationLog = "Generated GLSL: \n \n \n" + Tree;
             CompilationResult.bIsError = false;
-
             bGLSLPreviewDirty = true;
+
             IShaderCompiler* ShaderCompiler = GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext()->GetShaderCompiler();
-            ShaderCompiler->CompilerShaderRaw(Tree, {}, [this](const TVector<uint32>& Binaries)
+            ShaderCompiler->CompilerShaderRaw(Tree, {}, [this](const ShaderBinaries& Binaries)
             {
                 IRenderContext* RenderContext = GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext();
                 FRHIPixelShaderRef PixelShader = RenderContext->CreatePixelShader(Binaries);
 
-                FName Key = eastl::to_string(Hash::GetHash64(Binaries.data(), Binaries.size())).c_str();
+                FName Key = eastl::to_string(Hash::GetHash64(Binaries.data(), Binaries.size()));
                 PixelShader->SetKey(Key);
                     
                 FRHIVertexShaderRef VertexShader = RenderContext->GetShaderLibrary()->GetShader("Material.vert").As<FRHIVertexShader>();
-                CMaterial* Material = Cast<CMaterial>(Asset);
+                CMaterial* Material = Cast<CMaterial>(Asset.Get());
                 Material->VertexShader = VertexShader;
                 Material->PixelShader = PixelShader;
                 RenderContext->OnShaderCompiled(PixelShader);
             });
 
+            
+
             IRenderContext* RenderContext = GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext();
 
-            CMaterial* Material = Cast<CMaterial>(Asset);
-            Compiler.GetBoundImages(Material->Images);
-            
+            CMaterial* Material = Cast<CMaterial>(Asset.Get());
+            Compiler.GetBoundTextures(Material->Textures);
+
+            FRHIBufferDesc BufferDesc;
+            BufferDesc.Size = sizeof(FMaterialUniforms);
+            BufferDesc.DebugName = "Material Uniforms";
+            BufferDesc.InitialState = EResourceStates::ConstantBuffer;
+            BufferDesc.bKeepInitialState = true;
+            BufferDesc.Usage.SetFlag(BUF_UniformBuffer);
+            Material->UniformBuffer = RenderContext->CreateBuffer(BufferDesc);
+            RenderContext->SetObjectName(Material->UniformBuffer, Material->GetName().c_str(), EAPIResourceType::Buffer);
+
             FBindingSetDesc SetDesc;
+            SetDesc.AddItem(FBindingSetItem::BufferCBV(0, Material->UniformBuffer));
             
             FBindingLayoutDesc LayoutDesc;
             LayoutDesc.StageFlags.SetMultipleFlags(ERHIShaderType::Fragment);
+
+            FBindingLayoutItem BufferItem;
+            BufferItem.Slot = 0;
+            BufferItem.Type = ERHIBindingResourceType::Buffer_Uniform;
+            LayoutDesc.AddItem(BufferItem);
             
-            for (int i = 0; i < Material->Images.size(); ++i)
+            for (SIZE_T i = 0; i < Material->Textures.size(); ++i)
             {
-                FRHIImageRef Image = Material->Images[i];
+                FRHIImageRef Image = Material->Textures[i]->RHIImage;
                 
                 FBindingLayoutItem Item;
-                Item.Slot = i;
+                Item.Slot = i + 1;
                 Item.Type = ERHIBindingResourceType::Texture_SRV;
                 
                 LayoutDesc.AddItem(Item);
+                
                 SetDesc.AddItem(FBindingSetItem::TextureSRV(i, Image));
             }
-
+            
+            Memory::Memzero(&Material->MaterialUniforms, sizeof(FMaterialUniforms));
+            RenderContext->GetCommandList(ECommandQueue::Graphics)->WriteBuffer(Material->UniformBuffer, &Material->MaterialUniforms, 0, sizeof(FMaterialUniforms));
+            
             Material->BindingLayout = RenderContext->CreateBindingLayout(LayoutDesc);
             RenderContext->SetObjectName(Material->BindingLayout, Material->GetName().c_str(), EAPIResourceType::DescriptorSetLayout);
             

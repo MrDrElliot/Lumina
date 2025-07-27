@@ -1,6 +1,12 @@
 ﻿#pragma once
 
+#include "Core/Object/ObjectHandleTyped.h"
 #include "UI/Tools/AssetEditors/AssetEditorTool.h"
+
+namespace Lumina
+{
+    class CEdGraphNode;
+}
 
 namespace Lumina
 {
@@ -42,8 +48,10 @@ namespace Lumina
 
     private:
 
+        CEdGraphNode* SelectedNode = nullptr;
         FCompilationResultInfo CompilationResult;
-        CMaterialNodeGraph* NodeGraph;
+        
+        TObjectHandle<CMaterialNodeGraph> NodeGraph;
         bool bGLSLPreviewDirty = false;
 
     };

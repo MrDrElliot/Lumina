@@ -17,11 +17,14 @@ layout(location = 0) out vec4 outFragColor;
 layout(location = 1) out vec3 outNormal;
 layout(location = 2) out vec3 outFragPos;
 layout(location = 3) out vec2 outUV;
+layout(location = 4) out mat4 inModelMatrix;
 
 
 void main()
 {
     mat4 model = GetModelMatrix(gl_InstanceIndex);
+    inModelMatrix = model;
+    
     vec4 worldPos = model * vec4(inPosition.xyz, 1.0f);
 
     mat3 normalMatrix = transpose(inverse(mat3(model)));

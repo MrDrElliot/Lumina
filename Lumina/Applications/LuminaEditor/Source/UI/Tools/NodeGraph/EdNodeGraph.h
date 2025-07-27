@@ -3,10 +3,8 @@
 #include "EdGraphNode.h"
 #include "imnodes/imnodes_internal.h"
 #include "Containers/Array.h"
-#include "Containers/Name.h"
 #include "Core/Functional/Function.h"
-#include "Core/Templates/Forward.h"
-#include "Memory/Memory.h"
+#include "Core/Object/ObjectHandleTyped.h"
 #include "EdNodeGraph.generated.h"
 
 namespace Lumina
@@ -55,20 +53,25 @@ namespace Lumina
 
         virtual CEdGraphNode* OnNodeRemoved(CEdGraphNode* Node) { return nullptr; }
 
-        void SetNodeSelectedCallback(const TFunction<CEdGraphNode*()>& Callback) { NodeSelectedCallback = Callback; }
+        void SetNodeSelectedCallback(const TFunction<void(CEdGraphNode*)>& Callback) { NodeSelectedCallback = Callback; }
         
-    protected:
+    public:
 
-        void RegisterGraphNode(CClass* InClass) { SupportedNodes.push_back(InClass); }
+        void RegisterGraphNode(CClass* InClass);
         
         uint64 AddNode(CEdGraphNode* InNode);
 
-        TVector<CEdGraphNode*>                          Nodes;
+        LUM_PROPERTY()
+        TVector<TObjectHandle<CEdGraphNode>>            Nodes;
         
-        TVector<CClass*>                                SupportedNodes;
+        LUM_PROPERTY()
+        TVector<uint16>                                 Connections;
+        
+        THashSet<CClass*>                               SupportedNodes;
         TVector<FAction>                                Actions;
-
-        TFunction<CEdGraphNode*()>                      NodeSelectedCallback;
+        TQueue<CEdGraphNode*>                           NodesToDestroy;
+        
+        TFunction<void(CEdGraphNode*)>                  NodeSelectedCallback;
     private:
         
         ImNodesEditorContext* ImNodesContext = nullptr;

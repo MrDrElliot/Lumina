@@ -4,32 +4,27 @@
 #include "MaterialInput.h"
 #include "Containers/Array.h"
 #include "Containers/String.h"
+#include "Core/Object/ObjectHandleTyped.h"
 #include "Renderer/RHIFwd.h"
 
 namespace Lumina
 {
     class CTexture;
-}
-
-namespace Lumina
-{
     class FMaterialNodePin;
     class CMaterialGraphNode;
 }
 
+
 namespace Lumina
 {
-
-    class FShaderChunk
-    {
-    public:
-        
-        FString Data;
-    };
-    
     class FMaterialCompiler
     {
     public:
+
+        FMaterialCompiler()
+        {
+            ShaderChunks.reserve(4096 * 10);
+        }
 
         struct FError
         {
@@ -45,8 +40,13 @@ namespace Lumina
         FORCEINLINE const TVector<FError>& GetErrors() const { return Errors; }
 
         FString BuildTree();
+
         
-        
+        void DefineFloatParameter(const FString& NodeID, const FName& ParamID, float Value);
+        void DefineFloat2Parameter(const FString& NodeID, const FName& ParamID, float Value[2]);
+        void DefineFloat3Parameter(const FString& NodeID, const FName& ParamID, float Value[3]);
+        void DefineFloat4Parameter(const FString& NodeID, const FName& ParamID, float Value[4]);
+
         void DefineConstantFloat(const FString& ID, float Value);
         void DefineConstantFloat2(const FString& ID, float Value[2]);
         void DefineConstantFloat3(const FString& ID, float Value[3]);
@@ -76,20 +76,29 @@ namespace Lumina
         void Step(CMaterialInput* A, CMaterialInput* B);
         void Lerp(CMaterialInput* A, CMaterialInput* B, CMaterialInput* C);
 
-        void GetBoundImages(TVector<FRHIImageRef>& Images);
+        void GetBoundTextures(TVector<TObjectHandle<CTexture>>& Images);
 
         void AddRaw(const FString& Raw);
         
         //-----------------------------------------------------------------------------
     
     private:
-
-        CMaterialGraphNode*                 CurrentNode = nullptr;
-        FMaterialNodePin*                   CurrentPin =  nullptr;
-        TVector<FShaderChunk>               ShaderChunks;
+        
+        FString                             ShaderChunks;
         TVector<FError>                     Errors;
 
-        uint32                              BindingIndex = 0;
-        TVector<FRHIImageRef>               BoundImages;
+        uint32                              BindingIndex = 1; // 0 is uniform buffer.
+        TVector<TObjectHandle<CTexture>>    BoundImages;
+
+        uint32                              NumScalarParams = 0;
+        uint32                              NumVec2Params = 0;
+        uint32                              NumVec3Params = 0;
+        uint32                              NumVec4Params = 0;
+        
+        THashMap<FName, uint32>             ScalarParameters;
+        THashMap<FName, uint32>             Vec2Parameters;
+        THashMap<FName, uint32>             Vec3Parameters;
+        THashMap<FName, uint32>             Vec4Parameters;
+
     };
 }

@@ -56,84 +56,62 @@ namespace Lumina::ImGuiX
         static ImGuiTextFilter SearchFilter;
         Filter.ClassNames.push_back(T::StaticClass()->GetName().ToString());
         
-        const char* Text = "Select Object";
-        float WindowWidth = ImGui::GetContentRegionAvail().x;
-        float TextWidth = ImGui::CalcTextSize(Text).x;
-
-        if (ImGui::Button("Clear", ImVec2(ImGui::GetContentRegionAvail().x, 0)))
+        if (ImGui::Button("Clear", ImVec2(ImGui::GetContentRegionAvail().x / 2, 0)))
         {
             OutSelected = nullptr;
-            ImGui::EndPopup();
-            return false;
+            return true;
+        }
+
+        ImGui::SameLine();
+        
+        if (ImGui::Button("Close", ImVec2(ImGui::GetContentRegionAvail().x, 0)))
+        {
+            return true;
         }
         
-        ImGui::SetCursorPosX((WindowWidth - TextWidth) * 0.5f);
-        ImGui::Text("%s", Text);        ImGui::Separator();
-
         SearchFilter.Draw("##", ImGui::GetContentRegionAvail().x);
         ImGui::Separator();
 
         TVector<FAssetData> FilteredAssets;
         GEngine->GetEngineSubsystem<FAssetRegistry>()->GetAssets(Filter, FilteredAssets);
-
-        if (ImGui::BeginTable("AssetTable", 1, ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_ScrollY))
+        
+        for (const FAssetData& Asset : FilteredAssets)
         {
-            ImGui::TableSetupColumn("Asset", ImGuiTableColumnFlags_WidthStretch);
-
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            
-            for (const FAssetData& Asset : FilteredAssets)
+            if (!SearchFilter.PassFilter(Asset.Name.c_str()))
             {
-                if (!SearchFilter.PassFilter(Asset.Name.c_str()))
-                {
-                    continue;
-                }
+                continue;
+            }
+            
+            const char* NameStr = Asset.Name.c_str();
 
-                ImGui::TableNextRow();
-                ImGui::TableSetColumnIndex(0);
-
-                const char* NameStr = Asset.Name.c_str();
-                float TextWidth = ImGui::CalcTextSize(NameStr).x;
-                float ColumnWidth = ImGui::GetColumnWidth();
-                float SelectableWidth = TextWidth + ImGui::GetStyle().FramePadding.x * 2.0f;
-
-                float Padding = (ColumnWidth - SelectableWidth) * 0.5f;
-                if (Padding > 0.0f)
-                    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + Padding);
-
-                // Limit width of the selectable to just fit the text
-                ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(ImGui::GetStyle().FramePadding.x, ImGui::GetStyle().FramePadding.y));
-                ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, ImGui::GetStyle().ItemSpacing.y));
-
+            ImGui::BeginGroup();
+            ImGui::Button("Asset", ImVec2(64, 64));
+            ImGui::SameLine();
+            
+            if (ImGui::Selectable(NameStr))
+            {
                 ImGui::PushID(Asset.Path.c_str());
-
-                if (ImGui::Selectable(NameStr, false, 0, ImVec2(SelectableWidth, 0)))
-                {
-                    FString VirtualPath = Paths::ConvertToVirtualPath(Asset.Path);
-                    VirtualPath += "." + Asset.Name.ToString();
-                    FName AssetName = VirtualPath.c_str();
-                    OutSelected = LoadObject<T>(AssetName);
-                    ImGui::CloseCurrentPopup();
-                    ImGui::PopStyleVar(2);
-                    ImGui::PopID();
-                    break;
-                }
-
-                if (ImGui::IsItemHovered())
-                {
-                    ImGui::SetTooltip("%s", Asset.Path.c_str());
-                }
-
+                
+                FString VirtualPath = Paths::ConvertToVirtualPath(Asset.Path);
+                VirtualPath += "." + Asset.Name.ToString();
+                FName AssetName = VirtualPath.c_str();
+                OutSelected = LoadObject<T>(AssetName);
+                
                 ImGui::PopID();
-
-                ImGui::PopStyleVar(2);
+                ImGui::CloseCurrentPopup();
+                ImGui::EndGroup();
+                return true;
             }
 
-            ImGui::EndTable();
+            if (ImGui::IsItemHovered())
+            {
+                ImGui::SetTooltip("%s", Asset.Path.c_str());
+            }
+
+            ImGui::EndGroup();
         }
         
-        return true;
+        return false;
     }
 
     namespace Notifications

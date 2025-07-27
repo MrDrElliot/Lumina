@@ -3,7 +3,6 @@
 #include "Core/Engine/Engine.h"
 #include "Core/Object/Object.h"
 #include "Source/Runtime/Core/Application/Application.h"
-#include "Core/Object/ObjectPtr.h"
 
 
 class FSandboxEngine : public Lumina::FEngine

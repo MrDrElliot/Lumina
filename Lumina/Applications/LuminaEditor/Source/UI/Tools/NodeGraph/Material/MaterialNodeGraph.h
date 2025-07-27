@@ -28,14 +28,17 @@ namespace Lumina
 
         void ValidateGraph() override;
 
-        void SetMaterial(CMaterial* InMaterial) { Material = InMaterial;}
+        void SetMaterial(CMaterial* InMaterial);
         CMaterial* GetMaterial() const { return Material; }
 
         CEdGraphNode* CreateNode(CClass* NodeClass) override;
+
+        
     private:
 
-        static CEdGraphNode* TopologicalSort(const TVector<CEdGraphNode*>& Nodes, TVector<CEdGraphNode*>& SortedNodes);
+        static CEdGraphNode* TopologicalSort(const TVector<TObjectHandle<CEdGraphNode>>& Nodes, TVector<CEdGraphNode*>& SortedNodes);
 
-        CMaterial* Material = nullptr;
+        
+        TObjectHandle<CMaterial> Material;
     };
 }

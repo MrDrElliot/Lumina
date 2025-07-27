@@ -11,6 +11,8 @@ namespace Lumina
             :FProperty(InOwner, Params)
         {
         }
+
+        void Serialize(FArchive& Ar, void* Value) override;
     
     };
 
@@ -23,6 +25,8 @@ namespace Lumina
             :FProperty(InOwner, Params)
         {
         }
+
+        void Serialize(FArchive& Ar, void* Value) override;
 
     };
     

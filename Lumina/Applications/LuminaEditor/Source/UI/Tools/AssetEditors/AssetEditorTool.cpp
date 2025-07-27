@@ -9,17 +9,29 @@ namespace Lumina
 {
     void FAssetEditorTool::Deinitialize(const FUpdateContext& UpdateContext)
     {
-        OnSave();
         FEditorTool::Deinitialize(UpdateContext);
+    }
+
+    FString FAssetEditorTool::GetToolName() const
+    {
+        return Asset->GetName().ToString();
+    }
+
+    void FAssetEditorTool::Update(const FUpdateContext& UpdateContext)
+    {
+        if (!bAssetLoadBroadcasted && Asset != nullptr)
+        {
+            OnAssetLoadFinished();
+            bAssetLoadBroadcasted = true;
+        }
     }
 
     void FAssetEditorTool::OnSave()
     {
         FString FullPath = Paths::ResolveVirtualPath(Asset->GetPathName());
         Paths::AddPackageExtension(FullPath);
-        bool bSuccess = CPackage::SavePackage(Asset->GetPackage(), Asset, FullPath.c_str());
 
-        if (bSuccess)
+        if (CPackage::SavePackage(Asset->GetPackage(), Asset, FullPath.c_str()))
         {
             ImGuiX::Notifications::NotifySuccess("Successfully saved package: \"%s\"", Asset->GetPathName().c_str());
         }

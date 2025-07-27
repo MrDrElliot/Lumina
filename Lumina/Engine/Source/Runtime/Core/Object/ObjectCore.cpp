@@ -2,6 +2,10 @@
 #include "ObjectCore.h"
 #include "Class.h"
 #include "Object.h"
+#include "ObjectAllocator.h"
+#include "ObjectArray.h"
+#include "ObjectHash.h"
+#include "ObjectIterator.h"
 #include "Assets/AssetManager/AssetManager.h"
 #include "Core/Engine/Engine.h"
 #include "Core/Math/Math.h"
@@ -24,7 +28,7 @@ namespace Lumina
         // Force 16-byte minimal alignment for cache friendliness.
         uint32 Alignment = Math::Max<uint32>(16, InClass->GetAlignment());
         
-        return (CObjectBase*)Memory::Malloc(InClass->GetSize(), Alignment);
+        return GCObjectAllocator.AllocateCObject(InClass->GetSize(), Alignment);
     }
 
     FString GetObjectNameFromPath(const FString& InPath)
@@ -81,8 +85,6 @@ namespace Lumina
 
     CObject* StaticAllocateObject(FConstructCObjectParams& Params)
     {
-        FScopeLock Lock(ObjectCreationMutex);
-        
         CPackage* Package = nullptr;
         if (Params.Package != NAME_None)
         {
@@ -121,7 +123,6 @@ namespace Lumina
     
     CObject* StaticLoadObject(const CClass* InClass, const FName& QualifiedName)
     {
-        
         CObject* FoundObject = FindObjectFast(InClass, QualifiedName);
 
         if (FoundObject == nullptr || FoundObject->HasAnyFlag(OF_NeedsLoad))
@@ -261,11 +262,11 @@ namespace Lumina
     void GetObjectsWithPackage(CPackage* Package, TVector<CObject*>& OutObjects)
     {
         Assert(Package != nullptr);
-        
-        for (SIZE_T i = 0; i < GObjectVector.size(); ++i)
+
+        for (TObjectIterator<CObject> It; It; ++It)
         {
-            CObjectBase* Object = GObjectVector[i];
-            if (Object->GetPackage() == Package)
+            CObjectBase* Object = *It;
+            if (Object && Object->GetPackage() == Package)
             {
                 OutObjects.push_back((CObject*)Object);
             }

@@ -45,6 +45,7 @@ namespace Lumina
         void PushModal(const FString& Title, ImVec2 Size, TFunction<bool(const FUpdateContext&)> DrawFunction) override;
 
         void OpenAssetEditor(CObject* InAsset) override;
+        void OnDestroyAsset(CObject* InAsset) override;
         
         template<typename T, typename... Args>
         requires std::is_base_of_v<FEditorTool, T>
@@ -55,7 +56,7 @@ namespace Lumina
         void EditorToolLayoutCopy(FEditorTool* SourceTool);
 
         /** Returns false if the tool wants to close */
-        bool SubmitToolMainWindow(const FUpdateContext& UpdateContet, FEditorTool* EditorTool, ImGuiID TopLevelDockspaceID);
+        bool SubmitToolMainWindow(const FUpdateContext& UpdateContext, FEditorTool* EditorTool, ImGuiID TopLevelDockspaceID);
         void DrawToolContents(const FUpdateContext& UpdateContext, FEditorTool* Tool);
         
 
@@ -92,7 +93,7 @@ namespace Lumina
         bool                                            bShowObjectDebug = false;
 
         TQueue<FEditorTool*>                            ToolsPendingAdd;
-
+        TQueue<FEditorTool*>                            ToolsPendingDestroy;
     public:
 
         static FRHIImageRef                             FolderIcon;

@@ -94,8 +94,22 @@ namespace Lumina
     {
         void* ValuePtr = Property->PropertyPointer;
         FName* Name = static_cast<FName*>(ValuePtr);
+
+        // We have to modify a copy here because modifying FName::c_str() will directly modify the global value in the name hash.
+        FString NameCopy = Name->ToString();
+        
+        if (ImGui::InputText("##Name", const_cast<char*>(NameCopy.c_str()), 256))
+        {
+            *Name = FName(NameCopy);
+        }
+    }
+
+    void FStringPropertyCustomization::DrawProperty(TSharedPtr<FPropertyHandle> Property)
+    {
+        void* ValuePtr = Property->PropertyPointer;
+        FString* Name = static_cast<FString*>(ValuePtr);
             
-        if (ImGui::InputText("##Name", const_cast<char*>(Name->c_str()), 256, ImGuiInputTextFlags_EnterReturnsTrue))
+        if (ImGui::InputText("##Name", const_cast<char*>(Name->c_str()), 256))
         {
                 
         }

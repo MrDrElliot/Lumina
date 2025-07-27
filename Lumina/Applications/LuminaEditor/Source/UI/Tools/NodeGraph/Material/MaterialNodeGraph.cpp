@@ -24,10 +24,12 @@ namespace Lumina
     {
         Super::Initialize();
         
-        TVector<CObject*> NewNodes = Memory::Move(Material->MaterialNodes);
-        TVector<uint16> NewConnections = Memory::Move(Material->Connections);
-
         bool bHasOutputNode = false;
+        auto NewNodes = Memory::Move(Nodes);
+        auto NewConnections = Memory::Move(Connections);
+        Nodes.clear();
+        Connections.clear();
+        
         for (CObject* Object : NewNodes)
         {
             CEdGraphNode* Node = Cast<CEdGraphNode>(Object);
@@ -37,7 +39,6 @@ namespace Lumina
             }
             
             AddNode(Node);
-            ImNodes::SetNodeGridSpacePos((int)Node->GetNodeID(), { Node->GetNodeX(), Node->GetNodeY() });
         }
 
         if (!bHasOutputNode)
@@ -45,48 +46,45 @@ namespace Lumina
             CreateNode(CMaterialOutputNode::StaticClass());
         }
         
-        if (!NewConnections.empty())
+        for (SIZE_T i = 0; i < NewConnections.size(); i += 2)
         {
-            for (SIZE_T i = 0; i < NewConnections.size(); i += 2)
+            uint16 FirstConnection = NewConnections[i];
+            uint16 SecondConnection = NewConnections[i + 1];
+            
+            CEdNodeGraphPin* StartPin = nullptr;
+            CEdNodeGraphPin* EndPin = nullptr;
+
+            for (CEdGraphNode* Node : Nodes)
             {
-                uint16 FirstConnection = NewConnections[i];
-                uint16 SecondConnection = NewConnections[i + 1];
-                
-                CEdNodeGraphPin* StartPin = nullptr;
-                CEdNodeGraphPin* EndPin = nullptr;
-
-                for (CEdGraphNode* Node : Nodes)
+                EndPin = Node->GetPin(FirstConnection, ENodePinDirection::Input);
+                if (EndPin)
                 {
-                    EndPin = Node->GetPin(FirstConnection, ENodePinDirection::Input);
-                    if (EndPin)
-                    {
-                        break;
-                    }
+                    break;
                 }
-                
-                for (CEdGraphNode* Node : Nodes)
-                {
-                    StartPin = Node->GetPin(SecondConnection, ENodePinDirection::Output);
-                    if (StartPin)
-                    {
-                        break;
-                    }
-                }
-
-                if (!StartPin || !EndPin || StartPin == EndPin || StartPin->OwningNode == EndPin->OwningNode)
-                {
-                    continue;
-                }
-
-                if (EndPin->HasConnection())
-                {
-                    continue; // Disallow connection if the input pin is already occupied
-                }
-
-                // Allow the connection
-                StartPin->AddConnection(EndPin);
-                EndPin->AddConnection(StartPin);
             }
+            
+            for (CEdGraphNode* Node : Nodes)
+            {
+                StartPin = Node->GetPin(SecondConnection, ENodePinDirection::Output);
+                if (StartPin)
+                {
+                    break;
+                }
+            }
+
+            if (!StartPin || !EndPin || StartPin == EndPin || StartPin->OwningNode == EndPin->OwningNode)
+            {
+                continue;
+            }
+
+            if (EndPin->HasConnection())
+            {
+                continue; // Disallow connection if the input pin is already occupied
+            }
+
+            // Allow the connection
+            StartPin->AddConnection(EndPin);
+            EndPin->AddConnection(StartPin);
         }
         
         
@@ -131,7 +129,7 @@ namespace Lumina
 
     void CMaterialNodeGraph::CompileGraph(FMaterialCompiler* Compiler)
     {
-        LUMINA_PROFILE_SCOPE();
+        LUMINA_PROFILE_SCOPE()
         
         TVector<CEdGraphNode*> SortedNodes;
         TVector<CEdGraphNode*> NodesToEvaluate;
@@ -165,7 +163,7 @@ namespace Lumina
             CEdGraphNode* Node = SortedNodes[i];
             
             Node->SetDebugExecutionOrder(i);
-            if (Node == Nodes[0])
+            if (Node == Nodes[0].Get())
             {
                 continue; 
             }
@@ -177,12 +175,12 @@ namespace Lumina
         Compiler->NewLine();
         Compiler->NewLine();
 
-        for (int i = 0; i < SortedNodes.size(); ++i)
+        for (SIZE_T i = 0; i < SortedNodes.size(); ++i)
         {
             CEdGraphNode* Node = SortedNodes[i];
             
-            Node->SetDebugExecutionOrder(i);
-            if (Node == Nodes[0])
+            Node->SetDebugExecutionOrder((uint32)i);
+            if (Node == Nodes[0].Get())
             {
                 continue; 
             }
@@ -191,31 +189,32 @@ namespace Lumina
             MaterialGraphNode->GenerateDefinition(Compiler);
         }
 
-        // We then start off the compilation process using the MaterialOutput node as the kick-off.
-        CMaterialGraphNode* MaterialOutputNode = static_cast<CMaterialGraphNode*>(Nodes[0]);
+        // Start off the compilation process using the MaterialOutput node as the kick-off.
+        CMaterialGraphNode* MaterialOutputNode = static_cast<CMaterialGraphNode*>(Nodes[0].Get());
         MaterialOutputNode->GenerateDefinition(Compiler);
         
     }
 
     void CMaterialNodeGraph::ValidateGraph()
     {
-        Material->MaterialNodes.clear();
-        Material->Connections.clear();
+        Connections.clear();
         
         for (CEdGraphNode* Node : Nodes)
         {
-            Material->MaterialNodes.push_back(Node);
-            Node->AddRef();
-
             for (CEdNodeGraphPin* InputPin : Node->GetInputPins())
             {
                 for (CEdNodeGraphPin* Connection : InputPin->GetConnections())
                 {
-                    Material->Connections.push_back(InputPin->PinID);
-                    Material->Connections.push_back(Connection->PinID);
+                    Connections.push_back(InputPin->PinID);
+                    Connections.push_back(Connection->PinID);
                 }
             }
         }
+    }
+
+    void CMaterialNodeGraph::SetMaterial(CMaterial* InMaterial)
+    {
+        Material = InMaterial;
     }
 
     CEdGraphNode* CMaterialNodeGraph::CreateNode(CClass* NodeClass)
@@ -225,9 +224,9 @@ namespace Lumina
         return NewNode;
     }
     
-    CEdGraphNode* CMaterialNodeGraph::TopologicalSort(const TVector<CEdGraphNode*>& NodesToSort, TVector<CEdGraphNode*>& SortedNodes)
+    CEdGraphNode* CMaterialNodeGraph::TopologicalSort(const TVector<TObjectHandle<CEdGraphNode>>& NodesToSort, TVector<CEdGraphNode*>& SortedNodes)
     {
-        LUMINA_PROFILE_SCOPE();
+        LUMINA_PROFILE_SCOPE()
 
         THashMap<CEdGraphNode*, uint32> InDegree;
         TQueue<CEdGraphNode*> ReadyQueue;

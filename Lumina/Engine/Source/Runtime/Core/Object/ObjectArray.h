@@ -1,75 +1,123 @@
 ﻿#pragma once
+#include "ObjectBase.h"
+#include "ObjectHandle.h"
+#include "Containers/Array.h"
+#include "Core/Threading/Thread.h"
 #include "Platform/GenericPlatform.h"
 
 namespace Lumina
 {
     class CObjectBase;
+}
 
-    struct FCObjectArray
+namespace Lumina
+{
+    class FCObjectArray
     {
     public:
-        FCObjectArray()
-            : Objects(nullptr)
-            , NumEntries(0)
-            , MaxEntries(0)
-        {}
-
-        ~FCObjectArray()
+        
+        struct FEntry
         {
-            delete[] Objects;
+            CObjectBase*    Object = nullptr;
+            uint32          Generation;
+        };
+
+        LUMINA_API uint32 GetNumObjectsAlive() const
+        {
+            return NumAlive;
+        }
+        
+        FObjectHandle Allocate(CObjectBase* NewObj)
+        {
+            FScopeLock Lock(Mutex);
+            uint32 Index;
+
+            if (!Free.empty())
+            {
+                Index = Free.front();
+                Free.pop();
+                Objects[Index].Object = NewObj;
+                Objects[Index].Generation++;
+            }
+            else
+            {
+                Index = (uint32)Objects.size();
+                Objects.emplace_back(NewObj, 1);
+            }
+            NumAlive++;
+            return FObjectHandle(Index, Objects[Index].Generation);
         }
 
-        void Reserve(int32 NewMax)
+        void Deallocate(FObjectHandle Handle)
         {
-            if (NewMax <= MaxEntries)
+            FScopeLock Lock(Mutex);
+            if (Handle.Index >= Objects.size())
                 return;
 
-            CObjectBase** NewObjects = new CObjectBase*[NewMax];
-
-            // Copy existing
-            for (int32 i = 0; i < NumEntries; ++i)
-            {
-                NewObjects[i] = Objects[i];
-            }
-
-            // Zero out the rest
-            for (int32 i = NumEntries; i < NewMax; ++i)
-            {
-                NewObjects[i] = nullptr;
-            }
-
-            delete[] Objects;
-            Objects = NewObjects;
-            MaxEntries = NewMax;
+            Objects[Handle.Index].Object = nullptr;
+            Objects[Handle.Index].Generation++;
+            Free.push(Handle.Index);
+            NumAlive--;
         }
 
-        /** Adds an object and returns its index. */
-        int32 Add(CObjectBase* Object)
+        void Deallocate(uint32 Index)
         {
-            if (NumEntries >= MaxEntries)
-            {
-                Reserve(MaxEntries > 0 ? MaxEntries * 2 : 16);
-            }
+            FScopeLock Lock(Mutex);
+            if (Index >= Objects.size())
+                return;
 
-            int32 Index = NumEntries;
-            Objects[Index] = Object;
-            ++NumEntries;
-            return Index;
+            Objects[Index].Object = nullptr;
+            Objects[Index].Generation++;
+            Free.push(Index);
+            NumAlive--;
         }
 
-        CObjectBase* GetAt(int32 Index) const
+        LUMINA_API CObjectBase* Resolve(FObjectHandle Handle)
         {
-            if (Index < 0 || Index >= NumEntries)
+            FScopeLock Lock(Mutex);
+            
+            if (Handle.Index >= Objects.size())
                 return nullptr;
-            return Objects[Index];
+
+            const FEntry& Entry = Objects[Handle.Index];
+            
+            if (Entry.Generation != Handle.Generation)
+                return nullptr;
+
+            return Entry.Object;
         }
 
-        int32 Num() const { return NumEntries; }
+        LUMINA_API CObjectBase* Resolve(const CObjectBase* Object)
+        {
+            FScopeLock Lock(Mutex);
 
-    private:
-        CObjectBase** Objects;  // Single flat array
-        int32 NumEntries;       // How many are used
-        int32 MaxEntries;       // How many are allocated
+            const FEntry& Entry = Objects[Object->InternalIndex];
+            return Entry.Object;
+        }
+
+        LUMINA_API FObjectHandle ToHandle(const CObjectBase* Object)
+        {
+            FScopeLock Lock(Mutex);
+            if (Object == nullptr)
+            {
+                return FObjectHandle();
+            }
+
+            const FEntry& Entry = Objects[Object->InternalIndex];
+            FObjectHandle Handle;
+            Handle.Index = Object->InternalIndex;
+            Handle.Generation = Entry.Generation;
+
+            return Handle;
+        }
+        
+
+        TFixedVector<FEntry, 2024>          Objects;
+        TQueue<uint32>                      Free;
+        uint32                              NumAlive = 0;
+        FMutex                              Mutex;
     };
 
+    extern LUMINA_API FCObjectArray         GObjectArray;
+    
 }
