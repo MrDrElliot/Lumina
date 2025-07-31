@@ -70,24 +70,28 @@ namespace Lumina
         LUMINA_API virtual void RegisterDependencies() { }
 
         /** Returns the CClass that defines the fields of this object */
-        FORCEINLINE CClass* GetClass() const
+        CClass* GetClass() const
         {
             return ClassPrivate;
         }
 
         /** Get the internal low level name of this object */
-        FORCEINLINE FName GetName() const
+        FName GetName() const
         {
             return NamePrivate;
         }
 
         /** Get the internal package this object came from (script, plugin, package, etc). */
-        FORCEINLINE CPackage* GetPackage() const
+        CPackage* GetPackage() const
         {
             return PackagePrivate;
         }
 
-        LUMINA_API int64 GetLoaderIndex() const { return LoaderIndex; }
+        /** Loader index from asset loading */
+        LUMINA_API int64 GetLoaderIndex() const
+        {
+            return LoaderIndex;
+        }
 
         LUMINA_API void GetPath(FString& OutPath) const;
         LUMINA_API FString GetPathName() const;
@@ -96,7 +100,7 @@ namespace Lumina
     private:
         
         template<typename TClassType>
-        static FORCEINLINE bool IsAHelper(const TClassType* Class, const TClassType* TestClass)
+        static bool IsAHelper(const TClassType* Class, const TClassType* TestClass)
         {
             return Class->IsChildOf(TestClass);
         }
@@ -105,7 +109,7 @@ namespace Lumina
 
         // This exists to fix the cyclical dependency between CObjectBase and CClass.
         template<typename OtherClassType>
-        FORCEINLINE bool IsA(OtherClassType Base) const
+        bool IsA(OtherClassType Base) const
         {
             const CClass* SomeBase = Base;
             (void)SomeBase;
@@ -144,7 +148,7 @@ namespace Lumina
         uint32                  InternalIndex;
 
         /** Index into this object's package export map */
-        int64                   LoaderIndex;
+        int64                   LoaderIndex = 0;
 
         /** Internal reference count to this object */
         mutable uint32          RefCount = 0;

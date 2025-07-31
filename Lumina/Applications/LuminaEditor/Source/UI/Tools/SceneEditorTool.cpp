@@ -12,18 +12,23 @@
 #include "Scene/Entity/Components/NameComponent.h"
 #include "Scene/Entity/Components/EditorComponent.h"
 #include "Scene/Entity/Components/LightComponent.h"
-#include "Scene/Entity/Components/StaticMeshComponent.h"
+#include "scene/entity/components/staticmeshcomponent.h"
 #include "Scene/Entity/Components/VelocityComponent.h"
 #include "Tools/UI/ImGui/ImGuiX.h"
 
 
 namespace Lumina
 {
+    static const char* SystemOutlinerName = "Systems";
+    
     FSceneEditorTool::FSceneEditorTool(IEditorToolContext* Context, FScene* InScene)
         : FEditorTool(Context, "Scene Editor", InScene)
         , SelectedEntity()
+        , CopiedEntity()
         , OutlinerContext()
+        , SystemsContext()
     {
+        GuizmoOp = ImGuizmo::TRANSLATE;
         Assert(Scene != nullptr)
     }
 
@@ -31,15 +36,23 @@ namespace Lumina
     {
         CreateToolWindow("Outliner", [this] (const FUpdateContext& Context, bool bisFocused)
         {
-            DrawOutliner( Context, bisFocused );
+            DrawOutliner(Context, bisFocused);
+        });
+
+        CreateToolWindow(SystemOutlinerName, [this] (const FUpdateContext& Context, bool bisFocused)
+        {
+            DrawSystems(Context, bisFocused);
         });
         
         CreateToolWindow("Entity Details", [this] (const FUpdateContext& Context, bool bisFocused)
         {
-            DrawEntityEditor( Context, bisFocused );
+            DrawEntityEditor(Context, bisFocused);
         });
 
-        OutlinerContext.DrawItemContextMenuFunction = [this](const TVector<FTreeListViewItem*> Items)
+
+        //------------------------------------------------------------------------------------------------------
+
+        OutlinerContext.DrawItemContextMenuFunction = [this](const TVector<FTreeListViewItem*>& Items)
         {
             for (FTreeListViewItem* Item : Items)
             {
@@ -48,72 +61,21 @@ namespace Lumina
                 {
                     continue;
                 }
-
                 
                 if (ImGui::MenuItem("Add Component"))
                 {
-                    ToolContext->PushModal("Add Component", ImVec2(600.0f, 350.0f), [this, Item](const FUpdateContext& Context) -> bool
-                    {
-                        FEntityListViewItem* EntityListItem = static_cast<FEntityListViewItem*>(Item);
-                        Entity Ent = EntityListItem->GetEntity();
-
-                        bool bComponentAdded = false;
-
-                        float const tableHeight = ImGui::GetContentRegionAvail().y - ImGui::GetFrameHeightWithSpacing() - ImGui::GetStyle().ItemSpacing.y;
-                        ImGui::PushStyleColor(ImGuiCol_Header, IM_COL32(40, 40, 40, 255));
-                        if (ImGui::BeginTable("Options List", 1, ImGuiTableFlags_NoSavedSettings | ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollY, ImVec2(ImGui::GetContentRegionAvail().x, tableHeight)))
-                        {
-                            ImGui::PushID(Item);
-                            ImGui::TableSetupColumn("Label", ImGuiTableColumnFlags_WidthStretch);
-
-                            ImGui::TableNextRow();
-                            ImGui::TableSetColumnIndex(0);
-
-                            for (TObjectIterator<CStruct> It; It; ++It)
-                            {
-                                CStruct* Struct = *It;
-                                if (Struct->IsChildOf(SEntityComponent::StaticStruct()))
-                                {
-                                    Components::ComponentAddFn Fn = Components::GetEntityComponentCreationFn(Struct);
-                                    if (Fn)
-                                    {
-                                        if (ImGui::Selectable(Struct->GetName().c_str(), false, ImGuiSelectableFlags_SpanAllColumns))
-                                        {
-                                            Fn(Scene->GetMutableEntityRegistry(), SelectedEntity.GetHandle());
-                                            bComponentAdded = true;
-                                        }
-                                    }
-                                }
-                            }
-                            
-                            ImGui::PopID();
-                            ImGui::EndTable();
-                        }
-                        
-                        ImGui::PopStyleColor();
-
-                        if (ImGui::Button("Cancel"))
-                        {
-                            return true;
-                        }
-                        
-                        if (bComponentAdded)
-                        {
-                            RebuildPropertyTables();
-                        }
-                        
-                        return bComponentAdded;
-                    });
+                    PushAddComponentModal(EntityListItem->GetEntity());
                 }
                 
                 if (ImGui::MenuItem("Rename"))
                 {
-                    
+                    PushRenameEntityModal(EntityListItem->GetEntity());
                 }
 
                 if (ImGui::MenuItem("Duplicate"))
                 {
-                    
+                    Entity New;
+                    CopyEntity(New, SelectedEntity);
                 }
                 
                 if (ImGui::MenuItem("Delete"))
@@ -134,7 +96,6 @@ namespace Lumina
         
         OutlinerContext.ItemSelectedFunction = [this](FTreeListViewItem* Item)
         {
-            
             if (Item == nullptr)
             {
                 SelectedEntity = Entity();
@@ -149,23 +110,76 @@ namespace Lumina
         };
 
         OutlinerListView.MarkTreeDirty();
+
+        //------------------------------------------------------------------------------------------------------
+
+
+        SystemsContext.RebuildTreeFunction = [this](FTreeListView* Tree)
+        {
+            for (uint8 i = 0; i < (uint8)EUpdateStage::Max; ++i)
+            {
+                for (CEntitySystem* System : Scene->GetSystemsForUpdateStage((EUpdateStage)i))
+                {
+                    SystemsListView.AddItemToTree<FSystemListViewItem>(nullptr, eastl::move(System));
+                }
+            }
+        };
+
+        SystemsListView.MarkTreeDirty();
+        
     }
 
     void FSceneEditorTool::Update(const FUpdateContext& UpdateContext)
     {
         while (!EntityDestroyRequests.empty())
         {
-            Scene->DestroyEntity(EntityDestroyRequests.back());
+            Entity Entity = EntityDestroyRequests.back();
+            EntityDestroyRequests.pop();
+
+            if (Entity == SelectedEntity)
+            {
+                if (CopiedEntity == SelectedEntity)
+                {
+                    CopiedEntity = {};
+                }
+                
+                SelectedEntity = {};
+            }
+            
+            Scene->DestroyEntity(Entity);
+            
             OutlinerListView.MarkTreeDirty();
 
-            EntityDestroyRequests.pop();
         }
 
         if (SelectedEntity.IsValid())
         {
-            if (ImGui::IsKeyPressed(ImGuiKey_LeftCtrl) && ImGui::IsKeyPressed(ImGuiKey_C))
+            if (ImGui::IsKeyDown(ImGuiKey_LeftCtrl) && ImGui::IsKeyPressed(ImGuiKey_C))
             {
-                LOG_INFO("Copied!");
+                CopiedEntity = SelectedEntity;
+            }
+
+            if (ImGui::IsKeyDown(ImGuiKey_LeftCtrl) && ImGui::IsKeyPressed(ImGuiKey_D))
+            {
+                Entity New;
+                CopyEntity(New, SelectedEntity);
+            }
+        }
+
+        if (CopiedEntity)
+        {
+            if (ImGui::IsKeyDown(ImGuiKey_LeftCtrl) && ImGui::IsKeyPressed(ImGuiKey_V))
+            {
+                Entity New;
+                CopyEntity(New, CopiedEntity);
+            }
+        }
+
+        if (SelectedEntity)
+        {
+            if (ImGui::IsKeyPressed(ImGuiKey_Delete))
+            {
+                EntityDestroyRequests.push(SelectedEntity);
             }
         }
     }
@@ -248,6 +262,7 @@ namespace Lumina
 
         ImGui::DockBuilderDockWindow(GetToolWindowName(ViewportWindowName).c_str(), topDockID);
         ImGui::DockBuilderDockWindow(GetToolWindowName("Outliner").c_str(), bottomLeftDockID);
+        ImGui::DockBuilderDockWindow(GetToolWindowName(SystemOutlinerName).c_str(), bottomRightDockID);
         ImGui::DockBuilderDockWindow(GetToolWindowName("Entity Details").c_str(), bottomCenterDockID);
 
     }
@@ -283,26 +298,165 @@ namespace Lumina
             glm::vec4 Other;
     
             glm::decompose(Matrix, scale, rotation, translation, Skew, Other);
-    
-            TransformComponent.SetLocation(translation);
-            TransformComponent.SetRotation(rotation);
-            TransformComponent.SetScale(scale);
 
-            SelectedEntity.AddComponent<FNeedsRenderProxyUpdate>();
+            if (translation != TransformComponent.GetLocation() || rotation != TransformComponent.GetRotation() || scale != TransformComponent.GetScale())
+            {
+                SelectedEntity.Patch<STransformComponent>([&](auto& Transform)
+                {
+                    Transform.SetLocation(translation);
+                    Transform.SetRotation(rotation);
+                    Transform.SetScale(scale); 
+                });
+            }
         }
     }
 
+    void FSceneEditorTool::PushAddComponentModal(const Entity& Entity)
+    {
+        ToolContext->PushModal("Add Component", ImVec2(600.0f, 350.0f), [this, Entity](const FUpdateContext& Context) -> bool
+        {
+            bool bComponentAdded = false;
 
+            float const tableHeight = ImGui::GetContentRegionAvail().y - ImGui::GetFrameHeightWithSpacing() - ImGui::GetStyle().ItemSpacing.y;
+            ImGui::PushStyleColor(ImGuiCol_Header, IM_COL32(40, 40, 40, 255));
+            if (ImGui::BeginTable("Options List", 1, ImGuiTableFlags_NoSavedSettings | ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollY, ImVec2(ImGui::GetContentRegionAvail().x, tableHeight)))
+            {
+                ImGui::PushID((int)Entity.GetHandle());
+                ImGui::TableSetupColumn("Label", ImGuiTableColumnFlags_WidthStretch);
+
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+
+                for (TObjectIterator<CStruct> It; It; ++It)
+                {
+                    CStruct* Struct = *It;
+                    if (Struct->IsChildOf(SEntityComponent::StaticStruct()))
+                    {
+                        Components::ComponentAddFn Fn = Components::GetEntityComponentCreationFn(Struct);
+                        if (Fn)
+                        {
+                            if (ImGui::Selectable(Struct->GetName().c_str(), false, ImGuiSelectableFlags_SpanAllColumns))
+                            {
+                                Fn(Scene->GetMutableEntityRegistry(), SelectedEntity.GetHandle());
+                                bComponentAdded = true;
+                            }
+                        }
+                    }
+                }
+                
+                ImGui::PopID();
+                ImGui::EndTable();
+            }
+            
+            ImGui::PopStyleColor();
+
+            if (ImGui::Button("Cancel"))
+            {
+                return true;
+            }
+            
+            if (bComponentAdded)
+            {
+                RebuildPropertyTables();
+            }
+            
+            return bComponentAdded;
+        });
+    }
+
+    void FSceneEditorTool::PushAddSystemModal()
+    {
+        ToolContext->PushModal("Add System", ImVec2(600.0f, 350.0f), [this](const FUpdateContext& Context) -> bool
+        {
+            bool bComponentAdded = false;
+
+            float const tableHeight = ImGui::GetContentRegionAvail().y - ImGui::GetFrameHeightWithSpacing() - ImGui::GetStyle().ItemSpacing.y;
+            ImGui::PushStyleColor(ImGuiCol_Header, IM_COL32(40, 40, 40, 255));
+            if (ImGui::BeginTable("Options List", 1, ImGuiTableFlags_NoSavedSettings | ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollY, ImVec2(ImGui::GetContentRegionAvail().x, tableHeight)))
+            {
+                ImGui::TableSetupColumn("Label", ImGuiTableColumnFlags_WidthStretch);
+
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+
+                TVector<TObjectHandle<CEntitySystem>> Systems;
+                CEntitySystemRegistry::Get().GetRegisteredSystems(Systems);
+
+                for (CEntitySystem* EntitySystem : Systems)
+                {
+                    if (ImGui::Selectable(EntitySystem->GetClass()->GetName().c_str(), false, ImGuiSelectableFlags_SpanAllColumns))
+                    {
+                        CreateSystem(EntitySystem->GetClass());
+                    }
+                }
+                
+                ImGui::EndTable();
+            }
+            
+            ImGui::PopStyleColor();
+
+            if (ImGui::Button("Cancel"))
+            {
+                return true;
+            }
+            
+            if (bComponentAdded)
+            {
+                RebuildPropertyTables();
+            }
+            
+            return bComponentAdded;
+        });
+    }
+
+    void FSceneEditorTool::PushRenameEntityModal(Entity Ent)
+    {
+        ToolContext->PushModal("Add Component", ImVec2(600.0f, 350.0f), [this, Ent](const FUpdateContext& Context) -> bool
+        {
+            Entity CopyEntity = Ent;
+            FName& Name = CopyEntity.AddComponent<SNameComponent>().Name;
+            FString CopyName = Name.ToString();
+            
+            if (ImGui::InputText("##Name", const_cast<char*>(CopyName.c_str()), 256, ImGuiInputTextFlags_EnterReturnsTrue))
+            {
+                Name = CopyName.c_str();
+                return true;
+            }
+            
+            if (ImGui::Button("Cancel"))
+            {
+                return true;
+            }
+
+            return false;
+        });
+    }
+    
     void FSceneEditorTool::DrawOutliner(const FUpdateContext& UpdateContext, bool bFocused)
     {
         ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.15f, 0.35f, 0.15f, 1.0f));
-        if (ImGui::Button("Create New Entity", ImVec2(ImGui::GetContentRegionAvail().x / 2, 0.0f)))
+        if (ImGui::Button("New Entity", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f)))
         {
             CreateEntity();
         }
         ImGui::PopStyleColor();
-        
+
+        ImGui::SeparatorText("Entities");
+        ImGui::Text("Num: %i", Scene->GetMutableEntityRegistry().view<SNameComponent>().size());
+
         OutlinerListView.Draw(OutlinerContext);
+    }
+
+    void FSceneEditorTool::DrawSystems(const FUpdateContext& UpdateContext, bool bFocused)
+    {
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.15f, 0.35f, 0.15f, 1.0f));
+        if (ImGui::Button("New System", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f)))
+        {
+            PushAddSystemModal();
+        }
+        ImGui::PopStyleColor();
+        
+        SystemsListView.Draw(SystemsContext);
     }
 
     void FSceneEditorTool::DrawEntityEditor(const FUpdateContext& UpdateContext, bool bFocused)
@@ -314,7 +468,27 @@ namespace Lumina
         }
 
         ImGui::BeginChild("EntityEditor", ImGui::GetContentRegionAvail(), true);
+        
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.15f, 0.35f, 0.15f, 1.0f));
+        if (ImGui::Button("Add Component", ImVec2(ImGui::GetContentRegionAvail().x / 2, 0.0f)))
+        {
+            PushAddComponentModal(SelectedEntity);
+        }
+        ImGui::PopStyleColor();
 
+        ImGui::SameLine();
+
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.45f, 0.15f, 0.15f, 1.0f));
+        if (ImGui::Button("Destroy", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f)))
+        {
+            EntityDestroyRequests.push(SelectedEntity);
+        }
+        ImGui::PopStyleColor();
+
+        ImGui::Spacing();
+        ImGui::SeparatorText("Components");
+        ImGui::Spacing();
+        
         for (FPropertyTable* Table : PropertyTables)
         {
             ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.0f);
@@ -376,7 +550,9 @@ namespace Lumina
                     CStruct* Type = EntityComponent->GetType();
                     if (Type != nullptr)
                     {
-                        PropertyTables.emplace_back(Memory::New<FPropertyTable>(ComponentPtr, Type))->RebuildTree();
+                        FPropertyTable* NewTable = Memory::New<FPropertyTable>(ComponentPtr, Type);
+
+                        PropertyTables.emplace_back(NewTable)->RebuildTree();
                     }
                 }
             }
@@ -386,6 +562,20 @@ namespace Lumina
     void FSceneEditorTool::CreateEntity()
     {
         Scene->CreateEntity(FTransform(), FName("New Entity"));
+        OutlinerListView.MarkTreeDirty();
+    }
+
+    void FSceneEditorTool::CreateSystem(CClass* SystemClass)
+    {
+        CEntitySystem* NewSystem = NewObject<CEntitySystem>(SystemClass);
+        Scene->RegisterSystem(NewSystem);
+        
+        SystemsListView.MarkTreeDirty();
+    }
+
+    void FSceneEditorTool::CopyEntity(Entity& To, const Entity& From)
+    {
+        Scene->CopyEntity(To, From);
         OutlinerListView.MarkTreeDirty();
     }
 }

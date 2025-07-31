@@ -16,10 +16,14 @@ namespace Lumina::Logging
 {
 	LUMINA_API bool IsInitialized();
 	LUMINA_API void Init();
-	LUMINA_API std::shared_ptr<spdlog::sinks::sink> GetSink();
-	LUMINA_API void GetConsoleLogs(TVector<FConsoleMessage>& OutLogs);
 	LUMINA_API void Shutdown();
+	
+
+	/** DO NOT COPY THIS ARRAY. It can become very large and will become incredibly expensive */
+	LUMINA_API const TVector<FConsoleMessage>& GetConsoleLogs();
 	LUMINA_API std::shared_ptr<spdlog::logger> GetLogger();
+	LUMINA_API std::shared_ptr<spdlog::sinks::sink> GetSink();
+	
 
 	
 }

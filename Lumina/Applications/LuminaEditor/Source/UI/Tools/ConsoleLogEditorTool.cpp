@@ -65,6 +65,8 @@ namespace Lumina
             ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8, 2));
             
             ImGui::Checkbox("Color Whole Row", &bColorWholeRow);
+            ImGui::Checkbox("Auto Scroll", &bAutoScroll);
+
             ImGui::PopStyleVar(2);
 
             ImGui::EndMenu();
@@ -78,16 +80,17 @@ namespace Lumina
         ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
 
         ImGui::BeginChild("LogMessages", ImVec2(0, -ImGui::GetFrameHeightWithSpacing()), true, ImGuiWindowFlags_HorizontalScrollbar);
-
-        SIZE_T PreviousMessageSize = OutputMessages.size();
-        Logging::GetConsoleLogs(OutputMessages);
-        SIZE_T NewMessageSize = OutputMessages.size();
+        
+        const TVector<FConsoleMessage>& Messages = Logging::GetConsoleLogs();
+        SIZE_T NewMessageSize = Messages.size();
         
         if (NewMessageSize > PreviousMessageSize)
         {
             ScrollToBottom = true;
         }
 
+        PreviousMessageSize = NewMessageSize;
+        
         if (ImGui::BeginTable("LogTable", 4, ImGuiTableFlags_Resizable | ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH | ImGuiTableFlags_ScrollY | ImGuiTableFlags_ScrollX))
         {
             ImGui::TableSetupColumn("Level", ImGuiTableColumnFlags_WidthFixed, 60.0f);
@@ -95,14 +98,19 @@ namespace Lumina
             ImGui::TableSetupColumn("Logger", ImGuiTableColumnFlags_WidthFixed, 60.0f);
             ImGui::TableSetupColumn("Message", ImGuiTableColumnFlags_WidthStretch);
             ImGui::TableHeadersRow();
-            
-            for (int i = 0; i < OutputMessages.size(); ++i)
-            {
-                const FConsoleMessage& Message = OutputMessages[i];
 
-                // Filtering logic
-                switch (Message.Level)
+            ImGuiListClipper Clipper;
+            Clipper.Begin((int)NewMessageSize);
+
+            while (Clipper.Step())
+            {
+                for (int i = Clipper.DisplayStart; i < Clipper.DisplayEnd; ++i)
                 {
+                    const FConsoleMessage& Message = Messages[i];
+        
+                    // Filtering logic
+                    switch (Message.Level)
+                    {
                     case spdlog::level::trace:    if (!bShowTrace) continue; break;
                     case spdlog::level::debug:    if (!bShowDebug) continue; break;
                     case spdlog::level::info:     if (!bShowInfo)  continue; break;
@@ -110,68 +118,69 @@ namespace Lumina
                     case spdlog::level::err:      if (!bShowError) continue; break;
                     case spdlog::level::critical: if (!bShowCritical) continue; break;
                     default: break;
-                }
-
-    
-                ImVec4 Color;
-                const char* LevelLabel = "";
-                switch (Message.Level)
-                {
+                    }
+        
+                        
+                    ImVec4 Color;
+                    const char* LevelLabel = "";
+                    switch (Message.Level)
+                    {
                     case spdlog::level::level_enum::err:   Color = ImVec4(1.0f, 0.2f, 0.2f, 1.0f); LevelLabel = "Error"; break;
                     case spdlog::level::level_enum::warn:  Color = ImVec4(1.0f, 0.6f, 0.0f, 1.0f); LevelLabel = "Warn";  break;
                     case spdlog::level::level_enum::info:  Color = ImVec4(0.9f, 0.9f, 0.9f, 1.0f); LevelLabel = "Info";  break;
                     case spdlog::level::level_enum::debug: Color = ImVec4(0.4f, 0.8f, 1.0f, 1.0f); LevelLabel = "Debug"; break;
                     case spdlog::level::level_enum::trace: Color = ImVec4(0.5f, 0.5f, 0.5f, 1.0f); LevelLabel = "Trace"; break;
                     default:                                Color = ImVec4(0.7f, 0.7f, 0.7f, 1.0f); LevelLabel = "Other"; break;
-                }
-    
-                ImGui::TableNextRow();
-    
-                // Level
-                ImGui::TableSetColumnIndex(0);
-                ImGui::TextColored(Color, "%s", LevelLabel);
-    
-                // Time
-                ImGui::TableSetColumnIndex(1);
-                if (bColorWholeRow)
-                {
-                    ImGui::PushStyleColor(ImGuiCol_Text, Color);
-                    ImGui::TextWrapped("%s", Message.Time.c_str());
-                    ImGui::PopStyleColor();
-                }
-                else
-                {
-                    ImGui::TextWrapped("%s", Message.Time.c_str());
-                }
-    
-                // Logger Name
-                ImGui::TableSetColumnIndex(2);
-                if (bColorWholeRow)
-                {
-                    ImGui::PushStyleColor(ImGuiCol_Text, Color);
-                    ImGui::TextWrapped("%s", Message.LoggerName.c_str());
-                    ImGui::PopStyleColor();
-                }
-                else
-                {
-                    ImGui::TextWrapped("%s", Message.LoggerName.c_str());
-                }
-                
-                // Message
-                ImGui::TableSetColumnIndex(3);
-                if (bColorWholeRow)
-                {
-                    ImGui::PushStyleColor(ImGuiCol_Text, Color);
-                    ImGui::TextWrapped("%s", Message.Message.c_str());
-                    ImGui::PopStyleColor();
-                }
-                else
-                {
-                    ImGui::TextWrapped("%s", Message.Message.c_str());
+                    }
+                        
+                    ImGui::TableNextRow();
+                        
+                    // Level
+                    ImGui::TableSetColumnIndex(0);
+                    ImGui::TextColored(Color, "%s", LevelLabel);
+                        
+                    // Time
+                    ImGui::TableSetColumnIndex(1);
+                    if (bColorWholeRow)
+                    {
+                        ImGui::PushStyleColor(ImGuiCol_Text, Color);
+                        ImGui::TextWrapped("%s", Message.Time.c_str());
+                        ImGui::PopStyleColor();
+                    }
+                    else
+                    {
+                        ImGui::TextWrapped("%s", Message.Time.c_str());
+                    }
+                        
+                    // Logger Name
+                    ImGui::TableSetColumnIndex(2);
+                    if (bColorWholeRow)
+                    {
+                        ImGui::PushStyleColor(ImGuiCol_Text, Color);
+                        ImGui::TextWrapped("%s", Message.LoggerName.c_str());
+                        ImGui::PopStyleColor();
+                    }
+                    else
+                    {
+                        ImGui::TextWrapped("%s", Message.LoggerName.c_str());
+                    }
+                    
+                    // Message
+                    ImGui::TableSetColumnIndex(3);
+                    if (bColorWholeRow)
+                    {
+                        ImGui::PushStyleColor(ImGuiCol_Text, Color);
+                        ImGui::TextWrapped("%s", Message.Message.c_str());
+                        ImGui::PopStyleColor();
+                    }
+                    else
+                    {
+                        ImGui::TextWrapped("%s", Message.Message.c_str());
+                    }
                 }
             }
 
-            if (ScrollToBottom)
+            if (ScrollToBottom && bAutoScroll)
             {
                 ImGui::SetScrollHereY(0.999f);
                 ScrollToBottom = false;

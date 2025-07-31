@@ -32,7 +32,7 @@ namespace Lumina
     };
 
     /**
-     * Mininal type-erased vector view.
+     * Minimal type-erased vector view.
      */
     class FReflectArrayHelper
     {
@@ -47,16 +47,29 @@ namespace Lumina
             : Property(InArrayProperty)
         {
             VectorPtr = ContainerPtr;
+            ElementSize = (uint16)InArrayProperty->GetInternalProperty()->GetElementSize();
         }
 
-        void* GetData() const
+        
+        
+        NODISCARD void* GetData() const
+        {
+            return begin();
+        }
+
+        NODISCARD void* GetVectorPointer() const
         {
             return VectorPtr;
         }
-
-        void* GetVectorPointer() const
+        
+        NODISCARD bool IsValidIndex(int32 i) const
         {
-            return VectorPtr;
+            return i >= 0 && i < Num();
+        }
+
+        NODISCARD bool IsEmpty() const
+        {
+            return Num() == 0;
         }
 
         SIZE_T Num() const
@@ -74,30 +87,149 @@ namespace Lumina
                 return nullptr;
             }
 
-            return (void*)(begin() + Index * Property->GetInternalProperty()->ElementSize);
+            return (begin() + Index * Property->GetInternalProperty()->ElementSize);
+        }
+
+        void Remove(SIZE_T Index)
+        {
+            const SIZE_T Count = Num();
+            if (Index >= Count)
+                return;
+
+            uint8* Base = begin();
+            uint8* RemovePtr = Base + Index * ElementSize;
+
+            Memory::Memzero(RemovePtr, ElementSize);
+
+            if (Index < Count - 1)
+            {
+                void* Src = RemovePtr + ElementSize;
+                void* Dst = RemovePtr;
+                SIZE_T MoveSize = (Count - Index - 1) * ElementSize;
+                Memory::Memcpy(Dst, Src, MoveSize);
+            }
+
+            Resize(Count - 1);
         }
 
         void Resize(SIZE_T NewElementCount)
         {
-            if (NewElementCount <= 0)
+
+            uint8* OldBegin = begin();
+            uint8* OldEnd = end();
+            uint8* OldCapacity = capacity();
+            SIZE_T OldElementCount = (OldEnd - OldBegin) / ElementSize;
+            SIZE_T CapacityBytes = OldCapacity - OldBegin;
+            SIZE_T CapacityElements = CapacityBytes / ElementSize;
+
+            if (NewElementCount <= CapacityElements)
             {
+                uint8* NewEnd = OldBegin + NewElementCount * ElementSize;
+        
+                if (NewElementCount > OldElementCount)
+                {
+                    // Zero new memory
+                    SIZE_T BytesToZero = (NewElementCount - OldElementCount) * ElementSize;
+                    Memory::Memzero(OldEnd, BytesToZero);
+                }
+
+                *reinterpret_cast<uint8**>((uint8*)VectorPtr + sizeof(void*)) = NewEnd;
+            }
+            else
+            {
+                // Need to reallocate
+                SIZE_T NewCapacity = eastl::max(CapacityElements * 2, NewElementCount);
+                SIZE_T AllocSize = NewCapacity * ElementSize;
+
+                uint8* NewData = (uint8*)Memory::Malloc(AllocSize);
+                Memory::Memzero(NewData, AllocSize);
+
+                if (OldBegin)
+                {
+                    Memory::Memcpy(NewData, OldBegin, OldElementCount * ElementSize);
+                    Memory::Free(OldBegin);
+                }
+
+                uint8* NewEnd = NewData + NewElementCount * ElementSize;
+                uint8* NewCapacityPtr = NewData + AllocSize;
+
+                *reinterpret_cast<uint8**>((uint8*)VectorPtr + 0) = NewData;
+                *reinterpret_cast<uint8**>((uint8*)VectorPtr + sizeof(void*) * 1) = NewEnd;
+                *reinterpret_cast<uint8**>((uint8*)VectorPtr + sizeof(void*) * 2) = NewCapacityPtr;
+            }
+        }
+
+        void Add(int32 Count)
+        {
+            if (Count <= 0)
                 return;
+
+            const FProperty* Inner = Property->GetInternalProperty();
+            const SIZE_T ElementSize = Inner->ElementSize;
+
+            SIZE_T OldCount = Num();
+            SIZE_T NewCount = OldCount + Count;
+
+            uint8* Begin = begin();
+            uint8* End = end();
+            uint8* CapacityEnd = capacity();
+            SIZE_T CurrentCapacity = (CapacityEnd - Begin) / ElementSize;
+
+            if (NewCount > CurrentCapacity)
+            {
+                SIZE_T NewCapacity = eastl::max(NewCount, CurrentCapacity * 2);
+                SIZE_T NewBytes = NewCapacity * ElementSize;
+
+                uint8* NewData = (uint8*)Memory::Malloc(NewBytes);
+                Memory::Memzero(NewData, NewBytes);
+
+                SIZE_T OldBytes = OldCount * ElementSize;
+                if (Begin)
+                {
+                    Memory::Memcpy(NewData, Begin, OldBytes);
+                    Memory::Free(Begin);
+                }
+
+                Begin = NewData;
+                End = Begin + OldCount * ElementSize;
+                CapacityEnd = Begin + NewBytes;
+
+                *reinterpret_cast<uint8**>(VectorPtr) = Begin;
+                *reinterpret_cast<uint8**>((uint8*)VectorPtr + sizeof(void*)) = End;
+                *reinterpret_cast<uint8**>((uint8*)VectorPtr + sizeof(void*) * 2) = CapacityEnd;
             }
             
-            uint8* OldData = begin();
-            if (OldData)
-            {
-                Memory::Free(OldData);
-            }
+            // Update end pointer
+            *reinterpret_cast<uint8**>((uint8*)VectorPtr + sizeof(void*)) += Count * ElementSize;
+        }
 
-            SIZE_T ElementSize = Property->GetInternalProperty()->ElementSize;
-            SIZE_T TotalBytes = NewElementCount * ElementSize;
+        void Clear()
+        {
+            uint8* Begin = begin();
+            
+            SIZE_T CapacityBytes = capacity() - Begin;
+            Memory::Memzero(Begin, CapacityBytes);
 
-            uint8* NewData = (uint8*)Memory::Malloc(TotalBytes);
-            Memory::Memzero(NewData, TotalBytes);
+            // Set end pointer = begin
+            *reinterpret_cast<uint8**>((uint8*)VectorPtr + sizeof(void*)) = Begin;
+        }
 
-            *reinterpret_cast<uint8**>(VectorPtr) = NewData;
-            *reinterpret_cast<uint8**>((uint8*)VectorPtr + sizeof(void*)) = NewData + TotalBytes;
+        void Reset()
+        {
+            uint8* Begin = begin();
+
+            // Free memory
+            eastl::destruct(begin(), end());
+            Memory::Free(Begin);
+
+            // Null the vector pointers
+            *reinterpret_cast<uint8**>(VectorPtr) = nullptr;
+            *reinterpret_cast<uint8**>((uint8*)VectorPtr + sizeof(void*)) = nullptr;
+        }
+
+        uint8* capacity() const
+        {
+            return *reinterpret_cast<uint8**>((uint8*)VectorPtr + sizeof(void*) * 2);
         }
         
         uint8* begin() const
@@ -114,6 +246,7 @@ namespace Lumina
     private:
         
         void*                   VectorPtr;
+        uint16                  ElementSize;
         const FArrayProperty*   Property;
     };
 }

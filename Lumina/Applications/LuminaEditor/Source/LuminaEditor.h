@@ -9,19 +9,17 @@ namespace Lumina
     class FEditorLayer;
     class FEditorPanel;
 
-
+    inline class FEditorEngine* GEditorEngine = nullptr;
     
     class FEditorEngine : public FEngine
     {
     public:
 
         void CreateDevelopmentTools() override;
-
-        
+    
     private:
     };
     
-    inline FEditorEngine* GEditor = nullptr;
 
     class LuminaEditor : public FApplication
     {

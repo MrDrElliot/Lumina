@@ -8,10 +8,9 @@
 #include "Renderer/RenderTypes.h"
 #include "Renderer/RenderGraph/RenderPasses/RenderPass.h"
 
-
-
 namespace Lumina
 {
+    struct FStaticMeshRenderProxy;
     class CStaticMesh;
     class FPrimitiveDrawManager;
     struct FMaterialTexturesData;
@@ -19,9 +18,6 @@ namespace Lumina
     class AMaterialInstance;
     class FScene;
     class FRenderer;
-    class AStaticMesh;
-    class FBuffer;
-    class FCamera;
     
     
     /**
@@ -56,6 +52,9 @@ namespace Lumina
         void AddRenderPass(const FName& Name, FRenderPassFunction&& Function);
         
     protected:
+
+        void OnStaticMeshComponentCreated();
+        void OnStaticMeshComponentDestroyed();
 
         void BuildPasses();
         void ExecutePasses();
@@ -127,7 +126,8 @@ namespace Lumina
         THashMap<CStaticMesh*, SIZE_T>      MeshIndexOffset;
         TSet<CStaticMesh*>                  RegisteredMeshes;
         TSet<CMaterial*>                    RegisteredMaterials;
-        
+
+        TVector<FStaticMeshRenderProxy*> StaticMeshProxies;
         
         TSharedPtr<FDescriptorTableManager> DescriptorTableManager;
     };

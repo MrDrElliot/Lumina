@@ -9,15 +9,16 @@
 
 namespace Lumina
 {
+    class FProperty;
     class IStructuredArchive;
+    class CClass;
+    class CObject;
 }
 
 LUMINA_API Lumina::CClass* Construct_CClass_Lumina_CObject();
 
 namespace Lumina
 {
-    class CClass;
-    class CObject;
 
     //========================================================
     //
@@ -67,6 +68,9 @@ namespace Lumina
         
         /** Called immediately after the object is serialized from disk */
         LUMINA_API virtual void PostLoad() {}
+
+        /** Called when a property on this object has been modified externally */
+        LUMINA_API virtual void PostPropertyChange(FProperty* ChangedProperty) {}
         
     private:
 

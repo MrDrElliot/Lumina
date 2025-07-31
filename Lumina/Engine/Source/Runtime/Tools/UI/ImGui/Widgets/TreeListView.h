@@ -99,7 +99,7 @@ namespace Lumina
         FTreeListView& operator=(const FTreeListView&) = delete;
         
 
-        void Draw(FTreeListViewContext Context);
+        void Draw(const FTreeListViewContext& Context);
 
         void ClearTree();
 

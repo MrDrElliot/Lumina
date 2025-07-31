@@ -34,7 +34,17 @@ namespace Lumina
         TVector<FGeometrySurface>   GeometrySurfaces;
 
         SIZE_T GetNumSurfaces() const { return GeometrySurfaces.size(); }
-
+        
+        bool IsSurfaceIndexValid(SIZE_T Slot) const
+        {
+            return Slot < GetNumSurfaces();
+        }
+        
+        const FGeometrySurface& GetSurface(SIZE_T Slot) const
+        {
+            return GeometrySurfaces[Slot];
+        }
+        
         friend FArchive& operator << (FArchive& Ar, FMeshResource& Data)
         {
             Ar << Data.Name;

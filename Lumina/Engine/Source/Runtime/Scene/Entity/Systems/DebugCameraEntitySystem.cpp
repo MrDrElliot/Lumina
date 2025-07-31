@@ -12,17 +12,17 @@
 
 namespace Lumina
 {
-    void FDebugCameraEntitySystem::Initialize(const FSubsystemManager* SubsystemManager)
+    void CDebugCameraEntitySystem::Initialize(const FSubsystemManager* SubsystemManager)
     {
         
     }
 
-    void FDebugCameraEntitySystem::Shutdown()
+    void CDebugCameraEntitySystem::Shutdown()
     {
         
     }
 
-    void FDebugCameraEntitySystem::Update(FEntityRegistry& EntityRegistry, const FSceneUpdateContext& UpdateContext)
+    void CDebugCameraEntitySystem::Update(FEntityRegistry& EntityRegistry, const FSceneUpdateContext& UpdateContext)
     {
         double DeltaTime = UpdateContext.GetDeltaTime();
     

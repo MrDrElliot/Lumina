@@ -10,10 +10,6 @@ namespace Lumina
     {
         GENERATED_BODY()
         
-        TVector<int64> ProxyIDs;
-    };
-
-    struct FNeedsRenderProxyUpdate
-    {
+        
     };
 }

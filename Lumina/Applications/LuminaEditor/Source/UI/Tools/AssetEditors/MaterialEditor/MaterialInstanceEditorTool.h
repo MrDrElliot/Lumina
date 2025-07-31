@@ -10,10 +10,7 @@ namespace Lumina
         
         LUMINA_EDITOR_TOOL(FMaterialInstanceEditorTool)
 
-        FMaterialInstanceEditorTool(IEditorToolContext* Context, CObject* InAsset)
-            : FAssetEditorTool(Context, InAsset->GetName().c_str(), InAsset)
-        {
-        }
+        FMaterialInstanceEditorTool(IEditorToolContext* Context, CObject* InAsset);
 
         bool IsSingleWindowTool() const override { return false; }
         const char* GetTitlebarIcon() const override { return LE_ICON_FORMAT_LIST_BULLETED_TYPE; }
@@ -23,6 +20,9 @@ namespace Lumina
         void OnAssetLoadFinished() override;
         void DrawToolMenu(const FUpdateContext& UpdateContext) override;
         void InitializeDockingLayout(ImGuiID InDockspaceID, const ImVec2& InDockspaceSize) const override;
-    
+
+    private:
+
+        Entity MeshEntity;
     };
 }

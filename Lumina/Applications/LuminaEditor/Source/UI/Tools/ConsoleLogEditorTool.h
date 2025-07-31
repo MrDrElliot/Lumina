@@ -25,12 +25,13 @@ namespace Lumina
 
     private:
 
-        TVector<FConsoleMessage>    OutputMessages;
+        SIZE_T                      PreviousMessageSize = 0;
         TDeque<FString>             CommandHistory;
         FString                     CurrentCommand;
         uint64                      HistoryIndex;
         bool                        ScrollToBottom = false;
 
+        bool bAutoScroll = true;
         bool bShowTrace = true;
         bool bShowDebug = true;
         bool bShowInfo  = true;

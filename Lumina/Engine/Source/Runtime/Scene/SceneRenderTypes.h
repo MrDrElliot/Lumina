@@ -13,6 +13,11 @@
 
 namespace Lumina
 {
+    class CMaterialInterface;
+}
+
+namespace Lumina
+{
     struct FVertex;
     class CMaterial;
     class CStaticMesh;
@@ -83,14 +88,14 @@ namespace Lumina
 
     struct FIndirectRenderBatch
     {
-        CMaterial* Material = nullptr;
+        CMaterialInterface* Material = nullptr;
         SIZE_T      NumDraws;
         SIZE_T      Offset;
     };
 
     struct FMeshRenderProxy
     {
-        CMaterial*          Material = nullptr;
+        CMaterialInterface* Material = nullptr;
         FGeometrySurface    Surface;
         glm::mat4           Matrix;
         uint32              VertexOffset;

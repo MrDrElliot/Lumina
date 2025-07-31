@@ -58,7 +58,7 @@ namespace Lumina
             else
             {
                 FAssetData Asset = Registry->GetAsset(Path);
-                if (Asset.ClassName == "CMaterial")
+                if (Asset.ClassName == "CMaterial" || Asset.ClassName == "CMaterialInstance")
                 {
                     ImTexture = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer()->GetOrCreateImTexture(FEditorUI::MaterialIcon);
                 }

@@ -98,7 +98,6 @@ project "Lumina"
     	 "LUMINA_RENDERER_VULKAN",
     	 "TRACY_ENABLE",
     	 "TRACY_CALLSTACK",
-
 	}
 
 	filter "system:linux"
@@ -109,7 +108,6 @@ project "Lumina"
 		defines { "LE_PLATFORM_WINDOWS", }
 		flags { "NoRuntimeChecks", "NoIncrementalLink" }
 		links { "Dbghelp", }
-	    prebuildcommands { '"%LUMINA_DIR%/Binaries/Release-windows-x86_64/Reflector.exe"' }
 
 	filter "configurations:Debug"
 		links { "%{VULKAN_SDK}/lib/shaderc_combinedd.lib", }

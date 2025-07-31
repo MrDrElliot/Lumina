@@ -21,13 +21,13 @@
 #include "Paths/Paths.h"
 #include "Renderer/RenderContext.h"
 #include "Renderer/RenderManager.h"
+#include "Renderer/ShaderCompiler.h"
 #include "Subsystems/FCameraManager.h"
 #include "TaskSystem/TaskSystem.h"
 #include "Tools/Import/ImportHelpers.h"
 
 namespace Lumina
 {
-    
     FSceneRenderer::FSceneRenderer(FScene* InScene)
         : Scene(InScene)
         , SceneRenderStats()
@@ -46,9 +46,13 @@ namespace Lumina
         LUMINA_PROFILE_SCOPE();
         RenderContext = GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext();
         LOG_TRACE("Initializing Scene Renderer");
+
+        Scene->GetMutableEntityRegistry().on_update<SStaticMeshComponent>().connect<&FSceneRenderer::OnStaticMeshComponentCreated>(this);
+        Scene->GetMutableEntityRegistry().on_construct<SStaticMeshComponent>().connect<&FSceneRenderer::OnStaticMeshComponentCreated>(this);
+        Scene->GetMutableEntityRegistry().on_destroy<SStaticMeshComponent>().connect<&FSceneRenderer::OnStaticMeshComponentDestroyed>(this);
         
         // Wait for shader tasks.
-        FTaskSystem::Get()->WaitForAll();
+        while (RenderContext->GetShaderCompiler()->HasPendingRequests()) {}
         
         InitBuffers();
         CreateImages();
@@ -145,21 +149,21 @@ namespace Lumina
             {
                 const FIndirectRenderBatch& Batch = RenderBatches[CurrentDraw];
                 
-                CMaterial* Material = Batch.Material;
+                CMaterialInterface* Material = Batch.Material;
             
                 FGraphicsPipelineDesc Desc;
                 Desc.SetRenderState(RenderState);
                 Desc.SetInputLayout(VertexLayoutInput);
                 Desc.AddBindingLayout(BindingLayout);
-                Desc.AddBindingLayout(Material->BindingLayout);
-                Desc.SetVertexShader(Material->VertexShader);
-                Desc.SetPixelShader(Material->PixelShader);
+                Desc.AddBindingLayout(Material->GetMaterial()->BindingLayout);
+                Desc.SetVertexShader(Material->GetMaterial()->VertexShader);
+                Desc.SetPixelShader(Material->GetMaterial()->PixelShader);
                 
                 FRHIGraphicsPipelineRef Pipeline = RenderContext->CreateGraphicsPipeline(Desc);
                 
                 CommandList->SetGraphicsPipeline(Pipeline);
             
-                CommandList->BindBindingSets(ERHIBindingPoint::Graphics, {{BindingSet, 0}, {Material->BindingSet, 1}});
+                CommandList->BindBindingSets(ERHIBindingPoint::Graphics, {{BindingSet, 0}, {Material->GetMaterial()->BindingSet, 1}});
 
                 SceneRenderStats.NumDrawCalls++;
                 CommandList->DrawIndexedIndirect(IndirectDrawBuffer, IndexBuffer, Batch.NumDraws, Batch.Offset * sizeof(FDrawIndexedIndirectArguments));
@@ -473,6 +477,16 @@ namespace Lumina
         Pass->SetPassFunc(std::move(Function));
     }
 
+    void FSceneRenderer::OnStaticMeshComponentCreated()
+    {
+        LOG_INFO("Created");
+    }
+
+    void FSceneRenderer::OnStaticMeshComponentDestroyed()
+    {
+        
+    }
+
     void FSceneRenderer::BuildPasses()
     {
         ICommandList* CommandList = RenderContext->GetCommandList(ECommandQueue::Graphics);
@@ -487,6 +501,7 @@ namespace Lumina
 
             if (WorkSize == 0)
                 return;
+            
             {
                 LUMINA_PROFILE_SECTION("Process Mesh Components");
 
@@ -498,7 +513,7 @@ namespace Lumina
 
                     CStaticMesh* Mesh = MeshComponent.StaticMesh;
                     
-                    if (!IsValid(Mesh) || !MeshComponent.StaticMesh->IsReadyForRender())
+                    if (!IsValid(Mesh))
                         continue;
 
                     if (RegisteredMeshes.find(Mesh) == RegisteredMeshes.end())
@@ -555,15 +570,26 @@ namespace Lumina
                         LUMINA_PROFILE_SECTION("Build Render Proxies");
 
                         SIZE_T Surfaces = Mesh->GetMeshResource().GetNumSurfaces();
-                        for (SIZE_T i = 0; i < Surfaces; ++i)
+                        for (SIZE_T j = 0; j < Surfaces; ++j)
                         {
-                            const FGeometrySurface& Surface = MeshComponent.StaticMesh->GetMeshResource().GeometrySurfaces[i];
-
+                            const FMeshResource& Resource = MeshComponent.StaticMesh->GetMeshResource();
+                            if (!Resource.IsSurfaceIndexValid(j))
+                            {
+                                continue;
+                            }
+                            
+                            const FGeometrySurface& Surface = Resource.GetSurface(j);
+                            CMaterialInterface* Material = MeshComponent.GetMaterialForSlot(Surface.MaterialIndex);
+                            if (!IsValid(Material) || !Material->IsReadyForRender())
+                            {
+                                continue;
+                            }
+                                
                             SIZE_T VertexLocation = MeshVertexOffset[Mesh];
                             SIZE_T StartIndex = MeshIndexOffset[Mesh] + Surface.StartIndex;
                         
                             FMeshRenderProxy Proxy;
-                            Proxy.Material = MeshComponent.StaticMesh->GetMaterialAtSlot(Surface.MaterialIndex);
+                            Proxy.Material = MeshComponent.GetMaterialForSlot(Surface.MaterialIndex);
                             Proxy.VertexOffset = (VertexLocation / sizeof(FVertex));
                             Proxy.FirstIndex = (StartIndex / sizeof(uint32));
                             Proxy.Surface = Surface;
@@ -596,7 +622,7 @@ namespace Lumina
 
                     ModelData.ModelMatrices.push_back(Proxy.Matrix);
 
-                    if (Proxy.Material != PrevMaterial)
+                    if (Proxy.Material->GetMaterial() != PrevMaterial)
                     {
                         FIndirectRenderBatch Batch;
                         Batch.NumDraws = 1;
@@ -604,7 +630,7 @@ namespace Lumina
                         Batch.Offset = IndirectDrawArguments.size();
                         RenderBatches.push_back(Batch);
 
-                        PrevMaterial = Proxy.Material;
+                        PrevMaterial = Proxy.Material->GetMaterial();
                         PrevSortKey = ~0ull;
                     }
                     else

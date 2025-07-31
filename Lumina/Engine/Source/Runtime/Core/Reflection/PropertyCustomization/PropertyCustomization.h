@@ -21,12 +21,24 @@ namespace Lumina
         void* PropertyPointer;
         FProperty* Property;
     };
+
+    enum class LUMINA_API EPropertyChangeOp : uint8
+    {
+        None,
+        Updated,
+    };
     
-    struct LUMINA_API IPropertyTypeCustomization : public TSharedFromThis<IPropertyTypeCustomization>
+    struct LUMINA_API IPropertyTypeCustomization : TSharedFromThis<IPropertyTypeCustomization>
     {
     public:
 
-        virtual void DrawProperty(TSharedPtr<FPropertyHandle> Property) = 0;
+        virtual EPropertyChangeOp DrawProperty(TSharedPtr<FPropertyHandle> Property) = 0;
+        
+        EPropertyChangeOp UpdateAndDraw(const TSharedPtr<FPropertyHandle>& Property);
+
+        virtual void UpdatePropertyValue(TSharedPtr<FPropertyHandle> Property) = 0;
+
+        virtual void HandleExternalUpdate(TSharedPtr<FPropertyHandle> Property) = 0;
         
     };
     

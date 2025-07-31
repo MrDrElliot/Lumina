@@ -8,6 +8,7 @@ namespace Lumina
 
     static void OnStartThread(uint32 threadNum)
     {
+        TracyCSetThreadName(eastl::to_string(threadNum).c_str())
         Memory::InitializeThreadHeap();
     }
 

@@ -124,9 +124,9 @@ namespace Lumina::ImGuiX
     
     struct LUMINA_API ApplicationTitleBar
     {
-        constexpr static float const s_windowControlButtonWidth = 45;
-        constexpr static float const s_minimumDraggableGap = 24; // Minimum open gap left open to allow dragging
-        constexpr static float const s_sectionPadding = 8; // Padding between the window frame/window controls and the menu/control sections
+        constexpr static float s_windowControlButtonWidth = 45;
+        constexpr static float s_minimumDraggableGap = 24; // Minimum open gap left open to allow dragging
+        constexpr static float s_sectionPadding = 8; // Padding between the window frame/window controls and the menu/control sections
 
         static inline float GetWindowsControlsWidth() { return s_windowControlButtonWidth * 3; }
         static void DrawWindowControls();

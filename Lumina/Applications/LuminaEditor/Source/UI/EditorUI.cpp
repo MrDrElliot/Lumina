@@ -68,19 +68,19 @@ namespace Lumina
         CorruptIcon         = Import::Textures::CreateTextureFromImport(RenderContext, Path + "/CorruptAssetIcon.png", false);
 
         PropertyCustomizationRegistry = Memory::New<FPropertyCustomizationRegistry>();
-        PropertyCustomizationRegistry->RegisterPropertyCustomization("vec2", [this]()
+        PropertyCustomizationRegistry->RegisterPropertyCustomization(TBaseStructure<glm::vec2>::Get()->GetName(), [this]()
         {
             return FVec2PropertyCustomization::MakeInstance();
         });
-        PropertyCustomizationRegistry->RegisterPropertyCustomization("vec3", [this]()
+        PropertyCustomizationRegistry->RegisterPropertyCustomization(TBaseStructure<glm::vec3>::Get()->GetName(), [this]()
         {
             return FVec3PropertyCustomization::MakeInstance();
         });
-        PropertyCustomizationRegistry->RegisterPropertyCustomization("vec4", [this]()
+        PropertyCustomizationRegistry->RegisterPropertyCustomization(TBaseStructure<glm::vec4>::Get()->GetName(), [this]()
         {
             return FVec4PropertyCustomization::MakeInstance();
         });
-        PropertyCustomizationRegistry->RegisterPropertyCustomization("FTransform", [this]()
+        PropertyCustomizationRegistry->RegisterPropertyCustomization(TBaseStructure<FTransform>::Get()->GetName(), [this]()
         {
             return FTransformPropertyCustomization::MakeInstance();
         });
@@ -100,7 +100,7 @@ namespace Lumina
 
         
         FScene* NewScene = SceneManager->CreateScene(ESceneType::Tool);
-        NewScene->RegisterSystem(Memory::New<FDebugCameraEntitySystem>());
+        NewScene->RegisterSystem(NewObject<CDebugCameraEntitySystem>());
         
         SceneEditorTool = CreateTool<FEntitySceneEditorTool>(this, NewScene);
         ConsoleLogTool = CreateTool<FConsoleLogEditorTool>(this);
@@ -137,7 +137,7 @@ namespace Lumina
             DrawTitleBarInfoStats(UpdateContext);
         };
 
-        TitleBar.Draw(TitleBarLeftContents, 400, TitleBarRightContents, 200);
+        TitleBar.Draw(TitleBarLeftContents, 400, TitleBarRightContents, 230);
 
         const ImGuiID DockspaceID = ImGui::GetID("EditorDockSpace");
 
@@ -911,7 +911,6 @@ namespace Lumina
         {
             ImGui::EndMenu();
         }
-
         
         ImGui::PopStyleColor(2);
     }
@@ -919,15 +918,14 @@ namespace Lumina
     void FEditorUI::DrawTitleBarInfoStats(const FUpdateContext& UpdateContext)
     {
         ImGui::SameLine();
-        float const currentFPS = 1.0f / (float)UpdateContext.GetDeltaTime();
-        TInlineString<100> const perfStats( TInlineString<100>::CtorSprintf(),  "FPS: %3.0f", currentFPS );
-        ImGui::Text(perfStats.c_str());
 
-        
+        const TInlineString<100> PerfStats(TInlineString<100>::CtorSprintf(), "FPS: %3.0f / %.2f ms", UpdateContext.GetFPS(), UpdateContext.GetDeltaTime() * 1000.0f);
+        ImGui::TextUnformatted(PerfStats.c_str());
+
         ImGui::SameLine();
+
         SIZE_T CObjectCount = GObjectArray.GetNumObjectsAlive();
-        TInlineString<100> const ObjectStats(TInlineString<100>::CtorSprintf(),  "CObject Count: %i", CObjectCount);
-        ImGui::Text(ObjectStats.c_str());
-        
+        const TInlineString<100> ObjectStats(TInlineString<100>::CtorSprintf(), "CObjects: %i", CObjectCount);
+        ImGui::TextUnformatted(ObjectStats.c_str());
     }
 }

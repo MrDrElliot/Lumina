@@ -10,7 +10,7 @@ namespace Lumina
         return bSelected ? ImVec4(0.60f, 0.60f, 1.0f, 1.0f) : ImVec4(0.95f, 0.95f, 0.95f, 1.0f);
     }
 
-    void FTreeListView::Draw(FTreeListViewContext Context)
+    void FTreeListView::Draw(const FTreeListViewContext& Context)
     {
         if (bDirty)
         {
@@ -29,22 +29,17 @@ namespace Lumina
         if (ImGui::BeginTable("TreeViewTable", 1, TableFlags, ImVec2(ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x / 2, -1)))
         {
             ImGui::TableSetupColumn("Label", ImGuiTableColumnFlags_WidthStretch);
-
-            for (SIZE_T i = 0; i < ListItems.size(); ++i)
-            {
-                DrawListItem(ListItems[i], Context);
-            }
             
-            /*ImGuiListClipper Clipper;
+            ImGuiListClipper Clipper;
             Clipper.Begin((int)ListItems.size());
 
             while (Clipper.Step())
             {
                 for (int i = Clipper.DisplayStart; i < Clipper.DisplayEnd; ++i)
                 {
-                    
+                    DrawListItem(ListItems[i], Context);
                 }
-            }*/
+            }
             
             ImGui::EndTable();
         }
@@ -77,7 +72,8 @@ namespace Lumina
 
         ClearSelection();
         ClearTree();
-        
+
+        Assert(Context.RebuildTreeFunction)
         Context.RebuildTreeFunction(this);
 
         bDirty = false;
@@ -147,8 +143,11 @@ namespace Lumina
                         SelectionsToDraw.push_back(Selection);
                     }
                 }
-                
-                Context.DrawItemContextMenuFunction(SelectionsToDraw);
+
+                if (Context.DrawItemContextMenuFunction)
+                {
+                    Context.DrawItemContextMenuFunction(SelectionsToDraw);
+                }
                 
                 ImGui::EndPopup();
             }
@@ -169,7 +168,10 @@ namespace Lumina
             Item->bSelected = true;
         }
 
-        Context.ItemSelectedFunction(bWasSelected ? nullptr : Item);
+        if (Context.ItemSelectedFunction)
+        {
+            Context.ItemSelectedFunction(bWasSelected ? nullptr : Item);
+        }
         Item->OnSelectionStateChanged();
     }
 

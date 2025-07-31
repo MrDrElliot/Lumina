@@ -5,6 +5,7 @@
 #include "Lumina.h"
 #include "Core/UpdateContext.h"
 #include "Core/Functional/Function.h"
+#include "Core/Object/ObjectHandleTyped.h"
 #include "Entity/Registry/EntityRegistry.h"
 #include "Subsystems/Subsystem.h"
 
@@ -12,13 +13,13 @@
 
 namespace Lumina
 {
+    class CEntitySystem;
     class FCameraManager;
     class FUpdateContext;
     class FSubsystemManager;
     class FTransform;
     class Entity;
     class AStaticMesh;
-    class FEntitySystem;
 }
 
 namespace Lumina
@@ -37,31 +38,33 @@ namespace Lumina
         void Update(const FUpdateContext& UpdateContext);
         void EndFrame();
         
-        bool RegisterSystem(FEntitySystem* NewSystem);
+        bool RegisterSystem(CEntitySystem* NewSystem);
 
         Entity CreateEntity(const FTransform& Transform, const FName& Name);
+        void CopyEntity(Entity& To, const Entity& From);
         void DestroyEntity(Entity Entity);
         
         FEntityRegistry& GetMutableEntityRegistry() { return EntityRegistry; }
         const FEntityRegistry& GetConstEntityRegistry() const { return EntityRegistry; }
         
-        FORCEINLINE FSubsystemManager* GetSceneSubsystemManager() const { return SceneSubsystemManager; }
+        FSubsystemManager* GetSceneSubsystemManager() const { return SceneSubsystemManager; }
         FCameraManager* GetSceneCameraManager() const;
 
-        FORCEINLINE double GetSceneDeltaTime() const { return DeltaTime; }
-        FORCEINLINE double GetTimeSinceSceneCreation() const { return TimeSinceCreation; }
+        double GetSceneDeltaTime() const { return DeltaTime; }
+        double GetTimeSinceSceneCreation() const { return TimeSinceCreation; }
 
-        INLINE void SetPaused(bool bNewPause) { bPaused = bNewPause; }
-        INLINE bool IsPaused() const { return bPaused; }
+        void SetPaused(bool bNewPause) { bPaused = bNewPause; }
+        bool IsPaused() const { return bPaused; }
         
         template<typename T>
         T* GetSceneSubsystem() const;
         
         template <typename T>
         void ForEachComponent(const TFunction<void(uint32& CurrentIndex, entt::entity& OutEntity, T& OutComponent)>&& Functor);
+        ESceneType GetSceneType() const { return SceneType; }
 
-        FORCEINLINE ESceneType GetSceneType() const { return SceneType; }
-    
+        TVector<TObjectHandle<CEntitySystem>> GetSystemsForUpdateStage(EUpdateStage Stage);
+        
     private:
         
         
@@ -70,13 +73,11 @@ namespace Lumina
         double                          TimeSinceCreation = 0.0;
         bool                            bPaused = false;
         
-        FSubsystemManager*              SceneSubsystemManager = nullptr;
+        FSubsystemManager*                            SceneSubsystemManager = nullptr;
 
-        TVector<FEntitySystem*>         EntitySystems;
-        TVector<FEntitySystem*>         SystemUpdateList[(uint32)EUpdateStage::Max];
+        TVector<TObjectHandle<CEntitySystem>>         SystemUpdateList[(int32)EUpdateStage::Max];
+
         FEntityRegistry                 EntityRegistry;
-
-        THashMap<FName, entt::entity>   EntityNameMap;
     };
 
 

@@ -1,7 +1,7 @@
 #include "LuminaEditor.h"
 #include "EntryPoint.h"
-#include <Lumina_eastl.cpp>
 #include "Project/Project.h"
+#include "Lumina_eastl.cpp"
 #include "Renderer/RenderResource.h"
 #include "Scene/Scene.h"
 #include "Settings/EditorSettings.h"
@@ -9,12 +9,10 @@
 
 namespace Lumina
 {
-
     void FEditorEngine::CreateDevelopmentTools()
     {
         DeveloperToolUI = Memory::New<FEditorUI>();
     }
-
     
     FApplication* CreateApplication(int argc, char** argv)
     {
@@ -28,10 +26,8 @@ namespace Lumina
     
     bool LuminaEditor::Initialize(int argc, char** argv)
     {
-
         FEditorSettings::Get()->LoadSettings();
-        std::filesystem::path StartupProject = FEditorSettings::Get()->GetStartupProject().c_str();
-        FProject::Get()->LoadProject(StartupProject.generic_string().c_str());
+        FProject::Get()->LoadProject(FEditorSettings::Get()->GetStartupProject());
 
         Engine->Initialize(this);
         
@@ -40,8 +36,8 @@ namespace Lumina
 
     void LuminaEditor::CreateEngine()
     {
-        GEditor = Memory::New<FEditorEngine>();
-        Engine = GEditor;
+        GEditorEngine = Memory::New<FEditorEngine>();
+        Engine = GEditorEngine;
         Engine->SetUpdateCallback([] (const FUpdateContext&) { });
     }
 

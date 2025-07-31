@@ -13,7 +13,7 @@ namespace Lumina
         GENERATED_BODY()
         ENTITY_COMPONENT()        
 
-        LUM_PROPERTY(ReadOnly)
+        LUM_PROPERTY(Editable)
         FName Name;
     };
     

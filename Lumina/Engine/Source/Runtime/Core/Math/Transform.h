@@ -64,6 +64,18 @@ namespace Lumina
         {
             Scale *= scaleFactors;
         }
+
+        bool operator==(const FTransform& Other) const
+        {
+            return Location == Other.Location &&
+                   Rotation == Other.Rotation &&
+                   Scale == Other.Scale;
+        }
+
+        bool operator!=(const FTransform& Other) const
+        {
+            return !(*this == Other);
+        }
     };
 }
 
@@ -75,7 +87,6 @@ struct fmt::formatter<Lumina::FTransform>\
         return ctx.begin();
     }
 
-    // Format function
     template <typename FormatContext>
     auto format(const Lumina::FTransform& transform, FormatContext& ctx) -> decltype(ctx.out())
     {

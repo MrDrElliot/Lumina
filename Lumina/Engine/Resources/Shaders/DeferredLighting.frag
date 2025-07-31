@@ -125,7 +125,7 @@ void main()
         Lo += (kD * Albedo / PI + Spec) * Radiance * NdotL;
     }
     
-    vec3 Ambient = vec3(0.00) * Albedo * AO;
+    vec3 Ambient = vec3(0.01) * Albedo * AO;
     vec3 Color = Ambient + Lo;
     
     Color = Color / (Color + vec3(1.0));

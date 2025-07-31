@@ -253,5 +253,9 @@ namespace Lumina
     {
         static LUMINA_API CStruct* Get(); 
     };
-    
+
+    template<> struct TBaseStructure<FTransform> 
+    {
+        static LUMINA_API CStruct* Get(); 
+    };
 }

@@ -1,6 +1,5 @@
 
 #include "Sandbox.h"
-#include "Lumina_eastl.cpp"
 #include "EntryPoint.h"
 #include "Assets/AssetManager/AssetManager.h"
 #include "Core/Module/ModuleManager.h"

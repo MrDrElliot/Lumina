@@ -12,155 +12,96 @@
 
 namespace Lumina
 {
-    void FNumericPropertyCustomization::DrawProperty(TSharedPtr<FPropertyHandle> Property)
+
+    EPropertyChangeOp FVec2PropertyCustomization::DrawProperty(TSharedPtr<FPropertyHandle> Property)
     {
-        ImGui::PushID(this);
-    
-        EPropertyTypeFlags PropertyType = Property->Property->GetType();
-    
-        int Min = 0;
-        int Max = 0;
-        double MinD = 0.0;
-        double MaxD = 0.0;
-    
-        void* Ptr = Property->PropertyPointer;
-        
-        switch (PropertyType)
-        {
-            case EPropertyTypeFlags::Int8:
-                Min = std::numeric_limits<int8_t>::min();
-                Max = std::numeric_limits<int8_t>::max();
-                ImGui::DragInt("##Value", (int*)(Ptr), 1,Min, Max);
-                break;
-            case EPropertyTypeFlags::Int16:
-                Min = std::numeric_limits<int16_t>::min();
-                Max = std::numeric_limits<int16_t>::max();
-                ImGui::DragInt("##Value", (int*)(Ptr), 1,Min, Max);
-                break;
-            case EPropertyTypeFlags::Int32:
-                Min = std::numeric_limits<int32_t>::min();
-                Max = std::numeric_limits<int32_t>::max();
-                ImGui::DragInt("##Value", (int*)(Ptr), 1,Min, Max);
-                break;
-            case EPropertyTypeFlags::Int64:
-                // No native ImGui support for int64, so cast to double
-                MinD = static_cast<double>(std::numeric_limits<int64_t>::min());
-                MaxD = static_cast<double>(std::numeric_limits<int64_t>::max());
-                ImGui::DragScalar("##Value", ImGuiDataType_S64, Ptr, 1.0f, &MinD, &MaxD);
-                break;
-    
-            case EPropertyTypeFlags::UInt8:
-                Min = std::numeric_limits<uint8_t>::min();
-                Max = std::numeric_limits<uint8_t>::max();
-                ImGui::DragInt("##Value", (int*)(Ptr), 1,Min, Max);
-                break;
-            case EPropertyTypeFlags::UInt16:
-                Min = std::numeric_limits<uint16_t>::min();
-                Max = std::numeric_limits<uint16_t>::max();
-                ImGui::DragInt("##Value", (int*)(Ptr), 1,Min, Max);
-                break;
-            case EPropertyTypeFlags::UInt32:
-                Min = 0;
-                Max = static_cast<int>(std::numeric_limits<uint32_t>::max());
-                ImGui::DragInt("##Value", (int*)(Ptr), 1,Min, Max);
-                break;
-            case EPropertyTypeFlags::UInt64:
-                MinD = 0.0;
-                MaxD = static_cast<double>(std::numeric_limits<uint64_t>::max());
-                ImGui::DragScalar("##Value", ImGuiDataType_U64, Ptr, 1.0f, &MinD, &MaxD);
-                break;
-    
-            case EPropertyTypeFlags::Float:
-                    MinD = std::numeric_limits<float>::min();
-                    MaxD = std::numeric_limits<float>::max();
-                ImGui::DragScalar("##Value", ImGuiDataType_Float, Ptr, 0.1f, &MinD, &MaxD);
-                break;
-    
-            case EPropertyTypeFlags::Double:
-                MinD = -DBL_MAX;
-                MaxD = DBL_MAX;
-                ImGui::DragScalar("##Value", ImGuiDataType_Double, Ptr, 0.1f, &MinD, &MaxD);
-                break;
-    
-            default:
-                ImGui::TextDisabled("Unsupported type");
-                break;
-        }
-    
-        ImGui::PopID();
+        ImGui::DragFloat2("##", glm::value_ptr(DisplayValue), 0.1f);
+
+        return ImGui::IsItemDeactivatedAfterEdit() ? EPropertyChangeOp::Updated : EPropertyChangeOp::None;
     }
 
-    void FNamePropertyCustomization::DrawProperty(TSharedPtr<FPropertyHandle> Property)
+    void FVec2PropertyCustomization::UpdatePropertyValue(TSharedPtr<FPropertyHandle> Property)
     {
-        void* ValuePtr = Property->PropertyPointer;
-        FName* Name = static_cast<FName*>(ValuePtr);
+        CachedValue = DisplayValue;
+        *(glm::vec2*)Property->PropertyPointer = CachedValue;
+    }
 
-        // We have to modify a copy here because modifying FName::c_str() will directly modify the global value in the name hash.
-        FString NameCopy = Name->ToString();
-        
-        if (ImGui::InputText("##Name", const_cast<char*>(NameCopy.c_str()), 256))
+    void FVec2PropertyCustomization::HandleExternalUpdate(TSharedPtr<FPropertyHandle> Property)
+    {
+        glm::vec2& ActualValue = *(glm::vec2*)Property->PropertyPointer;
+        if (CachedValue != ActualValue)
         {
-            *Name = FName(NameCopy);
+            CachedValue = DisplayValue = ActualValue;
         }
     }
 
-    void FStringPropertyCustomization::DrawProperty(TSharedPtr<FPropertyHandle> Property)
-    {
-        void* ValuePtr = Property->PropertyPointer;
-        FString* Name = static_cast<FString*>(ValuePtr);
-            
-        if (ImGui::InputText("##Name", const_cast<char*>(Name->c_str()), 256))
-        {
-                
-        }
-    }
-
-    void FVec2PropertyCustomization::DrawProperty(TSharedPtr<FPropertyHandle> Property)
-    {
-        void* ValuePtr = Property->PropertyPointer;
-        glm::vec2* Vec4Ptr = (glm::vec2*)ValuePtr;
-            
-        ImGui::DragFloat2("##", glm::value_ptr(*Vec4Ptr), 0.1f);
-    }
-    
-    void FVec3PropertyCustomization::DrawProperty(TSharedPtr<FPropertyHandle> Property)
+    EPropertyChangeOp FVec3PropertyCustomization::DrawProperty(TSharedPtr<FPropertyHandle> Property)
     {
         FStructProperty* StructProperty = static_cast<FStructProperty*>(Property->Property);
-        bool bAsColor = StructProperty->Metadata.HasMetadata("Color");
-        void* ValuePtr = Property->PropertyPointer;
-        glm::vec3* Vec3Ptr = (glm::vec3*)ValuePtr;
-    
-        if (bAsColor)
+
+        if (StructProperty->Metadata.HasMetadata("Color"))
         {
-            ImGui::ColorEdit3("##", glm::value_ptr(*Vec3Ptr));
+            ImGui::ColorEdit3("##", glm::value_ptr(DisplayValue));
         }
         else
         {
-            ImGui::DragFloat3("##", glm::value_ptr(*Vec3Ptr), 0.1f);
+            ImGui::DragFloat3("##", glm::value_ptr(DisplayValue), 0.1f);
+        }
+
+        return ImGui::IsItemDeactivatedAfterEdit() ? EPropertyChangeOp::Updated : EPropertyChangeOp::None;
+    }
+    
+    void FVec3PropertyCustomization::UpdatePropertyValue(TSharedPtr<FPropertyHandle> Property)
+    {
+        CachedValue = DisplayValue;
+        *(glm::vec3*)Property->PropertyPointer = CachedValue;
+    }
+
+    void FVec3PropertyCustomization::HandleExternalUpdate(TSharedPtr<FPropertyHandle> Property)
+    {
+        glm::vec3& ActualValue = *(glm::vec3*)Property->PropertyPointer;
+        if (CachedValue != ActualValue)
+        {
+            CachedValue = DisplayValue = ActualValue;
         }
     }
-    void FVec4PropertyCustomization::DrawProperty(TSharedPtr<FPropertyHandle> Property)
+
+    EPropertyChangeOp FVec4PropertyCustomization::DrawProperty(TSharedPtr<FPropertyHandle> Property)
     {
         FStructProperty* StructProperty = static_cast<FStructProperty*>(Property->Property);
-        bool bAsColor = StructProperty->Metadata.HasMetadata("Color");
-        void* ValuePtr = Property->PropertyPointer;
-        glm::vec4* Vec4Ptr = (glm::vec4*)ValuePtr;
-    
-        if (bAsColor)
+
+        if (StructProperty->Metadata.HasMetadata("Color"))
         {
-            ImGui::ColorEdit4("##", glm::value_ptr(*Vec4Ptr));
+            ImGui::ColorEdit4("##", glm::value_ptr(DisplayValue));
         }
         else
         {
-            ImGui::DragFloat4("##", glm::value_ptr(*Vec4Ptr), 0.1f);
+            ImGui::DragFloat4("##", glm::value_ptr(DisplayValue), 0.1f);
+        }
+
+        return ImGui::IsItemDeactivatedAfterEdit() ? EPropertyChangeOp::Updated : EPropertyChangeOp::None;
+    }
+
+    void FVec4PropertyCustomization::UpdatePropertyValue(TSharedPtr<FPropertyHandle> Property)
+    {
+        CachedValue = DisplayValue;
+        *(glm::vec4*)Property->PropertyPointer = CachedValue;
+    }
+
+    void FVec4PropertyCustomization::HandleExternalUpdate(TSharedPtr<FPropertyHandle> Property)
+    {
+        glm::vec4& ActualValue = *(glm::vec4*)Property->PropertyPointer;
+        if (CachedValue != ActualValue)
+        {
+            CachedValue = DisplayValue = ActualValue;
         }
     }
-    
-    void FTransformPropertyCustomization::DrawProperty(TSharedPtr<FPropertyHandle> Property)
-    {
-        FTransform* TransformPtr = Property->GetTypePropertyPtr<FTransform>();
 
+    EPropertyChangeOp FTransformPropertyCustomization::DrawProperty(TSharedPtr<FPropertyHandle> Property)
+    {
         constexpr float HeaderWidth = 24;
+
+        bool bWasChanged = false;
         
         ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(0, 2));
         if (ImGui::BeginTable("Transform", 2, ImGuiTableFlags_None))
@@ -179,9 +120,9 @@ namespace Lumina
                 }
         
                 ImGui::TableNextColumn();
-                if (ImGui::DragFloat3("T", glm::value_ptr(TransformPtr->Location), 0.1f))
+                if (ImGui::DragFloat3("T", glm::value_ptr(DisplayValue.Location), 0.1f))
                 {
-                    
+                    bWasChanged = true;
                 }
             }
             
@@ -195,10 +136,11 @@ namespace Lumina
                 }
         
                 ImGui::TableNextColumn();
-                glm::vec3 EulerRotation = glm::degrees(glm::eulerAngles(TransformPtr->Rotation));
+                glm::vec3 EulerRotation = glm::degrees(glm::eulerAngles(DisplayValue.Rotation));
                 if (ImGui::DragFloat3("R", glm::value_ptr(EulerRotation), 0.1f))
                 {
-                    TransformPtr->SetRotationFromEuler(EulerRotation);
+                    DisplayValue.SetRotationFromEuler(EulerRotation);
+                    bWasChanged = true;
                 }
             }
         
@@ -212,15 +154,32 @@ namespace Lumina
                 }
                 
                 ImGui::TableNextColumn();
-                if (ImGui::DragFloat3("S", glm::value_ptr(TransformPtr->Scale), 0.1f))
+                if (ImGui::DragFloat3("S", glm::value_ptr(DisplayValue.Scale), 0.1f))
                 {
-                    
+                    bWasChanged = true;
                 }
             }
         
             ImGui::EndTable();
         }
         ImGui::PopStyleVar();
+
+        return bWasChanged ? EPropertyChangeOp::Updated : EPropertyChangeOp::None;
         
+    }
+
+    void FTransformPropertyCustomization::UpdatePropertyValue(TSharedPtr<FPropertyHandle> Property)
+    {
+        CachedValue = DisplayValue;
+        *(FTransform*)Property->PropertyPointer = CachedValue;
+    }
+
+    void FTransformPropertyCustomization::HandleExternalUpdate(TSharedPtr<FPropertyHandle> Property)
+    {
+        FTransform& ActualValue = *(FTransform*)Property->PropertyPointer;
+        if (CachedValue != ActualValue)
+        {
+            CachedValue = DisplayValue = ActualValue;
+        }
     }
 }

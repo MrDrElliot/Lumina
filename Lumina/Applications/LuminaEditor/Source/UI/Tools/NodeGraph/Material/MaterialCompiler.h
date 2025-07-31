@@ -34,6 +34,17 @@ namespace Lumina
             FMaterialNodePin*   ErrorPin = nullptr;
         };
 
+        struct FScalarParam
+        {
+            uint16 Index;
+            float Value;
+        };
+
+        struct FVectorParam
+        {
+            uint16 Index;
+            glm::vec4 Value;
+        };
         
         FORCEINLINE bool HasErrors() const { return !Errors.empty(); }
         FORCEINLINE void AddError(const FError& Error) { Errors.push_back(Error); }
@@ -79,6 +90,9 @@ namespace Lumina
         void GetBoundTextures(TVector<TObjectHandle<CTexture>>& Images);
 
         void AddRaw(const FString& Raw);
+
+        const THashMap<FName, FScalarParam>& GetScalarParameters() const { return ScalarParameters; }
+        const THashMap<FName, FVectorParam>& GetVectorParameters() const { return VectorParameters; }
         
         //-----------------------------------------------------------------------------
     
@@ -91,14 +105,11 @@ namespace Lumina
         TVector<TObjectHandle<CTexture>>    BoundImages;
 
         uint32                              NumScalarParams = 0;
-        uint32                              NumVec2Params = 0;
-        uint32                              NumVec3Params = 0;
-        uint32                              NumVec4Params = 0;
+        uint32                              NumVectorParams = 0;
         
-        THashMap<FName, uint32>             ScalarParameters;
-        THashMap<FName, uint32>             Vec2Parameters;
-        THashMap<FName, uint32>             Vec3Parameters;
-        THashMap<FName, uint32>             Vec4Parameters;
+        THashMap<FName, FScalarParam>       ScalarParameters;
+        
+        THashMap<FName, FVectorParam>       VectorParameters;
 
     };
 }

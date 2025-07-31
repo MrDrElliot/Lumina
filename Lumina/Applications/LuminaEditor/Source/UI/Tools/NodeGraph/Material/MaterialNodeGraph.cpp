@@ -33,6 +33,11 @@ namespace Lumina
         for (CObject* Object : NewNodes)
         {
             CEdGraphNode* Node = Cast<CEdGraphNode>(Object);
+            if (Node == nullptr)
+            {
+                continue;
+            }
+            
             if (Node->IsA<CMaterialOutputNode>())
             {
                 bHasOutputNode = true;

@@ -384,15 +384,15 @@ namespace Lumina::ImGuiX
             
             if (controlsSectionDesiredWidth > 0)
             {
-                ImGui::SetCursorPos( controlSectionStartPos );
-                ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 0, 0 ) );
-                bool const drawControlsSection = ImGui::BeginChild( "Right", ImVec2( controlSectionFinalWidth, titleBarHeight ),
+                ImGui::SetCursorPos(controlSectionStartPos);
+                ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+                bool const drawControlsSection = ImGui::BeginChild( "Right", ImVec2( controlSectionFinalWidth, titleBarHeight),
                     ImGuiChildFlags_AlwaysUseWindowPadding,
-                    ImGuiWindowFlags_NoDecoration );
+                    ImGuiWindowFlags_NoDecoration);
                 
                 ImGui::PopStyleVar();
 
-                if ( drawControlsSection )
+                if (drawControlsSection)
                 {
                     controlsSectionDrawFunction();
                 }

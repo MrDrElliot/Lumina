@@ -26,7 +26,7 @@ namespace Lumina
 
     	TVector<uint8> FontData, BoldFontData;
 
-    	Fonts::GetDecompressedFontData(Fonts::Lexend::Bold::GetData(), FontData);
+    	Fonts::GetDecompressedFontData(Fonts::Lexend::Regular::GetData(), FontData);
 		Fonts::GetDecompressedFontData(Fonts::Lexend::Bold::GetData(), BoldFontData);	
 
 		constexpr ImWchar icons_ranges[] = { LE_ICONRANGE_MIN, LE_ICONRANGE_MAX, 0 };
@@ -47,14 +47,14 @@ namespace Lumina
     	auto CreateFont = [&] ( Blob& fontData, float fontSize, float iconFontSize, ImGuiX::Font::EFont fontID, char const* pName, ImVec2 const& glyphOffset )
     	{
     		ImFont* pFont = io.Fonts->AddFontFromMemoryTTF( fontData.data(), static_cast<int32_t>(fontData.size()), fontSize, &fontConfig );
-		    ImGuiX::Font::GFonts[static_cast<uint8_t>(fontID)] = pFont;
+		    ImGuiX::Font::GFonts[static_cast<uint8>(fontID)] = pFont;
 
     		iconFontConfig.GlyphOffset = glyphOffset;
     		iconFontConfig.GlyphMinAdvanceX = iconFontSize;
     		io.Fonts->AddFontFromMemoryTTF( iconFontData.data(), static_cast<int32_t>(iconFontData.size()), iconFontSize, &iconFontConfig, icons_ranges );
     	};
 
-    	constexpr float const DPIScale = 1.0f;
+    	constexpr float DPIScale = 1.0f;
     	float const size12 = std::floor( 12 * DPIScale );
     	float const size14 = std::floor( 14 * DPIScale );
     	float const size16 = std::floor( 16 * DPIScale );

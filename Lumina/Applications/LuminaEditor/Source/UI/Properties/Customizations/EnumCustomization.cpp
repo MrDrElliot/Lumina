@@ -4,28 +4,25 @@
 
 namespace Lumina
 {
-    void FEnumPropertyCustomization::DrawProperty(TSharedPtr<FPropertyHandle> Property)
+    EPropertyChangeOp FEnumPropertyCustomization::DrawProperty(TSharedPtr<FPropertyHandle> Property)
     {
-        void* ValuePtr = Property->PropertyPointer;
         FEnumProperty* EnumProperty = static_cast<FEnumProperty*>(Property->Property);
+        int64 EnumCount = (int64)EnumProperty->GetEnum()->Names.size();
+        bool bWasChanged = false;
 
-        int64 EnumValue = EnumProperty->GetInnerProperty()->GetSignedIntPropertyValue(ValuePtr);
-        int64 CurrentIndex = EnumValue;
-        
-        SIZE_T EnumCount = EnumProperty->GetEnum()->Names.size();
-
-        const char* PreviewValue = EnumProperty->GetEnum()->GetNameAtValue(CurrentIndex).c_str();
+        const char* PreviewValue = EnumProperty->GetEnum()->GetNameAtValue(CachedValue).c_str();
 
         if (ImGui::BeginCombo("##", PreviewValue))
         {
-            for (SIZE_T i = 0; i < EnumCount; ++i)
+            for (int64 i = 0; i < EnumCount; ++i)
             {
                 const char* Label = EnumProperty->GetEnum()->GetNameAtValue(i).c_str();
-                bool IsSelected = (i == CurrentIndex);
+                bool IsSelected = (i == CachedValue);
 
                 if (ImGui::Selectable(Label, IsSelected))
                 {
-                    EnumProperty->GetInnerProperty()->SetIntPropertyValue(ValuePtr, i);
+                    CachedValue = i;
+                    bWasChanged = true;
                 }
 
                 if (IsSelected)
@@ -36,5 +33,20 @@ namespace Lumina
 
             ImGui::EndCombo();
         }
+
+        return bWasChanged ? EPropertyChangeOp::Updated : EPropertyChangeOp::None;
+    }
+
+    void FEnumPropertyCustomization::UpdatePropertyValue(TSharedPtr<FPropertyHandle> Property)
+    {
+        FEnumProperty* EnumProperty = static_cast<FEnumProperty*>(Property->Property);
+        EnumProperty->GetInnerProperty()->SetIntPropertyValue(Property->PropertyPointer, CachedValue);
+    }
+
+    void FEnumPropertyCustomization::HandleExternalUpdate(TSharedPtr<FPropertyHandle> Property)
+    {
+        FEnumProperty* EnumProperty = static_cast<FEnumProperty*>(Property->Property);
+        
+        CachedValue = EnumProperty->GetInnerProperty()->GetSignedIntPropertyValue(Property->PropertyPointer);
     }
 }

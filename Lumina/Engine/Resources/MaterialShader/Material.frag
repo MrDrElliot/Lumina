@@ -3,8 +3,8 @@
 
 #include "Includes/SceneGlobals.glsl"
 
-#define MAX_VEC4 24
 #define MAX_SCALARS 24
+#define MAX_VECTORS 24
 
 layout(location = 0) in vec4 inColor;
 layout(location = 1) in vec3 inNormal;
@@ -20,7 +20,7 @@ layout(location = 3) out vec4 GAlbedoSpec;
 layout(set = 1, binding = 0) uniform FMaterialUniforms
 {
     vec4 Scalars[MAX_SCALARS / 4];
-    vec4 Vec4s[MAX_VEC4];
+    vec4 Vectors[MAX_VECTORS];
 
 } MaterialUniforms;
 
@@ -33,7 +33,7 @@ float GetMaterialScalar(uint Index)
 
 vec4 GetMaterialVec4(uint Index)
 {
-    return MaterialUniforms.Vec4s[Index];
+    return MaterialUniforms.Vectors[Index];
 }
 
 vec3 getNormalFromMap(vec3 FragNormal, vec3 Normal, vec2 UV, vec3 FragPos)

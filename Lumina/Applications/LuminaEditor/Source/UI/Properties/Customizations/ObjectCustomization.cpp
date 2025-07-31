@@ -15,11 +15,11 @@ namespace Lumina
 {
     static constexpr ImVec2 GButtonSize(30, 0);
 
-    void FCObjectPropertyCustomization::DrawProperty(TSharedPtr<FPropertyHandle> Property)
+    EPropertyChangeOp FCObjectPropertyCustomization::DrawProperty(TSharedPtr<FPropertyHandle> Property)
     {
         FObjectProperty* ObjectProperty = static_cast<FObjectProperty*>(Property->Property);
-        FObjectHandle* Ptr = (FObjectHandle*)Property->PropertyPointer;
-        CObject* Obj = Ptr->Resolve();
+        CObject* Obj = ObjectHandle.Resolve();
+        bool bWasChanged = false;
         
         ImGui::PushID(this);
         if (ImGui::BeginChild("OP", ImVec2(-1, 0), ImGuiChildFlags_AutoResizeY, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse))
@@ -32,7 +32,7 @@ namespace Lumina
             // Temporary stuff.
             ImTextureID ButtonTexture = 0;
             CClass* Class = ObjectProperty->GetPropertyClass();
-            if (Class == CMaterial::StaticClass() || Class == CMaterialInstance::StaticClass())
+            if (Class == CMaterialInterface::StaticClass())
             {
                 ButtonTexture = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer()->GetOrCreateImTexture(FEditorUI::MaterialIcon);
             }
@@ -44,13 +44,17 @@ namespace Lumina
             {
                 ButtonTexture = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer()->GetOrCreateImTexture(FEditorUI::StaticMeshIcon);
             }
+            else
+            {
+                ButtonTexture = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer()->GetOrCreateImTexture(FEditorUI::CorruptIcon);
+            }
             
             ImGui::ImageButton(Label, ButtonTexture, ImVec2(64, 64));
             ImGui::EndDisabled();
 
             if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
             {
-            
+                
             }
 
             ImGui::SameLine();
@@ -99,7 +103,7 @@ namespace Lumina
                 if (ImGui::BeginChild("##OptList", ChildSize, false, ImGuiChildFlags_NavFlattened))
                 {
                     FARFilter Filter;
-                    Filter.ClassNames.push_back(ObjectProperty->GetPropertyClass()->GetName().ToString());
+                    //Filter.ClassNames.push_back(ObjectProperty->GetPropertyClass()->GetName().ToString());
 
                     TVector<FAssetData> FilteredAssets;
                     GEngine->GetEngineSubsystem<FAssetRegistry>()->GetAssets(Filter, FilteredAssets);
@@ -116,8 +120,10 @@ namespace Lumina
                             VirtualPath += "." + Asset.Name.ToString();
                             FName AssetName = VirtualPath.c_str();
                             Obj = LoadObject<CObject>(AssetName);
-                            *Ptr = GObjectArray.ToHandle(Obj);
+                            ObjectHandle = GObjectArray.ToHandle(Obj);
                             ImGui::CloseCurrentPopup();
+
+                            bWasChanged = true;
                         }
                     }
                 }
@@ -143,7 +149,8 @@ namespace Lumina
         
             if (ImGui::Button(LE_ICON_CLOSE_CIRCLE "##Clear", GButtonSize))
             {
-                *Ptr = FObjectHandle();
+                ObjectHandle = FObjectHandle();
+                bWasChanged = true;
             }
         
             ImGui::EndDisabled();
@@ -152,5 +159,17 @@ namespace Lumina
         ImGui::EndChild();
 
         ImGui::PopID();
+
+        return bWasChanged ? EPropertyChangeOp::Updated : EPropertyChangeOp::None;
+    }
+
+    void FCObjectPropertyCustomization::UpdatePropertyValue(TSharedPtr<FPropertyHandle> Property)
+    {
+        *(FObjectHandle*)Property->PropertyPointer = ObjectHandle;
+    }
+
+    void FCObjectPropertyCustomization::HandleExternalUpdate(TSharedPtr<FPropertyHandle> Property)
+    {
+        ObjectHandle = *(FObjectHandle*)Property->PropertyPointer;
     }
 }

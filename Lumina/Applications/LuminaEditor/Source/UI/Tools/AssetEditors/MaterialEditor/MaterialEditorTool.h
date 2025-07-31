@@ -24,13 +24,8 @@ namespace Lumina
 
         LUMINA_EDITOR_TOOL(FMaterialEditorTool)
 
-        FMaterialEditorTool(IEditorToolContext* Context, CObject* InAsset)
-            : FAssetEditorTool(Context, InAsset->GetName().c_str(), InAsset)
-            , CompilationResult()
-            , NodeGraph(nullptr)
-        {
-        }
-
+        FMaterialEditorTool(IEditorToolContext* Context, CObject* InAsset);
+        
         bool IsSingleWindowTool() const override { return false; }
         const char* GetTitlebarIcon() const override { return LE_ICON_FORMAT_LIST_BULLETED_TYPE; }
         void OnInitialize() override;
@@ -48,6 +43,7 @@ namespace Lumina
 
     private:
 
+        Entity MeshEntity;
         CEdGraphNode* SelectedNode = nullptr;
         FCompilationResultInfo CompilationResult;
         

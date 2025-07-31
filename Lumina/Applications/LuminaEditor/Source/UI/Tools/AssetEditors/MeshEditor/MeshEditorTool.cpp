@@ -25,17 +25,15 @@ namespace Lumina
     {
         FSceneManager* SceneManager = GEngine->GetEngineSubsystem<FSceneManager>();
         FScene* NewScene = SceneManager->CreateScene(ESceneType::Tool);
-        NewScene->RegisterSystem(Memory::New<FDebugCameraEntitySystem>());
+        NewScene->RegisterSystem(NewObject<CDebugCameraEntitySystem>());
 
         Entity DirectionalLightEntity = NewScene->CreateEntity(FTransform(), "Directional Light");
         DirectionalLightEntity.AddComponent<SDirectionalLightComponent>();
-        DirectionalLightEntity.AddComponent<FNeedsRenderProxyUpdate>();
         
         MeshEntity = NewScene->CreateEntity(FTransform(), "MeshEntity");
         
         MeshEntity.AddComponent<SStaticMeshComponent>().StaticMesh = Cast<CStaticMesh>(InAsset);
         MeshEntity.GetComponent<STransformComponent>().SetLocation(glm::vec3(0.0f, 0.0f, -2.5f));
-        MeshEntity.AddComponent<FNeedsRenderProxyUpdate>();
         
         Scene = NewScene;
     }

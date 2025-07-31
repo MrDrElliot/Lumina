@@ -22,7 +22,7 @@ namespace Lumina
     
     FApplication* FApplication::Instance = nullptr;
 
-    FApplication::FApplication(FString InApplicationName, uint32 AppFlags)
+    FApplication::FApplication(const FString& InApplicationName, uint32 AppFlags)
     {
         ApplicationName = InApplicationName;
         ApplicationFlags = AppFlags;

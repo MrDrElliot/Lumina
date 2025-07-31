@@ -20,7 +20,7 @@ namespace Lumina
         FSubsystemManager* GetSceneSubsystemManager() const;
         
         template<typename T>
-        FORCEINLINE T* GetSceneSubsystem() const
+        T* GetSceneSubsystem() const
         {
             static_assert(std::is_base_of_v<ISubsystem, T>, "T must derive from ISubsystem");
             return GetSceneSubsystemManager()->GetSubsystem<T>();

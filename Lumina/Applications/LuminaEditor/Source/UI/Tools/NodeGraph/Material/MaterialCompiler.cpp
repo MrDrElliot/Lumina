@@ -32,45 +32,49 @@ namespace Lumina
     {
         if (ScalarParameters.find(ParamID) == ScalarParameters.end())
         {
-            ScalarParameters[ParamID] = NumScalarParams++;
+            ScalarParameters[ParamID].Index = NumScalarParams++;
+            ScalarParameters[ParamID].Value = Value;
         }
 
-        FString ValueString = eastl::to_string(ScalarParameters[ParamID]);
-        ShaderChunks.append("float " + NodeID + " = GetMaterialScalar(" + ValueString + ");\n");
+        FString IndexString = eastl::to_string(ScalarParameters[ParamID].Index);
+        ShaderChunks.append("float " + NodeID + " = GetMaterialScalar(" + IndexString + ");\n");
     }
 
     void FMaterialCompiler::DefineFloat2Parameter(const FString& NodeID, const FName& ParamID, float Value[2])
     {
-        if (Vec2Parameters.find(ParamID) == Vec2Parameters.end())
+        if (VectorParameters.find(ParamID) == VectorParameters.end())
         {
-            Vec2Parameters[ParamID] = NumVec2Params++;
+            VectorParameters[ParamID].Index = NumVectorParams++;
+            VectorParameters[ParamID].Value = glm::vec4(Value[0], Value[1], 1.0f, 1.0f);
         }
 
-        FString ValueString = eastl::to_string(Vec2Parameters[ParamID]);
+        FString IndexString = eastl::to_string(VectorParameters[ParamID].Index);
         
-        ShaderChunks.append("vec4 " + NodeID + " = GetMaterialVec4(" + ValueString + ");\n");
+        ShaderChunks.append("vec4 " + NodeID + " = GetMaterialVec4(" + IndexString + ");\n");
     }
 
     void FMaterialCompiler::DefineFloat3Parameter(const FString& NodeID, const FName& ParamID, float Value[3])
     {
-        if (Vec3Parameters.find(ParamID) == Vec3Parameters.end())
+        if (VectorParameters.find(ParamID) == VectorParameters.end())
         {
-            Vec3Parameters[ParamID] = NumVec3Params++;
+            VectorParameters[ParamID].Index = NumVectorParams++;
+            VectorParameters[ParamID].Value = glm::vec4(Value[0], Value[1], Value[2], 1.0f);
         }
         
-        FString ValueString = eastl::to_string(Vec3Parameters[ParamID]);
-        ShaderChunks.append("vec4 " + NodeID + " = GetMaterialVec4(" + ValueString + ");\n");
+        FString IndexString = eastl::to_string(VectorParameters[ParamID].Index);
+        ShaderChunks.append("vec4 " + NodeID + " = GetMaterialVec4(" + IndexString + ");\n");
     }
 
     void FMaterialCompiler::DefineFloat4Parameter(const FString& NodeID, const FName& ParamID, float Value[4])
     {
-        if (Vec4Parameters.find(ParamID) == Vec4Parameters.end())
+        if (VectorParameters.find(ParamID) == VectorParameters.end())
         {
-            Vec4Parameters[ParamID] = NumVec4Params++;
+            VectorParameters[ParamID].Index = NumVectorParams++;
+            VectorParameters[ParamID].Value = glm::vec4(Value[0], Value[1], Value[2], Value[3]);
         }
         
-        FString ValueString = eastl::to_string(Vec4Parameters[ParamID]);
-        ShaderChunks.append("vec4 " + NodeID + " = GetMaterialVec4(" + ValueString + ");\n");
+        FString IndexString = eastl::to_string(VectorParameters[ParamID].Index);
+        ShaderChunks.append("vec4 " + NodeID + " = GetMaterialVec4(" + IndexString + ");\n");
     }
 
 

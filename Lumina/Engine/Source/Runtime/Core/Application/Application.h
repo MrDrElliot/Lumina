@@ -24,7 +24,7 @@ namespace Lumina
 	{
 	public:
 
-		FApplication(FString InApplicationName = "Unnamed Application", uint32 AppFlags = 0);
+		FApplication(const FString& InApplicationName = "Unnamed Application", uint32 AppFlags = 0);
 		virtual ~FApplication() = default;
 
 		static FApplication& Get() { return *Instance; }

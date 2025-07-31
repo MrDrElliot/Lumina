@@ -19,4 +19,5 @@ namespace Lumina
 
 #define ENTITY_COMPONENT() \
 	virtual Lumina::CStruct* GetType() override { return StaticStruct(); }
+	
 }

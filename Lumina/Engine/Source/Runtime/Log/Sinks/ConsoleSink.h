@@ -2,6 +2,7 @@
 
 #include <spdlog/sinks/base_sink.h>
 #include "Containers/Array.h"
+#include "Core/Profiler/Profile.h"
 #include "Log/LogMessage.h"
 #include "Memory/Memory.h"
 
@@ -13,12 +14,16 @@ namespace Lumina
     {
     public:
         ConsoleSink(TVector<FConsoleMessage>& outputMessages)
-            : OutputMessages(&outputMessages) {}
+            : OutputMessages(&outputMessages)
+        {
+            OutputMessages->reserve(10000);
+        }
 
     protected:
         
         void sink_it_(const spdlog::details::log_msg& msg) override
         {
+            LUMINA_PROFILE_SCOPE();
             FConsoleMessage Message;
 
             std::time_t timestamp = std::chrono::system_clock::to_time_t(msg.time);
@@ -30,17 +35,13 @@ namespace Lumina
             Message.Level = msg.level;
             Message.Message.assign(msg.payload.begin(), msg.payload.end());
 
-            // Add new message to the output
             OutputMessages->push_back(Memory::Move(Message));
-
-            // Check if we exceed the max number of messages, remove the oldest if needed
-            if (OutputMessages->size() > 150)
-            {
-                OutputMessages->erase(OutputMessages->begin());  // Remove the oldest message
-            }
         }
 
-        void flush_() override {}
+        void flush_() override
+        {
+            LUMINA_PROFILE_SCOPE();
+        }
 
         
         TVector<FConsoleMessage>* OutputMessages;

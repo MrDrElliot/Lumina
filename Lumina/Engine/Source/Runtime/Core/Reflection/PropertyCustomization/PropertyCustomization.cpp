@@ -1,11 +1,23 @@
 ﻿#include "PropertyCustomization.h"
 
+#include "imgui.h"
+
 namespace Lumina
 {
     FPropertyHandle::FPropertyHandle(void* InPropertyPointer, FProperty* InProperty)
         : PropertyPointer(InPropertyPointer)
         , Property(InProperty)
     {
+    }
+
+    EPropertyChangeOp IPropertyTypeCustomization::UpdateAndDraw(const TSharedPtr<FPropertyHandle>& Property)
+    {
+        ImGui::PushID(Property.get());
+        HandleExternalUpdate(Property);
+        EPropertyChangeOp Result = DrawProperty(Property);
+        ImGui::PopID();
+
+        return Result;
     }
 
     void FPropertyCustomizationRegistry::RegisterPropertyCustomization(const FName& Name, PropertyCustomizationRegisterFn Callback)

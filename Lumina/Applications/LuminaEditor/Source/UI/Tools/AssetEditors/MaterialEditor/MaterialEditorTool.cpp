@@ -1,4 +1,6 @@
 ﻿#include "MaterialEditorTool.h"
+
+#include "LuminaEditor.h"
 #include "imnodes/imnodes.h"
 #include "Assets/AssetTypes/Material/Material.h"
 #include "Assets/AssetTypes/Textures/Texture.h"
@@ -9,9 +11,15 @@
 #include "Core/Object/Package/Package.h"
 #include "Paths/Paths.h"
 #include "Platform/Filesystem/FileHelper.h"
+#include "Renderer/MaterialTypes.h"
 #include "Renderer/RenderContext.h"
 #include "Renderer/RenderManager.h"
 #include "Renderer/ShaderCompiler.h"
+#include "Scene/SceneManager.h"
+#include "scene/entity/components/lightcomponent.h"
+#include "scene/entity/components/staticmeshcomponent.h"
+#include "Scene/Entity/Systems/DebugCameraEntitySystem.h"
+#include "Thumbnails/ThumbnailManager.h"
 #include "Tools/UI/ImGui/ImGuiRenderer.h"
 #include "Tools/UI/ImGui/ImGuiX.h"
 #include "Tools/UI/ImGui/ImGuiColorTextEdit/TextEditor.h"
@@ -22,8 +30,29 @@ namespace Lumina
 {
     static const char* MaterialGraphName           = "Material Graph";
     static const char* MaterialPropertiesName      = "Material Properties";
-    static const char* MaterialPreviewName         = "Material Preview";
     static const char* GLSLPreviewName             = "GLSL Preview";
+
+    FMaterialEditorTool::FMaterialEditorTool(IEditorToolContext* Context, CObject* InAsset)
+        : FAssetEditorTool(Context, InAsset->GetName().c_str(), InAsset)
+        , CompilationResult()
+        , NodeGraph(nullptr)
+    {
+        FSceneManager* SceneManager = GEngine->GetEngineSubsystem<FSceneManager>();
+        FScene* NewScene = SceneManager->CreateScene(ESceneType::Tool);
+        NewScene->RegisterSystem(NewObject<CDebugCameraEntitySystem>());
+
+        Entity DirectionalLightEntity = NewScene->CreateEntity(FTransform(), "Directional Light");
+        DirectionalLightEntity.AddComponent<SDirectionalLightComponent>();
+        
+        MeshEntity = NewScene->CreateEntity(FTransform(), "MeshEntity");
+        MeshEntity.AddComponent<SStaticMeshComponent>();
+        MeshEntity.GetComponent<SStaticMeshComponent>().StaticMesh = CThumbnailManager::Get().CubeMesh;
+        MeshEntity.GetComponent<SStaticMeshComponent>().MaterialOverrides.resize(CThumbnailManager::Get().CubeMesh->Materials.size());
+        MeshEntity.GetComponent<SStaticMeshComponent>().MaterialOverrides[0] = Cast<CMaterialInterface>(InAsset);
+        
+        Scene = NewScene;
+    }
+
 
     void FMaterialEditorTool::OnInitialize()
     {
@@ -35,11 +64,6 @@ namespace Lumina
         CreateToolWindow(MaterialPropertiesName, [this](const FUpdateContext& Cxt, bool bFocused)
         {
             DrawMaterialProperties(Cxt);
-        });
-
-        CreateToolWindow(MaterialPreviewName, [this](const FUpdateContext& Cxt, bool bFocused)
-        {
-            DrawMaterialPreview(Cxt);
         });
 
         CreateToolWindow(GLSLPreviewName, [this](const FUpdateContext& Cxt, bool bFocused)
@@ -182,9 +206,7 @@ namespace Lumina
                 Material->PixelShader = PixelShader;
                 RenderContext->OnShaderCompiled(PixelShader);
             });
-
             
-
             IRenderContext* RenderContext = GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext();
 
             CMaterial* Material = Cast<CMaterial>(Asset.Get());
@@ -215,23 +237,45 @@ namespace Lumina
                 FRHIImageRef Image = Material->Textures[i]->RHIImage;
                 
                 FBindingLayoutItem Item;
-                Item.Slot = i + 1;
+                Item.Slot = i + 1; // Add 1 because uniform buffer is at 0.
                 Item.Type = ERHIBindingResourceType::Texture_SRV;
                 
                 LayoutDesc.AddItem(Item);
                 
-                SetDesc.AddItem(FBindingSetItem::TextureSRV(i, Image));
+                SetDesc.AddItem(FBindingSetItem::TextureSRV((uint32)i, Image));
             }
             
+
             Memory::Memzero(&Material->MaterialUniforms, sizeof(FMaterialUniforms));
-            RenderContext->GetCommandList(ECommandQueue::Graphics)->WriteBuffer(Material->UniformBuffer, &Material->MaterialUniforms, 0, sizeof(FMaterialUniforms));
+            Material->Parameters.clear();
             
+            for (const auto& [Name, Value] : Compiler.GetScalarParameters())
+            {
+                FMaterialParameter NewParam;
+                NewParam.ParameterName = Name;
+                NewParam.Type = EMaterialParameterType::Scalar;
+                NewParam.Index = (uint16)Value.Index;
+                Material->Parameters.push_back(NewParam);
+                Material->SetScalarValue(Name, Value.Value);
+            }
+
+            for (const auto& [Name, Value] : Compiler.GetVectorParameters())
+            {
+                FMaterialParameter NewParam;
+                NewParam.ParameterName = Name;
+                NewParam.Type = EMaterialParameterType::Vector;
+                NewParam.Index = (uint16)Value.Index;
+                Material->Parameters.push_back(NewParam);
+                Material->SetVectorValue(Name, Value.Value);
+            }
+            
+            RenderContext->GetCommandList(ECommandQueue::Graphics)->WriteBuffer(Material->UniformBuffer, &Material->MaterialUniforms, 0, sizeof(FMaterialUniforms));
             Material->BindingLayout = RenderContext->CreateBindingLayout(LayoutDesc);
+            
             RenderContext->SetObjectName(Material->BindingLayout, Material->GetName().c_str(), EAPIResourceType::DescriptorSetLayout);
             
             Material->BindingSet = RenderContext->CreateBindingSet(SetDesc, Material->BindingLayout);
             RenderContext->SetObjectName(Material->BindingSet, Material->GetName().c_str(), EAPIResourceType::DescriptorSet);
-
         }
     }
 
@@ -248,7 +292,7 @@ namespace Lumina
 
         // Dock the windows into their respective locations
         ImGui::DockBuilderDockWindow(GetToolWindowName(MaterialGraphName).c_str(), leftDockID);
-        ImGui::DockBuilderDockWindow(GetToolWindowName(MaterialPreviewName).c_str(), rightDockID);
+        ImGui::DockBuilderDockWindow(GetToolWindowName(ViewportWindowName).c_str(), rightDockID);
 
         // Dock only the MaterialCompileLogName window to the full bottom dock
         ImGui::DockBuilderDockWindow(GetToolWindowName(GLSLPreviewName).c_str(), bottomDockID);

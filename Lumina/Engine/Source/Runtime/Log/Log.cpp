@@ -20,7 +20,7 @@ namespace Lumina::Logging
 
 	void Init()
 	{
-		Logs.reserve(2024);
+		Logs.reserve(10000);
 		spdlog::set_pattern("%^[%T] %n: %v%$");
 		Logger = spdlog::stdout_color_mt("Lumina");
 		Logger->sinks().push_back(std::make_shared<ConsoleSink>(Logs));
@@ -47,8 +47,8 @@ namespace Lumina::Logging
 		return Logger;
 	}
 
-	void GetConsoleLogs(TVector<FConsoleMessage>& OutLogs)
+	const TVector<FConsoleMessage>& GetConsoleLogs()
 	{
-		OutLogs = Logs;
+		return Logs;
 	}
 }

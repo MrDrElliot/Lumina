@@ -41,14 +41,13 @@ namespace Lumina
 
     bool FSpirVShaderCompiler::CompileShader(const FString& ShaderPath, const FShaderCompileOptions& CompileOptions, CompletedFunc OnCompleted)
     {
-        FScopeLock Lock(RunMutex);
-
         FRequest Request;
         Request.Path = ShaderPath;
         Request.CompileOptions = CompileOptions;
         Request.OnCompleted = Memory::Move(OnCompleted);
-
-        FTaskSystem::Get()->ScheduleLambda(1, [Request] (uint32 Start, uint32 End, uint32 ThreadNum_)
+        AddRequest(Request);
+        
+        FTaskSystem::Get()->ScheduleLambda(1, [this, Request] (uint32 Start, uint32 End, uint32 ThreadNum_)
         {
             FString FileName = Paths::FileName(Request.Path);
             LOG_DEBUG("Compiling Shader: {0} - Thread: {1}", FileName, Threading::GetThreadID());
@@ -107,13 +106,27 @@ namespace Lumina
             }
     
             Request.OnCompleted(Binaries);
+            PopRequest();
         });
         
         return true;
     }
-    
-   
-    
+
+    void FSpirVShaderCompiler::AddRequest(const FRequest& Request)
+    {
+        FScopeLock Lock(RequestMutex);
+
+        PendingRequest.push(Request);
+    }
+
+    void FSpirVShaderCompiler::PopRequest()
+    {
+        FScopeLock Lock(RequestMutex);
+
+        PendingRequest.pop();
+    }
+
+
     void FSpirVShaderCompiler::Initialize()
     {
         
@@ -130,8 +143,9 @@ namespace Lumina
         Request.Path = ShaderString;
         Request.CompileOptions = CompileOptions;
         Request.OnCompleted = Memory::Move(OnCompleted);
-
-        FTaskSystem::Get()->ScheduleLambda(1, [Request] (uint32 Start, uint32 End, uint32 ThreadNum_)
+        AddRequest(Request);
+        
+        FTaskSystem::Get()->ScheduleLambda(1, [this, Request] (uint32 Start, uint32 End, uint32 ThreadNum_)
         {
             FString VertexPath = std::filesystem::path(Paths::GetEngineResourceDirectory() / "Shaders/Material.frag").generic_string().c_str();
             
@@ -181,6 +195,7 @@ namespace Lumina
             }
     
             Request.OnCompleted(Binaries);
+            PopRequest();
         });
         
         return true;

@@ -28,8 +28,8 @@ namespace Lumina
 
     struct FUpdateStagePriority
     {
-        inline FUpdateStagePriority(EUpdateStage InStage) : Stage(InStage) { }
-        inline FUpdateStagePriority(EUpdateStage InStage, EUpdatePriority InPriority) : Stage(InStage), Priority(InPriority) { }
+        FUpdateStagePriority(EUpdateStage InStage) : Stage(InStage) { }
+        FUpdateStagePriority(EUpdateStage InStage, EUpdatePriority InPriority) : Stage(InStage), Priority(InPriority) { }
 
     public:
 
@@ -47,7 +47,7 @@ namespace Lumina
         }
 
         template<typename... Args>
-        FUpdatePriorityList( Args&&... args )
+        FUpdatePriorityList(Args&&... args)
         {
             Reset();
             ((*this << static_cast<Args&&>(args)), ...);

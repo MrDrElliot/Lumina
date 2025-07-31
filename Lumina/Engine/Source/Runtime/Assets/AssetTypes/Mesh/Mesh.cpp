@@ -2,6 +2,7 @@
 
 #include "Renderer/RenderContext.h"
 #include "Assets/AssetTypes/Material/Material.h"
+#include "assets/assettypes/material/materialinstance.h"
 #include "Core/Object/Cast.h"
 
 
@@ -23,9 +24,26 @@ namespace Lumina
         
     }
 
-    CMaterial* CMesh::GetMaterialAtSlot(SIZE_T Slot) const
+    CMaterialInterface* CMesh::GetMaterialAtSlot(SIZE_T Slot) const
     {
-        return Materials.empty() ? nullptr : Cast<CMaterial>(Materials[Slot].Get());
+        return Materials.empty() ? nullptr : Cast<CMaterialInterface>(Materials[Slot].Get());
+    }
+
+    void CMesh::SetMaterialAtSlot(SIZE_T Slot, CMaterialInterface* NewMaterial)
+    {
+        if (Materials.size() <= Slot)
+        {
+            Materials.push_back(NewMaterial);
+        }
+        else
+        {
+            Materials[Slot] = NewMaterial;
+        }  
+    }
+
+    void CMesh::SetMeshResource(const FMeshResource& NewResource)
+    {
+        MeshResources = NewResource;
     }
 
     bool CMesh::IsReadyForRender() const
@@ -35,17 +53,14 @@ namespace Lumina
             return false;
         }
 
-        for (CMaterial* Material : Materials)
+        for (CMaterialInterface* Material : Materials)
         {
             if (Material == nullptr)
             {
                 return false;
             }
-            
-            if (Material->BindingLayout == nullptr
-                || Material->BindingSet == nullptr
-                || Material->VertexShader == nullptr
-                || Material->PixelShader == nullptr)
+
+            if (Material->IsReadyForRender() == false)
             {
                 return false;
             }
