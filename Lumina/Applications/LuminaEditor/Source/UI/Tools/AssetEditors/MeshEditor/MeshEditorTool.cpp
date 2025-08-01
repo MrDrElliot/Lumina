@@ -149,7 +149,6 @@ namespace Lumina
             ImGui::Text("Draw Calls");    ImGui::SameLine(150); ImGui::Text("%u", Stats.NumDrawCalls);
             ImGui::Text("Vertices");      ImGui::SameLine(150); ImGui::Text("%llu", Stats.NumVertices);
             ImGui::Text("Indices");       ImGui::SameLine(150); ImGui::Text("%llu", Stats.NumIndices);
-            ImGui::Text("Mesh Proxies");  ImGui::SameLine(150); ImGui::Text("%llu", SceneRenderer->GetNumMeshProxies());
 
             ImGui::Spacing();
     

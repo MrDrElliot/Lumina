@@ -37,7 +37,7 @@ namespace Lumina
             EditorEntity.AddComponent<SEditorComponent>();
             EditorEntity.AddComponent<SVelocityComponent>().Speed = 50.0f;
             EditorEntity.AddComponent<SHiddenComponent>();
-            EditorEntity.GetComponent<STransformComponent>().SetLocation(glm::vec3(0.0f, 0.0f, 5.0f));
+            EditorEntity.GetComponent<STransformComponent>().SetLocation(glm::vec3(0.0f, 0.0f, 2.0f));
             
             
             Scene->GetSceneCameraManager()->SetActiveCamera(EditorEntity);

@@ -1,10 +1,24 @@
 ﻿#include "MaterialInstance.h"
 #include "Renderer/RHIIncl.h"
 #include "Material.h"
+#include "Assets/AssetTypes/Textures/Texture.h"
+#include "Core/Engine/Engine.h"
+#include "Renderer/RenderContext.h"
+#include "Renderer/RenderManager.h"
 
 
 namespace Lumina
 {
+    CMaterialInstance::CMaterialInstance()
+    {
+        Memory::Memzero(&MaterialUniforms, sizeof(FMaterialUniforms));
+        if (Material)
+        {
+            MaterialUniforms = Material->MaterialUniforms;
+            Parameters = Material->Parameters;
+        }
+    }
+
     CMaterial* CMaterialInstance::GetMaterial() const
     {
         return Material.Get();
@@ -12,32 +26,65 @@ namespace Lumina
 
     bool CMaterialInstance::SetScalarValue(const FName& Name, const float Value)
     {
-        if (!Material.IsValid())
+        auto* Itr = eastl::find_if(Parameters.begin(), Parameters.end(), [Name](const FMaterialParameter& Param)
         {
-            return false;
+           return Param.ParameterName == Name && Param.Type == EMaterialParameterType::Scalar; 
+        });
+
+        if (Itr != Parameters.end())
+        {
+            const FMaterialParameter& Param = *Itr;
+
+            int CecIndex = Param.Index / 4;
+            int ComponentIndex = Param.Index % 4;
+            
+            MaterialUniforms.Scalars[CecIndex][ComponentIndex] = Value;
+            return true;
+        }
+        else
+        {
+            LOG_ERROR("Failed to find material scalar parameter {}", Name);
         }
 
-        return Material->SetScalarValue(Name, Value);
+        return false;
     }
 
     bool CMaterialInstance::SetVectorValue(const FName& Name, const glm::vec4& Value)
     {
-        if (!Material.IsValid())
+        auto* Itr = eastl::find_if(Parameters.begin(), Parameters.end(), [Name](const FMaterialParameter& Param)
         {
-            return false;
+           return Param.ParameterName == Name && Param.Type == EMaterialParameterType::Vector; 
+        });
+
+        if (Itr != Parameters.end())
+        {
+            const FMaterialParameter& Param = *Itr;
+            MaterialUniforms.Vectors[Param.Index] = Value;
+            return true;
+        }
+        else
+        {
+            LOG_ERROR("Failed to find material vector parameter {}", Name);
         }
 
-        return Material->SetVectorValue(Name, Value);
+        return false;
     }
 
     bool CMaterialInstance::GetParameterValue(EMaterialParameterType Type, const FName& Name, FMaterialParameter& Param)
     {
-        if (!Material.IsValid())
+        Param = {};
+        auto* Itr = eastl::find_if(Parameters.begin(), Parameters.end(), [Type, Name](const FMaterialParameter& Param)
         {
-            return false;
-        }
+           return Param.ParameterName == Name && Param.Type == Type; 
+        });
 
-        return Material->GetParameterValue(Type, Name, Param);
+        if (Itr != Parameters.end())
+        {
+            Param = *Itr;
+            return true;
+        }
+        
+        return false;
     }
 
     bool CMaterialInstance::IsReadyForRender() const
@@ -48,5 +95,51 @@ namespace Lumina
         }
 
         return Material->IsReadyForRender();
+    }
+
+    FRHIBindingSetRef CMaterialInstance::GetBindingSet() const
+    {
+        return BindingSet;
+    }
+
+    FRHIBindingLayoutRef CMaterialInstance::GetBindingLayout() const
+    {
+        return Material->GetBindingLayout();
+    }
+
+    void CMaterialInstance::PostLoad()
+    {
+        if (Material)
+        {
+            MaterialUniforms = Material->MaterialUniforms;
+            Parameters = Material->Parameters;
+            
+            IRenderContext* RenderContext = GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext();
+
+            FRHIBufferDesc BufferDesc;
+            BufferDesc.Size = sizeof(FMaterialUniforms);
+            BufferDesc.DebugName = "Material Uniforms";
+            BufferDesc.InitialState = EResourceStates::ConstantBuffer;
+            BufferDesc.bKeepInitialState = true;
+            BufferDesc.Usage.SetFlag(BUF_UniformBuffer);
+            UniformBuffer = RenderContext->CreateBuffer(BufferDesc);
+            RenderContext->SetObjectName(UniformBuffer, GetName().c_str(), EAPIResourceType::Buffer);
+
+
+            FBindingSetDesc SetDesc;
+            SetDesc.AddItem(FBindingSetItem::BufferCBV(0, UniformBuffer));
+
+            for (SIZE_T i = 0; i < Material->Textures.size(); ++i)
+            {
+                FRHIImageRef Image = Material->Textures[i]->RHIImage;
+                
+                SetDesc.AddItem(FBindingSetItem::TextureSRV((uint32)i, Image));
+            }
+
+            RenderContext->GetCommandList(ECommandQueue::Graphics)->WriteBuffer(UniformBuffer, &MaterialUniforms, 0, sizeof(FMaterialUniforms));
+
+            BindingSet = RenderContext->CreateBindingSet(SetDesc, Material->BindingLayout);
+
+        }
     }
 }

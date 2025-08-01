@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "Core/Functional/Function.h"
+#include "Core/Reflection/PropertyChangedEvent.h"
 #include "Core/Reflection/PropertyCustomization/PropertyCustomization.h"
 #include "Memory/SmartPtr.h"
 
@@ -18,12 +19,25 @@ namespace Lumina
 
 namespace Lumina
 {
+
+    using FPropertyChangedEventFn = TFunction<void(const FPropertyChangedEvent&)>;
+
+    struct FPropertyChangedEventCallbacks
+    {
+        CStruct* OwnerStruct;
+        FPropertyChangedEventFn PreChangeCallback;
+        FPropertyChangedEventFn PostChangeCallback;
+    };
+    
     class FPropertyRow
     {
     public:
 
-        FPropertyRow() = default;
-        FPropertyRow(FProperty* InProperty, FPropertyRow* InParentRow);
+        FPropertyRow(const FPropertyChangedEventCallbacks& InCallbacks)
+            :Callbacks(InCallbacks)
+        {}
+        
+        FPropertyRow(FProperty* InProperty, FPropertyRow* InParentRow, const FPropertyChangedEventCallbacks& Callbacks);
         virtual ~FPropertyRow();
 
         virtual void DrawHeader(float Offset) { }
@@ -44,11 +58,11 @@ namespace Lumina
         bool IsArrayElementProperty() const { return bArrayElement; }
         
     protected:
-
+        
+        FPropertyChangedEventCallbacks          Callbacks;
         EPropertyChangeOp                       ChangeOp = EPropertyChangeOp::None;
         TSharedPtr<IPropertyTypeCustomization>  Customization;
         FProperty*                              Property = nullptr;
-        FPropertyTable*                         Table = nullptr;
         FPropertyRow*                           ParentRow = nullptr;
         TVector<FPropertyRow*>                  Children;
 
@@ -60,7 +74,7 @@ namespace Lumina
     {
     public:
 
-        FPropertyPropertyRow(void* InPropertyPointer, FProperty* InProperty, FPropertyRow* InParentRow, int64 InArrayElementIndex);
+        FPropertyPropertyRow(void* InPropertyPointer, FProperty* InProperty, FPropertyRow* InParentRow, int64 InArrayElementIndex, const FPropertyChangedEventCallbacks& Callbacks);
         void Update() override;
         void DrawHeader(float Offset) override;
         void DrawEditor() override;
@@ -79,7 +93,7 @@ namespace Lumina
     {
     public:
         
-        FArrayPropertyRow(void* InPropPointer, FArrayProperty* InProperty, FPropertyRow* InParentRow);
+        FArrayPropertyRow(void* InPropPointer, FArrayProperty* InProperty, FPropertyRow* InParentRow, const FPropertyChangedEventCallbacks& Callbacks);
         void Update() override;
         void DrawHeader(float Offset) override;
         void DrawEditor() override;
@@ -99,7 +113,7 @@ namespace Lumina
     {
     public:
         
-        FStructPropertyRow(void* InPropPointer, FStructProperty* InProperty, FPropertyRow* InParentRow);
+        FStructPropertyRow(void* InPropPointer, FStructProperty* InProperty, FPropertyRow* InParentRow, const FPropertyChangedEventCallbacks& InCallbacks);
         ~FStructPropertyRow() override;
         void Update() override;
         void DrawHeader(float Offset) override;
@@ -118,7 +132,7 @@ namespace Lumina
     {
     public:
         
-        FCategoryPropertyRow(void* InObj, const FName& InCategory);
+        FCategoryPropertyRow(void* InObj, const FName& InCategory, const FPropertyChangedEventCallbacks& InCallbacks);
 
         void AddProperty(FProperty* InProperty);
         FName GetCategoryName() const { return Category; }
@@ -150,13 +164,13 @@ namespace Lumina
         CStruct* GetType() const { return Struct; }
 
         void SetObject(void* InObject, CStruct* StructType);
-        void SetPreEditCallback(const TFunction<void()>& Callback);
-        void SetPostEditCallback(const TFunction<void()>& Callback);
+        void SetPreEditCallback(const FPropertyChangedEventFn& Callback);
+        void SetPostEditCallback(const FPropertyChangedEventFn& Callback);
             
         FCategoryPropertyRow* FindOrCreateCategoryRow(const FName& CategoryName);
 
-        TFunction<void()>                       PrePropertyChange;
-        TFunction<void()>                       PostPropertyChange;
+        FPropertyChangedEventCallbacks ChangeEventCallbacks;
+        
     private:
 
         CStruct*                                Struct = nullptr;

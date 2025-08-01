@@ -2,6 +2,7 @@
 
 #include "Scene.h"
 #include "SceneRenderTypes.h"
+#include "Entity/Components/StaticMeshComponent.h"
 #include "Memory/SmartPtr.h"
 #include "Renderer/DescriptorTableManager.h"
 #include "Renderer/RenderResource.h"
@@ -46,8 +47,6 @@ namespace Lumina
         
         ESceneRenderGBuffer GetGBufferDebugMode() const { return GBufferDebugMode; }
         void SetGBufferDebugMode(ESceneRenderGBuffer Mode) { GBufferDebugMode = Mode; }
-
-        SIZE_T GetNumMeshProxies() const { return MeshProxies.size(); }
         
         void AddRenderPass(const FName& Name, FRenderPassFunction&& Function);
         
@@ -116,8 +115,8 @@ namespace Lumina
         FModelData                          ModelData;
 
         TVector<FPointLightProxy>           PointLightProxies;
-        TVector<FMeshRenderProxy>           MeshProxies;
 
+        TVector<FStaticMeshRender>              StaticMeshRenders;
         TVector<FIndirectRenderBatch>           RenderBatches;
         TVector<FDrawIndexedIndirectArguments>  IndirectDrawArguments;
 

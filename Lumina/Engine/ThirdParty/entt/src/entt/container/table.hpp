@@ -43,7 +43,7 @@ public:
     }
 
     constexpr table_iterator operator++(int) noexcept {
-        table_iterator orig = *this;
+        const table_iterator orig = *this;
         return ++(*this), orig;
     }
 
@@ -52,7 +52,7 @@ public:
     }
 
     constexpr table_iterator operator--(int) noexcept {
-        table_iterator orig = *this;
+        const table_iterator orig = *this;
         return operator--(), orig;
     }
 
@@ -152,6 +152,8 @@ class basic_table {
 public:
     /*! @brief Unsigned integer type. */
     using size_type = std::size_t;
+    /*! @brief Signed integer type. */
+    using difference_type = std::ptrdiff_t;
     /*! @brief Input iterator type. */
     using iterator = internal::table_iterator<typename Container::iterator...>;
     /*! @brief Constant input iterator type. */
@@ -417,7 +419,7 @@ public:
      */
     void erase(const size_type pos) {
         ENTT_ASSERT(pos < size(), "Index out of bounds");
-        erase(begin() + static_cast<typename const_iterator::difference_type>(pos));
+        erase(begin() + static_cast<difference_type>(pos));
     }
 
     /**

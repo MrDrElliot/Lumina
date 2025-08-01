@@ -223,7 +223,6 @@ namespace Lumina
             ImGui::Text("Draw Calls");    ImGui::SameLine(150); ImGui::Text("%u", Stats.NumDrawCalls);
             ImGui::Text("Vertices");      ImGui::SameLine(150); ImGui::Text("%llu", Stats.NumVertices);
             ImGui::Text("Indices");       ImGui::SameLine(150); ImGui::Text("%llu", Stats.NumIndices);
-            ImGui::Text("Mesh Proxies");   ImGui::SameLine(150); ImGui::Text("%llu", SceneRenderer->GetNumMeshProxies());
 
             ImGui::Spacing();
     
@@ -272,6 +271,14 @@ namespace Lumina
         if (SelectedEntity.IsValid() == false)
         {
             return;
+        }
+
+        if (bViewportFocused)
+        {
+            if (ImGui::IsKeyPressed(ImGuiKey_Space))
+            {
+                CycleGuizmoOp();
+            }
         }
         
         ImGuizmo::SetDrawlist(ImGui::GetCurrentWindow()->DrawList);
@@ -505,6 +512,50 @@ namespace Lumina
 
             if (ImGui::CollapsingHeader(Table->GetType()->GetName().c_str(), ImGuiTreeNodeFlags_DefaultOpen))
             {
+                ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.45f, 0.15f, 0.15f, 1.0f));
+                ImGui::PushID(Table);
+                
+                bool bWasRemoved = false;
+                if (Table->GetType() != STransformComponent::StaticStruct() && Table->GetType() != SNameComponent::StaticStruct())
+                {
+                    if (ImGui::Button("Remove", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f)))
+                    {
+                        for (const auto& [ID, Set] : Scene->GetMutableEntityRegistry().storage())
+                        {
+                            if (Set.contains(SelectedEntity.GetHandle()))
+                            {
+                                void* ComponentPtr = Set.value(SelectedEntity.GetHandle());
+                                if (ComponentPtr == nullptr)
+                                {
+                                    continue;
+                                }
+                    
+                                SEntityComponent* EntityComponent = (SEntityComponent*)ComponentPtr;
+                                CStruct* Type = EntityComponent->GetType();
+
+                                if (Table->GetType() == Type)
+                                {
+                                    Set.remove(SelectedEntity.GetHandle());
+                                    bWasRemoved = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                ImGui::PopID();
+                ImGui::PopStyleColor();
+
+                if (bWasRemoved)
+                {
+                    ImGui::PopStyleColor(3);
+                    ImGui::PopStyleVar(2);
+                    RebuildPropertyTables();
+                    break;
+                }
+                
+                
                 ImGui::Indent();
                 Table->DrawTree();
                 ImGui::Unindent();
@@ -526,6 +577,7 @@ namespace Lumina
 
     void FSceneEditorTool::RebuildPropertyTables()
     {
+        using namespace entt::literals;
         for (FPropertyTable* Table : PropertyTables)
         {
             Memory::Delete(Table);
@@ -535,12 +587,11 @@ namespace Lumina
 
         if (SelectedEntity)
         {
-            for (auto&& Curr : Scene->GetMutableEntityRegistry().storage())
+            for (const auto& [ID, Set] : Scene->GetMutableEntityRegistry().storage())
             {
-                auto& Storage = Curr.second;
-                if (Storage.contains(SelectedEntity.GetHandle()))
+                if (Set.contains(SelectedEntity.GetHandle()))
                 {
-                    void* ComponentPtr = Storage.value(SelectedEntity.GetHandle());
+                    void* ComponentPtr = Set.value(SelectedEntity.GetHandle());
                     if (ComponentPtr == nullptr)
                     {
                         continue;
@@ -551,7 +602,17 @@ namespace Lumina
                     if (Type != nullptr)
                     {
                         FPropertyTable* NewTable = Memory::New<FPropertyTable>(ComponentPtr, Type);
-
+                        NewTable->SetPostEditCallback([this](const FPropertyChangedEvent& Event)
+                        {
+                            if (Event.OuterStruct->IsChildOf(STransformComponent::StaticStruct()))
+                            {
+                                //SelectedEntity.GetOrAddComponent<FDirtyRenderStateComponent>().bNeedsTransformUpdate = true;
+                            }
+                            else if (Event.OuterStruct->IsChildOf(SRenderComponent::StaticStruct()))
+                            {
+                                //SelectedEntity.GetOrAddComponent<FDirtyRenderStateComponent>().bNeedsRenderProxyUpdate = true;
+                            }
+                        });
                         PropertyTables.emplace_back(NewTable)->RebuildTree();
                     }
                 }
@@ -577,5 +638,27 @@ namespace Lumina
     {
         Scene->CopyEntity(To, From);
         OutlinerListView.MarkTreeDirty();
+    }
+
+    void FSceneEditorTool::CycleGuizmoOp()
+    {
+        switch (GuizmoOp)
+        {
+        case ImGuizmo::TRANSLATE:
+            {
+                GuizmoOp = ImGuizmo::ROTATE;
+            }
+            break;
+        case ImGuizmo::ROTATE:
+            {
+                GuizmoOp = ImGuizmo::SCALE;
+            }
+            break;
+        case ImGuizmo::SCALE:
+            {
+                GuizmoOp = ImGuizmo::TRANSLATE;
+            }
+            break;
+        }
     }
 }

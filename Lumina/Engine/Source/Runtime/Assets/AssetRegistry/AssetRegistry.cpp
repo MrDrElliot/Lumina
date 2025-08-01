@@ -15,7 +15,7 @@ namespace Lumina
 
     void FAssetRegistry::Initialize(FSubsystemManager& Manager)
     {
-        
+        BuildAssetDictionary();
     }
 
     void FAssetRegistry::Deinitialize()
@@ -30,67 +30,68 @@ namespace Lumina
         bIsBuildingAssets = true;
         
         ClearAssets();
-        
-        FString ContentDirectory = FProject::Get()->GetProjectContentDirectory();
-        
-        FTaskSystem::Get()->ScheduleLambda(1, [this, ContentDirectory](uint32 Start, uint32 End, uint32 ThreadNum)
+
+        for (const auto& [ID, Path] : Paths::GetMountedPaths())
         {
-            for (const auto& Directory : std::filesystem::recursive_directory_iterator(ContentDirectory.c_str()))
+            FTaskSystem::Get()->ScheduleLambda(1, [this, Path](uint32, uint32, uint32)
             {
-                if (!Directory.is_directory() && Directory.path().extension() == ".lasset")
+                for (const auto& Directory : std::filesystem::recursive_directory_iterator(Path.c_str()))
                 {
-                    FAssetData Data;
-                    Data.Path = Directory.path().generic_string().c_str();
-                    Data.Name = Directory.path().filename().stem().generic_string().c_str();
-                    
-                    FString VirtualPath = Paths::ConvertToVirtualPath(Data.Path);
-                    CPackage* Package = FindObject<CPackage>(FName(VirtualPath));
-                    
-                    FString ClassPath;
-                    if (Package == nullptr)
+                    if (!Directory.is_directory() && Directory.path().extension() == ".lasset")
                     {
-                        TVector<uint8> PackageData;
-                        if (!FileHelper::LoadFileToArray(PackageData, Data.Path))
+                        FAssetData Data;
+                        Data.Path = Directory.path().generic_string().c_str();
+                        Data.Name = Directory.path().filename().stem().generic_string().c_str();
+                    
+                        FString VirtualPath = Paths::ConvertToVirtualPath(Data.Path);
+                        CPackage* Package = FindObject<CPackage>(FName(VirtualPath));
+                    
+                        FString ClassPath;
+                        if (Package == nullptr)
                         {
-                            LOG_ERROR("[AssetRegistry] - Invalid package found {0}", Data.Path);
+                            TVector<uint8> PackageData;
+                            if (!FileHelper::LoadFileToArray(PackageData, Data.Path))
                             {
-                                FScopeLock Lock(AssetsMutex);
-                                CorruptedAssets.emplace(Data.Path);
+                                LOG_ERROR("[AssetRegistry] - Invalid package found {0}", Data.Path);
+                                {
+                                    FScopeLock Lock(AssetsMutex);
+                                    CorruptedAssets.emplace(Data.Path);
+                                }
+                                continue;
                             }
-                            continue;
+                    
+                            FMemoryReader Reader(PackageData);
+                            FPackageHeader Header;
+                            Reader << Header;
+                            ClassPath = Header.ClassPath;
+                    
+                            if (ClassPath.empty() || Header.Version != 1)
+                            {
+                                LOG_ERROR("[AssetRegistry] - Invalid package found {0}", Data.Path);
+                                {
+                                    FScopeLock Lock(AssetsMutex);
+                                    CorruptedAssets.emplace(Data.Path);
+                                }
+                                continue;
+                            }
+                        }
+                        else
+                        {
+                            ClassPath = Package->TopLevelClassName;
                         }
                     
-                        FMemoryReader Reader(PackageData);
-                        FPackageHeader Header;
-                        Reader << Header;
-                        ClassPath = Header.ClassPath;
-                    
-                        if (ClassPath.empty() || Header.Version != 1)
-                        {
-                            LOG_ERROR("[AssetRegistry] - Invalid package found {0}", Data.Path);
-                            {
-                                FScopeLock Lock(AssetsMutex);
-                                CorruptedAssets.emplace(Data.Path);
-                            }
-                            continue;
-                        }
+                        Data.ClassName = ClassPath;
+                        AddAsset(Data);
                     }
-                    else
-                    {
-                        ClassPath = Package->TopLevelClassName;
-                    }
-                    
-                    Data.ClassName = ClassPath;
-                    AddAsset(Data);
                 }
-            }
             
-            {
-                std::lock_guard Guard(BuildMutex);
-                bIsBuildingAssets = false;
-            }
-            BuildCV.notify_all();
-        });
+                {
+                    std::lock_guard Guard(BuildMutex);
+                    bIsBuildingAssets = false;
+                }
+                BuildCV.notify_all();
+            });
+        }
     }
 
     void FAssetRegistry::GetAssets(const FARFilter& Filter, TVector<FAssetData>& OutAssets)

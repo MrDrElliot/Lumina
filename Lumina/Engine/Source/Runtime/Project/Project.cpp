@@ -7,6 +7,7 @@
 
 #include "Assets/AssetRegistry/AssetRegistry.h"
 #include "Core/Engine/Engine.h"
+#include "Paths/Paths.h"
 
 
 namespace Lumina
@@ -39,6 +40,7 @@ namespace Lumina
             LOG_ERROR("Failed to parse project JSON: {0}", e.what());
         }
 
+        Paths::Mount("project://", GetProjectContentDirectory());
         GEngine->GetEngineSubsystem<FAssetRegistry>()->ProjectLoaded();
         bHasProjectLoaded = true;
     }

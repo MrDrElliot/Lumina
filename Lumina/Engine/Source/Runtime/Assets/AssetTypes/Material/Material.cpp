@@ -82,4 +82,14 @@ namespace Lumina
     {
         return VertexShader != nullptr && PixelShader != nullptr && BindingLayout != nullptr && BindingSet != nullptr;
     }
+
+    FRHIBindingSetRef CMaterial::GetBindingSet() const
+    {
+        return BindingSet;
+    }
+
+    FRHIBindingLayoutRef CMaterial::GetBindingLayout() const
+    {
+        return BindingLayout; 
+    }
 }

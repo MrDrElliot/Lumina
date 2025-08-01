@@ -67,7 +67,7 @@ namespace Lumina
                     ImGui::TableSetupColumn("##Editor", ImGuiTableColumnFlags_WidthStretch);
         
                     
-                    for (FMaterialParameter& Param : Instance->Material->Parameters)
+                    for (FMaterialParameter& Param : Instance->Parameters)
                     {
                         ImGui::PushID(&Param);
                         ImGui::TableNextRow();
@@ -86,12 +86,12 @@ namespace Lumina
                                 {
                                     int VecIndex = Param.Index / 4;
                                     int ComponentIndex = Param.Index % 4;
-                                    float* ValuePtr = &Instance->Material->MaterialUniforms.Scalars[VecIndex][ComponentIndex];
+                                    float* ValuePtr = &Instance->MaterialUniforms.Scalars[VecIndex][ComponentIndex];
         
                                     ImGui::PushID(&Param);
                                     if (ImGui::DragFloat("##Scalar", ValuePtr, 0.1f))
                                     {
-                                        CommandList->WriteBuffer(Instance->Material->UniformBuffer, &Instance->Material->MaterialUniforms, 0, sizeof(FMaterialUniforms));
+                                        CommandList->WriteBuffer(Instance->UniformBuffer, &Instance->MaterialUniforms, 0, sizeof(FMaterialUniforms));
                                     }
                                     ImGui::PopID();
                                     break;
@@ -99,11 +99,11 @@ namespace Lumina
         
                                 case EMaterialParameterType::Vector:
                                 {
-                                    glm::vec4& Vec = Instance->Material->MaterialUniforms.Vectors[Param.Index];
+                                    glm::vec4& Vec = Instance->MaterialUniforms.Vectors[Param.Index];
                                     ImGui::PushID(&Param);
                                     if (ImGui::ColorEdit4("##Vector", glm::value_ptr(Vec), ImGuiColorEditFlags_Float))
                                     {
-                                        CommandList->WriteBuffer(Instance->Material->UniformBuffer, &Instance->Material->MaterialUniforms, 0, sizeof(FMaterialUniforms));
+                                        CommandList->WriteBuffer(Instance->UniformBuffer, &Instance->MaterialUniforms, 0, sizeof(FMaterialUniforms));
                                     }
                                     ImGui::PopID();
                                     break;

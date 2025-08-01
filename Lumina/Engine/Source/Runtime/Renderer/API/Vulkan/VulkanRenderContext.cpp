@@ -865,7 +865,7 @@ namespace Lumina
 
     void FVulkanRenderContext::CompileEngineShaders()
     {
-        for (auto& Dir : std::filesystem::directory_iterator(Paths::GetEngineResourceDirectory() / "Shaders"))
+        for (auto& Dir : std::filesystem::directory_iterator(FString(Paths::GetEngineResourceDirectory() + "/Shaders").c_str()))
         {
             if (!Dir.is_directory())
             {

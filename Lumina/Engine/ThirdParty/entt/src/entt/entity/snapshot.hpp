@@ -231,15 +231,18 @@ public:
 
         if constexpr(std::is_same_v<Type, entity_type>) {
             typename traits_type::entity_type count{};
+            entity_type placeholder{};
 
             storage.reserve(length);
             archive(count);
 
             for(entity_type entity = null; length; --length) {
                 archive(entity);
-                storage.emplace(entity);
+                storage.generate(entity);
+                placeholder = (entity > placeholder) ? entity : placeholder;
             }
 
+            storage.start_from(traits_type::next(placeholder));
             storage.free_list(count);
         } else {
             auto &other = reg->template storage<entity_type>();
@@ -247,7 +250,7 @@ public:
 
             while(length--) {
                 if(archive(entt); entt != null) {
-                    const auto entity = other.contains(entt) ? entt : other.emplace(entt);
+                    const auto entity = other.contains(entt) ? entt : other.generate(entt);
                     ENTT_ASSERT(entity == entt, "Entity not available for use");
 
                     if constexpr(std::tuple_size_v<decltype(storage.get_as_tuple({}))> == 0u) {

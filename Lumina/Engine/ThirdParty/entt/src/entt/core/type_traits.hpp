@@ -63,6 +63,7 @@ struct size_of: std::integral_constant<std::size_t, 0u> {};
 /*! @copydoc size_of */
 template<typename Type>
 struct size_of<Type, std::void_t<decltype(sizeof(Type))>>
+    // NOLINTNEXTLINE(bugprone-sizeof-expression)
     : std::integral_constant<std::size_t, sizeof(Type)> {};
 
 /**
@@ -345,6 +346,7 @@ struct type_list_transform;
 template<typename... Type, template<typename...> class Op>
 struct type_list_transform<type_list<Type...>, Op> {
     /*! @brief Resulting type list after applying the transform function. */
+    // NOLINTNEXTLINE(modernize-type-traits)
     using type = type_list<typename Op<Type>::type...>;
 };
 
@@ -772,17 +774,17 @@ template<typename Type>
     // NOLINTBEGIN(modernize-use-transparent-functors)
     if constexpr(std::is_array_v<Type>) {
         return false;
-    } else if constexpr(!is_iterator_v<Type> && has_value_type<Type>::value) {
-        if constexpr(std::is_same_v<typename Type::value_type, Type> || dispatch_is_equality_comparable<typename Type::value_type>()) {
-            return maybe_equality_comparable<Type>(0);
-        } else {
-            return false;
-        }
     } else if constexpr(is_complete_v<std::tuple_size<std::remove_cv_t<Type>>>) {
         if constexpr(has_tuple_size_value<Type>::value) {
             return maybe_equality_comparable<Type>(0) && unpack_maybe_equality_comparable<Type>(std::make_index_sequence<std::tuple_size<Type>::value>{});
         } else {
             return maybe_equality_comparable<Type>(0);
+        }
+    } else if constexpr(has_value_type<Type>::value) {
+        if constexpr(is_iterator_v<Type> || std::is_same_v<typename Type::value_type, Type> || dispatch_is_equality_comparable<typename Type::value_type>()) {
+            return maybe_equality_comparable<Type>(0);
+        } else {
+            return false;
         }
     } else {
         return maybe_equality_comparable<Type>(0);

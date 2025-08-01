@@ -29,7 +29,7 @@ namespace Lumina
         if (ImGui::BeginTable("TreeViewTable", 1, TableFlags, ImVec2(ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x / 2, -1)))
         {
             ImGui::TableSetupColumn("Label", ImGuiTableColumnFlags_WidthStretch);
-            
+
             ImGuiListClipper Clipper;
             Clipper.Begin((int)ListItems.size());
 
@@ -37,12 +37,16 @@ namespace Lumina
             {
                 for (int i = Clipper.DisplayStart; i < Clipper.DisplayEnd; ++i)
                 {
+                    ImGui::TableNextRow();
+                    ImGui::TableSetColumnIndex(0);
+
                     DrawListItem(ListItems[i], Context);
                 }
             }
-            
+
             ImGui::EndTable();
         }
+
         
         ImGui::PopStyleVar();
         ImGui::PopID();
@@ -68,13 +72,31 @@ namespace Lumina
     void FTreeListView::RebuildTree(FTreeListViewContext Context)
     {
         Assert(bCurrentlyDrawing == false)
+        Assert(Context.RebuildTreeFunction)
         Assert(bDirty)
 
+
+        THashSet<uint64> CachedExpandedItems;
+        ForEachItem([&](const FTreeListViewItem* Item)
+        {
+            if (Item->bExpanded)
+            {
+                CachedExpandedItems.emplace(Item->GetHash());
+            }
+        });
+        
         ClearSelection();
         ClearTree();
-
-        Assert(Context.RebuildTreeFunction)
+        
         Context.RebuildTreeFunction(this);
+
+        ForEachItem([&](FTreeListViewItem* Item)
+        {
+            if (CachedExpandedItems.find(Item->GetHash()) != CachedExpandedItems.end())
+            {
+                Item->bExpanded = true;
+            }
+        });
 
         bDirty = false;
     }
@@ -84,8 +106,6 @@ namespace Lumina
         bool bSelectedItem = VectorContains(Selections, ItemToDraw);
         Assert(bSelectedItem == ItemToDraw->bSelected)
         
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
         ImGui::PushID(ItemToDraw);
 
         ImGuiTreeNodeFlags Flags = ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_FramePadding | ImGuiTreeNodeFlags_DrawLinesFull;
@@ -96,6 +116,7 @@ namespace Lumina
         }
         else
         {
+            ImGui::SetNextItemOpen(ItemToDraw->bExpanded);
             Flags |= ImGuiTreeNodeFlags_OpenOnArrow;
         }
 
@@ -106,7 +127,7 @@ namespace Lumina
         
         const FInlineString DisplayName = ItemToDraw->GetDisplayName();
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(ItemToDraw->GetDisplayColor()));
-        bool bOpen = ImGui::TreeNodeEx("##TreeNode", Flags, "%s", DisplayName.c_str());
+        ItemToDraw->bExpanded = ImGui::TreeNodeEx("##TreeNode", Flags, "%s", DisplayName.c_str());
 
         if (ImGui::IsItemClicked(ImGuiMouseButton_Left))
         {
@@ -114,7 +135,7 @@ namespace Lumina
         }
         
         
-        if (bOpen)
+        if (ItemToDraw->bExpanded)
         {
             for (FTreeListViewItem* Child : ItemToDraw->Children)
             {
@@ -123,6 +144,8 @@ namespace Lumina
             
             ImGui::TreePop();
         }
+
+        
         ImGui::PopStyleColor();
         
         const char* TooltipText = ItemToDraw->GetTooltipText();
@@ -187,4 +210,23 @@ namespace Lumina
 
         Selections.clear();
     }
+
+    void FTreeListView::ForEachItem(const TFunction<void(FTreeListViewItem* Item)>& Functor)
+    {
+        for (auto* RootItem : ListItems)
+        {
+            TFunction<void(FTreeListViewItem*)> Visit;
+            Visit = [&](FTreeListViewItem* Item)
+            {
+                Functor(Item);
+                for (auto* Child : Item->Children)
+                {
+                    Visit(Child);
+                }
+            };
+
+            Visit(RootItem);
+        }
+    }
+
 }

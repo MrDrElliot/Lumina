@@ -50,7 +50,6 @@ namespace Lumina
 	private:
 
 		void PreInitStartup(int argc, char** argv);
-		void SetGameFromCommandLine(int argc, char** argv);
 		bool CreateApplicationWindow();
 		bool FatalError(const FString& Error);
 		

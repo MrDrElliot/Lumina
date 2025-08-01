@@ -99,7 +99,8 @@ namespace Lumina
                 ImGui::Dummy(ChildSize);
                 ImGui::SetCursorPos(PreviousCursorPos);
 
-                static ImGuiTextFilter SearchFilter;
+                SearchFilter.Draw("##Search", ImGui::GetContentRegionAvail().x);
+                
                 if (ImGui::BeginChild("##OptList", ChildSize, false, ImGuiChildFlags_NavFlattened))
                 {
                     FARFilter Filter;
@@ -109,7 +110,7 @@ namespace Lumina
                     GEngine->GetEngineSubsystem<FAssetRegistry>()->GetAssets(Filter, FilteredAssets);
                     for (const FAssetData& Asset : FilteredAssets)
                     {
-                        if (!SearchFilter.PassFilter(Asset.Name.c_str()))
+                        if (!SearchFilter.PassFilter(Asset.Path.c_str()))
                         {
                             continue;
                         }

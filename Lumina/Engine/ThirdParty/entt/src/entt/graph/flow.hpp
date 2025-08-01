@@ -181,6 +181,18 @@ public:
     basic_flow &operator=(basic_flow &&) noexcept = default;
 
     /**
+     * @brief Exchanges the contents with those of a given flow builder.
+     * @param other Flow builder to exchange the content with.
+     */
+    void swap(basic_flow &other) noexcept {
+        using std::swap;
+        std::swap(index, other.index);
+        std::swap(vertices, other.vertices);
+        std::swap(deps, other.deps);
+        std::swap(sync_on, other.sync_on);
+    }
+
+    /**
      * @brief Returns the associated allocator.
      * @return The associated allocator.
      */
@@ -194,7 +206,7 @@ public:
      * @return The requested identifier.
      */
     [[nodiscard]] id_type operator[](const size_type pos) const {
-        return vertices.cbegin()[pos];
+        return vertices.cbegin()[static_cast<typename task_container_type::difference_type>(pos)];
     }
 
     /*! @brief Clears the flow builder. */
@@ -203,18 +215,6 @@ public:
         vertices.clear();
         deps.clear();
         sync_on = {};
-    }
-
-    /**
-     * @brief Exchanges the contents with those of a given flow builder.
-     * @param other Flow builder to exchange the content with.
-     */
-    void swap(basic_flow &other) noexcept {
-        using std::swap;
-        std::swap(index, other.index);
-        std::swap(vertices, other.vertices);
-        std::swap(deps, other.deps);
-        std::swap(sync_on, other.sync_on);
     }
 
     /**

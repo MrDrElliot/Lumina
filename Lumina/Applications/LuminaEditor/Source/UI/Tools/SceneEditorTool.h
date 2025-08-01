@@ -28,6 +28,7 @@ namespace Lumina
 
             const char* GetTooltipText() const override { return GetName().c_str(); }
             bool HasContextMenu() override { return true; }
+            uint64 GetHash() const override { return (uint64)Entity.GetHandle(); }
 
             FName GetName() const override
             {
@@ -55,7 +56,7 @@ namespace Lumina
 
             const char* GetTooltipText() const override { return GetName().c_str(); }
             bool HasContextMenu() override { return true; }
-
+            uint64 GetHash() const override { return System->GetSystemID(); }
             FName GetName() const override
             {
                 return System->GetName();
@@ -100,6 +101,8 @@ namespace Lumina
         void CreateSystem(CClass* SystemClass);
 
         void CopyEntity(Entity& To, const Entity& From);
+
+        void CycleGuizmoOp();
 
     private:
 

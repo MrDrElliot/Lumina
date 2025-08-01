@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+	<Type Name="entt::resource&lt;*&gt;">
+		<DisplayString>{ value }</DisplayString>
+		<Expand>
+			<ExpandedItem>value</ExpandedItem>
+		</Expand>
+	</Type>
+	<Type Name="entt::resource_cache&lt;*&gt;">
+		<Intrinsic Name="size" Expression="pool.first_base::value.size()"/>
+		<DisplayString>{{ size={ size() } }}</DisplayString>
+		<Expand>
+			<CustomListItems>
+				<Variable Name="pos" InitialValue="0" />
+				<Variable Name="last" InitialValue="size()"/>
+				<Loop>
+					<Break Condition="pos == last"/>
+					<Item Name="[{ pool.first_base::value.packed.first_base::value[pos].element.first }]">
+						*pool.first_base::value.packed.first_base::value[pos].element.second
+					</Item>
+					<Exec>++pos</Exec>
+				</Loop>
+			</CustomListItems>
+		</Expand>
+	</Type>
+</AutoVisualizer>

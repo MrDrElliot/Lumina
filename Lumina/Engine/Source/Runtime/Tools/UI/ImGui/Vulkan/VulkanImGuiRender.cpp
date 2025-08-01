@@ -128,6 +128,11 @@ namespace Lumina
     {
     	LUMINA_PROFILE_SCOPE();
     	
+    	if(Image == nullptr)
+    	{
+    		return 0;
+    	}
+    	
 	    VkImage VulkanImage = Image->GetAPIResource<VkImage>();
     	VkImageView VulkanImageView = Image->GetAPIResource<VkImageView, EAPIResourceType::ImageView>();
     	

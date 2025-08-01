@@ -92,6 +92,7 @@ namespace Lumina
     private:
 
         FObjectHandle ObjectHandle;
+        ImGuiTextFilter SearchFilter;
     };
 
     class FEnumPropertyCustomization : public IPropertyTypeCustomization

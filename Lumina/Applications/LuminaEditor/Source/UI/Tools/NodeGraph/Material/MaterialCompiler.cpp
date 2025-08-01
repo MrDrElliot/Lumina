@@ -12,7 +12,7 @@ namespace Lumina
 {
     FString FMaterialCompiler::BuildTree()
     {
-        FString FragmentPath = std::filesystem::path(Paths::GetEngineResourceDirectory() / "MaterialShader/Material.frag").generic_string().c_str();
+        FString FragmentPath = Paths::GetEngineResourceDirectory() + "/MaterialShader/Material.frag";
 
         FString LoadedString;
         FileHelper::LoadFileIntoString(LoadedString, FragmentPath);

@@ -20,6 +20,10 @@ template<typename It>
 class edge_iterator {
     using size_type = std::size_t;
 
+    void find_next() noexcept {
+        for(; pos != last && !it[static_cast<typename It::difference_type>(pos)]; pos += offset) {}
+    }
+
 public:
     using value_type = std::pair<size_type, size_type>;
     using pointer = input_iterator_pointer<value_type>;
@@ -37,16 +41,17 @@ public:
           pos{from},
           last{to},
           offset{step} {
-        for(; pos != last && !it[pos]; pos += offset) {}
+        find_next();
     }
 
     constexpr edge_iterator &operator++() noexcept {
-        for(pos += offset; pos != last && !it[pos]; pos += offset) {}
+        pos += offset;
+        find_next();
         return *this;
     }
 
     constexpr edge_iterator operator++(int) noexcept {
-        edge_iterator orig = *this;
+        const edge_iterator orig = *this;
         return ++(*this), orig;
     }
 
@@ -70,12 +75,12 @@ private:
 };
 
 template<typename Container>
-[[nodiscard]] inline constexpr bool operator==(const edge_iterator<Container> &lhs, const edge_iterator<Container> &rhs) noexcept {
+[[nodiscard]] constexpr bool operator==(const edge_iterator<Container> &lhs, const edge_iterator<Container> &rhs) noexcept {
     return lhs.pos == rhs.pos;
 }
 
 template<typename Container>
-[[nodiscard]] inline constexpr bool operator!=(const edge_iterator<Container> &lhs, const edge_iterator<Container> &rhs) noexcept {
+[[nodiscard]] constexpr bool operator!=(const edge_iterator<Container> &lhs, const edge_iterator<Container> &rhs) noexcept {
     return !(lhs == rhs);
 }
 
@@ -176,6 +181,16 @@ public:
     adjacency_matrix &operator=(adjacency_matrix &&) noexcept = default;
 
     /**
+     * @brief Exchanges the contents with those of a given adjacency matrix.
+     * @param other Adjacency matrix to exchange the content with.
+     */
+    void swap(adjacency_matrix &other) noexcept {
+        using std::swap;
+        swap(matrix, other.matrix);
+        swap(vert, other.vert);
+    }
+
+    /**
      * @brief Returns the associated allocator.
      * @return The associated allocator.
      */
@@ -187,16 +202,6 @@ public:
     void clear() noexcept {
         matrix.clear();
         vert = {};
-    }
-
-    /**
-     * @brief Exchanges the contents with those of a given adjacency matrix.
-     * @param other Adjacency matrix to exchange the content with.
-     */
-    void swap(adjacency_matrix &other) noexcept {
-        using std::swap;
-        swap(matrix, other.matrix);
-        swap(vert, other.vert);
     }
 
     /**

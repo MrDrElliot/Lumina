@@ -12,52 +12,50 @@ namespace Lumina
             return;
         }
     
-        float paneWidth = ImGui::GetContentRegionAvail().x;
-        constexpr float ButtonSize = 125.0f;
-        float cellSize = ButtonSize + ImGui::GetStyle().ItemSpacing.x;
-        int itemsPerRow = std::max(1, int(paneWidth / cellSize));
+        float PaneWidth = ImGui::GetContentRegionAvail().x;
+        constexpr float ThumbnailSize = 125.0f;
+        float CellSize = ThumbnailSize + ImGui::GetStyle().ItemSpacing.x;
+        int ItemsPerRow = std::max(1, int(PaneWidth / CellSize));
 
-        int itemIndex = 0;
+        int ItemIndex = 0;
         for (FTileViewItem* Item : ListItems)
         {
             const char* DisplayName = Item->GetDisplayName().c_str();
 
-            if (itemIndex % itemsPerRow != 0)
-                ImGui::SameLine(0.0f, 20.0f);
+            if (ItemIndex % ItemsPerRow != 0)
+            {
+                ImGui::SameLine(0.0f, 15.0f);
+            }
 
             ImGui::PushID(Item);
             ImGui::BeginGroup();
 
             DrawItem(Item, Context);
 
-            // --- Centered Wrapped Text Drawing ---
-            ImFont* font = ImGui::GetIO().Fonts->Fonts[3];
-            ImGui::PushFont(font);
+            ImFont* Font = ImGui::GetIO().Fonts->Fonts[3];
+            ImGui::PushFont(Font);
 
-            float wrapWidth = ButtonSize;
+            float WrapWidth = ThumbnailSize;
 
-            // Estimate text height with wrapping
-            ImVec2 textSize = ImGui::CalcTextSize(DisplayName, nullptr, true, wrapWidth);
-            float reservedHeight = textSize.y;
+            ImVec2 TextSize = ImGui::CalcTextSize(DisplayName, nullptr, true, WrapWidth);
+            float ReservedHeight = TextSize.y;
 
-            ImVec2 cursorPos = ImGui::GetCursorScreenPos();
-            float textStartX = cursorPos.x + (cellSize - wrapWidth) * 0.5f;
+            ImVec2 CursorPos = ImGui::GetCursorScreenPos();
+            float TextStartX = CursorPos.x + (CellSize - WrapWidth) * 0.5f;
 
-            // Reserve vertical space
-            ImGui::Dummy(ImVec2(cellSize, reservedHeight));
+            ImGui::Dummy(ImVec2(CellSize, ReservedHeight));
 
-            // Draw centered wrapped text
-            ImGui::GetWindowDrawList()->AddText(font, font->LegacySize,
-                ImVec2(textStartX, cursorPos.y),
+            ImGui::GetWindowDrawList()->AddText(Font, Font->LegacySize,
+                ImVec2(TextStartX, CursorPos.y),
                 ImGui::ColorConvertFloat4ToU32(ImGui::GetStyle().Colors[ImGuiCol_Text]),
-                DisplayName, nullptr, wrapWidth);
+                DisplayName, nullptr, WrapWidth);
 
             ImGui::PopFont();
 
             ImGui::EndGroup();
             ImGui::PopID();
 
-            ++itemIndex;
+            ++ItemIndex;
         }
     }
     

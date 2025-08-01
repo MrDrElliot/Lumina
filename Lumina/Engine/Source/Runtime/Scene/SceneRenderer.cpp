@@ -10,6 +10,7 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <execution>
 
+#include "RenderProxy.h"
 #include "Assets/AssetTypes/Material/Material.h"
 #include "Assets/AssetTypes/Textures/Texture.h"
 #include "glm/gtx/quaternion.hpp"
@@ -155,7 +156,7 @@ namespace Lumina
                 Desc.SetRenderState(RenderState);
                 Desc.SetInputLayout(VertexLayoutInput);
                 Desc.AddBindingLayout(BindingLayout);
-                Desc.AddBindingLayout(Material->GetMaterial()->BindingLayout);
+                Desc.AddBindingLayout(Material->GetBindingLayout());
                 Desc.SetVertexShader(Material->GetMaterial()->VertexShader);
                 Desc.SetPixelShader(Material->GetMaterial()->PixelShader);
                 
@@ -163,9 +164,9 @@ namespace Lumina
                 
                 CommandList->SetGraphicsPipeline(Pipeline);
             
-                CommandList->BindBindingSets(ERHIBindingPoint::Graphics, {{BindingSet, 0}, {Material->GetMaterial()->BindingSet, 1}});
+                CommandList->BindBindingSets(ERHIBindingPoint::Graphics, {{BindingSet, 0}, {Material->GetBindingSet(), 1}});
 
-                SceneRenderStats.NumDrawCalls++;
+                SceneRenderStats.NumDrawCalls += Batch.NumDraws;
                 CommandList->DrawIndexedIndirect(IndirectDrawBuffer, IndexBuffer, Batch.NumDraws, Batch.Offset * sizeof(FDrawIndexedIndirectArguments));
             }
             
@@ -479,15 +480,13 @@ namespace Lumina
 
     void FSceneRenderer::OnStaticMeshComponentCreated()
     {
-        LOG_INFO("Created");
     }
 
     void FSceneRenderer::OnStaticMeshComponentDestroyed()
     {
-        
     }
 
-    void FSceneRenderer::BuildPasses()
+     void FSceneRenderer::BuildPasses()
     {
         ICommandList* CommandList = RenderContext->GetCommandList(ECommandQueue::Graphics);
         {
@@ -495,7 +494,7 @@ namespace Lumina
             SIZE_T WorkSize = Group.size();
             
             RenderBatches.clear();
-            MeshProxies.clear();
+            StaticMeshRenders.clear();
             IndirectDrawArguments.clear();
             ModelData.ModelMatrices.clear();
 
@@ -588,8 +587,8 @@ namespace Lumina
                             SIZE_T VertexLocation = MeshVertexOffset[Mesh];
                             SIZE_T StartIndex = MeshIndexOffset[Mesh] + Surface.StartIndex;
                         
-                            FMeshRenderProxy Proxy;
-                            Proxy.Material = MeshComponent.GetMaterialForSlot(Surface.MaterialIndex);
+                            FStaticMeshRender Proxy;
+                            Proxy.Material = Material;
                             Proxy.VertexOffset = (VertexLocation / sizeof(FVertex));
                             Proxy.FirstIndex = (StartIndex / sizeof(uint32));
                             Proxy.Surface = Surface;
@@ -598,7 +597,7 @@ namespace Lumina
                             uint64 MaterialID = reinterpret_cast<uintptr_t>(Proxy.Material) & 0xFFFFFFFF;
                             Proxy.SortKey = (uint64(MaterialID) << 32) | (uint64(Proxy.VertexOffset) << 16) | (Proxy.FirstIndex & 0xFFFF);
 
-                            MeshProxies.push_back(Proxy);
+                            StaticMeshRenders.push_back(Proxy);
                         }
                     }
                 }
@@ -606,7 +605,7 @@ namespace Lumina
 
             {
                 LUMINA_PROFILE_SECTION("Sort Render Proxies");
-                eastl::sort(MeshProxies.begin(), MeshProxies.end());
+                eastl::sort(StaticMeshRenders.begin(), StaticMeshRenders.end());
             }
 
             {
@@ -616,30 +615,29 @@ namespace Lumina
                 uint64 PrevSortKey = ~0ull;
                 uint32 CurrentInstanceCount = 0;
             
-                for (SIZE_T i = 0; i < MeshProxies.size(); ++i)
+                for (SIZE_T i = 0; i < StaticMeshRenders.size(); ++i)
                 {
-                    const FMeshRenderProxy& Proxy = MeshProxies[i];
+                    const FStaticMeshRender& Proxy = StaticMeshRenders[i];
 
                     ModelData.ModelMatrices.push_back(Proxy.Matrix);
 
-                    if (Proxy.Material->GetMaterial() != PrevMaterial)
-                    {
-                        FIndirectRenderBatch Batch;
-                        Batch.NumDraws = 1;
-                        Batch.Material = Proxy.Material;
-                        Batch.Offset = IndirectDrawArguments.size();
-                        RenderBatches.push_back(Batch);
-
-                        PrevMaterial = Proxy.Material->GetMaterial();
-                        PrevSortKey = ~0ull;
-                    }
-                    else
-                    {
-                        RenderBatches.back().NumDraws++;
-                    }
-
                     if (Proxy.SortKey != PrevSortKey)
                     {
+
+                        // New material or sort group, emit a new draw and possibly a new batch
+                        if (Proxy.Material->GetMaterial() != PrevMaterial)
+                        {
+                            FIndirectRenderBatch Batch;
+                            Batch.NumDraws = 1;
+                            Batch.Material = Proxy.Material;
+                            Batch.Offset = IndirectDrawArguments.size();
+                            RenderBatches.push_back(Batch);
+                        }
+                        else
+                        {
+                            RenderBatches.back().NumDraws++;
+                        }
+
                         FDrawIndexedIndirectArguments DrawArgument;
                         DrawArgument.BaseVertexLocation     = Proxy.VertexOffset;
                         DrawArgument.StartIndexLocation     = Proxy.FirstIndex;
@@ -648,13 +646,14 @@ namespace Lumina
                         DrawArgument.InstanceCount          = 1;
 
                         IndirectDrawArguments.push_back(DrawArgument);
-
                         PrevSortKey = Proxy.SortKey;
+                        
                     }
                     else
                     {
                         IndirectDrawArguments.back().InstanceCount++;
                     }
+
 
                     CurrentInstanceCount++;
                 }
@@ -780,7 +779,7 @@ namespace Lumina
         CommandList->EndRenderPass();
 #endif
     }
-    
+
 
     // https://github.com/SaschaWillems/Vulkan/blob/master/examples/pbrtexture/pbrtexture.cpp
     void FSceneRenderer::CreateIrradianceCube()
@@ -1156,11 +1155,11 @@ namespace Lumina
         
         for (int i = 0; i < 6; ++i)
         {
-            std::filesystem::path ResourceDirectory = Paths::GetEngineResourceDirectory();
-            ResourceDirectory /= std::filesystem::path("Textures") / "CubeMaps" / "Mountains" / CubeFaceFiles[i];
+            FString ResourceDirectory = Paths::GetEngineResourceDirectory();
+            ResourceDirectory += FString("/Textures/CubeMaps/Mountains/") + CubeFaceFiles[i];
             
             TVector<uint8> Pixels;
-            FIntVector2D ImageExtent = Import::Textures::ImportTexture(Pixels, ResourceDirectory.generic_string().c_str(), false);
+            FIntVector2D ImageExtent = Import::Textures::ImportTexture(Pixels, ResourceDirectory, false);
             
             const uint32 width = ImageExtent.X;
             const uint32 height = ImageExtent.Y;

@@ -105,59 +105,11 @@ namespace Lumina
 
     void FApplication::PreInitStartup(int argc, char** argv)
     {
-        SetGameFromCommandLine(argc, argv);
-
-        FString DLLName = ".dll";
-        FString ProjectBinariesPath = Paths::GetEngineBinariesDirectory().generic_string().c_str();
-
-        Platform::PushDLLDirectory(StringUtils::ToWideString(ProjectBinariesPath).c_str());
-        FModuleManager::Get()->LoadModule("PropertyCustomization.dll");
-        Platform::PopDLLDirectory();
-
+        Paths::Mount("engine://", Paths::GetEngineContentDirectory());
         
         // Must be called after module initialization.
         ProcessNewlyLoadedCObjects();
 
-    }
-
-    void FApplication::SetGameFromCommandLine(int argc, char** argv)
-    {
-        FCommandLineParser Parser(argc, argv);
-        FString ProjectPath = "";
-        FString ProjectDirectory = "";
-        FString ProjectName = "";
-        
-        if (Parser.Has("--project"))
-        {
-            ProjectPath = Parser.Get("--project");
-            LOG_DEBUG("Project Path: {0}", ProjectPath);
-            ProjectDirectory = Paths::Parent(ProjectPath);
-        }
-        else
-        {
-            LOG_WARN("Error finding project from command line: {0}", *argv);
-            return;
-        }
-
-        ProjectName = Paths::RemoveExtension(Paths::FileName(ProjectPath));
-
-        //@TODO Proper module discovery.
-        FString DLLName = ProjectName + ".dll";
-        FString ProjectBinariesPath = Paths::Combine(ProjectDirectory.c_str(), "Binaries/Debug-windows-x86_64");
-
-        Platform::PushDLLDirectory(StringUtils::ToWideString(ProjectBinariesPath).c_str());
-        IModuleInterface* Module = FModuleManager::Get()->LoadModule(DLLName);
-        Platform::PopDLLDirectory();
-
-        if (Module)
-        {
-            LOG_WARN("Module Successfully Loaded: {0}", ProjectPath);
-        }
-        else
-        {
-            LOG_ERROR("Failed to load module {0}", ProjectBinariesPath);
-        }
-        
     }
 
     bool FApplication::CreateApplicationWindow()

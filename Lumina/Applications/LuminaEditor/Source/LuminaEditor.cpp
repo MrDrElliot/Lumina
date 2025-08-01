@@ -4,7 +4,6 @@
 #include "Lumina_eastl.cpp"
 #include "Renderer/RenderResource.h"
 #include "Scene/Scene.h"
-#include "Settings/EditorSettings.h"
 #include "UI/EditorUI.h"
 
 namespace Lumina
@@ -26,9 +25,6 @@ namespace Lumina
     
     bool LuminaEditor::Initialize(int argc, char** argv)
     {
-        FEditorSettings::Get()->LoadSettings();
-        FProject::Get()->LoadProject(FEditorSettings::Get()->GetStartupProject());
-
         Engine->Initialize(this);
         
         return true;

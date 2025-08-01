@@ -1,17 +1,25 @@
 #pragma once
 
 #include <filesystem>
+
+#include "Containers/Name.h"
 #include "Log/Log.h"
 #include "Project/Project.h"
 
 namespace Lumina::Paths
 {
+
+    /** Mounts a virtual file system to a specified path */
+    LUMINA_API void Mount(const FName& VirtualPrefix, const FString& PhysicalPath);
+
+    /** Unmounts a virtual file system */
+    LUMINA_API void Unmount(const FName& VirtualPrefix);
+
+    LUMINA_API const THashMap<FName, FString>& GetMountedPaths();
     
     /** Gets the directory where the Lumina engine is installed. */
-    LUMINA_API std::filesystem::path GetEngineDirectory();
-
-    LUMINA_API std::filesystem::path GetEngineBinariesDirectory();
-
+    LUMINA_API FString GetEngineDirectory();
+    
     /** Returns the parent directory of the given path. */
     LUMINA_API FString Parent(const FString& Path);
 
@@ -65,16 +73,16 @@ namespace Lumina::Paths
     LUMINA_API void ReplaceFilename(FString& Path, const FString& NewFilename);
     
     /** Gets the path to the engine's resource directory. */
-    LUMINA_API std::filesystem::path GetEngineResourceDirectory();
+    LUMINA_API FString GetEngineResourceDirectory();
+
+    /** Gets the path to the engine's content directory */
+    LUMINA_API FString GetEngineContentDirectory();
+
+    /** Gets the path to the engine's shaders */
+    LUMINA_API FString GetEngineShadersDirectory();
     
     /** Gets the engine installation directory (one level above the engine binary). */
-    LUMINA_API std::filesystem::path GetEngineInstallDirectory();
-
-    /**
-     * Resolves a relative path from the engine's install directory into an absolute path.
-     * @param relativePath A path relative to the engine's install directory.
-     */
-    LUMINA_API std::filesystem::path ResolveFromEngine(const std::filesystem::path& relativePath);
+    LUMINA_API FString GetEngineInstallDirectory();
     
     /**
      * Sets an environment variable in a cross-platform way.

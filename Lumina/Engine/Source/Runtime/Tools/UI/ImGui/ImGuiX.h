@@ -1,5 +1,6 @@
 #pragma once
 #include "imgui.h"
+#include "ImGuiDesignIcons.h"
 #include "Core/Object/Class.h"
 #include "Assets/AssetPath.h"
 #include "Assets/AssetRegistry/AssetRegistry.h"
@@ -53,8 +54,11 @@ namespace Lumina::ImGuiX
     template<typename T>
     bool ObjectSelector(FARFilter& Filter, T*& OutSelected)
     {
+        
         static ImGuiTextFilter SearchFilter;
         Filter.ClassNames.push_back(T::StaticClass()->GetName().ToString());
+
+        ImGui::Dummy(ImVec2(0, 10));
         
         if (ImGui::Button("Clear", ImVec2(ImGui::GetContentRegionAvail().x / 2, 0)))
         {
@@ -69,14 +73,19 @@ namespace Lumina::ImGuiX
             return true;
         }
         
-        SearchFilter.Draw("##", ImGui::GetContentRegionAvail().x);
-        ImGui::Separator();
+        SearchFilter.Draw("##Search", ImGui::GetContentRegionAvail().x);
 
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Dummy(ImVec2(0, 10));
+
+        
         TVector<FAssetData> FilteredAssets;
         GEngine->GetEngineSubsystem<FAssetRegistry>()->GetAssets(Filter, FilteredAssets);
         
         for (const FAssetData& Asset : FilteredAssets)
         {
+            
             if (!SearchFilter.PassFilter(Asset.Name.c_str()))
             {
                 continue;
@@ -84,22 +93,31 @@ namespace Lumina::ImGuiX
             
             const char* NameStr = Asset.Name.c_str();
 
-            ImGui::BeginGroup();
-            ImGui::Button("Asset", ImVec2(64, 64));
-            ImGui::SameLine();
-            
-            if (ImGui::Selectable(NameStr))
+            auto OnSelected = [&] (const FAssetData& Data)
             {
-                ImGui::PushID(Asset.Path.c_str());
-                
-                FString VirtualPath = Paths::ConvertToVirtualPath(Asset.Path);
-                VirtualPath += "." + Asset.Name.ToString();
+                FString VirtualPath = Paths::ConvertToVirtualPath(Data.Path);
+                VirtualPath += "." + Data.Name.ToString();
                 FName AssetName = VirtualPath.c_str();
                 OutSelected = LoadObject<T>(AssetName);
                 
                 ImGui::PopID();
                 ImGui::CloseCurrentPopup();
                 ImGui::EndGroup();
+            };
+            
+            ImGui::BeginGroup();
+            ImGui::PushID(Asset.Path.c_str());
+            if (ImGui::Button("Asset", ImVec2(64, 64)))
+            {
+                OnSelected(Asset);
+                return true;
+            }
+            
+            ImGui::SameLine();
+            
+            if (ImGui::Selectable(NameStr))
+            {
+                OnSelected(Asset);
                 return true;
             }
 
@@ -108,6 +126,7 @@ namespace Lumina::ImGuiX
                 ImGui::SetTooltip("%s", Asset.Path.c_str());
             }
 
+            ImGui::PopID();
             ImGui::EndGroup();
         }
         

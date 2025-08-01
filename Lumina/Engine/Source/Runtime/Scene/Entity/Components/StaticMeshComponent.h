@@ -28,4 +28,5 @@ namespace Lumina
     };
 
     DECLARE_ENTITY_COMPONENT(SStaticMeshComponent);
+
 }

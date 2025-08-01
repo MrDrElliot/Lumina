@@ -89,11 +89,11 @@ namespace Lumina
     struct FIndirectRenderBatch
     {
         CMaterialInterface* Material = nullptr;
-        SIZE_T      NumDraws;
-        SIZE_T      Offset;
+        uint32              NumDraws;
+        uint32              Offset;
     };
 
-    struct FMeshRenderProxy
+    struct FStaticMeshRender
     {
         CMaterialInterface* Material = nullptr;
         FGeometrySurface    Surface;
@@ -102,7 +102,7 @@ namespace Lumina
         uint32              FirstIndex;
         SIZE_T              SortKey;
 
-        bool operator < (const FMeshRenderProxy& Other) const
+        bool operator < (const FStaticMeshRender& Other) const
         {
             return SortKey < Other.SortKey;
         }

@@ -40,7 +40,9 @@ namespace Lumina
         bool GetParameterValue(EMaterialParameterType Type, const FName& Name, FMaterialParameter& Param) override;
         CMaterial* GetMaterial() const override;
         bool IsReadyForRender() const override;
-        
+        FRHIBindingSetRef GetBindingSet() const override;
+        FRHIBindingLayoutRef GetBindingLayout() const override;
+
         
         LUM_PROPERTY(Editable)
         EMaterialType MaterialType;

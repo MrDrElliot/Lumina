@@ -24,13 +24,13 @@ namespace Lumina
         
         virtual ~FRenderPass() = default;
         
-        virtual void SetPassFunc(FRenderPassFunction&& Function) { PassFunction = Function; }
+        virtual void SetPassFunc(const FRenderPassFunction& Function) { PassFunction = Function; }
         void Execute() { PassFunction(); }
         
 
         FName GetPassName() const { return PassName; }
 
-        void AddProxy(FMeshRenderProxy&& Proxy);
+        void AddProxy(FStaticMeshRender&& Proxy);
         void ClearProxies();
 
     protected:
@@ -38,7 +38,7 @@ namespace Lumina
         FRenderPassFunction PassFunction;
         FName PassName;
         FMutex ProxyMutex;
-        TFixedVector<FMeshRenderProxy, 100> RenderProxies;
+        TFixedVector<FStaticMeshRender, 100> RenderProxies;
         
     };
 }

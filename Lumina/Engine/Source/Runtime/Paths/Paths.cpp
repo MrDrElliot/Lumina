@@ -1,35 +1,57 @@
 #include "Paths.h"
 #include <cstdlib>
 
+#include "Core/Assertions/Assert.h"
+
 namespace Lumina::Paths
 {
-    std::filesystem::path GetEngineDirectory()
+
+    static THashMap<FName, FString> VirtualPathMap;
+    static THashMap<FName, FString> CachedDirectories;
+
+    namespace
     {
-        const char* luminaDirEnv = std::getenv("LUMINA_DIR");
+        const char* EngineResourceDirectoryName = "EngineResourceDirectory";
+        const char* EngineContentDirectoryName = "EngineContentDirectory";
+        const char* EngineShadersDirectoryName = "EngineShadersDirectory";
+        const char* EngineDirectoryName = "EngineDirectory";
 
-        if (luminaDirEnv && std::strlen(luminaDirEnv) > 0)
-        {
-            return std::filesystem::path(luminaDirEnv) / "Lumina" / "Engine";
-        }
+    }
+    
+    void Mount(const FName& VirtualPrefix, const FString& PhysicalPath)
+    {
+        Assert(VirtualPathMap.find(VirtualPrefix) == VirtualPathMap.end())
 
-        // Fallback: Assume the engine is two levels up from the executable
-        return std::filesystem::canonical(std::filesystem::current_path().parent_path().parent_path() / "Lumina" / "Engine");
+        LOG_DEBUG("Virtual file path mounted: {} - {}", VirtualPrefix, PhysicalPath);
+        VirtualPathMap[VirtualPrefix] = PhysicalPath;
     }
 
-    std::filesystem::path GetEngineBinariesDirectory()
+    void Unmount(const FName& VirtualPrefix)
     {
-        const char* luminaDirEnv = std::getenv("LUMINA_DIR");
+        auto Itr = VirtualPathMap.find(VirtualPrefix);
+        Assert(Itr != VirtualPathMap.end())
 
-        if (luminaDirEnv && std::strlen(luminaDirEnv) > 0)
+        LOG_DEBUG("Virtual file path unmounted: {} - {}", VirtualPrefix, Itr->second);
+        VirtualPathMap.erase(Itr);
+    }
+
+    const THashMap<FName, FString>& GetMountedPaths()
+    {
+        return VirtualPathMap;
+    }
+
+    FString GetEngineDirectory()
+    {
+        if (CachedDirectories.find(EngineDirectoryName) == CachedDirectories.end())
         {
-#if defined (_DEBUG)
-            return std::filesystem::path(luminaDirEnv) / "Binaries" / "Debug-windows-x86_64";
-#endif
+            const char* LuminaDir = std::getenv("LUMINA_DIR");
+            
+            CachedDirectories[EngineDirectoryName] = FString(LuminaDir) + "/Lumina/Engine";
         }
 
-        // Fallback: Assume the engine is two levels up from the executable
-        return std::filesystem::canonical(std::filesystem::current_path().parent_path().parent_path() / "Lumina" / "Engine");
+        return CachedDirectories[EngineDirectoryName];
     }
+    
 
     FString Parent(const FString& Path)
     {
@@ -127,38 +149,46 @@ namespace Lumina::Paths
     
     FString ResolveVirtualPath(const FString& VirtualPath)
     {
-        if (StringUtils::StartsWith(VirtualPath, "project://"))
+        FString NormalizedPath = RemoveExtension(VirtualPath);
+        StringUtils::ReplaceAllOccurrencesInPlace(NormalizedPath, "\\", "/");
+
+        for (const auto& [VirtualPrefix, PhysicalPath] : VirtualPathMap)
         {
-            FString PathWithoutPrefix = VirtualPath.substr(10);
-        
-            return FProject::Get()->GetProjectContentDirectory() + "/" + PathWithoutPrefix;
+            const FString& PrefixStr = VirtualPrefix.ToString();
+            if (StringUtils::StartsWith(NormalizedPath, PrefixStr.c_str()))
+            {
+                FString Remaining = NormalizedPath.substr(PrefixStr.length());
+                return PhysicalPath + "/" + Remaining;
+            }
         }
-    
-        return VirtualPath;
+
+        return NormalizedPath;
     }
 
     FString ConvertToVirtualPath(const FString& AbsolutePath)
     {
-        FString VirtualPath = FString();
-        FString ProjectDir = FProject::Get()->GetProjectContentDirectory();
-    
         FString NormalizedAbsolutePath = AbsolutePath;
         StringUtils::ReplaceAllOccurrencesInPlace(NormalizedAbsolutePath, "\\", "/");
-    
 
-        if (StringUtils::StartsWith(NormalizedAbsolutePath, ProjectDir.c_str()))
+        for (const auto& [VirtualPrefix, PhysicalPath] : VirtualPathMap)
         {
-            FString AdditionalString = NormalizedAbsolutePath.substr(ProjectDir.length());
+            FString NormalizedPhysical = PhysicalPath;
+            StringUtils::ReplaceAllOccurrencesInPlace(NormalizedPhysical, "\\", "/");
 
-            if (StringUtils::StartsWith(AdditionalString, "/"))
+            if (StringUtils::StartsWith(NormalizedAbsolutePath, NormalizedPhysical.c_str()))
             {
-                AdditionalString.erase(0, 1);
+                FString Remaining = NormalizedAbsolutePath.substr(NormalizedPhysical.length());
+                if (StringUtils::StartsWith(Remaining, "/"))
+                {
+                    Remaining.erase(0, 1);
+                }
+
+                Remaining = RemoveExtension(Remaining);
+                return VirtualPrefix.ToString() + Remaining;
             }
-        
-            VirtualPath = FString("project://") + AdditionalString;
         }
-    
-        return Paths::RemoveExtension(VirtualPath);
+
+        return RemoveExtension(NormalizedAbsolutePath);
     }
 
     FString MakeRelativeTo(const FString& Path, const FString& BasePath)
@@ -204,29 +234,41 @@ namespace Lumina::Paths
         Path = NewFilename;
     }
 
-    std::filesystem::path GetEngineResourceDirectory()
+    FString GetEngineResourceDirectory()
     {
-        const char* luminaDirEnv = std::getenv("LUMINA_DIR");
-
-        if (luminaDirEnv && std::strlen(luminaDirEnv) > 0)
+        if (CachedDirectories.find(EngineResourceDirectoryName) == CachedDirectories.end())
         {
-            return std::filesystem::path(luminaDirEnv) / "Lumina" / "Engine" / "Resources";
+            const char* LuminaDir = std::getenv("LUMINA_DIR");
+            return CachedDirectories[EngineResourceDirectoryName] = FString(LuminaDir) + "/Lumina/Engine/Resources";
         }
 
-        // Fallback: Assume the engine is two levels up from the executable
-        return std::filesystem::canonical(std::filesystem::current_path().parent_path().parent_path() / "Lumina" / "Engine " / "Resources");
+        return CachedDirectories[EngineResourceDirectoryName];
     }
 
-    std::filesystem::path GetEngineInstallDirectory()
+    FString GetEngineContentDirectory()
     {
-        return GetEngineDirectory().parent_path();
+        if (CachedDirectories.find(EngineContentDirectoryName) == CachedDirectories.end())
+        {
+            return CachedDirectories[EngineContentDirectoryName] = FString(GetEngineResourceDirectory() + "/Content");
+        }
+
+        return CachedDirectories[EngineContentDirectoryName];
     }
 
-    std::filesystem::path ResolveFromEngine(const std::filesystem::path& relativePath)
+    FString GetEngineShadersDirectory()
     {
-        return GetEngineInstallDirectory() / relativePath;
+        if (CachedDirectories.find(EngineShadersDirectoryName) == CachedDirectories.end())
+        {
+            return CachedDirectories[EngineShadersDirectoryName] = FString(GetEngineResourceDirectory() + "/Shaders");
+        }
+
+        return CachedDirectories[EngineShadersDirectoryName];
     }
 
+    FString GetEngineInstallDirectory()
+    {
+        return Parent(GetEngineDirectory());
+    }
     
     void AddPackageExtension(FString& FileName)
     {

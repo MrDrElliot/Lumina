@@ -57,7 +57,7 @@ public:
     }
 
     extended_group_iterator operator++(int) noexcept {
-        extended_group_iterator orig = *this;
+        const extended_group_iterator orig = *this;
         return ++(*this), orig;
     }
 
@@ -131,7 +131,7 @@ class group_handler final: public group_descriptor {
 
     void common_setup() {
         // we cannot iterate backwards because we want to leave behind valid entities in case of owned types
-        for(auto first = pools[0u]->rbegin(), last = first + pools[0u]->size(); first != last; ++first) {
+        for(auto first = pools[0u]->rbegin(), last = first + static_cast<typename decltype(pools)::difference_type>(pools[0u]->size()); first != last; ++first) {
             push_on_construct(*first);
         }
     }
@@ -151,7 +151,7 @@ public:
 
     [[nodiscard]] bool owned(const id_type hash) const noexcept override {
         for(size_type pos{}; pos < Owned; ++pos) {
-            if(pools[pos]->type().hash() == hash) {
+            if(pools[pos]->info().hash() == hash) {
                 return true;
             }
         }
@@ -297,6 +297,8 @@ public:
     using entity_type = underlying_type;
     /*! @brief Unsigned integer type. */
     using size_type = std::size_t;
+    /*! @brief Signed integer type. */
+    using difference_type = std::ptrdiff_t;
     /*! @brief Common type among all storage types. */
     using common_type = base_type;
     /*! @brief Random access iterator type. */
@@ -465,7 +467,7 @@ public:
      * @return The identifier that occupies the given position.
      */
     [[nodiscard]] entity_type operator[](const size_type pos) const {
-        return begin()[pos];
+        return begin()[static_cast<difference_type>(pos)];
     }
 
     /**
@@ -711,6 +713,8 @@ public:
     using entity_type = underlying_type;
     /*! @brief Unsigned integer type. */
     using size_type = std::size_t;
+    /*! @brief Signed integer type. */
+    using difference_type = std::ptrdiff_t;
     /*! @brief Common type among all storage types. */
     using common_type = base_type;
     /*! @brief Random access iterator type. */
@@ -794,7 +798,7 @@ public:
      * @return An iterator to the first entity of the group.
      */
     [[nodiscard]] iterator begin() const noexcept {
-        return *this ? (handle().end() - descriptor->length()) : iterator{};
+        return *this ? (handle().end() - static_cast<difference_type>(descriptor->length())) : iterator{};
     }
 
     /**
@@ -824,7 +828,7 @@ public:
      * reversed group.
      */
     [[nodiscard]] reverse_iterator rend() const noexcept {
-        return *this ? (handle().rbegin() + descriptor->length()) : reverse_iterator{};
+        return *this ? (handle().rbegin() + static_cast<difference_type>(descriptor->length())) : reverse_iterator{};
     }
 
     /**
@@ -864,7 +868,7 @@ public:
      * @return The identifier that occupies the given position.
      */
     [[nodiscard]] entity_type operator[](const size_type pos) const {
-        return begin()[pos];
+        return begin()[static_cast<difference_type>(pos)];
     }
 
     /**

@@ -49,24 +49,25 @@ namespace Lumina::Vulkan
 
 // Macro to check Vulkan function results and log errors if necessary
 #ifdef _DEBUG
-#define VK_CHECK(x)                                                       \
-do {                                                                  \
-    VkResult result = (x);                                            \
-    if (UNLIKELY(result < 0))                                          \
-    {                                                                 \
-        LOG_WARN("===========================================");      \
-        LOG_WARN("Vulkan Error Detected!");                           \
-        LOG_WARN("Function Call: {0}", #x);                           \
-        LOG_WARN("File: {0}", __FILE__);                              \
-        LOG_WARN("Line: {0}", __LINE__);                              \
-        LOG_WARN("Error Code: {0} ({1})", result, Vulkan::VkResultToString(result)); \
-        LOG_WARN("===========================================");      \
-        if (result == VK_ERROR_DEVICE_LOST)                           \
-        {                                                             \
-            std::exit(uint32(result));                                 \
-        }                                                             \
-    }                                                                 \
+#define VK_CHECK(x)                                                                 \
+do {                                                                                \
+    VkResult result = (x);                                                          \
+    if (UNLIKELY(result < 0))                                                       \
+    {                                                                               \
+        LOG_WARN(                                                                   \
+            "Vulkan Error:\n"                                                       \
+            "  Function Call : {0}\n"                                               \
+            "  File          : {1}\n"                                               \
+            "  Line          : {2}\n"                                               \
+            "  Error Code    : {3} ({4})",                                          \
+            #x, __FILE__, __LINE__, result, Vulkan::VkResultToString(result));      \
+        if (result == VK_ERROR_DEVICE_LOST)                                         \
+        {                                                                           \
+            std::exit(static_cast<uint32>(result));                                 \
+        }                                                                           \
+    }                                                                               \
 } while (0)
+
 
 // Macro to check Vulkan function results and log errors if necessary
 #define VK_CHECK_RETURN(x, r)                                                       \

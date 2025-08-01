@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "Core/Object/ObjectMacros.h"
 #include "Core/Object/Object.h"
+#include "Renderer/RHIFwd.h"
 #include "MaterialInterface.generated.h"
 
 namespace Lumina
@@ -23,7 +24,10 @@ namespace Lumina
         virtual bool SetVectorValue(const FName& Name, const glm::vec4& Value) { LUMINA_NO_ENTRY(); }
         virtual bool SetScalarValue(const FName& Name, const float Value) { LUMINA_NO_ENTRY(); }
         virtual bool GetParameterValue(EMaterialParameterType Type, const FName& Name, FMaterialParameter& Param) { LUMINA_NO_ENTRY(); }
-
+        
+        virtual FRHIBindingSetRef GetBindingSet() const { LUMINA_NO_ENTRY(); }
+        virtual FRHIBindingLayoutRef GetBindingLayout() const { LUMINA_NO_ENTRY(); }
+        
         // @TODO TEMP
         virtual bool IsReadyForRender() const { return false; }
         

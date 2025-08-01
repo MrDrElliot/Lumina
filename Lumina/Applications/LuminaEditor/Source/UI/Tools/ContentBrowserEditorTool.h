@@ -16,14 +16,15 @@ namespace Lumina
         {
         public:
 
-            FContentBrowserListViewItem(FTreeListViewItem* InParent, std::filesystem::path InPath)
+            FContentBrowserListViewItem(FTreeListViewItem* InParent, const FString& InPath, const FString& InDisplayName)
                 : FTreeListViewItem(InParent)
-                , Path(std::move(InPath))
+                , Path(InPath)
+                , DisplayName(InDisplayName)
             {}
 
             virtual ~FContentBrowserListViewItem() override { }
 
-            const char* GetTooltipText() const override { return Path.filename().string().c_str(); }
+            const char* GetTooltipText() const override { return Path.c_str(); }
             bool HasContextMenu() override { return true; }
             
             FInlineString GetDisplayName() const override
@@ -38,24 +39,27 @@ namespace Lumina
 
             FName GetName() const override
             {
-                return Path.filename().string().c_str();
+                return DisplayName.c_str();
             }
 
-            std::filesystem::path GetPath() const { return Path; }
+            uint64 GetHash() const override { return Hash::GetHash64(Path); }
+
+            const FString& GetPath() const { return Path; }
             
         private:
 
-            std::filesystem::path Path;
+            FString DisplayName;
+            FString Path;
         };
 
         class FContentBrowserTileViewItem : public FTileViewItem
         {
         public:
             
-            FContentBrowserTileViewItem(FTileViewItem* InParent, const std::filesystem::path& path)
+            FContentBrowserTileViewItem(FTileViewItem* InParent, const FString& InPath)
                 : FTileViewItem(InParent)
-                , Path(std::move(path))
-                , VirtualPath(Paths::ConvertToVirtualPath(path.string().c_str()))
+                , Path(InPath)
+                , VirtualPath(Paths::ConvertToVirtualPath(InPath))
             {}
 
             const char* GetTooltipText() const override { return "Test"; }
@@ -63,15 +67,15 @@ namespace Lumina
 
             FName GetName() const override
             {
-                return Path.filename().stem().string().c_str();
+                return Paths::FileName(Path, true);
             }
 
-            std::filesystem::path GetPath() const { return Path; }
-            FString GetVirtualPath() const { return VirtualPath; }
+            const FString& GetPath() const { return Path; }
+            const FString& GetVirtualPath() const { return VirtualPath; }
             
         private:
 
-            std::filesystem::path   Path;
+            FString                 Path;
             FString                 VirtualPath;
         };
 
@@ -107,7 +111,7 @@ namespace Lumina
         FTileViewWidget             ContentBrowserTileView;
         FTileViewContext            ContentBrowserTileViewContext;
 
-        std::filesystem::path       SelectedPath;
+        FString                     SelectedPath;
         ImGui::FileBrowser          FileBrowser;
     };
 }

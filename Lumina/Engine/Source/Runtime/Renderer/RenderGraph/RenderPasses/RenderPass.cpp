@@ -3,7 +3,7 @@
 
 namespace Lumina
 {
-    void FRenderPass::AddProxy(FMeshRenderProxy&& Proxy)
+    void FRenderPass::AddProxy(FStaticMeshRender&& Proxy)
     {
         FScopeLock Lock(ProxyMutex);
         RenderProxies.push_back(Proxy);

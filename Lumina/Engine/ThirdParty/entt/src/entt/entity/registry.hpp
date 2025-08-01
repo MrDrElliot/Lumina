@@ -64,7 +64,7 @@ public:
     }
 
     constexpr registry_storage_iterator operator++(int) noexcept {
-        registry_storage_iterator orig = *this;
+        const registry_storage_iterator orig = *this;
         return ++(*this), orig;
     }
 
@@ -73,7 +73,7 @@ public:
     }
 
     constexpr registry_storage_iterator operator--(int) noexcept {
-        registry_storage_iterator orig = *this;
+        const registry_storage_iterator orig = *this;
         return operator--(), orig;
     }
 
@@ -164,6 +164,10 @@ public:
     explicit registry_context(const allocator_type &allocator)
         : ctx{allocator} {}
 
+    void clear() noexcept {
+        ctx.clear();
+    }
+
     template<typename Type, typename... Args>
     Type &emplace_as(const id_type id, Args &&...args) {
         return any_cast<Type &>(ctx.try_emplace(id, std::in_place_type<Type>, std::forward<Args>(args)...).first->second);
@@ -187,7 +191,7 @@ public:
     template<typename Type>
     bool erase(const id_type id = type_id<Type>().hash()) {
         const auto it = ctx.find(id);
-        return it != ctx.end() && it->second.type() == type_id<Type>() ? (ctx.erase(it), true) : false;
+        return it != ctx.end() && it->second.info() == type_id<Type>() ? (ctx.erase(it), true) : false;
     }
 
     template<typename Type>
@@ -215,7 +219,7 @@ public:
     template<typename Type>
     [[nodiscard]] bool contains(const id_type id = type_id<Type>().hash()) const {
         const auto it = ctx.find(id);
-        return it != ctx.cend() && it->second.type() == type_id<Type>();
+        return it != ctx.cend() && it->second.info() == type_id<Type>();
     }
 
 private:
@@ -251,7 +255,7 @@ class basic_registry {
             using storage_type = storage_for_type<Type>;
 
             if(auto it = pools.find(id); it != pools.cend()) {
-                ENTT_ASSERT(it->second->type() == type_id<Type>(), "Unexpected type");
+                ENTT_ASSERT(it->second->info() == type_id<Type>(), "Unexpected type");
                 return static_cast<storage_type &>(*it->second);
             }
 
@@ -281,7 +285,7 @@ class basic_registry {
             return &entities;
         } else {
             if(const auto it = pools.find(id); it != pools.cend()) {
-                ENTT_ASSERT(it->second->type() == type_id<Type>(), "Unexpected type");
+                ENTT_ASSERT(it->second->info() == type_id<Type>(), "Unexpected type");
                 return static_cast<const storage_for_type<Type> *>(it->second.get());
             }
 
@@ -449,7 +453,7 @@ public:
      */
     template<typename Type>
     storage_for_type<Type> &storage(const id_type id = type_hash<Type>::value()) {
-        return assure<Type>(id);
+        return assure<std::remove_const_t<Type>>(id);
     }
 
     /**
@@ -460,7 +464,7 @@ public:
      */
     template<typename Type>
     [[nodiscard]] const storage_for_type<Type> *storage(const id_type id = type_hash<Type>::value()) const {
-        return assure<Type>(id);
+        return assure<std::remove_const_t<Type>>(id);
     }
 
     /**
@@ -497,7 +501,7 @@ public:
      * @return A valid identifier.
      */
     [[nodiscard]] entity_type create() {
-        return entities.emplace();
+        return entities.generate();
     }
 
     /**
@@ -510,7 +514,7 @@ public:
      * @return A valid identifier.
      */
     [[nodiscard]] entity_type create(const entity_type hint) {
-        return entities.emplace(hint);
+        return entities.generate(hint);
     }
 
     /**
@@ -524,7 +528,7 @@ public:
      */
     template<typename It>
     void create(It first, It last) {
-        entities.insert(std::move(first), std::move(last));
+        entities.generate(std::move(first), std::move(last));
     }
 
     /**
@@ -539,7 +543,7 @@ public:
      */
     version_type destroy(const entity_type entt) {
         for(size_type pos = pools.size(); pos != 0u; --pos) {
-            pools.begin()[pos - 1u].second->remove(entt);
+            pools.begin()[static_cast<typename pool_container_type::difference_type>(pos - 1u)].second->remove(entt);
         }
 
         entities.erase(entt);
@@ -576,7 +580,7 @@ public:
     template<typename It>
     void destroy(It first, It last) {
         const auto to = entities.sort_as(first, last);
-        const auto from = entities.cend() - entities.free_list();
+        const auto from = entities.cend() - static_cast<typename common_type::difference_type>(entities.free_list());
 
         for(auto &&curr: pools) {
             curr.second->remove(from, to);
@@ -960,7 +964,7 @@ public:
     void clear() {
         if constexpr(sizeof...(Type) == 0u) {
             for(size_type pos = pools.size(); pos; --pos) {
-                pools.begin()[pos - 1u].second->clear();
+                pools.begin()[static_cast<typename pool_container_type::difference_type>(pos - 1u)].second->clear();
             }
 
             const auto elem = entities.each();

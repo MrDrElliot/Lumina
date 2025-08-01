@@ -120,7 +120,7 @@ namespace Lumina
                 }
         
                 ImGui::TableNextColumn();
-                if (ImGui::DragFloat3("T", glm::value_ptr(DisplayValue.Location), 0.1f))
+                if (ImGui::DragFloat3("T", glm::value_ptr(DisplayValue.Location), 0.01f))
                 {
                     bWasChanged = true;
                 }
@@ -137,7 +137,7 @@ namespace Lumina
         
                 ImGui::TableNextColumn();
                 glm::vec3 EulerRotation = glm::degrees(glm::eulerAngles(DisplayValue.Rotation));
-                if (ImGui::DragFloat3("R", glm::value_ptr(EulerRotation), 0.1f))
+                if (ImGui::DragFloat3("R", glm::value_ptr(EulerRotation), 0.01f))
                 {
                     DisplayValue.SetRotationFromEuler(EulerRotation);
                     bWasChanged = true;
@@ -154,7 +154,7 @@ namespace Lumina
                 }
                 
                 ImGui::TableNextColumn();
-                if (ImGui::DragFloat3("S", glm::value_ptr(DisplayValue.Scale), 0.1f))
+                if (ImGui::DragFloat3("S", glm::value_ptr(DisplayValue.Scale), 0.01f))
                 {
                     bWasChanged = true;
                 }

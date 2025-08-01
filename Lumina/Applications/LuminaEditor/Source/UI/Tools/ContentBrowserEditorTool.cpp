@@ -47,17 +47,16 @@ namespace Lumina
         ContentBrowserTileViewContext.DrawItemOverrideFunction = [this] (FTileViewItem* Item) -> bool
         {
             FContentBrowserTileViewItem* ContentItem = static_cast<FContentBrowserTileViewItem*>(Item);
-            FString Path = ContentItem->GetPath().generic_string().c_str();
             ImTextureID ImTexture;
             
             FAssetRegistry* Registry = GEngine->GetEngineSubsystem<FAssetRegistry>();
-            if (Registry->IsPathCorrupt(Path))
+            if (Registry->IsPathCorrupt(ContentItem->GetPath()))
             {
                 ImTexture = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer()->GetOrCreateImTexture(FEditorUI::CorruptIcon);
             }
             else
             {
-                FAssetData Asset = Registry->GetAsset(Path);
+                FAssetData Asset = Registry->GetAsset(ContentItem->GetPath());
                 if (Asset.ClassName == "CMaterial" || Asset.ClassName == "CMaterialInstance")
                 {
                     ImTexture = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer()->GetOrCreateImTexture(FEditorUI::MaterialIcon);
@@ -76,11 +75,11 @@ namespace Lumina
                 }
             }
             
-
+            
             ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1, 1, 1, 0.05f)); 
             ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1, 1, 1, 0.3f));
             ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(1, 1, 1, 0.5f));
-            if (ImGui::ImageButton("##", ImTexture, ImVec2(115.0f, 115.0f)))
+            if (ImGui::ImageButton("##", ImTexture, ImVec2(125.0f, 125.0f)))
             {
                 ImGui::PopStyleColor(3);
                 return true;
@@ -94,16 +93,15 @@ namespace Lumina
         ContentBrowserTileViewContext.ItemSelectedFunction = [this] (FTileViewItem* Item)
         {
             FContentBrowserTileViewItem* ContentItem = static_cast<FContentBrowserTileViewItem*>(Item);
-            std::filesystem::path FSPath = ContentItem->GetPath();
-            if (is_directory(FSPath))
+            if (std::filesystem::is_directory(ContentItem->GetPath().c_str()))
             {
-                SelectedPath = FSPath;
+                SelectedPath = ContentItem->GetPath();
                 RefreshContentBrowser();
             }
             else
             {
                 FString ObjectName = ContentItem->GetName().ToString();
-                FString QualifiedName = ContentItem->GetVirtualPath() + "." + ObjectName;
+                FString QualifiedName = Paths::RemoveExtension(ContentItem->GetVirtualPath()) + "." + ObjectName;
 
                 CObject* Asset = LoadObject<CObject>(FName(QualifiedName));
                 ToolContext->OpenAssetEditor(Asset);
@@ -135,7 +133,7 @@ namespace Lumina
         
                         if (bSubmitted)
                         {
-                            std::filesystem::path OldPath = ContentItem->GetPath();
+                            std::filesystem::path OldPath = ContentItem->GetPath().c_str();
                             std::filesystem::path NewPath = OldPath.parent_path() / Buf;
 
                             
@@ -212,11 +210,11 @@ namespace Lumina
 
         ContentBrowserTileViewContext.RebuildTreeFunction = [this] (FTileViewWidget* Tree)
         {
-            if (std::filesystem::exists(SelectedPath))
+            if (Paths::Exists(SelectedPath))
             {
-                for (auto& Directory : std::filesystem::directory_iterator(SelectedPath))
+                for (auto& Directory : std::filesystem::directory_iterator(SelectedPath.c_str()))
                 {
-                    ContentBrowserTileView.AddItemToTree<FContentBrowserTileViewItem>(nullptr, Directory.path());
+                    ContentBrowserTileView.AddItemToTree<FContentBrowserTileViewItem>(nullptr, Directory.path().generic_string().c_str());
                 }
             }
         };
@@ -232,44 +230,37 @@ namespace Lumina
         
         OutlinerContext.RebuildTreeFunction = [this](FTreeListView* Tree)
         {
-            std::filesystem::path Path = FProject::Get()->GetProjectSettings().ProjectPath.c_str();
-            Path = Path.parent_path() / "Game/";
-
-            if (!std::filesystem::exists(Path))
+            for (const auto& [VirtualPrefix, PhysicalRootStr] : Paths::GetMountedPaths())
             {
-                return;
-            }
+                auto* RootItem = OutlinerListView.AddItemToTree<FContentBrowserListViewItem>(nullptr, PhysicalRootStr, VirtualPrefix.ToString());
 
-            auto AddChildrenRecursive = [&](auto& AddChildrenRecursive,
-                FContentBrowserListViewItem* ParentItem, const std::filesystem::path& ParentPath) -> void
-            {
-                for (auto& Entry : std::filesystem::directory_iterator(ParentPath))
+                TFunction<void(FContentBrowserListViewItem*, const FString&)> AddChildrenRecursive;
+
+                AddChildrenRecursive = [&](FContentBrowserListViewItem* ParentItem, const FString& CurrentPath)
                 {
-                    if (!std::filesystem::is_directory(Entry))
-                        continue;
-
-                    auto* ChildItem = ParentItem->AddChild<FContentBrowserListViewItem>(ParentItem, Entry.path());
-
-                    AddChildrenRecursive(AddChildrenRecursive, ChildItem, Entry.path());
-                    
-                    if (Entry.path() == SelectedPath)
+                    std::error_code ec;
+                    for (auto& Entry : std::filesystem::directory_iterator(CurrentPath.c_str(), ec))
                     {
-                        OutlinerListView.SetSelection(ChildItem, OutlinerContext);
+                        if (ec || !Entry.is_directory())
+                            continue;
+
+                        FString Path = Entry.path().generic_string().c_str();
+                        FString DisplayName = Entry.path().filename().string().c_str();
+                        auto* ChildItem = ParentItem->AddChild<FContentBrowserListViewItem>(ParentItem, Path, DisplayName);
+
+                        if (Entry.path() == SelectedPath.c_str())
+                        {
+                            OutlinerListView.SetSelection(ChildItem, OutlinerContext);
+                        }
+
+                        AddChildrenRecursive(ChildItem, Path);
                     }
-                }
-            };
+                };
 
-            for (auto& Directory : std::filesystem::directory_iterator(Path))
-            {
-                if (!std::filesystem::is_directory(Directory))
-                    continue;
-
-                auto* RootItem = OutlinerListView.AddItemToTree<FContentBrowserListViewItem>(nullptr, Directory.path());
-
-                AddChildrenRecursive(AddChildrenRecursive, RootItem, Directory.path());
+                AddChildrenRecursive(RootItem, PhysicalRootStr);
             }
-            
         };
+
 
 
         OutlinerContext.ItemSelectedFunction = [this] (FTreeListViewItem* Item)
@@ -280,10 +271,8 @@ namespace Lumina
             }
             
             FContentBrowserListViewItem* ContentItem = static_cast<FContentBrowserListViewItem*>(Item);
-
-            std::filesystem::path Path = ContentItem->GetPath();
-
-            SelectedPath = Path;
+            
+            SelectedPath = ContentItem->GetPath();
 
             ContentBrowserTileView.MarkTreeDirty();
         };
@@ -310,7 +299,7 @@ namespace Lumina
     void FContentBrowserEditorTool::DrawDirectoryBrowser(const FUpdateContext& Contxt, bool bIsFocused, ImVec2 Size)
     {
         ImGui::BeginChild("Directories", Size);
-        
+
         OutlinerListView.Draw(OutlinerContext);
         
         ImGui::EndChild();
@@ -318,7 +307,7 @@ namespace Lumina
 
     void FContentBrowserEditorTool::DrawContentBrowser(const FUpdateContext& Context, bool bIsFocused, ImVec2 Size)
     {
-        std::filesystem::path Path = Paths::GetEngineResourceDirectory();
+        FString Path = Paths::GetEngineResourceDirectory();
         constexpr float Padding = 10.0f;
         bool bWroteSomething = false;
 
@@ -389,7 +378,7 @@ namespace Lumina
                 FString MenuItemName = FString(FolderIcon) + " " + "New Folder";
                 if (ImGui::MenuItem(MenuItemName.c_str()))
                 {
-                    std::filesystem::path NewPath = SelectedPath / "NewFolder";
+                    std::filesystem::path NewPath = FString(SelectedPath + "/NewFolder").c_str();
                     FString PathString = NewPath.generic_string().c_str();
                     MakeUniquePath(PathString);
                     std::filesystem::create_directory(PathString.c_str());
@@ -433,7 +422,7 @@ namespace Lumina
                     if (ImGui::MenuItem(DisplayName.c_str()))
                     {
                         CFactory* Factory = Definition->GetFactory();
-                        FString PathString = Paths::Combine(SelectedPath.generic_string().c_str(), Factory->GetDefaultAssetCreationName(PathString).c_str());
+                        FString PathString = Paths::Combine(SelectedPath.c_str(), Factory->GetDefaultAssetCreationName(PathString).c_str());
                         Paths::AddPackageExtension(PathString);
                         MakeUniquePath(PathString);
                         PathString = Paths::RemoveExtension(PathString);
@@ -503,7 +492,7 @@ namespace Lumina
 
                     FString FStringFileName = FilePath.generic_string().c_str();
                     FString NoExtFileName = Paths::RemoveExtension(FilePath.filename().generic_string().c_str());
-                    FString PathString = Paths::Combine(SelectedPath.generic_string().c_str(), NoExtFileName.c_str());
+                    FString PathString = Paths::Combine(SelectedPath.c_str(), NoExtFileName.c_str());
                 
                     Paths::AddPackageExtension(PathString);
                     MakeUniquePath(PathString);

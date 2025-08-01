@@ -3,7 +3,6 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <string_view>
 #include "fwd.hpp"
 
 namespace entt {
@@ -32,9 +31,9 @@ struct basic_hashed_string {
     using size_type = std::size_t;
     using hash_type = id_type;
 
-    const value_type *repr;
-    size_type length;
-    hash_type hash;
+    const value_type *repr{};
+    hash_type hash{fnv_1a_params<>::offset};
+    size_type length{};
 };
 
 } // namespace internal
@@ -62,22 +61,11 @@ class basic_hashed_string: internal::basic_hashed_string<Char> {
 
     struct const_wrapper {
         // non-explicit constructor on purpose
-        constexpr const_wrapper(const Char *str) noexcept
+        constexpr const_wrapper(const typename base_type::value_type *str) noexcept
             : repr{str} {}
 
-        const Char *repr;
+        const typename base_type::value_type *repr;
     };
-
-    // Fowler–Noll–Vo hash function v. 1a - the good
-    [[nodiscard]] static constexpr auto helper(const std::basic_string_view<Char> view) noexcept {
-        base_type base{view.data(), view.size(), params::offset};
-
-        for(auto &&curr: view) {
-            base.hash = (base.hash ^ static_cast<id_type>(curr)) * params::prime;
-        }
-
-        return base;
-    }
 
 public:
     /*! @brief Character type. */
@@ -105,7 +93,7 @@ public:
      */
     template<std::size_t N>
     // NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays, modernize-avoid-c-arrays)
-    [[nodiscard]] static constexpr hash_type value(const value_type (&str)[N]) noexcept {
+    [[nodiscard]] static ENTT_CONSTEVAL hash_type value(const value_type (&str)[N]) noexcept {
         return basic_hashed_string{str};
     }
 
@@ -128,7 +116,14 @@ public:
      * @param len Length of the string to hash.
      */
     constexpr basic_hashed_string(const value_type *str, const size_type len) noexcept
-        : base_type{helper({str, len})} {}
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
+        : base_type{str} {
+        // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+        for(; base_type::length < len; ++base_type::length) {
+            base_type::hash = (base_type::hash ^ static_cast<id_type>(str[base_type::length])) * params::prime;
+        }
+        // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+    }
 
     /**
      * @brief Constructs a hashed string from an array of const characters.
@@ -137,8 +132,13 @@ public:
      */
     template<std::size_t N>
     // NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays, modernize-avoid-c-arrays)
-    constexpr basic_hashed_string(const value_type (&str)[N]) noexcept
-        : base_type{helper({static_cast<const value_type *>(str)})} {}
+    ENTT_CONSTEVAL basic_hashed_string(const value_type (&str)[N]) noexcept
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
+        : base_type{str} {
+        for(; str[base_type::length]; ++base_type::length) {
+            base_type::hash = (base_type::hash ^ static_cast<id_type>(str[base_type::length])) * params::prime;
+        }
+    }
 
     /**
      * @brief Explicit constructor on purpose to avoid constructing a hashed
@@ -150,10 +150,16 @@ public:
      * @param wrapper Helps achieving the purpose by relying on overloading.
      */
     explicit constexpr basic_hashed_string(const_wrapper wrapper) noexcept
-        : base_type{helper({wrapper.repr})} {}
+        : base_type{wrapper.repr} {
+        // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+        for(; wrapper.repr[base_type::length]; ++base_type::length) {
+            base_type::hash = (base_type::hash ^ static_cast<id_type>(wrapper.repr[base_type::length])) * params::prime;
+        }
+        // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+    }
 
     /**
-     * @brief Returns the size a hashed string.
+     * @brief Returns the size of a hashed string.
      * @return The size of the hashed string.
      */
     [[nodiscard]] constexpr size_type size() const noexcept {
@@ -177,7 +183,7 @@ public:
     }
 
     /*! @copydoc data */
-    [[nodiscard]] constexpr operator const value_type *() const noexcept {
+    [[nodiscard]] explicit constexpr operator const value_type *() const noexcept {
         return data();
     }
 
@@ -291,7 +297,7 @@ inline namespace literals {
  * @param str The literal without its suffix.
  * @return A properly initialized hashed string.
  */
-[[nodiscard]] constexpr hashed_string operator"" _hs(const char *str, std::size_t) noexcept {
+[[nodiscard]] ENTT_CONSTEVAL hashed_string operator""_hs(const char *str, std::size_t) noexcept {
     return hashed_string{str};
 }
 
@@ -300,7 +306,7 @@ inline namespace literals {
  * @param str The literal without its suffix.
  * @return A properly initialized hashed wstring.
  */
-[[nodiscard]] constexpr hashed_wstring operator"" _hws(const wchar_t *str, std::size_t) noexcept {
+[[nodiscard]] ENTT_CONSTEVAL hashed_wstring operator""_hws(const wchar_t *str, std::size_t) noexcept {
     return hashed_wstring{str};
 }
 

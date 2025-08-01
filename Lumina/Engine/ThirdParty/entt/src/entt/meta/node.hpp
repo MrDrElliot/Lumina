@@ -37,9 +37,9 @@ enum class meta_traits : std::uint32_t {
     is_enum = 0x0040,
     is_class = 0x0080,
     is_pointer = 0x0100,
-    is_meta_pointer_like = 0x0200,
-    is_meta_sequence_container = 0x0400,
-    is_meta_associative_container = 0x0800,
+    is_pointer_like = 0x0200,
+    is_sequence_container = 0x0400,
+    is_associative_container = 0x0800,
     _user_defined_traits = 0xFFFF,
     _entt_enum_as_bitmask = 0xFFFF
 };
@@ -64,13 +64,7 @@ struct meta_type_node;
 
 struct meta_custom_node {
     id_type type{};
-    std::shared_ptr<void> value{};
-};
-
-struct meta_prop_node {
-    id_type id{};
-    meta_type_node (*type)(const meta_context &) noexcept {};
-    std::shared_ptr<void> value{};
+    std::shared_ptr<void> value;
 };
 
 struct meta_base_node {
@@ -101,28 +95,28 @@ struct meta_data_node {
     using size_type = std::size_t;
 
     id_type id{};
+    const char *name{};
     meta_traits traits{meta_traits::is_none};
     size_type arity{0u};
     meta_type_node (*type)(const meta_context &) noexcept {};
     meta_type (*arg)(const meta_ctx &, const size_type) noexcept {};
     bool (*set)(meta_handle, meta_any){};
-    meta_any (*get)(const meta_ctx &, meta_handle){};
+    meta_any (*get)(meta_handle){};
     meta_custom_node custom{};
-    std::vector<meta_prop_node> prop{};
 };
 
 struct meta_func_node {
     using size_type = std::size_t;
 
     id_type id{};
+    const char *name{};
     meta_traits traits{meta_traits::is_none};
     size_type arity{0u};
     meta_type_node (*ret)(const meta_context &) noexcept {};
     meta_type (*arg)(const meta_ctx &, const size_type) noexcept {};
-    meta_any (*invoke)(const meta_ctx &, meta_handle, meta_any *const){};
-    std::shared_ptr<meta_func_node> next{};
+    meta_any (*invoke)(meta_handle, meta_any *const){};
+    std::shared_ptr<meta_func_node> next;
     meta_custom_node custom{};
-    std::vector<meta_prop_node> prop{};
 };
 
 struct meta_template_node {
@@ -134,12 +128,11 @@ struct meta_template_node {
 };
 
 struct meta_type_descriptor {
-    std::vector<meta_ctor_node> ctor{};
-    std::vector<meta_base_node> base{};
-    std::vector<meta_conv_node> conv{};
-    std::vector<meta_data_node> data{};
-    std::vector<meta_func_node> func{};
-    std::vector<meta_prop_node> prop{};
+    std::vector<meta_ctor_node> ctor;
+    std::vector<meta_base_node> base;
+    std::vector<meta_conv_node> conv;
+    std::vector<meta_data_node> data;
+    std::vector<meta_func_node> func;
 };
 
 struct meta_type_node {
@@ -147,6 +140,7 @@ struct meta_type_node {
 
     const type_info *info{};
     id_type id{};
+    const char *name{};
     meta_traits traits{meta_traits::is_none};
     size_type size_of{0u};
     meta_type_node (*resolve)(const meta_context &) noexcept {};
@@ -157,7 +151,7 @@ struct meta_type_node {
     meta_template_node templ{};
     meta_dtor_node dtor{};
     meta_custom_node custom{};
-    std::shared_ptr<meta_type_descriptor> details{};
+    std::shared_ptr<meta_type_descriptor> details;
 };
 
 template<auto Member, typename Type, typename Value>
@@ -200,15 +194,19 @@ meta_type_node resolve(const meta_context &) noexcept;
 
 template<typename... Args>
 [[nodiscard]] auto meta_arg_node(const meta_context &context, type_list<Args...>, [[maybe_unused]] const std::size_t index) noexcept {
-    [[maybe_unused]] std::size_t pos{};
     meta_type_node (*value)(const meta_context &) noexcept = nullptr;
-    ((value = (pos++ == index ? &resolve<std::remove_cv_t<std::remove_reference_t<Args>>> : value)), ...);
+
+    if constexpr(sizeof...(Args) != 0u) {
+        std::size_t pos{};
+        ((value = (pos++ == index ? &resolve<std::remove_cv_t<std::remove_reference_t<Args>>> : value)), ...);
+    }
+
     ENTT_ASSERT(value != nullptr, "Out of bounds");
     return value(context);
 }
 
-[[nodiscard]] inline const void *try_cast(const meta_context &context, const meta_type_node &from, const meta_type_node &to, const void *instance) noexcept {
-    if((from.info != nullptr) && (to.info != nullptr) && *from.info == *to.info) {
+[[nodiscard]] inline const void *try_cast(const meta_context &context, const meta_type_node &from, const type_info &to, const void *instance) noexcept {
+    if((from.info != nullptr) && *from.info == to) {
         return instance;
     }
 
@@ -266,6 +264,7 @@ template<typename Type>
     meta_type_node node{
         &type_id<Type>(),
         type_id<Type>().hash(),
+        nullptr,
         (std::is_arithmetic_v<Type> ? meta_traits::is_arithmetic : meta_traits::is_none)
             | (std::is_integral_v<Type> ? meta_traits::is_integral : meta_traits::is_none)
             | (std::is_signed_v<Type> ? meta_traits::is_signed : meta_traits::is_none)
@@ -273,9 +272,9 @@ template<typename Type>
             | (std::is_enum_v<Type> ? meta_traits::is_enum : meta_traits::is_none)
             | (std::is_class_v<Type> ? meta_traits::is_class : meta_traits::is_none)
             | (std::is_pointer_v<Type> ? meta_traits::is_pointer : meta_traits::is_none)
-            | (is_meta_pointer_like_v<Type> ? meta_traits::is_meta_pointer_like : meta_traits::is_none)
-            | (is_complete_v<meta_sequence_container_traits<Type>> ? meta_traits::is_meta_sequence_container : meta_traits::is_none)
-            | (is_complete_v<meta_associative_container_traits<Type>> ? meta_traits::is_meta_associative_container : meta_traits::is_none),
+            | (is_meta_pointer_like_v<Type> ? meta_traits::is_pointer_like : meta_traits::is_none)
+            | (is_complete_v<meta_sequence_container_traits<Type>> ? meta_traits::is_sequence_container : meta_traits::is_none)
+            | (is_complete_v<meta_associative_container_traits<Type>> ? meta_traits::is_associative_container : meta_traits::is_none),
         size_of_v<Type>,
         &resolve<Type>,
         &resolve<std::remove_cv_t<std::remove_pointer_t<Type>>>};
@@ -298,10 +297,15 @@ template<typename Type>
 
     if constexpr(!std::is_void_v<Type> && !std::is_function_v<Type>) {
         node.from_void = +[](const meta_ctx &ctx, void *elem, const void *celem) {
-            if(elem) {
+            if(elem && celem) { // ownership construction request
+                return meta_any{ctx, std::in_place, static_cast<std::decay_t<Type> *>(elem)};
+            }
+
+            if(elem) { // non-const reference construction request
                 return meta_any{ctx, std::in_place_type<std::decay_t<Type> &>, *static_cast<std::decay_t<Type> *>(elem)};
             }
 
+            // const reference construction request
             return meta_any{ctx, std::in_place_type<const std::decay_t<Type> &>, *static_cast<const std::decay_t<Type> *>(celem)};
         };
     }

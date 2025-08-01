@@ -34,6 +34,8 @@ namespace Lumina
         virtual void OnSelectionStateChanged() { }
 
         bool HasChildren() const { return !Children.empty(); }
+
+        virtual uint64 GetHash() const = 0;
         
         virtual FInlineString GetDisplayName() const
         {
@@ -44,7 +46,7 @@ namespace Lumina
         requires (std::is_base_of_v<FTreeListViewItem, T> && std::is_constructible_v<T, Args...>)
         T* AddChild(Args&&... args)
         {
-            T* New = Memory::New<T>(eastl::forward<Args>(args)...);
+            T* New = Memory::New<T>(std::forward<Args>(args)...);
             Children.push_back(New);
 
             return New;
@@ -103,9 +105,9 @@ namespace Lumina
 
         void ClearTree();
 
-        FORCEINLINE void MarkTreeDirty() { bDirty = true; }
-        FORCEINLINE bool IsCurrentlyDrawing() const { return bCurrentlyDrawing; }
-        FORCEINLINE bool IsDirty() const { return bDirty; }
+        void MarkTreeDirty() { bDirty = true; }
+        bool IsCurrentlyDrawing() const { return bCurrentlyDrawing; }
+        bool IsDirty() const { return bDirty; }
         
         template<typename T, typename... Args>
         requires (std::is_base_of_v<FTreeListViewItem, T> && std::is_constructible_v<T, Args...>)
@@ -126,6 +128,8 @@ namespace Lumina
         void DrawListItem(FTreeListViewItem* ItemToDraw, FTreeListViewContext Context);
 
         void ClearSelection();
+
+        void ForEachItem(const TFunction<void(FTreeListViewItem* Item)>& Functor);
 
     private:
 

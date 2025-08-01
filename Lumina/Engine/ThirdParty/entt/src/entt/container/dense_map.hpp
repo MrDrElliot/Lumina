@@ -83,7 +83,7 @@ public:
     }
 
     constexpr dense_map_iterator operator++(int) noexcept {
-        dense_map_iterator orig = *this;
+        const dense_map_iterator orig = *this;
         return ++(*this), orig;
     }
 
@@ -92,7 +92,7 @@ public:
     }
 
     constexpr dense_map_iterator operator--(int) noexcept {
-        dense_map_iterator orig = *this;
+        const dense_map_iterator orig = *this;
         return operator--(), orig;
     }
 
@@ -204,11 +204,11 @@ public:
           offset{other.offset} {}
 
     constexpr dense_map_local_iterator &operator++() noexcept {
-        return offset = it[offset].next, *this;
+        return (offset = it[static_cast<typename It::difference_type>(offset)].next), *this;
     }
 
     constexpr dense_map_local_iterator operator++(int) noexcept {
-        dense_map_local_iterator orig = *this;
+        const dense_map_local_iterator orig = *this;
         return ++(*this), orig;
     }
 
@@ -217,7 +217,8 @@ public:
     }
 
     [[nodiscard]] constexpr reference operator*() const noexcept {
-        return {it[offset].element.first, it[offset].element.second};
+        const auto idx = static_cast<typename It::difference_type>(offset);
+        return {it[idx].element.first, it[idx].element.second};
     }
 
     [[nodiscard]] constexpr std::size_t index() const noexcept {
@@ -276,7 +277,7 @@ class dense_map {
     [[nodiscard]] auto constrained_find(const Other &key, std::size_t bucket) {
         for(auto it = begin(bucket), last = end(bucket); it != last; ++it) {
             if(packed.second()(it->first, key)) {
-                return begin() + static_cast<typename iterator::difference_type>(it.index());
+                return begin() + static_cast<difference_type>(it.index());
             }
         }
 
@@ -287,7 +288,7 @@ class dense_map {
     [[nodiscard]] auto constrained_find(const Other &key, std::size_t bucket) const {
         for(auto it = cbegin(bucket), last = cend(bucket); it != last; ++it) {
             if(packed.second()(it->first, key)) {
-                return cbegin() + static_cast<typename iterator::difference_type>(it.index());
+                return cbegin() + static_cast<difference_type>(it.index());
             }
         }
 
@@ -337,8 +338,8 @@ class dense_map {
     }
 
     void rehash_if_required() {
-        if(size() > (bucket_count() * max_load_factor())) {
-            rehash(bucket_count() * 2u);
+        if(const auto bc = bucket_count(); size() > static_cast<size_type>(static_cast<float>(bc) * max_load_factor())) {
+            rehash(bc * 2u);
         }
     }
 
@@ -353,6 +354,8 @@ public:
     using value_type = std::pair<const Key, Type>;
     /*! @brief Unsigned integer type. */
     using size_type = std::size_t;
+    /*! @brief Signed integer type. */
+    using difference_type = std::ptrdiff_t;
     /*! @brief Type of function to use to hash the keys. */
     using hasher = Hash;
     /*! @brief Type of function to use to compare the keys for equality. */
@@ -450,6 +453,17 @@ public:
      * @return This container.
      */
     dense_map &operator=(dense_map &&) noexcept = default;
+
+    /**
+     * @brief Exchanges the contents with those of a given container.
+     * @param other Container to exchange the content with.
+     */
+    void swap(dense_map &other) noexcept {
+        using std::swap;
+        swap(sparse, other.sparse);
+        swap(packed, other.packed);
+        swap(threshold, other.threshold);
+    }
 
     /**
      * @brief Returns the associated allocator.
@@ -669,7 +683,7 @@ public:
         const auto dist = first - cbegin();
 
         for(auto from = last - cbegin(); from != dist; --from) {
-            erase(packed.first()[from - 1u].element.first);
+            erase(packed.first()[static_cast<size_type>(from) - 1u].element.first);
         }
 
         return (begin() + dist);
@@ -691,17 +705,6 @@ public:
         }
 
         return 0u;
-    }
-
-    /**
-     * @brief Exchanges the contents with those of a given container.
-     * @param other Container to exchange the content with.
-     */
-    void swap(dense_map &other) noexcept {
-        using std::swap;
-        swap(sparse, other.sparse);
-        swap(packed, other.packed);
-        swap(threshold, other.threshold);
     }
 
     /**
@@ -952,7 +955,7 @@ public:
      * @return The average number of elements per bucket.
      */
     [[nodiscard]] float load_factor() const {
-        return size() / static_cast<float>(bucket_count());
+        return static_cast<float>(size()) / static_cast<float>(bucket_count());
     }
 
     /**
@@ -980,7 +983,7 @@ public:
      */
     void rehash(const size_type cnt) {
         auto value = cnt > minimum_capacity ? cnt : minimum_capacity;
-        const auto cap = static_cast<size_type>(size() / max_load_factor());
+        const auto cap = static_cast<size_type>(static_cast<float>(size()) / max_load_factor());
         value = value > cap ? value : cap;
 
         if(const auto sz = next_power_of_two(value); sz != bucket_count()) {
@@ -1004,7 +1007,7 @@ public:
      */
     void reserve(const size_type cnt) {
         packed.first().reserve(cnt);
-        rehash(static_cast<size_type>(std::ceil(cnt / max_load_factor())));
+        rehash(static_cast<size_type>(std::ceil(static_cast<float>(cnt) / max_load_factor())));
     }
 
     /**

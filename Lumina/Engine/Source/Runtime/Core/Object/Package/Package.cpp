@@ -63,7 +63,7 @@ namespace Lumina
 
         Package->TopLevelClassName = InTopLevelClassName;
         LOG_INFO("Created Package: \"{}\"", VirtualPath);
-
+        
         GEngine->GetEngineSubsystem<FAssetRegistry>()->BuildAssetDictionary();
         return Package;
     }

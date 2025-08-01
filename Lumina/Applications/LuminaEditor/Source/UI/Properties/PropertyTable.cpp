@@ -16,27 +16,28 @@
 namespace Lumina
 {
     
-    static FPropertyRow* CreatePropertyRow(void* InOwner, FProperty* InProperty, FPropertyRow* InParentRow, SIZE_T ArrayElementIndex = INDEX_NONE)
+    static FPropertyRow* CreatePropertyRow(void* InOwner, FProperty* InProperty, FPropertyRow* InParentRow, const FPropertyChangedEventCallbacks& InCallbacks, SIZE_T ArrayElementIndex = INDEX_NONE)
     {
         FPropertyRow* NewRow = nullptr;
         if (FArrayProperty* ArrayProperty = dynamic_cast<FArrayProperty*>(InProperty))
         {
-            NewRow = Memory::New<FArrayPropertyRow>(InOwner, ArrayProperty, InParentRow);
+            NewRow = Memory::New<FArrayPropertyRow>(InOwner, ArrayProperty, InParentRow, InCallbacks);
         }
         else if (FStructProperty* StructProperty = dynamic_cast<FStructProperty*>(InProperty))
         {
-            NewRow = Memory::New<FStructPropertyRow>(InOwner, StructProperty, InParentRow);
+            NewRow = Memory::New<FStructPropertyRow>(InOwner, StructProperty, InParentRow, InCallbacks);
         }
         else
         {
-            NewRow = Memory::New<FPropertyPropertyRow>(InOwner, InProperty, InParentRow, ArrayElementIndex);
+            NewRow = Memory::New<FPropertyPropertyRow>(InOwner, InProperty, InParentRow, ArrayElementIndex, InCallbacks);
         }
 
         return NewRow;
     }
     
-    FPropertyRow::FPropertyRow(FProperty* InProperty, FPropertyRow* InParentRow)
+    FPropertyRow::FPropertyRow(FProperty* InProperty, FPropertyRow* InParentRow, const FPropertyChangedEventCallbacks& InCallbacks)
         : ParentRow(InParentRow)
+        , Callbacks(InCallbacks)
     {
         Property = InProperty;
     }
@@ -134,8 +135,8 @@ namespace Lumina
         }
     }
 
-    FPropertyPropertyRow::FPropertyPropertyRow(void* InPropertyPointer, FProperty* InProperty, FPropertyRow* InParentRow, int64 InArrayElementIndex)
-        : FPropertyRow(InProperty, InParentRow)
+    FPropertyPropertyRow::FPropertyPropertyRow(void* InPropertyPointer, FProperty* InProperty, FPropertyRow* InParentRow, int64 InArrayElementIndex, const FPropertyChangedEventCallbacks& InCallbacks)
+        : FPropertyRow(InProperty, InParentRow, InCallbacks)
         , ArrayElementIndex(InArrayElementIndex)
     {
         PropertyHandle = MakeSharedPtr<FPropertyHandle>(InPropertyPointer, InProperty);
@@ -238,7 +239,19 @@ namespace Lumina
             break;
         case EPropertyChangeOp::Updated:
             {
+                if (Callbacks.PreChangeCallback)
+                {
+                    FPropertyChangedEvent Event(Callbacks.OwnerStruct, PropertyHandle->Property, PropertyHandle->Property->Name);
+                    Callbacks.PreChangeCallback(Event);
+                }
+                
                 Customization->UpdatePropertyValue(PropertyHandle);
+
+                if (Callbacks.PostChangeCallback)
+                {
+                    FPropertyChangedEvent Event(Callbacks.OwnerStruct, PropertyHandle->Property, PropertyHandle->Property->Name);
+                    Callbacks.PostChangeCallback(Event);
+                }
             }
             break;
         }
@@ -322,8 +335,8 @@ namespace Lumina
         ImGuiX::ItemTooltip("Array Element Options");
     }
 
-    FArrayPropertyRow::FArrayPropertyRow(void* InPropPointer, FArrayProperty* InProperty, FPropertyRow* InParentRow)
-        : FPropertyRow(InProperty, InParentRow)
+    FArrayPropertyRow::FArrayPropertyRow(void* InPropPointer, FArrayProperty* InProperty, FPropertyRow* InParentRow, const FPropertyChangedEventCallbacks& InCallbacks)
+        : FPropertyRow(InProperty, InParentRow, InCallbacks)
         , ArrayProperty(InProperty)
     {
         PropertyHandle = MakeSharedPtr<FPropertyHandle>(InPropPointer, InProperty);
@@ -366,7 +379,7 @@ namespace Lumina
         for (SIZE_T i = 0; i < ElementCount; ++i)
         {
             void* Pointer = Helper.GetRawAt(i);
-            FPropertyRow* NewRow = CreatePropertyRow(Pointer, ArrayProperty->GetInternalProperty(), this, i);
+            FPropertyRow* NewRow = CreatePropertyRow(Pointer, ArrayProperty->GetInternalProperty(), this, Callbacks, i);
             NewRow->SetIsArrayElement(true);
             Children.push_back(NewRow);
         }
@@ -404,8 +417,8 @@ namespace Lumina
         //ImGui::EndDisabled();
     }
 
-    FStructPropertyRow::FStructPropertyRow(void* InPropPointer, FStructProperty* InProperty, FPropertyRow* InParentRow)
-        : FPropertyRow(InProperty, InParentRow)
+    FStructPropertyRow::FStructPropertyRow(void* InPropPointer, FStructProperty* InProperty, FPropertyRow* InParentRow, const FPropertyChangedEventCallbacks& InCallbacks)
+        : FPropertyRow(InProperty, InParentRow, InCallbacks)
         , StructProperty(InProperty)
     {
         PropertyHandle = MakeSharedPtr<FPropertyHandle>(InPropPointer, InProperty);
@@ -436,7 +449,19 @@ namespace Lumina
             break;
         case EPropertyChangeOp::Updated:
             {
+                if (Callbacks.PreChangeCallback)
+                {
+                    FPropertyChangedEvent Event(Callbacks.OwnerStruct, PropertyHandle->Property, PropertyHandle->Property->Name);
+                    Callbacks.PreChangeCallback(Event);
+                }
+                
                 Customization->UpdatePropertyValue(PropertyHandle);
+
+                if (Callbacks.PostChangeCallback)
+                {
+                    FPropertyChangedEvent Event(Callbacks.OwnerStruct, PropertyHandle->Property, PropertyHandle->Property->Name);
+                    Callbacks.PostChangeCallback(Event);
+                }
             }
             break;
         }
@@ -489,8 +514,9 @@ namespace Lumina
         PropertyTable->RebuildTree();
     }
 
-    FCategoryPropertyRow::FCategoryPropertyRow(void* InObj, const FName& InCategory)
-        : Category(InCategory)
+    FCategoryPropertyRow::FCategoryPropertyRow(void* InObj, const FName& InCategory, const FPropertyChangedEventCallbacks& InCallbacks)
+        : FPropertyRow(InCallbacks)
+        , Category(InCategory)
     {
         OwnerObject = InObj;
     }
@@ -498,7 +524,7 @@ namespace Lumina
     void FCategoryPropertyRow::AddProperty(FProperty* InProperty)
     {
         void* PropPointer = InProperty->GetValuePtr<void>(OwnerObject);
-        FPropertyRow* NewRow = CreatePropertyRow(PropPointer, InProperty, this);
+        FPropertyRow* NewRow = CreatePropertyRow(PropPointer, InProperty, this, Callbacks);
         Children.push_back(NewRow);
     }
 
@@ -518,11 +544,11 @@ namespace Lumina
     }
 
     FPropertyTable::FPropertyTable(void* InObject, CStruct* InType)
-        : Struct(InType)
+        : ChangeEventCallbacks()
+        , Struct(InType)
         , Object(InObject)
-        , PrePropertyChange()
-        , PostPropertyChange()
     {
+        ChangeEventCallbacks.OwnerStruct = Struct;
     }
 
     FPropertyTable::~FPropertyTable()
@@ -600,25 +626,26 @@ namespace Lumina
     {
         Object = InObject;
         Struct = StructType;
-        
+
+        ChangeEventCallbacks.OwnerStruct = StructType;
         RebuildTree();
     }
 
-    void FPropertyTable::SetPreEditCallback(const TFunction<void()>& Callback)
+    void FPropertyTable::SetPreEditCallback(const FPropertyChangedEventFn& Callback)
     {
-        PrePropertyChange = Callback;
+        ChangeEventCallbacks.PreChangeCallback = Callback;
     }
 
-    void FPropertyTable::SetPostEditCallback(const TFunction<void()>& Callback)
+    void FPropertyTable::SetPostEditCallback(const FPropertyChangedEventFn& Callback)
     {
-        PostPropertyChange = Callback;
+        ChangeEventCallbacks.PostChangeCallback = Callback;
     }
 
     FCategoryPropertyRow* FPropertyTable::FindOrCreateCategoryRow(const FName& CategoryName)
     {
         if (CategoryMap.find(CategoryName) == CategoryMap.end())
         {
-            FCategoryPropertyRow* NewRow = Memory::New<FCategoryPropertyRow>(Object, CategoryName);
+            FCategoryPropertyRow* NewRow = Memory::New<FCategoryPropertyRow>(Object, CategoryName, ChangeEventCallbacks);
             CategoryMap.emplace(CategoryName, NewRow);
             Categories.push_back(NewRow);
         }

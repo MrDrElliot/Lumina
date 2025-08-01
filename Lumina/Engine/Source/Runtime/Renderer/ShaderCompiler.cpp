@@ -147,7 +147,7 @@ namespace Lumina
         
         FTaskSystem::Get()->ScheduleLambda(1, [this, Request] (uint32 Start, uint32 End, uint32 ThreadNum_)
         {
-            FString VertexPath = std::filesystem::path(Paths::GetEngineResourceDirectory() / "Shaders/Material.frag").generic_string().c_str();
+            FString VertexPath = Paths::GetEngineResourceDirectory() + "/Shaders/Material.frag";
             
             TVector<uint32> Binaries;
             shaderc::Compiler Compiler;

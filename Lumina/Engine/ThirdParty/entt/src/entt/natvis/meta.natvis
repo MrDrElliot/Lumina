@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+	<Type Name="entt::internal::meta_base_node">
+		<DisplayString Condition="resolve != nullptr">{{ type={ type } }}</DisplayString>
+		<DisplayString>{{}}</DisplayString>
+		<Expand>
+			<Item Name="[type]">type</Item>
+		</Expand>
+	</Type>
+	<Type Name="entt::internal::meta_conv_node">
+		<DisplayString Condition="conv != nullptr">{{ type={ type } }}</DisplayString>
+		<DisplayString>{{}}</DisplayString>
+		<Expand>
+			<Item Name="[type]">type</Item>
+		</Expand>
+	</Type>
+	<Type Name="entt::internal::meta_ctor_node">
+		<DisplayString Condition="invoke != nullptr">{{ id={ id } }}</DisplayString>
+		<DisplayString>{{}}</DisplayString>
+		<Expand>
+			<Item Name="[id]">id</Item>
+			<Item Name="[arity]">arity</Item>
+		</Expand>
+	</Type>
+	<Type Name="entt::internal::meta_custom_node">
+		<DisplayString Condition="value != nullptr">{{ type={ type } }}</DisplayString>
+		<DisplayString>{{}}</DisplayString>
+		<Expand>
+			<Item Name="[type]">type</Item>
+			<Item Name="[value]">value</Item>
+		</Expand>
+	</Type>
+	<Type Name="entt::internal::meta_data_node">
+		<Intrinsic Name="has_trait" Expression="!!(traits &amp; property)">
+			<Parameter Name="property" Type="int"/>
+		</Intrinsic>
+		<DisplayString Condition="name != nullptr">{{ id={ name,na } }}</DisplayString>
+		<DisplayString Condition="get != nullptr">{{ id={ id } }}</DisplayString>
+		<DisplayString>{{}}</DisplayString>
+		<Expand>
+			<Item Name="[id]">id</Item>
+			<Item Name="[name]" Condition="name != nullptr">name,na</Item>
+			<Item Name="[arity]">arity</Item>
+			<Item Name="[is_const]">has_trait(entt::internal::meta_traits::is_const)</Item>
+			<Item Name="[is_static]">has_trait(entt::internal::meta_traits::is_static)</Item>
+			<Item Name="[custom]">custom</Item>
+		</Expand>
+	</Type>
+	<Type Name="entt::internal::meta_dtor_node">
+		<DisplayString>{{}}</DisplayString>
+		<Expand/>
+	</Type>	
+	<Type Name="entt::internal::meta_func_node"	>
+		<Intrinsic Name="has_trait" Expression="!!(traits &amp; property)">
+			<Parameter Name="property" Type="int"/>
+		</Intrinsic>
+		<DisplayString Condition="name != nullptr">{{ id={ name,na } }}</DisplayString>
+		<DisplayString Condition="invoke != nullptr">{{ id={ id } }}</DisplayString>
+		<DisplayString>{{}}</DisplayString>
+		<Expand>
+			<Item Name="[id]">id</Item>
+			<Item Name="[name]" Condition="name != nullptr">name,na</Item>
+			<Item Name="[arity]">arity</Item>
+			<Item Name="[is_const]">has_trait(entt::internal::meta_traits::is_const)</Item>
+			<Item Name="[is_static]">has_trait(entt::internal::meta_traits::is_static)</Item>
+			<Item Name="[next]" Condition="next != nullptr">*next</Item>
+			<Item Name="[custom]">custom</Item>
+		</Expand>
+	</Type>
+	<Type Name="entt::internal::meta_template_node">
+		<DisplayString Condition="arity != 0u">{{ arity={ arity } }}</DisplayString>
+		<DisplayString>{{}}</DisplayString>
+		<Expand>
+			<Item Name="[arity]">arity</Item>
+		</Expand>
+	</Type>
+	<Type Name="entt::internal::meta_type_descriptor">
+		<DisplayString/>
+		<Expand>
+			<Item Name="[ctor]">ctor,view(simple)</Item>
+			<Item Name="[base]">base,view(simple)</Item>
+			<Item Name="[conv]">conv,view(simple)</Item>
+			<Item Name="[data]">data,view(simple)</Item>
+			<Item Name="[func]">func,view(simple)</Item>
+		</Expand>
+	</Type>
+	<Type Name="entt::internal::meta_type_node">
+		<Intrinsic Name="has_trait" Expression="!!(traits &amp; property)">
+			<Parameter Name="property" Type="int"/>
+		</Intrinsic>
+		<DisplayString Condition="name != nullptr">{{ type={ name,na } }}</DisplayString>
+		<DisplayString Condition="info != nullptr">{{ type={ info->alias,na } }}</DisplayString>
+		<DisplayString>{{}}</DisplayString>
+		<Expand>
+			<Item Name="[id]">id</Item>
+			<Item Name="[name]" Condition="name != nullptr">name,na</Item>
+			<Item Name="[sizeof]">size_of</Item>
+			<Item Name="[is_arithmetic]">has_trait(entt::internal::meta_traits::is_arithmetic)</Item>
+			<Item Name="[is_integral]">has_trait(entt::internal::meta_traits::is_integral)</Item>
+			<Item Name="[is_signed]">has_trait(entt::internal::meta_traits::is_signed)</Item>
+			<Item Name="[is_array]">has_trait(entt::internal::meta_traits::is_array)</Item>
+			<Item Name="[is_enum]">has_trait(entt::internal::meta_traits::is_enum)</Item>
+			<Item Name="[is_class]">has_trait(entt::internal::meta_traits::is_class)</Item>
+			<Item Name="[is_pointer]">has_trait(entt::internal::meta_traits::is_pointer)</Item>
+			<Item Name="[is_pointer_like]">has_trait(entt::internal::meta_traits::is_pointer_like)</Item>
+			<Item Name="[is_sequence_container]">has_trait(entt::internal::meta_traits::is_sequence_container)</Item>
+			<Item Name="[is_associative_container]">has_trait(entt::internal::meta_traits::is_associative_container)</Item>
+			<Item Name="[default_constructor]">default_constructor != nullptr</Item>
+			<Item Name="[conversion_helper]">conversion_helper != nullptr</Item>
+			<Item Name="[from_void]">from_void != nullptr</Item>
+			<Item Name="[template_info]">templ</Item>
+			<Item Name="[custom]">custom</Item>
+			<Item Name="[details]" Condition="!(details == nullptr)">*details</Item>
+		</Expand>
+	</Type>
+	<Type Name="entt::meta_any">
+		<DisplayString Condition="node.info != nullptr">{{ type={ node.info->alias,na }, policy={ storage.mode,en } }}</DisplayString>
+		<DisplayString>{{}}</DisplayString>
+		<Expand>
+			<ExpandedItem>node</ExpandedItem>
+			<Item Name="[context]" Condition="ctx != nullptr">ctx->value</Item>
+		</Expand>
+	</Type>
+	<Type Name="entt::meta_handle">
+		<DisplayString>{ any }</DisplayString>
+		<Expand>
+			<ExpandedItem>any</ExpandedItem>
+		</Expand>
+	</Type>
+	<Type Name="entt::meta_associative_container">
+		<DisplayString Condition="data != nullptr">{{ const={ const_only } }}</DisplayString>
+		<DisplayString>{{}}</DisplayString>
+		<Expand>
+			<Item Name="[context]" Condition="ctx != nullptr">ctx->value</Item>
+			<Item Name="[const]">const_only</Item>
+			<Item Name="[data]">data</Item>
+		</Expand>
+	</Type>
+	<Type Name="entt::meta_sequence_container">
+		<DisplayString Condition="data != nullptr">{{ const={ const_only } }}</DisplayString>
+		<DisplayString>{{}}</DisplayString>
+		<Expand>
+			<Item Name="[context]" Condition="ctx != nullptr">ctx->value</Item>
+			<Item Name="[const]">const_only</Item>
+			<Item Name="[data]">data</Item>
+		</Expand>
+	</Type>
+	<Type Name="entt::meta_custom">
+		<DisplayString>{ node }</DisplayString>
+		<Expand>
+			<ExpandedItem>node</ExpandedItem>
+		</Expand>
+	</Type>
+	<Type Name="entt::meta_data">
+		<DisplayString Condition="node.get != nullptr">{ node }</DisplayString>
+		<DisplayString>{{}}</DisplayString>
+		<Expand>
+			<ExpandedItem Condition="node.get != nullptr">node</ExpandedItem>
+			<Item Name="[context]" Condition="ctx != nullptr">ctx->value</Item>
+		</Expand>
+	</Type>
+	<Type Name="entt::meta_func">
+		<DisplayString Condition="node.invoke != nullptr">{ node }</DisplayString>
+		<DisplayString>{{}}</DisplayString>
+		<Expand>
+			<ExpandedItem Condition="node.invoke != nullptr">node</ExpandedItem>
+			<Item Name="[context]" Condition="ctx != nullptr">ctx->value</Item>
+		</Expand>
+	</Type>
+	<Type Name="entt::meta_type">
+		<DisplayString>{ node }</DisplayString>
+		<Expand>
+			<ExpandedItem>node</ExpandedItem>
+			<Item Name="[context]" Condition="ctx != nullptr">ctx->value</Item>
+		</Expand>
+	</Type>
+	<Type Name="entt::meta_ctx">
+		<Intrinsic Name="element_at" Expression="value.packed.first_base::value[pos].element">
+			<Parameter Name="pos" Type="int"/>
+		</Intrinsic>
+		<DisplayString>{ value }</DisplayString>
+		<Expand>
+			<CustomListItems>
+				<Variable Name="pos" InitialValue="0"/>
+				<Variable Name="last" InitialValue="value.size()"/>
+				<Loop>
+					<Break Condition="pos == last"/>
+					<Item Name="[{ element_at(pos).first }]">element_at(pos).second</Item>
+					<Exec>++pos</Exec>
+				</Loop>
+			</CustomListItems>
+		</Expand>
+	</Type>
+</AutoVisualizer>

@@ -49,7 +49,7 @@ public:
     }
 
     constexpr dense_set_iterator operator++(int) noexcept {
-        dense_set_iterator orig = *this;
+        const dense_set_iterator orig = *this;
         return ++(*this), orig;
     }
 
@@ -58,7 +58,7 @@ public:
     }
 
     constexpr dense_set_iterator operator--(int) noexcept {
-        dense_set_iterator orig = *this;
+        const dense_set_iterator orig = *this;
         return operator--(), orig;
     }
 
@@ -166,16 +166,16 @@ public:
           offset{other.offset} {}
 
     constexpr dense_set_local_iterator &operator++() noexcept {
-        return offset = it[offset].first, *this;
+        return offset = it[static_cast<typename It::difference_type>(offset)].first, *this;
     }
 
     constexpr dense_set_local_iterator operator++(int) noexcept {
-        dense_set_local_iterator orig = *this;
+        const dense_set_local_iterator orig = *this;
         return ++(*this), orig;
     }
 
     [[nodiscard]] constexpr pointer operator->() const noexcept {
-        return std::addressof(it[offset].second);
+        return std::addressof(it[static_cast<typename It::difference_type>(offset)].second);
     }
 
     [[nodiscard]] constexpr reference operator*() const noexcept {
@@ -236,7 +236,7 @@ class dense_set {
     [[nodiscard]] auto constrained_find(const Other &value, std::size_t bucket) {
         for(auto it = begin(bucket), last = end(bucket); it != last; ++it) {
             if(packed.second()(*it, value)) {
-                return begin() + static_cast<typename iterator::difference_type>(it.index());
+                return begin() + static_cast<difference_type>(it.index());
             }
         }
 
@@ -247,7 +247,7 @@ class dense_set {
     [[nodiscard]] auto constrained_find(const Other &value, std::size_t bucket) const {
         for(auto it = cbegin(bucket), last = cend(bucket); it != last; ++it) {
             if(packed.second()(*it, value)) {
-                return cbegin() + static_cast<typename iterator::difference_type>(it.index());
+                return cbegin() + static_cast<difference_type>(it.index());
             }
         }
 
@@ -281,8 +281,8 @@ class dense_set {
     }
 
     void rehash_if_required() {
-        if(size() > (bucket_count() * max_load_factor())) {
-            rehash(bucket_count() * 2u);
+        if(const auto bc = bucket_count(); size() > static_cast<size_type>(static_cast<float>(bc) * max_load_factor())) {
+            rehash(bc * 2u);
         }
     }
 
@@ -295,6 +295,8 @@ public:
     using value_type = Type;
     /*! @brief Unsigned integer type. */
     using size_type = std::size_t;
+    /*! @brief Signed integer type. */
+    using difference_type = std::ptrdiff_t;
     /*! @brief Type of function to use to hash the elements. */
     using hasher = Hash;
     /*! @brief Type of function to use to compare the elements for equality. */
@@ -396,6 +398,17 @@ public:
      * @return This container.
      */
     dense_set &operator=(dense_set &&) noexcept = default;
+
+    /**
+     * @brief Exchanges the contents with those of a given container.
+     * @param other Container to exchange the content with.
+     */
+    void swap(dense_set &other) noexcept {
+        using std::swap;
+        swap(sparse, other.sparse);
+        swap(packed, other.packed);
+        swap(threshold, other.threshold);
+    }
 
     /**
      * @brief Returns the associated allocator.
@@ -599,7 +612,7 @@ public:
         const auto dist = first - cbegin();
 
         for(auto from = last - cbegin(); from != dist; --from) {
-            erase(packed.first()[from - 1u].second);
+            erase(packed.first()[static_cast<size_type>(from) - 1u].second);
         }
 
         return (begin() + dist);
@@ -621,17 +634,6 @@ public:
         }
 
         return 0u;
-    }
-
-    /**
-     * @brief Exchanges the contents with those of a given container.
-     * @param other Container to exchange the content with.
-     */
-    void swap(dense_set &other) noexcept {
-        using std::swap;
-        swap(sparse, other.sparse);
-        swap(packed, other.packed);
-        swap(threshold, other.threshold);
     }
 
     /**
@@ -845,7 +847,7 @@ public:
      * @return The average number of elements per bucket.
      */
     [[nodiscard]] float load_factor() const {
-        return size() / static_cast<float>(bucket_count());
+        return static_cast<float>(size()) / static_cast<float>(bucket_count());
     }
 
     /**
@@ -873,7 +875,7 @@ public:
      */
     void rehash(const size_type cnt) {
         auto value = cnt > minimum_capacity ? cnt : minimum_capacity;
-        const auto cap = static_cast<size_type>(size() / max_load_factor());
+        const auto cap = static_cast<size_type>(static_cast<float>(size()) / max_load_factor());
         value = value > cap ? value : cap;
 
         if(const auto sz = next_power_of_two(value); sz != bucket_count()) {
@@ -897,7 +899,7 @@ public:
      */
     void reserve(const size_type cnt) {
         packed.first().reserve(cnt);
-        rehash(static_cast<size_type>(std::ceil(cnt / max_load_factor())));
+        rehash(static_cast<size_type>(std::ceil(static_cast<float>(cnt) / max_load_factor())));
     }
 
     /**

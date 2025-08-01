@@ -14,7 +14,7 @@ namespace Lumina
 
     FString FAssetEditorTool::GetToolName() const
     {
-        return Asset->GetName().ToString();
+        return Asset->GetPathName();
     }
 
     void FAssetEditorTool::Update(const FUpdateContext& UpdateContext)

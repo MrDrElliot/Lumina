@@ -22,7 +22,7 @@ template<typename Registry>
 class as_view {
     template<typename... Get, typename... Exclude>
     [[nodiscard]] auto dispatch(get_t<Get...>, exclude_t<Exclude...>) const {
-        return reg.template view<constness_as_t<typename Get::element_type, Get>...>(exclude_t<constness_as_t<typename Exclude::element_type, Exclude>...>{});
+        return reg->template view<constness_as_t<typename Get::element_type, Get>...>(exclude_t<constness_as_t<typename Exclude::element_type, Exclude>...>{});
     }
 
 public:
@@ -36,7 +36,7 @@ public:
      * @param source A valid reference to a registry.
      */
     as_view(registry_type &source) noexcept
-        : reg{source} {}
+        : reg{&source} {}
 
     /**
      * @brief Conversion function from a registry to a view.
@@ -50,7 +50,7 @@ public:
     }
 
 private:
-    registry_type &reg;
+    registry_type *reg;
 };
 
 /**
@@ -62,9 +62,9 @@ class as_group {
     template<typename... Owned, typename... Get, typename... Exclude>
     [[nodiscard]] auto dispatch(owned_t<Owned...>, get_t<Get...>, exclude_t<Exclude...>) const {
         if constexpr(std::is_const_v<registry_type>) {
-            return reg.template group_if_exists<typename Owned::element_type...>(get_t<typename Get::element_type...>{}, exclude_t<typename Exclude::element_type...>{});
+            return reg->template group_if_exists<typename Owned::element_type...>(get_t<typename Get::element_type...>{}, exclude_t<typename Exclude::element_type...>{});
         } else {
-            return reg.template group<constness_as_t<typename Owned::element_type, Owned>...>(get_t<constness_as_t<typename Get::element_type, Get>...>{}, exclude_t<constness_as_t<typename Exclude::element_type, Exclude>...>{});
+            return reg->template group<constness_as_t<typename Owned::element_type, Owned>...>(get_t<constness_as_t<typename Get::element_type, Get>...>{}, exclude_t<constness_as_t<typename Exclude::element_type, Exclude>...>{});
         }
     }
 
@@ -79,7 +79,7 @@ public:
      * @param source A valid reference to a registry.
      */
     as_group(registry_type &source) noexcept
-        : reg{source} {}
+        : reg{&source} {}
 
     /**
      * @brief Conversion function from a registry to a group.
@@ -94,7 +94,7 @@ public:
     }
 
 private:
-    registry_type &reg;
+    registry_type *reg;
 };
 
 /**
@@ -124,16 +124,17 @@ void invoke(Registry &reg, const typename Registry::entity_type entt) {
  */
 template<typename... Args>
 typename basic_storage<Args...>::entity_type to_entity(const basic_storage<Args...> &storage, const typename basic_storage<Args...>::value_type &instance) {
-    using traits_type = component_traits<typename basic_storage<Args...>::value_type>;
+    using traits_type = component_traits<typename basic_storage<Args...>::value_type, typename basic_storage<Args...>::entity_type>;
     static_assert(traits_type::page_size != 0u, "Unexpected page size");
-    const typename basic_storage<Args...>::base_type &base = storage;
-    const auto *addr = std::addressof(instance);
+    const auto *page = storage.raw();
 
-    for(auto it = base.rbegin(), last = base.rend(); it < last; it += traits_type::page_size) {
-        if(const auto dist = (addr - std::addressof(storage.get(*it))); dist >= 0 && dist < static_cast<decltype(dist)>(traits_type::page_size)) {
-            return *(it + dist);
+    // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+    for(std::size_t pos{}, count = storage.size(); pos < count; pos += traits_type::page_size, ++page) {
+        if(const auto dist = (std::addressof(instance) - *page); dist >= 0 && dist < static_cast<decltype(dist)>(traits_type::page_size)) {
+            return *(static_cast<const typename basic_storage<Args...>::base_type &>(storage).rbegin() + static_cast<decltype(dist)>(pos) + dist);
         }
     }
+    // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
     return null;
 }

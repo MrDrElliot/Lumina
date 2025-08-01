@@ -232,7 +232,8 @@ build system of the library.
 ## CMake
 
 To use `EnTT` from a `CMake` project, just link an existing target to the
-`EnTT::EnTT` alias.<br/>
+`EnTT::EnTT` alias.
+
 The library offers everything you need for locating (as in `find_package`),
 embedding (as in `add_subdirectory`), fetching (as in `FetchContent`) or using
 it in many of the ways that you can think of and that involve `CMake`.<br/>
@@ -240,12 +241,17 @@ Covering all possible cases would require a treatise and not a simple README
 file, but I'm confident that anyone reading this section also knows what it's
 about and can use `EnTT` from a `CMake` project without problems.
 
+Note that all `install` calls are guarded by the `ENTT_INSTALL` option to allow
+using `EnTT` as a submodule without conflicting with user logic.<br/>
+It is therefore necessary to set the option to true to take advantage of the
+installation logic provided by this library.
+
 ## Natvis support
 
 When using `CMake`, just enable the option `ENTT_INCLUDE_NATVIS` and enjoy
 it.<br/>
 Otherwise, most of the tools are covered via Natvis and all files can be found
-in the `natvis` directory, divided by module.<br/>
+in the `natvis` subdirectory, divided by module.<br/>
 If you spot errors or have suggestions, any contribution is welcome!
 
 ## Packaging Tools
@@ -403,7 +409,7 @@ know who has participated so far.
 
 # License
 
-Code and documentation Copyright (c) 2017-2024 Michele Caini.<br/>
+Code and documentation Copyright (c) 2017-2025 Michele Caini.<br/>
 Colorful logo Copyright (c) 2018-2021 Richard Caseres.
 
 Code released under
