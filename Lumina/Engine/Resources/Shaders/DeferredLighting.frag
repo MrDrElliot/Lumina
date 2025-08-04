@@ -16,8 +16,8 @@ layout(set = 1, binding = 3) uniform sampler2D uAlbedoSpec;
 
 float DistributionGGX(vec3 N, vec3 H, float roughness)
 {
-    float a = roughness*roughness;
-    float a2 = a*a;
+    float a = roughness * roughness;
+    float a2 = a * a;
     float NdotH = max(dot(N, H), 0.0);
     float NdotH2 = NdotH*NdotH;
 
@@ -31,13 +31,14 @@ float DistributionGGX(vec3 N, vec3 H, float roughness)
 float GeometrySchlickGGX(float NdotV, float roughness)
 {
     float r = (roughness + 1.0);
-    float k = (r*r) / 8.0;
+    float k = (r * r) / 8.0;
 
     float nom   = NdotV;
     float denom = NdotV * (1.0 - k) + k;
 
     return nom / denom;
 }
+
 // ----------------------------------------------------------------------------
 float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
 {
@@ -53,6 +54,9 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0)
 {
     return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }
+// ----------------------------------------------------------------------------
+
+
 // ----------------------------------------------------------------------------
 
 void main()
@@ -73,57 +77,100 @@ void main()
     F0 = mix(F0, Albedo.rgb, Metallic);
 
     vec3 Lo = vec3(0.0);
-    if (HasDirectionalLight())
+    
+    for(uint LightIndex = 0; LightIndex < GetNumLights(); ++LightIndex)
     {
-        FDirectionalLight Light = GetDirectionalLight();
+        FLight Light = GetLightAt(LightIndex);
+        
+        switch(Light.Type)
+        {
+            case LIGHT_TYPE_DIRECTIONAL:
+            {
+                vec3 L = normalize(-Light.Direction.xyz);
+                vec3 H = normalize(V + L);
+                vec3 Radiance = Light.Color.rgb * Light.Color.a;
 
-        vec3 L = normalize(-Light.Direction.xyz);
-        vec3 H = normalize(V + L);
-        vec3 Radiance = Light.Color.rgb * Light.Color.a;
+                float NDF = DistributionGGX(N, H, Roughness);
+                float G = GeometrySmith(N, V, L, Roughness);
+                vec3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);
 
-        float NDF = DistributionGGX(N, H, Roughness);
-        float G = GeometrySmith(N, V, L, Roughness);
-        vec3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);
+                vec3 Numerator = NDF * G * F;
+                float Denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
+                vec3 Spec = Numerator / Denominator;
+                vec3 kS = F;
+                vec3 kD = vec3(1.0) - kS;
+                kD *= 1.0 - Metallic;
 
-        vec3 Numerator = NDF * G * F;
-        float Denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
-        vec3 Spec = Numerator / Denominator;
-        vec3 kS = F;
-        vec3 kD = vec3(1.0) - kS;
-        kD *= 1.0 - Metallic;
+                float NdotL = max(dot(N, L), 0.0);
 
-        float NdotL = max(dot(N, L), 0.0);
+                Lo += (kD * Albedo / PI + Spec) * Radiance * NdotL;
+                break;
+            }
+            case LIGHT_TYPE_POINT:
+            {
+                vec3 L = normalize(Light.Position.xyz - Position);
+                vec3 H = normalize(V + L);
+                float Distance = length(Light.Position.xyz - Position);
+                float Attenuation = 1.0 / (Distance * Distance);
+                vec3 Radiance = Light.Color.rgb * Light.Color.a * Attenuation;
 
-        Lo += (kD * Albedo / PI + Spec) * Radiance * NdotL;
+                float NDF = DistributionGGX(N, H, Roughness);
+                float G = GeometrySmith(N, V, L, Roughness);
+                vec3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);
+
+                vec3 Numerator = NDF * G * F;
+                float Denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
+                vec3 Spec = Numerator / Denominator;
+                vec3 kS = F;
+
+                vec3 kD = vec3(1.0) - kS;
+
+                kD *= 1.0 - Metallic;
+
+                float NdotL = max(dot(N, L), 0.0);
+
+                Lo += (kD * Albedo / PI + Spec) * Radiance * NdotL;
+                break;
+            }
+            case LIGHT_TYPE_SPOT:
+            {
+                vec3 L = normalize(Light.Position.xyz - Position);
+                vec3 H = normalize(V + L);
+                float Distance = length(Light.Position.xyz - Position);
+
+                vec3 LightDir = normalize(-Light.Direction.xyz);
+
+                float CosTheta = dot(LightDir, L);
+
+                float InnerCos = Light.ConeAngles.x;
+                float OuterCos = Light.ConeAngles.y;
+
+                float Falloff = clamp((CosTheta - OuterCos) / max(InnerCos - OuterCos, 0.001), 0.0, 1.0);
+
+                float Attenuation = 1.0 / (Distance * Distance);
+                vec3 Radiance = Light.Color.rgb * Light.Color.a * Attenuation * Falloff;
+
+                float NDF = DistributionGGX(N, H, Roughness);
+                float G = GeometrySmith(N, V, L, Roughness);
+                vec3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);
+                
+                vec3 kS = F;
+                vec3 kD = vec3(1.0) - kS;
+                kD *= 1.0 - Metallic;
+
+                float NdotL = max(dot(N, L), 0.0);
+                
+                vec3 Numerator = NDF * G * F;
+                float Denominator = 4.0 * max(dot(N, V), 0.0) * NdotL + 0.0001;
+                vec3 Spec = Numerator / Denominator;
+
+
+                Lo += (kD * Albedo / PI + Spec) * Radiance * NdotL;
+                break;
+            }
+        }
     }
     
-    for(int i = 0; i < LightData.NumPointLights; ++i)
-    {
-        FPointLight Light = LightData.PointLights[i];
-        
-        vec3 L = normalize(Light.Position.xyz - Position);
-        vec3 H = normalize(V + L);
-        float Distance = length(Light.Position.xyz - Position);
-        float Attenuation = 1.0 / (Distance * Distance);
-        vec3 Radiance = Light.Color.rgb * Light.Color.a * Attenuation;
-        
-        float NDF = DistributionGGX(N, H, Roughness);
-        float G = GeometrySmith(N, V, L, Roughness);
-        vec3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);
-
-        vec3 Numerator = NDF * G * F;
-        float Denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
-        vec3 Spec = Numerator / Denominator;
-        vec3 kS = F;
-        
-        vec3 kD = vec3(1.0) - kS;
-        
-        kD *= 1.0 - Metallic;
-        
-        float NdotL = max(dot(N, L), 0.0);
-        
-        Lo += (kD * Albedo / PI + Spec) * Radiance * NdotL;
-    }
     
     vec3 Ambient = vec3(0.01) * Albedo * AO;
     vec3 Color = Ambient + Lo;

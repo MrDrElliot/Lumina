@@ -250,7 +250,7 @@ namespace Lumina
     	}
 #endif
 
-#if 1
+#if 0
     	while (!FramesInFlight.empty())
 #else
     	while (FramesInFlight.size() >= FRAMES_IN_FLIGHT)

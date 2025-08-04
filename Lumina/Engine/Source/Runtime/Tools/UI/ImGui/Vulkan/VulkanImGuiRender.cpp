@@ -15,7 +15,33 @@
 
 namespace Lumina
 {
-
+	FString VkFormatToString(VkFormat format)
+	{
+		switch (format)
+		{
+		case VK_FORMAT_B8G8R8A8_SRGB: return "VK_FORMAT_B8G8R8A8_SRGB";
+		case VK_FORMAT_R8G8B8A8_SRGB: return "VK_FORMAT_R8G8B8A8_SRGB";
+		case VK_FORMAT_B8G8R8A8_UNORM: return "VK_FORMAT_B8G8R8A8_UNORM";
+		case VK_FORMAT_R8G8B8A8_UNORM: return "VK_FORMAT_R8G8B8A8_UNORM";
+		case VK_FORMAT_R32G32B32A32_SFLOAT: return "VK_FORMAT_R32G32B32A32_SFLOAT";
+		case VK_FORMAT_R32G32B32_SFLOAT: return "VK_FORMAT_R32G32B32_SFLOAT";
+		case VK_FORMAT_R32G32_SFLOAT: return "VK_FORMAT_R32G32_SFLOAT";
+		case VK_FORMAT_R32_SFLOAT: return "VK_FORMAT_R32_SFLOAT";
+		default: return "Unknown Format";
+		}
+	}
+	
+	FString VkColorSpaceToString(VkColorSpaceKHR colorSpace)
+	{
+		switch (colorSpace)
+		{
+		case VK_COLOR_SPACE_SRGB_NONLINEAR_KHR: return "VK_COLOR_SPACE_SRGB_NONLINEAR_KHR";
+		case VK_COLOR_SPACE_DISPLAY_P3_NONLINEAR_EXT: return "VK_COLOR_SPACE_DISPLAY_P3_NONLINEAR_EXT";
+		case VK_COLOR_SPACE_BT2020_LINEAR_EXT: return "VK_COLOR_SPACE_BT2020_LINEAR_EXT";
+		default: return "Unknown ColorSpace";
+		}
+	}
+	
     void FVulkanImGuiRender::Initialize(FSubsystemManager& Manager)
     {
 		IImGuiRenderer::Initialize(Manager);
@@ -123,6 +149,176 @@ namespace Lumina
 			CommandList->EndRenderPass();
 		}
     }
+
+	void FVulkanImGuiRender::DrawRenderDebugInformationWindow(bool* bOpen, const FUpdateContext& Context)
+	{
+		if (!ImGui::Begin("Vulkan Render Information", bOpen, ImGuiWindowFlags_AlwaysAutoResize))
+		{
+			ImGui::End();
+			return;
+		}
+		VkPhysicalDevice physicalDevice = VulkanRenderContext->GetDevice()->GetPhysicalDevice();
+	
+		VkPhysicalDeviceProperties props{};
+		vkGetPhysicalDeviceProperties(physicalDevice, &props);
+	
+		VkPhysicalDeviceMemoryProperties memProps{};
+		vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProps);
+
+    	VmaAllocator Allocator = VulkanRenderContext->GetDevice()->GetAllocator()->GetAllocator();
+    	
+		ImGui::SeparatorText("Device Properties");
+	
+		if (ImGui::BeginTable("VulkanDeviceInfo", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg))
+		{
+			auto Label = [](const char* name, auto value)
+			{
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0); ImGui::TextUnformatted(name);
+				ImGui::TableSetColumnIndex(1); ImGui::Text("%s", value);
+			};
+	
+			Label("Device Name", props.deviceName);
+			Label("Device Type", 
+				props.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU ? "Discrete GPU" :
+				props.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU ? "Integrated GPU" :
+				props.deviceType == VK_PHYSICAL_DEVICE_TYPE_CPU ? "CPU" : "Other");
+	
+			Label("Vendor ID", std::format("0x{:04X}", props.vendorID).c_str());
+			Label("Device ID", std::format("0x{:04X}", props.deviceID).c_str());
+	
+			Label("API Version", std::format("{}.{}.{}", 
+				VK_VERSION_MAJOR(props.apiVersion), 
+				VK_VERSION_MINOR(props.apiVersion), 
+				VK_VERSION_PATCH(props.apiVersion)).c_str());
+	
+			Label("Driver Version", std::format("0x{:X}", props.driverVersion).c_str());
+	
+			Label("Max Image Dimension 2D", std::format("{}", props.limits.maxImageDimension2D).c_str());
+			Label("Uniform Buffer Alignment", std::format("{} bytes", props.limits.minUniformBufferOffsetAlignment).c_str());
+			Label("Storage Buffer Alignment", std::format("{} bytes", props.limits.minStorageBufferOffsetAlignment).c_str());
+	
+			ImGui::EndTable();
+		}
+
+    	
+    	ImGui::Spacing();
+    	ImGui::SeparatorText("Swapchain Info");
+
+		if (FVulkanSwapchain* Swapchain = VulkanRenderContext->GetSwapchain())
+    	{
+    		const VkSurfaceFormatKHR& surfaceFormat = Swapchain->GetSurfaceFormat();
+    		const FIntVector2D& extent = Swapchain->GetSwapchainExtent();
+    		VkPresentModeKHR presentMode = Swapchain->GetPresentMode();
+			uint32 FramesInFlight = Swapchain->GetNumFramesInFlight();
+    		uint32 imageCount = Swapchain->GetImageCount();
+    		uint32 currentImageIndex = Swapchain->GetCurrentImageIndex();
+
+    		if (ImGui::BeginTable("SwapchainTable", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg))
+    		{
+    			auto Row = [](const char* label, const std::string& value)
+    			{
+    				ImGui::TableNextRow();
+    				ImGui::TableSetColumnIndex(0); ImGui::TextUnformatted(label);
+    				ImGui::TableSetColumnIndex(1); ImGui::TextUnformatted(value.c_str());
+    			};
+
+    			Row("Resolution", std::format("{}x{}", extent.X, extent.Y));
+    			Row("Frames In Flight", std::format("{}", FramesInFlight));
+    			Row("Image Count", std::format("{}", imageCount));
+    			Row("Current Image Index", std::format("{}", currentImageIndex));
+    			Row("Present Mode", std::format("{}", presentMode == VK_PRESENT_MODE_FIFO_KHR ? "FIFO (VSync)"
+												   : presentMode == VK_PRESENT_MODE_MAILBOX_KHR ? "Mailbox (Triple Buffer)"
+												   : presentMode == VK_PRESENT_MODE_IMMEDIATE_KHR ? "Immediate (No VSync)"
+												   : "Unknown"));
+    			Row("Format", std::format("{}", VkFormatToString(surfaceFormat.format).c_str()));
+    			Row("Color Space", std::format("{}", VkColorSpaceToString(surfaceFormat.colorSpace).c_str()));
+
+    			ImGui::EndTable();
+    		}
+    	}
+    	else
+    	{
+    		ImGui::Text("No swapchain available.");
+    	}  	
+	
+		ImGui::Spacing();
+		ImGui::SeparatorText("Memory Heaps and Types");
+	
+		if (ImGui::BeginTable("VulkanMemoryInfo", 3, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable))
+		{
+			ImGui::TableSetupColumn("Heap");
+			ImGui::TableSetupColumn("Size (MB)");
+			ImGui::TableSetupColumn("Flags");
+			ImGui::TableHeadersRow();
+	
+			for (uint32_t i = 0; i < memProps.memoryHeapCount; ++i)
+			{
+				const VkMemoryHeap& heap = memProps.memoryHeaps[i];
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0); ImGui::Text("Heap %u", i);
+				ImGui::TableSetColumnIndex(1); ImGui::Text("%.2f MB", heap.size / (1024.0f * 1024.0f));
+				ImGui::TableSetColumnIndex(2); ImGui::TextUnformatted(
+					heap.flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT ? "Device Local" : "Host Visible");
+			}
+	
+			ImGui::EndTable();
+		}
+	
+
+		ImGui::Spacing();
+		ImGui::SeparatorText("Memory Usage (VMA)");
+		
+		// VMA Stats
+		VmaTotalStatistics stats{};
+		vmaCalculateStatistics(Allocator, &stats);
+		
+		ImGui::Spacing();
+
+    	if (ImGui::BeginTable("VmaHeapDetails", 10, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingStretchProp))
+    	{
+    		ImGui::TableSetupColumn("Heap");
+    		ImGui::TableSetupColumn("Blocks");
+    		ImGui::TableSetupColumn("Allocs");
+    		ImGui::TableSetupColumn("Used (MB)");
+    		ImGui::TableSetupColumn("Unused (MB)");
+    		ImGui::TableSetupColumn("Min Alloc (KB)");
+    		ImGui::TableSetupColumn("Max Alloc (MB)");
+    		ImGui::TableSetupColumn("Free Ranges");
+    		ImGui::TableSetupColumn("Min Empty (KB)");
+    		ImGui::TableSetupColumn("Max Empty (MB)");
+    		ImGui::TableHeadersRow();
+
+    		for (uint32_t i = 0; i < VK_MAX_MEMORY_HEAPS; ++i)
+    		{
+    			const VmaDetailedStatistics& heap = stats.memoryHeap[i];
+    			if (heap.statistics.blockCount == 0 && heap.statistics.allocationCount == 0)
+    				continue;
+
+    			ImGui::TableNextRow();
+    			ImGui::TableSetColumnIndex(0); ImGui::Text("Heap %u", i);
+    			ImGui::TableSetColumnIndex(1); ImGui::Text("%u", heap.statistics.blockCount);
+    			ImGui::TableSetColumnIndex(2); ImGui::Text("%u", heap.statistics.allocationCount);
+    			ImGui::TableSetColumnIndex(3); ImGui::Text("%.2f", heap.statistics.allocationBytes / (1024.0f * 1024.0f)); // used
+    			ImGui::TableSetColumnIndex(4); ImGui::Text("%.2f", (heap.statistics.blockBytes - heap.statistics.allocationBytes) / (1024.0f * 1024.0f));
+    			ImGui::TableSetColumnIndex(5); ImGui::Text(heap.allocationSizeMin == VK_WHOLE_SIZE ? "-" : "%.2f", heap.allocationSizeMin / 1024.0f);
+    			ImGui::TableSetColumnIndex(6); ImGui::Text("%.2f", heap.allocationSizeMax / (1024.0f * 1024.0f));
+    			ImGui::TableSetColumnIndex(7); ImGui::Text("%u", heap.unusedRangeCount);
+    			ImGui::TableSetColumnIndex(8); ImGui::Text(heap.unusedRangeSizeMin == VK_WHOLE_SIZE ? "-" : "%.2f", heap.unusedRangeSizeMin / 1024.0f);
+    			ImGui::TableSetColumnIndex(9); ImGui::Text("%.2f", heap.unusedRangeSizeMax / (1024.0f * 1024.0f));
+
+    		}
+    		ImGui::EndTable();
+    	}
+
+		ImGui::Spacing();
+	
+		if (ImGui::Button("Close"))
+			*bOpen = false;
+	
+		ImGui::End();
+	}
+
 
     ImTextureID FVulkanImGuiRender::GetOrCreateImTexture(FRHIImageRef Image)
     {

@@ -47,9 +47,11 @@ namespace Lumina
         FProperty* Current = LinkedProperty;
         while (Current != nullptr)
         {
+            Ar << Current->Name;
+            
             void* ValuePtr = Current->GetValuePtr<void>(Data);
             Current->Serialize(Ar, ValuePtr);
-            
+        
             Current = (FProperty*)Current->Next;
         }
     }
@@ -66,7 +68,7 @@ namespace Lumina
         DefaultObjectName += "_CDO";
         
         FConstructCObjectParams Params(this);
-        Params.Flags |= EObjectFlags::OF_DefaultObject;
+        Params.Flags |= OF_DefaultObject;
         Params.Name = FName(DefaultObjectName);
         
         if (GetPackage())

@@ -36,7 +36,7 @@ vec4 GetMaterialVec4(uint Index)
     return MaterialUniforms.Vectors[Index];
 }
 
-vec3 getNormalFromMap(vec3 FragNormal, vec3 Normal, vec2 UV, vec3 FragPos)
+vec3 GetNormalFromMap(vec3 FragNormal, vec3 Normal, vec2 UV, vec3 FragPos)
 {
     vec3 tangentNormal = Normal * 2.0 - 1.0;
 
@@ -69,18 +69,18 @@ $MATERIAL_INPUTS
 
 void main()
 {
-    SMaterialInputs mat = GetMaterialInputs();
+    SMaterialInputs Material = GetMaterialInputs();
 
     GPosition = vec4(inFragPos, 1.0);
 
-    GNormal = vec4(getNormalFromMap(inNormal, mat.Normal, inUV, inFragPos), 1.0);
+    GNormal = vec4(GetNormalFromMap(inNormal, Material.Normal, inUV, inFragPos), 1.0);
     
-    GMaterial.r = mat.AmbientOcclusion;
-    GMaterial.g = mat.Roughness;
-    GMaterial.b = mat.Metallic;
+    GMaterial.r = Material.AmbientOcclusion;
+    GMaterial.g = Material.Roughness;
+    GMaterial.b = Material.Metallic;
     GMaterial.a = 1.0;
     
-    GAlbedoSpec.rgb = mat.Diffuse.rgb;
+    GAlbedoSpec.rgb = Material.Diffuse.rgb;
     
-    GAlbedoSpec.a = mat.Specular;
+    GAlbedoSpec.a = Material.Specular;
 }

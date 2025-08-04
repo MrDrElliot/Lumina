@@ -38,7 +38,6 @@ namespace Lumina
         {
             vkCmdBindVertexBuffers(CmdBuffer, 0, NumBindings, Buffers, Offsets);
 
-            // Efficiently copy PendingStreams to LastPendingStreams
             std::memcpy(LastPendingStreams, PendingStreams, sizeof(PendingStreams));
         }
     }

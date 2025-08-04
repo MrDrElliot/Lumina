@@ -8,7 +8,7 @@
 #include "Renderer/RenderResource.h"
 #include "Renderer/RHIFwd.h"
 
-#define MAX_LIGHTS 10000
+#define MAX_LIGHTS 1024
 #define MAX_MODELS 10000
 
 namespace Lumina
@@ -44,26 +44,26 @@ namespace Lumina
         glm::mat4 View =        {};
         glm::mat4 Projection =  {};
     };
+    
+    constexpr uint32 LIGHT_TYPE_DIRECTIONAL = 0;
+    constexpr uint32 LIGHT_TYPE_POINT       = 1;
+    constexpr uint32 LIGHT_TYPE_SPOT        = 2;
 
-    struct FPointLight
+    struct FLight
     {
-        glm::vec4 Position =   glm::vec4(0.0f);
-        glm::vec4 Color =      glm::vec4(0.0f);
+        glm::vec4 Position      = glm::vec4(0.0f);
+        glm::vec4 Direction     = glm::vec4(0.0f);
+        glm::vec4 Color         = glm::vec4(0.0f);
+        glm::vec2 Angle         = glm::vec2(10.0f);
+        float Radius            = 10.0f;
+        uint32 Type             = 0;
     };
-
-    struct FDirectionalLight
-    {
-        glm::vec4 Direction = glm::vec4(0.0f, -1.0f, 0.0f, 1.0f);
-        glm::vec4 Color = glm::vec4(1.0f);
-    };
-
+    
     struct FSceneLightData
     {
-        uint32 NumPointLights = 0;
-        bool bHasDirectionalLight = false;
-        uint32 padding[2];
-        FDirectionalLight DirectionalLight;
-        FPointLight PointLights[MAX_LIGHTS];
+        uint32 NumLights = 0;
+        uint32 Padding[3] = {};
+        FLight Lights[MAX_LIGHTS];
     };
 
     struct FModelData

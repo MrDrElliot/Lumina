@@ -1,4 +1,6 @@
 
+#define MAX_LIGHTS 1024
+
 struct FCameraView
 {
     vec4 CameraPosition;    // Camera Position
@@ -6,16 +8,18 @@ struct FCameraView
     mat4 CameraProjection;  // Projection matrix
 };
 
-struct FPointLight
-{
-    vec4 Position;
-    vec4 Color;
-};
+const uint LIGHT_TYPE_DIRECTIONAL = 0;
+const uint LIGHT_TYPE_POINT       = 1;
+const uint LIGHT_TYPE_SPOT        = 2;
 
-struct FDirectionalLight
+struct FLight
 {
-    vec4 Direction;
-    vec4 Color;
+    vec4 Position;      // xyz: position, w: range or falloff scale
+    vec4 Direction;     // xyz: direction (normalized), w: inner cone cos angle
+    vec4 Color;         // rgb: color * intensity, a: unused or padding
+    vec2 ConeAngles;    // x: cos(inner cone), y: cos(outer cone)
+    float Radius;       // Radius.
+    uint Type;          // Type of the light
 };
 
 layout(set = 0, binding = 0) readonly uniform SceneGlobals
@@ -30,13 +34,15 @@ layout(set = 0, binding = 1) readonly buffer FModelData
     mat4 ModelMatrix[]; // Raw flat buffer of scatterd models (not sorted).
 } ModelData;
 
+
 layout(set = 0, binding = 2) readonly buffer FLightData
 {
-    uint                NumPointLights;
-    bool                bHasDirectionalLight;
-    FDirectionalLight   DirectionalLight;
-    FPointLight         PointLights[];
+    uint    NumLights;
+    FLight  Lights[MAX_LIGHTS];
 } LightData;
+
+
+
 
 float GetTime()
 {
@@ -94,13 +100,12 @@ float SineWave(float speed, float amplitude)
     return amplitude * sin(float(GetTime()) * speed);
 }
 
-bool HasDirectionalLight()
+FLight GetLightAt(uint Index)
 {
-    return LightData.bHasDirectionalLight;
+    return LightData.Lights[Index];
 }
 
-FDirectionalLight GetDirectionalLight()
+uint GetNumLights()
 {
-    return LightData.DirectionalLight;
+    return LightData.NumLights;
 }
-

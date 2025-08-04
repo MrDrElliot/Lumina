@@ -2,19 +2,6 @@
 
 namespace Lumina
 {
-    inline std::string LogLevelToString(spdlog::level::level_enum level)
-    {
-        switch (level)
-        {
-            case spdlog::level::level_enum::trace: return "TRACE";
-            case spdlog::level::level_enum::debug: return "DEBUG";
-            case spdlog::level::level_enum::info: return "INFO";
-            case spdlog::level::level_enum::warn: return "WARN";
-            case spdlog::level::level_enum::err: return "ERROR";
-            default: return "UNKNOWN";
-        }
-    }
-    
     void FConsoleLogEditorTool::OnInitialize()
     {
         CreateToolWindow("Console", [this] (const FUpdateContext& UpdateContext, bool bIsFocused)
@@ -125,12 +112,11 @@ namespace Lumina
                     const char* LevelLabel = "";
                     switch (Message.Level)
                     {
-                    case spdlog::level::level_enum::err:   Color = ImVec4(1.0f, 0.2f, 0.2f, 1.0f); LevelLabel = "Error"; break;
-                    case spdlog::level::level_enum::warn:  Color = ImVec4(1.0f, 0.6f, 0.0f, 1.0f); LevelLabel = "Warn";  break;
-                    case spdlog::level::level_enum::info:  Color = ImVec4(0.9f, 0.9f, 0.9f, 1.0f); LevelLabel = "Info";  break;
-                    case spdlog::level::level_enum::debug: Color = ImVec4(0.4f, 0.8f, 1.0f, 1.0f); LevelLabel = "Debug"; break;
-                    case spdlog::level::level_enum::trace: Color = ImVec4(0.5f, 0.5f, 0.5f, 1.0f); LevelLabel = "Trace"; break;
-                    default:                                Color = ImVec4(0.7f, 0.7f, 0.7f, 1.0f); LevelLabel = "Other"; break;
+                        case spdlog::level::level_enum::err:   Color = ImVec4(1.0f, 0.2f, 0.2f, 1.0f); LevelLabel = LE_ICON_INFORMATION " Error"; break;
+                        case spdlog::level::level_enum::warn:  Color = ImVec4(1.0f, 0.6f, 0.0f, 1.0f); LevelLabel = LE_ICON_INFORMATION " Warn";  break;
+                        case spdlog::level::level_enum::info:  Color = ImVec4(0.9f, 0.9f, 0.9f, 1.0f); LevelLabel = LE_ICON_INFORMATION " Info";  break;
+                        case spdlog::level::level_enum::debug: Color = ImVec4(0.4f, 0.8f, 1.0f, 1.0f); LevelLabel = LE_ICON_INFORMATION " Debug"; break;
+                        case spdlog::level::level_enum::trace: Color = ImVec4(0.5f, 0.5f, 0.5f, 1.0f); LevelLabel = LE_ICON_INFORMATION " Trace"; break;
                     }
                         
                     ImGui::TableNextRow();

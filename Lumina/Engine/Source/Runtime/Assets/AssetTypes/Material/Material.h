@@ -42,7 +42,8 @@ namespace Lumina
         bool IsReadyForRender() const override;
         FRHIBindingSetRef GetBindingSet() const override;
         FRHIBindingLayoutRef GetBindingLayout() const override;
-
+        FRHIVertexShaderRef GetVertexShader() const override;
+        FRHIPixelShaderRef GetPixelShader() const override;
         
         LUM_PROPERTY(Editable)
         EMaterialType MaterialType;

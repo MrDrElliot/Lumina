@@ -26,10 +26,15 @@ namespace Lumina
 
         void RecreateSwapchain(const FIntVector2D& Extent);
         void SetPresentMode(VkPresentModeKHR NewMode);
-        
-        FORCEINLINE VkPresentModeKHR GetPresentMode() const { return CurrentPresentMode; }
-        FORCEINLINE VkFormat GetSwapchainFormat() const { return Format; }
-        FORCEINLINE const FIntVector2D& GetSwapchainExtent() const { return SwapchainExtent; }
+
+        const VkSurfaceFormatKHR& GetSurfaceFormat() const { return SurfaceFormat; }
+
+        uint32 GetNumFramesInFlight() const { return FramesInFlight.size(); }
+        uint32 GetCurrentImageIndex() const { return CurrentImageIndex; }
+        uint32 GetImageCount() const { return SwapchainImages.size(); }
+        VkPresentModeKHR GetPresentMode() const { return CurrentPresentMode; }
+        VkFormat GetSwapchainFormat() const { return Format; }
+        const FIntVector2D& GetSwapchainExtent() const { return SwapchainExtent; }
         
         TRefCountPtr<FVulkanImage> GetCurrentImage() const;
 

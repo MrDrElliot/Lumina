@@ -223,6 +223,11 @@ namespace Lumina
             ImGui::ShowDemoWindow(&bDearImGuiDemoWindowOpen);
         }
 
+        if (bShowRenderDebug)
+        {
+            UpdateContext.GetSubsystem<FRenderManager>()->GetImGuiRenderer()->DrawRenderDebugInformationWindow(&bShowRenderDebug, UpdateContext);
+        }
+
         if (bShowObjectDebug)
         {
             ImGui::SetNextWindowSize({ 700.0f, 600.0f }, ImGuiCond_FirstUseEver);
@@ -891,11 +896,14 @@ namespace Lumina
         {
             ImGui::MenuItem("ImGui Demo Window", nullptr, &bDearImGuiDemoWindowOpen, !bDearImGuiDemoWindowOpen);
 
+            ImGui::MenuItem("Renderer Info", nullptr, &bShowRenderDebug, !bShowRenderDebug);
+            
             bool bVSyncEnabled = UpdateContext.GetSubsystem<FRenderManager>()->GetRenderContext()->IsVSyncEnabled();
             if (ImGui::MenuItem("Enable V-Sync", nullptr, bVSyncEnabled))
             {
                 UpdateContext.GetSubsystem<FRenderManager>()->GetRenderContext()->SetVSyncEnabled(!bVSyncEnabled);
             }
+            
             ImGui::MenuItem("CObject List", nullptr, &bShowObjectDebug, !bShowObjectDebug);
             if (ImGui::MenuItem("Profiler", nullptr))
             {

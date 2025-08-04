@@ -47,12 +47,12 @@ namespace Lumina
             Transform.Rotation = glm::quat(glm::radians(EulerRotation));
         }
 
-        FORCEINLINE void SetScale(const glm::vec3& InScale) 
+        void SetScale(const glm::vec3& InScale) 
         { 
             Transform.Scale = InScale; 
         }
 
-        FORCEINLINE glm::vec3 GetRotationAsEuler() const 
+        glm::vec3 GetRotationAsEuler() const 
         {
             return glm::degrees(glm::eulerAngles(Transform.Rotation));
         }

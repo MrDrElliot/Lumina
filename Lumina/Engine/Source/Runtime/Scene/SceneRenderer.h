@@ -104,10 +104,12 @@ namespace Lumina
         FGBuffer                            GBuffer;
 
         TVector<FRenderPass*>               RenderPasses;
-        
+
+        FRHIImageRef                        DepthMap;
         FRHIImageRef                        DepthAttachment;
         FRHIImageRef                        CubeMap;
         FRHIImageRef                        IrradianceCube;
+        FRHIImageRef                        ShadowCubeMap;
 
         ESceneRenderGBuffer                 GBufferDebugMode = ESceneRenderGBuffer::RenderTarget;
 

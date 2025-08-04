@@ -25,6 +25,8 @@ namespace Lumina
         
         FRHIBindingSetRef GetBindingSet() const override;
         FRHIBindingLayoutRef GetBindingLayout() const override;
+        FRHIVertexShaderRef GetVertexShader() const override;
+        FRHIPixelShaderRef GetPixelShader() const override;
 
         void PostLoad() override;
 

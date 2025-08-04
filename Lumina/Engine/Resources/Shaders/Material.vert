@@ -25,19 +25,19 @@ void main()
     mat4 model = GetModelMatrix(gl_InstanceIndex);
     inModelMatrix = model;
     
-    vec4 worldPos = model * vec4(inPosition.xyz, 1.0f);
+    vec4 WorldPos = model * vec4(inPosition.xyz, 1.0f);
 
-    mat3 normalMatrix = transpose(inverse(mat3(model)));
-    vec3 worldNormal = normalMatrix * inNormal.xyz;
+    mat3 NormalMatrix = transpose(inverse(mat3(model)));
+    vec3 worldNormal = NormalMatrix * normalize(inNormal.xyz);
     
     mat4 view = GetCameraView();
     mat4 projection = GetCameraProjection();
 
-    gl_Position = projection * view * worldPos;
+    gl_Position = projection * view * WorldPos;
 
     outFragColor = inColor;
     outNormal = worldNormal;
-    outFragPos = worldPos.xyz;
+    outFragPos = WorldPos.xyz;
     outUV = inUV;
     outUV.y = 1.0 - inUV.y;
 }

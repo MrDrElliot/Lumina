@@ -91,6 +91,7 @@ namespace Lumina
         FEditorModalManager                             ModalManager; 
         bool                                            bDearImGuiDemoWindowOpen = false;
         bool                                            bShowObjectDebug = false;
+        bool                                            bShowRenderDebug = false;
 
         TQueue<FEditorTool*>                            ToolsPendingAdd;
         TQueue<FEditorTool*>                            ToolsPendingDestroy;

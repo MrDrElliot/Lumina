@@ -30,6 +30,8 @@ namespace Lumina
 
         virtual ImTextureID GetOrCreateImTexture(FRHIImageRef Image) = 0;
 
+        virtual void DrawRenderDebugInformationWindow(bool* bOpen, const FUpdateContext& Context) = 0;
+
         static TextEditor& GetTextEditor()
         {
             static TextEditor TextEdit;

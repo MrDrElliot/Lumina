@@ -33,7 +33,6 @@ namespace Lumina
         : Scene(InScene)
         , SceneRenderStats()
         , SceneGlobalData()
-        , LightData()
     {
         SceneViewport = GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext()->CreateViewport(Windowing::GetPrimaryWindowHandle()->GetExtent());
     }
@@ -173,6 +172,12 @@ namespace Lumina
             CommandList->EndRenderPass();
         });
 
+        AddRenderPass("Shadow Pass", [this]
+        {
+
+            
+            
+        });
 
         AddRenderPass("Lighting Pass", [this] ()
         {
@@ -372,34 +377,33 @@ namespace Lumina
                 
             CommandList->SetGraphicsPipeline(Pipeline);
             
-            for (uint32 CurrentDraw = 0; CurrentDraw < LightData.NumPointLights; ++CurrentDraw)
+            for (uint32 i = 0; i < LightData.NumLights; ++i)
             {
-                FPointLight Light = LightData.PointLights[CurrentDraw];
+                FLight Light = LightData.Lights[i];
             
                 struct FPC
                 {
                     glm::mat4 ModelMatrix;
                     glm::vec4 Color;
                 } PC;
-                
+            
                 FTransform Transform;
                 Transform.Location = Light.Position;
                 PC.ModelMatrix = Transform.GetMatrix();
                 PC.ModelMatrix = glm::scale(PC.ModelMatrix, glm::vec3(0.15f));
             
                 PC.Color = Light.Color;
-                
+            
                 float SizeY = (float)GBuffer.AlbedoSpec->GetSizeY();
                 float SizeX = (float)GBuffer.AlbedoSpec->GetSizeX();
                 CommandList->SetViewport(0.0f, 0.0f, 0.0f, SizeX, SizeY, 1.0f);
                 CommandList->SetScissorRect(0, 0, SizeX, SizeY);
-                
+            
                 CommandList->SetPushConstants(&PC, sizeof(FPC));
 
                 SceneRenderStats.NumDrawCalls++;
                 SceneRenderStats.NumVertices += 36;
                 CommandList->Draw(36, 1, 0, 0);
-                
             }
             
             CommandList->EndRenderPass();
@@ -497,9 +501,7 @@ namespace Lumina
             StaticMeshRenders.clear();
             IndirectDrawArguments.clear();
             ModelData.ModelMatrices.clear();
-
-            if (WorkSize == 0)
-                return;
+            LightData.NumLights = 0;
             
             {
                 LUMINA_PROFILE_SECTION("Process Mesh Components");
@@ -659,35 +661,77 @@ namespace Lumina
                 }
             }
 
-            LUMINA_PROFILE_SECTION("Write Buffers");
-            CommandList->WriteBuffer(ModelDataBuffer, ModelData.ModelMatrices.data(), 0, ModelData.ModelMatrices.size() * sizeof(glm::mat4));
-            CommandList->WriteBuffer(IndirectDrawBuffer, IndirectDrawArguments.data(), 0, IndirectDrawArguments.size() * sizeof(FDrawIndexedIndirectArguments));
+            if (WorkSize != 0)
+            {
+                LUMINA_PROFILE_SECTION("Write Buffers");
+                CommandList->WriteBuffer(ModelDataBuffer, ModelData.ModelMatrices.data(), 0, ModelData.ModelMatrices.size() * sizeof(glm::mat4));
+                CommandList->WriteBuffer(IndirectDrawBuffer, IndirectDrawArguments.data(), 0, IndirectDrawArguments.size() * sizeof(FDrawIndexedIndirectArguments));
+            }
         }
 
+
+        //========================================================================================================================
+        
         {
             auto Group = Scene->GetMutableEntityRegistry().group<SPointLightComponent>(entt::get<STransformComponent>);
-            uint32 Index = 0;
+
             Group.each([&](auto& PointLightComponent, auto& TransformComponent)
             {
-                FPointLight Light;
+                FLight Light;
+                Light.Type = LIGHT_TYPE_POINT;
+                
                 Light.Color = glm::vec4(PointLightComponent.LightColor, PointLightComponent.Intensity);
+                Light.Radius = PointLightComponent.Attenuation;
                 Light.Position = glm::vec4(TransformComponent.GetLocation(), 1.0f);
-                LightData.PointLights[Index] = Memory::Move(Light);
-
-                Index++;
+                
+                LightData.Lights[LightData.NumLights++] = Memory::Move(Light);
             });
-            LightData.NumPointLights = Group.size();
         }
 
+        
         {
-            auto Group = Scene->GetMutableEntityRegistry().group<SDirectionalLightComponent>();
-            Group.each([&](auto& DirectionalLightComponent)
+            auto Group = Scene->GetMutableEntityRegistry().group<SSpotLightComponent>(entt::get<STransformComponent>);
+
+            Group.each([&](auto& SpotLightComponent, auto& TransformComponent)
             {
-                FDirectionalLight DirectionalLight;
+                FLight SpotLight;
+                SpotLight.Type = LIGHT_TYPE_SPOT;
+                
+                SpotLight.Position = glm::vec4(TransformComponent.GetLocation(), 1.0f);
+
+                glm::vec3 Forward = TransformComponent.GetRotation() * glm::vec3(0.0f, 0.0f, -1.0f);
+                SpotLight.Direction = glm::vec4(glm::normalize(Forward), 0.0f);
+                
+                SpotLight.Color = glm::vec4(SpotLightComponent.LightColor, SpotLightComponent.Intensity);
+
+                float InnerDegrees = SpotLightComponent.InnerConeAngle;
+                float OuterDegrees = SpotLightComponent.OuterConeAngle;
+
+                float InnerCos = glm::cos(glm::radians(InnerDegrees));
+                float OuterCos = glm::cos(glm::radians(OuterDegrees));
+                
+                SpotLight.Angle = glm::vec2(InnerCos, OuterCos);
+
+                SpotLight.Radius = SpotLightComponent.Attenuation;
+
+                LightData.Lights[LightData.NumLights++] = SpotLight;
+            });
+
+        }
+        
+
+        {
+            auto Group = Scene->GetMutableEntityRegistry().group<SDirectionalLightComponent>(entt::get<STransformComponent>);
+            Group.each([&](auto& DirectionalLightComponent, auto& TransformComponent)
+            {
+                FLight DirectionalLight;
+                DirectionalLight.Type = LIGHT_TYPE_DIRECTIONAL;
+                
                 DirectionalLight.Color = glm::vec4(DirectionalLightComponent.Color, DirectionalLightComponent.Intensity);
-                DirectionalLight.Direction = glm::vec4(DirectionalLightComponent.Direction, 1.0f);
-                LightData.DirectionalLight = Memory::Move(DirectionalLight);
-                LightData.bHasDirectionalLight = true;
+                glm::vec3 Forward = TransformComponent.GetRotation() * glm::vec3(0.0f, 0.0f, -1.0f);
+                DirectionalLight.Direction = glm::vec4(glm::normalize(Forward), 0.0f);
+                
+                LightData.Lights[LightData.NumLights++] = Memory::Move(DirectionalLight);
             });
         }
 
@@ -1131,49 +1175,86 @@ namespace Lumina
 
 
         //==================================================================================================
-        
-        FRHIImageDesc SkyCubeMapDesc;
-        SkyCubeMapDesc.Extent = {2048, 2048};
-        SkyCubeMapDesc.Flags.SetFlag(EImageCreateFlags::CubeCompatible);
-        SkyCubeMapDesc.Flags.SetFlag(EImageCreateFlags::ShaderResource);
-        SkyCubeMapDesc.Format = EFormat::RGBA8_UNORM;
-        SkyCubeMapDesc.Dimension = EImageDimension::Texture2D;
-        SkyCubeMapDesc.ArraySize = 6;
-        SkyCubeMapDesc.DebugName = "Skybox CubeMap";
 
-        CubeMap = RenderContext->CreateImage(SkyCubeMapDesc);
-        RenderContext->SetObjectName(CubeMap, "CubeMap", EAPIResourceType::Image);
-
-        static const char* CubeFaceFiles[6] = {
-            "right.jpg", "left.jpg", "top.jpg", "bottom.jpg", "front.jpg", "back.jpg"
-        };
-
-        ICommandList* CommandList = RenderContext->CreateCommandList(FCommandListInfo::Transfer());
-        CommandList->Open();
-
-        CommandList->BeginTrackingImageState(CubeMap, AllSubresources, EResourceStates::Common);
-        
-        for (int i = 0; i < 6; ++i)
         {
-            FString ResourceDirectory = Paths::GetEngineResourceDirectory();
-            ResourceDirectory += FString("/Textures/CubeMaps/Mountains/") + CubeFaceFiles[i];
+            FRHIImageDesc SkyCubeMapDesc;
+            SkyCubeMapDesc.Extent = {2048, 2048};
+            SkyCubeMapDesc.Flags.SetFlag(EImageCreateFlags::CubeCompatible);
+            SkyCubeMapDesc.Flags.SetFlag(EImageCreateFlags::ShaderResource);
+            SkyCubeMapDesc.Format = EFormat::RGBA8_UNORM;
+            SkyCubeMapDesc.Dimension = EImageDimension::Texture2D;
+            SkyCubeMapDesc.ArraySize = 6;
+            SkyCubeMapDesc.DebugName = "Skybox CubeMap";
+
+            CubeMap = RenderContext->CreateImage(SkyCubeMapDesc);
+            RenderContext->SetObjectName(CubeMap, "CubeMap", EAPIResourceType::Image);
+
+            static const char* CubeFaceFiles[6] = {
+                "right.jpg", "left.jpg", "top.jpg", "bottom.jpg", "front.jpg", "back.jpg"
+            };
+
+            ICommandList* CommandList = RenderContext->CreateCommandList(FCommandListInfo::Transfer());
+            CommandList->Open();
+
+            CommandList->BeginTrackingImageState(CubeMap, AllSubresources, EResourceStates::Common);
+        
+            for (int i = 0; i < 6; ++i)
+            {
+                FString ResourceDirectory = Paths::GetEngineResourceDirectory();
+                ResourceDirectory += FString("/Textures/CubeMaps/Mountains/") + CubeFaceFiles[i];
             
-            TVector<uint8> Pixels;
-            FIntVector2D ImageExtent = Import::Textures::ImportTexture(Pixels, ResourceDirectory, false);
+                TVector<uint8> Pixels;
+                FIntVector2D ImageExtent = Import::Textures::ImportTexture(Pixels, ResourceDirectory, false);
             
-            const uint32 width = ImageExtent.X;
-            const uint32 height = ImageExtent.Y;
-            const SIZE_T rowPitch = width * 4;  // 4 bytes per pixel (RGBA8)
-            const SIZE_T depthPitch = rowPitch * height;
+                const uint32 width = ImageExtent.X;
+                const uint32 height = ImageExtent.Y;
+                const SIZE_T rowPitch = width * 4;  // 4 bytes per pixel (RGBA8)
+                const SIZE_T depthPitch = rowPitch * height;
             
-            CommandList->WriteImage(CubeMap, i, 0, Pixels.data(), rowPitch, depthPitch);
+                CommandList->WriteImage(CubeMap, i, 0, Pixels.data(), rowPitch, depthPitch);
+            }
+
+            CommandList->SetPermanentImageState(CubeMap, EResourceStates::ShaderResource);
+            CommandList->CommitBarriers();
+        
+            CommandList->Close();
+            RenderContext->ExecuteCommandList(CommandList, ECommandQueue::Transfer);
         }
 
-        CommandList->SetPermanentImageState(CubeMap, EResourceStates::ShaderResource);
-        CommandList->CommitBarriers();
+        //==================================================================================================
+
+        {
+            FRHIImageDesc DepthMapDesc;
+            DepthMapDesc.Extent = Extent;
+            DepthMapDesc.Flags.SetMultipleFlags(EImageCreateFlags::DepthAttachment, EImageCreateFlags::ShaderResource);
+            DepthMapDesc.Format = EFormat::D32;
+            DepthMapDesc.InitialState = EResourceStates::DepthWrite;
+            DepthMapDesc.bKeepInitialState = true;
+            DepthMapDesc.Dimension = EImageDimension::Texture2D;
+            DepthMapDesc.DebugName = "Depth Map";
+
+            DepthMap = RenderContext->CreateImage(DepthMapDesc);
+            RenderContext->SetObjectName(DepthMap, "Depth Map", EAPIResourceType::Image);
+        }
+
+        //==================================================================================================
         
-        CommandList->Close();
-    	RenderContext->ExecuteCommandList(CommandList, ECommandQueue::Transfer);
+        {
+            FRHIImageDesc CubeMapDesc;
+            CubeMapDesc.Extent = {1024, 1024};
+            CubeMapDesc.Flags.SetFlag(EImageCreateFlags::CubeCompatible);
+            CubeMapDesc.Flags.SetFlag(EImageCreateFlags::ShaderResource);
+            CubeMapDesc.Format = EFormat::RGBA8_UNORM;
+            CubeMapDesc.bKeepInitialState = true;
+            CubeMapDesc.InitialState = EResourceStates::ShaderResource;
+            CubeMapDesc.Dimension = EImageDimension::Texture2D;
+            CubeMapDesc.ArraySize = 6;
+            CubeMapDesc.DebugName = "Shadow Cubemap";
+
+            ShadowCubeMap = RenderContext->CreateImage(CubeMapDesc);
+            RenderContext->SetObjectName(ShadowCubeMap, CubeMapDesc.DebugName.c_str(), EAPIResourceType::Image);
+        }
+        
     }
     
 }

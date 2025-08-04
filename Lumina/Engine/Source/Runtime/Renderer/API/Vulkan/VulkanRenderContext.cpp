@@ -379,6 +379,9 @@ namespace Lumina
 
         
         CreateDevice(InstBuilder.value());
+
+        
+        LOG_TRACE("Vulkan Render Context - {}", GetDevice()->GetPhysicalDeviceProperties().deviceName);
         
         DebugUtils.vkCmdDebugMarkerBeginEXT = (PFN_vkCmdDebugMarkerBeginEXT)vkGetDeviceProcAddr(GetDevice()->GetDevice(), "vkCmdDebugMarkerBeginEXT");
         DebugUtils.vkCmdDebugMarkerEndEXT = (PFN_vkCmdDebugMarkerEndEXT)vkGetDeviceProcAddr(GetDevice()->GetDevice(), "vkCmdDebugMarkerEndEXT");
