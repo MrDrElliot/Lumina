@@ -36,6 +36,7 @@ namespace Lumina
         Position,
         Normals,
         Material,
+        Depth,
     };
     
     struct FCameraData

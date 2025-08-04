@@ -1246,23 +1246,29 @@ namespace Lumina
 
         
         TVector<VkPipelineShaderStageCreateInfo> ShaderStages;
-        VkPipelineShaderStageCreateInfo VertexStage = {};
-        VertexStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-        VertexStage.module = InDesc.VS->GetAPIResource<VkShaderModule>();
-        VertexStage.pName = "main";
-        VertexStage.pNext = nullptr;
-        VertexStage.stage = VK_SHADER_STAGE_VERTEX_BIT;
-        VertexStage.pSpecializationInfo = nullptr;
-        ShaderStages.push_back(VertexStage);
+        if (InDesc.VS)
+        {
+            VkPipelineShaderStageCreateInfo VertexStage = {};
+            VertexStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+            VertexStage.module = InDesc.VS->GetAPIResource<VkShaderModule>();
+            VertexStage.pName = "main";
+            VertexStage.pNext = nullptr;
+            VertexStage.stage = VK_SHADER_STAGE_VERTEX_BIT;
+            VertexStage.pSpecializationInfo = nullptr;
+            ShaderStages.push_back(VertexStage);
+        }
 
-        VkPipelineShaderStageCreateInfo FragmentStage = {};
-        FragmentStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-        FragmentStage.module = InDesc.PS->GetAPIResource<VkShaderModule>();
-        FragmentStage.pName = "main";
-        FragmentStage.pNext = nullptr;
-        FragmentStage.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-        FragmentStage.pSpecializationInfo = nullptr;
-        ShaderStages.push_back(FragmentStage);
+        if (InDesc.PS)
+        {
+            VkPipelineShaderStageCreateInfo FragmentStage = {};
+            FragmentStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+            FragmentStage.module = InDesc.PS->GetAPIResource<VkShaderModule>();
+            FragmentStage.pName = "main";
+            FragmentStage.pNext = nullptr;
+            FragmentStage.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+            FragmentStage.pSpecializationInfo = nullptr;
+            ShaderStages.push_back(FragmentStage);
+        }
 
         VkPipelineDynamicStateCreateInfo DynamicState = {};
         DynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;

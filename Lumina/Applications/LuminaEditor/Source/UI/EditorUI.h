@@ -95,8 +95,9 @@ namespace Lumina
 
         TQueue<FEditorTool*>                            ToolsPendingAdd;
         TQueue<FEditorTool*>                            ToolsPendingDestroy;
-    public:
 
+    public:
+        
         static FRHIImageRef                             FolderIcon;
         static FRHIImageRef                             MaterialIcon;
         static FRHIImageRef                             CorruptIcon;

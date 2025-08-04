@@ -6,3 +6,8 @@ namespace Lumina::ImGuiX::Notifications
     void Shutdown();
     void Render();
 }
+
+namespace Lumina::ImGuiX::MessageBoxes
+{
+    void Render();
+}

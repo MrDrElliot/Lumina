@@ -285,6 +285,12 @@ namespace Lumina
             RenderArea = Area;
             return *this;
         }
+
+        FRenderPassBeginInfo& SetDebugName(const FString& Name)
+        {
+            DebugName = Name;
+            return *this;
+        }
     };
     
     struct FDescriptorBinding

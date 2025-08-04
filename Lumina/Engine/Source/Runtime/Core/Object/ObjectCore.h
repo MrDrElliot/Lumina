@@ -93,7 +93,7 @@ namespace Lumina
         return T::StaticClass()->template GetDefaultObject<T>();
     }
     
-    enum class EPropertyFlags : uint64
+    enum class EPropertyFlags : uint8
     {
         None = 0,
         PF_Const,
@@ -105,7 +105,7 @@ namespace Lumina
     ENUM_CLASS_FLAGS(EPropertyFlags);
 
     /** This must reflect EPropertyTypeFlags found in ReflectedType.h */
-    enum class EPropertyTypeFlags : uint64
+    enum class EPropertyTypeFlags : uint8
     {
         None = 0,
 

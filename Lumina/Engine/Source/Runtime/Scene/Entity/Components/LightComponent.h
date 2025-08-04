@@ -36,10 +36,10 @@ namespace Lumina
         float Intensity = 10.0f;
 
         LUM_PROPERTY(Editable, Category = "Light")
-        float InnerConeAngle = glm::radians(20.0f);
+        float InnerConeAngle = 20.0f;
 
         LUM_PROPERTY(Editable, Category = "Light")
-        float OuterConeAngle = glm::radians(30.0f);
+        float OuterConeAngle = 30.0f;
 
         LUM_PROPERTY(Editable, Category = "Light")
         float Attenuation = 1.0f;

@@ -1,9 +1,8 @@
 #pragma once
-#include "Lumina.h"
+
+#include "Containers/Name.h"
 #include "Containers/String.h"
-#include "Core/LuminaMacros.h"
 #include "Core/Assertions/Assert.h"
-#include "Core/Reflection/Type/Metadata/PropertyMetadata.h"
 #include "Core/Variant/Variant.h"
 #include "Platform/GenericPlatform.h"
 
@@ -13,18 +12,6 @@ namespace Lumina
     class CStruct;
     class FProperty;
     
-
-    
-    enum class EFieldFlags : uint32
-    {
-        None      = 0,
-        Editable  = 1 << 0,
-        Nullable  = 1 << 1,
-        Default   = 1 << 2,
-    };
-
-    ENUM_CLASS_FLAGS(EFieldFlags)
-
     struct FFieldOwner
     {
         TVariant<CStruct*, FField*>     Variant;
@@ -46,8 +33,13 @@ namespace Lumina
         // Mirrored in CStruct.
         LUMINA_API virtual void AddProperty(FProperty* Property) { LUMINA_NO_ENTRY(); }
 
+        const FName& GetPropertyName() const { return Name; }
+        const FString& GetPropertyDisplayName() const { return DisplayName; }
+        
         
         FName               Name;
+        FString             DisplayName;
+        
         uint32              Offset;
         FField*             Next;
         FFieldOwner         Owner;

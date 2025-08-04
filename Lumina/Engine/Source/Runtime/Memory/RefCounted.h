@@ -26,30 +26,33 @@ namespace Lumina
 	{
 	public:
 
-		FRefCounted() :RefCount(0) {}
+		FRefCounted() = default;
 		virtual ~FRefCounted() { Assert(RefCount == 0) }
 		FRefCounted(const FRefCounted&) = delete;
 		FRefCounted& operator = (const FRefCounted&) = delete;
 
-		FORCEINLINE void AddRef() const
+		uint32 AddRef() const
 		{
 			/** Add 1 to the reference count */
-			RefCount.fetch_add(1, eastl::memory_order_relaxed);
+			return RefCount.fetch_add(1, eastl::memory_order_relaxed);
 		}
 
-		FORCEINLINE void Release() const
+		uint32 Release() const
 		{
+			int Value = RefCount.fetch_sub(1, eastl::memory_order_acq_rel);
 			/** Returns the previous value (if previous value is 1, our new value is 0). */
-			if(RefCount.fetch_sub(1, eastl::memory_order_acq_rel) == 1)
+			if(Value == 1)
 			{
 				eastl::atomic_thread_fence(eastl::memory_order_acquire);
 				Memory::Delete(this);
 			}
+
+			return Value;
 		}
 
-		FORCEINLINE uint32 GetRefCount() const { return RefCount; }
+		uint32 GetRefCount() const { return RefCount; }
 
-		FORCEINLINE bool IsValid() const { return RefCount > 0; }
+		bool IsValid() const { return RefCount > 0; }
 
 	private:
 
@@ -68,7 +71,7 @@ namespace Lumina
 	
 	public:
 
-		FORCEINLINE TRefCountPtr():
+		TRefCountPtr():
 			Reference(nullptr)
 		{ }
 
@@ -101,7 +104,7 @@ namespace Lumina
 			}
 		}
 
-		FORCEINLINE TRefCountPtr(TRefCountPtr&& Move) noexcept
+		TRefCountPtr(TRefCountPtr&& Move) noexcept
 		{
 			Reference = Move.Reference;
 			Move.Reference = nullptr;
@@ -156,7 +159,7 @@ namespace Lumina
 		}
 
 		template<typename T>
-		const TRefCountPtr<T> As() const
+		TRefCountPtr<T> As() const
 		{
 			return TRefCountPtr<T>(static_cast<T*>(Reference));
 		}
@@ -263,12 +266,12 @@ namespace Lumina
 		friend class TRefCountPtr;
 
 	public:
-		FORCEINLINE bool operator==(const TRefCountPtr& B) const
+		bool operator==(const TRefCountPtr& B) const
 		{
 			return GetReference() == B.GetReference();
 		}
 
-		FORCEINLINE bool operator==(ReferencedType* B) const
+		bool operator==(ReferencedType* B) const
 		{
 			return GetReference() == B;
 		}

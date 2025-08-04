@@ -89,7 +89,7 @@ namespace Lumina
     class FBufferReader : public FMemoryArchiver
     {
     public:
-        FBufferReader(void* InData, int64 InSize, bool bFreeAfterClose, bool bIsPersistent = false)
+        FBufferReader(void* InData, int64 InSize, bool bFreeAfterClose)
             : Data(static_cast<uint8*>(InData))
             , Size(InSize)
             , bFreeOnClose(bFreeAfterClose)

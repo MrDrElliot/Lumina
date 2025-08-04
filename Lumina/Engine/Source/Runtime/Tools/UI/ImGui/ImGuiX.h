@@ -140,6 +140,11 @@ namespace Lumina::ImGuiX
         LUMINA_API void NotifyWarning( const char* format, ... );
         LUMINA_API void NotifyError( const char* format, ... );
     }
+
+    namespace MessageBoxes
+    {
+        LUMINA_API bool ShowMessageBox(const char* Title, const char* Format, ...);
+    }
     
     struct LUMINA_API ApplicationTitleBar
     {

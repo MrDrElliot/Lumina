@@ -1,6 +1,7 @@
 ﻿#include "ThumbnailManager.h"
 #include "Renderer/RHIIncl.h"
 #include "Assets/AssetTypes/Mesh/StaticMesh/StaticMesh.h"
+#include "Core/Object/Package/Thumbnail/ThumbnailGenerator.h"
 #include "Scene/ScenePrimitives.h"
 
 
@@ -45,5 +46,14 @@ namespace Lumina
         }
         
         return *ThumbnailManagerSingleton;
+    }
+
+    void CThumbnailManager::GetOrLoadThumbnailsForPackages(TSpan<FString> Packages)
+    {
+        for (const FString& PackagePath : Packages)
+        {
+            FName PackageName = PackagePath;
+            
+        }
     }
 }

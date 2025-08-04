@@ -2,6 +2,7 @@
 
 #include "Core/DisableAllWarnings.h"
 #include "EASTL/list.h"
+#include "EASTL/span.h"
 #include "Platform/GenericPlatform.h"
 
 PRAGMA_DISABLE_ALL_WARNINGS
@@ -28,6 +29,7 @@ namespace Lumina
     //-------------------------------------------------------------------------
 
     template<typename T> using TVector =                                                eastl::vector<T>;
+    template<typename T> using TSpan =                                                  eastl::span<T>;
     template<typename T, eastl_size_t S, bool bOverflow = true> using TFixedVector =    eastl::fixed_vector<T, S, bOverflow>;
     template<typename T, eastl_size_t S> using TArray =                                 eastl::array<T, S>;
                                                                                         

@@ -643,7 +643,7 @@ namespace Lumina
             Attachment.imageView = VulkanImage->GetImageView();
             Attachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL; 
             Attachment.loadOp = (PassInfo.ColorLoadOps[i] == ERenderLoadOp::Clear) ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
-            Attachment.storeOp = PassInfo.ColorStoreOps[i] == ERenderStoreOp::DontCare ? VK_ATTACHMENT_STORE_OP_DONT_CARE : VK_ATTACHMENT_STORE_OP_STORE; 
+            Attachment.storeOp = (PassInfo.ColorStoreOps[i] == ERenderStoreOp::Store) ? VK_ATTACHMENT_STORE_OP_STORE : VK_ATTACHMENT_STORE_OP_DONT_CARE;
 
             if (!PassInfo.ClearColorValues.empty())
             {
@@ -667,9 +667,9 @@ namespace Lumina
             VkRenderingAttachmentInfo Attachment = {};
             Attachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
             Attachment.imageView = VulkanImage->GetImageView();
-            Attachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL; 
+            Attachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL; 
             Attachment.loadOp = (PassInfo.DepthLoadOp == ERenderLoadOp::Clear) ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
-            Attachment.storeOp = PassInfo.DepthStoreOp == ERenderStoreOp::DontCare ? VK_ATTACHMENT_STORE_OP_DONT_CARE : VK_ATTACHMENT_STORE_OP_STORE;
+            Attachment.storeOp = (PassInfo.DepthStoreOp == ERenderStoreOp::Store) ? VK_ATTACHMENT_STORE_OP_STORE : VK_ATTACHMENT_STORE_OP_DONT_CARE;
             
             DepthAttachment = Attachment;
             DepthAttachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;

@@ -281,6 +281,8 @@ namespace Lumina
             const FMetaDataPairParam& Param = ParamArray[i];
             NewProperty->Metadata.AddValue(Param.NameUTF8, Param.ValueUTF8);
         }
+        
+        NewProperty->OnMetadataFinalized();
     }
 
     template<typename TPropertyType, typename TPropertyParamType>

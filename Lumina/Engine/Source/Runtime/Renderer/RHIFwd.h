@@ -6,15 +6,7 @@
 namespace Lumina
 {
     class FRHIDescriptorTable;
-}
-
-namespace Lumina
-{
     class IEventQuery;
-}
-
-namespace Lumina
-{
     class FRHISampler;
     class IRHIResource;
     class FShaderLibrary;

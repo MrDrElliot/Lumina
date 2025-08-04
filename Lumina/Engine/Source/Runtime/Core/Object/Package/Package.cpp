@@ -10,6 +10,7 @@
 #include "Core/Serialization/Package/PackageSaver.h"
 #include "Core/Serialization/Package/PackageLoader.h"
 #include "TaskSystem/TaskSystem.h"
+#include "Thumbnail/PackageThumbnail.h"
 
 
 namespace Lumina
@@ -37,10 +38,7 @@ namespace Lumina
     
     void CPackage::OnDestroy()
     {
-        if (Loader)
-        {
-            Memory::Delete(Loader);
-        }
+        
     }
 
     CPackage* CPackage::CreatePackage(const FString& InTopLevelClassName, const FString& FileName)
@@ -118,8 +116,8 @@ namespace Lumina
         void* HeapData = Memory::Malloc(FileBinary.size());
         Memory::Memcpy(HeapData, FileBinary.data(), FileBinary.size());
         
-        Package->Loader = Memory::New<FPackageLoader>(HeapData, FileBinary.size(), Package);
-        FPackageLoader& Reader = *(FPackageLoader*)Package->Loader;
+        Package->Loader = MakeSharedPtr<FPackageLoader>(HeapData, FileBinary.size(), Package);
+        FPackageLoader& Reader = *(FPackageLoader*)Package->Loader.get();
 
         
         FPackageHeader PackageHeader;
@@ -173,6 +171,7 @@ namespace Lumina
         TVector<uint8> FileBinary;
         FPackageSaver Writer(FileBinary, Package);
         FPackageHeader PackageHeader;
+        PackageHeader.Tag = PACKAGE_FILE_TAG;
         PackageHeader.Version = 1;
         PackageHeader.ClassPath = Package->TopLevelClassName;
 
@@ -223,6 +222,12 @@ namespace Lumina
         PackageHeader.ImportCount = (uint32)Package->ImportTable.size();
         PackageHeader.ExportCount = (uint32)Package->ExportTable.size();
 
+        PackageHeader.ThumbnailDataOffset = Writer.Tell();
+        if (Package->PackageThumbnail)
+        {
+            Package->PackageThumbnail->Serialize(Writer);
+        }
+        
         // Write the header.
         Writer.Seek(0);
         Writer << PackageHeader;
@@ -232,7 +237,7 @@ namespace Lumina
         {
             void* HeapData = Memory::Malloc(FileBinary.size());
             Memory::Memcpy(HeapData, FileBinary.data(), FileBinary.size());
-            Package->Loader = Memory::New<FPackageLoader>(HeapData, FileBinary.size(), Package);
+            Package->Loader = MakeSharedPtr<FPackageLoader>(HeapData, FileBinary.size(), Package);
         }
 
         if (!FileHelper::SaveArrayToFile(FileBinary, PathString))
@@ -246,7 +251,7 @@ namespace Lumina
 
     FPackageLoader* CPackage::GetLoader() const
     {
-        return (FPackageLoader*)Loader;
+        return (FPackageLoader*)Loader.get();
     }
 
     void CPackage::BuildSaveContext(FSaveContext& Context)

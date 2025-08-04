@@ -36,21 +36,20 @@ vec4 GetMaterialVec4(uint Index)
     return MaterialUniforms.Vectors[Index];
 }
 
-vec3 GetNormalFromMap(vec3 FragNormal, vec3 Normal, vec2 UV, vec3 FragPos)
+vec3 GetWorldNormal(vec3 FragNormal, vec2 UV, vec3 FragPos, vec3 TangentSpaceNormal)
 {
-    vec3 tangentNormal = Normal * 2.0 - 1.0;
+    vec3 N = normalize(FragNormal);
 
-    vec3 Q1  = dFdx(FragPos);
-    vec3 Q2  = dFdy(FragPos);
+    vec3 Q1 = dFdx(FragPos);
+    vec3 Q2 = dFdy(FragPos);
     vec2 st1 = dFdx(UV);
     vec2 st2 = dFdy(UV);
 
-    vec3 N   = normalize(FragNormal);
-    vec3 T  = normalize(Q1*st2.t - Q2*st1.t);
-    vec3 B  = -normalize(cross(N, T));
+    vec3 T = normalize(Q1 * st2.t - Q2 * st1.t);
+    vec3 B = normalize(cross(N, T));
     mat3 TBN = mat3(T, B, N);
 
-    return normalize(TBN * tangentNormal);
+    return normalize(TBN * TangentSpaceNormal);
 }
 
 struct SMaterialInputs
@@ -73,7 +72,7 @@ void main()
 
     GPosition = vec4(inFragPos, 1.0);
 
-    GNormal = vec4(GetNormalFromMap(inNormal, Material.Normal, inUV, inFragPos), 1.0);
+    GNormal = vec4(GetWorldNormal(inNormal, inUV, inFragPos, Material.Normal), 1.0);
     
     GMaterial.r = Material.AmbientOcclusion;
     GMaterial.g = Material.Roughness;

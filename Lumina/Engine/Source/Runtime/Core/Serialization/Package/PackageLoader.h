@@ -13,7 +13,7 @@ namespace Lumina
         using FArchive::operator<<;
 
         explicit FPackageLoader(void* Data, int64 Size, CPackage* InPackage)
-            : FBufferReader(Data, Size, true, false)
+            : FBufferReader(Data, Size, true)
             , Package(InPackage)
         {
         }

@@ -11,6 +11,8 @@
 #include "Project/Project.h"
 #include "Renderer/RenderManager.h"
 #include "TaskSystem/TaskSystem.h"
+#include "thumbnails/thumbnailmanager.h"
+#include "Tools/Dialogs/Dialogs.h"
 #include "Tools/Import/ImportHelpers.h"
 #include "Tools/UI/ImGui/ImGuiMemoryEditor.h"
 #include "Tools/UI/ImGui/ImGuiRenderer.h"
@@ -178,31 +180,34 @@ namespace Lumina
 
                 if (ImGui::MenuItem("Delete"))
                 {
-                    try
+                    if (Dialogs::Confirmation("Delete", "Are you sure you wish to delete this file?"))
                     {
-                        FString PackagePath = ContentItem->GetVirtualPath();
-                        FString ObjectName = ContentItem->GetName().ToString();
-                        FString QualifiedName = ContentItem->GetVirtualPath() + "." + ObjectName;
+                        try
+                        {
+                            FString PackagePath = ContentItem->GetVirtualPath();
+                            FString ObjectName = ContentItem->GetName().ToString();
+                            FString QualifiedName = ContentItem->GetVirtualPath() + "." + ObjectName;
 
-                        if (CObject* AliveObject = FindObject<CObject>(FName(QualifiedName)))
-                        {
-                            ToolContext->OnDestroyAsset(AliveObject);
-                        }
+                            if (CObject* AliveObject = FindObject<CObject>(FName(QualifiedName)))
+                            {
+                                ToolContext->OnDestroyAsset(AliveObject);
+                            }
                         
-                        if (CPackage::DestroyPackage(PackagePath) && std::filesystem::remove(ContentItem->GetPath().c_str()))
-                        {
-                            RefreshContentBrowser();
-                            ImGuiX::Notifications::NotifySuccess("Successfully deleted: \"%s\"", PackagePath.c_str());
+                            if (CPackage::DestroyPackage(PackagePath) && std::filesystem::remove(ContentItem->GetPath().c_str()))
+                            {
+                                RefreshContentBrowser();
+                                ImGuiX::Notifications::NotifySuccess("Successfully deleted: \"%s\"", PackagePath.c_str());
+                            }
+                            else
+                            {
+                                ImGuiX::Notifications::NotifyError("Failed to delete: \"%s\"", PackagePath.c_str());
+                            }
                         }
-                        else
+                        catch (const std::filesystem::filesystem_error& e)
                         {
-                            ImGuiX::Notifications::NotifyError("Failed to delete: \"%s\"", PackagePath.c_str());
+                            LOG_ERROR("Failed to delete file: {0}", e.what());
+                            ImGuiX::Notifications::NotifyError("Failed to delete: \"%s\"", e.what());
                         }
-                    }
-                    catch (const std::filesystem::filesystem_error& e)
-                    {
-                        LOG_ERROR("Failed to delete file: {0}", e.what());
-                        ImGuiX::Notifications::NotifyError("Failed to delete: \"%s\"", e.what());
                     }
                 }
             }
@@ -212,14 +217,22 @@ namespace Lumina
         {
             if (Paths::Exists(SelectedPath))
             {
+                TVector<FString> AllPaths;
                 for (auto& Directory : std::filesystem::directory_iterator(SelectedPath.c_str()))
                 {
-                    ContentBrowserTileView.AddItemToTree<FContentBrowserTileViewItem>(nullptr, Directory.path().generic_string().c_str());
+                    AllPaths.push_back(Directory.path().generic_string().c_str());
+                }
+
+                CThumbnailManager::Get().GetOrLoadThumbnailsForPackages(AllPaths);
+
+                for (auto& Directory : AllPaths)
+                {
+                    ContentBrowserTileView.AddItemToTree<FContentBrowserTileViewItem>(nullptr, Directory);
                 }
             }
         };
 
-        OutlinerContext.DrawItemContextMenuFunction = [this](const TVector<FTreeListViewItem*> Items)
+        OutlinerContext.DrawItemContextMenuFunction = [this](const TVector<FTreeListViewItem*>& Items)
         {
             for (FTreeListViewItem* Item : Items)
             {
@@ -385,9 +398,7 @@ namespace Lumina
                     bWroteSomething = true;
                 }
             }
-
-            ImGui::Separator();
-
+            
             {
                 const char* ImportIcon = LE_ICON_FILE_IMPORT;
                 FString MenuItemName = FString(ImportIcon) + " " + "Import Asset";
@@ -402,9 +413,11 @@ namespace Lumina
             }
             
             
-            const char* FileIcon = LE_ICON_FILE;
+            const char* FileIcon = LE_ICON_PLUS;
             const char* File = "New Asset";
 
+            ImGui::Separator();
+            
             FString MenuItemName = FString(FileIcon) + " " + File;
 
             if (ImGui::BeginMenu(MenuItemName.c_str()))

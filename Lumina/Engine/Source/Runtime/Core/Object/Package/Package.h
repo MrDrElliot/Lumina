@@ -1,13 +1,18 @@
 ﻿#pragma once
+
 #include "Lumina.h"
 #include "Core/Object/Class.h"
 #include "Core/Object/Object.h"
+#include "Memory/SmartPtr.h"
 
 namespace Lumina
 {
+    struct FPackageThumbnail;
     class FSaveContext;
     class FPackageLoader;
 }
+
+#define PACKAGE_FILE_TAG 0x9E2A83C1
 
 namespace Lumina
 {
@@ -179,6 +184,9 @@ namespace Lumina
 
     struct FPackageHeader
     {
+
+        /** Tag matching PACKAGE_FILE_TAG to make sure this file is a Lumina package */
+        uint32 Tag;
         
         /** File format version (increment when the layout changes) */
         uint32 Version;
@@ -198,17 +206,22 @@ namespace Lumina
         /** Byte offset from file start to the raw object data block */
         uint64 ObjectDataOffset;
 
+        /** Byte offset from the file start to the thumbnail */
+        uint64 ThumbnailDataOffset;
+
         /** The class for the asset at this packages top level (e.g. A static mesh). */
         FString ClassPath;
 
-        INLINE friend FArchive& operator << (FArchive& Ar, FPackageHeader& Data)
+        friend FArchive& operator << (FArchive& Ar, FPackageHeader& Data)
         {
+            Ar << Data.Tag;
             Ar << Data.Version;
             Ar << Data.ImportTableOffset;
             Ar << Data.ImportCount;
             Ar << Data.ExportTableOffset;
             Ar << Data.ExportCount;
             Ar << Data.ObjectDataOffset;
+            Ar << Data.ThumbnailDataOffset;
             Ar << Data.ClassPath;
 
             return Ar;
@@ -369,17 +382,19 @@ namespace Lumina
         
 
         LUMINA_API CObject* IndexToObject(const FObjectPackageIndex& Index);
-        
-    private:
+
+        /** Returns the thumbnail data for this package */
+        LUMINA_API TSharedPtr<FPackageThumbnail> GetPackageThumbnail() const { return PackageThumbnail; }
 
     public:
 
-        FArchive*                        Loader = nullptr;
-
+        TSharedPtr<FArchive>             Loader;
         FString                          TopLevelClassName;
         TVector<FObjectImport>           ImportTable;
         TVector<FObjectExport>           ExportTable;
-
+        
+        TSharedPtr<FPackageThumbnail>    PackageThumbnail;
+        
         int64       ExportIndex = 0;
     };
     

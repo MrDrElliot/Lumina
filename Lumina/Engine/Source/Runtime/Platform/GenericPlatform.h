@@ -36,7 +36,6 @@ using int64  = signed long long;
 // Size type. Leave _t to not interfere with SIZE in windef.h
 using SIZE_T = size_t;
 
-
 //--------------------------------- Character types
 
 // An ANSI character. 8-bit fixed-width representation of 7-bit characters.

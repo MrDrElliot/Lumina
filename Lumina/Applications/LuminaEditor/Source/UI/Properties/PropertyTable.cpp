@@ -264,7 +264,7 @@ namespace Lumina
         ImGui::Dummy(ImVec2(Offset, 0));
         ImGui::SameLine();
 
-        FString DisplayName = ArrayElementIndex == INDEX_NONE ? Property->Name.ToString() : eastl::to_string(ArrayElementIndex);
+        FString DisplayName = ArrayElementIndex == INDEX_NONE ? Property->GetPropertyDisplayName() : eastl::to_string(ArrayElementIndex);
         ImGui::TextUnformatted(DisplayName.c_str());
     }
 
@@ -357,7 +357,7 @@ namespace Lumina
         ImGui::PushStyleColor(ImGuiCol_Header, 0);
         ImGui::PushStyleColor(ImGuiCol_HeaderActive, 0);
         ImGui::PushStyleColor(ImGuiCol_HeaderHovered, 0);
-        bExpanded = ImGui::CollapsingHeader(ArrayProperty->Name.c_str());
+        bExpanded = ImGui::CollapsingHeader(ArrayProperty->GetPropertyDisplayName().c_str());
         ImGui::PopStyleColor(3);
     }
 
@@ -478,7 +478,7 @@ namespace Lumina
         ImGui::PushStyleColor(ImGuiCol_Header, 0);
         ImGui::PushStyleColor(ImGuiCol_HeaderActive, 0);
         ImGui::PushStyleColor(ImGuiCol_HeaderHovered, 0);
-        bExpanded = ImGui::CollapsingHeader(StructProperty->Name.c_str());
+        bExpanded = ImGui::CollapsingHeader(StructProperty->GetPropertyDisplayName().c_str());
         ImGui::PopStyleColor(3);
     }
 

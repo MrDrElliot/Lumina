@@ -95,7 +95,7 @@ inline LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS* exceptionInfo)
             LOG_CRITICAL("Assertion failed: {0} in {1} at line {2}", \
                 #condition, __FILE__, __LINE__);        \
             PrintCallStack();                           \
-            /* Platform-specific debugging */            \
+            /* Platform-specific debugging */           \
             __debugbreak();                             \
             std::exit(1);                               \
         }                                               \

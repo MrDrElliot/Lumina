@@ -7,7 +7,7 @@ namespace Lumina
 {
     ImVec4 FTreeListViewItem::GetDisplayColor() const
     {
-        return bSelected ? ImVec4(0.60f, 0.60f, 1.0f, 1.0f) : ImVec4(0.95f, 0.95f, 0.95f, 1.0f);
+        return bSelected ? ImVec4(0.95f, 0.95f, 0.95f, 1.0f) : ImVec4(0.75f, 0.75f, 0.75f, 1.0f);
     }
 
     void FTreeListView::Draw(const FTreeListViewContext& Context)

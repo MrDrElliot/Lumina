@@ -1,9 +1,10 @@
 #pragma once
-#include "imgui.h"
+
 #include "Core/Object/Field.h"
 #include "Core/Object/ObjectCore.h"
 #include "Core/Serialization/Structured/StructuredArchive.h"
 #include "Core/Templates/Align.h"
+#include "Metadata/PropertyMetadata.h"
 #include "Platform/GenericPlatform.h"
 
 
@@ -78,6 +79,9 @@ namespace Lumina
 
         const FPropertyMetadata& GetMetadata() const { return Metadata; }
 
+        void OnMetadataFinalized();
+        static FString MakeDisplayNameFromName(EPropertyTypeFlags TypeFlags, const FName& InName);
+        
     private:
 
         LUMINA_API void* GetValuePtrInternal(void* ContainerPtr, int32 ArrayIndex) const;

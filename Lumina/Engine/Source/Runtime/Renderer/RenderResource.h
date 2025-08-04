@@ -272,31 +272,31 @@ namespace Lumina
     public:
 
     	        
-    	FORCEINLINE uint32 AddRef() const
+    	uint32 AddRef() const
     	{
     		int32 NewValue = AtomicFlags.AddRef(std::memory_order_acquire);
-    		Assert(NewValue > 0); 
+    		Assert(NewValue > 0)
     		return uint32(NewValue);
     	}
         
-    	FORCEINLINE uint32 Release()
+    	uint32 Release()
     	{
     		int32 NewValue = AtomicFlags.Release(std::memory_order_release);
-    		Assert(NewValue >= 0);
+    		Assert(NewValue >= 0)
 
     		if (NewValue == 0)
     		{
     			Destroy();
     		}
     		
-    		Assert(NewValue >= 0);
+    		Assert(NewValue >= 0)
     		return uint32(NewValue);
     	}
         
-    	FORCEINLINE uint32 GetRefCount() const
+    	uint32 GetRefCount() const
     	{
     		int32 CurrentValue = AtomicFlags.GetNumRefs(std::memory_order_relaxed);
-    		Assert(CurrentValue >= 0); 
+    		Assert(CurrentValue >= 0);
     		return uint32(CurrentValue);
     	}
 
@@ -423,7 +423,6 @@ namespace Lumina
 		
 		FRHIViewport(const FIntVector2D& InSize, IRenderContext* InContext)
 			: RenderContext(InContext)
-			, ViewVolume()
 			, Size(InSize)
 		{
 			CreateRenderTarget(InSize);
@@ -440,11 +439,11 @@ namespace Lumina
 		void SetSize(const FIntVector2D& InSize);
 		
 
-		FORCEINLINE const FViewVolume& GetViewVolume() const { return ViewVolume; }
-		FORCEINLINE const FIntVector2D& GetSize() const { return Size; }
+		const FViewVolume& GetViewVolume() const { return ViewVolume; }
+		const FIntVector2D& GetSize() const { return Size; }
 
-		FORCEINLINE void SetViewVolume(const FViewVolume& InVolume) { ViewVolume = InVolume;}
-		FORCEINLINE virtual FRHIImageRef GetRenderTarget() const { return RenderTarget; }
+		void SetViewVolume(const FViewVolume& InVolume) { ViewVolume = InVolume;}
+		virtual FRHIImageRef GetRenderTarget() const { return RenderTarget; }
 
 	private:
 
@@ -517,17 +516,17 @@ namespace Lumina
 			, Description(InDesc)
 		{}
 		
-		FORCEINLINE const FRHIBufferDesc& GetDescription() const { return Description; }
+		const FRHIBufferDesc& GetDescription() const { return Description; }
 
-		FORCEINLINE bool IsStorageBuffer() const { return Description.Usage.IsFlagSet(EBufferUsageFlags::StorageBuffer); }
-		FORCEINLINE bool IsUniformBuffer() const { return Description.Usage.IsFlagSet(EBufferUsageFlags::UniformBuffer); }
-		FORCEINLINE bool IsVertexBuffer() const { return Description.Usage.IsFlagSet(EBufferUsageFlags::VertexBuffer); }
-		FORCEINLINE bool IsIndexBuffer() const { return Description.Usage.IsFlagSet(EBufferUsageFlags::IndexBuffer); }
+		bool IsStorageBuffer() const { return Description.Usage.IsFlagSet(EBufferUsageFlags::StorageBuffer); }
+		bool IsUniformBuffer() const { return Description.Usage.IsFlagSet(EBufferUsageFlags::UniformBuffer); }
+		bool IsVertexBuffer() const { return Description.Usage.IsFlagSet(EBufferUsageFlags::VertexBuffer); }
+		bool IsIndexBuffer() const { return Description.Usage.IsFlagSet(EBufferUsageFlags::IndexBuffer); }
 
 		
-		FORCEINLINE uint32 GetSize() const { return Description.Size; }
-		FORCEINLINE uint32 GetStride() const { return Description.Stride; }
-		FORCEINLINE TBitFlags<EBufferUsageFlags> GetUsage() const { return Description.Usage; }
+		uint64 GetSize() const { return Description.Size; }
+		uint32 GetStride() const { return Description.Stride; }
+		TBitFlags<EBufferUsageFlags> GetUsage() const { return Description.Usage; }
 
 	protected:
 
@@ -1709,9 +1708,9 @@ namespace eastl
 		size_t operator()(const FGraphicsPipelineDesc& Desc) const
 		{
 			size_t hash = 0;
-			Hash::HashCombine(hash, Desc.VS->GetKey());
-			Hash::HashCombine(hash, Desc.PS->GetKey());
-			
+			Hash::HashCombine(hash, Desc.VS ? Desc.VS->GetKey() : 0);
+			Hash::HashCombine(hash, Desc.PS ? Desc.PS->GetKey() : 0);
+			Hash::HashCombine(hash, Desc.RenderState);
 			return hash;
 		}
 	};

@@ -44,6 +44,7 @@ namespace Lumina
 
         const FSceneRenderStats& GetSceneRenderStats() const { return SceneRenderStats; }
         const FGBuffer& GetGBuffer() const { return GBuffer; }
+        FRHIImageRef GetDepthAttachment() const { return DepthAttachment; }
         
         ESceneRenderGBuffer GetGBufferDebugMode() const { return GBufferDebugMode; }
         void SetGBufferDebugMode(ESceneRenderGBuffer Mode) { GBufferDebugMode = Mode; }
@@ -100,6 +101,7 @@ namespace Lumina
         FRHIBindingLayoutRef                LightingPassLayout;
         FRHIBindingLayoutRef                BindingLayout;
         FRHIBindingSetRef                   BindingSet;
+        
         
         FGBuffer                            GBuffer;
 

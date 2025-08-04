@@ -35,6 +35,7 @@
 #include "Tools/AssetEditors/MaterialEditor/MaterialInstanceEditorTool.h"
 #include "Tools/AssetEditors/MeshEditor/MeshEditorTool.h"
 #include "Tools/AssetEditors/TextureEditor/TextureEditorTool.h"
+#include "Tools/Dialogs/Dialogs.h"
 #include "Tools/Import/ImportHelpers.h"
 #include "Tools/UI/ImGui/ImGuiRenderer.h"
 
@@ -115,6 +116,12 @@ namespace Lumina
             DestroyTool(UpdateContext, EditorTools[0]);
         }
 
+        FolderIcon.SafeRelease();
+        StaticMeshIcon.SafeRelease();
+        TextureIcon.SafeRelease();
+        MaterialIcon.SafeRelease();
+        CorruptIcon.SafeRelease();
+        
         SceneManager = nullptr;
         SceneEditorTool = nullptr;
         ConsoleLogTool = nullptr;
@@ -752,6 +759,12 @@ namespace Lumina
                             case ESceneRenderGBuffer::Material:
                                 {
                                     ViewportTexture = ImGuiRenderer->GetOrCreateImTexture(SceneRenderer->GetGBuffer().Material);
+                                }
+                            break;
+                            
+                        case ESceneRenderGBuffer::Depth:
+                                {
+                                    ViewportTexture = ImGuiRenderer->GetOrCreateImTexture(SceneRenderer->GetDepthAttachment());
                                 }
                             break;
                         }

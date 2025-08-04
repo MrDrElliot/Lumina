@@ -44,7 +44,7 @@ namespace Lumina
             DrawSystems(Context, bisFocused);
         });
         
-        CreateToolWindow("Entity Details", [this] (const FUpdateContext& Context, bool bisFocused)
+        CreateToolWindow("Details", [this] (const FUpdateContext& Context, bool bisFocused)
         {
             DrawEntityEditor(Context, bisFocused);
         });
@@ -235,7 +235,8 @@ namespace Lumina
                 "Albedo",
                 "Position",
                 "Normals",
-                "Material"
+                "Material",
+                "Depth",
             };
 
             ESceneRenderGBuffer DebugMode = SceneRenderer->GetGBufferDebugMode();
@@ -262,7 +263,7 @@ namespace Lumina
         ImGui::DockBuilderDockWindow(GetToolWindowName(ViewportWindowName).c_str(), topDockID);
         ImGui::DockBuilderDockWindow(GetToolWindowName("Outliner").c_str(), bottomLeftDockID);
         ImGui::DockBuilderDockWindow(GetToolWindowName(SystemOutlinerName).c_str(), bottomRightDockID);
-        ImGui::DockBuilderDockWindow(GetToolWindowName("Entity Details").c_str(), bottomCenterDockID);
+        ImGui::DockBuilderDockWindow(GetToolWindowName("Details").c_str(), bottomCenterDockID);
 
     }
 
