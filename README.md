@@ -35,26 +35,6 @@
 - 🎮 **Vulkan renderer**
 ---
 
-## 🛠️ Integrated Third-Party Libraries
-
-| Library           | Purpose/Description                                      |
-|-------------------|----------------------------------------------------------|
-| **GLFW**          | OpenGL, Vulkan, and window management                    |
-| **VMA**           | Vulkan Memory Allocator                                  |
-| **EASTL**         | High-performance C++ standard library replacement         |
-| **VkBootstrap**   | Helper library for Vulkan initialization                 |
-| **EnTT**          | Entity Component System (ECS) framework                  |
-| **EnkiTS**        | Task scheduler for parallelism and multi-threading       |
-| **ImGui**         | Immediate mode GUI framework                              |
-| **FastGLTF**      | GLTF 2.0 parser and writer                               |
-| **GLM**           | Mathematics library for graphics (similar to GLSL)       |
-| **NlohmannJson**  | JSON for Modern C++ (for reading/writing JSON data)      |
-| **RPMalloc**      | High-performance memory allocator                        |
-| **SPDLog**        | Fast, header-only logging library                        |
-| **SPIRV-Reflect** | SPIR-V reflection library for Vulkan                     |
-| **STB_Image**     | Image loading library (supports multiple formats)        |
-| **Tracy**         | Real-time, low-overhead profiler                         |
-| **XXHash**        | Extremely fast non-cryptographic hash function           |
 ## 📸 Screenshots
 
 | Render Pipeline | Editor |
@@ -136,6 +116,29 @@ Pull requests are welcome!
 - PascalCase for all identifiers
 - Tabs (not spaces), braces on new lines
 - See [Coding Standards](CONTRIBUTING.md) for full details.
+
+---
+
+## 🛠️ Integrated Third-Party Libraries
+
+| Library           | Purpose/Description                                      |
+|-------------------|----------------------------------------------------------|
+| **GLFW**          | OpenGL, Vulkan, and window management                    |
+| **VMA**           | Vulkan Memory Allocator                                  |
+| **EASTL**         | High-performance C++ standard library replacement         |
+| **VkBootstrap**   | Helper library for Vulkan initialization                 |
+| **EnTT**          | Entity Component System (ECS) framework                  |
+| **EnkiTS**        | Task scheduler for parallelism and multi-threading       |
+| **ImGui**         | Immediate mode GUI framework                              |
+| **FastGLTF**      | GLTF 2.0 parser and writer                               |
+| **GLM**           | Mathematics library for graphics (similar to GLSL)       |
+| **NlohmannJson**  | JSON for Modern C++ (for reading/writing JSON data)      |
+| **RPMalloc**      | High-performance memory allocator                        |
+| **SPDLog**        | Fast, header-only logging library                        |
+| **SPIRV-Reflect** | SPIR-V reflection library for Vulkan                     |
+| **STB_Image**     | Image loading library (supports multiple formats)        |
+| **Tracy**         | Real-time, low-overhead profiler                         |
+| **XXHash**        | Extremely fast non-cryptographic hash function           |
 
 ---
 
