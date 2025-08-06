@@ -44,8 +44,6 @@ layout(set = 0, binding = 2) readonly buffer FLightData
 } LightData;
 
 
-
-
 float GetTime()
 {
     return SceneUBO.Time;
@@ -58,7 +56,6 @@ float GetDeltaTime()
 
 vec3 GetCameraPosition()
 {
-    // Disregard forth element, it was only used for padding.
     return SceneUBO.CameraView.CameraPosition.xyx;
 }
 

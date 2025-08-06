@@ -34,7 +34,6 @@ namespace Lumina
 
         CMaterial();
 
-
         bool SetScalarValue(const FName& Name, const float Value) override;
         bool SetVectorValue(const FName& Name, const glm::vec4& Value) override;
         bool GetParameterValue(EMaterialParameterType Type, const FName& Name, FMaterialParameter& Param) override;

@@ -397,7 +397,7 @@ namespace Lumina
         {
             LUMINA_PROFILE_SECTION_COLORED("Lighting Pass", tracy::Color::Beige);
             
-            FRHIVertexShaderRef VertexShader = RenderContext->GetShaderLibrary()->GetShader<FRHIVertexShader>("DeferredLighting.vert");
+            FRHIVertexShaderRef VertexShader = RenderContext->GetShaderLibrary()->GetShader<FRHIVertexShader>("FullscreenQuad.vert");
             FRHIPixelShaderRef PixelShader = RenderContext->GetShaderLibrary()->GetShader<FRHIPixelShader>("DeferredLighting.frag");
             if (!VertexShader || !PixelShader)
             {

@@ -73,7 +73,7 @@ void main()
 {
     SMaterialInputs Material = GetMaterialInputs();
 
-    GPosition = vec4(inFragPos, LinearDepth(gl_FragCoord.z));
+    GPosition = vec4(inFragPos, LinearDepth(gl_FragCoord.w));
 
     vec3 WorldNormal = GetWorldNormal(inNormal, inUV, inFragPos, Material.Normal);
     GNormal = vec4(WorldNormal * 0.5 + 0.5, 1.0);

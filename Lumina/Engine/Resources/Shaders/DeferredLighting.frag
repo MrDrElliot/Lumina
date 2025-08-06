@@ -180,5 +180,5 @@ void main()
     
     Color = pow(Color, vec3(1.0/2.2));
 
-    outColor = vec4(vec3(AmbientOcclusion), 1.0);
+    outColor = vec4(Color, 1.0);
 }

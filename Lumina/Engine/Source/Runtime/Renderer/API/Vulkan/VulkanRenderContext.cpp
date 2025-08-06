@@ -44,17 +44,7 @@ namespace Lumina
     
     static void* VulkanRealloc(void* pUserData, void* pMemory, size_t size, size_t alignment, VkSystemAllocationScope allocationScope)
     {
-        if (pMemory == nullptr)
-        {
-            return Memory::Malloc(size, alignment);
-        }
-        else if (size == 0)
-        {
-            Memory::Free(pMemory);
-            return nullptr;
-        }
-
-        return Memory::Realloc(pMemory, size);
+        return Memory::Realloc(pMemory, size, alignment);
     }
     
     VkBool32 VKAPI_PTR VkDebugCallback(
@@ -64,7 +54,8 @@ namespace Lumina
         void* pUserData)
     {
         // Helper to decode messageTypes
-        auto GetMessageTypeString = [](VkDebugUtilsMessageTypeFlagsEXT types) -> std::string {
+        auto GetMessageTypeString = [](VkDebugUtilsMessageTypeFlagsEXT types) -> std::string
+        {
             std::string result;
             if (types & VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT) {
                 result += "[General] ";

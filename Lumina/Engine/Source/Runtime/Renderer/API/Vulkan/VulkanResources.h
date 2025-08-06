@@ -2,6 +2,7 @@
 
 #include "VulkanDevice.h"
 #include "VulkanMacros.h"
+#include "VulkanRenderContext.h"
 #include "Renderer/RenderResource.h"
 
 namespace Lumina
@@ -195,28 +196,9 @@ namespace Lumina
     {
     public:
 
-        IVulkanShader(FVulkanDevice* InDevice, const TVector<uint32>& ByteCode, ERHIResourceType Type)
-            :IDeviceChild(InDevice)
-        {
-            Assert(!ByteCode.empty())
-            
-            SpirV.ByteCode = ByteCode;
-
-            VkShaderModuleCreateFlags Flags = 0;
-            
-            VkShaderModuleCreateInfo CreateInfo = {};
-            CreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-            CreateInfo.codeSize = ByteCode.size() * sizeof(uint32);
-            CreateInfo.pCode = ByteCode.data();
-            CreateInfo.flags = Flags;
-
-            VK_CHECK(vkCreateShaderModule(Device->GetDevice(), &CreateInfo, nullptr, &ShaderModule));
-        }
+        IVulkanShader(FVulkanDevice* InDevice, const TVector<uint32>& ByteCode, ERHIResourceType Type);
         
-        ~IVulkanShader() override
-        {
-            vkDestroyShaderModule(Device->GetDevice(), ShaderModule, nullptr);
-        }
+        ~IVulkanShader() override;
 
         void GetByteCodeImpl(const void** ByteCode, uint64* Size)
         {

@@ -755,6 +755,28 @@ namespace Lumina
         return nullptr;
     }
 
+    IVulkanShader::IVulkanShader(FVulkanDevice* InDevice, const TVector<uint32>& ByteCode, ERHIResourceType Type)
+        :IDeviceChild(InDevice)
+    {
+        Assert(!ByteCode.empty())
+            
+        SpirV.ByteCode = ByteCode;
+
+        VkShaderModuleCreateFlags Flags = 0;
+            
+        VkShaderModuleCreateInfo CreateInfo = {};
+        CreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+        CreateInfo.codeSize = ByteCode.size() * sizeof(uint32);
+        CreateInfo.pCode = ByteCode.data();
+        CreateInfo.flags = Flags;
+
+        VK_CHECK(vkCreateShaderModule(Device->GetDevice(), &CreateInfo, &GVulkanAllocationCallbacks, &ShaderModule));
+    }
+
+    IVulkanShader::~IVulkanShader()
+    {
+        vkDestroyShaderModule(Device->GetDevice(), ShaderModule, &GVulkanAllocationCallbacks);
+    }
     //----------------------------------------------------------------------------------------------
 
 

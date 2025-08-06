@@ -171,7 +171,7 @@ namespace Lumina::Memory
 
         // Ensure minimum alignment rules
         SIZE_T defaultAlignment = (size < 16) ? 8 : 16;
-        SIZE_T Align = (alignment < defaultAlignment) ? defaultAlignment : static_cast<SIZE_T>(alignment);
+        SIZE_T Align = (alignment < defaultAlignment) ? defaultAlignment : (alignment);
 
         return Lumina::Math::Max<SIZE_T>(Align, alignment);
     }
