@@ -59,8 +59,6 @@ project "Lumina"
         "Engine/ThirdParty/xxhash/**.h",
     	"Engine/ThirdParty/xxhash/**.c",
 
-		"Engine/ThirdParty/Tracy/public/TracyClient.cpp",
-
 	}
 
 
@@ -98,6 +96,8 @@ project "Lumina"
     	 "LUMINA_RENDERER_VULKAN",
     	 "TRACY_ENABLE",
     	 "TRACY_CALLSTACK",
+    	 "TRACY_ON_DEMAND",
+		 "TRACY_IMPORTS",
 	}
 
 	filter "system:linux"

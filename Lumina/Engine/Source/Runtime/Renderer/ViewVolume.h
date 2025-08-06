@@ -3,6 +3,7 @@
 #include "Core/DisableAllWarnings.h"
 #include "Module/API.h"
 PRAGMA_DISABLE_ALL_WARNINGS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 PRAGMA_ENABLE_ALL_WARNINGS

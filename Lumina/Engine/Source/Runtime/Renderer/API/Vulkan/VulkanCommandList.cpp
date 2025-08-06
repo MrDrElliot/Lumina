@@ -11,6 +11,29 @@
 
 namespace Lumina
 {
+
+    VkImageAspectFlags GuessImageAspectFlags(VkFormat format)
+    {
+        switch (format)
+        {
+        case VK_FORMAT_D16_UNORM:
+        case VK_FORMAT_X8_D24_UNORM_PACK32:
+        case VK_FORMAT_D32_SFLOAT:
+            return VK_IMAGE_ASPECT_DEPTH_BIT;
+
+        case VK_FORMAT_S8_UINT:
+            return VK_IMAGE_ASPECT_STENCIL_BIT;
+
+        case VK_FORMAT_D16_UNORM_S8_UINT:
+        case VK_FORMAT_D24_UNORM_S8_UINT:
+        case VK_FORMAT_D32_SFLOAT_S8_UINT:
+            return VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+
+        default:
+            return VK_IMAGE_ASPECT_COLOR_BIT;
+        }
+    }
+    
     void FVulkanCommandList::Open()
     {
         LUMINA_PROFILE_SCOPE();
@@ -135,11 +158,17 @@ namespace Lumina
         uint32 Depth = std::max((uint32)Desc.Depth >> MipLevel, uint32(1));
 
         if (WidthOut)
+        {
             *WidthOut = Width;
+        }
         if (HeightOut)
+        {
             *HeightOut = Height;
+        }
         if (DepthOut)
+        {
             *DepthOut = Depth;
+        }
     }
 
     void FVulkanCommandList::WriteImage(FRHIImage* Dst, uint32 ArraySlice, uint32 MipLevel, const void* Data, SIZE_T RowPitch, SIZE_T DepthPitch)
@@ -168,9 +197,9 @@ namespace Lumina
 
         SIZE_T MinRowPitch = std::min(SIZE_T(DeviceRowPitch), RowPitch);
         uint8* MappedPtr = (uint8*)UploadCPUVA;
-        for (uint32 i = 0; i < MipDepth; ++i)
+        for (uint32 Slice = 0; Slice < MipDepth; ++Slice)
         {
-            const uint8* SourcePtr = (const uint8*)Data + DepthPitch * i;
+            const uint8* SourcePtr = (const uint8*)Data + DepthPitch * Slice;
             for (uint32 row = 0; row < DeviceNumRows; row++)
             {
                 Memory::Memcpy(MappedPtr, SourcePtr, MinRowPitch);
@@ -183,8 +212,8 @@ namespace Lumina
         
         VkBufferImageCopy CopyRegion = {};
         CopyRegion.bufferOffset = UploadOffset;
-        CopyRegion.bufferRowLength = 0;
-        CopyRegion.bufferImageHeight = 0;
+        CopyRegion.bufferRowLength = DeviceNumCols * FormatInfo.BlockSize;
+        CopyRegion.bufferImageHeight = DeviceNumRows * FormatInfo.BlockSize;
         CopyRegion.imageSubresource.aspectMask = VulkanImage->GetFullAspectMask();
         CopyRegion.imageSubresource.mipLevel = MipLevel;
         CopyRegion.imageSubresource.baseArrayLayer = ArraySlice;
@@ -389,7 +418,6 @@ namespace Lumina
                 UploadManager->SuballocateBuffer(Size, &UploadBuffer, &UploadOffset, &UploadCPUVA, MakeVersion(CurrentCommandBuffer->RecordingID, Info.CommandQueue, false));
 
                 Memory::Memcpy(UploadCPUVA, Data, Size);
-
                 CopyBuffer(UploadBuffer, UploadOffset, Buffer, Offset, Size);
             }
             else
@@ -877,7 +905,7 @@ namespace Lumina
     {
         LUMINA_PROFILE_SCOPE();
         TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "BindVertexBuffer")        
-        Assert(Buffer != nullptr);
+        Assert(Buffer != nullptr)
         
         GraphicsState.SetVertexStream(Buffer, Index, Offset);
     }

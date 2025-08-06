@@ -15,7 +15,7 @@ namespace Lumina
         LUM_PROPERTY(Editable, Color, Category = "Light")
         glm::vec3 LightColor = glm::vec3(1.0f);
 
-        LUM_PROPERTY(Editable, Category = "Light")
+        LUM_PROPERTY(Editable, Category = "Light", ClampMin = 0.0f)
         float Intensity = 10.0f;
 
         LUM_PROPERTY(Editable, Category = "Light")
@@ -32,16 +32,16 @@ namespace Lumina
         LUM_PROPERTY(Editable, Color, Category = "Light")
         glm::vec3 LightColor = glm::vec3(1.0f);
 
-        LUM_PROPERTY(Editable, Category = "Light")
+        LUM_PROPERTY(Editable, Category = "Light", ClampMin = 0.0f, ClampMax = 1000.0f)
         float Intensity = 10.0f;
 
-        LUM_PROPERTY(Editable, Category = "Light")
+        LUM_PROPERTY(Editable, Category = "Light", ClampMin = 0.0f)
         float InnerConeAngle = 20.0f;
 
-        LUM_PROPERTY(Editable, Category = "Light")
+        LUM_PROPERTY(Editable, Category = "Light", ClampMin = 0.0f)
         float OuterConeAngle = 30.0f;
 
-        LUM_PROPERTY(Editable, Category = "Light")
+        LUM_PROPERTY(Editable, Category = "Light", ClampMin = 0.0f)
         float Attenuation = 1.0f;
 
         LUM_PROPERTY(Editable, Category = "Shadows")
@@ -73,7 +73,7 @@ namespace Lumina
         LUM_PROPERTY(Editable, Color, Category = "Light")
         glm::vec3 Color = glm::vec4(1.0f);
 
-        LUM_PROPERTY(Editable, Category = "Light")
+        LUM_PROPERTY(Editable, Category = "Light", ClampMin = 0.0f)
         float Intensity = 10.0f;
 
         LUM_PROPERTY(Editable)

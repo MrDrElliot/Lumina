@@ -37,6 +37,7 @@ namespace Lumina
         Normals,
         Material,
         Depth,
+        SSAO,
     };
     
     struct FCameraData
@@ -138,6 +139,8 @@ namespace Lumina
         FCameraData    CameraData;
         float          Time;
         float          DeltaTime;
+        float          NearPlane;
+        float          FarPlane;
     };
 }
 

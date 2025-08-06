@@ -111,18 +111,53 @@ namespace Lumina::Memory
         rpmalloc_thread_finalize(1);
     }
 
-    LUMINA_API NODISCARD inline size_t GetTotalRequestedMemory()
+    LUMINA_API NODISCARD inline size_t GetCurrentMappedMemory()
     {
         rpmalloc_global_statistics_t stats;
         rpmalloc_global_statistics(&stats);
         return stats.mapped;
     }
 
-    LUMINA_API NODISCARD inline size_t GetTotalAllocatedMemory()
+    LUMINA_API NODISCARD inline size_t GetPeakMappedMemory()
+    {
+        rpmalloc_global_statistics_t stats;
+        rpmalloc_global_statistics(&stats);
+        return stats.mapped_peak;
+    }
+
+    LUMINA_API NODISCARD inline size_t GetCachedMemory()
+    {
+        rpmalloc_global_statistics_t stats;
+        rpmalloc_global_statistics(&stats);
+        return stats.cached;
+    }
+
+    LUMINA_API NODISCARD inline size_t GetCurrentHugeAllocMemory()
+    {
+        rpmalloc_global_statistics_t stats;
+        rpmalloc_global_statistics(&stats);
+        return stats.huge_alloc;
+    }
+
+    LUMINA_API NODISCARD inline size_t GetPeakHugeAllocMemory()
+    {
+        rpmalloc_global_statistics_t stats;
+        rpmalloc_global_statistics(&stats);
+        return stats.huge_alloc_peak;
+    }
+
+    LUMINA_API NODISCARD inline size_t GetTotalMappedMemory()
     {
         rpmalloc_global_statistics_t stats;
         rpmalloc_global_statistics(&stats);
         return stats.mapped_total;
+    }
+
+    LUMINA_API NODISCARD inline size_t GetTotalUnmappedMemory()
+    {
+        rpmalloc_global_statistics_t stats;
+        rpmalloc_global_statistics(&stats);
+        return stats.unmapped_total;
     }
 
     LUMINA_API inline SIZE_T GetActualAlignment(size_t size, size_t alignment)

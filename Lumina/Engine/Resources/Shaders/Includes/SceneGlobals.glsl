@@ -27,6 +27,8 @@ layout(set = 0, binding = 0) readonly uniform SceneGlobals
     FCameraView CameraView;
     float Time;
     float DeltaTime;
+    float NearPlane;
+    float FarPlane;
 } SceneUBO;
 
 layout(set = 0, binding = 1) readonly buffer FModelData
@@ -85,6 +87,11 @@ vec3 WorldToView(vec3 worldPos)
     return (GetCameraView() * vec4(worldPos, 1.0)).xyz;
 }
 
+vec3 NormalWorldToView(vec3 Normal)
+{
+    return mat3(GetCameraView()) * Normal;
+}
+
 vec4 ViewToClip(vec3 viewPos)
 {
     return GetCameraProjection() * vec4(viewPos, 1.0);
@@ -108,4 +115,10 @@ FLight GetLightAt(uint Index)
 uint GetNumLights()
 {
     return LightData.NumLights;
+}
+
+float LinearDepth(float depth)
+{
+    float z = depth * 2.0f - 1.0f;
+    return (2.0 * SceneUBO.NearPlane * SceneUBO.FarPlane) / (SceneUBO.FarPlane - z * (SceneUBO.FarPlane - SceneUBO.NearPlane));
 }

@@ -29,6 +29,7 @@
 #include "Core/Object/Package/Package.h"
 #include "Core/Profiler/Profile.h"
 #include "Core/Reflection/PropertyCustomization/PropertyCustomization.h"
+#include "Platform/Process/PlatformProcess.h"
 #include "Properties/Customizations/CoreTypeCustomization.h"
 #include "Renderer/RenderManager.h"
 #include "Scene/SceneRenderer.h"
@@ -41,6 +42,22 @@
 
 namespace Lumina
 {
+    static FString FormatSize(size_t bytes)
+    {
+        const char* suffixes[] = { "B", "KB", "MB", "GB" };
+        double size = static_cast<double>(bytes);
+        int suffix = 0;
+
+        while (size >= 1024.0 && suffix < 3) {
+            size /= 1024.0;
+            ++suffix;
+        }
+
+        char buffer[64];
+        snprintf(buffer, sizeof(buffer), "%.2f %s", size, suffixes[suffix]);
+        return FString(buffer);
+    }
+    
     FRHIImageRef FEditorUI::FolderIcon;
     FRHIImageRef FEditorUI::StaticMeshIcon;
     FRHIImageRef FEditorUI::TextureIcon;
@@ -235,6 +252,45 @@ namespace Lumina
             UpdateContext.GetSubsystem<FRenderManager>()->GetImGuiRenderer()->DrawRenderDebugInformationWindow(&bShowRenderDebug, UpdateContext);
         }
 
+        if (bShowMemoryDebug)
+        {
+            if (!ImGui::Begin("Memory Debug", &bShowMemoryDebug, ImGuiWindowFlags_AlwaysAutoResize))
+            {
+                ImGui::End();
+                return;
+            }
+
+            ImGui::TextColored(ImVec4(1, 0.75f, 0.5f, 1), "Global Memory Statistics");
+
+            if (ImGui::BeginTable("MemoryStats", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg))
+            {
+                ImGui::TableSetupColumn("Metric", ImGuiTableColumnFlags_WidthStretch);
+                ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthFixed);
+
+                auto Row = [](const char* label, size_t value)
+                {
+                    ImGui::TableNextRow();
+                    ImGui::TableSetColumnIndex(0); ImGui::TextUnformatted(label);
+                    ImGui::TableSetColumnIndex(1); ImGui::TextUnformatted(FormatSize(value).c_str());
+                };
+                Row("Current Program Memory", Platform::GetProcessMemoryUsageBytes());
+                Row("Current Mapped",        Memory::GetCurrentMappedMemory());
+                Row("Peak Mapped",           Memory::GetPeakMappedMemory());
+                Row("Cached (Small/Medium)", Memory::GetCachedMemory());
+                Row("Current Huge Allocs",  Memory::GetCurrentHugeAllocMemory());
+                Row("Peak Huge Allocs",     Memory::GetPeakHugeAllocMemory());
+                Row("Total Mapped",         Memory::GetTotalMappedMemory());
+                Row("Total Unmapped",       Memory::GetTotalUnmappedMemory());
+
+                ImGui::EndTable();
+            }
+
+            ImGui::Spacing();
+            ImGui::TextDisabled("Note: All values reported by rpmalloc_global_statistics");
+
+            ImGui::End();
+        }
+
         if (bShowObjectDebug)
         {
             ImGui::SetNextWindowSize({ 700.0f, 600.0f }, ImGuiCond_FirstUseEver);
@@ -351,7 +407,7 @@ namespace Lumina
 
     void FEditorUI::OnUpdate(const FUpdateContext& UpdateContext)
     {
-        LUMINA_PROFILE_SCOPE()
+        LUMINA_PROFILE_SCOPE();
         for (FEditorTool* Tool : EditorTools)
         {
             if (Tool->HasScene())
@@ -363,7 +419,7 @@ namespace Lumina
 
     void FEditorUI::OnEndFrame(const FUpdateContext& UpdateContext)
     {
-        LUMINA_PROFILE_SCOPE()
+        LUMINA_PROFILE_SCOPE();
     }
     
     void FEditorUI::DestroyTool(const FUpdateContext& UpdateContext, FEditorTool* Tool)
@@ -483,7 +539,7 @@ namespace Lumina
 
     bool FEditorUI::SubmitToolMainWindow(const FUpdateContext& UpdateContext, FEditorTool* EditorTool, ImGuiID TopLevelDockspaceID)
     {
-        LUMINA_PROFILE_SCOPE()
+        LUMINA_PROFILE_SCOPE();
         Assert(EditorTool != nullptr)
         Assert(TopLevelDockspaceID != 0)
 
@@ -552,7 +608,7 @@ namespace Lumina
 
     void FEditorUI::DrawToolContents(const FUpdateContext& UpdateContext, FEditorTool* Tool)
     {
-        LUMINA_PROFILE_SCOPE()
+        LUMINA_PROFILE_SCOPE();
 
         // This is the second Begin(), as MyEditor_UpdateDocLocationAndLayout() has already done one
         // (Therefore only the p_open and flags of the first call to Begin() applies)
@@ -767,6 +823,11 @@ namespace Lumina
                                     ViewportTexture = ImGuiRenderer->GetOrCreateImTexture(SceneRenderer->GetDepthAttachment());
                                 }
                             break;
+                        case ESceneRenderGBuffer::SSAO:
+                            {
+                                ViewportTexture = ImGuiRenderer->GetOrCreateImTexture(SceneRenderer->GetSSAOImage());
+                            }
+                            break;
                         }
                         
                         Tool->bViewportFocused = ImGui::IsWindowFocused();
@@ -911,6 +972,8 @@ namespace Lumina
 
             ImGui::MenuItem("Renderer Info", nullptr, &bShowRenderDebug, !bShowRenderDebug);
             
+            ImGui::MenuItem("Memory Info", nullptr, &bShowMemoryDebug, !bShowMemoryDebug);
+
             bool bVSyncEnabled = UpdateContext.GetSubsystem<FRenderManager>()->GetRenderContext()->IsVSyncEnabled();
             if (ImGui::MenuItem("Enable V-Sync", nullptr, bVSyncEnabled))
             {

@@ -121,9 +121,10 @@ namespace Lumina
 
 		~TRefCountPtr()
 		{
-			if(Reference)
+			if(Reference != nullptr)
 			{
 				Reference->Release();
+				Reference = nullptr;
 			}
 		}
 
@@ -276,9 +277,6 @@ namespace Lumina
 			return GetReference() == B;
 		}
 	};
-	
-
-	
 }
 
 namespace eastl

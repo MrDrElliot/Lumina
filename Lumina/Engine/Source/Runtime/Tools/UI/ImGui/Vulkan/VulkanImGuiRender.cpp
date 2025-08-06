@@ -197,7 +197,8 @@ namespace Lumina
 			Label("Max Image Dimension 2D", std::format("{}", props.limits.maxImageDimension2D).c_str());
 			Label("Uniform Buffer Alignment", std::format("{} bytes", props.limits.minUniformBufferOffsetAlignment).c_str());
 			Label("Storage Buffer Alignment", std::format("{} bytes", props.limits.minStorageBufferOffsetAlignment).c_str());
-	
+			Label("Total Allocated RHI Resources", std::format("{}", GTotalRenderResourcesAllocated).c_str());
+			
 			ImGui::EndTable();
 		}
 

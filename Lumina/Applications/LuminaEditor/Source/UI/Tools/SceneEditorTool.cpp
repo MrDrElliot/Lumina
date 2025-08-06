@@ -237,6 +237,7 @@ namespace Lumina
                 "Normals",
                 "Material",
                 "Depth",
+                "SSAO",
             };
 
             ESceneRenderGBuffer DebugMode = SceneRenderer->GetGBufferDebugMode();

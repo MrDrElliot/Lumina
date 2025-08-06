@@ -2,6 +2,7 @@
 #include "Core/Reflection/PropertyCustomization/PropertyCustomization.h"
 #include "imgui.h"
 #include "Core/Math/Transform.h"
+#include "Core/Reflection/Type/LuminaTypes.h"
 #include "glm/glm.hpp"
 
 namespace Lumina
@@ -20,7 +21,19 @@ namespace Lumina
         
         EPropertyChangeOp DrawProperty(TSharedPtr<FPropertyHandle> Property) override
         {
-            ImGui::DragScalar("##Value", DT, &DisplayValue);
+            FProperty* Prop = Property->Property;
+            float Speed = Prop->HasMetadata("Delta") ? std::stof(Prop->GetMetadata("Delta").c_str()) : 1.0f;
+
+            std::optional<float> MinOpt;
+            std::optional<float> MaxOpt;
+
+            if (Prop->HasMetadata("ClampMin")) MinOpt = std::stof(Prop->GetMetadata("ClampMin").c_str());
+            if (Prop->HasMetadata("ClampMax")) MaxOpt = std::stof(Prop->GetMetadata("ClampMax").c_str());
+
+            float* Min = MinOpt ? &MinOpt.value() : nullptr;
+            float* Max = MaxOpt ? &MaxOpt.value() : nullptr;
+
+            ImGui::DragScalar("##Value", DT, &DisplayValue, Speed, Min, Max);
 
             return ImGui::IsItemDeactivatedAfterEdit() ? EPropertyChangeOp::Updated : EPropertyChangeOp::None;
         }

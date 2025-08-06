@@ -1,11 +1,9 @@
 #pragma once
 
 #define GLFW_INCLUDE_VULKAN
-#include <functional>
 #include <GLFW/glfw3.h>
 
 #include "WindowTypes.h"
-#include "Core/Functional/Function.h"
 #include "Core/Math/Math.h"
 
 

@@ -3,6 +3,11 @@
 #include "Paths/Paths.h"
 #include "Renderer/RenderContext.h"
 #include "Renderer/RenderResource.h"
+
+#define STBI_MALLOC(Sz) Lumina::Memory::Malloc(Sz)
+#define STBI_REALLOC(p, newsz) Lumina::Memory::Realloc(p, newsz)
+#define STBI_FREE(p) Lumina::Memory::Free(p)
+
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image/stb_image.h"
 
@@ -45,11 +50,10 @@ namespace Lumina::Import::Textures
         const uint32 Width = ImageDescription.Extent.X;
         const uint32 Height = ImageDescription.Extent.Y;
         const SIZE_T RowPitch = Width * 4;
-        const SIZE_T DepthPitch = RowPitch * Height;
 
         FRHICommandListRef TransferCommandList = RenderContext->CreateCommandList(FCommandListInfo::Graphics());
         TransferCommandList->Open();
-        TransferCommandList->WriteImage(ReturnImage, 0, 0, Pixels.data(), RowPitch, DepthPitch);
+        TransferCommandList->WriteImage(ReturnImage, 0, 0, Pixels.data(), RowPitch, 0);
         TransferCommandList->Close();
         RenderContext->ExecuteCommandList(TransferCommandList, ECommandQueue::Graphics);
 

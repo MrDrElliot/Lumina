@@ -30,8 +30,33 @@
 
 namespace Lumina
 {
-    extern TStack<IRHIResource*, TFixedVector<IRHIResource*, 100>> PendingDeletes;
+    VkAllocationCallbacks GVulkanAllocationCallbacks;
 
+    static void* VulkanAlloc(void* pUserData, size_t size, size_t alignment, VkSystemAllocationScope allocationScope)
+    {
+        return Memory::Malloc(size, alignment);
+    }
+
+    static void VulkanFree(void* pUserData, void* pMemory)
+    {
+        Memory::Free(pMemory);
+    }
+    
+    static void* VulkanRealloc(void* pUserData, void* pMemory, size_t size, size_t alignment, VkSystemAllocationScope allocationScope)
+    {
+        if (pMemory == nullptr)
+        {
+            return Memory::Malloc(size, alignment);
+        }
+        else if (size == 0)
+        {
+            Memory::Free(pMemory);
+            return nullptr;
+        }
+
+        return Memory::Realloc(pMemory, size);
+    }
+    
     VkBool32 VKAPI_PTR VkDebugCallback(
         VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
         VkDebugUtilsMessageTypeFlagsEXT messageTypes,
@@ -128,13 +153,13 @@ namespace Lumina
         CreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
         CreateInfo.pNext = &TimelineInfo;
 
-        VK_CHECK(vkCreateSemaphore(Device->GetDevice(), &CreateInfo, nullptr, &TimelineSemaphore));
+        VK_CHECK(vkCreateSemaphore(Device->GetDevice(), &CreateInfo, &GVulkanAllocationCallbacks, &TimelineSemaphore));
         InRenderContext->SetVulkanObjectName("Timeline Semaphore", VK_OBJECT_TYPE_SEMAPHORE, (uintptr_t)TimelineSemaphore);
     }
     
     FQueue::~FQueue()
     {
-        vkDestroySemaphore(Device->GetDevice(), TimelineSemaphore, nullptr);
+        vkDestroySemaphore(Device->GetDevice(), TimelineSemaphore, &GVulkanAllocationCallbacks);
         TimelineSemaphore = nullptr;
     }
 
@@ -157,7 +182,7 @@ namespace Lumina
             PoolInfo.queueFamilyIndex = QueueFamilyIndex;
             PoolInfo.flags = Flags;
         
-            VK_CHECK(vkCreateCommandPool(Device->GetDevice(), &PoolInfo, nullptr, &CommandPool));
+            VK_CHECK(vkCreateCommandPool(Device->GetDevice(), &PoolInfo, &GVulkanAllocationCallbacks, &CommandPool));
 
             VkCommandBufferAllocateInfo BufferInfo = {};
             BufferInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -355,6 +380,9 @@ namespace Lumina
         LUMINA_PROFILE_SCOPE();
         
         AssertMsg(glfwVulkanSupported(), "Vulkan Is Not Supported!");
+        GVulkanAllocationCallbacks.pfnAllocation = VulkanAlloc;
+        GVulkanAllocationCallbacks.pfnFree = VulkanFree;
+        GVulkanAllocationCallbacks.pfnReallocation = VulkanRealloc;
         
         vkb::InstanceBuilder Builder;
         auto InstBuilder = Builder
@@ -365,6 +393,7 @@ namespace Lumina
         //.add_validation_feature_enable(VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_RESERVE_BINDING_SLOT_EXT)
         //.add_validation_feature_enable(VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT)
         .request_validation_layers()
+        .set_allocation_callbacks(&GVulkanAllocationCallbacks)
         .use_default_debug_messenger()
         .set_debug_callback(VkDebugCallback)
         .enable_extension(VK_EXT_DEBUG_UTILS_EXTENSION_NAME)
@@ -423,12 +452,12 @@ namespace Lumina
         }
         
         auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(VulkanInstance, "vkDestroyDebugUtilsMessengerEXT");
-        func(VulkanInstance, DebugUtils.DebugMessenger, nullptr);
+        func(VulkanInstance, DebugUtils.DebugMessenger, &GVulkanAllocationCallbacks);
         
         FlushPendingDeletes();
         
         Memory::Delete(VulkanDevice);
-        vkDestroyInstance(VulkanInstance, nullptr);
+        vkDestroyInstance(VulkanInstance, &GVulkanAllocationCallbacks);
     }
 
     void FVulkanRenderContext::SetVSyncEnabled(bool bEnable)
@@ -851,16 +880,6 @@ namespace Lumina
             if (Queue != nullptr)
             {
                 Queue->RetireCommandBuffers();
-            }
-        }
-
-        while (!PendingDeletes.empty())
-        {
-            IRHIResource* Resource = PendingDeletes.top();
-            PendingDeletes.pop();
-            if (Resource->Deleting())
-            {
-                Memory::Delete(Resource);
             }
         }
     }

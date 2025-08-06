@@ -19,25 +19,22 @@ layout(location = 2) out vec3 outFragPos;
 layout(location = 3) out vec2 outUV;
 layout(location = 4) out mat4 inModelMatrix;
 
+precise invariant gl_Position;
 
 void main()
 {
     mat4 model = GetModelMatrix(gl_InstanceIndex);
     inModelMatrix = model;
-    
-    vec4 WorldPos = model * vec4(inPosition.xyz, 1.0f);
+
+    vec4 WorldPos = model * vec4(inPosition.xyz, 1.0);
+    outFragPos = WorldPos.xyz;
 
     mat3 NormalMatrix = transpose(inverse(mat3(model)));
-    vec3 worldNormal = NormalMatrix * normalize(inNormal.xyz);
-    
-    mat4 view = GetCameraView();
-    mat4 projection = GetCameraProjection();
+    outNormal = normalize(NormalMatrix * inNormal.xyz);
 
-    gl_Position = projection * view * WorldPos;
+    outUV = vec2(inUV.x, 1.0 - inUV.y);
 
     outFragColor = inColor;
-    outNormal = worldNormal;
-    outFragPos = WorldPos.xyz;
-    outUV = inUV;
-    outUV.y = 1.0 - inUV.y;
+
+    gl_Position = GetCameraProjection() * GetCameraView() * WorldPos;
 }

@@ -20,7 +20,7 @@ namespace Lumina
 {
     FVulkanSwapchain::~FVulkanSwapchain()
     {
-    	vkDestroySwapchainKHR(Context->GetDevice()->GetDevice(), Swapchain, nullptr);
+    	vkDestroySwapchainKHR(Context->GetDevice()->GetDevice(), Swapchain, &GVulkanAllocationCallbacks);
 
     	SwapchainImages.clear();
 
@@ -28,7 +28,7 @@ namespace Lumina
     	{
     		if (Semaphore)
     		{
-    			vkDestroySemaphore(Context->GetDevice()->GetDevice(), Semaphore, nullptr);
+    			vkDestroySemaphore(Context->GetDevice()->GetDevice(), Semaphore, &GVulkanAllocationCallbacks);
     		}
     	}
     	
@@ -36,7 +36,7 @@ namespace Lumina
     	{
     		if (Semaphore)
     		{
-    			vkDestroySemaphore(Context->GetDevice()->GetDevice(), Semaphore, nullptr);    
+    			vkDestroySemaphore(Context->GetDevice()->GetDevice(), Semaphore, &GVulkanAllocationCallbacks);    
     		}
     	}
 
@@ -44,7 +44,7 @@ namespace Lumina
     	PresentSemaphores.clear();
 
     	
-    	vkDestroySurfaceKHR(Context->GetVulkanInstance(), Surface, nullptr);
+    	vkDestroySurfaceKHR(Context->GetVulkanInstance(), Surface, &GVulkanAllocationCallbacks);
     	
     }
 
@@ -59,7 +59,7 @@ namespace Lumina
 
     	if (bFromResize == false)
     	{
-			VK_CHECK(glfwCreateWindowSurface(Instance, Window->GetWindow(), nullptr, &Surface));
+			VK_CHECK(glfwCreateWindowSurface(Instance, Window->GetWindow(), &GVulkanAllocationCallbacks, &Surface));
     	}
 	    
     	
@@ -78,6 +78,7 @@ namespace Lumina
             .set_desired_min_image_count(SWAPCHAIN_IMAGES)
     		.set_old_swapchain(Swapchain)
             .set_image_array_layer_count(1)
+    		.set_allocation_callbacks(&GVulkanAllocationCallbacks)
             .set_desired_extent(Extent.X, Extent.Y)
             .add_image_usage_flags(VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
             .build()
@@ -85,7 +86,7 @@ namespace Lumina
 
     	if (bFromResize)
     	{
-			vkDestroySwapchainKHR(Device, Swapchain, nullptr);
+			vkDestroySwapchainKHR(Device, Swapchain, &GVulkanAllocationCallbacks);
     		Swapchain = VK_NULL_HANDLE;
 		}
 
@@ -116,7 +117,7 @@ namespace Lumina
 			ImageViewCreateInfo.subresourceRange.baseMipLevel = 0;
 			ImageViewCreateInfo.subresourceRange.levelCount = 1;
 
-			VK_CHECK(vkCreateImageView(Device, &ImageViewCreateInfo, nullptr, &ImageView));
+			VK_CHECK(vkCreateImageView(Device, &ImageViewCreateInfo, &GVulkanAllocationCallbacks, &ImageView));
 
         	FRHIImageDesc ImageDescription;
         	ImageDescription.Extent = Extent;
@@ -143,7 +144,7 @@ namespace Lumina
     		VkSemaphoreCreateInfo CreateInfo = {};
     		CreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
     		VkSemaphore Semaphore;
-    		VK_CHECK(vkCreateSemaphore(Device, &CreateInfo, nullptr, &Semaphore));
+    		VK_CHECK(vkCreateSemaphore(Device, &CreateInfo, &GVulkanAllocationCallbacks, &Semaphore));
     		PresentSemaphores.push_back(Semaphore);
     	}
 
@@ -155,7 +156,7 @@ namespace Lumina
 	    	VkSemaphoreCreateInfo CreateInfo = {};
 	    	CreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 	    	VkSemaphore Semaphore;
-	    	VK_CHECK(vkCreateSemaphore(Device, &CreateInfo, nullptr, &Semaphore));
+	    	VK_CHECK(vkCreateSemaphore(Device, &CreateInfo, &GVulkanAllocationCallbacks, &Semaphore));
 	    	AcquireSemaphores.push_back(Semaphore);
 	    }
     	
@@ -250,13 +251,13 @@ namespace Lumina
     	}
 #endif
 
-#if 0
+#if 1
     	while (!FramesInFlight.empty())
 #else
     	while (FramesInFlight.size() >= FRAMES_IN_FLIGHT)
 #endif
     	{
-    		auto& Query = FramesInFlight.front();
+    		FRHIEventQueryRef Query = FramesInFlight.front();
     		FramesInFlight.pop();
 			
     		Context->WaitEventQuery(Query);

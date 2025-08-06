@@ -19,6 +19,8 @@ namespace Lumina::Platform
 
     const TCHAR* ExecutableName(bool bRemoveExtension = true);
 
+    LUMINA_API SIZE_T GetProcessMemoryUsageBytes();
+    
     const TCHAR* BaseDir();
 
     void* LoadLibraryWithSearchPaths(const FString& Filename, const TVector<FString>& SearchPaths);

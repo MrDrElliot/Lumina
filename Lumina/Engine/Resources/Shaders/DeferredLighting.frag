@@ -12,6 +12,7 @@ layout(set = 1, binding = 0) uniform sampler2D uPosition;
 layout(set = 1, binding = 1) uniform sampler2D uNormal;
 layout(set = 1, binding = 2) uniform sampler2D uMaterial;
 layout(set = 1, binding = 3) uniform sampler2D uAlbedoSpec;
+layout(set = 1, binding = 4) uniform sampler2D uSSAO;
 
 
 float DistributionGGX(vec3 N, vec3 H, float roughness)
@@ -63,12 +64,12 @@ void main()
 {
     vec3 Position = texture(uPosition, vUV).rgb;
     vec3 Albedo = texture(uAlbedoSpec, vUV).rgb;
-    vec3 Normal = texture(uNormal, vUV).rgb;
+    vec3 Normal = texture(uNormal, vUV).rgb * 2.0 - 1.0;
     float AO = texture(uMaterial, vUV).r;
     float Roughness = texture(uMaterial, vUV).g;
     float Metallic = texture(uMaterial, vUV).b;
     float Specular = texture(uAlbedoSpec, vUV).a;
-
+    float AmbientOcclusion = texture(uSSAO, vUV).r;
 
     vec3 N = Normal;
     vec3 V = normalize(SceneUBO.CameraView.CameraPosition.xyz - Position);
@@ -172,12 +173,12 @@ void main()
     }
     
     
-    vec3 Ambient = vec3(0.01) * Albedo * AO;
+    vec3 Ambient = vec3(0.01) * Albedo * AmbientOcclusion;
     vec3 Color = Ambient + Lo;
     
     Color = Color / (Color + vec3(1.0));
     
     Color = pow(Color, vec3(1.0/2.2));
 
-    outColor = vec4(Color, 1.0);
+    outColor = vec4(vec3(AmbientOcclusion), 1.0);
 }

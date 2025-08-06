@@ -24,7 +24,8 @@ namespace Lumina
 
 namespace Lumina
 {
-
+    extern VkAllocationCallbacks GVulkanAllocationCallbacks;
+    
     struct FVulkanRenderContextFunctions
     {
         VkDebugUtilsMessengerEXT DebugMessenger = nullptr;
@@ -46,7 +47,7 @@ namespace Lumina
         {
             for (VkFence Fence : Fences)
             {
-                vkDestroyFence(Device->GetDevice(), Fence, nullptr);
+                vkDestroyFence(Device->GetDevice(), Fence, &GVulkanAllocationCallbacks);
             }
         }
 
@@ -62,7 +63,7 @@ namespace Lumina
             VkFence Fence;
             VkFenceCreateInfo FenceCreateInfo = {};
             FenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-            VK_CHECK(vkCreateFence(Device->GetDevice(), &FenceCreateInfo, nullptr, &Fence));
+            VK_CHECK(vkCreateFence(Device->GetDevice(), &FenceCreateInfo, &GVulkanAllocationCallbacks, &Fence));
             return Fence;
         }
 
@@ -221,7 +222,6 @@ namespace Lumina
         FVulkanDevice*                                  VulkanDevice = nullptr;
         FVulkanRenderContextFunctions                   DebugUtils;
 
-        
         FSpirVShaderCompiler*                           ShaderCompiler;
         FRHIShaderLibraryRef                            ShaderLibrary;
     };

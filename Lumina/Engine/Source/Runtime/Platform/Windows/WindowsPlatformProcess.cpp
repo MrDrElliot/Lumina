@@ -6,6 +6,7 @@
 #include <Windows.h>
 #include <tchar.h>
 #include <PathCch.h>  // For PathFindFileName
+#include <psapi.h>
 #include <Shlwapi.h>
 #pragma comment(lib, "Shlwapi.lib")
 #pragma comment(lib, "PathCch.lib")
@@ -95,6 +96,16 @@ namespace Lumina::Platform
         }
 
         return ExecutableName;
+    }
+
+    SIZE_T GetProcessMemoryUsageBytes()
+    {
+        PROCESS_MEMORY_COUNTERS_EX pmc;
+        if (GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)&pmc, sizeof(pmc)))
+        {
+            return pmc.PrivateUsage;
+        }
+        return 0;
     }
 
 

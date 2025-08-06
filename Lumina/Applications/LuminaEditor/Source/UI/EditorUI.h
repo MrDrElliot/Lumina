@@ -92,6 +92,7 @@ namespace Lumina
         bool                                            bDearImGuiDemoWindowOpen = false;
         bool                                            bShowObjectDebug = false;
         bool                                            bShowRenderDebug = false;
+        bool                                            bShowMemoryDebug = false;
 
         TQueue<FEditorTool*>                            ToolsPendingAdd;
         TQueue<FEditorTool*>                            ToolsPendingDestroy;

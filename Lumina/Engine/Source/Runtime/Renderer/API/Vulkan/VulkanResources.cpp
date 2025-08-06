@@ -595,7 +595,7 @@ namespace Lumina
 
         Info.magFilter = InDesc.MagFilter ? VK_FILTER_LINEAR : VK_FILTER_NEAREST;
         Info.minFilter = InDesc.MinFilter ? VK_FILTER_LINEAR : VK_FILTER_NEAREST;
-        Info.mipmapMode = InDesc.MipFilter ? VK_SAMPLER_MIPMAP_MODE_LINEAR : VK_SAMPLER_MIPMAP_MODE_NEAREST;
+        Info.mipmapMode = InDesc.MipFilter ? VK_SAMPLER_MIPMAP_MODE_LINEAR : VK_SAMPLER_MIPMAP_MODE_LINEAR;
 
         Info.maxAnisotropy = InDesc.MaxAnisotropy;
         Info.anisotropyEnable = (InDesc.MaxAnisotropy > 1.0f) ? VK_TRUE : VK_FALSE;
@@ -607,16 +607,16 @@ namespace Lumina
         Info.mipLodBias = InDesc.MipBias;
 
         Info.compareEnable = VK_FALSE;
-        Info.compareOp = VK_COMPARE_OP_ALWAYS;
+        Info.compareOp = VK_COMPARE_OP_NEVER;
         Info.minLod = 0.0f;
         Info.maxLod = 0.0f; // TEMP WAS VK_LOD_CLAMP_NONE
 
-        VK_CHECK(vkCreateSampler(Device->GetDevice(), &Info, nullptr, &Sampler));
+        VK_CHECK(vkCreateSampler(Device->GetDevice(), &Info, &GVulkanAllocationCallbacks, &Sampler));
     }
 
     FVulkanSampler::~FVulkanSampler()
     {
-        vkDestroySampler(Device->GetDevice(), Sampler, nullptr);
+        vkDestroySampler(Device->GetDevice(), Sampler, &GVulkanAllocationCallbacks);
     }
 
 
@@ -715,7 +715,7 @@ namespace Lumina
         ImageViewCreateInfo.subresourceRange.baseMipLevel = 0;
         ImageViewCreateInfo.subresourceRange.levelCount = GetDescription().NumMips;
     
-        VK_CHECK(vkCreateImageView(Device->GetDevice(), &ImageViewCreateInfo, nullptr, &ImageView));
+        VK_CHECK(vkCreateImageView(Device->GetDevice(), &ImageViewCreateInfo, &GVulkanAllocationCallbacks, &ImageView));
     
         Assert(ImageView != VK_NULL_HANDLE)
     }
@@ -739,7 +739,7 @@ namespace Lumina
             Device->GetAllocator()->DestroyImage(Image);
         }
         
-        vkDestroyImageView(Device->GetDevice(), ImageView, nullptr);
+        vkDestroyImageView(Device->GetDevice(), ImageView, &GVulkanAllocationCallbacks);
     }
 
     void* FVulkanImage::GetAPIResourceImpl(EAPIResourceType Type)
@@ -888,7 +888,7 @@ namespace Lumina
 
     FVulkanBindingLayout::~FVulkanBindingLayout()
     {
-        vkDestroyDescriptorSetLayout(Device->GetDevice(), DescriptorSetLayout, nullptr);
+        vkDestroyDescriptorSetLayout(Device->GetDevice(), DescriptorSetLayout, &GVulkanAllocationCallbacks);
     }
 
     bool FVulkanBindingLayout::Bake()
@@ -946,7 +946,7 @@ namespace Lumina
             CreateInfo.pNext = &ExtendedInfo;
         }
 
-        auto Result = vkCreateDescriptorSetLayout(Device->GetDevice(), &CreateInfo, nullptr, &DescriptorSetLayout);
+        auto Result = vkCreateDescriptorSetLayout(Device->GetDevice(), &CreateInfo, &GVulkanAllocationCallbacks, &DescriptorSetLayout);
         VK_CHECK(Result);
 
         THashMap<VkDescriptorType, uint32> PoolSizeMap;
@@ -998,7 +998,7 @@ namespace Lumina
         PoolCreateInfo.pPoolSizes = InLayout->PoolSizes.data();
         PoolCreateInfo.maxSets = 1;
 
-        VK_CHECK(vkCreateDescriptorPool(Device->GetDevice(), &PoolCreateInfo, nullptr, &DescriptorPool));
+        VK_CHECK(vkCreateDescriptorPool(Device->GetDevice(), &PoolCreateInfo, &GVulkanAllocationCallbacks, &DescriptorPool));
         
         VkDescriptorSetAllocateInfo AllocateInfo = {};
         AllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -1141,7 +1141,7 @@ namespace Lumina
 
     FVulkanBindingSet::~FVulkanBindingSet()
     {
-        vkDestroyDescriptorPool(Device->GetDevice(), DescriptorPool, nullptr);
+        vkDestroyDescriptorPool(Device->GetDevice(), DescriptorPool, &GVulkanAllocationCallbacks);
     }
 
     void* FVulkanBindingSet::GetAPIResourceImpl(EAPIResourceType InType)
@@ -1161,7 +1161,7 @@ namespace Lumina
         PoolCreateInfo.pPoolSizes = InLayout->PoolSizes.data();
         PoolCreateInfo.maxSets = 1;
 
-        VK_CHECK(vkCreateDescriptorPool(Device->GetDevice(), &PoolCreateInfo, nullptr, &DescriptorPool));
+        VK_CHECK(vkCreateDescriptorPool(Device->GetDevice(), &PoolCreateInfo, &GVulkanAllocationCallbacks, &DescriptorPool));
         
         VkDescriptorSetAllocateInfo AllocateInfo = {};
         AllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -1174,7 +1174,7 @@ namespace Lumina
 
     FVulkanDescriptorTable::~FVulkanDescriptorTable()
     {
-        vkDestroyDescriptorPool(Device->GetDevice(), DescriptorPool, nullptr);
+        vkDestroyDescriptorPool(Device->GetDevice(), DescriptorPool, &GVulkanAllocationCallbacks);
     }
 
     void* FVulkanDescriptorTable::GetAPIResourceImpl(EAPIResourceType Type)
@@ -1184,8 +1184,8 @@ namespace Lumina
     
     FVulkanPipeline::~FVulkanPipeline()
     {
-        vkDestroyPipeline(Device->GetDevice(), Pipeline, nullptr);
-        vkDestroyPipelineLayout(Device->GetDevice(), PipelineLayout, nullptr);
+        vkDestroyPipeline(Device->GetDevice(), Pipeline, &GVulkanAllocationCallbacks);
+        vkDestroyPipelineLayout(Device->GetDevice(), PipelineLayout, &GVulkanAllocationCallbacks);
     }
 
     void FVulkanPipeline::CreatePipelineLayout(TVector<FRHIBindingLayoutRef> BindingLayouts, VkShaderStageFlags& OutStageFlags)
@@ -1225,7 +1225,7 @@ namespace Lumina
         CreateInfo.pushConstantRangeCount = PushConstantSize ? 1 : 0;
         CreateInfo.pPushConstantRanges = &Range;
         
-        VK_CHECK(vkCreatePipelineLayout(Device->GetDevice(), &CreateInfo, nullptr, &PipelineLayout));
+        VK_CHECK(vkCreatePipelineLayout(Device->GetDevice(), &CreateInfo, &GVulkanAllocationCallbacks, &PipelineLayout));
     }
 
     FVulkanGraphicsPipeline::FVulkanGraphicsPipeline(FVulkanDevice* InDevice, const FGraphicsPipelineDesc& InDesc)
@@ -1379,7 +1379,7 @@ namespace Lumina
         CreateInfo.renderPass = VK_NULL_HANDLE;
         CreateInfo.subpass = 0;
         
-        VK_CHECK(vkCreateGraphicsPipelines(Device->GetDevice(), nullptr, 1, &CreateInfo, nullptr, &Pipeline));
+        VK_CHECK(vkCreateGraphicsPipelines(Device->GetDevice(), nullptr, 1, &CreateInfo, &GVulkanAllocationCallbacks, &Pipeline));
 
     }
     
@@ -1401,6 +1401,6 @@ namespace Lumina
         CreateInfo.stage = StageInfo;
         CreateInfo.layout = PipelineLayout;
         
-        VK_CHECK(vkCreateComputePipelines(Device->GetDevice(), nullptr, 1, &CreateInfo, nullptr, &Pipeline));
+        VK_CHECK(vkCreateComputePipelines(Device->GetDevice(), nullptr, 1, &CreateInfo, &GVulkanAllocationCallbacks, &Pipeline));
     }
 }

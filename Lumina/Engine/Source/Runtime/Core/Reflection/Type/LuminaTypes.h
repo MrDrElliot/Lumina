@@ -77,7 +77,8 @@ namespace Lumina
         
         FString GetTypeAsString() const;
 
-        const FPropertyMetadata& GetMetadata() const { return Metadata; }
+        FName GetMetadata(const FName& Name) { return Metadata.GetMetadata(Name); }
+        bool HasMetadata(const FName& Name) { return Metadata.HasMetadata(Name); }
 
         void OnMetadataFinalized();
         static FString MakeDisplayNameFromName(EPropertyTypeFlags TypeFlags, const FName& InName);

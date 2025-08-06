@@ -12,6 +12,10 @@ project "Editor"
 	defines
 	{ 
 		"_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS",
+		"TRACY_ENABLE",
+    	"TRACY_CALLSTACK",
+    	"TRACY_ON_DEMAND",
+		"TRACY_IMPORTS",
 	}
 
 	links

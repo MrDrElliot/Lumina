@@ -178,6 +178,8 @@ virtual ERHIResourceType GetResourceType() const override { return ERHIResourceT
 namespace Lumina
 {
 
+	LUMINA_API extern SIZE_T GTotalRenderResourcesAllocated;
+	
 	constexpr uint64 GVersionSubmittedFlag = 0x8000000000000000;
 	constexpr uint32 GVersionQueueShift = 60;
 	constexpr uint32 GVersionQueueMask = 0x7;
@@ -239,8 +241,12 @@ namespace Lumina
 
     	virtual ERHIResourceType GetResourceType() const = 0;
 
-        IRHIResource() = default;
-        virtual ~IRHIResource() = default;
+    	IRHIResource();
+    	virtual ~IRHIResource();
+    	IRHIResource(const IRHIResource&) = delete;
+    	IRHIResource(const IRHIResource&&) = delete;
+    	IRHIResource& operator=(const IRHIResource&) = delete;
+    	IRHIResource& operator=(const IRHIResource&&) = delete;
 
     	template<typename T, EAPIResourceType Type = EAPIResourceType::Default>
 		T GetAPIResource()
@@ -287,9 +293,9 @@ namespace Lumina
     		if (NewValue == 0)
     		{
     			Destroy();
+    			return 0;
     		}
     		
-    		Assert(NewValue >= 0)
     		return uint32(NewValue);
     	}
         
@@ -365,11 +371,11 @@ namespace Lumina
 			bool Deleteing()
 			{
 				uint32 LocalPacked = Packed.load(std::memory_order_acquire);
-				Assert((LocalPacked & MarkedForDeleteBit) != 0);
-				Assert((LocalPacked & DeletingBit) == 0);
+				Assert((LocalPacked & MarkedForDeleteBit) != 0)
+				Assert((LocalPacked & DeletingBit) == 0)
 				uint32 NumRefs = LocalPacked & NumRefsMask;
 		
-				if (NumRefs == 0) // caches can bring dead objects back to life
+				if (NumRefs == 0)
 				{
 					Packed.fetch_or(DeletingBit, std::memory_order_acquire);
 					return true;
@@ -692,9 +698,9 @@ namespace Lumina
 
 	struct LUMINA_API FSamplerDesc
 	{
-		FColor BorderColor = 1.f;
-		float MaxAnisotropy = 1.f;
-		float MipBias = 0.f;
+		FColor BorderColor = 1.0f;
+		float MaxAnisotropy = 1.0f;
+		float MipBias = 0.0f;
 
 		bool MinFilter = true;
 		bool MagFilter = true;
@@ -1003,8 +1009,8 @@ namespace Lumina
         bool MultisampleEnable = false;
         bool AntialiasedLineEnable = false;
         int DepthBias = 0;
-        float DepthBiasClamp = 0.f;
-        float SlopeScaledDepthBias = 0.f;
+        float DepthBiasClamp = 0.0f;
+        float SlopeScaledDepthBias = 0.0f;
 
 
         uint8 ForcedSampleCount = 0;

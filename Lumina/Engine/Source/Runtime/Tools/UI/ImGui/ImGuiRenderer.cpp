@@ -14,11 +14,22 @@
 
 namespace Lumina
 {
+	static void* ImGuiMemAlloc(size_t size, void* user_data)
+	{
+		return Memory::Malloc(size);
+	}
+
+	static void ImGuiMemFree(void* ptr, void* user_data)
+	{
+		Memory::Free(ptr);
+	}
+
 	
     void IImGuiRenderer::Initialize(FSubsystemManager& Manager)
     {
 
         IMGUI_CHECKVERSION();
+		ImGui::SetAllocatorFunctions(ImGuiMemAlloc, ImGuiMemFree, nullptr);
         ImGuiContext* Context = ImGui::CreateContext();
     	ImGuizmo::SetImGuiContext(Context);
     	
@@ -84,8 +95,8 @@ namespace Lumina
         Assert(GFonts[(uint8)EFont::MediumBold]->IsLoaded())
         Assert(GFonts[(uint8)EFont::Large]->IsLoaded())
         Assert(GFonts[(uint8)EFont::LargeBold]->IsLoaded())
+		
     	
-
     	io.ConfigWindowsMoveFromTitleBarOnly = true;
     	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls

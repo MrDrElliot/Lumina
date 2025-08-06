@@ -28,7 +28,7 @@ namespace Lumina
 
     void FVec2PropertyCustomization::HandleExternalUpdate(TSharedPtr<FPropertyHandle> Property)
     {
-        glm::vec2& ActualValue = *(glm::vec2*)Property->PropertyPointer;
+        glm::vec2& ActualValue = *Property->GetTypePropertyPtr<glm::vec2>();
         if (CachedValue != ActualValue)
         {
             CachedValue = DisplayValue = ActualValue;
@@ -59,7 +59,7 @@ namespace Lumina
 
     void FVec3PropertyCustomization::HandleExternalUpdate(TSharedPtr<FPropertyHandle> Property)
     {
-        glm::vec3& ActualValue = *(glm::vec3*)Property->PropertyPointer;
+        glm::vec3& ActualValue = *Property->GetTypePropertyPtr<glm::vec3>();
         if (CachedValue != ActualValue)
         {
             CachedValue = DisplayValue = ActualValue;
@@ -90,7 +90,7 @@ namespace Lumina
 
     void FVec4PropertyCustomization::HandleExternalUpdate(TSharedPtr<FPropertyHandle> Property)
     {
-        glm::vec4& ActualValue = *(glm::vec4*)Property->PropertyPointer;
+        glm::vec4& ActualValue = *Property->GetTypePropertyPtr<glm::vec4>();
         if (CachedValue != ActualValue)
         {
             CachedValue = DisplayValue = ActualValue;

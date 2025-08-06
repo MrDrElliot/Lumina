@@ -17,13 +17,12 @@ namespace Lumina
 
         FSamplerDesc SamplerDesc; SamplerDesc
         .SetAllFilters(false)
-        .SetAllAddressModes(ESamplerAddressMode::Clamp);
-        
+        .SetAllAddressModes(ESamplerAddressMode::Repeat);
         NearestSampler = RenderContext->CreateSampler(SamplerDesc);
 
+        
         SamplerDesc.SetAllFilters(true)
         .SetAllAddressModes(ESamplerAddressMode::Clamp);
-        
         LinearSampler = RenderContext->CreateSampler(SamplerDesc);
 
         #if WITH_DEVELOPMENT_TOOLS

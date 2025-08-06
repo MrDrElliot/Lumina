@@ -27,14 +27,7 @@ namespace Lumina
             }
         }
 
-        ~FTrackedCommandBuffer() override
-        {
-            if (TracyContext)
-            {
-                TracyVkDestroy(TracyContext)
-            }
-            vkDestroyCommandPool(Device->GetDevice(), CommandPool, nullptr);
-        }
+        ~FTrackedCommandBuffer() override;
 
         void AddReferencedResource(const TRefCountPtr<IRHIResource>& InResource)
         {

@@ -39,12 +39,13 @@ namespace Lumina
         void StartScene(const FUpdateContext& UpdateContext);
         void EndScene(const FUpdateContext& UpdateContext);
     
-        INLINE FRHIImageRef GetRenderTarget() const { return SceneViewport->GetRenderTarget(); }
-        INLINE FSceneGlobalData* GetSceneGlobalData() { return &SceneGlobalData; }
+        FRHIImageRef GetRenderTarget() const { return SceneViewport->GetRenderTarget(); }
+        FSceneGlobalData* GetSceneGlobalData() { return &SceneGlobalData; }
 
         const FSceneRenderStats& GetSceneRenderStats() const { return SceneRenderStats; }
         const FGBuffer& GetGBuffer() const { return GBuffer; }
         FRHIImageRef GetDepthAttachment() const { return DepthAttachment; }
+        FRHIImageRef GetSSAOImage() const { return SSAOImage; }
         
         ESceneRenderGBuffer GetGBufferDebugMode() const { return GBufferDebugMode; }
         void SetGBufferDebugMode(ESceneRenderGBuffer Mode) { GBufferDebugMode = Mode; }
@@ -58,7 +59,6 @@ namespace Lumina
 
         void BuildPasses();
         void ExecutePasses();
-        void CreateIrradianceCube();
 
         void InitResources();
         void InitBuffers();
@@ -66,8 +66,6 @@ namespace Lumina
         void OnSwapchainResized();
 
         bool ResizeBufferIfNeeded(FRHIBufferRef& Buffer, SIZE_T DesiredSize) const;
-
-        void FullScreenPass(const FScene* Scene);
     
     private:
 
@@ -91,6 +89,8 @@ namespace Lumina
         FRHIBufferRef                       SceneDataBuffer;
         FRHIBufferRef                       ModelDataBuffer;
         FRHIBufferRef                       LightDataBuffer;
+        FRHIBufferRef                       SSAOKernalBuffer;
+        
         FRHIInputLayoutRef                  VertexLayoutInput;
         
         FSceneGlobalData                    SceneGlobalData;
@@ -99,6 +99,10 @@ namespace Lumina
         FRHIBindingSetRef                   SkyboxBindingSet;
         FRHIBindingSetRef                   LightingPassSet;
         FRHIBindingLayoutRef                LightingPassLayout;
+        
+        FRHIBindingSetRef                   SSAOPassSet;
+        FRHIBindingLayoutRef                SSAOPassLayout;
+        
         FRHIBindingLayoutRef                BindingLayout;
         FRHIBindingSetRef                   BindingSet;
         
@@ -112,6 +116,8 @@ namespace Lumina
         FRHIImageRef                        CubeMap;
         FRHIImageRef                        IrradianceCube;
         FRHIImageRef                        ShadowCubeMap;
+        FRHIImageRef                        NoiseImage;
+        FRHIImageRef                        SSAOImage;
 
         ESceneRenderGBuffer                 GBufferDebugMode = ESceneRenderGBuffer::RenderTarget;
 

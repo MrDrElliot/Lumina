@@ -29,6 +29,8 @@ namespace Lumina
     
     void FTaskSystem::Initialize()
     {
+        Assert(bInitialized == false)
+        
         enki::TaskSchedulerConfig config;
         config.numTaskThreadsToCreate = std::thread::hardware_concurrency();
         config.customAllocator.alloc = CustomAllocFunc;

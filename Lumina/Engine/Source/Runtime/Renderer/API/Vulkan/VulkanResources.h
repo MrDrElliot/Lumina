@@ -179,8 +179,8 @@ namespace Lumina
         VkImage GetImage() const { return Image; }
         VkImageView GetImageView() const { return ImageView; }
         
-        FORCEINLINE VkImageAspectFlags GetFullAspectMask() const { return FullAspectMask; }
-        FORCEINLINE VkImageAspectFlags GetPartialAspectMask() const { return PartialAspectMask; }
+        VkImageAspectFlags GetFullAspectMask() const { return FullAspectMask; }
+        VkImageAspectFlags GetPartialAspectMask() const { return PartialAspectMask; }
 
     private:
 

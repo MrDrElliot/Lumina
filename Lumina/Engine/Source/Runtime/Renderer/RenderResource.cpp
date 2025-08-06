@@ -27,13 +27,23 @@ namespace Lumina
     template class LUMINA_API TRefCountPtr<FShaderLibrary>;
     template class LUMINA_API TRefCountPtr<FRHIDescriptorTable>;
 
-    TStack<IRHIResource*, TFixedVector<IRHIResource*, 100>> PendingDeletes;
+    SIZE_T GTotalRenderResourcesAllocated = 0;
     
+    IRHIResource::IRHIResource()
+    {
+        GTotalRenderResourcesAllocated++;
+    }
+
+    IRHIResource::~IRHIResource()
+    {
+        GTotalRenderResourcesAllocated--;
+    }
+
     void IRHIResource::Destroy() const
     {
         if (!AtomicFlags.MarkForDelete(std::memory_order_relaxed))
         {
-            PendingDeletes.push(const_cast<IRHIResource*>(this));
+            Memory::Delete(this);
         }
     }
     

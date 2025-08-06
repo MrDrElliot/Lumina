@@ -14,6 +14,29 @@ namespace
 	{
 		LOG_CRITICAL("GLFW Error: {0} | {1}", error, description);
 	}
+	
+	void* CustomGLFWAllocate(size_t size, void* user)
+	{
+		return Lumina::Memory::Malloc(size);
+	}
+
+	void* CustomGLFWReallocate(void* block, size_t size, void* user)
+	{
+		return Lumina::Memory::Realloc(block, size);
+	}
+
+	void CustomGLFWDeallocate(void* block, void* user)
+	{
+		Lumina::Memory::Free(block);
+	}
+
+	GLFWallocator CustomAllocator =
+	{
+		CustomGLFWAllocate,
+		CustomGLFWReallocate,
+		CustomGLFWDeallocate,
+		nullptr
+	};
 }
 
 
@@ -60,6 +83,7 @@ namespace Lumina
 	{
 		if (LIKELY(!bInitialized))
 		{
+			glfwInitAllocator(&CustomAllocator);
 			glfwInit();
 			glfwSetErrorCallback(GLFWErrorCallback);
 			glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);

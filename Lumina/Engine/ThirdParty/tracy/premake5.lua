@@ -2,16 +2,19 @@ include(os.getenv("LUMINA_DIR") .. "/Dependencies.lua")
 
 
 project "Tracy"
-	kind "StaticLib"
-    staticruntime "on"
+	kind "SharedLib"
 	language "C++"
+	staticruntime "Off"
 
     targetdir ("%{wks.location}/Binaries/" .. outputdir)
     objdir ("%{wks.location}/Intermediates/Obj/" .. outputdir .. "/%{prj.name}")
 
     defines
     {
-        "LUMINA_ENGINE",
+		"TRACY_ENABLE",
+    	"TRACY_CALLSTACK",
+    	"TRACY_ON_DEMAND",
+		"TRACY_EXPORTS",
     }
 
 	buildoptions
@@ -28,22 +31,3 @@ project "Tracy"
 	{
 		"public",
 	}
-
-	filter "system:windows"
-		systemversion "latest"
-		cppdialect "C++17"
-
-	filter "system:linux"
-		pic "On"
-		systemversion "latest"
-		cppdialect "C++17"
-
-	filter "configurations:Debug"
-	defines "LE_DEBUG"
-	buildoptions "/MDd"
-	symbols "On"
-	
-	filter "configurations:Release"
-	defines "LE_RELEASE"
-	buildoptions "/MD"
-	optimize "On"

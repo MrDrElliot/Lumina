@@ -1,10 +1,13 @@
 #version 460 core
+
 #pragma shader_stage(fragment)
 
 #include "Includes/SceneGlobals.glsl"
 
 #define MAX_SCALARS 24
 #define MAX_VECTORS 24
+
+layout(early_fragment_tests) in;
 
 layout(location = 0) in vec4 inColor;
 layout(location = 1) in vec3 inNormal;
@@ -70,16 +73,16 @@ void main()
 {
     SMaterialInputs Material = GetMaterialInputs();
 
-    GPosition = vec4(inFragPos, 1.0);
+    GPosition = vec4(inFragPos, LinearDepth(gl_FragCoord.z));
 
-    GNormal = vec4(GetWorldNormal(inNormal, inUV, inFragPos, Material.Normal), 1.0);
-    
+    vec3 WorldNormal = GetWorldNormal(inNormal, inUV, inFragPos, Material.Normal);
+    GNormal = vec4(WorldNormal * 0.5 + 0.5, 1.0);
+
     GMaterial.r = Material.AmbientOcclusion;
     GMaterial.g = Material.Roughness;
     GMaterial.b = Material.Metallic;
     GMaterial.a = 1.0;
-    
+
     GAlbedoSpec.rgb = Material.Diffuse.rgb;
-    
     GAlbedoSpec.a = Material.Specular;
 }
