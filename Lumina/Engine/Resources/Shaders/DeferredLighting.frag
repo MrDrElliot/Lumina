@@ -63,8 +63,16 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0)
 void main()
 {
     vec3 Position = texture(uPosition, vUV).rgb;
+    Position = (GetInverseCameraView() * vec4(Position, 1.0f)).xyz;
+    
     vec3 Albedo = texture(uAlbedoSpec, vUV).rgb;
+    
+    
     vec3 Normal = texture(uNormal, vUV).rgb * 2.0 - 1.0;
+    mat3 inverseViewMatrix3x3 = transpose(inverse(mat3(GetInverseCameraView())));
+    Normal = normalize(inverseViewMatrix3x3 * Normal);
+    
+    
     float AO = texture(uMaterial, vUV).r;
     float Roughness = texture(uMaterial, vUV).g;
     float Metallic = texture(uMaterial, vUV).b;
@@ -171,7 +179,6 @@ void main()
             }
         }
     }
-    
     
     vec3 Ambient = vec3(0.01) * Albedo * AmbientOcclusion;
     vec3 Color = Ambient + Lo;

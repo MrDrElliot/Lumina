@@ -1003,7 +1003,7 @@ namespace Lumina
     {
         ERasterFillMode FillMode = ERasterFillMode::Solid;
         ERasterCullMode CullMode = ERasterCullMode::Back;
-        bool FrontCounterClockwise = true; // true for vk.
+        bool FrontCounterClockwise = true;
         bool DepthClipEnable = false;
         bool ScissorEnable = false;
         bool MultisampleEnable = false;

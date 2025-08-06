@@ -44,7 +44,9 @@ namespace Lumina
     {
         glm::vec4 Location =    {};
         glm::mat4 View =        {};
+        glm::mat4 InverseView = {};
         glm::mat4 Projection =  {};
+        glm::mat4 InverseProjection = {};
     };
     
     constexpr uint32 LIGHT_TYPE_DIRECTIONAL = 0;

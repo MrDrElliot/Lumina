@@ -5,7 +5,9 @@ struct FCameraView
 {
     vec4 CameraPosition;    // Camera Position
     mat4 CameraView;        // View matrix
+    mat4 InverseCameraView;
     mat4 CameraProjection;  // Projection matrix
+    mat4 InverseCameraProjection; // Inverse Camera Projection.
 };
 
 const uint LIGHT_TYPE_DIRECTIONAL = 0;
@@ -64,9 +66,19 @@ mat4 GetCameraView()
     return SceneUBO.CameraView.CameraView;
 }
 
+mat4 GetInverseCameraView()
+{
+    return SceneUBO.CameraView.InverseCameraView;
+}
+
 mat4 GetCameraProjection()
 {
     return SceneUBO.CameraView.CameraProjection;
+}
+
+mat4 GetInverseCameraProjection()
+{
+    return SceneUBO.CameraView.InverseCameraProjection;
 }
 
 vec3 GetModelLocation(uint Index)
@@ -112,10 +124,4 @@ FLight GetLightAt(uint Index)
 uint GetNumLights()
 {
     return LightData.NumLights;
-}
-
-float LinearDepth(float depth)
-{
-    float z = depth * 2.0f - 1.0f;
-    return (2.0 * SceneUBO.NearPlane * SceneUBO.FarPlane) / (SceneUBO.FarPlane - z * (SceneUBO.FarPlane - SceneUBO.NearPlane));
 }

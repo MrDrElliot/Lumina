@@ -11,9 +11,8 @@ layout(early_fragment_tests) in;
 
 layout(location = 0) in vec4 inColor;
 layout(location = 1) in vec3 inNormal;
-layout(location = 2) in vec3 inFragPos;
+layout(location = 2) in vec4 inFragPos;
 layout(location = 3) in vec2 inUV;
-layout(location = 4) in mat4 inModelMatrix;
 
 layout(location = 0) out vec4 GPosition;
 layout(location = 1) out vec4 GNormal;
@@ -73,10 +72,13 @@ void main()
 {
     SMaterialInputs Material = GetMaterialInputs();
 
-    GPosition = vec4(inFragPos, LinearDepth(gl_FragCoord.w));
+    GPosition = inFragPos;
 
-    vec3 WorldNormal = GetWorldNormal(inNormal, inUV, inFragPos, Material.Normal);
-    GNormal = vec4(WorldNormal * 0.5 + 0.5, 1.0);
+    vec3 WorldNormal = GetWorldNormal(inNormal, inUV, inFragPos.xyz, Material.Normal);
+    vec3 ViewNormal = normalize(inNormal);
+    vec3 EncodedNormal = ViewNormal * 0.5 + 0.5;
+    
+    GNormal = vec4(ViewNormal, 1.0);
 
     GMaterial.r = Material.AmbientOcclusion;
     GMaterial.g = Material.Roughness;

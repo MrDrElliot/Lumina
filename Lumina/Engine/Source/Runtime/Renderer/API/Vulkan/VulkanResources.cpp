@@ -1070,7 +1070,7 @@ namespace Lumina
                     VkDescriptorImageInfo& ImageInfo = ImageInfos.emplace_back();
                     ImageInfo.imageView = Image->GetImageView();
                     ImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                    ImageInfo.sampler = GEngine->GetEngineSubsystem<FRenderManager>()->GetLinearSampler()->GetAPIResource<VkSampler>();
+                    ImageInfo.sampler = GEngine->GetEngineSubsystem<FRenderManager>()->GetNearestSampler()->GetAPIResource<VkSampler>();
 
                     
                     Write.pImageInfo = &ImageInfo;

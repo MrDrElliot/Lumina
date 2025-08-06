@@ -293,7 +293,6 @@ namespace Lumina
             BeginInfo.DebugName = "SSAO Pass";
             CommandList->BeginRenderPass(BeginInfo);
             
-                
             float SizeY = (float)GetRenderTarget()->GetSizeY();
             float SizeX = (float)GetRenderTarget()->GetSizeX();
             CommandList->SetViewport(0.0f, 0.0f, 0.0f, SizeX, SizeY, 1.0f);
@@ -448,10 +447,10 @@ namespace Lumina
             CommandList->BeginRenderPass(BeginInfo);
             
                 
-            float SizeY = (float)GBuffer.AlbedoSpec->GetSizeY();
-            float SizeX = (float)GBuffer.AlbedoSpec->GetSizeX();
+            float SizeY = (float)GetRenderTarget()->GetSizeY();
+            float SizeX = (float)GetRenderTarget()->GetSizeX();
             CommandList->SetViewport(0.0f, 0.0f, 0.0f, SizeX, SizeY, 1.0f);
-            CommandList->SetScissorRect(0, 0, SizeX, SizeY);
+            CommandList->SetScissorRect(0, 0, (uint32)SizeX, (uint32)SizeY);
 
             SceneRenderStats.NumDrawCalls++;
             SceneRenderStats.NumVertices += 3;
@@ -521,8 +520,10 @@ namespace Lumina
             
             CommandList->BeginRenderPass(BeginInfo);
             
-            CommandList->SetViewport(0.0f, 0.0f, 0.0f, (float)ColorAttachment->GetSizeX(), (float)ColorAttachment->GetSizeY(), 1.0f);
-            CommandList->SetScissorRect(0, 0, ColorAttachment->GetSizeX(), ColorAttachment->GetSizeY());
+            float SizeY = (float)GetRenderTarget()->GetSizeY();
+            float SizeX = (float)GetRenderTarget()->GetSizeX();
+            CommandList->SetViewport(0.0f, 0.0f, 0.0f, SizeX, SizeY, 1.0f);
+            CommandList->SetScissorRect(0, 0, SizeX, SizeY);
 
             SceneRenderStats.NumDrawCalls++;
             SceneRenderStats.NumVertices += 36;
@@ -603,11 +604,11 @@ namespace Lumina
             
                 PC.Color = Light.Color;
             
-                float SizeY = (float)GBuffer.AlbedoSpec->GetSizeY();
-                float SizeX = (float)GBuffer.AlbedoSpec->GetSizeX();
+                float SizeY = (float)GetRenderTarget()->GetSizeY();
+                float SizeX = (float)GetRenderTarget()->GetSizeX();
                 CommandList->SetViewport(0.0f, 0.0f, 0.0f, SizeX, SizeY, 1.0f);
                 CommandList->SetScissorRect(0, 0, SizeX, SizeY);
-            
+                
                 CommandList->SetPushConstants(&PC, sizeof(FPC));
 
                 SceneRenderStats.NumDrawCalls++;
@@ -649,11 +650,13 @@ namespace Lumina
 
         SceneGlobalData.CameraData.Location =   glm::vec4(CameraComponent.GetPosition(), 1.0f);
         SceneGlobalData.CameraData.View =       CameraComponent.GetViewMatrix();
+        SceneGlobalData.CameraData.InverseView = CameraComponent.GetViewVolume().GetInverseViewMatrix();
         SceneGlobalData.CameraData.Projection = CameraComponent.GetProjectionMatrix();
+        SceneGlobalData.CameraData.InverseProjection = CameraComponent.GetViewVolume().GetInverseProjectionMatrix();
         SceneGlobalData.Time =                  (float)Scene->GetTimeSinceSceneCreation();
         SceneGlobalData.DeltaTime =             (float)Scene->GetSceneDeltaTime();
-        SceneGlobalData.FarPlane =              1000.0f;
-        SceneGlobalData.NearPlane =             0.01f;
+        SceneGlobalData.FarPlane =              0.01f;
+        SceneGlobalData.NearPlane =             1000.0f;
         
         SceneViewport->SetViewVolume(CameraComponent.GetViewVolume());
 

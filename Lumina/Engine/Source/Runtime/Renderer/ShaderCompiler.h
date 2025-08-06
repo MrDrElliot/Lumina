@@ -1,4 +1,6 @@
 ﻿#pragma once
+#include <shaderc/shaderc.hpp>
+
 #include "Containers/Array.h"
 #include "Containers/String.h"
 #include "Core/Functional/Function.h"
@@ -17,7 +19,7 @@ namespace Lumina
     class IShaderCompiler
     {
     public:
-        using CompletedFunc = TFunction<void(const TVector<uint32>& Binaries)>;
+        using CompletedFunc = TFunction<void(const TVector<uint32>&& Binaries)>;
 
         virtual ~IShaderCompiler() = default;
 
@@ -49,19 +51,21 @@ namespace Lumina
             FShaderCompileOptions CompileOptions;
             CompletedFunc OnCompleted;
         };
-        
+
+        FSpirVShaderCompiler();
         void Initialize() override;
         void Shutdown() override;
 
         bool CompilerShaderRaw(const FString& ShaderString, const FShaderCompileOptions& CompileOptions, CompletedFunc OnCompleted) override;
         bool CompileShader(const FString& ShaderPath, const FShaderCompileOptions& CompileOptions, CompletedFunc OnCompleted) override;
 
-        void AddRequest(const FRequest& Request);
+        void PushRequest(const FRequest& Request);
         void PopRequest();
 
         bool HasPendingRequests() const override { return !PendingRequest.empty(); }
-        
-        FMutex           RequestMutex;
-        TQueue<FRequest> PendingRequest;
+
+        shaderc::Compiler           Compiler;
+        FMutex                      RequestMutex;
+        TQueue<FRequest>            PendingRequest;
     };
 }

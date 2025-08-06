@@ -90,10 +90,10 @@ namespace Lumina
             }
     
             // Update camera view
-            glm::vec3 updatedForward = Transform.Transform.Rotation * glm::vec3(0.0f, 0.0f, -1.0f);
-            glm::vec3 updatedUp      = Transform.Transform.Rotation * glm::vec3(0.0f, 1.0f,  0.0f);
+            glm::vec3 UpdatedForward = Transform.Transform.Rotation * glm::vec3(0.0f, 0.0f, -1.0f);
+            glm::vec3 UpdatedUp      = Transform.Transform.Rotation * glm::vec3(0.0f, 1.0f,  0.0f);
     
-            Camera.SetView(Transform.Transform.Location, Transform.Transform.Location + updatedForward, updatedUp);
+            Camera.SetView(Transform.Transform.Location, Transform.Transform.Location + UpdatedForward, UpdatedUp);
         }
     }
 }

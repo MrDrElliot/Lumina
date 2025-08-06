@@ -378,13 +378,15 @@ namespace Lumina
     {
     public:
         
-        ~FVulkanPipeline();
+        ~FVulkanPipeline() override;
 
         FVulkanPipeline(FVulkanDevice* InDevice)
-            :IDeviceChild(InDevice)
+            : IDeviceChild(InDevice)
             , PipelineLayout(nullptr)
             , Pipeline(nullptr)
-        {}
+            , PushConstantVisibility(VK_SHADER_STAGE_FLAG_BITS_MAX_ENUM)
+        {
+        }
 
         virtual void Bind(VkCommandBuffer CmdBuffer) = 0;
 

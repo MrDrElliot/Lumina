@@ -932,9 +932,9 @@ namespace Lumina
 
         VkViewport Viewport = {};
         Viewport.x        = MinX;
-        Viewport.y        = MaxY; // <- Y offset at bottom
+        Viewport.y        = MaxY;
         Viewport.width    = MaxX - MinX;
-        Viewport.height   = -(MaxY - MinY); // <- Negative height
+        Viewport.height   = -(MaxY - MinY);
         Viewport.minDepth = MinZ;
         Viewport.maxDepth = MaxZ;
 
@@ -949,8 +949,8 @@ namespace Lumina
         VkRect2D Scissor = {};
         Scissor.offset.x = (int32)MinX;
         Scissor.offset.y = (int32)MinY;
-        Scissor.extent.width = MaxX - MinX;
-        Scissor.extent.height = MaxY - MinY;
+        Scissor.extent.width = std::abs((int32)(MaxX - MinX));
+        Scissor.extent.height = std::abs((int32)(MaxY - MinY));
 
         vkCmdSetScissor(CurrentCommandBuffer->CommandBuffer, 0, 1, &Scissor);
     }

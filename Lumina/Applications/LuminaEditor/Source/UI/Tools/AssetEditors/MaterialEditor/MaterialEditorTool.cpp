@@ -174,7 +174,6 @@ namespace Lumina
             
         FMaterialCompiler Compiler;
         NodeGraph->CompileGraph(&Compiler);
-
         if (Compiler.HasErrors())
         {
             for (const FMaterialCompiler::FError& Error : Compiler.GetErrors())
@@ -190,13 +189,13 @@ namespace Lumina
             CompilationResult.CompilationLog = "Generated GLSL: \n \n \n" + Tree;
             CompilationResult.bIsError = false;
             bGLSLPreviewDirty = true;
-
+            
             IShaderCompiler* ShaderCompiler = GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext()->GetShaderCompiler();
             ShaderCompiler->CompilerShaderRaw(Tree, {}, [this](const ShaderBinaries& Binaries)
             {
                 IRenderContext* RenderContext = GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext();
                 FRHIPixelShaderRef PixelShader = RenderContext->CreatePixelShader(Binaries);
-
+                
                 FName Key = eastl::to_string(Hash::GetHash64(Binaries.data(), Binaries.size()));
                 PixelShader->SetKey(Key);
                     
@@ -276,6 +275,8 @@ namespace Lumina
             
             Material->BindingSet = RenderContext->CreateBindingSet(SetDesc, Material->BindingLayout);
             RenderContext->SetObjectName(Material->BindingSet, Material->GetName().c_str(), EAPIResourceType::DescriptorSet);
+
+            OnSave();
         }
     }
 

@@ -13,11 +13,10 @@ precise invariant gl_Position;
 
 void main()
 {
-	mat4 Model = GetModelMatrix(gl_InstanceIndex);
-	vec4 WorldPos = Model * vec4(inPosition.xyz, 1.0f);
-
+	mat4 ModelMatrix = GetModelMatrix(gl_InstanceIndex);
 	mat4 View = GetCameraView();
-	mat4 Projection = GetCameraProjection();
+	
+	vec4 ViewPosition = View * ModelMatrix * vec4(inPosition.xyz, 1.0);
 
-	gl_Position = Projection * View * WorldPos;
+	gl_Position = GetCameraProjection() * ViewPosition;
 }

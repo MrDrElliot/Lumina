@@ -38,7 +38,8 @@ namespace Lumina
         FOV = fov;
         AspectRatio = aspect;
 
-        ProjectionMatrix = glm::perspective(glm::radians(FOV), AspectRatio, 10000.0f, 0.1f);
+        ProjectionMatrix = glm::perspective(glm::radians(FOV), AspectRatio, 1000.0f, 0.1f);
+        InverseProjectionMatrix = glm::inverse(ProjectionMatrix);
         UpdateMatrices();
     }
 
@@ -47,14 +48,16 @@ namespace Lumina
     {
         AspectRatio = InAspect;
 
-        ProjectionMatrix = glm::perspective(glm::radians(FOV), AspectRatio, 10000.0f, 0.1f);
+        ProjectionMatrix = glm::perspective(glm::radians(FOV), AspectRatio, 1000.0f, 0.1f);
+        InverseProjectionMatrix = glm::inverse(ProjectionMatrix);
         UpdateMatrices();
     }
     
     void FViewVolume::SetFOV(float InFOV)
     {
         FOV = InFOV;
-        ProjectionMatrix = glm::perspective(glm::radians(FOV), AspectRatio, 10000.0f, 0.1f);
+        ProjectionMatrix = glm::perspective(glm::radians(FOV), AspectRatio, 100.0f, 0.1f);
+        InverseProjectionMatrix = glm::inverse(ProjectionMatrix);
         UpdateMatrices();
     }
 
@@ -62,5 +65,6 @@ namespace Lumina
     {
         ViewMatrix = glm::lookAt(ViewPosition, ViewPosition + ForwardVector, UpVector);
         ViewProjectionMatrix = ProjectionMatrix * ViewMatrix;
+        InverseViewMatrix = glm::inverse(ViewMatrix);
     }
 }

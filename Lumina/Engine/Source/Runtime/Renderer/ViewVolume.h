@@ -26,6 +26,7 @@ namespace Lumina
         FORCEINLINE const glm::vec3& GetViewPosition() const { return ViewPosition; }
 
         FORCEINLINE const glm::mat4& GetViewMatrix() const { return ViewMatrix; }
+        FORCEINLINE const glm::mat4& GetInverseViewMatrix() const { return InverseViewMatrix; }
         FORCEINLINE const glm::mat4& GetViewProjectionMatrix() const { return ViewProjectionMatrix; }
         FORCEINLINE const glm::mat4& GetProjectionMatrix() const { return ProjectionMatrix; }
         FORCEINLINE const glm::mat4& GetInverseProjectionMatrix() const { return InverseProjectionMatrix; }
@@ -45,6 +46,7 @@ namespace Lumina
         glm::mat4           ProjectionMatrix;
         glm::mat4           InverseProjectionMatrix;
         glm::mat4           ViewMatrix;
+        glm::mat4           InverseViewMatrix;
         glm::mat4           ViewProjectionMatrix;
         
         float               FOV = 90.0f;
