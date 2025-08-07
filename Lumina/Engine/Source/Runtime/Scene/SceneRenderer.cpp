@@ -258,7 +258,6 @@ namespace Lumina
     
             FBlendState BlendState;
             FBlendState::RenderTarget RenderTarget;
-            RenderTarget.DisableBlend();
             RenderTarget.SetFormat(EFormat::R8_UNORM);
             BlendState.SetRenderTarget(0, RenderTarget);
     
@@ -285,6 +284,68 @@ namespace Lumina
             
             FRenderPassBeginInfo BeginInfo; BeginInfo
             .AddColorAttachment(SSAOImage)
+            .SetColorLoadOp(ERenderLoadOp::Clear)
+            .SetColorStoreOp(ERenderStoreOp::Store)
+            .SetColorClearColor(FColor::Black)
+            
+            .SetRenderArea(GetRenderTarget()->GetExtent());
+            BeginInfo.DebugName = "SSAO Pass";
+            CommandList->BeginRenderPass(BeginInfo);
+            
+            float SizeY = (float)GetRenderTarget()->GetSizeY();
+            float SizeX = (float)GetRenderTarget()->GetSizeX();
+            CommandList->SetViewport(0.0f, 0.0f, 0.0f, SizeX, SizeY, 1.0f);
+            CommandList->SetScissorRect(0, 0, SizeX, SizeY);
+
+            SceneRenderStats.NumDrawCalls++;
+            SceneRenderStats.NumVertices += 3;
+            CommandList->Draw(3, 1, 0, 0);
+    
+            CommandList->EndRenderPass(); 
+            
+        });
+
+        AddRenderPass("SSAO Blur Pass", [this, CommandList]()
+        {
+
+            FRHIVertexShaderRef VertexShader = RenderContext->GetShaderLibrary()->GetShader<FRHIVertexShader>("FullscreenQuad.vert");
+            FRHIPixelShaderRef PixelShader = RenderContext->GetShaderLibrary()->GetShader<FRHIPixelShader>("SSAOBlur.frag");
+            if (!VertexShader || !PixelShader)
+            {
+                return;
+            }
+
+            FRasterState RasterState;
+            RasterState.SetCullNone();
+    
+            FBlendState BlendState;
+            FBlendState::RenderTarget RenderTarget;
+            RenderTarget.SetFormat(EFormat::R8_UNORM);
+            BlendState.SetRenderTarget(0, RenderTarget);
+    
+            FDepthStencilState DepthState;
+            DepthState.DisableDepthTest();
+            DepthState.DisableDepthWrite();
+            
+            FRenderState RenderState;
+            RenderState.SetRasterState(RasterState);
+            RenderState.SetDepthStencilState(DepthState);
+            RenderState.SetBlendState(BlendState);
+            
+            FGraphicsPipelineDesc Desc;
+            Desc.SetRenderState(RenderState);
+            Desc.AddBindingLayout(BindingLayout);
+            Desc.AddBindingLayout(SSAOBlurPassLayout);
+            Desc.SetVertexShader(VertexShader);
+            Desc.SetPixelShader(PixelShader);
+    
+            FRHIGraphicsPipelineRef Pipeline = RenderContext->CreateGraphicsPipeline(Desc);
+                
+            CommandList->SetGraphicsPipeline(Pipeline);
+            CommandList->BindBindingSets(ERHIBindingPoint::Graphics, {{BindingSet, 0}, {SSAOBlurPassSet, 1}});
+            
+            FRenderPassBeginInfo BeginInfo; BeginInfo
+            .AddColorAttachment(SSAOBlur)
             .SetColorLoadOp(ERenderLoadOp::Clear)
             .SetColorStoreOp(ERenderStoreOp::Store)
             .SetColorClearColor(FColor::Black)
@@ -458,6 +519,7 @@ namespace Lumina
     
             CommandList->EndRenderPass(); 
         });
+#if 0
 
         AddRenderPass("Skybox Pass", [this, CommandList]()
         {
@@ -618,6 +680,9 @@ namespace Lumina
             
             CommandList->EndRenderPass();
         });
+
+#endif
+        
     }
 
     void FSceneRenderer::Deinitialize()
@@ -1025,7 +1090,7 @@ namespace Lumina
             SetDesc.AddItem(FBindingSetItem::TextureSRV(1, GBuffer.Normals));
             SetDesc.AddItem(FBindingSetItem::TextureSRV(2, GBuffer.Material));
             SetDesc.AddItem(FBindingSetItem::TextureSRV(3, GBuffer.AlbedoSpec));
-            SetDesc.AddItem(FBindingSetItem::TextureSRV(4, SSAOImage));
+            SetDesc.AddItem(FBindingSetItem::TextureSRV(4, SSAOBlur));
 
             LightingPassSet = RenderContext->CreateBindingSet(SetDesc, LightingPassLayout);
         }
@@ -1043,10 +1108,23 @@ namespace Lumina
             FBindingSetDesc SetDesc;
             SetDesc.AddItem(FBindingSetItem::TextureSRV(0, GBuffer.Position));
             SetDesc.AddItem(FBindingSetItem::TextureSRV(1, GBuffer.Normals));
-            SetDesc.AddItem(FBindingSetItem::TextureSRV(2, NoiseImage));
+            SetDesc.AddItem(FBindingSetItem::TextureSRV(2, NoiseImage, GEngine->GetEngineSubsystem<FRenderManager>()->GetNearestSamplerRepeat()));
             SetDesc.AddItem(FBindingSetItem::BufferCBV(2, SSAOKernalBuffer));
 
             SSAOPassSet = RenderContext->CreateBindingSet(SetDesc, SSAOPassLayout);
+        }
+
+        {
+            FBindingLayoutDesc LayoutDesc;
+            LayoutDesc.AddItem(FBindingLayoutItem(0, ERHIBindingResourceType::Texture_SRV));
+            LayoutDesc.StageFlags.SetMultipleFlags(ERHIShaderType::Fragment);
+            
+            SSAOBlurPassLayout = RenderContext->CreateBindingLayout(LayoutDesc);
+
+            FBindingSetDesc SetDesc;
+            SetDesc.AddItem(FBindingSetItem::TextureSRV(0, SSAOImage, GEngine->GetEngineSubsystem<FRenderManager>()->GetNearestSamplerClamped()));
+
+            SSAOBlurPassSet = RenderContext->CreateBindingSet(SetDesc, SSAOBlurPassLayout);
         }
         
         FBindingLayoutItem ImageItem;
@@ -1106,13 +1184,13 @@ namespace Lumina
             std::uniform_real_distribution rndDist(0.0f, 1.0f);
 
             // Sample kernel
-            TVector<glm::vec4> SSAOKernel(64);
-            for (uint32_t i = 0; i < 64; ++i)
+            TVector<glm::vec4> SSAOKernel(32);
+            for (uint32_t i = 0; i < 32; ++i)
             {
                 glm::vec3 sample(rndDist(rndEngine) * 2.0 - 1.0, rndDist(rndEngine) * 2.0 - 1.0, rndDist(rndEngine));
                 sample = glm::normalize(sample);
                 sample *= rndDist(rndEngine);
-                float scale = float(i) / float(64);
+                float scale = float(i) / float(32);
                 scale = lerp(0.1f, 1.0f, scale * scale);
                 SSAOKernel[i] = glm::vec4(sample * scale, 0.0f);
             }
@@ -1139,7 +1217,7 @@ namespace Lumina
             CommandList->Open();
             
             FRHIImageDesc SSAONoiseDesc = {};
-            SSAONoiseDesc.Extent = {8, 8};
+            SSAONoiseDesc.Extent = {4, 4};
             SSAONoiseDesc.Format = EFormat::RGBA32_FLOAT;
             SSAONoiseDesc.Dimension = EImageDimension::Texture2D;
             SSAONoiseDesc.bKeepInitialState = true;
@@ -1151,13 +1229,13 @@ namespace Lumina
             RenderContext->SetObjectName(NoiseImage, "SSAO Noise", EAPIResourceType::Image);
         
             // Random noise
-            TVector<glm::vec4> NoiseValues(64);
+            TVector<glm::vec4> NoiseValues(32);
             for (SIZE_T i = 0; i < NoiseValues.size(); i++)
             {
                 NoiseValues[i] = glm::vec4(rndDist(rndEngine) * 2.0f - 1.0f, rndDist(rndEngine) * 2.0f - 1.0f, 0.0f, 0.0f);
             }
             
-            CommandList->WriteImage(NoiseImage, 0, 0, NoiseValues.data(), 8 * 16, 0);
+            CommandList->WriteImage(NoiseImage, 0, 0, NoiseValues.data(), 4 * 16, 0);
 
             CommandList->Close();
             RenderContext->ExecuteCommandList(CommandList, ECommandQueue::Graphics);
@@ -1267,6 +1345,18 @@ namespace Lumina
         
             SSAOImage = RenderContext->CreateImage(SSAODesc);
             RenderContext->SetObjectName(SSAOImage, "SSAO", EAPIResourceType::Image);
+        }
+
+        {
+            FRHIImageDesc SSAODesc = {};
+            SSAODesc.Extent = Extent;
+            SSAODesc.Format = EFormat::R8_UNORM;
+            SSAODesc.Dimension = EImageDimension::Texture2D;
+            SSAODesc.Flags.SetMultipleFlags(EImageCreateFlags::ColorAttachment, EImageCreateFlags::ShaderResource);
+            SSAODesc.DebugName = "SSAO Blur";
+        
+            SSAOBlur = RenderContext->CreateImage(SSAODesc);
+            RenderContext->SetObjectName(SSAOBlur, "SSAO Blur", EAPIResourceType::Image);
         }
         
         

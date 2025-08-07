@@ -9,8 +9,8 @@ layout(set = 1, binding = 0) uniform sampler2D uPositionDepth;
 layout(set = 1, binding = 1) uniform sampler2D uNormal;
 layout(set = 1, binding = 2) uniform sampler2D uNoise;
 
-const int SSAO_KERNEL_SIZE = 64;
-const float SSAO_RADIUS = 0.5;
+const int SSAO_KERNEL_SIZE = 32;
+const float SSAO_RADIUS = 0.3;
 
 layout(set = 1, binding = 3) uniform SSBOKernal
 {
@@ -25,7 +25,7 @@ void main()
 {
     // FragPos and Normal are in *view-space*.
     vec3 FragPos = texture(uPositionDepth, inUV).rgb;
-    vec3 Normal = normalize(texture(uNormal, inUV).rgb);
+    vec3 Normal = normalize(texture(uNormal, inUV).rgb) * 2.0 - 1.0;
     
     ivec2 TexDim = textureSize(uPositionDepth, 0);
     ivec2 NoiseDim = textureSize(uNoise, 0);
@@ -51,6 +51,7 @@ void main()
         Offset = GetCameraProjection() * Offset; // From View-Space to Clip-Space.
         Offset.xy /= Offset.w; // Perspective divide.
         Offset.xy = Offset.xy * 0.5f + 0.5f; // Transform to range 0.0 - 1.0
+        Offset.y = 1.0 - Offset.y;
 
         if(Offset.x < 0.0 || Offset.x > 1.0 || Offset.y < 0.0 || Offset.y > 1.0) continue;
         
@@ -63,8 +64,7 @@ void main()
         Occlusion += (SampleDepth >= SamplerPos.z - Bias ? 1.0f : 0.0f) * RangeCheck;
     }
     
+    float Power = 1.5f;
     Occlusion = 1.0 - (Occlusion / float(SSAO_KERNEL_SIZE));
-    
-    outFragColor = Occlusion;
-
+    outFragColor = pow(Occlusion, Power);
 }

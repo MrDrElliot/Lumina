@@ -35,13 +35,11 @@ namespace Lumina
 
         glm::mat4 GetMatrix() const
         {
-            glm::mat4 m = glm::mat4_cast(Rotation);
-            m[0] *= Scale.x;
-            m[1] *= Scale.y;
-            m[2] *= Scale.z;
-            m[3] = glm::vec4(Location, 1.0f);
+            glm::mat4 T = glm::translate(glm::mat4(1.0f), Location);
+            glm::mat4 R = glm::mat4_cast(Rotation);
+            glm::mat4 S = glm::scale(glm::mat4(1.0f), Scale);
 
-            return m;
+            return T * R * S;
         }
 
         void SetRotationFromEuler(const glm::vec3& eulerAngles)

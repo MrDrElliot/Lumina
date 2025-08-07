@@ -102,6 +102,9 @@ namespace Lumina
         
         FRHIBindingSetRef                   SSAOPassSet;
         FRHIBindingLayoutRef                SSAOPassLayout;
+
+        FRHIBindingSetRef                   SSAOBlurPassSet;
+        FRHIBindingLayoutRef                SSAOBlurPassLayout;
         
         FRHIBindingLayoutRef                BindingLayout;
         FRHIBindingSetRef                   BindingSet;
@@ -118,6 +121,7 @@ namespace Lumina
         FRHIImageRef                        ShadowCubeMap;
         FRHIImageRef                        NoiseImage;
         FRHIImageRef                        SSAOImage;
+        FRHIImageRef                        SSAOBlur;
 
         ESceneRenderGBuffer                 GBufferDebugMode = ESceneRenderGBuffer::RenderTarget;
 

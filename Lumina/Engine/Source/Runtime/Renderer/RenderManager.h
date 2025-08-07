@@ -34,7 +34,8 @@ namespace Lumina
         
         LUMINA_API IRenderContext* GetRenderContext() const { return RenderContext; }
 
-        LUMINA_API FRHISamplerRef GetNearestSampler() const { return NearestSampler; }
+        LUMINA_API FRHISamplerRef GetNearestSamplerRepeat() const { return NearestSamplerRepeat; }
+        LUMINA_API FRHISamplerRef GetNearestSamplerClamped() const { return NearestSamplerClamped; }
         LUMINA_API FRHISamplerRef GetLinearSampler() const { return LinearSampler; }
 
         uint32 GetCurrentFrameIndex() const { return CurrentFrameIndex; }
@@ -47,8 +48,9 @@ namespace Lumina
         
         IRenderContext*     RenderContext = nullptr;
         uint8               CurrentFrameIndex = 0;
-        
-        FRHISamplerRef      NearestSampler;
+
+        FRHISamplerRef      NearestSamplerRepeat;
+        FRHISamplerRef      NearestSamplerClamped;
         FRHISamplerRef      LinearSampler;
         
     };

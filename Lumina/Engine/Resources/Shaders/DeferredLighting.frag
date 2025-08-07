@@ -62,8 +62,8 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0)
 
 void main()
 {
-    vec3 Position = texture(uPosition, vUV).rgb;
-    Position = (GetInverseCameraView() * vec4(Position, 1.0f)).xyz;
+    vec3 PositionVS = texture(uPosition, vUV).rgb;
+    vec3 Position = (GetInverseCameraView() * vec4(PositionVS, 1.0f)).xyz;
     
     vec3 Albedo = texture(uAlbedoSpec, vUV).rgb;
     
@@ -180,7 +180,7 @@ void main()
         }
     }
     
-    vec3 Ambient = vec3(0.01) * Albedo * AmbientOcclusion;
+    vec3 Ambient = vec3(0.1) * Albedo * AmbientOcclusion;
     vec3 Color = Ambient + Lo;
     
     Color = Color / (Color + vec3(1.0));

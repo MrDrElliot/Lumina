@@ -251,7 +251,6 @@ namespace Lumina
 
             ImGui::EndMenu();
         }
-        
     }
 
     void FSceneEditorTool::InitializeDockingLayout(ImGuiID InDockspaceID, const ImVec2& InDockspaceSize) const
@@ -292,8 +291,18 @@ namespace Lumina
     
         glm::mat4 ViewMatrix = CameraComponent.GetViewMatrix();
         glm::mat4 ProjectionMatrix = CameraComponent.GetProjectionMatrix();
-        
+
         ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, ViewportSize.x, ViewportSize.y);
+        
+        const float ViewManipSize = 100.0f;
+        ImVec2 corner = ImGui::GetWindowPos();
+        ImVec2 manipPos = ImVec2(corner.x + 10, corner.y + 10);
+        ImGuizmo::ViewManipulate(glm::value_ptr(ViewMatrix),
+                                 8.0f,
+                                 manipPos,
+                                 ImVec2(ViewManipSize, ViewManipSize),
+                                 IM_COL32(25, 0, 0, 255));
+        
         ImGuizmo::Manipulate(glm::value_ptr(ViewMatrix),
                              glm::value_ptr(ProjectionMatrix),
                              GuizmoOp,

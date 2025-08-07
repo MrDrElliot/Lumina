@@ -78,7 +78,7 @@ void main()
     vec3 ViewNormal = normalize(inNormal);
     vec3 EncodedNormal = ViewNormal * 0.5 + 0.5;
     
-    GNormal = vec4(ViewNormal, 1.0);
+    GNormal = vec4(EncodedNormal, 1.0);
 
     GMaterial.r = Material.AmbientOcclusion;
     GMaterial.g = Material.Roughness;

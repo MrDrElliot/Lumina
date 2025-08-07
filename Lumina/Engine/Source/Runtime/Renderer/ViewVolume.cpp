@@ -3,13 +3,17 @@
 
 namespace Lumina
 {
+
+    glm::vec3 FViewVolume::UpAxis       = glm::vec3(0.0f, 1.0f, 0.0f);
+    glm::vec3 FViewVolume::ForwardAxis  = glm::vec3(0.0f, 0.0f, -1.0f);
+    glm::vec3 FViewVolume::RightAxis    = glm::vec3(1.0f, 0.0f, 0.0f);
     
     FViewVolume::FViewVolume(float fov, float aspect)
         : FOV(fov), AspectRatio(aspect)
     {
         ViewPosition =  glm::vec3(1.0f);
-        UpVector =      glm::vec3(0.0f, 1.0f, 0.0f);
-        ForwardVector = glm::vec3(0.0f, 0.0f, -1.0f);
+        UpVector =      UpAxis;
+        ForwardVector = ForwardAxis;
         RightVector =   glm::normalize(glm::cross(ForwardVector, UpVector));
         
         SetPerspective(fov, aspect);
@@ -56,7 +60,7 @@ namespace Lumina
     void FViewVolume::SetFOV(float InFOV)
     {
         FOV = InFOV;
-        ProjectionMatrix = glm::perspective(glm::radians(FOV), AspectRatio, 100.0f, 0.1f);
+        ProjectionMatrix = glm::perspective(glm::radians(FOV), AspectRatio, 1000.0f, 0.1f);
         InverseProjectionMatrix = glm::inverse(ProjectionMatrix);
         UpdateMatrices();
     }

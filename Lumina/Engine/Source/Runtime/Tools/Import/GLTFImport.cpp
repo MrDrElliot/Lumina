@@ -149,7 +149,7 @@ namespace Lumina::Import::Mesh::GLTF
                 auto normals = Primitive.findAttribute("NORMAL");
                 if (normals != Primitive.attributes.end())
                 {
-                    fastgltf::iterateAccessorWithIndex<glm::vec3>(Asset, Asset.accessors[(*normals).second], [&](glm::vec3 v, size_t index)
+                    fastgltf::iterateAccessorWithIndex<glm::vec3>(Asset, Asset.accessors[normals->second], [&](glm::vec3 v, size_t index)
                     {
                         NewResource.Vertices[InitialVert + index].Normal.x = v.x;
                         NewResource.Vertices[InitialVert + index].Normal.y = v.y;
@@ -162,7 +162,7 @@ namespace Lumina::Import::Mesh::GLTF
                 auto uv = Primitive.findAttribute("TEXCOORD_0");
                 if (uv != Primitive.attributes.end())
                 {
-                    fastgltf::iterateAccessorWithIndex<glm::vec2>(Asset, Asset.accessors[(*uv).second], [&](glm::vec2 v, size_t index)
+                    fastgltf::iterateAccessorWithIndex<glm::vec2>(Asset, Asset.accessors[uv->second], [&](glm::vec2 v, size_t index)
                     {
                         NewResource.Vertices[InitialVert + index].UV.x = v.x;
                         NewResource.Vertices[InitialVert + index].UV.y = v.y;
@@ -173,7 +173,7 @@ namespace Lumina::Import::Mesh::GLTF
                 auto colors = Primitive.findAttribute("COLOR_0");
                 if (colors != Primitive.attributes.end())
                 {
-                    fastgltf::iterateAccessorWithIndex<glm::vec4>(Asset, Asset.accessors[(*colors).second], [&](glm::vec4 v, size_t index)
+                    fastgltf::iterateAccessorWithIndex<glm::vec4>(Asset, Asset.accessors[colors->second], [&](glm::vec4 v, size_t index)
                     {
                         NewResource.Vertices[InitialVert + index].Color.r = v.r;
                         NewResource.Vertices[InitialVert + index].Color.g = v.g;

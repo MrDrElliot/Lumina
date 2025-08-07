@@ -90,6 +90,8 @@ enum class ERHIBindingResourceType : uint8
 	Texture_SRV,
 	Buffer_SRV,
 
+	Sampler,
+
 	// UAV (Unordered Access View) Types.
 	Texture_UAV,
 	Buffer_UAV,
@@ -591,7 +593,7 @@ namespace Lumina
 		// begin tracking the texture from the initial state and transition it to the initial state 
 		// on command list close.
 		bool bKeepInitialState = false;
-
+		
 		friend FArchive& operator << (FArchive& Ar, FRHIImageDesc& Data)
 		{
 			Ar << Data.Flags;
@@ -606,6 +608,7 @@ namespace Lumina
 			Ar << Data.DebugName;
 			Ar << Data.InitialState;
 			Ar << Data.bKeepInitialState;
+			
 			return Ar;
 		}
 		
@@ -1226,6 +1229,12 @@ namespace Lumina
 		FBindlessLayoutDesc& AddBinding(const FBindingLayoutItem& value) { Bindings.push_back(value); return *this; }
 
 	};
+
+	struct LUMINA_API FBindingTextureResource
+	{
+		FTextureSubresourceSet	Subresources;
+		FRHISampler*			Sampler;
+	};
 	
 	struct LUMINA_API FBindingSetItem
 	{
@@ -1242,8 +1251,8 @@ namespace Lumina
 
 		union 
 		{
-			FTextureSubresourceSet Subresources; // valid for Texture_SRV, Texture_UAV
-			FBufferRange Range; // valid for Buffer_SRV, Buffer_UAV, ConstantBuffer
+			FBindingTextureResource TextureResource;	// Valid for Texture_SRV, Texture_UAV
+			FBufferRange Range;							// Valid for Buffer_SRV, Buffer_UAV, ConstantBuffer
 			uint64 RawData[2];
 		};
 
@@ -1259,7 +1268,9 @@ namespace Lumina
 			FBindingSetItem Result;
 			Result.Type = bIsDynamic ? ERHIBindingResourceType::Buffer_Storage_Dynamic : ERHIBindingResourceType::Buffer_SRV;
 			Result.ResourceHandle = Buffer;
+			Result.Range = Range;
 			Result.Dimension = EImageDimension::Unknown;
+			Result.TextureResource.Sampler = nullptr;
 			Result.Format = Format;
 			Result.ArrayElement = 0;
 			Result.Slot = Slot;
@@ -1281,6 +1292,7 @@ namespace Lumina
 			Result.ResourceHandle = Buffer;
 			Result.Range = Range;
 			Result.Dimension = EImageDimension::Unknown;
+			Result.TextureResource.Sampler = nullptr;
 			Result.Format = Format;
 			Result.ArrayElement = 0;
 			Result.Slot = Slot;
@@ -1303,6 +1315,7 @@ namespace Lumina
 			Result.Range = Range;
 			Result.Dimension = EImageDimension::Unknown;
 			Result.Format = EFormat::UNKNOWN;
+			Result.TextureResource.Sampler = nullptr;
 			Result.ArrayElement = 0;
 			Result.Slot = Slot;
 			Result.RawData[0] = 0;
@@ -1315,7 +1328,7 @@ namespace Lumina
 
 		// Creates a Shader Resource View (SRV) binding for a texture/image.
 		// Used to read from a texture in shaders (e.g. sampling or texel fetch).
-		static FBindingSetItem TextureSRV(uint32 Slot, FRHIImage* Image, EFormat Format = EFormat::UNKNOWN, FTextureSubresourceSet Subresources = AllSubresources, EImageDimension Dimension = EImageDimension::Unknown)
+		static FBindingSetItem TextureSRV(uint32 Slot, FRHIImage* Image, FRHISampler* Sampler = nullptr, EFormat Format = EFormat::UNKNOWN, FTextureSubresourceSet Subresources = AllSubresources, EImageDimension Dimension = EImageDimension::Unknown)
 		{
 			FBindingSetItem Result;
 			Result.Slot = Slot;
@@ -1324,7 +1337,8 @@ namespace Lumina
 			Result.ResourceHandle = Image;
 			Result.Format = Format;
 			Result.Dimension = Dimension;
-			Result.Subresources = Subresources;
+			Result.TextureResource.Subresources = Subresources;
+			Result.TextureResource.Sampler = Sampler;
 			Result.bUnused = 0;
 			Result.bUnused2 = 0;
 			
@@ -1345,7 +1359,8 @@ namespace Lumina
 			Result.ResourceHandle = Image;
 			Result.Format = Format;
 			Result.Dimension = Dimension;
-			Result.Subresources = Subresources;
+			Result.TextureResource.Subresources = Subresources;
+			Result.TextureResource.Sampler = nullptr;
 			Result.bUnused = 0;
 			Result.bUnused2 = 0;
 			
@@ -1364,7 +1379,7 @@ namespace Lumina
 	};
 
 	// Verify the packing of BindingSetItem for good alignment.
-	static_assert(sizeof(FBindingSetItem) == 40, "sizeof(FBindingSetItem) is supposed to be 40 bytes");
+	static_assert(sizeof(FBindingSetItem) == 48, "sizeof(FBindingSetItem) is supposed to be 48 bytes");
 	
 	struct LUMINA_API FBindingSetDesc
 	{

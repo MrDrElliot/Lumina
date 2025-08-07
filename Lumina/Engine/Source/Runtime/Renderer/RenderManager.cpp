@@ -18,8 +18,11 @@ namespace Lumina
         FSamplerDesc SamplerDesc; SamplerDesc
         .SetAllFilters(false)
         .SetAllAddressModes(ESamplerAddressMode::Repeat);
-        NearestSampler = RenderContext->CreateSampler(SamplerDesc);
+        NearestSamplerRepeat = RenderContext->CreateSampler(SamplerDesc);
 
+        SamplerDesc.SetAllFilters(false)
+        .SetAllAddressModes(ESamplerAddressMode::Clamp);
+        NearestSamplerClamped = RenderContext->CreateSampler(SamplerDesc);
         
         SamplerDesc.SetAllFilters(true)
         .SetAllAddressModes(ESamplerAddressMode::Clamp);
@@ -38,7 +41,8 @@ namespace Lumina
         Memory::Delete(ImGuiRenderer);
         #endif
 
-        NearestSampler.SafeRelease();
+        NearestSamplerRepeat.SafeRelease();
+        NearestSamplerClamped.SafeRelease();
         LinearSampler.SafeRelease();
         
         RenderContext->Deinitialize();

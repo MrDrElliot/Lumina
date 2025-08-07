@@ -33,6 +33,10 @@ namespace Lumina
 
         FORCEINLINE float GetFOV() const { return FOV; }
         FORCEINLINE float GetAspectRatio() const { return AspectRatio; }
+
+        static glm::vec3 UpAxis;
+        static glm::vec3 RightAxis;
+        static glm::vec3 ForwardAxis;
         
     private:
 
