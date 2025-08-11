@@ -11,6 +11,6 @@ namespace Lumina
         {
             TracyVkDestroy(TracyContext)
         }
-        vkDestroyCommandPool(Device->GetDevice(), CommandPool, &GVulkanAllocationCallbacks);
+        vkDestroyCommandPool(Device->GetDevice(), CommandPool, VK_ALLOC_CALLBACK);
     }
 }

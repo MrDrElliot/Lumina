@@ -129,7 +129,7 @@ namespace Lumina
             return Buffer;
         }
 
-        FORCEINLINE VkBuffer GetBuffer() const { return Buffer; }
+        VkBuffer GetBuffer() const { return Buffer; }
         VmaAllocation GetAllocation() const { return Allocation; }
         void* GetMappedMemory() const;
 
@@ -387,9 +387,7 @@ namespace Lumina
             , PushConstantVisibility(VK_SHADER_STAGE_FLAG_BITS_MAX_ENUM)
         {
         }
-
-        virtual void Bind(VkCommandBuffer CmdBuffer) = 0;
-
+        
         void CreatePipelineLayout(TVector<FRHIBindingLayoutRef> BindingLayouts, VkShaderStageFlags& OutStageFlags);
         
         VkPipelineLayout            PipelineLayout;
@@ -407,13 +405,8 @@ namespace Lumina
         FVulkanGraphicsPipeline(FVulkanDevice* InDevice, const FGraphicsPipelineDesc& InDesc);
 
         const FGraphicsPipelineDesc& GetDesc() const override { return Desc; }
-        void* GetAPIResourceImpl(EAPIResourceType Type) override { return Pipeline; }
-
-        void Bind(VkCommandBuffer CmdBuffer) override
-        {
-            vkCmdBindPipeline(CmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, Pipeline);
-        }
-
+        void* GetAPIResourceImpl(EAPIResourceType Type) override;
+    
     private:
 
         FGraphicsPipelineDesc       Desc;
@@ -429,13 +422,8 @@ namespace Lumina
         FVulkanComputePipeline(FVulkanDevice* InDevice, const FComputePipelineDesc& InDesc);
 
         const FComputePipelineDesc& GetDesc() const override { return Desc; }
-        void* GetAPIResourceImpl(EAPIResourceType Type) override { return Pipeline; }
-
-        void Bind(VkCommandBuffer CmdBuffer) override
-        {
-            vkCmdBindPipeline(CmdBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, Pipeline);
-        }
-
+        void* GetAPIResourceImpl(EAPIResourceType Type) override;
+    
     private:
 
         FComputePipelineDesc Desc;

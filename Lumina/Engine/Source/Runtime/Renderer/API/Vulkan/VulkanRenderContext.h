@@ -21,10 +21,17 @@ namespace Lumina
     enum class ECommandQueue : uint8;
 }
 
+#define USE_VK_ALLOC_CALLBACK 1
 
 namespace Lumina
 {
     extern VkAllocationCallbacks GVulkanAllocationCallbacks;
+
+#if USE_VK_ALLOC_CALLBACK
+    #define VK_ALLOC_CALLBACK &GVulkanAllocationCallbacks
+#else
+    #define VK_ALLOC_CALLBACK nullptr
+#endif
     
     struct FVulkanRenderContextFunctions
     {
@@ -32,50 +39,6 @@ namespace Lumina
         PFN_vkSetDebugUtilsObjectNameEXT DebugUtilsObjectNameEXT = nullptr;
         PFN_vkCmdDebugMarkerBeginEXT vkCmdDebugMarkerBeginEXT = nullptr;
         PFN_vkCmdDebugMarkerEndEXT vkCmdDebugMarkerEndEXT = nullptr;
-    };
-    
-    class FFencePool : public IDeviceChild
-    {
-    public:
-        
-        FFencePool(FVulkanDevice* InDevice)
-            : IDeviceChild(InDevice)
-        {
-        }
-
-        ~FFencePool()
-        {
-            for (VkFence Fence : Fences)
-            {
-                vkDestroyFence(Device->GetDevice(), Fence, &GVulkanAllocationCallbacks);
-            }
-        }
-
-        NODISCARD VkFence Aquire()
-        {
-            if (!Fences.empty())
-            {
-                VkFence Fence = Fences.back();
-                Fences.pop_back();
-                return Fence;
-            }
-
-            VkFence Fence;
-            VkFenceCreateInfo FenceCreateInfo = {};
-            FenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-            VK_CHECK(vkCreateFence(Device->GetDevice(), &FenceCreateInfo, &GVulkanAllocationCallbacks, &Fence));
-            return Fence;
-        }
-
-        void Release(VkFence Fence)
-        {
-            vkResetFences(Device->GetDevice(), 1, &Fence);
-            Fences.push_back(Fence);
-        }
-
-    private:
-
-        TVector<VkFence> Fences;
     };
     
     class FQueue : public IDeviceChild
@@ -137,7 +100,7 @@ namespace Lumina
         bool FrameStart(const FUpdateContext& UpdateContext, uint8 InCurrentFrameIndex) override;
         bool FrameEnd(const FUpdateContext& UpdateContext) override;
 
-        FORCEINLINE FQueue* GetQueue(ECommandQueue Type) const { return Queues[(uint32)Type]; }
+        NODISCARD FQueue* GetQueue(ECommandQueue Type) const { return Queues[(uint32)Type]; }
 
         NODISCARD FRHICommandListRef CreateCommandList(const FCommandListInfo& Info) override;
         uint64 ExecuteCommandLists(ICommandList* const* CommandLists, uint32 NumCommandLists, ECommandQueue QueueType) override;
@@ -145,13 +108,13 @@ namespace Lumina
         
         void CreateDevice(vkb::Instance Instance);
 
-        FORCEINLINE NODISCARD VkInstance GetVulkanInstance() const { return VulkanInstance; }
-        FORCEINLINE NODISCARD FVulkanDevice* GetDevice() const { return VulkanDevice; }
-        FORCEINLINE NODISCARD FVulkanSwapchain* GetSwapchain() const { return Swapchain; }
+        NODISCARD VkInstance GetVulkanInstance() const { return VulkanInstance; }
+        NODISCARD FVulkanDevice* GetDevice() const { return VulkanDevice; }
+        NODISCARD FVulkanSwapchain* GetSwapchain() const { return Swapchain; }
         
         //-------------------------------------------------------------------------------------
 
-        FRHIEventQueryRef CreateEventQuery() override;
+        NODISCARD FRHIEventQueryRef CreateEventQuery() override;
         void SetEventQuery(IEventQuery* Query, ECommandQueue Queue) override;
         void ResetEventQuery(IEventQuery* Query) override;
         void PollEventQuery(IEventQuery* Query) override;
@@ -161,7 +124,7 @@ namespace Lumina
 
 
         NODISCARD FRHIBufferRef CreateBuffer(const FRHIBufferDesc& Description) override;
-        uint64 GetAlignedSizeForBuffer(uint64 Size, TBitFlags<EBufferUsageFlags> Usage) override;
+        NODISCARD uint64 GetAlignedSizeForBuffer(uint64 Size, TBitFlags<EBufferUsageFlags> Usage) override;
 
         
         //-------------------------------------------------------------------------------------
@@ -179,8 +142,8 @@ namespace Lumina
         NODISCARD FRHIPixelShaderRef CreatePixelShader(const TVector<uint32>& ByteCode) override;
         NODISCARD FRHIComputeShaderRef CreateComputeShader(const TVector<uint32>& ByteCode) override;
 
-        IShaderCompiler* GetShaderCompiler() const override;
-        FRHIShaderLibraryRef GetShaderLibrary() const override;
+        NODISCARD IShaderCompiler* GetShaderCompiler() const override;
+        NODISCARD FRHIShaderLibraryRef GetShaderLibrary() const override;
         void CompileEngineShaders() override;
         void OnShaderCompiled(FRHIShader* Shader) override;
 
@@ -214,8 +177,11 @@ namespace Lumina
         FVulkanPipelineCache                            PipelineCache;
         uint8                                           CurrentFrameIndex;
         TArray<FQueue*, (uint32)ECommandQueue::Num>     Queues;
-        FRHICommandListRef                              CommandList = nullptr;
-         
+        
+        FRHICommandListRef                              GraphicsCommandList;
+        FRHICommandListRef                              ComputeCommandList;
+        FRHICommandListRef                              TransferCommandList;
+
         VkInstance                                      VulkanInstance;
         
         FVulkanSwapchain*                               Swapchain = nullptr;

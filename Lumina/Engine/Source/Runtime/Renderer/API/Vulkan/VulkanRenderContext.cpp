@@ -31,7 +31,7 @@
 namespace Lumina
 {
     VkAllocationCallbacks GVulkanAllocationCallbacks;
-
+    
     static void* VulkanAlloc(void* pUserData, size_t size, size_t alignment, VkSystemAllocationScope allocationScope)
     {
         return Memory::Malloc(size, alignment);
@@ -54,36 +54,39 @@ namespace Lumina
         void* pUserData)
     {
         // Helper to decode messageTypes
-        auto GetMessageTypeString = [](VkDebugUtilsMessageTypeFlagsEXT types) -> std::string
+        auto GetMessageTypeString = [](VkDebugUtilsMessageTypeFlagsEXT types) -> TInlineString<256>
         {
-            std::string result;
-            if (types & VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT) {
-                result += "[General] ";
+            TInlineString<256> Result;
+            if (types & VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT)
+            {
+                Result += "[General] ";
             }
-            if (types & VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT) {
-                result += "[Validation] ";
+            if (types & VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT)
+            {
+                Result += "[Validation] ";
             }
-            if (types & VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT) {
-                result += "[Performance] ";
+            if (types & VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT)
+            {
+                Result += "[Performance] ";
             }
-            return result.empty() ? "[Unknown] " : result;
+            return Result.empty() ? "[Unknown] " : Result;
         };
 
-        std::string typeStr = GetMessageTypeString(messageTypes);
+        FStringView StringView = GetMessageTypeString(messageTypes);
 
         switch (messageSeverity)
         {
         case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
-            LOG_TRACE("Vulkan {}{}", typeStr, pCallbackData->pMessage);
+            LOG_TRACE("Vulkan {}{}", StringView, pCallbackData->pMessage);
             break;
         case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
-            LOG_DEBUG("Vulkan {}{}", typeStr, pCallbackData->pMessage);
+            LOG_DEBUG("Vulkan {}{}", StringView, pCallbackData->pMessage);
             break;
         case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
-            LOG_WARN("Vulkan {}{}", typeStr, pCallbackData->pMessage);
+            LOG_WARN("Vulkan {}{}", StringView, pCallbackData->pMessage);
             break;
         case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-            LOG_ERROR("Vulkan {}{}", typeStr, pCallbackData->pMessage);
+            LOG_ERROR("Vulkan {}{}", StringView, pCallbackData->pMessage);
             break;
         case VK_DEBUG_UTILS_MESSAGE_SEVERITY_FLAG_BITS_MAX_ENUM_EXT:
             std::unreachable();
@@ -144,13 +147,13 @@ namespace Lumina
         CreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
         CreateInfo.pNext = &TimelineInfo;
 
-        VK_CHECK(vkCreateSemaphore(Device->GetDevice(), &CreateInfo, &GVulkanAllocationCallbacks, &TimelineSemaphore));
+        VK_CHECK(vkCreateSemaphore(Device->GetDevice(), &CreateInfo, VK_ALLOC_CALLBACK, &TimelineSemaphore));
         InRenderContext->SetVulkanObjectName("Timeline Semaphore", VK_OBJECT_TYPE_SEMAPHORE, (uintptr_t)TimelineSemaphore);
     }
     
     FQueue::~FQueue()
     {
-        vkDestroySemaphore(Device->GetDevice(), TimelineSemaphore, &GVulkanAllocationCallbacks);
+        vkDestroySemaphore(Device->GetDevice(), TimelineSemaphore, VK_ALLOC_CALLBACK);
         TimelineSemaphore = nullptr;
     }
 
@@ -173,7 +176,7 @@ namespace Lumina
             PoolInfo.queueFamilyIndex = QueueFamilyIndex;
             PoolInfo.flags = Flags;
         
-            VK_CHECK(vkCreateCommandPool(Device->GetDevice(), &PoolInfo, &GVulkanAllocationCallbacks, &CommandPool));
+            VK_CHECK(vkCreateCommandPool(Device->GetDevice(), &PoolInfo, VK_ALLOC_CALLBACK, &CommandPool));
 
             VkCommandBufferAllocateInfo BufferInfo = {};
             BufferInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -384,7 +387,7 @@ namespace Lumina
         //.add_validation_feature_enable(VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_RESERVE_BINDING_SLOT_EXT)
         //.add_validation_feature_enable(VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT)
         .request_validation_layers()
-        .set_allocation_callbacks(&GVulkanAllocationCallbacks)
+        .set_allocation_callbacks(VK_ALLOC_CALLBACK)
         .use_default_debug_messenger()
         .set_debug_callback(VkDebugCallback)
         .enable_extension(VK_EXT_DEBUG_UTILS_EXTENSION_NAME)
@@ -406,7 +409,9 @@ namespace Lumina
         DebugUtils.vkCmdDebugMarkerBeginEXT = (PFN_vkCmdDebugMarkerBeginEXT)vkGetDeviceProcAddr(GetDevice()->GetDevice(), "vkCmdDebugMarkerBeginEXT");
         DebugUtils.vkCmdDebugMarkerEndEXT = (PFN_vkCmdDebugMarkerEndEXT)vkGetDeviceProcAddr(GetDevice()->GetDevice(), "vkCmdDebugMarkerEndEXT");
 
-        CommandList = CreateCommandList(FCommandListInfo());
+        GraphicsCommandList     = CreateCommandList(FCommandListInfo());
+        ComputeCommandList      = CreateCommandList(FCommandListInfo::Compute());
+        TransferCommandList     = CreateCommandList(FCommandListInfo::Transfer());
         
         Swapchain = Memory::New<FVulkanSwapchain>();
         Swapchain->CreateSwapchain(VulkanInstance, this, Windowing::GetPrimaryWindowHandle(), Windowing::GetPrimaryWindowHandle()->GetExtent());
@@ -426,7 +431,10 @@ namespace Lumina
     {
         WaitIdle();
         
-        CommandList.SafeRelease();
+        GraphicsCommandList.SafeRelease();
+        ComputeCommandList.SafeRelease();
+        TransferCommandList.SafeRelease();
+        
         ShaderLibrary.SafeRelease();
         PipelineCache.ReleasePipelines();
         DescriptorCache.ReleaseResources();
@@ -443,12 +451,12 @@ namespace Lumina
         }
         
         auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(VulkanInstance, "vkDestroyDebugUtilsMessengerEXT");
-        func(VulkanInstance, DebugUtils.DebugMessenger, &GVulkanAllocationCallbacks);
+        func(VulkanInstance, DebugUtils.DebugMessenger, VK_ALLOC_CALLBACK);
         
         FlushPendingDeletes();
         
         Memory::Delete(VulkanDevice);
-        vkDestroyInstance(VulkanInstance, &GVulkanAllocationCallbacks);
+        vkDestroyInstance(VulkanInstance, VK_ALLOC_CALLBACK);
     }
 
     void FVulkanRenderContext::SetVSyncEnabled(bool bEnable)
@@ -472,18 +480,18 @@ namespace Lumina
 
         bool bSuccess = Swapchain->AcquireNextImage();
         
-        CommandList->Open();
+        GraphicsCommandList->Open();
         
         return bSuccess;
     }
 
     bool FVulkanRenderContext::FrameEnd(const FUpdateContext& UpdateContext)
     {
-        CommandList->CopyImage(GEngine->GetEngineViewport()->GetRenderTarget(), {}, Swapchain->GetCurrentImage(), {});
+        GraphicsCommandList->CopyImage(GEngine->GetEngineViewport()->GetRenderTarget(), {}, Swapchain->GetCurrentImage(), {});
         
-        CommandList->Close();
+        GraphicsCommandList->Close();
 
-        ExecuteCommandList(CommandList, Q_Graphics);
+        ExecuteCommandList(GraphicsCommandList, Q_Graphics);
         
         bool bSuccess = Swapchain->Present();
         
@@ -516,7 +524,14 @@ namespace Lumina
 
     FRHICommandListRef FVulkanRenderContext::GetCommandList(ECommandQueue Queue)
     {
-        return CommandList;
+        switch (Queue)
+        {
+            case ECommandQueue::Graphics:   return GraphicsCommandList;
+            case ECommandQueue::Compute:    return ComputeCommandList;
+            case ECommandQueue::Transfer:   return TransferCommandList;
+        }
+
+        LUMINA_NO_ENTRY();
     }
 
     void FVulkanRenderContext::CreateDevice(vkb::Instance Instance)

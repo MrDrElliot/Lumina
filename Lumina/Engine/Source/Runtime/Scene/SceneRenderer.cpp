@@ -21,12 +21,15 @@
 #include "Renderer/RenderContext.h"
 #include "Renderer/RenderManager.h"
 #include "Renderer/ShaderCompiler.h"
+#include "Renderer/RenderGraph/RenderGraph.h"
+#include "Renderer/RenderGraph/RenderGraphDescriptor.h"
 #include "Subsystems/FCameraManager.h"
 #include "TaskSystem/TaskSystem.h"
 #include "Tools/Import/ImportHelpers.h"
 
 namespace Lumina
 {
+    
     FSceneRenderer::FSceneRenderer(FScene* InScene)
         : Scene(InScene)
         , SceneRenderStats()
@@ -42,12 +45,9 @@ namespace Lumina
     void FSceneRenderer::Initialize()
     {
         LUMINA_PROFILE_SCOPE();
-        RenderContext = GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext();
-
-        
         LOG_TRACE("Initializing Scene Renderer");
-
         
+        RenderContext = GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext();
         
         // Wait for shader tasks.
         while (RenderContext->GetShaderCompiler()->HasPendingRequests()) {}
@@ -55,22 +55,50 @@ namespace Lumina
         InitBuffers();
         CreateImages();
         InitResources();
+    }
 
+    void FSceneRenderer::Deinitialize()
+    {
+        RenderContext->WaitIdle();
+        
+        LOG_TRACE("Shutting down scene renderer");
+    }
+    
+    void FSceneRenderer::Render(const FUpdateContext& UpdateContext)
+    {
+        LUMINA_PROFILE_SCOPE();
+        SceneRenderStats = {};
 
-        ICommandList* CommandList = RenderContext->GetCommandList(ECommandQueue::Graphics);
+        ICommandList* GraphicsCommandList = RenderContext->GetCommandList(Q_Graphics);
+        
+        FCameraManager* CameraManager = Scene->GetSceneSubsystem<FCameraManager>();
+        SCameraComponent& CameraComponent = CameraManager->GetActiveCameraEntity().GetComponent<SCameraComponent>();
 
-#if 1
-        AddRenderPass("Pre-Depth Pass", [this, CommandList]()
+        SceneGlobalData.CameraData.Location =   glm::vec4(CameraComponent.GetPosition(), 1.0f);
+        SceneGlobalData.CameraData.View =       CameraComponent.GetViewMatrix();
+        SceneGlobalData.CameraData.InverseView = CameraComponent.GetViewVolume().GetInverseViewMatrix();
+        SceneGlobalData.CameraData.Projection = CameraComponent.GetProjectionMatrix();
+        SceneGlobalData.CameraData.InverseProjection = CameraComponent.GetViewVolume().GetInverseProjectionMatrix();
+        SceneGlobalData.Time =                  (float)Scene->GetTimeSinceSceneCreation();
+        SceneGlobalData.DeltaTime =             (float)Scene->GetSceneDeltaTime();
+        SceneGlobalData.FarPlane =              0.01f;
+        SceneGlobalData.NearPlane =             1000.0f;
+        
+        SceneViewport->SetViewVolume(CameraComponent.GetViewVolume());
+
+        BuildPasses();
+        
+
+        FRenderGraph RenderGraph;
+        
+        RenderGraph.AddPass<RG_Transfer>(FRGEvent("Write Scene Buffer"), nullptr, [&](ICommandList& CmdList)
+        {
+            GraphicsCommandList->WriteBuffer(SceneDataBuffer, &SceneGlobalData, 0, sizeof(FSceneGlobalData));
+        });
+        
+        RenderGraph.AddPass<RG_Raster>(FRGEvent("Pre-Depth Pass"), nullptr, [&] (ICommandList& CmdList)
         {
             LUMINA_PROFILE_SECTION_COLORED("Pre-Depth Pass", tracy::Color::Orange);
-
-            if (RenderBatches.empty())
-            {
-                return;
-            }
-            
-            CommandList->SetBufferState(IndirectDrawBuffer , EResourceStates::IndirectArgument);
-            CommandList->CommitBarriers();
             
             FRHIVertexShaderRef VertexShader = RenderContext->GetShaderLibrary()->GetShader<FRHIVertexShader>("DepthPrePass.vert");
             if (!VertexShader)
@@ -78,39 +106,36 @@ namespace Lumina
                 return;
             }
             
-            FRenderPassBeginInfo BeginInfo;
-            BeginInfo.SetDepthAttachment(DepthAttachment)
-                     .SetDepthClearValue(0.0f)
-                     .SetDepthLoadOp(ERenderLoadOp::Clear)
-                     .SetDepthStoreOp(ERenderStoreOp::Store)
-                     .SetRenderArea(GetRenderTarget()->GetExtent())
-                     .SetDebugName("PreDepthPass");
-            
-            CommandList->BeginRenderPass(BeginInfo);
-            
-            float SizeY = (float)GetRenderTarget()->GetSizeY();
-            float SizeX = (float)GetRenderTarget()->GetSizeX();
-            CommandList->SetViewport(0.0f, 0.0f, 0.0f, SizeX, SizeY, 1.0f);
-            CommandList->SetScissorRect(0, 0, SizeX, SizeY);
-
-            FDepthStencilState DepthState;
-            DepthState.SetDepthFunc(EComparisonFunc::Greater);
-            DepthState.SetDepthWriteEnable(true);
-            DepthState.SetDepthTestEnable(true);
-
-            FRasterState RasterState;
-            RasterState.SetDepthClipEnable(true);
-            
-            FRenderState RenderState = {};
-            RenderState.SetDepthStencilState(DepthState);
-            RenderState.SetRasterState(RasterState);
-            
-            CommandList->BindVertexBuffer(VertexBuffer, 0, 0);
-            
             for (SIZE_T CurrentDraw = 0; CurrentDraw < RenderBatches.size(); ++CurrentDraw)
             {
                 const FIndirectRenderBatch& Batch = RenderBatches[CurrentDraw];
+
+                FGraphicsState GraphicsState;
+            
+                FVertexBufferBinding VertexBufferBinding;
+                VertexBufferBinding.SetBuffer(VertexBuffer);
+                GraphicsState.AddVertexBuffer(VertexBufferBinding);
                 
+                FIndexBufferBinding IndexBufferBinding;
+                IndexBufferBinding.SetBuffer(IndexBuffer);
+                GraphicsState.SetIndexBuffer(IndexBufferBinding);
+                
+                FRenderPassBeginInfo BeginInfo; BeginInfo
+                    .SetDebugName("PreDepthPass")
+                    .SetDepthAttachment(DepthAttachment)
+                    .SetDepthClearValue(0.0f)
+                    .SetDepthLoadOp(ERenderLoadOp::Clear)
+                    .SetDepthStoreOp(ERenderStoreOp::Store)
+                    .SetRenderArea(GetRenderTarget()->GetExtent());
+                
+                GraphicsState.SetRenderPass(BeginInfo);
+                
+                GraphicsState.SetViewport(MakeViewportStateFromImage(GetRenderTarget()));
+                
+                FRenderState RenderState; RenderState
+                    .SetDepthStencilState(FDepthStencilState().SetDepthFunc(EComparisonFunc::Greater))
+                    .SetRasterState(FRasterState().EnableDepthClip());
+                    
                 FGraphicsPipelineDesc Desc;
                 Desc.SetRenderState(RenderState);
                 Desc.SetInputLayout(VertexLayoutInput);
@@ -119,25 +144,23 @@ namespace Lumina
                 
                 FRHIGraphicsPipelineRef Pipeline = RenderContext->CreateGraphicsPipeline(Desc);
                 
-                CommandList->SetGraphicsPipeline(Pipeline);
-            
-                CommandList->BindBindingSets(ERHIBindingPoint::Graphics, {{BindingSet, 0}});
-
+                GraphicsState.SetPipeline(Pipeline);
+                GraphicsState.AddBindingSet(BindingSet);
+                
+                GraphicsState.SetIndirectParams(IndirectDrawBuffer);
+                
+                CmdList.SetGraphicsState(GraphicsState);
+                
                 SceneRenderStats.NumDrawCalls += Batch.NumDraws;
-                CommandList->DrawIndexedIndirect(IndirectDrawBuffer, IndexBuffer, Batch.NumDraws, Batch.Offset * sizeof(FDrawIndexedIndirectArguments));
+                uint64 Offset = Batch.Offset * sizeof(FDrawIndexedIndirectArguments);
+                
+                CmdList.DrawIndexedIndirect(Batch.NumDraws, Offset);
             }
-
-            CommandList->EndRenderPass();
         });
-        
-#endif
-        
-        AddRenderPass("Geometry Pass", [this, CommandList]()
+
+        RenderGraph.AddPass<RG_Raster>(FRGEvent("Base Pass"), nullptr, [&](ICommandList& CmdList)
         {
-            LUMINA_PROFILE_SECTION_COLORED("Geometry Pass", tracy::Color::Red);
-            
-            CommandList->SetBufferState(IndirectDrawBuffer , EResourceStates::IndirectArgument);
-            CommandList->CommitBarriers();
+            LUMINA_PROFILE_SECTION_COLORED("Base Pass", tracy::Color::Red);
             
             if (RenderBatches.empty())
             {
@@ -145,6 +168,7 @@ namespace Lumina
             }
             
             FRenderPassBeginInfo BeginInfo; BeginInfo
+            .SetDebugName("Base Pass")
             .AddColorAttachment(GBuffer.Position)
             .SetColorLoadOp(ERenderLoadOp::Clear)
             .SetColorStoreOp(ERenderStoreOp::Store)
@@ -170,58 +194,58 @@ namespace Lumina
             .SetDepthStoreOp(ERenderStoreOp::Store)
                 
             .SetRenderArea(GetRenderTarget()->GetExtent());
-            BeginInfo.DebugName = "Geometry Pass";
-            CommandList->BeginRenderPass(BeginInfo);
-            
-            float SizeY = (float)GetRenderTarget()->GetSizeY();
-            float SizeX = (float)GetRenderTarget()->GetSizeX();
-            CommandList->SetViewport(0.0f, 0.0f, 0.0f, SizeX, SizeY, 1.0f);
-            CommandList->SetScissorRect(0, 0, SizeX, SizeY);
-            
-            FDepthStencilState DepthState;
-            DepthState.SetDepthFunc(EComparisonFunc::Equal);
-            DepthState.DisableDepthWrite();
-            DepthState.EnableDepthTest();
+
 
             FBlendState BlendState;
             FBlendState::RenderTarget PositionTarget;
-            PositionTarget.DisableBlend();
             PositionTarget.SetFormat(EFormat::RGBA32_FLOAT);
             BlendState.SetRenderTarget(0, PositionTarget);
             
             FBlendState::RenderTarget NormalTarget;
-            NormalTarget.DisableBlend();
             NormalTarget.SetFormat(EFormat::RGBA16_FLOAT);
             BlendState.SetRenderTarget(1, NormalTarget);
             
             FBlendState::RenderTarget MaterialTarget;
-            MaterialTarget.DisableBlend();
             MaterialTarget.SetFormat(EFormat::RGBA8_UNORM);
             BlendState.SetRenderTarget(2, MaterialTarget);
             
             FBlendState::RenderTarget AlbedoSpecTarget;
-            AlbedoSpecTarget.DisableBlend();
             AlbedoSpecTarget.SetFormat(EFormat::RGBA8_UNORM);
             BlendState.SetRenderTarget(3, AlbedoSpecTarget);
             
             FRasterState RasterState;
             RasterState.EnableDepthClip();
-                
+
+            FDepthStencilState DepthState; DepthState
+                .SetDepthFunc(EComparisonFunc::Equal)
+                .DisableDepthWrite();
+            
             FRenderState RenderState;
             RenderState.SetBlendState(BlendState);
             RenderState.SetRasterState(RasterState);
             RenderState.SetDepthStencilState(DepthState);
             
-            CommandList->BindVertexBuffer(VertexBuffer, 0, 0);
             SceneRenderStats.NumVertices = Vertices.size();
             SceneRenderStats.NumIndices = Indices.size();
+            
+            FVertexBufferBinding VertexBufferBinding;
+            VertexBufferBinding.SetBuffer(VertexBuffer);
+
+            FIndexBufferBinding IndexBufferBinding;
+            IndexBufferBinding.SetBuffer(IndexBuffer);
             
             for (SIZE_T CurrentDraw = 0; CurrentDraw < RenderBatches.size(); ++CurrentDraw)
             {
                 const FIndirectRenderBatch& Batch = RenderBatches[CurrentDraw];
-                
                 CMaterialInterface* Material = Batch.Material;
-            
+
+                FGraphicsState GraphicsState;
+                GraphicsState.SetRenderPass(BeginInfo);
+                GraphicsState.AddVertexBuffer(VertexBufferBinding);
+                GraphicsState.SetIndexBuffer(IndexBufferBinding);
+                GraphicsState.SetViewport(MakeViewportStateFromImage(GetRenderTarget()));
+
+                
                 FGraphicsPipelineDesc Desc;
                 Desc.SetRenderState(RenderState);
                 Desc.SetInputLayout(VertexLayoutInput);
@@ -231,20 +255,21 @@ namespace Lumina
                 Desc.SetPixelShader(Material->GetMaterial()->PixelShader);
                 
                 FRHIGraphicsPipelineRef Pipeline = RenderContext->CreateGraphicsPipeline(Desc);
-                
-                CommandList->SetGraphicsPipeline(Pipeline);
-            
-                CommandList->BindBindingSets(ERHIBindingPoint::Graphics, {{BindingSet, 0}, {Material->GetBindingSet(), 1}});
 
+                GraphicsState.SetPipeline(Pipeline);
+                GraphicsState.SetIndirectParams(IndirectDrawBuffer);
+                GraphicsState.AddBindingSet(BindingSet);
+                GraphicsState.AddBindingSet(Material->GetBindingSet());
+                CmdList.SetGraphicsState(GraphicsState);
+                
                 SceneRenderStats.NumDrawCalls += Batch.NumDraws;
-                CommandList->DrawIndexedIndirect(IndirectDrawBuffer, IndexBuffer, Batch.NumDraws, Batch.Offset * sizeof(FDrawIndexedIndirectArguments));
+                CmdList.DrawIndexedIndirect(Batch.NumDraws, Batch.Offset * sizeof(FDrawIndexedIndirectArguments));
             }
-            
-            CommandList->EndRenderPass();
         });
 
-        AddRenderPass("SSAO Pass", [this, CommandList]()
+        RenderGraph.AddPass<RG_Raster>(FRGEvent("SSAO Pass"), nullptr, [&] (ICommandList& CmdList)
         {
+            LUMINA_PROFILE_SECTION_COLORED("SSAO Pass", tracy::Color::Pink);
 
             FRHIVertexShaderRef VertexShader = RenderContext->GetShaderLibrary()->GetShader<FRHIVertexShader>("FullscreenQuad.vert");
             FRHIPixelShaderRef PixelShader = RenderContext->GetShaderLibrary()->GetShader<FRHIPixelShader>("SSAO.frag");
@@ -278,35 +303,35 @@ namespace Lumina
             Desc.SetPixelShader(PixelShader);
     
             FRHIGraphicsPipelineRef Pipeline = RenderContext->CreateGraphicsPipeline(Desc);
-                
-            CommandList->SetGraphicsPipeline(Pipeline);
-            CommandList->BindBindingSets(ERHIBindingPoint::Graphics, {{BindingSet, 0}, {SSAOPassSet, 1}});
+
+            FGraphicsState GraphicsState;
+            GraphicsState.SetPipeline(Pipeline);
+            GraphicsState.AddBindingSet(BindingSet);
+            GraphicsState.AddBindingSet(SSAOPassSet);
             
             FRenderPassBeginInfo BeginInfo; BeginInfo
+            .SetDebugName("SSAO Pass")
             .AddColorAttachment(SSAOImage)
             .SetColorLoadOp(ERenderLoadOp::Clear)
             .SetColorStoreOp(ERenderStoreOp::Store)
             .SetColorClearColor(FColor::Black)
-            
             .SetRenderArea(GetRenderTarget()->GetExtent());
-            BeginInfo.DebugName = "SSAO Pass";
-            CommandList->BeginRenderPass(BeginInfo);
-            
-            float SizeY = (float)GetRenderTarget()->GetSizeY();
-            float SizeX = (float)GetRenderTarget()->GetSizeX();
-            CommandList->SetViewport(0.0f, 0.0f, 0.0f, SizeX, SizeY, 1.0f);
-            CommandList->SetScissorRect(0, 0, SizeX, SizeY);
 
+            GraphicsState.SetRenderPass(BeginInfo);
+            GraphicsState.SetViewport(MakeViewportStateFromImage(GetRenderTarget()));
+
+            CmdList.SetGraphicsState(GraphicsState);
+            
             SceneRenderStats.NumDrawCalls++;
             SceneRenderStats.NumVertices += 3;
-            CommandList->Draw(3, 1, 0, 0);
-    
-            CommandList->EndRenderPass(); 
             
+            CmdList.Draw(3, 1, 0, 0); 
         });
 
-        AddRenderPass("SSAO Blur Pass", [this, CommandList]()
+
+        RenderGraph.AddPass<RG_Raster>(FRGEvent("SSAO Blur Pass"), nullptr, [&](ICommandList& CmdList)
         {
+            LUMINA_PROFILE_SECTION_COLORED("SSAO Blur Pass", tracy::Color::Yellow);
 
             FRHIVertexShaderRef VertexShader = RenderContext->GetShaderLibrary()->GetShader<FRHIVertexShader>("FullscreenQuad.vert");
             FRHIPixelShaderRef PixelShader = RenderContext->GetShaderLibrary()->GetShader<FRHIPixelShader>("SSAOBlur.frag");
@@ -340,122 +365,35 @@ namespace Lumina
             Desc.SetPixelShader(PixelShader);
     
             FRHIGraphicsPipelineRef Pipeline = RenderContext->CreateGraphicsPipeline(Desc);
-                
-            CommandList->SetGraphicsPipeline(Pipeline);
-            CommandList->BindBindingSets(ERHIBindingPoint::Graphics, {{BindingSet, 0}, {SSAOBlurPassSet, 1}});
+
+            FGraphicsState GraphicsState;
+            GraphicsState.SetPipeline(Pipeline);
+            GraphicsState.AddBindingSet(BindingSet);
+            GraphicsState.AddBindingSet(SSAOBlurPassSet);
+            
             
             FRenderPassBeginInfo BeginInfo; BeginInfo
+            .SetDebugName("SSAO Blue Pass")
             .AddColorAttachment(SSAOBlur)
             .SetColorLoadOp(ERenderLoadOp::Clear)
             .SetColorStoreOp(ERenderStoreOp::Store)
             .SetColorClearColor(FColor::Black)
-            
             .SetRenderArea(GetRenderTarget()->GetExtent());
-            BeginInfo.DebugName = "SSAO Pass";
-            CommandList->BeginRenderPass(BeginInfo);
             
-            float SizeY = (float)GetRenderTarget()->GetSizeY();
-            float SizeX = (float)GetRenderTarget()->GetSizeX();
-            CommandList->SetViewport(0.0f, 0.0f, 0.0f, SizeX, SizeY, 1.0f);
-            CommandList->SetScissorRect(0, 0, SizeX, SizeY);
+            GraphicsState.SetRenderPass(BeginInfo);
+            GraphicsState.SetViewport(MakeViewportStateFromImage(GetRenderTarget()));
 
+            CmdList.SetGraphicsState(GraphicsState);
+            
             SceneRenderStats.NumDrawCalls++;
             SceneRenderStats.NumVertices += 3;
-            CommandList->Draw(3, 1, 0, 0);
-    
-            CommandList->EndRenderPass(); 
-            
+            CmdList.Draw(3, 1, 0, 0); 
         });
 
-#if 0
-        AddRenderPass("Shadow Pass", [this]
-        {
-            LUMINA_PROFILE_SECTION_COLORED("Shadow Pass", tracy::Color::Green);
 
-            ICommandList* CommandList = RenderContext->GetCommandList(ECommandQueue::Graphics);
-            if (RenderBatches.empty())
-            {
-                return;
-            }
-        
-            FRHIVertexShaderRef VertexShader = RenderContext->GetShaderLibrary()->GetShader<FRHIVertexShader>("ShadowMapping.vert");
-            FRHIPixelShaderRef PixelShader = RenderContext->GetShaderLibrary()->GetShader<FRHIPixelShader>("ShadowMapping.frag");
-            
-            if (!VertexShader || !PixelShader)
-            {
-                return;
-            }
-            
-            CommandList->SetBufferState(IndirectDrawBuffer, EResourceStates::IndirectArgument);
-            CommandList->CommitBarriers();
-            
-            for (uint32 LightIndex = 0; LightIndex < LightData.NumLights; ++LightIndex)
-            {
-                FRenderPassBeginInfo BeginInfo;
-                BeginInfo
-                    .SetDepthAttachment(DepthMap)
-                    .SetDepthLoadOp(ERenderLoadOp::Clear)
-                    .SetDepthStoreOp(ERenderStoreOp::Store)
-                    .SetDepthClearValue(1.0f)
-                    .SetRenderArea(GetRenderTarget()->GetExtent());
-            
-                BeginInfo.DebugName = "Shadow Pass";
-                CommandList->BeginRenderPass(BeginInfo);
-        
-                float SizeX = (float)DepthMap->GetSizeX();
-                float SizeY = (float)DepthMap->GetSizeY();
-                CommandList->SetViewport(0.0f, 0.0f, 0.0f, SizeX, SizeY, 1.0f);
-                CommandList->SetScissorRect(0, 0, SizeX, SizeY);
-        
-                FDepthStencilState DepthState;
-                DepthState.SetDepthFunc(EComparisonFunc::Less);
-                DepthState.EnableDepthWrite();
-        
-                FBlendState BlendState;
-                FBlendState::RenderTarget RenderTarget;
-                RenderTarget.DisableBlend();
-                BlendState.SetRenderTarget(0, RenderTarget);
-        
-                FRasterState RasterState;
-                RasterState.SetDepthClipEnable(true);
-        
-                FRenderState RenderState;
-                RenderState.SetBlendState(BlendState);
-                RenderState.SetRasterState(RasterState);
-                RenderState.SetDepthStencilState(DepthState);
-        
-                CommandList->BindVertexBuffer(VertexBuffer, 0, 0);
-                SceneRenderStats.NumVertices = Vertices.size();
-                SceneRenderStats.NumIndices = Indices.size();
-        
-                for (SIZE_T CurrentDraw = 0; CurrentDraw < RenderBatches.size(); ++CurrentDraw)
-                {
-                    const FIndirectRenderBatch& Batch = RenderBatches[CurrentDraw];
-                
-                    FGraphicsPipelineDesc Desc;
-                    Desc.SetRenderState(RenderState);
-                    Desc.SetInputLayout(VertexLayoutInput);
-                    Desc.AddBindingLayout(BindingLayout);
-                    Desc.SetVertexShader(VertexShader);
-                    Desc.SetPixelShader(PixelShader);
-        
-                    FRHIGraphicsPipelineRef Pipeline = RenderContext->CreateGraphicsPipeline(Desc);
-        
-                    CommandList->SetGraphicsPipeline(Pipeline);
-                    CommandList->BindBindingSets(ERHIBindingPoint::Graphics, {{BindingSet, 0}});
-        
-                    SceneRenderStats.NumDrawCalls += Batch.NumDraws;
-                    CommandList->DrawIndexedIndirect(IndirectDrawBuffer, IndexBuffer, Batch.NumDraws, Batch.Offset * sizeof(FDrawIndexedIndirectArguments));
-                }
-        
-                CommandList->EndRenderPass();
-            }
-            
-        });
-#endif
-        AddRenderPass("Lighting Pass", [this, CommandList] ()
+        RenderGraph.AddPass<RG_Raster>(FRGEvent("Lighting Pass"), nullptr, [&](ICommandList& CmdList)
         {
-            LUMINA_PROFILE_SECTION_COLORED("Lighting Pass", tracy::Color::Beige);
+            LUMINA_PROFILE_SECTION_COLORED("Lighting Pass", tracy::Color::Red2);
             
             FRHIVertexShaderRef VertexShader = RenderContext->GetShaderLibrary()->GetShader<FRHIVertexShader>("FullscreenQuad.vert");
             FRHIPixelShaderRef PixelShader = RenderContext->GetShaderLibrary()->GetShader<FRHIPixelShader>("DeferredLighting.frag");
@@ -489,253 +427,44 @@ namespace Lumina
             Desc.SetPixelShader(PixelShader);
     
             FRHIGraphicsPipelineRef Pipeline = RenderContext->CreateGraphicsPipeline(Desc);
-                
-            CommandList->SetGraphicsPipeline(Pipeline);
-            CommandList->BindBindingSets(ERHIBindingPoint::Graphics, {{BindingSet, 0}, {LightingPassSet, 1}});
+
+            FGraphicsState GraphicsState;
+            GraphicsState.SetPipeline(Pipeline);
+            GraphicsState.AddBindingSet(BindingSet);
+            GraphicsState.AddBindingSet(LightingPassSet);
             
             FRenderPassBeginInfo BeginInfo; BeginInfo
+            .SetDebugName("Lighting Pass")
             .AddColorAttachment(GetRenderTarget())
             .SetColorLoadOp(ERenderLoadOp::Clear)
             .SetColorStoreOp(ERenderStoreOp::Store)
             .SetColorClearColor(FColor::Black)
-    
+            
             .SetDepthAttachment(DepthAttachment)
             .SetDepthLoadOp(ERenderLoadOp::Load)
-            .SetDepthStoreOp(ERenderStoreOp::Store)
-            
             .SetRenderArea(GetRenderTarget()->GetExtent());
-            BeginInfo.DebugName = "Lighting Pass";
-            CommandList->BeginRenderPass(BeginInfo);
+
+            GraphicsState.SetRenderPass(BeginInfo);
             
-                
-            float SizeY = (float)GetRenderTarget()->GetSizeY();
-            float SizeX = (float)GetRenderTarget()->GetSizeX();
-            CommandList->SetViewport(0.0f, 0.0f, 0.0f, SizeX, SizeY, 1.0f);
-            CommandList->SetScissorRect(0, 0, (uint32)SizeX, (uint32)SizeY);
+            GraphicsState.SetViewport(MakeViewportStateFromImage(GetRenderTarget()));
+
+            CmdList.SetGraphicsState(GraphicsState);
 
             SceneRenderStats.NumDrawCalls++;
             SceneRenderStats.NumVertices += 3;
-            CommandList->Draw(3, 1, 0, 0);
-    
-            CommandList->EndRenderPass(); 
+            CmdList.Draw(3, 1, 0, 0); 
         });
-#if 0
-
-        AddRenderPass("Skybox Pass", [this, CommandList]()
-        {
-            LUMINA_PROFILE_SECTION_COLORED("Skybox Pass", tracy::Color::Green);
-
-            FRHIVertexShaderRef VertexShader = RenderContext->GetShaderLibrary()->GetShader<FRHIVertexShader>("Skybox.vert");
-            FRHIPixelShaderRef PixelShader = RenderContext->GetShaderLibrary()->GetShader<FRHIPixelShader>("Skybox.frag");
-            if (!VertexShader || !PixelShader)
-            {
-                return;
-            }
-            
-            FRHIImageRef ColorAttachment = GetRenderTarget();
-            
-            FDepthStencilState DepthState;
-            DepthState.SetDepthTestEnable(true);
-            DepthState.SetDepthWriteEnable(false);
-            DepthState.SetDepthFunc(EComparisonFunc::GreaterOrEqual);
-            
-            FBlendState BlendState;
-            FBlendState::RenderTarget RenderTarget;
-            RenderTarget.DisableBlend();
-            RenderTarget.SetFormat(EFormat::BGRA8_UNORM);
-            BlendState.SetRenderTarget(0, RenderTarget);
-            
-            FRasterState RasterState;
-            RasterState.SetCullFront();
-            RasterState.SetDepthClipEnable(false);
-            
-            FRenderState RenderState;
-            RenderState.SetBlendState(BlendState);
-            RenderState.SetRasterState(RasterState);
-            RenderState.SetDepthStencilState(DepthState);
-            
-            FGraphicsPipelineDesc Desc;
-            Desc.SetRenderState(RenderState);
-            Desc.AddBindingLayout(BindingLayout);
-            Desc.AddBindingLayout(SkyboxBindingLayout);
-            Desc.SetVertexShader(VertexShader);
-            Desc.SetPixelShader(PixelShader);
-            
-            FRHIGraphicsPipelineRef Pipeline = RenderContext->CreateGraphicsPipeline(Desc);
-            
-            CommandList->SetGraphicsPipeline(Pipeline);
-            
-            CommandList->BindBindingSets(ERHIBindingPoint::Graphics, {{SkyboxBindingSet, 1}});
-            
-            FRenderPassBeginInfo BeginInfo; BeginInfo
-            .AddColorAttachment(ColorAttachment)
-            .SetColorLoadOp(ERenderLoadOp::Load)
-            .SetColorStoreOp(ERenderStoreOp::Store)
-            .SetColorClearColor(FColor::Black)
-                    
-            .SetDepthAttachment(DepthAttachment)
-            .SetDepthLoadOp(ERenderLoadOp::Load)
-            .SetDepthStoreOp(ERenderStoreOp::Store)
-                    
-            .SetRenderArea(ColorAttachment->GetExtent());
-            BeginInfo.DebugName = "Skybox Pass";
-            
-            CommandList->BeginRenderPass(BeginInfo);
-            
-            float SizeY = (float)GetRenderTarget()->GetSizeY();
-            float SizeX = (float)GetRenderTarget()->GetSizeX();
-            CommandList->SetViewport(0.0f, 0.0f, 0.0f, SizeX, SizeY, 1.0f);
-            CommandList->SetScissorRect(0, 0, SizeX, SizeY);
-
-            SceneRenderStats.NumDrawCalls++;
-            SceneRenderStats.NumVertices += 36;
-            CommandList->Draw(36, 1, 0, 0);
-            
-            CommandList->EndRenderPass();
-        });
-
-        AddRenderPass("Debug Primitives", [this, CommandList]()
-        {
-            LUMINA_PROFILE_SECTION("Debug Pass");
-            
-            FRHIVertexShaderRef VertexShader = RenderContext->GetShaderLibrary()->GetShader<FRHIVertexShader>("Simple.vert");
-            FRHIPixelShaderRef PixelShader = RenderContext->GetShaderLibrary()->GetShader<FRHIPixelShader>("Simple.frag");
-            if (!VertexShader || !PixelShader)
-            {
-                return;
-            }
-            
-            FRenderPassBeginInfo BeginInfo; BeginInfo
-            .AddColorAttachment(GetRenderTarget())
-            .SetColorLoadOp(ERenderLoadOp::Load)
-            .SetColorStoreOp(ERenderStoreOp::Store)
-            
-            .SetDepthAttachment(DepthAttachment)
-            .SetDepthLoadOp(ERenderLoadOp::Load)
-            .SetDepthStoreOp(ERenderStoreOp::Store)
-                
-            .SetRenderArea(GetRenderTarget()->GetExtent());
-            BeginInfo.DebugName = "Primitive Pass";
-            CommandList->BeginRenderPass(BeginInfo);
-            
-            FDepthStencilState DepthState;
-            DepthState.SetDepthFunc(EComparisonFunc::Greater);
-            
-            FBlendState BlendState;
-            FBlendState::RenderTarget RenderTarget;
-            RenderTarget.DisableBlend();
-            RenderTarget.SetSrcBlend(EBlendFactor::SrcAlpha);
-            RenderTarget.SetDestBlend(EBlendFactor::OneMinusSrcAlpha);
-            RenderTarget.SetSrcBlendAlpha(EBlendFactor::One);
-            RenderTarget.SetDestBlendAlpha(EBlendFactor::Zero);
-            RenderTarget.SetFormat(EFormat::BGRA8_UNORM);
-            BlendState.SetRenderTarget(0, RenderTarget);
-            
-            FRasterState RasterState;
-            RasterState.SetDepthClipEnable(true);
-                
-            FRenderState RenderState;
-            RenderState.SetBlendState(BlendState);
-            RenderState.SetRasterState(RasterState);
-            RenderState.SetDepthStencilState(DepthState);
-                
-            FGraphicsPipelineDesc Desc;
-            Desc.SetRenderState(RenderState);
-            Desc.AddBindingLayout(BindingLayout);
-            Desc.SetVertexShader(VertexShader);
-            Desc.SetPixelShader(PixelShader);
-                
-            FRHIGraphicsPipelineRef Pipeline = RenderContext->CreateGraphicsPipeline(Desc);
-                
-            CommandList->SetGraphicsPipeline(Pipeline);
-            
-            for (uint32 i = 0; i < LightData.NumLights; ++i)
-            {
-                FLight Light = LightData.Lights[i];
-            
-                struct FPC
-                {
-                    glm::mat4 ModelMatrix;
-                    glm::vec4 Color;
-                } PC;
-            
-                FTransform Transform;
-                Transform.Location = Light.Position;
-                PC.ModelMatrix = Transform.GetMatrix();
-                PC.ModelMatrix = glm::scale(PC.ModelMatrix, glm::vec3(0.15f));
-            
-                PC.Color = Light.Color;
-            
-                float SizeY = (float)GetRenderTarget()->GetSizeY();
-                float SizeX = (float)GetRenderTarget()->GetSizeX();
-                CommandList->SetViewport(0.0f, 0.0f, 0.0f, SizeX, SizeY, 1.0f);
-                CommandList->SetScissorRect(0, 0, SizeX, SizeY);
-                
-                CommandList->SetPushConstants(&PC, sizeof(FPC));
-
-                SceneRenderStats.NumDrawCalls++;
-                SceneRenderStats.NumVertices += 36;
-                CommandList->Draw(36, 1, 0, 0);
-            }
-            
-            CommandList->EndRenderPass();
-        });
-
-#endif
         
-    }
-
-    void FSceneRenderer::Deinitialize()
-    {
-        RenderContext->WaitIdle();
         
-        LOG_TRACE("Shutting down scene renderer");
-
-        for (FRenderPass* Pass : RenderPasses)
-        {
-            Memory::Delete(Pass);
-        }
-        RenderPasses.clear();
-    }
-
-    void FSceneRenderer::StartScene(const FUpdateContext& UpdateContext)
-    {
-        LUMINA_PROFILE_SCOPE();
-    }
-
-    void FSceneRenderer::EndScene(const FUpdateContext& UpdateContext)
-    {
-        LUMINA_PROFILE_SCOPE();
-        SceneRenderStats = {};
-
-        ICommandList* CommandList = RenderContext->GetCommandList(Q_Graphics);
+        RenderGraph.Execute();
         
-        FCameraManager* CameraManager = Scene->GetSceneSubsystem<FCameraManager>();
-        SCameraComponent& CameraComponent = CameraManager->GetActiveCameraEntity().GetComponent<SCameraComponent>();
-
-        SceneGlobalData.CameraData.Location =   glm::vec4(CameraComponent.GetPosition(), 1.0f);
-        SceneGlobalData.CameraData.View =       CameraComponent.GetViewMatrix();
-        SceneGlobalData.CameraData.InverseView = CameraComponent.GetViewVolume().GetInverseViewMatrix();
-        SceneGlobalData.CameraData.Projection = CameraComponent.GetProjectionMatrix();
-        SceneGlobalData.CameraData.InverseProjection = CameraComponent.GetViewVolume().GetInverseProjectionMatrix();
-        SceneGlobalData.Time =                  (float)Scene->GetTimeSinceSceneCreation();
-        SceneGlobalData.DeltaTime =             (float)Scene->GetSceneDeltaTime();
-        SceneGlobalData.FarPlane =              0.01f;
-        SceneGlobalData.NearPlane =             1000.0f;
         
-        SceneViewport->SetViewVolume(CameraComponent.GetViewVolume());
-
-        CommandList->WriteBuffer(SceneDataBuffer, &SceneGlobalData, 0, sizeof(FSceneGlobalData));
-        
-        BuildPasses();
-        ExecutePasses();
-        
-        CommandList->SetImageState(GetRenderTarget(), AllSubresources, EResourceStates::ShaderResource);
-        CommandList->CommitBarriers();
+        GraphicsCommandList->SetImageState(GetRenderTarget(), AllSubresources, EResourceStates::ShaderResource);
+        GraphicsCommandList->CommitBarriers();
 
                 
-        CommandList->SetImageState(DepthAttachment, AllSubresources, EResourceStates::ShaderResource);
-        CommandList->CommitBarriers();
+        GraphicsCommandList->SetImageState(DepthAttachment, AllSubresources, EResourceStates::ShaderResource);
+        GraphicsCommandList->CommitBarriers();
     }
 
     void FSceneRenderer::OnSwapchainResized()
@@ -760,11 +489,16 @@ namespace Lumina
         return false;
     }
     
-    void FSceneRenderer::AddRenderPass(const FName& Name, FRenderPassFunction&& Function)
+    FViewportState FSceneRenderer::MakeViewportStateFromImage(const FRHIImage* Image)
     {
-        FRenderPass* Pass = Memory::New<FRenderPass>(Name);
-        RenderPasses.push_back(Pass);
-        Pass->SetPassFunc(std::move(Function));
+        float SizeY = (float)Image->GetSizeY();
+        float SizeX = (float)Image->GetSizeX();
+
+        FViewportState ViewportState;
+        ViewportState.Viewport = FViewport(SizeX, SizeY);
+        ViewportState.Scissor = FRect(SizeX, SizeY);
+
+        return ViewportState;
     }
 
     void FSceneRenderer::OnStaticMeshComponentCreated()
@@ -775,7 +509,7 @@ namespace Lumina
     {
     }
 
-     void FSceneRenderer::BuildPasses()
+    void FSceneRenderer::BuildPasses()
     {
         ICommandList* CommandList = RenderContext->GetCommandList(ECommandQueue::Graphics);
         {
@@ -1021,16 +755,6 @@ namespace Lumina
         }
 
         CommandList->WriteBuffer(LightDataBuffer, &LightData, 0, sizeof(FSceneLightData));
-    }
-
-    void FSceneRenderer::ExecutePasses()
-    {
-        LUMINA_PROFILE_SCOPE();
-
-        for (FRenderPass* Pass : RenderPasses)
-        {
-            Pass->Execute();
-        }
     }
 
     void FSceneRenderer::InitResources()

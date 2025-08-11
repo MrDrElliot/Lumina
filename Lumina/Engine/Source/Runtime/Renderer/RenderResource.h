@@ -1200,6 +1200,58 @@ namespace Lumina
 		
 		ERHIBindingResourceType Type	: 8;
 		uint16 Size						: 16;
+
+		static FBindingLayoutItem Buffer_SRV(uint32 Slot, uint16 Size = 0)
+		{
+			FBindingLayoutItem Result;
+			Result.Slot = Slot;
+			Result.Type = ERHIBindingResourceType::Buffer_SRV;
+			Result.Size = Size;
+			return Result;
+		}
+
+		static FBindingLayoutItem Buffer_UAV(uint32 Slot, uint16 Size = 0)
+		{
+			FBindingLayoutItem Result;
+			Result.Slot = Slot;
+			Result.Type = ERHIBindingResourceType::Buffer_UAV;
+			Result.Size = Size;
+			return Result;
+		}
+
+		static FBindingLayoutItem Buffer_CBV(uint32 Slot, uint16 Size = 0)
+		{
+			FBindingLayoutItem Result;
+			Result.Slot = Slot;
+			Result.Type = ERHIBindingResourceType::Buffer_CBV;
+			Result.Size = Size;
+			return Result;
+		}
+
+		static FBindingLayoutItem Texture_SRV(uint32 Slot, uint16 Size = 0)
+		{
+			FBindingLayoutItem Result;
+			Result.Slot = Slot;
+			Result.Type = ERHIBindingResourceType::Texture_SRV;
+			Result.Size = Size;
+			return Result;
+		}
+
+		static FBindingLayoutItem Texture_UAV(uint32 Slot, uint16 Size = 0)
+		{
+			FBindingLayoutItem Result;
+			Result.Slot = Slot;
+			Result.Type = ERHIBindingResourceType::Texture_UAV;
+			Result.Size = Size;
+			return Result;
+		}
+
+		bool operator ==(const FBindingLayoutItem& b) const
+		{
+			return Slot == b.Slot
+				&& Type == b.Type
+				&& Size == b.Size;
+		}
 	};
 	
 	
@@ -1227,6 +1279,7 @@ namespace Lumina
 		FBindlessLayoutDesc& SetFirstSlot(uint32 Value) { FirstSlot = Value; return *this; }
 		FBindlessLayoutDesc& SetMaxCapacity(uint32 Value) { MaxCapacity = Value; return *this; }
 		FBindlessLayoutDesc& AddBinding(const FBindingLayoutItem& value) { Bindings.push_back(value); return *this; }
+		
 
 	};
 

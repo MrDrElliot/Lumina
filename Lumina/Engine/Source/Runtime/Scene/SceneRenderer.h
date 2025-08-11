@@ -7,7 +7,6 @@
 #include "Renderer/DescriptorTableManager.h"
 #include "Renderer/RenderResource.h"
 #include "Renderer/RenderTypes.h"
-#include "Renderer/RenderGraph/RenderPasses/RenderPass.h"
 
 namespace Lumina
 {
@@ -36,8 +35,7 @@ namespace Lumina
         void Initialize();
         void Deinitialize();
         
-        void StartScene(const FUpdateContext& UpdateContext);
-        void EndScene(const FUpdateContext& UpdateContext);
+        void Render(const FUpdateContext& UpdateContext);
     
         FRHIImageRef GetRenderTarget() const { return SceneViewport->GetRenderTarget(); }
         FSceneGlobalData* GetSceneGlobalData() { return &SceneGlobalData; }
@@ -49,16 +47,15 @@ namespace Lumina
         
         ESceneRenderGBuffer GetGBufferDebugMode() const { return GBufferDebugMode; }
         void SetGBufferDebugMode(ESceneRenderGBuffer Mode) { GBufferDebugMode = Mode; }
-        
-        void AddRenderPass(const FName& Name, FRenderPassFunction&& Function);
-        
+    
     protected:
+
+        FViewportState MakeViewportStateFromImage(const FRHIImage* Image);
 
         void OnStaticMeshComponentCreated();
         void OnStaticMeshComponentDestroyed();
 
         void BuildPasses();
-        void ExecutePasses();
 
         void InitResources();
         void InitBuffers();
@@ -111,9 +108,7 @@ namespace Lumina
         
         
         FGBuffer                            GBuffer;
-
-        TVector<FRenderPass*>               RenderPasses;
-
+        
         FRHIImageRef                        DepthMap;
         FRHIImageRef                        DepthAttachment;
         FRHIImageRef                        CubeMap;

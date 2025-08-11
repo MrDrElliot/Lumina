@@ -140,7 +140,7 @@ namespace Lumina
 			.SetColorLoadOp(ERenderLoadOp::Load)
 			.SetColorStoreOp(ERenderStoreOp::Store)
 			.SetColorClearColor(FColor::Black)
-			.SetRenderArea(GEngine->GetEngineViewport()->GetRenderTarget()->GetDescription().Extent);
+			.SetRenderArea(GEngine->GetEngineViewport()->GetRenderTarget()->GetExtent());
 			
 			CommandList->BeginRenderPass(RenderPass);
 			

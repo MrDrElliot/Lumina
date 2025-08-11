@@ -61,6 +61,7 @@ namespace Lumina
         void CopyBuffer(FRHIBuffer* Source, uint64 SrcOffset, FRHIBuffer* Destination, uint64 DstOffset, uint64 CopySize) override;
         void WriteBuffer(FRHIBuffer* Buffer, const void* Data, SIZE_T Offset, SIZE_T Size) override;
 
+        void UpdateGraphicsDynamicBuffers();
         void FlushDynamicBufferWrites();
         void SubmitDynamicBuffers(uint64 RecordingID, uint64 SubmittedID);
 
@@ -84,28 +85,28 @@ namespace Lumina
 
         void BeginRenderPass(const FRenderPassBeginInfo& PassInfo) override;
         void EndRenderPass() override;
+        
         void ClearImageColor(FRHIImage* Image, const FColor& Color) override;
 
-        void BindBindingSets(ERHIBindingPoint BindPoint, TVector<TPair<FRHIBindingSet*, uint32>> BindingSets) override;
+        void BindBindingSets(VkPipelineBindPoint BindPoint, VkPipelineLayout PipelineLayout, TVector<FRHIBindingSet*> BindingSets);
 
         void SetPushConstants(const void* Data, SIZE_T ByteSize) override;
 
-        void BindVertexBuffer(FRHIBuffer* Buffer, uint32 Index, uint32 Offset) override;
-        void SetGraphicsPipeline(FRHIGraphicsPipeline* InPipeline) override;
         void SetViewport(float MinX, float MinY, float MinZ, float MaxX, float MaxY, float MaxZ) override;
         void SetScissorRect(uint32 MinX, uint32 MinY, uint32 MaxX, uint32 MaxY) override;
+        void SetGraphicsState(const FGraphicsState& State) override;
+        
         void Draw(uint32 VertexCount, uint32 InstanceCount, uint32 FirstVertex, uint32 FirstInstance) override;
-        void DrawIndexed(FRHIBuffer* IndexBuffer, uint32 IndexCount, uint32 InstanceCount, uint32 FirstIndex, int32 VertexOffset, uint32 FirstInstance) override;
-        void DrawIndirect(FRHIBuffer* Buffer, uint32 DrawCount, uint64 Offset) override;
-        void DrawIndexedIndirect(FRHIBuffer* DrawBuffer, FRHIBuffer* IndexBuffer, uint32 DrawCount, uint64 Offset) override;
+        void DrawIndexed(uint32 IndexCount, uint32 InstanceCount, uint32 FirstIndex, int32 VertexOffset, uint32 FirstInstance) override;
+        void DrawIndirect(uint32 DrawCount, uint64 Offset) override;
+        void DrawIndexedIndirect(uint32 DrawCount, uint64 Offset) override;
 
-        void SetComputePipeline(FRHIComputePipeline* InPipeline) override;
         void Dispatch(uint32 GroupCountX, uint32 GroupCountY, uint32 GroupCountZ) override;
 
 
         void CommitBarriersInternal();
 
-        void TrackResourcesAndBarriers();
+        void TrackResourcesAndBarriers(const FGraphicsState& State);
 
         void RequireTextureState(FRHIImage* Texture, FTextureSubresourceSet Subresources, EResourceStates StateBits);
 
@@ -125,8 +126,8 @@ namespace Lumina
         
         THashMap<FRHIBufferRef, FDynamicBufferWrite>    DynamicBufferWrites;
         bool                                            bHasDynamicBufferWrites = false;
-        
-        FVulkanGraphicsState                            GraphicsState;
+
+        FGraphicsState                                  CurrentGraphicsState;
         FVulkanComputeState                             ComputeState;
                                                         
         FCommandListResourceStateTracker                StateTracker;

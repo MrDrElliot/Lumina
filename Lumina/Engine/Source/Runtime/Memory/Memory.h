@@ -25,21 +25,7 @@ namespace Lumina::Memory
     {
         return static_cast<typename eastl::remove_reference<T>::type&&>(std::forward<T>(x));
     }
-
-    template <typename T>
-    constexpr auto MoveIfAble(T&& x) noexcept -> decltype(auto)
-    requires (std::is_move_constructible_v<std::remove_reference_t<T>> && !eastl::is_trivially_copyable_v<std::remove_reference_t<T>>)
-    {
-        return static_cast<std::remove_reference_t<T>&&>(std::forward<T>(x));
-    }
-
-    template <typename T>
-    constexpr auto MoveIfAble(T& x) noexcept -> decltype(auto)
-    requires (!std::is_move_constructible_v<T> || eastl::is_trivially_copyable_v<T>)
-    {
-        return x;
-    }
-
+    
     LUMINA_API inline void Memzero(void* ptr, size_t size)
     {
         memset(ptr, 0, size);

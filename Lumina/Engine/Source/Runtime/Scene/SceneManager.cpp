@@ -35,7 +35,6 @@ namespace Lumina
                 continue;
             }
             
-            Scene.SceneRenderer->StartScene(UpdateContext);
             Scene.Scene->StartFrame();       
         }
     }
@@ -66,7 +65,7 @@ namespace Lumina
             }
             
             Scene.Scene->EndFrame();
-            Scene.SceneRenderer->EndScene(UpdateContext);
+            Scene.SceneRenderer->Render(UpdateContext);
         }
     }
 

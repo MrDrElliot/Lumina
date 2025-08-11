@@ -285,6 +285,21 @@ namespace fmt
             return fmt::format_to(ctx.out(), "{}", str.data());
         }
     };
+
+    template <>
+    struct formatter<eastl::string_view>
+    {
+        constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin())
+        {
+            return ctx.begin();
+        }
+
+        template <typename FormatContext>
+        auto format(const eastl::string_view& str, FormatContext& ctx) -> decltype(ctx.out())
+        {
+            return fmt::format_to(ctx.out(), "{}", std::string_view(str.data(), str.length()));
+        }
+    };
 }
 
 
@@ -298,6 +313,7 @@ namespace eastl
             return eastl::hash<eastl::string_view>{}(eastl::string_view(str.c_str(), str.length()));
         }
     };
+    
 }
 
 namespace eastl

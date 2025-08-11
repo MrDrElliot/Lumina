@@ -73,7 +73,7 @@ namespace Lumina
         PushConstantVisibility =    VK_SHADER_STAGE_FLAG_BITS_MAX_ENUM;
         CurrentPipelineLayout =     VK_NULL_HANDLE;
         ComputeState =           {};
-        GraphicsState =          {};
+        CurrentGraphicsState =   {};
         bHasDynamicBufferWrites =   false;
         
         FlushDynamicBufferWrites();
@@ -427,6 +427,18 @@ namespace Lumina
         }
     }
 
+    void FVulkanCommandList::UpdateGraphicsDynamicBuffers()
+    {
+        if (bHasDynamicBufferWrites && CurrentGraphicsState.Pipeline)
+        {
+            FVulkanGraphicsPipeline* PSO = static_cast<FVulkanGraphicsPipeline*>(CurrentGraphicsState.Pipeline);
+
+            BindBindingSets(VK_PIPELINE_BIND_POINT_GRAPHICS, PSO->PipelineLayout, CurrentGraphicsState.Bindings);
+
+            bHasDynamicBufferWrites = false;
+        }
+    }
+
     void FVulkanCommandList::FlushDynamicBufferWrites()
     {
         TVector<VmaAllocation> Allocations;
@@ -651,7 +663,7 @@ namespace Lumina
         LUMINA_PROFILE_SCOPE();
         TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "BeginRenderPass")        
 
-        if (GraphicsState.CurrentRenderPassInfo.bValidPass)
+        if (CurrentGraphicsState.RenderPass.IsValid())
         {
             EndRenderPass();
         }
@@ -725,20 +737,18 @@ namespace Lumina
         RenderInfo.layerCount = 1;
         
         vkCmdBeginRendering(CurrentCommandBuffer->CommandBuffer, &RenderInfo);
-
-        GraphicsState.CurrentRenderPassInfo = PassInfo;
-        GraphicsState.CurrentRenderPassInfo.bValidPass = true;
+        CurrentGraphicsState.RenderPass = PassInfo;
     }
 
     void FVulkanCommandList::EndRenderPass()
     {
-        if (GraphicsState.CurrentRenderPassInfo.bValidPass)
+        if (CurrentGraphicsState.RenderPass.IsValid())
         {
             LUMINA_PROFILE_SCOPE();
             TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "EndRenderPass")        
 
             vkCmdEndRendering(CurrentCommandBuffer->CommandBuffer);
-            GraphicsState.CurrentRenderPassInfo = {};
+            CurrentGraphicsState.RenderPass = {};
         }
     }
 
@@ -769,63 +779,20 @@ namespace Lumina
         vkCmdClearColorImage(CurrentCommandBuffer->CommandBuffer, Image->GetAPIResource<VkImage, EAPIResourceType::Image>(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &Value, 1, &Range);
     }
 
-    void FVulkanCommandList::BindBindingSets(ERHIBindingPoint BindPoint, TVector<TPair<FRHIBindingSet*, uint32>> BindingSets)
+    void FVulkanCommandList::BindBindingSets(VkPipelineBindPoint BindPoint, VkPipelineLayout PipelineLayout, TVector<FRHIBindingSet*> BindingSets)
     {
         LUMINA_PROFILE_SCOPE();
         TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "BindBindingSet")
         
-        VkPipelineBindPoint BindingPoint = (BindPoint == ERHIBindingPoint::Graphics)
-            ? VK_PIPELINE_BIND_POINT_GRAPHICS
-            : VK_PIPELINE_BIND_POINT_COMPUTE;
-    
-        CurrentPipelineLayout = (BindPoint == ERHIBindingPoint::Graphics)
-            ? GraphicsState.Pipeline->PipelineLayout
-            : ComputeState.Pipeline->PipelineLayout;
-    
-        PushConstantVisibility = (BindPoint == ERHIBindingPoint::Graphics)
-            ? GraphicsState.Pipeline->PushConstantVisibility
-            : ComputeState.Pipeline->PushConstantVisibility;
-
-        auto CurrentBindings = (BindPoint == ERHIBindingPoint::Graphics)
-            ? GraphicsState.CurrentBindings
-            : ComputeState.CurrentBindings;
-
-        if (CurrentBindings == BindingSets)
-        {
-            return;
-        }
-
-        switch (BindPoint)
-        {
-        case ERHIBindingPoint::Graphics:
-            {
-                GraphicsState.CurrentBindings = BindingSets;
-            }
-            break;
-        case ERHIBindingPoint::Compute:
-            {
-                ComputeState.CurrentBindings = BindingSets;
-            }
-            break;
-        }
-        
-        std::ranges::sort(BindingSets, [](const auto& a, const auto& b)
-        {
-            return a.second < b.second;
-        });
-    
         uint32 CurrentBatchStart = UINT32_MAX;
         TVector<VkDescriptorSet> CurrentDescriptorBatch;
         TVector<uint32> DynamicOffsets;
     
         for (size_t i = 0; i < BindingSets.size(); ++i)
         {
-            FRHIBindingSet* Set = BindingSets[i].first;
-            uint32 SetIndex = BindingSets[i].second;
+            SIZE_T SetIndex = i;
+            FRHIBindingSet* Set = BindingSets[SetIndex];
             FVulkanBindingSet* VulkanSet = static_cast<FVulkanBindingSet*>(Set);
-    
-            SetResourceStatesForBindingSet(VulkanSet);
-            CommitBarriers();
     
             if (!VulkanSet)
             {
@@ -834,7 +801,7 @@ namespace Lumina
     
             if (CurrentBatchStart == UINT32_MAX)
             {
-                CurrentBatchStart = SetIndex;
+                CurrentBatchStart = i;
             }
     
             // Handle gaps — flush current batch if gap detected
@@ -843,8 +810,8 @@ namespace Lumina
                 if (!CurrentDescriptorBatch.empty())
                 {
                     vkCmdBindDescriptorSets(CurrentCommandBuffer->CommandBuffer,
-                        BindingPoint,
-                        CurrentPipelineLayout,
+                        BindPoint,
+                        PipelineLayout,
                         CurrentBatchStart,
                         static_cast<uint32>(CurrentDescriptorBatch.size()),
                         CurrentDescriptorBatch.data(),
@@ -885,8 +852,8 @@ namespace Lumina
         if (!CurrentDescriptorBatch.empty())
         {
             vkCmdBindDescriptorSets(CurrentCommandBuffer->CommandBuffer,
-                BindingPoint,
-                CurrentPipelineLayout,
+                BindPoint,
+                PipelineLayout,
                 CurrentBatchStart,
                 static_cast<uint32>(CurrentDescriptorBatch.size()),
                 CurrentDescriptorBatch.data(),
@@ -899,30 +866,6 @@ namespace Lumina
     {
         LUMINA_PROFILE_SCOPE();
         vkCmdPushConstants(CurrentCommandBuffer->CommandBuffer, CurrentPipelineLayout, PushConstantVisibility, 0, (uint32)ByteSize, Data);
-    }
-
-    void FVulkanCommandList::BindVertexBuffer(FRHIBuffer* Buffer, uint32 Index, uint32 Offset)
-    {
-        LUMINA_PROFILE_SCOPE();
-        TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "BindVertexBuffer")        
-        Assert(Buffer != nullptr)
-        
-        GraphicsState.SetVertexStream(Buffer, Index, Offset);
-    }
-
-    void FVulkanCommandList::SetGraphicsPipeline(FRHIGraphicsPipeline* InPipeline)
-    {
-        LUMINA_PROFILE_SCOPE();
-        TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "SetGraphicsPipeline")        
-
-        FVulkanGraphicsPipeline* PSO = static_cast<FVulkanGraphicsPipeline*>(InPipeline);
-
-        if (GraphicsState.Pipeline != InPipeline)
-        {
-            PSO->Bind(CurrentCommandBuffer->CommandBuffer);
-            CurrentCommandBuffer->AddReferencedResource(InPipeline);
-            GraphicsState.Pipeline = PSO;
-        }
     }
 
     void FVulkanCommandList::SetViewport(float MinX, float MinY, float MinZ, float MaxX, float MaxY, float MaxZ)
@@ -954,79 +897,124 @@ namespace Lumina
 
         vkCmdSetScissor(CurrentCommandBuffer->CommandBuffer, 0, 1, &Scissor);
     }
-    
+
+    void FVulkanCommandList::SetGraphicsState(const FGraphicsState& State)
+    {
+        Assert(CurrentCommandBuffer)
+        LUMINA_PROFILE_SCOPE();
+
+        VkCommandBuffer VkCmdBuffer = CurrentCommandBuffer->CommandBuffer;
+        
+        bool bHasBarriers = !StateTracker.GetBufferBarriers().empty() || !StateTracker.GetTextureBarriers().empty();
+        bool bPipelineChanged = false;
+
+        TrackResourcesAndBarriers(State);
+        
+        if (CurrentGraphicsState.Pipeline != State.Pipeline)
+        {
+            TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "Bind Pipeline")
+            vkCmdBindPipeline(VkCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, State.Pipeline->GetAPIResource<VkPipeline, EAPIResourceType::Pipeline>());
+            CurrentCommandBuffer->AddReferencedResource(State.Pipeline);
+            bPipelineChanged = true;
+        }
+
+        if (CurrentGraphicsState.RenderPass.IsValid() || bHasBarriers)
+        {
+            EndRenderPass();
+            CommitBarriers();
+        }
+        
+        BeginRenderPass(State.RenderPass);
+
+        CurrentPipelineLayout = State.Pipeline->GetAPIResource<VkPipelineLayout, EAPIResourceType::PipelineLayout>();
+        PushConstantVisibility = ((FVulkanGraphicsPipeline*)State.Pipeline)->PushConstantVisibility;
+        
+        BindBindingSets(VK_PIPELINE_BIND_POINT_GRAPHICS, CurrentPipelineLayout, State.Bindings);
+        
+        const FViewport& Viewport = State.ViewportState.Viewport;
+        const FRect& ScissorRect = State.ViewportState.Scissor;
+
+        bool bCurrentViewportValid = (CurrentGraphicsState.ViewportState.Viewport.Height() && CurrentGraphicsState.ViewportState.Viewport.Width());
+        bool bCurrentScissorValid = (CurrentGraphicsState.ViewportState.Scissor.height() && CurrentGraphicsState.ViewportState.Scissor.width());
+
+        if (!bCurrentViewportValid || CurrentGraphicsState.ViewportState.Viewport != Viewport)
+        {
+            SetViewport(Viewport.MinX, Viewport.MinY, Viewport.MinZ, Viewport.MaxX, Viewport.MaxY, Viewport.MaxZ);
+        }
+
+        if (!bCurrentScissorValid || CurrentGraphicsState.ViewportState.Scissor != ScissorRect)
+        {
+            SetScissorRect(ScissorRect.MinX, ScissorRect.MinY, ScissorRect.MaxX, ScissorRect.MaxY);
+        }
+
+        if (State.IndexBuffer.Buffer && CurrentGraphicsState.IndexBuffer != State.IndexBuffer)
+        {
+            TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "Bind Index Buffer")
+            vkCmdBindIndexBuffer(VkCmdBuffer, State.IndexBuffer.Buffer->GetAPIResource<VkBuffer>(), State.IndexBuffer.Offset
+                , State.IndexBuffer.Format == EFormat::R16_UINT ?
+                VK_INDEX_TYPE_UINT16 : VK_INDEX_TYPE_UINT32);
+
+            CurrentCommandBuffer->AddReferencedResource(State.IndexBuffer.Buffer);
+        }
+        
+        if (!State.VertexBuffers.empty() && State.VertexBuffers != CurrentGraphicsState.VertexBuffers)
+        {
+            VkBuffer VertexBuffer[16];
+            uint64 VertexBufferOffsets[16];
+            uint32 BindingIndex = 0;
+            
+            for (const FVertexBufferBinding& Binding : State.VertexBuffers)
+            {
+                VertexBuffer[Binding.Slot] = Binding.Buffer->GetAPIResource<VkBuffer>();
+                VertexBufferOffsets[Binding.Slot] = Binding.Offset;
+                BindingIndex = std::max(BindingIndex, Binding.Slot);
+                
+                CurrentCommandBuffer->AddReferencedResource(Binding.Buffer);
+            }
+
+            TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "Bind Vertex Buffer")
+            vkCmdBindVertexBuffers(VkCmdBuffer, 0, BindingIndex + 1, VertexBuffer, VertexBufferOffsets);
+        }
+
+        if (State.IndirectParams)
+        {
+            CurrentCommandBuffer->AddReferencedResource(State.IndirectParams);
+        }
+
+        CurrentGraphicsState = State;
+        bHasDynamicBufferWrites = false;
+    }
+
     void FVulkanCommandList::Draw(uint32 VertexCount, uint32 InstanceCount, uint32 FirstVertex, uint32 FirstInstance)
     {
         LUMINA_PROFILE_SCOPE();
         TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "Draw")        
-
-        GraphicsState.PrepareForDraw(CurrentCommandBuffer->CommandBuffer);
+        
         vkCmdDraw(CurrentCommandBuffer->CommandBuffer, VertexCount, InstanceCount, FirstVertex, FirstInstance);
     }
 
-    void FVulkanCommandList::DrawIndexed(FRHIBuffer* IndexBuffer, uint32 IndexCount, uint32 InstanceCount, uint32 FirstIndex, int32 VertexOffset, uint32 FirstInstance)
+    void FVulkanCommandList::DrawIndexed(uint32 IndexCount, uint32 InstanceCount, uint32 FirstIndex, int32 VertexOffset, uint32 FirstInstance)
     {
         LUMINA_PROFILE_SCOPE();
         TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "DrawIndexed")
         
-        FVulkanBuffer* Buffer = static_cast<FVulkanBuffer*>(IndexBuffer);
-        CurrentCommandBuffer->AddReferencedResource(Buffer);
-        
-        if (Buffer->Buffer != GraphicsState.IndexBuffer)
-        {
-            vkCmdBindIndexBuffer(CurrentCommandBuffer->CommandBuffer, Buffer->GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
-            GraphicsState.IndexBuffer = Buffer->Buffer;
-        }
-        
-        GraphicsState.PrepareForDraw(CurrentCommandBuffer->CommandBuffer);
         vkCmdDrawIndexed(CurrentCommandBuffer->CommandBuffer, IndexCount, InstanceCount, FirstIndex, VertexOffset, FirstInstance);
     }
 
-    void FVulkanCommandList::DrawIndirect(FRHIBuffer* Buffer, uint32 DrawCount, uint64 Offset)
+    void FVulkanCommandList::DrawIndirect(uint32 DrawCount, uint64 Offset)
     {
         LUMINA_PROFILE_SCOPE();
         TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "DrawIndirect")
         
-        CurrentCommandBuffer->AddReferencedResource(Buffer);
-        
-        GraphicsState.PrepareForDraw(CurrentCommandBuffer->CommandBuffer);
-        vkCmdDrawIndirect(CurrentCommandBuffer->CommandBuffer, Buffer->GetAPIResource<VkBuffer>(), Offset, DrawCount, sizeof(FDrawIndirectArguments));
+        vkCmdDrawIndirect(CurrentCommandBuffer->CommandBuffer, CurrentGraphicsState.IndirectParams->GetAPIResource<VkBuffer>(), Offset, DrawCount, sizeof(FDrawIndirectArguments));
     }
 
-    void FVulkanCommandList::DrawIndexedIndirect(FRHIBuffer* DrawBuffer, FRHIBuffer* IndexBuffer, uint32 DrawCount, uint64 Offset)
+    void FVulkanCommandList::DrawIndexedIndirect(uint32 DrawCount, uint64 Offset)
     {
         LUMINA_PROFILE_SCOPE();
         TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "DrawIndexedIndirect")
-        Assert(GraphicsState.CurrentRenderPassInfo.bValidPass)
         
-        CurrentCommandBuffer->AddReferencedResource(DrawBuffer);
-        CurrentCommandBuffer->AddReferencedResource(IndexBuffer);
-        
-        VkBuffer IndexBufferVk = IndexBuffer->GetAPIResource<VkBuffer>();
-        if (IndexBufferVk != GraphicsState.IndexBuffer)
-        {
-            vkCmdBindIndexBuffer(CurrentCommandBuffer->CommandBuffer, IndexBufferVk, 0, VK_INDEX_TYPE_UINT32);
-            GraphicsState.IndexBuffer = IndexBufferVk;
-        }
-        
-        GraphicsState.PrepareForDraw(CurrentCommandBuffer->CommandBuffer);
-        vkCmdDrawIndexedIndirect(CurrentCommandBuffer->CommandBuffer, DrawBuffer->GetAPIResource<VkBuffer>(), Offset, DrawCount, sizeof(FDrawIndexedIndirectArguments));
-    }
-
-    void FVulkanCommandList::SetComputePipeline(FRHIComputePipeline* InPipeline)
-    {
-        LUMINA_PROFILE_SCOPE();
-        TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "SetComputePipeline")        
-
-        FVulkanComputePipeline* PSO = static_cast<FVulkanComputePipeline*>(InPipeline);
-
-        if (ComputeState.Pipeline != InPipeline)
-        {
-            PSO->Bind(CurrentCommandBuffer->CommandBuffer);
-            CurrentCommandBuffer->AddReferencedResource(InPipeline);
-            ComputeState.Pipeline = PSO;
-        }
-        
+        vkCmdDrawIndexedIndirect(CurrentCommandBuffer->CommandBuffer, CurrentGraphicsState.IndirectParams->GetAPIResource<VkBuffer>(), Offset, DrawCount, sizeof(FDrawIndexedIndirectArguments));
     }
 
     void FVulkanCommandList::Dispatch(uint32 GroupCountX, uint32 GroupCountY, uint32 GroupCountZ)
@@ -1170,8 +1158,33 @@ namespace Lumina
         StateTracker.ClearBarriers();
     }
 
-    void FVulkanCommandList::TrackResourcesAndBarriers()
+    void FVulkanCommandList::TrackResourcesAndBarriers(const FGraphicsState& State)
     {
+        if (State.Bindings != CurrentGraphicsState.Bindings)
+        {
+            for (SIZE_T i = 0; i < State.Bindings.size(); ++i)
+            {
+                SetResourceStatesForBindingSet(State.Bindings[i]);
+            }
+        }
+
+        if (State.IndexBuffer.Buffer && State.IndexBuffer.Buffer != CurrentGraphicsState.IndexBuffer.Buffer)
+        {
+            RequireBufferState(State.IndexBuffer.Buffer, EResourceStates::IndexBuffer);
+        }
+
+        if (State.VertexBuffers != CurrentGraphicsState.VertexBuffers)
+        {
+            for (const FVertexBufferBinding& Binding : State.VertexBuffers)
+            {
+                RequireBufferState(Binding.Buffer, EResourceStates::VertexBuffer);
+            }
+        }
+
+        if (State.IndirectParams && State.IndirectParams != CurrentGraphicsState.IndirectParams)
+        {
+            RequireBufferState(State.IndirectParams, EResourceStates::IndirectArgument);
+        }
     }
 
     void FVulkanCommandList::RequireTextureState(FRHIImage* Texture, FTextureSubresourceSet Subresources, EResourceStates StateBits)

@@ -5,11 +5,18 @@
 namespace Lumina
 {
 
-    class IAllocator
+    class LUMINA_API IAllocator
     {
     public:
         virtual ~IAllocator() = default;
 
+        template<typename T, typename... Args>
+        T* TAlloc(Args&&... args)
+        {
+            void* mem = Allocate(sizeof(T), alignof(T));
+            return new (mem) T(std::forward<Args>(args)...);
+        } 
+        
         // Allocates memory of specified size and alignment.
         virtual void* Allocate(SIZE_T Size, SIZE_T Alignment = alignof(std::max_align_t)) = 0;
 
@@ -19,10 +26,11 @@ namespace Lumina
         virtual void Reset() = 0;
     };
 
-    class FDefaultAllocator : public IAllocator
+    class LUMINA_API FDefaultAllocator : public IAllocator
     {
     public:
-
+        
+        
         void* Allocate(SIZE_T Size, SIZE_T Alignment) override
         {
             return Memory::Malloc(Size, Alignment);
@@ -36,14 +44,13 @@ namespace Lumina
         void Reset() override { }
     };
     
-    class FLinearAllocator : public IAllocator
+    class LUMINA_API FLinearAllocator : public IAllocator
     {
     public:
         
-        explicit FLinearAllocator(SIZE_T CapacityBytes)
-            : Capacity(CapacityBytes)
+        explicit FLinearAllocator(SIZE_T InitialSize)
         {
-            Base = (uint8*)Memory::Malloc(Capacity);
+            Base = (uint8*)Memory::Malloc(InitialSize);
             Offset = 0;
         }
 
@@ -52,14 +59,13 @@ namespace Lumina
             Memory::Free(Base);
             Base = nullptr;
         }
-
+        
         void* Allocate(SIZE_T Size, SIZE_T Alignment = DEFAULT_ALIGNMENT) override
         {
             SIZE_T CurrentPtr = reinterpret_cast<SIZE_T>(Base + Offset);
             SIZE_T AlignedPtr = (CurrentPtr + Alignment - 1) & ~(Alignment - 1);
             SIZE_T NextOffset = AlignedPtr - reinterpret_cast<SIZE_T>(Base) + Size;
 
-            assert(NextOffset <= Capacity && "FFrameAllocator out of memory");
 
             void* Result = Base + (AlignedPtr - reinterpret_cast<SIZE_T>(Base));
             Offset = NextOffset;
@@ -74,14 +80,11 @@ namespace Lumina
         }
 
         SIZE_T GetUsed() const { return Offset; }
-        SIZE_T GetCapacity() const { return Capacity; }
-        SIZE_T GetRemaining() const { return Capacity - Offset; }
 
     private:
         
         uint8* Base = nullptr;
         SIZE_T Offset = 0;
-        SIZE_T Capacity = 0;
     };
 
 }

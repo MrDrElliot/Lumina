@@ -16,7 +16,7 @@ namespace Lumina
         ConsoleSink(TVector<FConsoleMessage>& outputMessages)
             : OutputMessages(&outputMessages)
         {
-            OutputMessages->reserve(10000);
+            
         }
 
     protected:
@@ -28,7 +28,7 @@ namespace Lumina
 
             std::time_t timestamp = std::chrono::system_clock::to_time_t(msg.time);
             char TimeBuffer[16];
-            std::strftime(TimeBuffer, sizeof(TimeBuffer), "%H:%M:%S", std::localtime(&timestamp));
+            (void)std::strftime(TimeBuffer, sizeof(TimeBuffer), "%H:%M:%S", std::localtime(&timestamp));  // NOLINT(concurrency-mt-unsafe)
 
             Message.Time.assign(TimeBuffer);
             Message.LoggerName.assign(msg.logger_name.begin(), msg.logger_name.end());

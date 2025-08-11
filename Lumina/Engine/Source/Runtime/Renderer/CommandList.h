@@ -101,22 +101,17 @@ namespace Lumina
         virtual void BeginRenderPass(const FRenderPassBeginInfo& PassInfo) = 0;
         virtual void EndRenderPass() = 0;
         virtual void ClearImageColor(FRHIImage* Image, const FColor& Color) = 0;
-
-        virtual void BindBindingSets(ERHIBindingPoint BindPoint, TVector<TPair<FRHIBindingSet*, uint32>> BindingSets) = 0;
-
+        
         virtual void SetPushConstants(const void* Data, SIZE_T ByteSize) = 0;
         
-        virtual void BindVertexBuffer(FRHIBuffer* Buffer, uint32 Index, uint32 Offset) = 0;
-        virtual void SetGraphicsPipeline(FRHIGraphicsPipeline* InPipeline) = 0;
         virtual void SetViewport(float MinX, float MinY, float MinZ, float MaxX, float MaxY, float MaxZ) = 0;
         virtual void SetScissorRect(uint32 MinX, uint32 MinY, uint32 MaxX, uint32 MaxY) = 0;
+        virtual void SetGraphicsState(const FGraphicsState& State) = 0;
         virtual void Draw(uint32 VertexCount, uint32 InstanceCount, uint32 FirstVertex, uint32 FirstInstance) = 0;
-        virtual void DrawIndexed(FRHIBuffer* IndexBuffer, uint32 IndexCount, uint32 InstanceCount = 1, uint32 FirstIndex = 1, int32 VertexOffset = 0, uint32 FirstInstance = 0) = 0;
-        virtual void DrawIndirect(FRHIBuffer* Buffer, uint32 DrawCount, uint64 Offset) = 0;
-        virtual void DrawIndexedIndirect(FRHIBuffer* DrawBuffer, FRHIBuffer* IndexBuffer, uint32 DrawCount, uint64 Offset) = 0;
-
+        virtual void DrawIndexed(uint32 IndexCount, uint32 InstanceCount = 1, uint32 FirstIndex = 1, int32 VertexOffset = 0, uint32 FirstInstance = 0) = 0;
+        virtual void DrawIndirect(uint32 DrawCount, uint64 Offset) = 0;
+        virtual void DrawIndexedIndirect(uint32 DrawCount, uint64 Offset) = 0;
         
-        virtual void SetComputePipeline(FRHIComputePipeline* InPipeline) = 0;
         virtual void Dispatch(uint32 GroupCountX, uint32 GroupCountY, uint32 GroupCountZ) = 0;
 
         NODISCARD virtual const FCommandListInfo& GetCommandListInfo() const = 0;

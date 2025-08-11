@@ -198,24 +198,80 @@ namespace Lumina
         DontCare,
     };
 
-    
+    struct FViewport
+    {
+        float MinX, MaxX;
+        float MinY, MaxY;
+        float MinZ, MaxZ;
+
+        FViewport() : MinX(0.f), MaxX(0.f), MinY(0.f), MaxY(0.f), MinZ(0.f), MaxZ(1.f) { }
+
+        FViewport(float width, float height) : MinX(0.0f), MaxX(width), MinY(0.0f), MaxY(height), MinZ(0.0f), MaxZ(1.0f) { }
+
+        FViewport(float _minX, float _maxX, float _minY, float _maxY, float _minZ, float _maxZ)
+            : MinX(_minX), MaxX(_maxX), MinY(_minY), MaxY(_maxY), MinZ(_minZ), MaxZ(_maxZ)
+        { }
+
+        bool operator ==(const FViewport& b) const
+        {
+            return MinX == b.MinX
+                && MinY == b.MinY
+                && MinZ == b.MinZ
+                && MaxX == b.MaxX
+                && MaxY == b.MaxY
+                && MaxZ == b.MaxZ;
+        }
+        bool operator !=(const FViewport& b) const { return !(*this == b); }
+
+        NODISCARD float Width() const { return MaxX - MinX; }
+        NODISCARD float Height() const { return MaxY - MinY; }
+    };
+
+    struct FRect
+    {
+        int MinX, MaxX;
+        int MinY, MaxY;
+
+        FRect() : MinX(0), MaxX(0), MinY(0), MaxY(0) { }
+        FRect(int width, int height) : MinX(0), MaxX(width), MinY(0), MaxY(height) { }
+        FRect(int _minX, int _maxX, int _minY, int _maxY) : MinX(_minX), MaxX(_maxX), MinY(_minY), MaxY(_maxY) { }
+        explicit FRect(const FViewport& viewport)
+            : MinX(int(floorf(viewport.MinX)))
+            , MaxX(int(ceilf(viewport.MaxX)))
+            , MinY(int(floorf(viewport.MinY)))
+            , MaxY(int(ceilf(viewport.MaxY)))
+        {
+        }
+
+        bool operator ==(const FRect& b) const {
+            return MinX == b.MinX && MinY == b.MinY && MaxX == b.MaxX && MaxY == b.MaxY;
+        }
+        bool operator !=(const FRect& b) const { return !(*this == b); }
+
+        NODISCARD int width() const { return MaxX - MinX; }
+        NODISCARD int height() const { return MaxY - MinY; }
+    };
     
     struct FRenderPassBeginInfo
     {
-        bool bValidPass = false;
-        TVector<FRHIImageRef> ColorAttachments;    // Color attachments
-        TVector<ERenderLoadOp> ColorLoadOps;       // One per color attachment
-        TVector<ERenderStoreOp> ColorStoreOps;     // How to handle color attachments at the end
-        TVector<FColor> ClearColorValues;          // Optional clear values for color attachments
+        TVector<FRHIImageRef> ColorAttachments;
+        TVector<ERenderLoadOp> ColorLoadOps;
+        TVector<ERenderStoreOp> ColorStoreOps;
+        TVector<FColor> ClearColorValues;
         
-        FRHIImageRef DepthAttachment;                           // Single depth attachment
-        ERenderLoadOp DepthLoadOp = ERenderLoadOp::Clear;       // Default depth load operation
-        ERenderStoreOp DepthStoreOp = ERenderStoreOp::Store;    // Default depth store operation
-        float ClearDepth = 1.0f;                                // Default depth clear value
-        uint32 ClearStencil = 0;                                // Default stencil clear value
+        FRHIImageRef DepthAttachment;
+        ERenderLoadOp DepthLoadOp = ERenderLoadOp::Clear;
+        ERenderStoreOp DepthStoreOp = ERenderStoreOp::Store;
+        float ClearDepth = 1.0f; 
+        uint32 ClearStencil = 0;
         FString DebugName;
-        FIntVector2D RenderArea;                                // Defines the renderable area
-    
+        FIntVector2D RenderArea;
+
+        bool IsValid() const
+        {
+            return RenderArea.X != 0 && RenderArea.Y != 0;
+        }
+        
         // Fluent API for adding color attachments
         FRenderPassBeginInfo& AddColorAttachment(const FRHIImageRef& Attachment)
         {
@@ -722,8 +778,8 @@ namespace Lumina
     struct FVertexBufferBinding
     {
         FRHIBuffer* Buffer = nullptr;
-        uint32 Slot;
-        uint64 Offset;
+        uint32 Slot = 0;
+        uint64 Offset = 0;
 
         bool operator ==(const FVertexBufferBinding& b) const
         {
@@ -740,36 +796,44 @@ namespace Lumina
 
     struct FIndexBufferBinding
     {
-        FRHIBuffer* buffer = nullptr;
-        EFormat format;
-        uint32 Offset;
+        FRHIBuffer* Buffer = nullptr;
+        EFormat Format = EFormat::R32_UINT;
+        uint32 Offset = 0;
 
         bool operator ==(const FIndexBufferBinding& b) const
         {
-            return buffer == b.buffer
-                && format == b.format
+            return Buffer == b.Buffer
+                && Format == b.Format
                 && Offset == b.Offset;
         }
         bool operator !=(const FIndexBufferBinding& b) const { return !(*this == b); }
 
-        FIndexBufferBinding& setBuffer(FRHIBuffer* value) { buffer = value; return *this; }
-        FIndexBufferBinding& setFormat(EFormat value) { format = value; return *this; }
-        FIndexBufferBinding& setOffset(uint32 value) { Offset = value; return *this; }
+        FIndexBufferBinding& SetBuffer(FRHIBuffer* value) { Buffer = value; return *this; }
+        FIndexBufferBinding& SetFormat(EFormat value) { Format = value; return *this; }
+        FIndexBufferBinding& SetOffset(uint32 value) { Offset = value; return *this; }
     };
 
+    struct FViewportState
+    {
+        FViewport   Viewport;
+        FRect       Scissor;
+    };
+    
     struct LUMINA_API FGraphicsState
     {
         FRHIGraphicsPipeline* Pipeline = nullptr;
         FRenderPassBeginInfo RenderPass = {};
+        FViewportState ViewportState;
         TVector<FRHIBindingSet*> Bindings;
-
+        
         TVector<FVertexBufferBinding> VertexBuffers;
         FIndexBufferBinding IndexBuffer;
 
         FRHIBuffer* IndirectParams = nullptr;
 
+        FGraphicsState& SetRenderPass(const FRenderPassBeginInfo& value) { RenderPass = value; return *this; }
         FGraphicsState& SetPipeline(FRHIGraphicsPipeline* value) { Pipeline = value; return *this; }
-        //FGraphicsState& SetViewport(const ViewportState& value) { viewport = value; return *this; }
+        FGraphicsState& SetViewport(const FViewportState& value) { ViewportState = value; return *this; }
         FGraphicsState& AddBindingSet(FRHIBindingSet* value) { Bindings.push_back(value); return *this; }
         FGraphicsState& AddVertexBuffer(const FVertexBufferBinding& value) { VertexBuffers.push_back(value); return *this; }
         FGraphicsState& SetIndexBuffer(const FIndexBufferBinding& value) { IndexBuffer = value; return *this; }
