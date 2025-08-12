@@ -32,6 +32,7 @@
 #include "Platform/Process/PlatformProcess.h"
 #include "Properties/Customizations/CoreTypeCustomization.h"
 #include "Renderer/RenderManager.h"
+#include "Renderer/RHIGlobals.h"
 #include "Scene/SceneRenderer.h"
 #include "Tools/AssetEditors/MaterialEditor/MaterialInstanceEditorTool.h"
 #include "Tools/AssetEditors/MeshEditor/MeshEditorTool.h"
@@ -76,14 +77,13 @@ namespace Lumina
     {
         ImNodes::CreateContext();
 
-        IRenderContext* RenderContext = GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext();
         FString Path = Paths::Combine(Paths::GetEngineResourceDirectory().c_str(), "Textures");
         
-        FolderIcon          = Import::Textures::CreateTextureFromImport(RenderContext, Path + "/Folder.png", false);
-        StaticMeshIcon      = Import::Textures::CreateTextureFromImport(RenderContext, Path + "/StaticMeshIcon.png", false);
-        TextureIcon         = Import::Textures::CreateTextureFromImport(RenderContext, Path + "/TextureIcon.png", false);
-        MaterialIcon        = Import::Textures::CreateTextureFromImport(RenderContext, Path + "/ShaderIcon.png", false);
-        CorruptIcon         = Import::Textures::CreateTextureFromImport(RenderContext, Path + "/CorruptAssetIcon.png", false);
+        FolderIcon          = Import::Textures::CreateTextureFromImport(GRenderContext, Path + "/Folder.png", false);
+        StaticMeshIcon      = Import::Textures::CreateTextureFromImport(GRenderContext, Path + "/StaticMeshIcon.png", false);
+        TextureIcon         = Import::Textures::CreateTextureFromImport(GRenderContext, Path + "/TextureIcon.png", false);
+        MaterialIcon        = Import::Textures::CreateTextureFromImport(GRenderContext, Path + "/ShaderIcon.png", false);
+        CorruptIcon         = Import::Textures::CreateTextureFromImport(GRenderContext, Path + "/CorruptAssetIcon.png", false);
 
         PropertyCustomizationRegistry = Memory::New<FPropertyCustomizationRegistry>();
         PropertyCustomizationRegistry->RegisterPropertyCustomization(TBaseStructure<glm::vec2>::Get()->GetName(), [this]()
@@ -900,7 +900,7 @@ namespace Lumina
             
             if (ImGui::MenuItem("Recompile Shaders", nullptr))
             {
-                UpdateContext.GetSubsystem<FRenderManager>()->GetRenderContext()->CompileEngineShaders();    
+                GRenderContext->CompileEngineShaders();    
             }
             ImGui::EndMenu();
         }
@@ -974,10 +974,10 @@ namespace Lumina
             
             ImGui::MenuItem("Memory Info", nullptr, &bShowMemoryDebug, !bShowMemoryDebug);
 
-            bool bVSyncEnabled = UpdateContext.GetSubsystem<FRenderManager>()->GetRenderContext()->IsVSyncEnabled();
+            bool bVSyncEnabled = GRenderContext->IsVSyncEnabled();
             if (ImGui::MenuItem("Enable V-Sync", nullptr, bVSyncEnabled))
             {
-                UpdateContext.GetSubsystem<FRenderManager>()->GetRenderContext()->SetVSyncEnabled(!bVSyncEnabled);
+                GRenderContext->SetVSyncEnabled(!bVSyncEnabled);
             }
             
             ImGui::MenuItem("CObject List", nullptr, &bShowObjectDebug, !bShowObjectDebug);

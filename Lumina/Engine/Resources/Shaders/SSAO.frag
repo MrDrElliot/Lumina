@@ -53,10 +53,7 @@ void main()
         Offset.xy = Offset.xy * 0.5f + 0.5f; // Transform to range 0.0 - 1.0
         Offset.y = 1.0 - Offset.y;
 
-        if(Offset.x < 0.0 || Offset.x > 1.0 || Offset.y < 0.0 || Offset.y > 1.0) continue;
-        
-        // Get occluder corresponding to sample position in screen space.
-        float SampleDepth = texture(uPositionDepth, Offset.xy).z; // Get depth value of kernal sample.
+        float SampleDepth = texture(uPositionDepth, Offset.xy).z;
         
         float RangeCheck = smoothstep(0.0f, 1.0f, SSAO_RADIUS / abs(FragPos.z - SampleDepth));
         

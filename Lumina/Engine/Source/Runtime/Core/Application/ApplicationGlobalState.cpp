@@ -9,7 +9,7 @@ namespace Lumina
 {
     namespace
     {
-        static bool bGlobalStateInitialize = false;
+        bool bGlobalStateInitialize = false;
     }
     
     FApplicationGlobalState::FApplicationGlobalState(char const* MainThreadName)

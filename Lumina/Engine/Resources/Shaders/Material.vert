@@ -22,6 +22,8 @@ precise invariant gl_Position;
 
 void main()
 {
+    outUV = inUV;
+    
     mat4 ModelMatrix = GetModelMatrix(gl_InstanceIndex);
     
     mat4 View = GetCameraView();
@@ -33,7 +35,6 @@ void main()
     mat3 NormalMatrix = transpose(inverse(mat3(View * ModelMatrix)));
     outNormal = NormalMatrix * inNormal.xyz;
 
-    outUV = vec2(inUV.x, inUV.y);
 
     outFragColor = inColor;
     

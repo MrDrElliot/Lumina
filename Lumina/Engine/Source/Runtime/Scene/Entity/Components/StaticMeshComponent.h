@@ -1,5 +1,6 @@
 #pragma once
 
+#include "EntityComponentRegistry.h"
 #include "MeshComponent.h"
 #include "Assets/AssetTypes/Mesh/StaticMesh/StaticMesh.h"
 #include "StaticMeshComponent.generated.h"
@@ -27,6 +28,6 @@ namespace Lumina
         FStaticMeshRenderProxy* Proxy = nullptr;
     };
 
-    DECLARE_ENTITY_COMPONENT(SStaticMeshComponent);
-
+    REGISTER_ENTITY_COMPONENT(SStaticMeshComponent);
+    
 }

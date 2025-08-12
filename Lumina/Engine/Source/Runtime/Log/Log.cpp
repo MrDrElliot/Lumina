@@ -11,7 +11,7 @@ namespace Lumina::Logging
 {
 	
 	LUMINA_API std::shared_ptr<spdlog::logger> Logger;
-	LUMINA_API TVector<FConsoleMessage> Logs;
+	LUMINA_API TFixedVector<FConsoleMessage, 10000> Logs;
 	
 	bool IsInitialized()
 	{
@@ -47,7 +47,7 @@ namespace Lumina::Logging
 		return Logger;
 	}
 
-	const TVector<FConsoleMessage>& GetConsoleLogs()
+	const TFixedVector<FConsoleMessage, 10000>& GetConsoleLogs()
 	{
 		return Logs;
 	}

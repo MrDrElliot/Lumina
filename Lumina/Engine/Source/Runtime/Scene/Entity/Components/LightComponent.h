@@ -80,7 +80,8 @@ namespace Lumina
         bool bCastShadows;
     };
 
-    DECLARE_ENTITY_COMPONENT(SPointLightComponent);
-    DECLARE_ENTITY_COMPONENT(SDirectionalLightComponent);
-    DECLARE_ENTITY_COMPONENT(SSpotLightComponent);
+    REGISTER_ENTITY_COMPONENT(SPointLightComponent);
+    REGISTER_ENTITY_COMPONENT(SSpotLightComponent);
+    REGISTER_ENTITY_COMPONENT(SDirectionalLightComponent);
+
 }

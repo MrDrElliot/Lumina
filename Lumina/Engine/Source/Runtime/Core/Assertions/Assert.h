@@ -88,6 +88,13 @@ inline LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS* exceptionInfo)
     __debugbreak(); \
     std::unreachable(); \
 
+#ifdef LE_DEBUG
+#define LUM_ENABLE_ASSERTS 1
+#else
+#define LUM_ENABLE_ASSERTS 0
+#endif
+
+#if LUM_ENABLE_ASSERTS
 // Macro for assertion, triggering a breakpoint if the condition fails
 #define Assert(condition)                               \
     do {                                                \
@@ -124,5 +131,11 @@ do {                                                    \
         std::this_thread::sleep_for(std::chrono::milliseconds(100)); \
     }                                                   \
 } while (false)
+#else
+#define Assert(...)
+#define AssertMsg(...)
+#define EnsureMsg(...)
+#endif
+
 
 #define LUMINA_NO_ENTRY() AssertMsg(false, "No Entry function called!")

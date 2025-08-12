@@ -21,7 +21,6 @@ void main()
         for(int y = -2; y < 2; ++y)
         {
             vec2 Offset = vec2(float(x), float(y)) * TexelSize;
-            Offset.y = -Offset.y;
 
             Result += texture(uSSAOInput, inUV + Offset).r;
         }

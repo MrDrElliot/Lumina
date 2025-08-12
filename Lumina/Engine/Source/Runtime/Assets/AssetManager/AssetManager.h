@@ -36,9 +36,6 @@ namespace Lumina
 		TVector<FAssetRequest*>									ActiveRequests;
 		
 		std::atomic<int32> OutstandingTasks =					0;
-		FMutex													RequestMutex;
-		FMutex													FlushMutex;
-		std::condition_variable									FlushCV;
 		
 	};
 	

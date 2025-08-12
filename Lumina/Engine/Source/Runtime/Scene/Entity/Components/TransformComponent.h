@@ -21,9 +21,6 @@ namespace Lumina
         STransformComponent(const glm::vec3& InPosition)
             :Transform(InPosition)
         {}
-
-        LUM_PROPERTY(Editable, Category = "Transform")
-        FTransform Transform;
         
         inline FTransform& GetTransform() { return Transform; }
         inline void SetTransform(const FTransform& InTransform) { Transform = InTransform; }
@@ -56,8 +53,13 @@ namespace Lumina
         {
             return glm::degrees(glm::eulerAngles(Transform.Rotation));
         }
+
+    public:
+
+        LUM_PROPERTY(Editable, Category = "Transform")
+        FTransform Transform;
     };
 
-    DECLARE_ENTITY_COMPONENT(STransformComponent);
-
+    REGISTER_ENTITY_COMPONENT(STransformComponent);
+    
 }

@@ -18,8 +18,8 @@ namespace Lumina
 
             FContentBrowserListViewItem(FTreeListViewItem* InParent, const FString& InPath, const FString& InDisplayName)
                 : FTreeListViewItem(InParent)
-                , Path(InPath)
                 , DisplayName(InDisplayName)
+                , Path(InPath)
             {}
 
             virtual ~FContentBrowserListViewItem() override { }

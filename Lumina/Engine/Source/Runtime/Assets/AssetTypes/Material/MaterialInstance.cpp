@@ -5,6 +5,7 @@
 #include "Core/Engine/Engine.h"
 #include "Renderer/RenderContext.h"
 #include "Renderer/RenderManager.h"
+#include "Renderer/RHIGlobals.h"
 
 
 namespace Lumina
@@ -124,16 +125,14 @@ namespace Lumina
             MaterialUniforms = Material->MaterialUniforms;
             Parameters = Material->Parameters;
             
-            IRenderContext* RenderContext = GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext();
-
             FRHIBufferDesc BufferDesc;
             BufferDesc.Size = sizeof(FMaterialUniforms);
             BufferDesc.DebugName = "Material Uniforms";
             BufferDesc.InitialState = EResourceStates::ConstantBuffer;
             BufferDesc.bKeepInitialState = true;
             BufferDesc.Usage.SetFlag(BUF_UniformBuffer);
-            UniformBuffer = RenderContext->CreateBuffer(BufferDesc);
-            RenderContext->SetObjectName(UniformBuffer, GetName().c_str(), EAPIResourceType::Buffer);
+            UniformBuffer = GRenderContext->CreateBuffer(BufferDesc);
+            GRenderContext->SetObjectName(UniformBuffer, GetName().c_str(), EAPIResourceType::Buffer);
 
 
             FBindingSetDesc SetDesc;
@@ -146,9 +145,9 @@ namespace Lumina
                 SetDesc.AddItem(FBindingSetItem::TextureSRV((uint32)i, Image));
             }
 
-            RenderContext->GetCommandList(ECommandQueue::Graphics)->WriteBuffer(UniformBuffer, &MaterialUniforms, 0, sizeof(FMaterialUniforms));
+            GRenderContext->GetCommandList(ECommandQueue::Graphics)->WriteBuffer(UniformBuffer, &MaterialUniforms, 0, sizeof(FMaterialUniforms));
 
-            BindingSet = RenderContext->CreateBindingSet(SetDesc, Material->BindingLayout);
+            BindingSet = GRenderContext->CreateBindingSet(SetDesc, Material->BindingLayout);
 
         }
     }

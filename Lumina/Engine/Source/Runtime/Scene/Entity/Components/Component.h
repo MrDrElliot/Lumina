@@ -1,7 +1,7 @@
 #pragma once
 
-#include "ComponentRegistry.h"
 #include "Core/Object/ObjectMacros.h"
+#include "EntityComponentRegistry.h"
 #include "Component.generated.h"
 
 namespace Lumina
@@ -15,9 +15,11 @@ namespace Lumina
 		{
 			return nullptr;
 		}
+		
 	};
 
-#define ENTITY_COMPONENT() \
-	virtual Lumina::CStruct* GetType() override { return StaticStruct(); }
-	
+#define ENTITY_COMPONENT(Type) \
+    virtual Lumina::CStruct* GetType() override { return StaticStruct(); }
 }
+
+	

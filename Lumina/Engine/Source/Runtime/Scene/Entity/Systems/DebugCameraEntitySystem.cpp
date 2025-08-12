@@ -75,10 +75,10 @@ namespace Lumina
                 float MouseYawDelta   = UpdateContext.GetSubsystem<FInputSubsystem>()->GetMouseDeltaYaw();
     
                 constexpr float Sensitivity = 0.1f;
-                float YawDelta   = MouseYawDelta   * Sensitivity;
+                float YawDelta   = -MouseYawDelta   * Sensitivity;
                 float PitchDelta = MousePitchDelta * Sensitivity;
     
-                glm::quat yawQuat   = glm::angleAxis(glm::radians(YawDelta), glm::vec3(0.0f, -1.0f, 0.0f));
+                glm::quat yawQuat   = glm::angleAxis(glm::radians(YawDelta), glm::vec3(0.0f, 1.0f, 0.0f));
                 glm::vec3 RightAxis = Transform.Transform.Rotation * glm::vec3(-1.0f, 0.0f, 0.0f);
                 glm::quat pitchQuat = glm::angleAxis(glm::radians(PitchDelta), RightAxis);
     

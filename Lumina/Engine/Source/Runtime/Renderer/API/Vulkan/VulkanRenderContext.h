@@ -173,6 +173,8 @@ namespace Lumina
     
     private:
 
+        THashMap<uint64, FRHISamplerRef>                SamplerMap;
+        
         FVulkanDescriptorCache                          DescriptorCache;
         FVulkanPipelineCache                            PipelineCache;
         uint8                                           CurrentFrameIndex;

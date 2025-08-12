@@ -23,16 +23,16 @@ namespace Lumina
         void SetAspectRatio(float InAspect);
         void SetFOV(float InFOV);
     
-        FORCEINLINE const glm::vec3& GetViewPosition() const { return ViewPosition; }
+        const glm::vec3& GetViewPosition() const { return ViewPosition; }
 
-        FORCEINLINE const glm::mat4& GetViewMatrix() const { return ViewMatrix; }
-        FORCEINLINE const glm::mat4& GetInverseViewMatrix() const { return InverseViewMatrix; }
-        FORCEINLINE const glm::mat4& GetViewProjectionMatrix() const { return ViewProjectionMatrix; }
-        FORCEINLINE const glm::mat4& GetProjectionMatrix() const { return ProjectionMatrix; }
-        FORCEINLINE const glm::mat4& GetInverseProjectionMatrix() const { return InverseProjectionMatrix; }
+        const glm::mat4& GetViewMatrix() const { return ViewMatrix; }
+        const glm::mat4& GetInverseViewMatrix() const { return InverseViewMatrix; }
+        const glm::mat4& GetViewProjectionMatrix() const { return ViewProjectionMatrix; }
+        const glm::mat4& GetProjectionMatrix() const { return ProjectionMatrix; }
+        const glm::mat4& GetInverseProjectionMatrix() const { return InverseProjectionMatrix; }
 
-        FORCEINLINE float GetFOV() const { return FOV; }
-        FORCEINLINE float GetAspectRatio() const { return AspectRatio; }
+        float GetFOV() const { return FOV; }
+        float GetAspectRatio() const { return AspectRatio; }
 
         static glm::vec3 UpAxis;
         static glm::vec3 RightAxis;

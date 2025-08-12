@@ -4,12 +4,15 @@
 #include "SceneRenderer.h"
 #include "SceneUpdateContext.h"
 #include "Containers/Name.h"
+#define GLM_ENABLE_EXPERIMENTAL
+#include "glm/gtx/matrix_decompose.hpp"
 #include "Core/Profiler/Profile.h"
 #include "Entity/Entity.h"
 #include "Entity/Components/NameComponent.h"
-#include "Entity/Components/StaticMeshComponent.h"
+#include "Entity/Components/RelationshipComponent.h"
 #include "Entity/Components/TransformComponent.h"
 #include "Entity/Systems/EntitySystem.h"
+#include "Entity/Systems/UpdateTransformEntitySystem.h"
 #include "Subsystems/FCameraManager.h"
 #include "TaskSystem/TaskSystem.h"
 
@@ -20,6 +23,7 @@ namespace Lumina
     {
         SceneSubsystemManager = Memory::New<FSubsystemManager>();
         SceneSubsystemManager->AddSubsystem<FCameraManager>();
+        RegisterSystem(NewObject<CUpdateTransformEntitySystem>());
     }
 
     FScene::~FScene()
@@ -114,6 +118,84 @@ namespace Lumina
                 storage.push(To.GetHandle(), storage.value(From.GetHandle()));
             }
         }
+    }
+ 
+    void FScene::ReparentEntity(Entity Child, Entity Parent)
+    {
+        if (Child.GetHandle() == Parent.GetHandle())
+        {
+            LOG_ERROR("Cannot parent an entity to itself!");
+            return;
+        }
+    
+        // Step 1: Get child's current world transform matrix
+        glm::mat4 childWorldMatrix = Child.GetWorldTransform().GetMatrix();
+    
+        // Step 2: Get parent's world transform matrix
+        glm::mat4 parentWorldMatrix = glm::mat4(1.0f); // Identity if no parent
+        if (Parent.IsValid())
+        {
+            parentWorldMatrix = Parent.GetWorldTransform().GetMatrix();
+        }
+    
+        // Step 3: Calculate child's new local matrix relative to new parent
+        glm::mat4 newLocalMatrix = glm::inverse(parentWorldMatrix) * childWorldMatrix;
+    
+        // Step 4: Decompose newLocalMatrix
+        glm::vec3 translation, scale, skew;
+        glm::quat rotation;
+        glm::vec4 perspective;
+    
+        glm::decompose(newLocalMatrix, scale, rotation, translation, skew, perspective);
+    
+        // Step 5: Update child's local transform component
+        if (Child.HasComponent<STransformComponent>())
+        {
+            Child.Patch<STransformComponent>([&](auto& Transform)
+            {
+                Transform.SetLocation(translation);
+                Transform.SetRotation(rotation);
+                Transform.SetScale(scale);
+            });
+        }
+        else
+        {
+            // If no transform component, optionally add one here
+            // Child.AddComponent<STransformComponent>(translation, rotation, scale);
+        }
+    
+        // Now proceed with your existing parenting logic
+        SRelationshipComponent& ParentRelationshipComponent = Parent.GetOrAddComponent<SRelationshipComponent>();
+        if (ParentRelationshipComponent.Size >= SRelationshipComponent::MaxChildren)
+        {
+            LOG_ERROR("Parent has reached its max children");
+            return;
+        }
+    
+        SRelationshipComponent& ChildRelationshipComponent = Child.GetOrAddComponent<SRelationshipComponent>();
+        if (ChildRelationshipComponent.Parent.IsValid())
+        {
+            if (SRelationshipComponent* ToRemove = ChildRelationshipComponent.Parent.TryGetComponent<SRelationshipComponent>())
+            {
+                for (SIZE_T i = 0; i < ToRemove->Size; ++i)
+                {
+                    if (ToRemove->Children[i] == Child)
+                    {
+                        // Shift remaining children down to fill the gap
+                        for (SIZE_T j = i; j < ToRemove->Size - 1; ++j)
+                        {
+                            ToRemove->Children[j] = ToRemove->Children[j + 1];
+                        }
+    
+                        --ToRemove->Size;
+                        break; // Child found and removed, exit loop
+                    }
+                }
+            }
+        }
+    
+        ParentRelationshipComponent.Children[ParentRelationshipComponent.Size++] = Child;
+        ChildRelationshipComponent.Parent = Parent;
     }
 
     void FScene::DestroyEntity(Entity Entity)

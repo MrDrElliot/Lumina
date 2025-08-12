@@ -194,25 +194,4 @@ namespace Lumina
         LUMINA_PROFILE_SCOPE();
         vmaUnmapMemory(Allocator, Allocation);
     }
-
-    void FVulkanDevice::AddChild(IDeviceChild* InChild)
-    {
-        FScopeLock Lock(ChildMutex);
-        
-        InChild->Index = Children.size();
-        Children.push_back(InChild);
-    }
-
-    void FVulkanDevice::RemoveChild(IDeviceChild* InChild)
-    {
-        FScopeLock Lock(ChildMutex);
-        
-        size_t idx = InChild->Index;
-        if (idx < Children.size() && Children[idx] == InChild)
-        {
-            std::swap(Children[idx], Children.back());
-            Children[idx]->Index = idx;
-            Children.pop_back();
-        }
-    }
 }

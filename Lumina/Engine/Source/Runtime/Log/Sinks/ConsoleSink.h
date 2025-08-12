@@ -13,7 +13,7 @@ namespace Lumina
     class ConsoleSink : public spdlog::sinks::base_sink<std::mutex>
     {
     public:
-        ConsoleSink(TVector<FConsoleMessage>& outputMessages)
+        ConsoleSink(TFixedVector<FConsoleMessage, 10000>& outputMessages)
             : OutputMessages(&outputMessages)
         {
             
@@ -44,7 +44,7 @@ namespace Lumina
         }
 
         
-        TVector<FConsoleMessage>* OutputMessages;
+        TFixedVector<FConsoleMessage, 10000>* OutputMessages;
     };
 }
 

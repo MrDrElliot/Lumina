@@ -41,10 +41,10 @@ namespace Lumina
         {
             ID = Hash::GetHash64(Char);
 
-            (*GNameCache).try_emplace(ID, Char);
+            GNameCache->try_emplace(ID, Char);
 
 #if _DEBUG
-            StringView = FString(Char);
+            StringView = Char;
 #endif
         }
         else

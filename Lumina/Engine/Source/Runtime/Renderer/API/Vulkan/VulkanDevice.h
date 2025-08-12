@@ -70,25 +70,17 @@ namespace Lumina
 
         virtual ~FVulkanDevice()
         {
-            for (auto it = Children.rbegin(); it != Children.rend(); ++it)
-            {
-                Memory::Delete(*it);
-            }
-
-            Children.clear();
             Memory::Delete(Allocator);
             vkDestroyDevice(Device, nullptr);
         }
+        
 
-        void AddChild(IDeviceChild* InChild);
-        void RemoveChild(IDeviceChild* InChild);
+        FVulkanMemoryAllocator* GetAllocator() const { return Allocator; }
+        VkPhysicalDevice GetPhysicalDevice() const { return PhysicalDevice; }
+        VkDevice GetDevice() const { return Device; }
 
-        FORCEINLINE FVulkanMemoryAllocator* GetAllocator() const { return Allocator; }
-        FORCEINLINE VkPhysicalDevice GetPhysicalDevice() const { return PhysicalDevice; }
-        FORCEINLINE VkDevice GetDevice() const { return Device; }
-
-        FORCEINLINE VkPhysicalDeviceProperties GetPhysicalDeviceProperties() const { return PhysicalDeviceProperties; }
-        FORCEINLINE VkPhysicalDeviceMemoryProperties GetPhysicalDeviceMemoryProperties() const { return PhysicalDeviceMemoryProperties; }
+        VkPhysicalDeviceProperties GetPhysicalDeviceProperties() const { return PhysicalDeviceProperties; }
+        VkPhysicalDeviceMemoryProperties GetPhysicalDeviceMemoryProperties() const { return PhysicalDeviceMemoryProperties; }
     
     private:
 
@@ -99,7 +91,6 @@ namespace Lumina
 
         VkPhysicalDeviceProperties              PhysicalDeviceProperties;
         VkPhysicalDeviceMemoryProperties        PhysicalDeviceMemoryProperties;
-        TFixedVector<IDeviceChild*, 1000>       Children;
     };
 
     class IDeviceChild
@@ -108,16 +99,10 @@ namespace Lumina
 
         IDeviceChild(FVulkanDevice* InDevice)
             :Device(InDevice)
-        {
-            Device->AddChild(this);
-        }
+        {}
         
-        virtual ~IDeviceChild()
-        {
-            Device->RemoveChild(this);
-        }
+        virtual ~IDeviceChild() = default;
         
-        SIZE_T         Index = INDEX_NONE;
         FVulkanDevice* Device = nullptr;
     };
     

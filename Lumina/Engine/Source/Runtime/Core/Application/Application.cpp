@@ -80,12 +80,11 @@ namespace Lumina
         Engine->Shutdown();
         
         Window->Shutdown();
+        Memory::Delete(Window);
 
         FModuleManager::Get()->UnloadAllModules();
 
-        ShutdownCObjectSystem();
         
-        delete Window;
         
         return 0;
     }
@@ -106,10 +105,6 @@ namespace Lumina
     void FApplication::PreInitStartup(int argc, char** argv)
     {
         Paths::Mount("engine://", Paths::GetEngineContentDirectory());
-        
-        // Must be called after module initialization.
-        ProcessNewlyLoadedCObjects();
-
     }
 
     bool FApplication::CreateApplicationWindow()

@@ -9,8 +9,7 @@ namespace Lumina
     namespace Threading
     {
 
-        static std::thread::id gMainThreadID = {};
-        static std::thread::id gRenderThreadID = {};
+        static std::thread::id GMainThreadID = {};
 
         uint64 GetThreadID()
         {
@@ -19,23 +18,12 @@ namespace Lumina
 
         bool IsMainThread()
         {
-            return gMainThreadID == std::this_thread::get_id();
-        }
-
-        bool IsRenderThread()
-        {
-            return gRenderThreadID == std::this_thread::get_id();
+            return GMainThreadID == std::this_thread::get_id();
         }
 
         uint32 GetNumThreads()
         {
             return std::thread::hardware_concurrency();
-        }
-
-        void SetRenderThread(std::thread::id ID)
-        {
-            gRenderThreadID = ID;
-            Assert(gRenderThreadID != gMainThreadID);
         }
 
         void Sleep(uint64 Milliseconds)
@@ -45,12 +33,12 @@ namespace Lumina
 
         void Initialize(const char* MainThreadName)
         {
-            gMainThreadID = std::this_thread::get_id();
+            GMainThreadID = std::this_thread::get_id();
         }
 
         void Shutdown()
         {
-            gMainThreadID = {};
+            GMainThreadID = {};
         }
 
         void InitializeThreadHeap()

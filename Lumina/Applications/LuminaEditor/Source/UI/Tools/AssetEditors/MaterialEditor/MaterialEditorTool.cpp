@@ -1,6 +1,4 @@
 ﻿#include "MaterialEditorTool.h"
-
-#include "LuminaEditor.h"
 #include "imnodes/imnodes.h"
 #include "Assets/AssetTypes/Material/Material.h"
 #include "Assets/AssetTypes/Textures/Texture.h"
@@ -13,16 +11,14 @@
 #include "Platform/Filesystem/FileHelper.h"
 #include "Renderer/MaterialTypes.h"
 #include "Renderer/RenderContext.h"
-#include "Renderer/RenderManager.h"
+#include "Renderer/RHIGlobals.h"
 #include "Renderer/ShaderCompiler.h"
 #include "Scene/SceneManager.h"
 #include "scene/entity/components/lightcomponent.h"
 #include "scene/entity/components/staticmeshcomponent.h"
 #include "Scene/Entity/Systems/DebugCameraEntitySystem.h"
 #include "Thumbnails/ThumbnailManager.h"
-#include "Tools/UI/ImGui/ImGuiRenderer.h"
 #include "Tools/UI/ImGui/ImGuiX.h"
-#include "Tools/UI/ImGui/ImGuiColorTextEdit/TextEditor.h"
 #include "UI/Tools/NodeGraph/Material/MaterialCompiler.h"
 #include "UI/Tools/NodeGraph/Material/MaterialNodeGraph.h"
 
@@ -140,32 +136,7 @@ namespace Lumina
 
     void FMaterialEditorTool::DrawGLSLPreview(const FUpdateContext& UpdateContext)
     {
-        if (CompilationResult.CompilationLog.empty())
-        {
-            return;
-        }
 
-        TextEditor& Editor = IImGuiRenderer::GetTextEditor();
-
-        if (bGLSLPreviewDirty)
-        {
-            Editor.SetLanguageDefinition(TextEditor::LanguageDefinition::GLSL());
-            Editor.SetText(CompilationResult.CompilationLog.c_str());
-            Editor.SetReadOnly(true);
-            Editor.SetShowWhitespaces(false);
-            bGLSLPreviewDirty = false;
-        }
-
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(10, 10));
-        ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.08f, 0.08f, 0.08f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.25f, 0.25f, 0.25f, 1.0f));
-
-        ImGui::BeginChild("CompilationLogEditor", ImVec2(0, 0), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
-        Editor.Render("GLSL Compilation Log");
-        ImGui::EndChild();
-
-        ImGui::PopStyleColor(2);
-        ImGui::PopStyleVar();
     }
 
     void FMaterialEditorTool::Compile()
@@ -190,24 +161,21 @@ namespace Lumina
             CompilationResult.bIsError = false;
             bGLSLPreviewDirty = true;
             
-            IShaderCompiler* ShaderCompiler = GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext()->GetShaderCompiler();
+            IShaderCompiler* ShaderCompiler = GRenderContext->GetShaderCompiler();
             ShaderCompiler->CompilerShaderRaw(Tree, {}, [this](const ShaderBinaries& Binaries)
             {
-                IRenderContext* RenderContext = GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext();
-                FRHIPixelShaderRef PixelShader = RenderContext->CreatePixelShader(Binaries);
+                FRHIPixelShaderRef PixelShader = GRenderContext->CreatePixelShader(Binaries);
                 
                 FName Key = eastl::to_string(Hash::GetHash64(Binaries.data(), Binaries.size()));
                 PixelShader->SetKey(Key);
                     
-                FRHIVertexShaderRef VertexShader = RenderContext->GetShaderLibrary()->GetShader("Material.vert").As<FRHIVertexShader>();
+                FRHIVertexShaderRef VertexShader = GRenderContext->GetShaderLibrary()->GetShader("Material.vert").As<FRHIVertexShader>();
                 CMaterial* Material = Cast<CMaterial>(Asset.Get());
                 Material->VertexShader = VertexShader;
                 Material->PixelShader = PixelShader;
-                RenderContext->OnShaderCompiled(PixelShader);
+                GRenderContext->OnShaderCompiled(PixelShader);
             });
             
-            IRenderContext* RenderContext = GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext();
-
             CMaterial* Material = Cast<CMaterial>(Asset.Get());
             Compiler.GetBoundTextures(Material->Textures);
 
@@ -217,8 +185,8 @@ namespace Lumina
             BufferDesc.InitialState = EResourceStates::ConstantBuffer;
             BufferDesc.bKeepInitialState = true;
             BufferDesc.Usage.SetFlag(BUF_UniformBuffer);
-            Material->UniformBuffer = RenderContext->CreateBuffer(BufferDesc);
-            RenderContext->SetObjectName(Material->UniformBuffer, Material->GetName().c_str(), EAPIResourceType::Buffer);
+            Material->UniformBuffer = GRenderContext->CreateBuffer(BufferDesc);
+            GRenderContext->SetObjectName(Material->UniformBuffer, Material->GetName().c_str(), EAPIResourceType::Buffer);
 
             FBindingSetDesc SetDesc;
             SetDesc.AddItem(FBindingSetItem::BufferCBV(0, Material->UniformBuffer));
@@ -268,13 +236,13 @@ namespace Lumina
                 Material->SetVectorValue(Name, Value.Value);
             }
             
-            RenderContext->GetCommandList(ECommandQueue::Graphics)->WriteBuffer(Material->UniformBuffer, &Material->MaterialUniforms, 0, sizeof(FMaterialUniforms));
-            Material->BindingLayout = RenderContext->CreateBindingLayout(LayoutDesc);
+            GRenderContext->GetCommandList(ECommandQueue::Graphics)->WriteBuffer(Material->UniformBuffer, &Material->MaterialUniforms, 0, sizeof(FMaterialUniforms));
+            Material->BindingLayout = GRenderContext->CreateBindingLayout(LayoutDesc);
             
-            RenderContext->SetObjectName(Material->BindingLayout, Material->GetName().c_str(), EAPIResourceType::DescriptorSetLayout);
+            GRenderContext->SetObjectName(Material->BindingLayout, Material->GetName().c_str(), EAPIResourceType::DescriptorSetLayout);
             
-            Material->BindingSet = RenderContext->CreateBindingSet(SetDesc, Material->BindingLayout);
-            RenderContext->SetObjectName(Material->BindingSet, Material->GetName().c_str(), EAPIResourceType::DescriptorSet);
+            Material->BindingSet = GRenderContext->CreateBindingSet(SetDesc, Material->BindingLayout);
+            GRenderContext->SetObjectName(Material->BindingSet, Material->GetName().c_str(), EAPIResourceType::DescriptorSet);
 
             OnSave();
         }
@@ -283,21 +251,18 @@ namespace Lumina
 
     void FMaterialEditorTool::InitializeDockingLayout(ImGuiID InDockspaceID, const ImVec2& InDockspaceSize) const
     {
-        ImGuiID leftDockID = 0, rightDockID = 0, bottomDockID = 0;
+        ImGuiID leftDockID = 0, rightDockID = 0;
+        ImGuiID rightBottomDockID = 0;
 
-        // Split horizontally: Left (Material Graph) and Right (Material Preview)
+        // 1. Split horizontally: Left (Material Graph) and Right (Material Preview + bottom)
         ImGui::DockBuilderSplitNode(InDockspaceID, ImGuiDir_Right, 0.3f, &rightDockID, &leftDockID);
 
-        // Create a full bottom dock by splitting the main dockspace (InDockspaceID) only once
-        ImGui::DockBuilderSplitNode(InDockspaceID, ImGuiDir_Down, 0.3f, &bottomDockID, &InDockspaceID);
+        // 2. Split right dock vertically: Top (Material Preview), Bottom (GLSL Preview)
+        ImGui::DockBuilderSplitNode(rightDockID, ImGuiDir_Down, 0.3f, &rightBottomDockID, &rightDockID);
 
-        // Dock the windows into their respective locations
+        // Dock windows
         ImGui::DockBuilderDockWindow(GetToolWindowName(MaterialGraphName).c_str(), leftDockID);
         ImGui::DockBuilderDockWindow(GetToolWindowName(ViewportWindowName).c_str(), rightDockID);
-
-        // Dock only the MaterialCompileLogName window to the full bottom dock
-        ImGui::DockBuilderDockWindow(GetToolWindowName(GLSLPreviewName).c_str(), bottomDockID);
+        ImGui::DockBuilderDockWindow(GetToolWindowName(GLSLPreviewName).c_str(), rightBottomDockID);
     }
-
-
 }

@@ -17,7 +17,7 @@ namespace Lumina
             :ViewVolume(fov, aspect)
         {}
 
-        FORCEINLINE void SetView(const glm::vec3& Position, const glm::vec3& ViewDirection, const glm::vec3& UpDirection = glm::vec3(0, -1, 0))
+        FORCEINLINE void SetView(const glm::vec3& Position, const glm::vec3& ViewDirection, const glm::vec3& UpDirection = glm::vec3(0, 1, 0))
         {
             ViewVolume.SetView(Position, ViewDirection, UpDirection);
         }
@@ -50,5 +50,5 @@ namespace Lumina
         FViewVolume ViewVolume;
     };
 
-    DECLARE_ENTITY_COMPONENT(SCameraComponent)
+    REGISTER_ENTITY_COMPONENT(SCameraComponent);
 }

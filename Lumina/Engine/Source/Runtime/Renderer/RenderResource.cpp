@@ -28,15 +28,112 @@ namespace Lumina
     template class LUMINA_API TRefCountPtr<FRHIDescriptorTable>;
 
     SIZE_T GTotalRenderResourcesAllocated = 0;
+
+    	
+    class LUMINA_API FRHIResourceList
+    {
+    public:
+
+        static FRHIResourceList& Get()
+        {
+            static FRHIResourceList Instance;
+            return Instance;
+        }
+
+        int32 Allocate(IRHIResource* Resource)
+        {
+            FScopeLock Lock(Mutex);
+            int32 Index;
+            if (FreeList.empty())
+            {
+                Index = (int32)ResourceList.size();
+                ResourceList.emplace_back(Resource);
+            }
+            else
+            {
+                Index = FreeList.back();
+                FreeList.pop();
+
+                ResourceList[Index] = Resource;
+            }
+
+            return Index;
+        }
+
+        void Deallocate(int32 Index)
+        {
+            FScopeLock Lock(Mutex);
+            FreeList.push(Index);
+            ResourceList[Index] = nullptr;
+        }
+
+        void Clear()
+        {
+            FScopeLock Lock(Mutex);
+            while (!FreeList.empty()) FreeList.pop();
+            ResourceList.clear();
+        }
+
+        template<typename FunctionType>
+	    void ForEachReverse(const FunctionType& Function)
+	    {
+	    	FScopeLock Lock(Mutex);
+	    	for (int32 Index = (int32)ResourceList.size() - 1; Index >= 0; --Index)
+	    	{
+                if (IRHIResource* Resource = ResourceList[Index])
+	    		{
+	    			Assert(Resource->GetListIndex() == Index)
+	    			Function(Resource);
+	    		}
+	    	}
+	    }
+        
+        FMutex Mutex;
+        TQueue<int32> FreeList;
+        TVector<IRHIResource*> ResourceList;
+		
+    };
+
     
     IRHIResource::IRHIResource()
     {
         GTotalRenderResourcesAllocated++;
+        ListIndex = FRHIResourceList::Get().Allocate(this);
     }
 
     IRHIResource::~IRHIResource()
     {
         GTotalRenderResourcesAllocated--;
+        FRHIResourceList::Get().Deallocate(ListIndex);
+        ListIndex = INDEX_NONE;
+    }
+
+    void IRHIResource::ReleaseAllRHIResources()
+    {
+        TVector<IRHIResource*> ResourcesSnapshot;
+
+        {
+            FScopeLock Lock(FRHIResourceList::Get().Mutex);
+            ResourcesSnapshot.reserve(FRHIResourceList::Get().ResourceList.size());
+
+            for (IRHIResource* Resource : FRHIResourceList::Get().ResourceList)
+            {
+                if (Resource)
+                {
+                    ResourcesSnapshot.push_back(Resource);
+                }
+            }
+        } 
+
+        for (IRHIResource* Resource : ResourcesSnapshot)
+        {
+            if (Resource && Resource->GetListIndex() != INDEX_NONE)
+            {
+                Resource->Destroy();
+            }
+        }
+
+        FRHIResourceList::Get().Clear();
     }
 
     void IRHIResource::Destroy() const

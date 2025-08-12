@@ -26,6 +26,7 @@
 #include "VulkanRenderContext.h"
 
 #include "Renderer/RenderManager.h"
+#include "Renderer/RHIStaticStates.h"
 #include "src/VkBootstrap.h"
 
 namespace Lumina
@@ -452,11 +453,17 @@ namespace Lumina
         
         auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(VulkanInstance, "vkDestroyDebugUtilsMessengerEXT");
         func(VulkanInstance, DebugUtils.DebugMessenger, VK_ALLOC_CALLBACK);
+
+        SamplerMap.clear();
         
         FlushPendingDeletes();
+        IRHIResource::ReleaseAllRHIResources();
         
         Memory::Delete(VulkanDevice);
+        VulkanDevice = nullptr;
+        
         vkDestroyInstance(VulkanInstance, VK_ALLOC_CALLBACK);
+        VulkanInstance = VK_NULL_HANDLE;
     }
 
     void FVulkanRenderContext::SetVSyncEnabled(bool bEnable)
@@ -637,7 +644,15 @@ namespace Lumina
 
     FRHISamplerRef FVulkanRenderContext::CreateSampler(const FSamplerDesc& SamplerDesc)
     {
-        return MakeRefCount<FVulkanSampler>(VulkanDevice, SamplerDesc);
+        uint64 Hash = Hash::GetHash(SamplerDesc);
+        if (SamplerMap.find(Hash) != SamplerMap.end())
+        {
+            return SamplerMap.at(Hash);
+        }
+        else
+        {
+            return SamplerMap[Hash] = MakeRefCount<FVulkanSampler>(VulkanDevice, SamplerDesc);
+        }
     }
 
     FRHIVertexShaderRef FVulkanRenderContext::CreateVertexShader(const TVector<uint32>& ByteCode)
@@ -709,7 +724,7 @@ namespace Lumina
                     VkDescriptorImageInfo& ImageInfo = ImageWriteInfos.emplace_back();
                     ImageInfo.imageView = Image->GetImageView();
                     ImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                    ImageInfo.sampler = GEngine->GetEngineSubsystem<FRenderManager>()->GetLinearSampler()->GetAPIResource<VkSampler>();
+                    ImageInfo.sampler = TStaticRHISampler<>::GetRHI()->GetAPIResource<VkSampler>();
 
                     
                     Write.pImageInfo = &ImageInfo;
@@ -889,8 +904,7 @@ namespace Lumina
             }
         }
     }
-
-
+    
     void FVulkanRenderContext::CompileEngineShaders()
     {
         for (auto& Dir : std::filesystem::directory_iterator(FString(Paths::GetEngineResourceDirectory() + "/Shaders").c_str()))
@@ -949,7 +963,6 @@ namespace Lumina
     {
         return MakeRefCount<FVulkanInputLayout>(AttributeDesc, Count);
     }
-
 
     void FVulkanRenderContext::SetVulkanObjectName(FString Name, VkObjectType ObjectType, uint64 Handle)
     {

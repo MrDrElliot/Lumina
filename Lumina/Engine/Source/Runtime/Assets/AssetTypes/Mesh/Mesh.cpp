@@ -21,7 +21,7 @@ namespace Lumina
 
     void CMesh::PostLoad()
     {
-        
+        GenerateBoundingBox();
     }
 
     CMaterialInterface* CMesh::GetMaterialAtSlot(SIZE_T Slot) const
@@ -44,6 +44,7 @@ namespace Lumina
     void CMesh::SetMeshResource(const FMeshResource& NewResource)
     {
         MeshResources = NewResource;
+        GenerateBoundingBox();
     }
 
     bool CMesh::IsReadyForRender() const
@@ -67,5 +68,24 @@ namespace Lumina
         }
 
         return !Materials.empty();
+    }
+
+    void CMesh::GenerateBoundingBox()
+    {
+        BoundingBox.Min = { FLT_MAX, FLT_MAX, FLT_MAX };
+        BoundingBox.Max = { -FLT_MAX, -FLT_MAX, -FLT_MAX };
+        
+        for (SIZE_T i = 0; i < MeshResources.Vertices.size(); ++i)
+        {
+            const FVertex& Vertex = MeshResources.Vertices[i];
+            
+            BoundingBox.Min.x = glm::min(Vertex.Position.x, BoundingBox.Min.x);
+            BoundingBox.Min.y = glm::min(Vertex.Position.y, BoundingBox.Min.y);
+            BoundingBox.Min.z = glm::min(Vertex.Position.z, BoundingBox.Min.z);
+        
+            BoundingBox.Max.x = glm::max(Vertex.Position.x, BoundingBox.Max.x);
+            BoundingBox.Max.y = glm::max(Vertex.Position.y, BoundingBox.Max.y);
+            BoundingBox.Max.z = glm::max(Vertex.Position.z, BoundingBox.Max.z);
+        }
     }
 }

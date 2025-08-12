@@ -68,7 +68,7 @@ namespace Lumina
 
         ImGui::BeginChild("LogMessages", ImVec2(0, -ImGui::GetFrameHeightWithSpacing()), true, ImGuiWindowFlags_HorizontalScrollbar);
         
-        const TVector<FConsoleMessage>& Messages = Logging::GetConsoleLogs();
+        const TFixedVector<FConsoleMessage, 10000>& Messages = Logging::GetConsoleLogs();
         SIZE_T NewMessageSize = Messages.size();
         
         if (NewMessageSize > PreviousMessageSize)

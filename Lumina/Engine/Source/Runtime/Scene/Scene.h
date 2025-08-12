@@ -42,6 +42,7 @@ namespace Lumina
 
         Entity CreateEntity(const FTransform& Transform, const FName& Name);
         void CopyEntity(Entity& To, const Entity& From);
+        void ReparentEntity(Entity Child, Entity Parent);
         void DestroyEntity(Entity Entity);
         
         FEntityRegistry& GetMutableEntityRegistry() { return EntityRegistry; }

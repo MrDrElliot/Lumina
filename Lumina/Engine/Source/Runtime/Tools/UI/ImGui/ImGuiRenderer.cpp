@@ -30,9 +30,7 @@ namespace Lumina
 
         IMGUI_CHECKVERSION();
 		
-#if 0 //@TODO Causes some weird issues, possible heap corruption?
 		ImGui::SetAllocatorFunctions(ImGuiMemAlloc, ImGuiMemFree, nullptr);
-#endif
 		
         ImGuiContext* Context = ImGui::CreateContext();
     	ImGuizmo::SetImGuiContext(Context);

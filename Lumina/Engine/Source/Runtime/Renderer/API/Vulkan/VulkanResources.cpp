@@ -7,6 +7,7 @@
 #include "Core/Engine/Engine.h"
 #include "Core/Templates/Align.h"
 #include "Renderer/RenderManager.h"
+#include "Renderer/RHIStaticStates.h"
 
 namespace Lumina
 {
@@ -294,7 +295,7 @@ namespace Lumina
         return Flags;
     }
 
-    constexpr VkDescriptorType ToVkDescriptorType(ERHIBindingResourceType Type)
+    static constexpr VkDescriptorType ToVkDescriptorType(ERHIBindingResourceType Type)
     {
         switch (Type)
         {
@@ -310,7 +311,7 @@ namespace Lumina
         }
     }
 
-    constexpr VkSamplerAddressMode ToVkSamplerAddressMode(ESamplerAddressMode Mode)
+    static constexpr VkSamplerAddressMode ToVkSamplerAddressMode(ESamplerAddressMode Mode)
     {
         switch (Mode)
         {
@@ -1071,7 +1072,7 @@ namespace Lumina
                     ImageInfo.imageView = Image->GetImageView();
                     ImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
                     ImageInfo.sampler = Item.TextureResource.Sampler ?
-                    Item.TextureResource.Sampler->GetAPIResource<VkSampler>() : GEngine->GetEngineSubsystem<FRenderManager>()->GetLinearSampler()->GetAPIResource<VkSampler>();
+                    Item.TextureResource.Sampler->GetAPIResource<VkSampler>() : TStaticRHISampler<>::GetRHI()->GetAPIResource<VkSampler>();
 
                     
                     Write.pImageInfo = &ImageInfo;

@@ -20,10 +20,6 @@ namespace Lumina
     class FRenderer;
     
     
-    /**
-     * Scene renderers are stateful renderers that interface with the state-less renderer.
-     * Responsible for managing all low-level scene rendering.
-     */
     class FSceneRenderer
     {
     public:
@@ -67,7 +63,6 @@ namespace Lumina
     private:
 
         FScene*                             Scene = nullptr;
-        IRenderContext*                     RenderContext = nullptr;
         FSceneRenderStats                   SceneRenderStats;
         
         FRHIViewportRef                     SceneViewport;

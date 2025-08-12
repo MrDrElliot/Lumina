@@ -74,6 +74,34 @@ namespace Lumina
         {
             return !(*this == Other);
         }
+
+        FTransform operator*(const FTransform& Other) const
+        {
+            FTransform Result;
+            Result.Scale    = Scale * Other.Scale;
+            Result.Rotation = Rotation * Other.Rotation;
+            Result.Location = Location + Rotation * (Scale * Other.Location);
+            return Result;
+        }
+
+        FTransform& operator*=(const FTransform& Other)
+        {
+            Location    = Location + Rotation * (Scale * Other.Location);
+            Rotation    = Rotation * Other.Rotation;
+            Scale       = Scale * Other.Scale;
+            return *this;
+        }
+
+        FTransform Inverse() const
+        {
+            FTransform Inv;
+            Inv.Scale       = 1.0f / Scale;
+            Inv.Rotation    = glm::conjugate(Rotation);
+            Inv.Location    = Inv.Rotation * (Inv.Scale * (-Location));
+            return Inv;
+        }
+
+        
     };
 }
 

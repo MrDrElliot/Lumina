@@ -8,6 +8,7 @@
 #include "Core/Profiler/Profile.h"
 #include "Core/Windows/Window.h"
 #include "Renderer/RenderManager.h"
+#include "Renderer/RHIStaticStates.h"
 #include "Renderer/API/Vulkan/VulkanMacros.h"
 #include "Renderer/API/Vulkan/VulkanRenderContext.h"
 #include "Renderer/API/Vulkan/VulkanSwapchain.h"
@@ -68,13 +69,13 @@ namespace Lumina
 		
 		FRenderManager* RenderManager = Manager.GetSubsystem<FRenderManager>();
 
-		VulkanRenderContext = RenderManager->GetRenderContext<FVulkanRenderContext>();
+		VulkanRenderContext = (FVulkanRenderContext*)GRenderContext;
 		
-        VK_CHECK(vkCreateDescriptorPool(VulkanRenderContext->GetDevice()->GetDevice(), &PoolInfo, nullptr, &DescriptorPool));
+        VK_CHECK(vkCreateDescriptorPool(VulkanRenderContext->GetDevice()->GetDevice(), &PoolInfo, VK_ALLOC_CALLBACK, &DescriptorPool));
     	
         VulkanRenderContext->SetVulkanObjectName("ImGui Descriptor Pool", VK_OBJECT_TYPE_DESCRIPTOR_POOL, reinterpret_cast<uint64>(DescriptorPool));
     	
-        Assert(ImGui_ImplGlfw_InitForVulkan(Windowing::GetPrimaryWindowHandle()->GetWindow(), true));
+        Assert(ImGui_ImplGlfw_InitForVulkan(Windowing::GetPrimaryWindowHandle()->GetWindow(), true))
 
 		VkFormat Format = VulkanRenderContext->GetSwapchain()->GetSwapchainFormat();
 		
@@ -111,7 +112,7 @@ namespace Lumina
     	
     	ImGui_ImplVulkan_Shutdown();
     	
-    	vkDestroyDescriptorPool(VulkanRenderContext->GetDevice()->GetDevice(), DescriptorPool, nullptr);
+    	vkDestroyDescriptorPool(VulkanRenderContext->GetDevice()->GetDevice(), DescriptorPool, VK_ALLOC_CALLBACK);
     	
     	ImGui_ImplGlfw_Shutdown();
     	ImGui::DestroyContext();
@@ -340,7 +341,7 @@ namespace Lumina
     		return (intptr_t)It->second;
     	}
 
-    	FRHISamplerRef Sampler = GEngine->GetEngineSubsystem<FRenderManager>()->GetLinearSampler();
+    	FRHISamplerRef Sampler = TStaticRHISampler<>::GetRHI();
     	VkSampler VulkanSampler = Sampler->GetAPIResource<VkSampler>();
     	
     	VkDescriptorSet DescriptorSet = ImGui_ImplVulkan_AddTexture(VulkanSampler, VulkanImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);

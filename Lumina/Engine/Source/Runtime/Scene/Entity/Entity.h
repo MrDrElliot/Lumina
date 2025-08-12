@@ -31,19 +31,20 @@ namespace Lumina
             Assert(Scene != nullptr)
         }
 
-        bool IsValid() const                                { return EntityHandle != entt::null && Scene != nullptr; }
-        FORCEINLINE FScene* GetScene() const                { return Scene; }
-        FORCEINLINE entt::entity GetHandle() const          { return EntityHandle; }
-        FORCEINLINE entt::entity GetHandleChecked() const   { Assert(EntityHandle != entt::null) return EntityHandle; }
+        LUMINA_API bool IsValid() const                    { return EntityHandle != entt::null && Scene != nullptr; }
+        LUMINA_API bool IsChild();
+        LUMINA_API Entity GetParent();
+        LUMINA_API FScene* GetScene() const                { return Scene; }
+        LUMINA_API entt::entity GetHandle() const          { return EntityHandle; }
+        LUMINA_API entt::entity GetHandleChecked() const   { Assert(EntityHandle != entt::null) return EntityHandle; }
 
-        FORCEINLINE const FName& GetName() const     { return GetConstComponent<SNameComponent>().Name; }
-        FORCEINLINE FTransform GetTransform()        { return GetComponent<STransformComponent>().GetTransform(); }
-        FORCEINLINE glm::vec3 GetLocation()          { return GetComponent<STransformComponent>().GetLocation(); }
-        FORCEINLINE glm::quat GetRotation()          { return GetComponent<STransformComponent>().GetRotation(); }
-        FORCEINLINE glm::vec3 GetScale()             { return GetComponent<STransformComponent>().GetScale(); }
-
-        FORCEINLINE void Destroy() const             { Assert(Scene != nullptr) Scene->DestroyEntity(*this);  }
-
+        LUMINA_API const FName& GetName() const            { return GetConstComponent<SNameComponent>().Name; }
+        LUMINA_API FTransform GetWorldTransform();
+        LUMINA_API FTransform GetLocalTransform();
+        
+        LUMINA_API glm::vec3 GetLocation()          { return GetComponent<STransformComponent>().GetLocation(); }
+        LUMINA_API glm::quat GetRotation()          { return GetComponent<STransformComponent>().GetRotation(); }
+        LUMINA_API glm::vec3 GetScale()             { return GetComponent<STransformComponent>().GetScale(); }
         
         
         template <typename T, typename... Args>
@@ -56,7 +57,7 @@ namespace Lumina
         T& SetComponentProperty(Args&&... args);
 
         template <typename T>
-        T& TryGetComponent();
+        T* TryGetComponent();
 
         template <typename T>
         T& GetComponent();
@@ -134,7 +135,7 @@ namespace Lumina
     }
     
     template <typename T>
-    T& Entity::TryGetComponent()
+    T* Entity::TryGetComponent()
     {
         return Scene->GetMutableEntityRegistry().try_get<T>(EntityHandle);
     }

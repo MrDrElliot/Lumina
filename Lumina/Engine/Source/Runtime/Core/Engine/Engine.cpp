@@ -12,6 +12,7 @@
 #include "Scene/SceneManager.h"
 #include "Renderer/RenderManager.h"
 #include "Renderer/RenderResource.h"
+#include "Renderer/RHIGlobals.h"
 #include "TaskSystem/TaskSystem.h"
 #include "Tools/UI/DevelopmentToolUI.h"
 
@@ -29,12 +30,14 @@ namespace Lumina
         
         GEngine = this;
         Application = App;
-        
+
         
         FTaskSystem::Get()->Initialize();
         
         RenderManager = EngineSubsystems.AddSubsystem<FRenderManager>();
-        EngineViewport = RenderManager->GetRenderContext()->CreateViewport(Windowing::GetPrimaryWindowHandle()->GetExtent());
+        EngineViewport = GRenderContext->CreateViewport(Windowing::GetPrimaryWindowHandle()->GetExtent());
+        
+        ProcessNewlyLoadedCObjects();
         
         InputSubsystem = EngineSubsystems.AddSubsystem<FInputSubsystem>();
         AssetRegistry = EngineSubsystems.AddSubsystem<FAssetRegistry>();
@@ -74,7 +77,10 @@ namespace Lumina
         EngineSubsystems.RemoveSubsystem<FAssetManager>();
         EngineSubsystems.RemoveSubsystem<FSceneManager>();
 
+        ShutdownCObjectSystem();
+        
         EngineViewport.SafeRelease();
+        
         EngineSubsystems.RemoveSubsystem<FRenderManager>();
         
 

@@ -22,7 +22,7 @@ namespace Lumina
             , bVisible(false)
             , bSelected(false)
         {}
-
+        
         virtual FName GetName() const = 0;
         
         virtual const char* GetTooltipText() const { return nullptr; }
@@ -34,6 +34,8 @@ namespace Lumina
         virtual void OnSelectionStateChanged() { }
 
         bool HasChildren() const { return !Children.empty(); }
+
+        virtual void SetDragDropPayloadData() const { }
 
         virtual uint64 GetHash() const = 0;
         
@@ -80,6 +82,9 @@ namespace Lumina
 
         /** Called when an item has been selected in the tree */
         TFunction<void(FTreeListViewItem*)>                         ItemSelectedFunction;
+
+        /** Called when we have a drag-drop operation on a target */
+        TFunction<void(FTreeListViewItem*)>                         DragDropFunction;
     };
     
     

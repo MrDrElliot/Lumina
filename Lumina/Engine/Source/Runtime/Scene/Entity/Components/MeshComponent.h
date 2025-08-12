@@ -16,4 +16,5 @@ namespace Lumina
         LUM_PROPERTY(Editable, Category = "Materials")
         TVector<TObjectHandle<CMaterialInterface>> MaterialOverrides;
     };
+    
 }

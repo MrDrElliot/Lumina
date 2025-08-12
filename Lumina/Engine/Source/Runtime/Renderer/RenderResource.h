@@ -237,6 +237,7 @@ namespace Lumina
 		constexpr FDrawIndexedIndirectArguments& SetStartInstanceLocation(uint32 value) { StartInstanceLocation = value; return *this; }
 	};
 	
+	
     class LUMINA_API IRHIResource
     {
     public:
@@ -250,6 +251,8 @@ namespace Lumina
     	IRHIResource& operator=(const IRHIResource&) = delete;
     	IRHIResource& operator=(const IRHIResource&&) = delete;
 
+    	static void ReleaseAllRHIResources();
+    	
     	template<typename T, EAPIResourceType Type = EAPIResourceType::Default>
 		T GetAPIResource()
     	{
@@ -263,11 +266,7 @@ namespace Lumina
     		return Resource;
     	}
 
-
-		#if LE_DEBUG
-		void SetDebugName(const FString& InName) { DebugName = InName; }
-		#endif
-
+    	int32 GetListIndex() const { return ListIndex; }
     	
     protected:
 
@@ -304,7 +303,7 @@ namespace Lumina
     	uint32 GetRefCount() const
     	{
     		int32 CurrentValue = AtomicFlags.GetNumRefs(std::memory_order_relaxed);
-    		Assert(CurrentValue >= 0);
+    		Assert(CurrentValue >= 0)
     		return uint32(CurrentValue);
     	}
 
@@ -410,13 +409,8 @@ namespace Lumina
         
 		mutable FAtomicFlags AtomicFlags;
 
-		#if LE_DEBUG
-		FString DebugName;
-		#endif
-    	
+		int32 ListIndex = INDEX_NONE;
     };
-
-	
 
 	//-------------------------------------------------------------------------------------------------------------------
 
@@ -677,11 +671,11 @@ namespace Lumina
 	enum class ESamplerAddressMode : uint8
 	{
 		// D3D names
-		Clamp,
-		Wrap,
-		Border,
-		Mirror,
-		MirrorOnce,
+		Clamp = 0,
+		Wrap = 1,
+		Border = 2,
+		Mirror = 3,
+		MirrorOnce = 4,
 
 		// Vulkan names
 		ClampToEdge = Clamp,
@@ -690,6 +684,13 @@ namespace Lumina
 		MirroredRepeat = Mirror,
 		MirrorClampToEdge = MirrorOnce
 	};
+
+#define AM_Clamp ESamplerAddressMode::Clamp
+#define AM_Wrap ESamplerAddressMode::Wrap
+#define AM_Repeat ESamplerAddressMode::Repeat
+#define AM_Border ESamplerAddressMode::Border
+#define AM_Mirror ESamplerAddressMode::Mirror
+#define AM_MirrorOnce ESamplerAddressMode::MirrorOnce
 
 	enum class LUMINA_API ESamplerReductionType : uint8_t
 	{
@@ -1201,6 +1202,24 @@ namespace Lumina
 		ERHIBindingResourceType Type	: 8;
 		uint16 Size						: 16;
 
+		static FBindingLayoutItem Buffer_UD(uint32 Slot, uint16 Size = 0)
+		{
+			FBindingLayoutItem Result;
+			Result.Slot = Slot;
+			Result.Type = ERHIBindingResourceType::Buffer_Uniform_Dynamic;
+			Result.Size = Size;
+			return Result;
+		}
+
+		static FBindingLayoutItem Buffer_SD(uint32 Slot, uint16 Size = 0)
+		{
+			FBindingLayoutItem Result;
+			Result.Slot = Slot;
+			Result.Type = ERHIBindingResourceType::Buffer_Storage_Dynamic;
+			Result.Size = Size;
+			return Result;
+		}
+		
 		static FBindingLayoutItem Buffer_SRV(uint32 Slot, uint16 Size = 0)
 		{
 			FBindingLayoutItem Result;
@@ -1246,6 +1265,15 @@ namespace Lumina
 			return Result;
 		}
 
+		static FBindingLayoutItem PushConstants(uint32 Slot, uint16 Size = 0)
+		{
+			FBindingLayoutItem Result;
+			Result.Slot = Slot;
+			Result.Type = ERHIBindingResourceType::PushConstants;
+			Result.Size = Size;
+			return Result;
+		}
+		
 		bool operator ==(const FBindingLayoutItem& b) const
 		{
 			return Slot == b.Slot
@@ -1608,6 +1636,26 @@ namespace eastl
 
 			return hash;
 		}
+	};
+
+	template<> 
+	struct hash<FSamplerDesc> 
+	{ 
+		size_t operator()(const FSamplerDesc& Item) const 
+		{ 
+			size_t hash = 0; 
+			//Hash::HashCombine(hash, Item.BorderColor);
+			Hash::HashCombine(hash, Item.MaxAnisotropy);
+			Hash::HashCombine(hash, Item.MipBias);
+			Hash::HashCombine(hash, Item.MinFilter);
+			Hash::HashCombine(hash, Item.MagFilter);
+			Hash::HashCombine(hash, Item.MipFilter);
+			Hash::HashCombine(hash, static_cast<int>(Item.AddressU));
+			Hash::HashCombine(hash, static_cast<int>(Item.AddressV));
+			Hash::HashCombine(hash, static_cast<int>(Item.AddressW));
+			Hash::HashCombine(hash, static_cast<int>(Item.ReductionType));
+			return hash; 
+		} 
 	};
 
 	template<>

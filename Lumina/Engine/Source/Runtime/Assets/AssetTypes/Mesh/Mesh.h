@@ -3,6 +3,7 @@
 #include "Core/Object/Object.h"
 #include "Renderer/MeshData.h"
 #include "Core/Object/ObjectHandleTyped.h"
+#include "Core/Math/AABB.h"
 #include "Mesh.generated.h"
 
 namespace Lumina
@@ -28,6 +29,8 @@ namespace Lumina
 
         bool IsReadyForRender() const;
 
+        void GenerateBoundingBox();
+
         uint32 GetNumMaterials() const { return (uint32)Materials.size(); }
         CMaterialInterface* GetMaterialAtSlot(SIZE_T Slot) const;
         void SetMaterialAtSlot(SIZE_T Slot, CMaterialInterface* NewMaterial);
@@ -40,9 +43,13 @@ namespace Lumina
         SIZE_T GetNumVertices() const { return MeshResources.Vertices.size(); }
         SIZE_T GetNumIndices() const { return MeshResources.Indices.size(); }
         
+        const FAABB& GetAABB() const { return BoundingBox; }
+        
         LUM_PROPERTY(Editable, Category = "Materials")
         TVector<TObjectHandle<CMaterialInterface>> Materials;
-    
+
+        FAABB BoundingBox;
+        
     private:
         
         FMeshResource MeshResources;

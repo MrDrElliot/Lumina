@@ -1,6 +1,8 @@
 ﻿#pragma once
 
 #include "Containers/String.h"
+#include "Core/Object/Object.h"
+#include "TaskSystem/TaskSystem.h"
 
 namespace Lumina
 {
@@ -15,25 +17,30 @@ namespace Lumina
 
         
         FAssetRequest(const FString& InPath)
-            : AssetPath(InPath)
+            : Task(nullptr)
+            , AssetPath(InPath)
             , PendingObject(nullptr)
         {
         }
 
-        
+        FStringView GetAssetPath() const { return AssetPath; }
+        CObject* GetPendingObject() const { return PendingObject; }
+        void AddListener(const TFunction<void(CObject*)>& Functor) { Listeners.push_back(Functor); }
 
-        FORCEINLINE FStringView GetAssetPath() const { return AssetPath; }
-        FORCEINLINE CObject* GetPendingObject() const { return PendingObject; }
+        void WaitForTask();
 
     private:
 
+        void SetTask(ITaskSet* InTask) { Task = InTask; }
         bool Process();
         
         
     private:
 
-        FString                         AssetPath;
-        CObject*                        PendingObject;
+        TVector<TFunction<void(CObject*)>>  Listeners;
+        ITaskSet*                           Task;
+        FString                             AssetPath;
+        CObject*                            PendingObject;
     };
     
 }

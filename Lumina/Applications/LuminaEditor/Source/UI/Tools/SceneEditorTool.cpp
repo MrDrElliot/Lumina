@@ -12,6 +12,7 @@
 #include "Scene/Entity/Components/NameComponent.h"
 #include "Scene/Entity/Components/EditorComponent.h"
 #include "Scene/Entity/Components/LightComponent.h"
+#include "Scene/Entity/Components/RelationshipComponent.h"
 #include "scene/entity/components/staticmeshcomponent.h"
 #include "Scene/Entity/Components/VelocityComponent.h"
 #include "Tools/UI/ImGui/ImGuiX.h"
@@ -19,7 +20,7 @@
 
 namespace Lumina
 {
-    static const char* SystemOutlinerName = "Systems";
+    static constexpr const char* SystemOutlinerName = "Systems";
     
     FSceneEditorTool::FSceneEditorTool(IEditorToolContext* Context, FScene* InScene)
         : FEditorTool(Context, "Scene Editor", InScene)
@@ -29,11 +30,13 @@ namespace Lumina
         , SystemsContext()
     {
         GuizmoOp = ImGuizmo::TRANSLATE;
+        GuizmoMode = ImGuizmo::WORLD;
         Assert(Scene != nullptr)
     }
 
     void FSceneEditorTool::OnInitialize()
     {
+        
         CreateToolWindow("Outliner", [this] (const FUpdateContext& Context, bool bisFocused)
         {
             DrawOutliner(Context, bisFocused);
@@ -87,11 +90,7 @@ namespace Lumina
 
         OutlinerContext.RebuildTreeFunction = [this](FTreeListView* Tree)
         {
-            for (auto entity : Scene->GetConstEntityRegistry().view<SNameComponent>(entt::exclude<SHiddenComponent>))
-            {
-                Entity NewEntity(entity, Scene);
-                OutlinerListView.AddItemToTree<FEntityListViewItem>(nullptr, eastl::move(NewEntity));
-            }
+            RebuildSceneOutliner(Tree);
         };
         
         OutlinerContext.ItemSelectedFunction = [this](FTreeListViewItem* Item)
@@ -107,6 +106,11 @@ namespace Lumina
             SelectedEntity = EntityListItem->GetEntity();
 
             RebuildPropertyTables();
+        };
+
+        OutlinerContext.DragDropFunction = [this](FTreeListViewItem* Item)
+        {
+            HandleEntityEditorDragDrop(Item);  
         };
 
         OutlinerListView.MarkTreeDirty();
@@ -194,19 +198,49 @@ namespace Lumina
             ImGui::EndMenu();
         }
         
-        // Gizmo Control Dropdown
         if (ImGui::BeginMenu(LE_ICON_MOVE_RESIZE " Gizmo Control"))
         {
-            const char* operations[] = { "Translate", "Rotate", "Scale" };
-            static int currentOp = 0;
+            static int currentOpIndex = 0;
 
-            if (ImGui::Combo("##", &currentOp, operations, IM_ARRAYSIZE(operations)))
+            const char* operations[] = { "Translate", "Rotate", "Scale" };
+            constexpr int operationsCount = IM_ARRAYSIZE(operations);
+
+            switch (GuizmoOp)
             {
-                switch (currentOp)
+            case ImGuizmo::TRANSLATE: currentOpIndex = 0; break;
+            case ImGuizmo::ROTATE:    currentOpIndex = 1; break;
+            case ImGuizmo::SCALE:     currentOpIndex = 2; break;
+            default:                  currentOpIndex = 0; break;
+            }
+
+            if (ImGui::Combo("Operation", &currentOpIndex, operations, operationsCount))
+            {
+                switch (currentOpIndex)
                 {
                 case 0: GuizmoOp = ImGuizmo::TRANSLATE; break;
                 case 1: GuizmoOp = ImGuizmo::ROTATE;    break;
                 case 2: GuizmoOp = ImGuizmo::SCALE;     break;
+                }
+            }
+
+            static int currentModeIndex = 0;
+
+            const char* modes[] = { "World", "Local" };
+            constexpr int modesCount = IM_ARRAYSIZE(modes);
+
+            switch (GuizmoMode)
+            {
+            case ImGuizmo::WORLD: currentModeIndex = 0; break;
+            case ImGuizmo::LOCAL: currentModeIndex = 1; break;
+            default:              currentModeIndex = 0; break;
+            }
+
+            if (ImGui::Combo("Mode", &currentModeIndex, modes, modesCount))
+            {
+                switch (currentModeIndex)
+                {
+                case 0: GuizmoMode = ImGuizmo::WORLD; break;
+                case 1: GuizmoMode = ImGuizmo::LOCAL; break;
                 }
             }
 
@@ -255,16 +289,28 @@ namespace Lumina
 
     void FSceneEditorTool::InitializeDockingLayout(ImGuiID InDockspaceID, const ImVec2& InDockspaceSize) const
     {
-        ImGuiID topDockID = 0, bottomLeftDockID = 0, bottomCenterDockID = 0, bottomRightDockID = 0;
-        ImGui::DockBuilderSplitNode(InDockspaceID, ImGuiDir_Down, 0.5f, &bottomCenterDockID, &topDockID);
-        ImGui::DockBuilderSplitNode(bottomCenterDockID, ImGuiDir_Right, 0.66f, &bottomCenterDockID, &bottomLeftDockID);
-        ImGui::DockBuilderSplitNode(bottomCenterDockID, ImGuiDir_Right, 0.5f, &bottomRightDockID, &bottomCenterDockID);
+        ImGuiID dockLeft = 0;
+        ImGuiID dockRight = 0;
 
-        ImGui::DockBuilderDockWindow(GetToolWindowName(ViewportWindowName).c_str(), topDockID);
-        ImGui::DockBuilderDockWindow(GetToolWindowName("Outliner").c_str(), bottomLeftDockID);
-        ImGui::DockBuilderDockWindow(GetToolWindowName(SystemOutlinerName).c_str(), bottomRightDockID);
-        ImGui::DockBuilderDockWindow(GetToolWindowName("Details").c_str(), bottomCenterDockID);
+        // 1. Split root dock vertically: left = viewport, right = other panels
+        ImGui::DockBuilderSplitNode(InDockspaceID, ImGuiDir_Right, 0.25f, &dockRight, &dockLeft);
 
+        ImGuiID dockRightTop = 0;
+        ImGuiID dockRightBottom = 0;
+
+        // 2. Split right dock horizontally into Outliner (top 25%) and bottom (Details + SystemOutliner)
+        ImGui::DockBuilderSplitNode(dockRight, ImGuiDir_Down, 0.25f, &dockRightTop, &dockRightBottom);
+
+        ImGuiID dockRightBottomLeft = 0;
+        ImGuiID dockRightBottomRight = 0;
+
+        // 3. Split bottom right dock horizontally into Details (left) and SystemOutliner (right)
+        ImGui::DockBuilderSplitNode(dockRightBottom, ImGuiDir_Right, 0.5f, &dockRightBottomRight, &dockRightBottomLeft);
+
+        ImGui::DockBuilderDockWindow(GetToolWindowName(ViewportWindowName).c_str(), dockLeft);
+        ImGui::DockBuilderDockWindow(GetToolWindowName("Outliner").c_str(), dockRightTop);
+        ImGui::DockBuilderDockWindow(GetToolWindowName("Details").c_str(), dockRightBottomLeft);
+        ImGui::DockBuilderDockWindow(GetToolWindowName(SystemOutlinerName).c_str(), dockRightBottomRight);
     }
 
     void FSceneEditorTool::DrawViewportOverlayElements(const FUpdateContext& UpdateContext, ImTextureID ViewportTexture, ImVec2 ViewportSize)
@@ -274,7 +320,7 @@ namespace Lumina
             return;
         }
 
-        if (bViewportFocused)
+        if (bViewportHovered)
         {
             if (ImGui::IsKeyPressed(ImGuiKey_Space))
             {
@@ -285,16 +331,15 @@ namespace Lumina
         ImGuizmo::SetDrawlist(ImGui::GetCurrentWindow()->DrawList);
     
         SCameraComponent& CameraComponent = EditorEntity.GetComponent<SCameraComponent>();
-        STransformComponent& TransformComponent = SelectedEntity.GetComponent<STransformComponent>();
     
-        glm::mat4 Matrix = TransformComponent.Transform.GetMatrix();
+        glm::mat4 Matrix = SelectedEntity.GetWorldTransform().GetMatrix();
     
         glm::mat4 ViewMatrix = CameraComponent.GetViewMatrix();
         glm::mat4 ProjectionMatrix = CameraComponent.GetProjectionMatrix();
 
         ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, ViewportSize.x, ViewportSize.y);
-        
-        const float ViewManipSize = 100.0f;
+
+        constexpr float ViewManipSize = 100.0f;
         ImVec2 corner = ImGui::GetWindowPos();
         ImVec2 manipPos = ImVec2(corner.x + 10, corner.y + 10);
         ImGuizmo::ViewManipulate(glm::value_ptr(ViewMatrix),
@@ -306,25 +351,65 @@ namespace Lumina
         ImGuizmo::Manipulate(glm::value_ptr(ViewMatrix),
                              glm::value_ptr(ProjectionMatrix),
                              GuizmoOp,
-                             ImGuizmo::WORLD,
+                             GuizmoMode,
                              glm::value_ptr(Matrix));
     
         if (ImGuizmo::IsUsing())
         {
-            glm::vec3 translation, scale, Skew;
-            glm::quat rotation;
-            glm::vec4 Other;
-    
-            glm::decompose(Matrix, scale, rotation, translation, Skew, Other);
-
-            if (translation != TransformComponent.GetLocation() || rotation != TransformComponent.GetRotation() || scale != TransformComponent.GetScale())
+            glm::mat4 worldMatrix = Matrix;
+        
+            // Check for parent transform
+            if (SelectedEntity.IsChild())
             {
-                SelectedEntity.Patch<STransformComponent>([&](auto& Transform)
+                glm::mat4 parentWorldMatrix = SelectedEntity.GetParent().GetWorldTransform().GetMatrix();
+                glm::mat4 parentWorldInverse = glm::inverse(parentWorldMatrix);
+                   
+                // Convert world transform to local transform by applying inverse parent transform
+                glm::mat4 localMatrix = parentWorldInverse * worldMatrix;
+        
+                // Decompose local matrix instead of world
+                glm::vec3 translation, scale, skew;
+                glm::quat rotation;
+                glm::vec4 perspective;
+        
+                glm::decompose(localMatrix, scale, rotation, translation, skew, perspective);
+        
+                STransformComponent& TransformComponent = SelectedEntity.GetComponent<STransformComponent>();
+        
+                if (translation != TransformComponent.GetLocation() ||
+                    rotation != TransformComponent.GetRotation() ||
+                    scale != TransformComponent.GetScale())
                 {
-                    Transform.SetLocation(translation);
-                    Transform.SetRotation(rotation);
-                    Transform.SetScale(scale); 
-                });
+                    SelectedEntity.Patch<STransformComponent>([&](auto& Transform)
+                    {
+                        Transform.SetLocation(translation);
+                        Transform.SetRotation(rotation);
+                        Transform.SetScale(scale);
+                    });
+                }
+            }
+            else
+            {
+                // No parent, set world transform as local directly
+                glm::vec3 translation, scale, skew;
+                glm::quat rotation;
+                glm::vec4 perspective;
+        
+                glm::decompose(worldMatrix, scale, rotation, translation, skew, perspective);
+        
+                STransformComponent& TransformComponent = SelectedEntity.GetComponent<STransformComponent>();
+        
+                if (translation != TransformComponent.GetLocation() ||
+                    rotation != TransformComponent.GetRotation() ||
+                    scale != TransformComponent.GetScale())
+                {
+                    SelectedEntity.Patch<STransformComponent>([&](auto& Transform)
+                    {
+                        Transform.SetLocation(translation);
+                        Transform.SetRotation(rotation);
+                        Transform.SetScale(scale);
+                    });
+                }
             }
         }
     }
@@ -350,12 +435,11 @@ namespace Lumina
                     CStruct* Struct = *It;
                     if (Struct->IsChildOf(SEntityComponent::StaticStruct()))
                     {
-                        Components::ComponentAddFn Fn = Components::GetEntityComponentCreationFn(Struct);
-                        if (Fn)
+                        if (auto Fn = FEntityComponentRegistry::Get()->GetComponentFn(Struct->GetName().c_str()))
                         {
                             if (ImGui::Selectable(Struct->GetName().c_str(), false, ImGuiSelectableFlags_SpanAllColumns))
                             {
-                                Fn(Scene->GetMutableEntityRegistry(), SelectedEntity.GetHandle());
+                                Fn(SelectedEntity.GetHandle(), Scene->GetMutableEntityRegistry());
                                 bComponentAdded = true;
                             }
                         }
@@ -429,7 +513,7 @@ namespace Lumina
 
     void FSceneEditorTool::PushRenameEntityModal(Entity Ent)
     {
-        ToolContext->PushModal("Add Component", ImVec2(600.0f, 350.0f), [this, Ent](const FUpdateContext& Context) -> bool
+        ToolContext->PushModal("Rename Entity", ImVec2(600.0f, 350.0f), [this, Ent](const FUpdateContext& Context) -> bool
         {
             Entity CopyEntity = Ent;
             FName& Name = CopyEntity.AddComponent<SNameComponent>().Name;
@@ -449,7 +533,70 @@ namespace Lumina
             return false;
         });
     }
-    
+
+    void FSceneEditorTool::RebuildSceneOutliner(FTreeListView* View)
+    {
+        TFunction<void(Entity, FEntityListViewItem*)> AddEntityRecursive;
+        
+        AddEntityRecursive = [&](Entity entity, FEntityListViewItem* ParentItem)
+        {
+            FEntityListViewItem* Item = nullptr;
+            if (ParentItem)
+            {
+                Item = ParentItem->AddChild<FEntityListViewItem>(ParentItem, eastl::move(entity));
+            }
+            else
+            {
+                Item = OutlinerListView.AddItemToTree<FEntityListViewItem>(ParentItem, eastl::move(entity));
+            }
+
+            if (SRelationshipComponent* rel = Item->GetEntity().TryGetComponent<SRelationshipComponent>())
+            {
+                for (SIZE_T i = 0; i < rel->Size; ++i)
+                {
+                    AddEntityRecursive(rel->Children[i], Item);
+                }
+            }
+        };
+        
+
+        for (auto EntityHandle : Scene->GetConstEntityRegistry().view<SNameComponent>(entt::exclude<SHiddenComponent>))
+        {
+            Entity entity(EntityHandle, Scene);
+
+            if (auto* Rel = entity.TryGetComponent<SRelationshipComponent>())
+            {
+                if (Rel->Parent.IsValid())
+                {
+                    continue;
+                }
+            }
+
+            AddEntityRecursive(eastl::move(entity), nullptr);
+        }
+    }
+
+
+    void FSceneEditorTool::HandleEntityEditorDragDrop(FTreeListViewItem* DropItem)
+    {
+        const ImGuiPayload* Payload = ImGui::AcceptDragDropPayload(FEntityListViewItem::DragDropID, ImGuiDragDropFlags_AcceptBeforeDelivery);
+        if (Payload && Payload->IsDelivery())
+        {
+            uintptr_t* RawPtr = (uintptr_t*)Payload->Data;
+            auto* SourceItem = (FEntityListViewItem*)*RawPtr;
+            auto* DestinationItem = (FEntityListViewItem*)DropItem;
+
+            if (SourceItem == DestinationItem)
+            {
+                return;
+            }
+
+            Scene->ReparentEntity(SourceItem->GetEntity(), DestinationItem->GetEntity());
+            
+            OutlinerListView.MarkTreeDirty();
+        }
+    }
+
     void FSceneEditorTool::DrawOutliner(const FUpdateContext& UpdateContext, bool bFocused)
     {
         ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.15f, 0.35f, 0.15f, 1.0f));

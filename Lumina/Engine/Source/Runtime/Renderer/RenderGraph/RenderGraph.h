@@ -65,7 +65,6 @@ namespace Lumina
 
     private:
 
-        IRenderContext*         RenderContext = nullptr;
         FRHICommandListRef      GraphicsCommandList;
         FRHICommandListRef      ComputeCommandList;
         FRHICommandListRef      TransferCommandList;

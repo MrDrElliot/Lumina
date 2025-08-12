@@ -27,39 +27,36 @@ namespace Lumina
 
     FAssetRequest* FAssetManager::LoadAsset(const FString& InAssetPath)
     {
-        bool bAlreadyInQueue;
+        bool bAlreadyInQueue = false;
         FAssetRequest* ActiveRequest = TryFindActiveRequest(InAssetPath, bAlreadyInQueue);
         
-        if (bAlreadyInQueue)
+        if (!bAlreadyInQueue)
         {
-            return ActiveRequest;
+            SubmitAssetRequest(ActiveRequest);
         }
-        
-        SubmitAssetRequest(ActiveRequest);
+
         return ActiveRequest;
     }
 
     void FAssetManager::NotifyAssetRequestCompleted(FAssetRequest* Request)
     {
         auto It = eastl::find(ActiveRequests.begin(), ActiveRequests.end(), Request);
-        Assert(It != ActiveRequests.end());
+        Assert(It != ActiveRequests.end())
         ActiveRequests.erase(It);
-        
         Memory::Delete(Request);
     }
 
     void FAssetManager::FlushAsyncLoading()
     {
-        std::unique_lock Lock(FlushMutex);
-        FlushCV.wait(Lock, [this]
+        while (OutstandingTasks.load(std::memory_order_acquire) != 0)
         {
-            return OutstandingTasks.load() == 0;
-        });
+            std::this_thread::yield();
+        }
     }
 
     FAssetRequest* FAssetManager::TryFindActiveRequest(const FString& InAssetPath, bool& bAlreadyInQueue)
     {
-        FAssetRequest** It = eastl::find_if(ActiveRequests.begin(), ActiveRequests.end(), [InAssetPath](const FAssetRequest* Request)
+        auto It = eastl::find_if(ActiveRequests.begin(), ActiveRequests.end(), [&](const FAssetRequest* Request)
         {
             return Request->GetAssetPath() == InAssetPath;
         });
@@ -73,13 +70,14 @@ namespace Lumina
         bAlreadyInQueue = false;
         FAssetRequest* NewRequest = Memory::New<FAssetRequest>(InAssetPath);
         ActiveRequests.push_back(NewRequest);
-        
         return NewRequest;
         
     }
 
     void FAssetManager::SubmitAssetRequest(FAssetRequest* Request)
     {
+        ++OutstandingTasks;
+
         struct FAssetTask : ITaskSet
         {
             FAssetManager* Manager;
@@ -89,33 +87,26 @@ namespace Lumina
                 : Manager(InManager), Request(InRequest)
             {
                 m_SetSize = 1;
-                TaskDeleter.SetDependency(TaskDeleter.Dependency, this);
             }
 
             void ExecuteRange(enki::TaskSetPartition range, uint32_t threadnum) override
             {
                 if (Request->Process())
                 {
+                    for (auto& Functor : Request->Listeners)
+                    {
+                        Functor(Request->PendingObject);
+                    }
+                    
                     Manager->NotifyAssetRequestCompleted(Request);
                 }
 
-                {
-                    FScopeLock Lock(Manager->FlushMutex);
-                    --Manager->OutstandingTasks;
-                    Manager->FlushCV.notify_all();
-                }
+                Manager->OutstandingTasks.fetch_sub(1, std::memory_order_release);
             }
-
-            CompletionActionDelete      TaskDeleter;
-
         };
 
-        {
-            FScopeLock Lock(FlushMutex);
-            ++OutstandingTasks;
-        }
-
         auto* Task = Memory::New<FAssetTask>(this, Request);
+        Request->SetTask(Task);
         FTaskSystem::Get()->ScheduleTask(Task);
     }
     

@@ -3,7 +3,7 @@
 #include "RenderGraphPass.h"
 #include "RenderGraphResources.h"
 #include "Core/Engine/Engine.h"
-#include "Renderer/RenderManager.h"
+#include "Renderer/RHIGlobals.h"
 
 
 namespace Lumina
@@ -13,10 +13,9 @@ namespace Lumina
     FRenderGraph::FRenderGraph()
         :GraphAllocator(InitialLinearAllocatorSize)
     {
-        RenderContext = GEngine->GetEngineSubsystem<FRenderManager>()->GetRenderContext();
-        GraphicsCommandList = RenderContext->GetCommandList(ECommandQueue::Graphics);
-        ComputeCommandList = RenderContext->GetCommandList(ECommandQueue::Compute);
-        TransferCommandList = RenderContext->GetCommandList(ECommandQueue::Transfer);
+        GraphicsCommandList = GRenderContext->GetCommandList(ECommandQueue::Graphics);
+        ComputeCommandList = GRenderContext->GetCommandList(ECommandQueue::Compute);
+        TransferCommandList = GRenderContext->GetCommandList(ECommandQueue::Transfer);
     }
 
     void FRenderGraph::Execute()

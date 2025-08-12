@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Component.h"
-#include "ComponentRegistry.h"
+#include "EntityComponentRegistry.h"
 #include "Containers/Name.h"
 #include "NameComponent.generated.h"
 
@@ -17,4 +17,5 @@ namespace Lumina
         FName Name;
     };
     
+    REGISTER_ENTITY_COMPONENT(SNameComponent);
 }

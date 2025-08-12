@@ -76,7 +76,7 @@ namespace Lumina
 	
 	FWindow::~FWindow()
 	{
-		Assert(Window == nullptr);
+		Assert(Window == nullptr)
 	}
 
 	void FWindow::Init()
@@ -155,7 +155,7 @@ namespace Lumina
 	
 	FWindow* FWindow::Create(const FWindowSpecs& InSpecs)
 	{
-		return new FWindow(InSpecs);
+		return Memory::New<FWindow>(InSpecs);
 	}
 
 	namespace Windowing
@@ -164,13 +164,13 @@ namespace Lumina
 		
 		FWindow* GetPrimaryWindowHandle()
 		{
-			Assert(PrimaryWindow != nullptr);
+			Assert(PrimaryWindow != nullptr)
 			return PrimaryWindow;
 		}
 
 		void SetPrimaryWindowHandle(FWindow* InWindow)
 		{
-			Assert(PrimaryWindow == nullptr);
+			Assert(PrimaryWindow == nullptr)
 			PrimaryWindow = InWindow;
 		}
 	}

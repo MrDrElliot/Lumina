@@ -46,7 +46,6 @@ namespace Lumina
 
             ImGui::EndTable();
         }
-
         
         ImGui::PopStyleVar();
         ImGui::PopID();
@@ -133,7 +132,52 @@ namespace Lumina
         {
             SetSelection(ItemToDraw, Context);
         }
+
+        if (ImGui::BeginDragDropSource())
+        {
+            ItemToDraw->SetDragDropPayloadData();
+            ImGui::Text("Test");
+            ImGui::EndDragDropSource();
+        }
+
+        if (ImGui::BeginDragDropTarget())
+        {
+            if (Context.DragDropFunction)
+            {
+                Context.DragDropFunction(ItemToDraw);
+            }
+
+            ImGui::EndDragDropTarget();
+        }
+
+        const char* TooltipText = ItemToDraw->GetTooltipText();
+        if (TooltipText != nullptr)
+        {
+            ImGuiX::ItemTooltip(TooltipText);
+        }
         
+
+        if (ItemToDraw->HasContextMenu())
+        {
+            if (ImGui::BeginPopupContextItem("ItemContextMenu"))
+            {
+                TVector<FTreeListViewItem*> SelectionsToDraw;
+                for (FTreeListViewItem* Selection : Selections)
+                {
+                    if (Selection->HasContextMenu())
+                    {
+                        SelectionsToDraw.push_back(Selection);
+                    }
+                } 
+
+                if (Context.DrawItemContextMenuFunction)
+                {
+                    Context.DrawItemContextMenuFunction(SelectionsToDraw);
+                }
+                
+                ImGui::EndPopup();
+            }
+        }
         
         if (ItemToDraw->bExpanded)
         {
@@ -147,34 +191,6 @@ namespace Lumina
 
         
         ImGui::PopStyleColor();
-        
-        const char* TooltipText = ItemToDraw->GetTooltipText();
-        if (TooltipText != nullptr)
-        {
-            ImGuiX::ItemTooltip(TooltipText);
-        }
-
-        if (ItemToDraw->HasContextMenu())
-        {
-            if (ImGui::BeginPopupContextItem("ItemContextMenu"))
-            {
-                TVector<FTreeListViewItem*> SelectionsToDraw;
-                for (FTreeListViewItem* Selection : Selections)
-                {
-                    if (Selection->HasContextMenu())
-                    {
-                        SelectionsToDraw.push_back(Selection);
-                    }
-                }
-
-                if (Context.DrawItemContextMenuFunction)
-                {
-                    Context.DrawItemContextMenuFunction(SelectionsToDraw);
-                }
-                
-                ImGui::EndPopup();
-            }
-        }
         
         ImGui::PopID();
     }

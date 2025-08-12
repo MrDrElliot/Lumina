@@ -165,10 +165,10 @@ namespace Lumina
     void FVulkanSwapchain::RecreateSwapchain(const FIntVector2D& Extent)
     {
     	LUMINA_PROFILE_SCOPE();
+
     	Context->WaitIdle();
-
     	CreateSwapchain(Context->GetVulkanInstance(), Context, Windowing::GetPrimaryWindowHandle(), Extent, true);
-
+    	
     	bNeedsResize = false;
     }
 
@@ -204,7 +204,6 @@ namespace Lumina
     		return true;
     	}
 
-    	VK_CHECK(Result);
     	return false;
     }
 
@@ -238,10 +237,6 @@ namespace Lumina
     	{
     		RecreateSwapchain(Windowing::GetPrimaryWindowHandle()->GetExtent());
     	}
-	    else
-	    {
-		    VK_CHECK(Result);
-	    }
 
 #ifndef _WIN32
 

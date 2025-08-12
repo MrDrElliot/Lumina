@@ -23,13 +23,20 @@ namespace Lumina
                 : FTreeListViewItem(InParent)
                 , Entity(InEntity)
             {}
-
+            
             virtual ~FEntityListViewItem() override { }
 
+            constexpr static const char* DragDropID = "EntityItem";
+            
             const char* GetTooltipText() const override { return GetName().c_str(); }
             bool HasContextMenu() override { return true; }
             uint64 GetHash() const override { return (uint64)Entity.GetHandle(); }
-
+            void SetDragDropPayloadData() const override
+            {
+                uintptr_t IntPtr = (uintptr_t)this;
+                ImGui::SetDragDropPayload(DragDropID, &IntPtr, sizeof(uintptr_t));
+            }
+            
             FName GetName() const override
             {
                 return Entity.GetConstComponent<SNameComponent>().Name;
@@ -89,6 +96,9 @@ namespace Lumina
         
     protected:
 
+        void RebuildSceneOutliner(FTreeListView* View);
+        void HandleEntityEditorDragDrop(FTreeListViewItem* DropItem);
+
         void DrawOutliner(const FUpdateContext& UpdateContext, bool bFocused);
         void DrawSystems(const FUpdateContext& UpdateContext, bool bFocused);
 
@@ -107,6 +117,7 @@ namespace Lumina
     private:
 
         ImGuizmo::OPERATION         GuizmoOp;
+        ImGuizmo::MODE              GuizmoMode;
         
         Entity                      SelectedEntity;
         Entity                      CopiedEntity;
@@ -120,4 +131,5 @@ namespace Lumina
         TQueue<Entity>              EntityDestroyRequests;
         TVector<FPropertyTable*>    PropertyTables;
     };
+    
 }

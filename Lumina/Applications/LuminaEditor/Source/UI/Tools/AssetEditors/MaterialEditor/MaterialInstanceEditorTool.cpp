@@ -7,7 +7,7 @@
 #include "Core/Object/Cast.h"
 #include "glm/gtc/type_ptr.inl"
 #include "Renderer/RenderContext.h"
-#include "Renderer/RenderManager.h"
+#include "Renderer/RHIGlobals.h"
 #include "Scene/SceneManager.h"
 #include "scene/entity/components/lightcomponent.h"
 #include "scene/entity/components/staticmeshcomponent.h"
@@ -43,7 +43,7 @@ namespace Lumina
         {
             PropertyTable.DrawTree();
         
-            ICommandList* CommandList = Cxt.GetSubsystem<FRenderManager>()->GetRenderContext()->GetCommandList(ECommandQueue::Graphics);
+            ICommandList* CommandList = GRenderContext->GetCommandList(ECommandQueue::Graphics);
         
             CMaterialInstance* Instance = Cast<CMaterialInstance>(Asset.Get());
             if (!Instance || !Instance->Material.IsValid())

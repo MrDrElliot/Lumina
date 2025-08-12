@@ -1,11 +1,12 @@
 ﻿#pragma once
 #include "Component.h"
+#include "Core/Object/ManualReflectTypes.h"
 #include "InterpolatingMovementComponent.generated.h"
 
 namespace Lumina
 {
     LUM_STRUCT()
-    struct LUMINA_API SInterpolatingMovementComponent : public SEntityComponent
+    struct LUMINA_API SInterpolatingMovementComponent : SEntityComponent
     {
         GENERATED_BODY()
         ENTITY_COMPONENT()
@@ -23,5 +24,6 @@ namespace Lumina
         bool bForward = true;
     };
 
-    DECLARE_ENTITY_COMPONENT(SInterpolatingMovementComponent)
+    REGISTER_ENTITY_COMPONENT(SInterpolatingMovementComponent);
+
 }

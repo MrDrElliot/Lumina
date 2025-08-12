@@ -8,6 +8,7 @@
 #include "Platform/Platform.h"
 #include "tracy/TracyC.h"
 
+#define LUMINA_RPMALLOC 1
 
 #define LUMINA_PROFILE_ALLOC(p, size) TracyCAllocS(p, size, 12)
 #define LUMINA_PROFILE_FREE(p) TracyCFreeS(p, 12)
@@ -32,7 +33,7 @@ namespace Lumina::Memory
     }
     
     template <typename T>
-    inline void Memzero(T* ptr)
+    void Memzero(T* ptr)
     {
         memset(ptr, 0, sizeof(T));
     }
@@ -43,27 +44,30 @@ namespace Lumina::Memory
     }
 
     template <typename T>
-    inline bool IsAligned(T const* p)
+    bool IsAligned(T const* p)
     {
         return (reinterpret_cast<uintptr_t>(p) % alignof( T )) == 0;
     }
 
     LUMINA_API inline void CustomAssert(const char* pMessage)
     {
-        const char* IgnorePrefix = "Memory leak detected";
-        if (std::strncmp(pMessage, IgnorePrefix, std::strlen(IgnorePrefix)) == 0)
+#if 0
+        if (Logging::IsInitialized())
         {
-            return;
+            LOG_CRITICAL("[Memory] - ", pMessage);
         }
-
-        std::cout << pMessage << "\n";
+        else
+        {
+            std::cout << "[Memory Error] - " << pMessage << "\n";
+        }
+#endif
     }
 
     LUMINA_API inline void Initialize()
     {
         if (!GIsMemorySystemInitialized)
         {
-            memset(&GrpmallocConfig, 0, sizeof(rpmalloc_config_t));
+            Memzero(&GrpmallocConfig, sizeof(rpmalloc_config_t));
             GrpmallocConfig.error_callback = &CustomAssert;
 
             rpmalloc_initialize_config(&GrpmallocConfig);
@@ -75,6 +79,16 @@ namespace Lumina::Memory
 
     LUMINA_API inline void Shutdown()
     {
+        rpmalloc_global_statistics_t stats;
+        rpmalloc_global_statistics(&stats);
+        
+        std::cout << "[Lumina] - Memory System Shutdown with " << stats.mapped << " bytes.\n";
+        
+        if (rpmalloc_is_thread_initialized())
+        {
+            rpmalloc_thread_finalize(1);
+        }
+
         GIsMemorySystemInitialized = false;
         rpmalloc_finalize();
     }
@@ -87,12 +101,12 @@ namespace Lumina::Memory
         rpmalloc_thread_initialize();
     }
 
-    LUMINA_API inline bool IsThreadHeapInitialized()
+    LUMINA_API NODISCARD inline bool IsThreadHeapInitialized()
     {
         return rpmalloc_is_thread_initialized();
     }
 
-    LUMINA_API inline void ShutdownThreadHeap()
+    LUMINA_API NODISCARD inline void ShutdownThreadHeap()
     {
         rpmalloc_thread_finalize(1);
     }
@@ -146,7 +160,7 @@ namespace Lumina::Memory
         return stats.unmapped_total;
     }
 
-    LUMINA_API inline SIZE_T GetActualAlignment(size_t size, size_t alignment)
+    LUMINA_API NODISCARD inline SIZE_T GetActualAlignment(size_t size, size_t alignment)
     {
         // If alignment is 0 (DEFAULT_ALIGNMENT), pick based on size:
         // 8-byte alignment for small blocks (<16), otherwise 16-byte
@@ -159,30 +173,7 @@ namespace Lumina::Memory
         SIZE_T defaultAlignment = (size < 16) ? 8 : 16;
         SIZE_T Align = (alignment < defaultAlignment) ? defaultAlignment : (alignment);
 
-        return Lumina::Math::Max<SIZE_T>(Align, alignment);
-    }
-
-    LUMINA_API NODISCARD inline void* Malloc(size_t size, size_t alignment = DEFAULT_ALIGNMENT)
-    {
-        Assert(size != 0)
-
-        if (UNLIKELY(!GIsMemorySystemInitialized))
-        {
-            Memory::Initialize();
-        }
-
-        if (UNLIKELY(!IsThreadHeapInitialized()))
-        {
-            InitializeThreadHeap();
-        }
-
-        SIZE_T ActualAlignment = GetActualAlignment(size, alignment);
-        void* pMemory = rpaligned_alloc(ActualAlignment, size);
-
-        Assert(IsAligned(pMemory, ActualAlignment))
-
-        LUMINA_PROFILE_ALLOC(pMemory, size);
-        return pMemory;
+        return Align;
     }
 
     LUMINA_API NODISCARD inline void Memcpy(void* Destination, void* Source, uint64 SrcSize)
@@ -197,18 +188,66 @@ namespace Lumina::Memory
         Assert(Destination != nullptr)
     }
 
-    LUMINA_API NODISCARD inline void* Realloc(void* pMemory, size_t newSize, size_t originalAlignment = DEFAULT_ALIGNMENT)
+    LUMINA_API NODISCARD inline void* Malloc(size_t size, size_t alignment = DEFAULT_ALIGNMENT)
     {
-        void* pReallocatedMemory = rprealloc(pMemory, newSize);
+#if LUMINA_RPMALLOC
+        Assert(size != 0)
+
+        if (UNLIKELY(!GIsMemorySystemInitialized))
+        {
+            Initialize();
+        }
+
+        if (UNLIKELY(!IsThreadHeapInitialized()))
+        {
+            InitializeThreadHeap();
+        }
+
+        SIZE_T ActualAlignment = GetActualAlignment(size, alignment);
+        void* pMemory = rpaligned_alloc(ActualAlignment, size);
+        
+        Assert(pMemory)
+        Assert(IsAligned(pMemory, ActualAlignment))
+
+        LUMINA_PROFILE_ALLOC(pMemory, size);
+#else
+        SIZE_T ActualAlignment = GetActualAlignment(size, alignment);
+        void* pMemory = _aligned_malloc(size, ActualAlignment);
+        Assert(IsAligned(pMemory, ActualAlignment))
+        LUMINA_PROFILE_ALLOC(pMemory, size);
+#endif
+
+        return pMemory;
+    }
+    
+    LUMINA_API NODISCARD inline void* Realloc(void* Memory, size_t NewSize, size_t OriginalAlignment = DEFAULT_ALIGNMENT)
+    {
+        SIZE_T ActualAlignment = GetActualAlignment(NewSize, OriginalAlignment);
+        
+#if LUMINA_RPMALLOC
+        void* pReallocatedMemory = rpaligned_realloc(Memory, ActualAlignment, NewSize, 0, 0);
         Assert(pReallocatedMemory != nullptr)
+
+#else
+        void* pReallocatedMemory = _aligned_realloc(Memory, NewSize, ActualAlignment);
+        Assert(pReallocatedMemory != nullptr)
+#endif
+        
         return pReallocatedMemory;
+        
     }
 
     LUMINA_API inline void Free(void*& Memory)
     {
+#if LUMINA_RPMALLOC
         LUMINA_PROFILE_FREE(Memory);
         rpfree(Memory);
         Memory = nullptr;
+#else
+        LUMINA_PROFILE_FREE(Memory);
+        _aligned_free(Memory);
+        Memory = nullptr;
+#endif
     }
 
     template< typename T, typename ... ConstructorParams >

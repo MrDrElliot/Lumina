@@ -20,7 +20,7 @@ namespace Lumina::Logging
 	
 
 	/** DO NOT COPY THIS ARRAY. It can become very large and will become incredibly expensive */
-	LUMINA_API const TVector<FConsoleMessage>& GetConsoleLogs();
+	LUMINA_API const TFixedVector<FConsoleMessage, 10000>& GetConsoleLogs();
 	LUMINA_API std::shared_ptr<spdlog::logger> GetLogger();
 	LUMINA_API std::shared_ptr<spdlog::sinks::sink> GetSink();
 	
