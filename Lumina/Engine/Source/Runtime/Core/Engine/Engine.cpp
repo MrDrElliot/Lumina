@@ -1,15 +1,13 @@
 ﻿#include "Engine.h"
 #include "Assets/AssetManager/AssetManager.h"
 #include "Core/Windows/Window.h"
-#include "glfw/glfw3.h"
 #include "Assets/AssetRegistry/AssetRegistry.h"
 #include "Core/Application/Application.h"
 #include "Core/Object/GarbageCollection/GarbageCollector.h"
 #include "Core/Profiler/Profile.h"
 #include "Input/InputSubsystem.h"
 #include "Renderer/RenderContext.h"
-#include "Scene/Scene.h"
-#include "Scene/SceneManager.h"
+#include "World/WorldManager.h"
 #include "Renderer/RenderManager.h"
 #include "Renderer/RenderResource.h"
 #include "Renderer/RHIGlobals.h"
@@ -18,10 +16,9 @@
 
 namespace Lumina
 {
-    LUMINA_API FEngine* GEngine = nullptr;
-
-
-    bool FEngine::Initialize(FApplication* App)
+    LUMINA_API FEngine* GEngine;
+    
+    bool FEngine::Init(FApplication* App)
     {
         //-------------------------------------------------------------------------
         // Initialize core engine state.
@@ -42,16 +39,14 @@ namespace Lumina
         InputSubsystem = EngineSubsystems.AddSubsystem<FInputSubsystem>();
         AssetRegistry = EngineSubsystems.AddSubsystem<FAssetRegistry>();
         AssetManager = EngineSubsystems.AddSubsystem<FAssetManager>();
-        SceneManager = EngineSubsystems.AddSubsystem<FSceneManager>();
+        WorldManager = EngineSubsystems.AddSubsystem<FWorldManager>();
         
         UpdateContext.SubsystemManager = &EngineSubsystems;
 
         #if WITH_DEVELOPMENT_TOOLS
-        CreateDevelopmentTools();
+        DeveloperToolUI = CreateDevelopmentTools();
         DeveloperToolUI->Initialize(UpdateContext);
         #endif
-        
-        PostInitialize();
         
         return true;
     }
@@ -63,9 +58,6 @@ namespace Lumina
         //-------------------------------------------------------------------------
         // Shutdown core engine state.
         //-------------------------------------------------------------------------
-        
-        PreShutdown();
-        
 
         #if WITH_DEVELOPMENT_TOOLS
         DeveloperToolUI->Deinitialize(UpdateContext);
@@ -75,7 +67,7 @@ namespace Lumina
         EngineSubsystems.RemoveSubsystem<FInputSubsystem>();
         EngineSubsystems.RemoveSubsystem<FAssetRegistry>();
         EngineSubsystems.RemoveSubsystem<FAssetManager>();
-        EngineSubsystems.RemoveSubsystem<FSceneManager>();
+        EngineSubsystems.RemoveSubsystem<FWorldManager>();
 
         ShutdownCObjectSystem();
         
@@ -111,10 +103,7 @@ namespace Lumina
             //-------------------------------------------------------------------
             {
                 LUMINA_PROFILE_SECTION("FrameStart");
-                UpdateCallback(UpdateContext);
                 
-                SceneManager->StartFrame(UpdateContext);
-
                 InputSubsystem->Update(UpdateContext);
                 
                 #if WITH_DEVELOPMENT_TOOLS
@@ -122,7 +111,7 @@ namespace Lumina
                 DeveloperToolUI->Update(UpdateContext);
                 #endif
                 
-                SceneManager->UpdateScenes(UpdateContext);
+                WorldManager->TickWorlds(UpdateContext);
             }
 
             // Pre Physics
@@ -136,7 +125,7 @@ namespace Lumina
                 DeveloperToolUI->Update(UpdateContext);
                 #endif
                 
-                SceneManager->UpdateScenes(UpdateContext);
+                WorldManager->TickWorlds(UpdateContext);
             }
 
             // During Physics
@@ -150,7 +139,7 @@ namespace Lumina
                 DeveloperToolUI->Update(UpdateContext);
                 #endif
                 
-                SceneManager->UpdateScenes(UpdateContext);
+                WorldManager->TickWorlds(UpdateContext);
             }
 
             // Post Physics
@@ -164,7 +153,7 @@ namespace Lumina
                 DeveloperToolUI->Update(UpdateContext);
                 #endif
 
-                SceneManager->UpdateScenes(UpdateContext);
+                WorldManager->TickWorlds(UpdateContext);
             }
 
             // Paused
@@ -177,7 +166,7 @@ namespace Lumina
                 DeveloperToolUI->Update(UpdateContext);
                 #endif
 
-                SceneManager->UpdateScenes(UpdateContext);
+                WorldManager->TickWorlds(UpdateContext);
             }
 
             // Frame End
@@ -190,11 +179,7 @@ namespace Lumina
                 DeveloperToolUI->Update(UpdateContext);
                 #endif
 
-                SceneManager->UpdateScenes(UpdateContext);
-
-                
-                SceneManager->EndFrame(UpdateContext);
-
+                WorldManager->TickWorlds(UpdateContext);
                 
                 #if WITH_DEVELOPMENT_TOOLS
                 DeveloperToolUI->EndFrame(UpdateContext);
@@ -211,6 +196,7 @@ namespace Lumina
         return true;
     }
 
+    #if WITH_DEVELOPMENT_TOOLS
     void FEngine::DrawDevelopmentTools()
     {
         if (Application->HasAnyFlags(EApplicationFlags::DevelopmentTools))
@@ -218,7 +204,8 @@ namespace Lumina
             Application->RenderDeveloperTools(UpdateContext);
         }
     }
-
+    #endif
+    
     void FEngine::SetEngineViewportSize(const FIntVector2D& InSize)
     {
         EngineViewport->SetSize(InSize);

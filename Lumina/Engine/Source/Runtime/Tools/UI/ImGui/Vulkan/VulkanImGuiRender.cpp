@@ -12,7 +12,6 @@
 #include "Renderer/API/Vulkan/VulkanMacros.h"
 #include "Renderer/API/Vulkan/VulkanRenderContext.h"
 #include "Renderer/API/Vulkan/VulkanSwapchain.h"
-#include "Scene/Scene.h"
 
 namespace Lumina
 {
@@ -148,6 +147,8 @@ namespace Lumina
 			ImGui_ImplVulkan_RenderDrawData(DrawData, CommandList->GetAPIResource<VkCommandBuffer>());
 
 			CommandList->EndRenderPass();
+
+			ReferencedImages.clear();
 		}
     }
 
@@ -325,12 +326,13 @@ namespace Lumina
     ImTextureID FVulkanImGuiRender::GetOrCreateImTexture(FRHIImageRef Image)
     {
     	LUMINA_PROFILE_SCOPE();
-    	
+		
     	if(Image == nullptr)
     	{
     		return 0;
     	}
     	
+		ReferencedImages.push_back(Image);
 	    VkImage VulkanImage = Image->GetAPIResource<VkImage>();
     	VkImageView VulkanImageView = Image->GetAPIResource<VkImageView, EAPIResourceType::ImageView>();
     	

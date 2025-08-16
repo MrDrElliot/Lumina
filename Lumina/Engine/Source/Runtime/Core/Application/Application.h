@@ -45,7 +45,7 @@ namespace Lumina
 
 	protected:
 
-		virtual void CreateEngine() = 0;
+		virtual FEngine* CreateEngine() = 0;
 		
 	private:
 
@@ -64,9 +64,6 @@ namespace Lumina
 		static FApplication*		Instance;
 		
 		uint32						ApplicationFlags = 0;
-
-		FEngine*					Engine;
-		
 	};
 
 	/* Implemented by client */

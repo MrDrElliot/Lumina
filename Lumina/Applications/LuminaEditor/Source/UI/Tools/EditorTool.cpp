@@ -2,20 +2,21 @@
 #include "EditorTool.h"
 #include "imgui_internal.h"
 #include "ToolFlags.h"
-#include "Scene/SceneManager.h"
-#include "Scene/Entity/Components/CameraComponent.h"
-#include "Scene/Entity/Components/EditorComponent.h"
-#include "Scene/Entity/Components/VelocityComponent.h"
-#include "Scene/Subsystems/FCameraManager.h"
+#include "World/Entity/Components/CameraComponent.h"
+#include "World/Entity/Components/EditorComponent.h"
+#include "World/Entity/Components/VelocityComponent.h"
+#include "World/Subsystems/FCameraManager.h"
 #include "TaskSystem/TaskSystem.h"
 #include "Tools/UI/ImGui/ImGuiX.h"
+#include "World/WorldManager.h"
+#include "World/Entity/Systems/DebugCameraEntitySystem.h"
 
 namespace Lumina
 {
-    FEditorTool::FEditorTool(IEditorToolContext* Context, const FString& DisplayName, FScene* InScene)
+    FEditorTool::FEditorTool(IEditorToolContext* Context, const FString& DisplayName, CWorld* InWorld)
         : ToolContext(Context)
         , ToolName(DisplayName)
-        , Scene(InScene)
+        , World(InWorld)
         , EditorEntity()
     {
         ToolFlags |= EEditorToolFlags::Tool_WantsToolbar;
@@ -30,19 +31,23 @@ namespace Lumina
     {
         SetDisplayName(ToolName);
         
-        if (HasScene())
+        if (HasWorld())
         {
-            EditorEntity = Scene->CreateEntity(FTransform(), FName("Editor Camera"));
+            GEngine->GetEngineSubsystem<FWorldManager>()->AddWorld(World);
+        
+            World->InitializeWorld();
+            World->RegisterSystem(NewObject<CDebugCameraEntitySystem>());
+            
+            EditorEntity = World->ConstructEntity("Editor Entity");
             EditorEntity.AddComponent<SCameraComponent>();
             EditorEntity.AddComponent<SEditorComponent>();
             EditorEntity.AddComponent<SVelocityComponent>().Speed = 50.0f;
             EditorEntity.AddComponent<SHiddenComponent>();
             EditorEntity.GetComponent<STransformComponent>().SetLocation(glm::vec3(0.0f, 0.0f, 2.0f));
             
+            World->SetActiveCamera(EditorEntity);
             
-            Scene->GetSceneCameraManager()->SetActiveCamera(EditorEntity);
-            
-            FToolWindow* NewWindow = CreateToolWindow(ViewportWindowName, [] (const FUpdateContext& Contxt, bool bIsFocused)
+            FToolWindow* NewWindow = CreateToolWindow(ViewportWindowName, [] (const FUpdateContext&, bool)
             {
                 //... Intentionally blank.
             });
@@ -62,9 +67,10 @@ namespace Lumina
             Memory::Delete(Window);
         }
         
-        if (HasScene())
+        if (HasWorld())
         {
-            UpdateContext.GetSubsystem<FSceneManager>()->DestroyScene(Scene);
+            //UpdateContext.GetSubsystem<FWorldManager>()->RemoveWorld(World);
+            //World.MarkGarbage();
         }
         
         ToolWindows.clear();
@@ -150,8 +156,15 @@ namespace Lumina
             IM_COL32_WHITE
         );
 
+        const ImGuiStyle& ImStyle = ImGui::GetStyle();
+
+        ImGui::Dummy(ImStyle.ItemSpacing);
+        ImGui::SetCursorPos(ImStyle.ItemSpacing);
         DrawViewportOverlayElements(UpdateContext, ViewportTexture, ViewportSize);
-        
+
+        ImGui::Dummy(ImStyle.ItemSpacing);
+        ImGui::SetCursorPos(ImStyle.ItemSpacing);
+        DrawViewportToolbar(UpdateContext);
         
         if (ImGuiDockNode* pDockNode = ImGui::GetWindowDockNode())
         {
@@ -161,6 +174,38 @@ namespace Lumina
         }
 
         return false;
+    }
+
+    void FEditorTool::DrawViewportToolbar(const FUpdateContext& UpdateContext)
+    {
+        
+    }
+
+    bool FEditorTool::BeginViewportToolbarGroup(char const* GroupID, ImVec2 GroupSize, const ImVec2& Padding)
+    {
+        ImGui::PushStyleColor(ImGuiCol_ChildBg, 0xFF2C2C2C);
+        ImGui::PushStyleColor(ImGuiCol_Header, 0xFF2C2C2C);
+        ImGui::PushStyleColor(ImGuiCol_FrameBg, 0xFF2C2C2C);
+        ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, 0xFF303030);
+        ImGui::PushStyleColor(ImGuiCol_FrameBgActive, 0xFF3A3A3A);
+
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, Padding);
+        ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 4.0f);
+
+        // Adjust "use available" height to default toolbar height
+        if (GroupSize.y <= 0)
+        {
+            GroupSize.y = ImGui::GetFrameHeight();
+        }
+
+        return ImGui::BeginChild(GroupID, GroupSize, ImGuiChildFlags_AlwaysUseWindowPadding, ImGuiWindowFlags_NoScrollbar);
+    }
+
+    void FEditorTool::EndViewportToolbarGroup()
+    {
+        ImGui::EndChild();
+        ImGui::PopStyleVar(2);
+        ImGui::PopStyleColor(5);
     }
 
     FEditorTool::FToolWindow* FEditorTool::CreateToolWindow(const FString& InName, const TFunction<void(const FUpdateContext&, bool)>& DrawFunction, const ImVec2& WindowPadding, bool DisableScrolling)

@@ -36,6 +36,7 @@ namespace Lumina
 		TVector<FString> ClassNames;
 	};
 	
+	
 	class LUMINA_API FAssetRegistry final : public ISubsystem
 	{
 	public:
@@ -57,17 +58,12 @@ namespace Lumina
 
 		void AddAsset(const FAssetData& Data);
 		void ClearAssets();
-
+		
+		FMutex						DataGatheringMutex;
+		
 		TSet<FName>					CorruptedAssets;
 		
-		std::condition_variable		BuildCV;
-		bool bIsBuildingAssets =	false;
-		bool bBuildQueued =			false;
-
-		FMutex						BuildMutex;
-		FMutex						AssetsMutex;
 		TVector<FAssetData> 		Assets;
 		THashMap<FName, FAssetData> AssetPathMap;
-		FThread						ScanThread;
 	};
 }

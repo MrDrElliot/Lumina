@@ -116,7 +116,8 @@ namespace Lumina
         {
             return Handle.IsValid();
         }
-        
+
+        bool operator==(ReferencedType* Other) const { return Get() == Other; }
         bool operator==(const TObjectHandle& Other) const { return Handle == Other.Handle; }
         bool operator!=(const TObjectHandle& Other) const { return !(*this == Other); }
 
@@ -131,6 +132,11 @@ namespace Lumina
             return (ReferencedType*)(GObjectArray.Resolve(Handle));
         }
 
+        void MarkGarbage()
+        {
+            Get()->MarkGarbage();
+            Handle = FObjectHandle();
+        }
         
         bool IsValid() const
         {

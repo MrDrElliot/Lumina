@@ -79,6 +79,7 @@ namespace Lumina
         
         void CommitBarriers() override;
         void SetResourceStatesForBindingSet(FRHIBindingSet* BindingSet) override;
+        void SetResourceStateForRenderPass(const FRenderPassBeginInfo& PassInfo) override;
 
         void AddMarker(const char* Name, const FColor& Color = FColor::Red) override;
         void PopMarker() override;

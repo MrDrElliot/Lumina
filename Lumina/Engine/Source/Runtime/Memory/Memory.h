@@ -83,11 +83,6 @@ namespace Lumina::Memory
         rpmalloc_global_statistics(&stats);
         
         std::cout << "[Lumina] - Memory System Shutdown with " << stats.mapped << " bytes.\n";
-        
-        if (rpmalloc_is_thread_initialized())
-        {
-            rpmalloc_thread_finalize(1);
-        }
 
         GIsMemorySystemInitialized = false;
         rpmalloc_finalize();

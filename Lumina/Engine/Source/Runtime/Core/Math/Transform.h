@@ -1,8 +1,8 @@
 #pragma once
-
+#include <spdlog/fmt/fmt.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/quaternion.hpp>  // For quaternions
+#include <glm/gtc/quaternion.hpp>
 
 namespace Lumina
 {
@@ -106,7 +106,7 @@ namespace Lumina
 }
 
 template <>
-struct fmt::formatter<Lumina::FTransform>\
+struct fmt::formatter<Lumina::FTransform>
 {
     constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin())
     {

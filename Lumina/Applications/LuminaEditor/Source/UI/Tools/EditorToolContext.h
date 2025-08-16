@@ -1,5 +1,7 @@
 #pragma once
 #include "imgui.h"
+#include "Core/UpdateContext.h"
+#include "Core/Functional/Function.h"
 #include "Platform/WindowsPlatform.h"
 
 namespace Lumina
@@ -18,7 +20,7 @@ namespace Lumina
         IEditorToolContext() = default;
         virtual ~IEditorToolContext() = default;
 
-        FORCEINLINE FSubsystemManager* GetSubsystemManager() const { return SubsystemManager; }
+        FSubsystemManager* GetSubsystemManager() const { return SubsystemManager; }
 
         virtual void PushModal(const FString& Title, ImVec2 Size, TFunction<bool(const FUpdateContext&)> DrawFunction) = 0;
 
@@ -26,6 +28,8 @@ namespace Lumina
 
         /** Called just before an asset is marked for destroy, mostly to close any asset editors that may be using it */
         virtual void OnDestroyAsset(CObject* InAsset) = 0;
+
+        
 
     protected:
     

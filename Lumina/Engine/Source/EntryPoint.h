@@ -28,7 +28,6 @@ inline int GuardedMain(int argc, char** argv)
 		Result = App->Run(argc, argv);
 	}
 	
-	
 	return Result;
 }
 

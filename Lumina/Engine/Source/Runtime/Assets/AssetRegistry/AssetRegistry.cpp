@@ -24,13 +24,9 @@ namespace Lumina
 
     void FAssetRegistry::BuildAssetDictionary()
     {
-        std::unique_lock Lock(BuildMutex);
-        BuildCV.wait(Lock, [this] { return !bIsBuildingAssets; });
-
-        bIsBuildingAssets = true;
-        
         ClearAssets();
-
+        
+        TVector<FString> PackagePaths;
         for (const auto& [ID, Path] : Paths::GetMountedPaths())
         {
             FTaskSystem::Get()->ScheduleLambda(1, [this, Path](uint32, uint32, uint32)
@@ -50,11 +46,10 @@ namespace Lumina
                         if (Package == nullptr)
                         {
                             TVector<uint8> PackageData;
-                            if (!FileHelper::LoadFileToArray(PackageData, Data.Path))
+                            if (!FileHelper::LoadFileToArray(PackageData, Data.Path, 0, sizeof(FPackageHeader)))
                             {
                                 LOG_ERROR("[AssetRegistry] - Invalid package found {0}", Data.Path);
                                 {
-                                    FScopeLock Lock(AssetsMutex);
                                     CorruptedAssets.emplace(Data.Path);
                                 }
                                 continue;
@@ -69,7 +64,6 @@ namespace Lumina
                             {
                                 LOG_ERROR("[AssetRegistry] - Invalid package found {0}", Data.Path);
                                 {
-                                    FScopeLock Lock(AssetsMutex);
                                     CorruptedAssets.emplace(Data.Path);
                                 }
                                 continue;
@@ -84,12 +78,6 @@ namespace Lumina
                         AddAsset(Data);
                     }
                 }
-            
-                {
-                    std::lock_guard Guard(BuildMutex);
-                    bIsBuildingAssets = false;
-                }
-                BuildCV.notify_all();
             });
         }
     }
@@ -124,14 +112,14 @@ namespace Lumina
 
     void FAssetRegistry::AddAsset(const FAssetData& Data)
     {
-        FScopeLock Lock(AssetsMutex);
+        FScopeLock Lock(DataGatheringMutex);
         Assets.push_back(Data);
         AssetPathMap.insert_or_assign(FName(Data.Path), Data);
     }
 
     void FAssetRegistry::ClearAssets()
     {
-        FScopeLock Lock(AssetsMutex);
+        FScopeLock Lock(DataGatheringMutex);
         Assets.clear();
         AssetPathMap.clear();
     }

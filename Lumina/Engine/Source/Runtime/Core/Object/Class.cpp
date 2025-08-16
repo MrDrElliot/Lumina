@@ -41,20 +41,7 @@ namespace Lumina
     IMPLEMENT_INTRINSIC_CLASS(CClass, CStruct, LUMINA_API)
 
     //-----------------------------------------------------------------------------------------------
-
-    void CClass::SerializeClassProperties(FArchive& Ar, void* Data)
-    {
-        FProperty* Current = LinkedProperty;
-        while (Current != nullptr)
-        {
-            Ar << Current->Name;
-            
-            void* ValuePtr = Current->GetValuePtr<void>(Data);
-            Current->Serialize(Ar, ValuePtr);
-        
-            Current = (FProperty*)Current->Next;
-        }
-    }
+    
 
     CObject* CClass::CreateDefaultObject()
     {

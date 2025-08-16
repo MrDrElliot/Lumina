@@ -11,11 +11,11 @@
 
 namespace Lumina
 {
+    class FWorldManager;
     class FAssetRegistry;
     class FRenderManager;
     class IImGuiRenderer;
     class IDevelopmentToolUI;
-    class FSceneManager;
     class FAssetManager;
     class FInputSubsystem;
     class FApplication;
@@ -33,28 +33,25 @@ namespace Lumina
         static TMulticastDelegate<void>		PreEngineShutdown;
     };
     
-    class LUMINA_API FEngine
+    class FEngine
     {
     public:
         
         FEngine() = default;
         virtual ~FEngine() = default;
 
-        bool Initialize(FApplication* App);
-        bool Shutdown();
-        bool Update();
+        LUMINA_API virtual bool Init(FApplication* App);
+        LUMINA_API virtual bool Shutdown();
+        LUMINA_API virtual bool Update();
 
-        virtual void CreateDevelopmentTools() = 0;
-        virtual void DrawDevelopmentTools();
-
-        const FRHIViewportRef& GetEngineViewport() const { return EngineViewport; }
-
-        void SetUpdateCallback(TFunction<void(const FUpdateContext&)> Callback) { UpdateCallback = Callback; }
-
-        void SetEngineViewportSize(const FIntVector2D& InSize);
+        LUMINA_API const FRHIViewportRef& GetEngineViewport() const { return EngineViewport; }
+        
+        LUMINA_API void SetEngineViewportSize(const FIntVector2D& InSize);
 
         #if WITH_DEVELOPMENT_TOOLS
-        IDevelopmentToolUI* GetDevelopmentToolsUI() const { return DeveloperToolUI; }
+        LUMINA_API virtual IDevelopmentToolUI* CreateDevelopmentTools() = 0;
+        LUMINA_API virtual void DrawDevelopmentTools();
+        LUMINA_API IDevelopmentToolUI* GetDevelopmentToolsUI() const { return DeveloperToolUI; }
         #endif
 
         template<typename T>
@@ -62,15 +59,8 @@ namespace Lumina
         {
             return EngineSubsystems.GetSubsystem<T>();
         }
-        
+    
     protected:
-
-        virtual void PostInitialize() { }
-        virtual void PreShutdown() { }
-
-    protected:
-
-        TFunction<void(const FUpdateContext&)>       UpdateCallback;
         
         FUpdateContext          UpdateContext;
         FApplication*           Application =           nullptr;
@@ -83,12 +73,12 @@ namespace Lumina
         FInputSubsystem*        InputSubsystem =        nullptr;
         FAssetManager*          AssetManager =          nullptr;
         FAssetRegistry*         AssetRegistry =         nullptr;
-        FSceneManager*          SceneManager =          nullptr;
+        FWorldManager*          WorldManager =          nullptr;
         FRenderManager*         RenderManager =         nullptr;
 
         FRHIViewportRef         EngineViewport;
     };
-
-    extern LUMINA_API FEngine* GEngine;
+    
+    LUMINA_API extern FEngine* GEngine;
 
 }

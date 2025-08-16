@@ -1,3 +1,6 @@
+
+VULKAN_SDK = os.getenv("VULKAN_SDK")
+
 project "ImGui"
 	kind "StaticLib"
     staticruntime "on"
@@ -16,6 +19,14 @@ project "ImGui"
 		"/W2",
 	}
 
+	includedirs
+	{
+		".",
+		"backends",
+		"%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/glfw/include/",
+		"%{VULKAN_SDK}/Include/",
+	}
+
 	files
 	{
 		"imconfig.h",
@@ -28,17 +39,21 @@ project "ImGui"
 		"imstb_textedit.h",
 		"imstb_truetype.h",
 		"imgui_demo.cpp",
+		"backends/imgui_impl_glfw.h",
+		"backends/imgui_impl_glfw.cpp",
+		"backends/imgui_impl_vulkan.h",
+		"backends/imgui_impl_vulkan.cpp",
         "imgui_tables.cpp",
 	}
 
 	filter "system:windows"
 		systemversion "latest"
-		cppdialect "C++17"
+		cppdialect "C++20"
 
 	filter "system:linux"
 		pic "On"
 		systemversion "latest"
-		cppdialect "C++17"
+		cppdialect "C++20"
 
 	filter "configurations:Debug"
 		runtime "Debug"

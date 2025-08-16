@@ -15,9 +15,8 @@ namespace Lumina
     {
     public:
 
-        void CreateDevelopmentTools() override;
+        IDevelopmentToolUI* CreateDevelopmentTools() override;
     
-    private:
     };
     
 
@@ -28,7 +27,7 @@ namespace Lumina
         LuminaEditor();
 
         bool Initialize(int argc, char** argv) override;
-        void CreateEngine() override;
+        FEngine* CreateEngine() override;
         
         bool ApplicationLoop() override;
         

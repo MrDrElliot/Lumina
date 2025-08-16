@@ -7,15 +7,14 @@
 #include "Memory/Memory.h"
 #include "Project/Project.h"
 #include "Renderer/RenderContext.h"
-#include "Scene/SceneManager.h"
-#include "Scene/Entity/Systems/DebugCameraEntitySystem.h"
+#include "World/Entity/Systems/DebugCameraEntitySystem.h"
 #include "Tools/ConsoleLogEditorTool.h"
 #include "Tools/ContentBrowserEditorTool.h"
 #include "Tools/EditorTool.h"
 #include "Tools/EditorToolModal.h"
 #include "Tools/UI/ImGui/ImGuiDesignIcons.h"
 #include "Tools/UI/ImGui/ImGuiX.h"
-#include "Tools/EntitySceneEditorTool.h"
+#include "Tools/WorldEditorTool.h"
 #include "Tools/AssetEditors/MaterialEditor/MaterialEditorTool.h"
 #include "Tools/UI/ImGui/imfilebrowser.h"
 #include "imnodes/imnodes.h"
@@ -25,6 +24,7 @@
 #include "Assets/AssetTypes/Material/MaterialInstance.h"
 #include "Assets/AssetTypes/Mesh/StaticMesh/StaticMesh.h"
 #include "Assets/AssetTypes/Textures/Texture.h"
+#include "Core/Object/Cast.h"
 #include "Core/Object/ObjectIterator.h"
 #include "Core/Object/Package/Package.h"
 #include "Core/Profiler/Profile.h"
@@ -33,13 +33,14 @@
 #include "Properties/Customizations/CoreTypeCustomization.h"
 #include "Renderer/RenderManager.h"
 #include "Renderer/RHIGlobals.h"
-#include "Scene/SceneRenderer.h"
+#include "Tools/GamePreviewTool.h"
+#include "World/SceneRenderer.h"
 #include "Tools/AssetEditors/MaterialEditor/MaterialInstanceEditorTool.h"
 #include "Tools/AssetEditors/MeshEditor/MeshEditorTool.h"
 #include "Tools/AssetEditors/TextureEditor/TextureEditorTool.h"
-#include "Tools/Dialogs/Dialogs.h"
 #include "Tools/Import/ImportHelpers.h"
 #include "Tools/UI/ImGui/ImGuiRenderer.h"
+#include "World/WorldManager.h"
 
 namespace Lumina
 {
@@ -114,16 +115,27 @@ namespace Lumina
 
         SubsystemManager = UpdateContext.GetSubsystemManager();
         AssetRegistry = UpdateContext.GetSubsystem<FAssetRegistry>();
-        SceneManager = UpdateContext.GetSubsystem<FSceneManager>();
 
         
-        FScene* NewScene = SceneManager->CreateScene(ESceneType::Tool);
-        NewScene->RegisterSystem(NewObject<CDebugCameraEntitySystem>());
+        CWorld* NewWorld = NewObject<CWorld>();
+        WorldEditorTool = CreateTool<FWorldEditorTool>(this, NewWorld);
         
-        SceneEditorTool = CreateTool<FEntitySceneEditorTool>(this, NewScene);
+        WorldEditorTool->GetOnPreviewStartRequestedDelegate().AddTFunction([this]
+        {
+            CWorld* PreviewWorld = NewObject<CWorld>();
+
+            GamePreviewTool = CreateTool<FGamePreviewTool>(this, PreviewWorld);
+            WorldEditorTool->NotifyPlayInEditorStart();
+        });
+
+        WorldEditorTool->GetOnPreviewStopRequestedDelegate().AddTFunction([this]
+        {
+            ToolsPendingDestroy.push(GamePreviewTool);
+        });
+
+        
         ConsoleLogTool = CreateTool<FConsoleLogEditorTool>(this);
         ContentBrowser = CreateTool<FContentBrowserEditorTool>(this);
-
     }
 
     void FEditorUI::Deinitialize(const FUpdateContext& UpdateContext)
@@ -139,8 +151,7 @@ namespace Lumina
         MaterialIcon.SafeRelease();
         CorruptIcon.SafeRelease();
         
-        SceneManager = nullptr;
-        SceneEditorTool = nullptr;
+        WorldEditorTool = nullptr;
         ConsoleLogTool = nullptr;
 
         ImNodes::DestroyContext();
@@ -198,7 +209,7 @@ namespace Lumina
                 ImGui::DockBuilderFinish(DockspaceID);
 
                 // Dock windows into appropriate sections
-                ImGui::DockBuilderDockWindow(SceneEditorTool->GetToolName().c_str(), topDockID);
+                ImGui::DockBuilderDockWindow(WorldEditorTool->GetToolName().c_str(), topDockID);
                 ImGui::DockBuilderDockWindow(ConsoleLogTool->GetToolName().c_str(), bottomLeftDockID);
                 ImGui::DockBuilderDockWindow(ContentBrowser->GetToolName().c_str(), bottomRightDockID);
             }
@@ -244,7 +255,7 @@ namespace Lumina
 
         if (bDearImGuiDemoWindowOpen)
         {
-            ImGui::ShowDemoWindow(&bDearImGuiDemoWindowOpen);
+            //ImGui::ShowDemoWindow(&bDearImGuiDemoWindowOpen);
         }
 
         if (bShowRenderDebug)
@@ -410,7 +421,7 @@ namespace Lumina
         LUMINA_PROFILE_SCOPE();
         for (FEditorTool* Tool : EditorTools)
         {
-            if (Tool->HasScene())
+            if (Tool->HasWorld())
             {
                 Tool->SceneUpdate(UpdateContext);
             }
@@ -436,6 +447,12 @@ namespace Lumina
                 break;
             }
         }
+
+        if (Tool == GamePreviewTool)
+        {
+            WorldEditorTool->NotifyPlayInEditorStop();
+            GamePreviewTool = nullptr;
+        }
         
         Tool->Deinitialize(UpdateContext);
         Memory::Delete(Tool);
@@ -445,7 +462,6 @@ namespace Lumina
     {
         ModalManager.CreateModalDialogue(Title, Size, DrawFunction);
     }
-
     
     void FEditorUI::OpenAssetEditor(CObject* InAsset)
     {
@@ -468,6 +484,10 @@ namespace Lumina
             else if (InAsset->IsA<CMaterialInstance>())
             {
                 NewTool = CreateTool<FMaterialInstanceEditorTool>(this, InAsset);
+            }
+            else if (InAsset->IsA<CWorld>())
+            {
+                WorldEditorTool->SetWorld(Cast<CWorld>(InAsset));
             }
             
             ActiveAssetTools.insert_or_assign(InAsset, NewTool);
@@ -544,7 +564,7 @@ namespace Lumina
         Assert(TopLevelDockspaceID != 0)
 
         bool bIsToolStillOpen = true;
-        bool* bIsToolOpen = (EditorTool == SceneEditorTool) ? nullptr : &bIsToolStillOpen; // Prevent closing the map-editor editor tool
+        bool* bIsToolOpen = (EditorTool == WorldEditorTool) ? nullptr : &bIsToolStillOpen; // Prevent closing the map-editor editor tool
         
         // Top level editors can only be docked with each others
         ImGui::SetNextWindowClass(&EditorWindowClass);
@@ -697,9 +717,9 @@ namespace Lumina
         Tool->bViewportFocused = false;
         Tool->bViewportHovered = false;
 
-        if (Tool->HasScene())
+        if (Tool->HasWorld())
         {
-            Tool->GetScene()->SetPaused(!bVisible);
+            Tool->GetWorld()->SetActive(bVisible);
         }
         
         if (!bVisible)
@@ -778,8 +798,7 @@ namespace Lumina
                 
                     if (DrawViewportWindow)
                     {
-                        FScene* Scene = Tool->GetScene();
-                        FSceneRenderer* SceneRenderer = UpdateContext.GetSubsystem<FSceneManager>()->GetSceneRendererForScene(Scene);
+                        FSceneRenderer* SceneRenderer = Tool->GetWorld()->GetRenderer();
                         
                         FRHIImageRef PositionTarget = SceneRenderer->GetGBuffer().Normals;
 
@@ -860,7 +879,7 @@ namespace Lumina
             }
         }
 
-        if (Tool->HasScene())
+        if (Tool->HasWorld())
         {
             Tool->SetEditorCameraEnabled(Tool->bViewportFocused);
         }

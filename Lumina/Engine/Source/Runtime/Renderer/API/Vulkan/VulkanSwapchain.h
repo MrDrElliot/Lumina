@@ -47,11 +47,11 @@ namespace Lumina
         uint32                                  CurrentImageIndex = 0;
         
         bool                                    bNeedsResize = false;
-        VkSurfaceKHR                            Surface = nullptr;
+        VkSurfaceKHR                            Surface = VK_NULL_HANDLE;
         VkFormat                                Format = VK_FORMAT_MAX_ENUM;
         FIntVector2D                            SwapchainExtent;
                                                 
-        VkSwapchainKHR                          Swapchain = nullptr;
+        VkSwapchainKHR                          Swapchain = VK_NULL_HANDLE;
         VkSurfaceFormatKHR                      SurfaceFormat = {};
         VkPresentModeKHR                        CurrentPresentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
         

@@ -10,12 +10,18 @@ layout(set = 1, binding = 1) uniform sampler2D uNormal;
 layout(set = 1, binding = 2) uniform sampler2D uNoise;
 
 const int SSAO_KERNEL_SIZE = 32;
-const float SSAO_RADIUS = 0.3;
 
 layout(set = 1, binding = 3) uniform SSBOKernal
 {
     vec4 Samples[SSAO_KERNEL_SIZE];
 } uSSAOKernal;
+
+layout(set = 1, binding = 4) uniform SSAOInfo
+{
+    float Radius;
+    float Intensity;
+    float Power;
+} uSSAOInfo;
 
 layout(location = 0) in vec2 inUV;
 
@@ -44,7 +50,7 @@ void main()
     {
         // Get sample position.
         vec3 SamplerPos = TBN * uSSAOKernal.Samples[i].xyz; // Tangent-Space to View-Space
-        SamplerPos = FragPos + SamplerPos * SSAO_RADIUS;
+        SamplerPos = FragPos + SamplerPos * uSSAOInfo.Radius;
         
         // Get sample position in screen space.
         vec4 Offset = vec4(SamplerPos, 1.0f);
@@ -55,13 +61,13 @@ void main()
 
         float SampleDepth = texture(uPositionDepth, Offset.xy).z;
         
-        float RangeCheck = smoothstep(0.0f, 1.0f, SSAO_RADIUS / abs(FragPos.z - SampleDepth));
+        float RangeCheck = smoothstep(0.0f, 1.0f, uSSAOInfo.Radius / abs(FragPos.z - SampleDepth));
         
         // In view-space, greater Z values are closer to the camera.
         Occlusion += (SampleDepth >= SamplerPos.z - Bias ? 1.0f : 0.0f) * RangeCheck;
     }
     
-    float Power = 1.5f;
+    float Power = uSSAOInfo.Power;
     Occlusion = 1.0 - (Occlusion / float(SSAO_KERNEL_SIZE));
     outFragColor = pow(Occlusion, Power);
 }

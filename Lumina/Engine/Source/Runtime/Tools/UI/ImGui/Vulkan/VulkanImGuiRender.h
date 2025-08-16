@@ -31,6 +31,7 @@ namespace Lumina
         FVulkanRenderContext* VulkanRenderContext = nullptr;
 
         THashMap<VkImage, VkDescriptorSet> ImageCache;
+        TFixedVector<FRHIImageRef, 10> ReferencedImages;
     };
     
 }

@@ -24,8 +24,6 @@
 #include "Core/Engine/Engine.h"
 #include "Core/Math/Alignment.h"
 #include "VulkanRenderContext.h"
-
-#include "Renderer/RenderManager.h"
 #include "Renderer/RHIStaticStates.h"
 #include "src/VkBootstrap.h"
 
@@ -370,7 +368,7 @@ namespace Lumina
     {
     }
 
-    void FVulkanRenderContext::Initialize()
+    bool FVulkanRenderContext::Initialize()
     {
         LUMINA_PROFILE_SCOPE();
         
@@ -382,6 +380,7 @@ namespace Lumina
         vkb::InstanceBuilder Builder;
         auto InstBuilder = Builder
         .set_app_name("Lumina Engine")
+#if LE_DEBUG
         //.add_validation_feature_enable(VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT)
         .add_validation_feature_enable(VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT)
         //.add_validation_feature_enable(VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT)
@@ -392,31 +391,37 @@ namespace Lumina
         .use_default_debug_messenger()
         .set_debug_callback(VkDebugCallback)
         .enable_extension(VK_EXT_DEBUG_UTILS_EXTENSION_NAME)
+#endif
         .require_api_version(1, 3, 0)
         .build();
+
+        if (!InstBuilder.has_value())
+        {
+            LOG_CRITICAL("A critical error occured while trying to create a Vulkan instance");
+            return false;
+        }
 
         VulkanInstance = InstBuilder.value();
         
         DebugUtils.DebugMessenger = InstBuilder->debug_messenger;
-        DebugUtils.DebugUtilsObjectNameEXT = (PFN_vkSetDebugUtilsObjectNameEXT)(vkGetInstanceProcAddr(
-            VulkanInstance, "vkSetDebugUtilsObjectNameEXT"));
-
         
         CreateDevice(InstBuilder.value());
-
         
         LOG_TRACE("Vulkan Render Context - {}", GetDevice()->GetPhysicalDeviceProperties().deviceName);
-        
-        DebugUtils.vkCmdDebugMarkerBeginEXT = (PFN_vkCmdDebugMarkerBeginEXT)vkGetDeviceProcAddr(GetDevice()->GetDevice(), "vkCmdDebugMarkerBeginEXT");
-        DebugUtils.vkCmdDebugMarkerEndEXT = (PFN_vkCmdDebugMarkerEndEXT)vkGetDeviceProcAddr(GetDevice()->GetDevice(), "vkCmdDebugMarkerEndEXT");
+
+
+        DebugUtils.DebugUtilsObjectNameEXT      = (PFN_vkSetDebugUtilsObjectNameEXT)(vkGetInstanceProcAddr(VulkanInstance, "vkSetDebugUtilsObjectNameEXT"));
+        DebugUtils.vkCmdDebugMarkerBeginEXT     = (PFN_vkCmdDebugMarkerBeginEXT)vkGetDeviceProcAddr(GetDevice()->GetDevice(), "vkCmdDebugMarkerBeginEXT");
+        DebugUtils.vkCmdDebugMarkerEndEXT       = (PFN_vkCmdDebugMarkerEndEXT)vkGetDeviceProcAddr(GetDevice()->GetDevice(), "vkCmdDebugMarkerEndEXT");
 
         GraphicsCommandList     = CreateCommandList(FCommandListInfo());
         ComputeCommandList      = CreateCommandList(FCommandListInfo::Compute());
         TransferCommandList     = CreateCommandList(FCommandListInfo::Transfer());
-        
+
         Swapchain = Memory::New<FVulkanSwapchain>();
         Swapchain->CreateSwapchain(VulkanInstance, this, Windowing::GetPrimaryWindowHandle(), Windowing::GetPrimaryWindowHandle()->GetExtent());
 
+        
         ShaderLibrary = MakeRefCount<FShaderLibrary>();
         ShaderCompiler = Memory::New<FSpirVShaderCompiler>();
         ShaderCompiler->Initialize();
@@ -426,6 +431,7 @@ namespace Lumina
         WaitIdle();
         FlushPendingDeletes();
 
+        return true;
     }
 
     void FVulkanRenderContext::Deinitialize()
@@ -455,6 +461,7 @@ namespace Lumina
         func(VulkanInstance, DebugUtils.DebugMessenger, VK_ALLOC_CALLBACK);
 
         SamplerMap.clear();
+        InputLayoutMap.clear();
         
         FlushPendingDeletes();
         IRHIResource::ReleaseAllRHIResources();
@@ -961,11 +968,26 @@ namespace Lumina
 
     FRHIInputLayoutRef FVulkanRenderContext::CreateInputLayout(const FVertexAttributeDesc* AttributeDesc, uint32 Count)
     {
-        return MakeRefCount<FVulkanInputLayout>(AttributeDesc, Count);
+        uint64 Hash = 0;
+        for (uint32 i = 0; i < Count; ++i)
+        {
+            Hash::HashCombine(Hash, Hash::GetHash(AttributeDesc[i]));
+        }
+
+        auto it = InputLayoutMap.find(Hash);
+        if (it != InputLayoutMap.end())
+        {
+            return it->second;
+        }
+
+        auto Layout = MakeRefCount<FVulkanInputLayout>(AttributeDesc, Count);
+        InputLayoutMap.emplace(Hash, Layout);
+        return Layout;
     }
 
     void FVulkanRenderContext::SetVulkanObjectName(FString Name, VkObjectType ObjectType, uint64 Handle)
     {
+        #if LE_DEBUG
         if (DebugUtils.DebugUtilsObjectNameEXT)
         {
             VkDebugUtilsObjectNameInfoEXT NameInfo = {};
@@ -976,6 +998,7 @@ namespace Lumina
 
             DebugUtils.DebugUtilsObjectNameEXT(VulkanDevice->GetDevice(), &NameInfo);
         }
+        #endif
     }
 
     FVulkanRenderContextFunctions& FVulkanRenderContext::GetDebugUtils()

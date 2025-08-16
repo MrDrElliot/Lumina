@@ -39,4 +39,5 @@ namespace Lumina
             return GRenderContext->CreateSampler(Desc);
         }
     };
+    
 }

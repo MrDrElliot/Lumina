@@ -22,7 +22,7 @@ precise invariant gl_Position;
 
 void main()
 {
-    outUV = inUV;
+    outUV = vec2(inUV.x, 1.0 - inUV.y);
     
     mat4 ModelMatrix = GetModelMatrix(gl_InstanceIndex);
     

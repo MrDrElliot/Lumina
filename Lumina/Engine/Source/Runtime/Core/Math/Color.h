@@ -1,5 +1,6 @@
 #pragma once
 #include <algorithm>
+#include "glm/glm.hpp"
 #include <string>
 #include <cmath>
 #include "Core/Serialization/Archiver.h"
@@ -13,6 +14,12 @@ namespace Lumina
         FColor() : R(0.0f), G(0.0f), B(0.0f), A(1.0f) {}
         FColor(float init) : R(init), G(init), B(init), A(init) {}
         FColor(float r, float g, float b, float a = 1.0f) : R(r), G(g), B(b), A(a) {}
+
+
+        operator glm::vec4() const
+        {
+            return glm::vec4(R, G, B, A);
+        }
 
         friend FArchive& operator << (FArchive& Ar, FColor& data)
         {
@@ -82,11 +89,12 @@ namespace Lumina
         }
     
         // Convert to string representation for easy logging or display
-        std::string ToString() const
+        FString ToString() const
         {
-            return "R: " + std::to_string(R) + " G: " + std::to_string(G) + 
-                   " B: " + std::to_string(B) + " A: " + std::to_string(A);
+            return "R: " + eastl::to_string(R) + " G: " + eastl::to_string(G) + 
+                   " B: " + eastl::to_string(B) + " A: " + eastl::to_string(A);
         }
+        
     
         // Utility function to create a color from a grayscale value
         static FColor FromGrayscale(float value, float alpha = 1.0f)
@@ -172,6 +180,4 @@ namespace Lumina
         static const FColor Black;
         
     };
-    
-    
 }

@@ -61,18 +61,19 @@ namespace Lumina
     	{
 			VK_CHECK(glfwCreateWindowSurface(Instance, Window->GetWindow(), VK_ALLOC_CALLBACK, &Surface));
     	}
-	    
     	
 		SwapchainImages.clear();
         SwapchainImages.reserve(SWAPCHAIN_IMAGES);
-    	
-        vkb::SwapchainBuilder swapchainBuilder { Context->GetDevice()->GetPhysicalDevice(), Device, Surface };
 
-    	Format = VK_FORMAT_B8G8R8A8_UNORM;
-        SurfaceFormat.format = VK_FORMAT_B8G8R8A8_UNORM;
-    	SurfaceFormat.colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+    	VkPhysicalDevice PhysicalDevice = Context->GetDevice()->GetPhysicalDevice();
+        vkb::SwapchainBuilder SwapchainBuilder(PhysicalDevice, Device, Surface);
 
-        vkb::Swapchain vkbSwapchain = swapchainBuilder
+    	Format						= VK_FORMAT_B8G8R8A8_UNORM;
+    	SurfaceFormat				= {};
+        SurfaceFormat.format		= VK_FORMAT_B8G8R8A8_UNORM;
+    	SurfaceFormat.colorSpace	= VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+
+        auto vkbSwapchain = SwapchainBuilder
             .set_desired_format(SurfaceFormat)
             .set_desired_present_mode(CurrentPresentMode)
             .set_desired_min_image_count(SWAPCHAIN_IMAGES)
@@ -81,18 +82,23 @@ namespace Lumina
     		.set_allocation_callbacks(VK_ALLOC_CALLBACK)
             .set_desired_extent(Extent.X, Extent.Y)
             .add_image_usage_flags(VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
-            .build()
-            .value();
+            .build();
 
+    	if (!vkbSwapchain.has_value() || !vkbSwapchain->get_images().has_value())
+    	{
+    		LOG_CRITICAL("Failed to create swapchain! Error: {} - Extent: {}x{}", vkbSwapchain.error().message(), Extent.X, Extent.Y);
+    		LUMINA_NO_ENTRY()
+    	}
+    	
     	if (bFromResize)
     	{
 			vkDestroySwapchainKHR(Device, Swapchain, VK_ALLOC_CALLBACK);
     		Swapchain = VK_NULL_HANDLE;
 		}
 
-        Swapchain = vkbSwapchain.swapchain;
+        Swapchain = vkbSwapchain->swapchain;
     	
-        std::vector<VkImage> RawImages = vkbSwapchain.get_images().value();
+        std::vector<VkImage> RawImages = vkbSwapchain->get_images().value();
     	
 
     	ICommandList* CommandList = Context->GetCommandList(Q_Graphics);

@@ -109,6 +109,20 @@ namespace Lumina
         Property->Next = nullptr;
     }
 
+    void CStruct::SerializeTaggedProperties(FArchive& Ar, void* Data)
+    {
+        FProperty* Current = LinkedProperty;
+        while (Current != nullptr)
+        {
+            Ar << Current->Name;
+            
+            void* ValuePtr = Current->GetValuePtr<void>(Data);
+            Current->Serialize(Ar, ValuePtr);
+        
+            Current = (FProperty*)Current->Next;
+        }
+    }
+
     void CStruct::ForEachProperty(TMoveOnlyFunction<void(FProperty*)> Callback)
     {
         FProperty* Current = LinkedProperty;

@@ -1,16 +1,14 @@
 #include "LuminaEditor.h"
 #include "EntryPoint.h"
-#include "Project/Project.h"
 #include "Lumina_eastl.cpp"
 #include "Renderer/RenderResource.h"
-#include "Scene/Scene.h"
 #include "UI/EditorUI.h"
 
 namespace Lumina
 {
-    void FEditorEngine::CreateDevelopmentTools()
+    IDevelopmentToolUI* FEditorEngine::CreateDevelopmentTools()
     {
-        DeveloperToolUI = Memory::New<FEditorUI>();
+        return Memory::New<FEditorUI>();
     }
     
     FApplication* CreateApplication(int argc, char** argv)
@@ -25,16 +23,16 @@ namespace Lumina
     
     bool LuminaEditor::Initialize(int argc, char** argv)
     {
-        Engine->Initialize(this);
+        GEngine->Init(this);
         
         return true;
     }
 
-    void LuminaEditor::CreateEngine()
+    FEngine* LuminaEditor::CreateEngine()
     {
         GEditorEngine = Memory::New<FEditorEngine>();
-        Engine = GEditorEngine;
-        Engine->SetUpdateCallback([] (const FUpdateContext&) { });
+        GEngine = GEditorEngine;
+        return GEngine;
     }
 
     bool LuminaEditor::ApplicationLoop()

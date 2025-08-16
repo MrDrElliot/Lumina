@@ -2,7 +2,7 @@
 #include "Renderer/RHIIncl.h"
 #include "Assets/AssetTypes/Mesh/StaticMesh/StaticMesh.h"
 #include "Core/Object/Package/Thumbnail/ThumbnailGenerator.h"
-#include "Scene/ScenePrimitives.h"
+#include "World/ScenePrimitives.h"
 
 
 namespace Lumina

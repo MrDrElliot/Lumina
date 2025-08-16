@@ -89,7 +89,7 @@ namespace Lumina
         
         FVulkanRenderContext();
         
-        void Initialize() override;
+        bool Initialize() override;
         void Deinitialize() override;
 
         void SetVSyncEnabled(bool bEnable) override;
@@ -173,6 +173,7 @@ namespace Lumina
     
     private:
 
+        THashMap<uint64, FRHIInputLayoutRef>            InputLayoutMap;
         THashMap<uint64, FRHISamplerRef>                SamplerMap;
         
         FVulkanDescriptorCache                          DescriptorCache;

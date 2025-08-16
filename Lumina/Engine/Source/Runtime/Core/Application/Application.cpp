@@ -59,7 +59,7 @@ namespace Lumina
         bool bExitRequested = false;
         while(!ShouldExit() && !bExitRequested)
         {
-            Engine->Update();
+            GEngine->Update();
             
             bExitRequested = !ApplicationLoop();
             
@@ -77,14 +77,12 @@ namespace Lumina
         
         Shutdown();
         
-        Engine->Shutdown();
+        GEngine->Shutdown();
         
         Window->Shutdown();
         Memory::Delete(Window);
 
         FModuleManager::Get()->UnloadAllModules();
-
-        
         
         return 0;
     }
@@ -96,7 +94,7 @@ namespace Lumina
 
     void FApplication::WindowResized(const FIntVector2D& Extent)
     {
-        Engine->SetEngineViewportSize(Extent);
+        GEngine->SetEngineViewportSize(Extent);
 
         OnWindowResized(Extent);
     }

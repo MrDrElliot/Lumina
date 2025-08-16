@@ -39,7 +39,7 @@ namespace Lumina
 
     void CObject::SerializeReflectedProperties(FArchive& Ar)
     {
-        GetClass()->SerializeClassProperties(Ar, this);
+        GetClass()->SerializeTaggedProperties(Ar, this);
     }
 
     void CObject::Serialize(IStructuredArchive::FSlot Slot)

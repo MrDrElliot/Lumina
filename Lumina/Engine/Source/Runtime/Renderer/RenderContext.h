@@ -26,7 +26,7 @@ namespace Lumina
     public:
         virtual ~IRenderContext() = default;
 
-        virtual void Initialize() = 0;
+        virtual bool Initialize() = 0;
         virtual void Deinitialize() = 0;
 
         virtual void WaitIdle() = 0;

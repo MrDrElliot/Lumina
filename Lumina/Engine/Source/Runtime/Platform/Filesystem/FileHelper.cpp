@@ -33,36 +33,71 @@ namespace Lumina::FileHelper
     bool LoadFileToArray(TVector<uint8>& Result, const FString& Path, uint32 ReadFlags)
     {
         Result.clear();
-        std::filesystem::path FilePath = Path.c_str();
         
-        std::ifstream inFile(FilePath, std::ios::binary | std::ios::ate);
-        if (!inFile)
+        std::ifstream InFile(Path.c_str(), std::ios::binary | std::ios::ate);
+        if (!InFile)
         {
             Result.clear();
-            LOG_ERROR("Failed to open file for reading: {0}", FilePath.string());
+            LOG_ERROR("Failed to open file for reading: {0}", Path);
             return false;
         }
 
-        std::streamsize fileSize = inFile.tellg();
-        if (fileSize == -1)
+        std::streamsize FileSize = InFile.tellg();
+        if (FileSize == -1)
         {
             Result.clear();
-            LOG_ERROR("Failed to get the file size: {0}", FilePath.string());
+            LOG_ERROR("Failed to get the file size: {0}", Path);
             return false;
         }
 
-        inFile.seekg(0, std::ios::beg);
+        InFile.seekg(0, std::ios::beg);
 
-        Result.resize(static_cast<size_t>(fileSize));
+        Result.resize(static_cast<size_t>(FileSize));
 
-        if (!inFile.read(reinterpret_cast<char*>(Result.data()), fileSize))
+        if (!InFile.read(reinterpret_cast<char*>(Result.data()), FileSize))
         {
             Result.clear();
-            LOG_ERROR("Failed to read data from file: {0}", FilePath.string());
+            LOG_ERROR("Failed to read data from file: {0}", Path);
             return false;
         }
 
-        inFile.close();
+        InFile.close();
+        return true;
+    }
+
+    bool LoadFileToArray(TVector<uint8>& Result, const FString& Path, uint32 Seek, uint32 ReadSize, uint32 ReadFlags)
+    {
+        Result.clear();
+        
+        std::ifstream InFile(Path.c_str(), std::ios::binary | std::ios::ate);
+        if (!InFile)
+        {
+            Result.clear();
+            LOG_ERROR("Failed to open file for reading: {0}", Path);
+            return false;
+        }
+
+        std::streamsize FileSize = InFile.tellg();
+        if (FileSize == -1)
+        {
+            Result.clear();
+            LOG_ERROR("Failed to get the file size: {0}", Path);
+            return false;
+        }
+
+        InFile.seekg(Seek, std::ios::beg);
+
+        size_t ActualRead = std::max<size_t>(ReadSize, FileSize);
+        
+        Result.resize(ActualRead);
+        if (!InFile.read(reinterpret_cast<char*>(Result.data()), ActualRead))
+        {
+            Result.clear();
+            LOG_ERROR("Failed to read data from file: {0}", Path);
+            return false;
+        }
+
+        InFile.close();
         return true;
     }
 

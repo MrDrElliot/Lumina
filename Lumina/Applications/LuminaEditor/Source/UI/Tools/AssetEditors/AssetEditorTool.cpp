@@ -39,6 +39,5 @@ namespace Lumina
         {
             ImGuiX::Notifications::NotifyError("Failed to save package: \"%s\"", Asset->GetPathName().c_str());
         }
-
     }
 }

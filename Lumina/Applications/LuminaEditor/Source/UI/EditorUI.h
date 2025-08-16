@@ -1,7 +1,6 @@
 ﻿#pragma once
 
 #include "Memory/RefCounted.h"
-#include "Scene/Scene.h"
 #include "Tools/EditorToolContext.h"
 #include "Tools/EditorToolModal.h"
 #include <ThirdParty/imgui/imgui.h>
@@ -10,6 +9,10 @@
 #include "Tools/UI/ImGui/ImGuiX.h"
 
 
+namespace Lumina
+{
+    class FGamePreviewTool;
+}
 
 namespace Lumina
 {
@@ -18,8 +21,7 @@ namespace Lumina
     class FRendererInfoEditorTool;
     class FPrimitiveDrawManager;
     class FConsoleLogEditorTool;
-    class FEntitySceneEditorTool;
-    class FSceneManager;
+    class FWorldEditorTool;
     class FEditorTool;
 }
 
@@ -48,7 +50,7 @@ namespace Lumina
         void OnDestroyAsset(CObject* InAsset) override;
         
         template<typename T, typename... Args>
-        requires std::is_base_of_v<FEditorTool, T>
+        requires std::is_base_of_v<FEditorTool, T> && std::constructible_from<T, Args...>
         T* CreateTool(Args&&... args);
         
     private:
@@ -77,8 +79,8 @@ namespace Lumina
         ImGuiX::ApplicationTitleBar                     TitleBar;
         ImGuiWindowClass                                EditorWindowClass;
 
-        FSceneManager*                                  SceneManager = nullptr;
-        FEntitySceneEditorTool*                         SceneEditorTool = nullptr;
+        FGamePreviewTool*                               GamePreviewTool = nullptr;
+        FWorldEditorTool*                               WorldEditorTool = nullptr;
 
         FConsoleLogEditorTool*                          ConsoleLogTool = nullptr;
         FContentBrowserEditorTool*                      ContentBrowser = nullptr;
@@ -108,7 +110,7 @@ namespace Lumina
     };
 
     template <typename T, typename ... Args>
-    requires std::is_base_of_v<FEditorTool, T>
+    requires std::is_base_of_v<FEditorTool, T> && std::constructible_from<T, Args...>
     T* FEditorUI::CreateTool(Args&&... args)
     {
         T* NewTool = Memory::New<T>(std::forward<Args>(args)...);

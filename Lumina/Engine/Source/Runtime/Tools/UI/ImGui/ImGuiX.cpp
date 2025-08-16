@@ -44,16 +44,16 @@ namespace Lumina::ImGuiX
     {
          bool wasPressed = false;
 
-        const ImU32 hoveredColor = 0;// = backgroundColor * 1.15f;
-        const ImU32 activeColor = 0;// backgroundColor * 1.25f;
+        ImU32 HoveredColor = ImGui::ColorConvertFloat4ToU32(backgroundColor.Value * 1.15f);
+        ImU32 ActiveColor  = ImGui::ColorConvertFloat4ToU32(backgroundColor.Value * 1.25f);
 
         //-------------------------------------------------------------------------
 
         if ( pIcon == nullptr || strlen( pIcon ) == 0 )
         {
             ImGui::PushStyleColor( ImGuiCol_Button, (ImVec4) backgroundColor );
-            ImGui::PushStyleColor( ImGuiCol_ButtonHovered, hoveredColor );
-            ImGui::PushStyleColor( ImGuiCol_ButtonActive, activeColor );
+            ImGui::PushStyleColor( ImGuiCol_ButtonHovered, HoveredColor );
+            ImGui::PushStyleColor( ImGuiCol_ButtonActive, ActiveColor );
             ImGui::PushStyleColor( ImGuiCol_Text, (ImVec4) foregroundColor );
             ImGui::PushStyleVar( ImGuiStyleVar_ButtonTextAlign, shouldCenterContents ? ImVec2( 0.5f, 0.5f ) : ImVec2( 0.0f, 0.5f ) );
             wasPressed = ImGui::Button( pLabel, size );
@@ -117,8 +117,8 @@ namespace Lumina::ImGuiX
             //-------------------------------------------------------------------------
 
             ImGui::PushStyleColor( ImGuiCol_Button, (ImVec4) backgroundColor );
-            ImGui::PushStyleColor( ImGuiCol_ButtonHovered, hoveredColor );
-            ImGui::PushStyleColor( ImGuiCol_ButtonActive, activeColor );
+            ImGui::PushStyleColor( ImGuiCol_ButtonHovered, HoveredColor );
+            ImGui::PushStyleColor( ImGuiCol_ButtonActive, ActiveColor );
             ImGui::PushStyleColor( ImGuiCol_Text, (ImVec4) foregroundColor );
 
             // Render frame

@@ -11,39 +11,15 @@ namespace Lumina
     {
     public:
 
-        FTrackedCommandBuffer(FVulkanDevice* InDevice, VkCommandBuffer InBuffer, VkCommandPool InPool, bool bCreateTraceContext, VkQueue InQueue)
-            : IDeviceChild(InDevice)
-            , CommandBuffer(InBuffer)
-            , CommandPool(InPool)
-            , Queue(InQueue)
-        {
-            ReferencedResources.reserve(24);
-            if (bCreateTraceContext)
-            {
-                TracyContext = TracyVkContext(InDevice->GetPhysicalDevice(),
-                    InDevice->GetDevice(),
-                    InQueue,
-                    CommandBuffer)
-            }
-        }
+        FTrackedCommandBuffer(FVulkanDevice* InDevice, VkCommandBuffer InBuffer, VkCommandPool InPool, bool bCreateTraceContext, VkQueue InQueue);
 
         ~FTrackedCommandBuffer() override;
 
-        void AddReferencedResource(const TRefCountPtr<IRHIResource>& InResource)
-        {
-            ReferencedResources.push_back(InResource);
-        }
+        void AddReferencedResource(const TRefCountPtr<IRHIResource>& InResource);
 
-        void AddStagingResource(const TRefCountPtr<FRHIBuffer>& InResource)
-        {
-            ReferencedStagingResources.push_back(InResource);
-        }
+        void AddStagingResource(const TRefCountPtr<FRHIBuffer>& InResource);
         
-        void ClearReferencedResources()
-        {
-            ReferencedResources.clear();
-            ReferencedStagingResources.clear();
-        }
+        void ClearReferencedResources();
 
         VkCommandBuffer             CommandBuffer;
         VkCommandPool               CommandPool;
@@ -56,8 +32,8 @@ namespace Lumina
 
         
         /** Here we keep alive any resources that this current command buffer needs/uses */
-        TFixedVector<TRefCountPtr<IRHIResource>, 20> ReferencedResources;
-        TFixedVector<TRefCountPtr<FRHIBuffer>, 20> ReferencedStagingResources;
+        TFixedVector<TRefCountPtr<IRHIResource>, 20>    ReferencedResources;
+        TFixedVector<TRefCountPtr<FRHIBuffer>, 20>      ReferencedStagingResources;
 
     };
 }

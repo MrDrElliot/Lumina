@@ -7,7 +7,6 @@
 #include "VulkanResources.h"
 #include "VulkanSwapchain.h"
 #include "Core/Profiler/Profile.h"
-#include "Renderer/RenderContext.h"
 
 namespace Lumina
 {
@@ -429,6 +428,8 @@ namespace Lumina
 
     void FVulkanCommandList::UpdateGraphicsDynamicBuffers()
     {
+        LUMINA_PROFILE_SCOPE();
+        
         if (bHasDynamicBufferWrites && CurrentGraphicsState.Pipeline)
         {
             FVulkanGraphicsPipeline* PSO = static_cast<FVulkanGraphicsPipeline*>(CurrentGraphicsState.Pipeline);
@@ -441,6 +442,8 @@ namespace Lumina
 
     void FVulkanCommandList::FlushDynamicBufferWrites()
     {
+        LUMINA_PROFILE_SCOPE();
+        
         TVector<VmaAllocation> Allocations;
         TVector<VkDeviceSize> Offsets;
         TVector<VkDeviceSize> Sizes;
@@ -485,6 +488,8 @@ namespace Lumina
 
     void FVulkanCommandList::SubmitDynamicBuffers(uint64 RecordingID, uint64 SubmittedID)
     {
+        LUMINA_PROFILE_SCOPE();
+
         uint64 StateToFind = (uint64(Info.CommandQueue) << GVersionQueueShift) | (RecordingID & GVersionIDMask);
         uint64 StateToReplace = (uint64(Info.CommandQueue) << GVersionQueueShift) | (SubmittedID & GVersionIDMask) | GVersionSubmittedFlag;
 
@@ -580,7 +585,6 @@ namespace Lumina
         EndRenderPass();
 
         CommitBarriersInternal();
-        
     }
 
     void FVulkanCommandList::SetResourceStatesForBindingSet(FRHIBindingSet* BindingSet)
@@ -639,10 +643,29 @@ namespace Lumina
             }
         }
     }
-    
+
+    void FVulkanCommandList::SetResourceStateForRenderPass(const FRenderPassBeginInfo& PassInfo)
+    {
+        for (FRHIImage* Attachment : PassInfo.ColorAttachments)
+        {
+            SetImageState(Attachment, AllSubresources, EResourceStates::RenderTarget);
+        }
+
+        if (PassInfo.DepthAttachment)
+        {
+            if (PassInfo.DepthLoadOp == ERenderLoadOp::Clear || PassInfo.DepthStoreOp != ERenderStoreOp::DontCare)
+            {
+                SetImageState(PassInfo.DepthAttachment, AllSubresources, EResourceStates::DepthWrite);
+            }
+            else
+            {
+                SetImageState(PassInfo.DepthAttachment, AllSubresources, EResourceStates::DepthRead);
+            }
+        }
+    }
+
     void FVulkanCommandList::AddMarker(const char* Name, const FColor& Color)
     {
-
         if (PendingState.IsRecording())
         {
             
@@ -651,7 +674,6 @@ namespace Lumina
 
     void FVulkanCommandList::PopMarker()
     {
-
         if(PendingState.IsRecording())
         {
             
@@ -692,8 +714,6 @@ namespace Lumina
                 Attachment.clearValue.color.float32[2] = PassInfo.ClearColorValues[i].B;
                 Attachment.clearValue.color.float32[3] = PassInfo.ClearColorValues[i].A;
             }
-
-            SetImageState(Image, AllSubresources, EResourceStates::RenderTarget);
             ColorAttachments[i] = Attachment;
         }
         
@@ -715,17 +735,7 @@ namespace Lumina
             DepthAttachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
             DepthAttachment.clearValue.depthStencil.depth = PassInfo.ClearDepth;
             DepthAttachment.clearValue.depthStencil.stencil = PassInfo.ClearStencil;
-            if (PassInfo.DepthLoadOp == ERenderLoadOp::Clear || PassInfo.DepthStoreOp != ERenderStoreOp::DontCare)
-            {
-                SetImageState(VulkanImage, AllSubresources, EResourceStates::DepthWrite);
-            }
-            else
-            {
-                SetImageState(VulkanImage, AllSubresources, EResourceStates::DepthRead);
-            }
         }
-
-        CommitBarriers();
         
         VkRenderingInfo RenderInfo = {};
         RenderInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
@@ -921,8 +931,9 @@ namespace Lumina
         if (CurrentGraphicsState.RenderPass.IsValid() || bHasBarriers)
         {
             EndRenderPass();
-            CommitBarriers();
         }
+
+        CommitBarriers();
         
         BeginRenderPass(State.RenderPass);
 
@@ -988,7 +999,9 @@ namespace Lumina
     void FVulkanCommandList::Draw(uint32 VertexCount, uint32 InstanceCount, uint32 FirstVertex, uint32 FirstInstance)
     {
         LUMINA_PROFILE_SCOPE();
-        TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "Draw")        
+        TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "Draw")
+
+        UpdateGraphicsDynamicBuffers();
         
         vkCmdDraw(CurrentCommandBuffer->CommandBuffer, VertexCount, InstanceCount, FirstVertex, FirstInstance);
     }
@@ -997,6 +1010,8 @@ namespace Lumina
     {
         LUMINA_PROFILE_SCOPE();
         TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "DrawIndexed")
+
+        UpdateGraphicsDynamicBuffers();
         
         vkCmdDrawIndexed(CurrentCommandBuffer->CommandBuffer, IndexCount, InstanceCount, FirstIndex, VertexOffset, FirstInstance);
     }
@@ -1005,6 +1020,8 @@ namespace Lumina
     {
         LUMINA_PROFILE_SCOPE();
         TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "DrawIndirect")
+
+        UpdateGraphicsDynamicBuffers();
         
         vkCmdDrawIndirect(CurrentCommandBuffer->CommandBuffer, CurrentGraphicsState.IndirectParams->GetAPIResource<VkBuffer>(), Offset, DrawCount, sizeof(FDrawIndirectArguments));
     }
@@ -1013,6 +1030,8 @@ namespace Lumina
     {
         LUMINA_PROFILE_SCOPE();
         TracyVkZone(CurrentCommandBuffer->TracyContext, CurrentCommandBuffer->CommandBuffer, "DrawIndexedIndirect")
+
+        UpdateGraphicsDynamicBuffers();
         
         vkCmdDrawIndexedIndirect(CurrentCommandBuffer->CommandBuffer, CurrentGraphicsState.IndirectParams->GetAPIResource<VkBuffer>(), Offset, DrawCount, sizeof(FDrawIndexedIndirectArguments));
     }
@@ -1029,137 +1048,146 @@ namespace Lumina
     {
         LUMINA_PROFILE_SCOPE();
 
-        TVector<VkImageMemoryBarrier> imageBarriers;
-        TVector<VkBufferMemoryBarrier> bufferBarriers;
-        VkPipelineStageFlags beforeStageFlags = VK_PIPELINE_STAGE_FLAG_BITS_MAX_ENUM;
-        VkPipelineStageFlags afterStageFlags = VK_PIPELINE_STAGE_FLAG_BITS_MAX_ENUM;
+        TFixedVector<VkImageMemoryBarrier, 4> ImageBarriers;
+        TFixedVector<VkBufferMemoryBarrier, 4> BufferBarriers;
+        VkPipelineStageFlags BeforeStageFlags = VK_PIPELINE_STAGE_FLAG_BITS_MAX_ENUM;
+        VkPipelineStageFlags AfterStageFlags = VK_PIPELINE_STAGE_FLAG_BITS_MAX_ENUM;
 
-        for (const FTextureBarrier& barrier : StateTracker.GetTextureBarriers())
         {
-            FResourceStateMapping before = Vk::ConvertResourceState(barrier.StateBefore);
-            FResourceStateMapping after = Vk::ConvertResourceState(barrier.StateAfter);
+            LUMINA_PROFILE_SECTION("Texture Barriers");
+            for (const FTextureBarrier& barrier : StateTracker.GetTextureBarriers())
+            {
+                FResourceStateMapping before = Vk::ConvertResourceState(barrier.StateBefore);
+                FResourceStateMapping after = Vk::ConvertResourceState(barrier.StateAfter);
 
-            if ((before.StageFlags != beforeStageFlags || after.StageFlags != afterStageFlags) && !imageBarriers.empty())
+                if ((before.StageFlags != BeforeStageFlags || after.StageFlags != AfterStageFlags) && !ImageBarriers.empty())
+                {
+                    vkCmdPipelineBarrier(
+                        CurrentCommandBuffer->CommandBuffer,
+                        BeforeStageFlags, AfterStageFlags,
+                        0, // dependencyFlags
+                        0, nullptr, // memory barriers
+                        0, nullptr, // buffer barriers
+                        static_cast<uint32>(ImageBarriers.size()), ImageBarriers.data()
+                    );
+
+                    ImageBarriers.clear();
+                }
+
+                BeforeStageFlags = before.StageFlags;
+                AfterStageFlags = after.StageFlags;
+
+                Assert(after.ImageLayout != VK_IMAGE_LAYOUT_UNDEFINED);
+
+                FVulkanImage* texture = static_cast<FVulkanImage*>(barrier.Texture);
+
+                const FFormatInfo& formatInfo = GetFormatInfo(texture->GetDescription().Format);
+
+                VkImageAspectFlags aspectMask = 0;
+                if (formatInfo.bHasDepth)   aspectMask |= VK_IMAGE_ASPECT_DEPTH_BIT;
+                if (formatInfo.bHasStencil) aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+                if (!aspectMask)            aspectMask  = VK_IMAGE_ASPECT_COLOR_BIT;
+
+                VkImageSubresourceRange subresourceRange = {};
+                subresourceRange.baseArrayLayer = barrier.bEntireTexture ? 0 : barrier.ArraySlice;
+                subresourceRange.layerCount     = barrier.bEntireTexture ? texture->GetDescription().ArraySize : 1;
+                subresourceRange.baseMipLevel   = barrier.bEntireTexture ? 0 : barrier.MipLevel;
+                subresourceRange.levelCount     = barrier.bEntireTexture ? texture->GetDescription().NumMips : 1;
+                subresourceRange.aspectMask     = aspectMask;
+
+
+                VkImageMemoryBarrier imgBarrier = {};
+                imgBarrier.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+                imgBarrier.srcAccessMask       = before.AccessMask;
+                imgBarrier.dstAccessMask       = after.AccessMask;
+                imgBarrier.oldLayout           = before.ImageLayout;
+                imgBarrier.newLayout           = after.ImageLayout;
+                imgBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+                imgBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+                imgBarrier.image               = texture->GetAPIResource<VkImage, EAPIResourceType::Image>();
+                imgBarrier.subresourceRange    = subresourceRange;
+
+                ImageBarriers.push_back(imgBarrier);
+            }
+        
+            if (!ImageBarriers.empty())
             {
                 vkCmdPipelineBarrier(
                     CurrentCommandBuffer->CommandBuffer,
-                    beforeStageFlags, afterStageFlags,
+                    BeforeStageFlags, AfterStageFlags,
                     0, // dependencyFlags
                     0, nullptr, // memory barriers
                     0, nullptr, // buffer barriers
-                    static_cast<uint32>(imageBarriers.size()), imageBarriers.data()
+                    static_cast<uint32_t>(ImageBarriers.size()), ImageBarriers.data()
                 );
-
-                imageBarriers.clear();
             }
-
-            beforeStageFlags = before.StageFlags;
-            afterStageFlags = after.StageFlags;
-
-            Assert(after.ImageLayout != VK_IMAGE_LAYOUT_UNDEFINED);
-
-            FVulkanImage* texture = static_cast<FVulkanImage*>(barrier.Texture);
-
-            const FFormatInfo& formatInfo = GetFormatInfo(texture->GetDescription().Format);
-
-            VkImageAspectFlags aspectMask = 0;
-            if (formatInfo.bHasDepth)   aspectMask |= VK_IMAGE_ASPECT_DEPTH_BIT;
-            if (formatInfo.bHasStencil) aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
-            if (!aspectMask)            aspectMask  = VK_IMAGE_ASPECT_COLOR_BIT;
-
-            VkImageSubresourceRange subresourceRange = {};
-            subresourceRange.baseArrayLayer = barrier.bEntireTexture ? 0 : barrier.ArraySlice;
-            subresourceRange.layerCount     = barrier.bEntireTexture ? texture->GetDescription().ArraySize : 1;
-            subresourceRange.baseMipLevel   = barrier.bEntireTexture ? 0 : barrier.MipLevel;
-            subresourceRange.levelCount     = barrier.bEntireTexture ? texture->GetDescription().NumMips : 1;
-            subresourceRange.aspectMask     = aspectMask;
-
-
-            VkImageMemoryBarrier imgBarrier = {};
-            imgBarrier.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-            imgBarrier.srcAccessMask       = before.AccessMask;
-            imgBarrier.dstAccessMask       = after.AccessMask;
-            imgBarrier.oldLayout           = before.ImageLayout;
-            imgBarrier.newLayout           = after.ImageLayout;
-            imgBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-            imgBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-            imgBarrier.image               = texture->GetAPIResource<VkImage, EAPIResourceType::Image>();
-            imgBarrier.subresourceRange    = subresourceRange;
-
-            imageBarriers.push_back(imgBarrier);
+            
+            BeforeStageFlags = 0;
+            AfterStageFlags = 0;
+            ImageBarriers.clear();
         }
         
-        if (!imageBarriers.empty())
         {
-            vkCmdPipelineBarrier(
-                CurrentCommandBuffer->CommandBuffer,
-                beforeStageFlags, afterStageFlags,
-                0, // dependencyFlags
-                0, nullptr, // memory barriers
-                0, nullptr, // buffer barriers
-                static_cast<uint32_t>(imageBarriers.size()), imageBarriers.data()
-            );
-        }
-
-        beforeStageFlags = 0;
-        afterStageFlags = 0;
-        imageBarriers.clear();
+            LUMINA_PROFILE_SECTION("Buffer Barriers");
+            for (const FBufferBarrier& barrier : StateTracker.GetBufferBarriers())
+            {
+                FResourceStateMapping before = Vk::ConvertResourceState(barrier.StateBefore);
+                FResourceStateMapping after = Vk::ConvertResourceState(barrier.StateAfter);
         
-        for (const FBufferBarrier& barrier : StateTracker.GetBufferBarriers())
-        {
-            FResourceStateMapping before = Vk::ConvertResourceState(barrier.StateBefore);
-            FResourceStateMapping after = Vk::ConvertResourceState(barrier.StateAfter);
+                if ((before.StageFlags != BeforeStageFlags || after.StageFlags != AfterStageFlags) && !BufferBarriers.empty())
+                {
+                    vkCmdPipelineBarrier(
+                        CurrentCommandBuffer->CommandBuffer,
+                        BeforeStageFlags, AfterStageFlags,
+                        0, // dependencyFlags
+                        0, nullptr, // memory barriers
+                        static_cast<uint32>(BufferBarriers.size()), BufferBarriers.data(),
+                        0, nullptr // image barriers
+                    );
         
-            if ((before.StageFlags != beforeStageFlags || after.StageFlags != afterStageFlags) && !bufferBarriers.empty())
+                    BufferBarriers.clear();
+                }
+        
+                BeforeStageFlags = before.StageFlags;
+                AfterStageFlags = after.StageFlags;
+        
+                FVulkanBuffer* buffer = static_cast<FVulkanBuffer*>(barrier.Buffer);
+        
+                VkBufferMemoryBarrier bufBarrier = {};
+                bufBarrier.sType               = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+                bufBarrier.srcAccessMask       = before.AccessMask;
+                bufBarrier.dstAccessMask       = after.AccessMask;
+                bufBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+                bufBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+                bufBarrier.buffer              = buffer->Buffer;
+                bufBarrier.offset              = 0;
+                bufBarrier.size                = buffer->GetDescription().Size;
+        
+                BufferBarriers.push_back(bufBarrier);
+            }
+        
+            if (!BufferBarriers.empty())
             {
                 vkCmdPipelineBarrier(
                     CurrentCommandBuffer->CommandBuffer,
-                    beforeStageFlags, afterStageFlags,
+                    BeforeStageFlags, AfterStageFlags,
                     0, // dependencyFlags
                     0, nullptr, // memory barriers
-                    static_cast<uint32_t>(bufferBarriers.size()), bufferBarriers.data(),
+                    static_cast<uint32>(BufferBarriers.size()), BufferBarriers.data(),
                     0, nullptr // image barriers
                 );
-        
-                bufferBarriers.clear();
             }
         
-            beforeStageFlags = before.StageFlags;
-            afterStageFlags = after.StageFlags;
-        
-            FVulkanBuffer* buffer = static_cast<FVulkanBuffer*>(barrier.Buffer);
-        
-            VkBufferMemoryBarrier bufBarrier = {};
-            bufBarrier.sType               = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
-            bufBarrier.srcAccessMask       = before.AccessMask;
-            bufBarrier.dstAccessMask       = after.AccessMask;
-            bufBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-            bufBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-            bufBarrier.buffer              = buffer->Buffer;
-            bufBarrier.offset              = 0;
-            bufBarrier.size                = buffer->GetDescription().Size;
-        
-            bufferBarriers.push_back(bufBarrier);
+            BufferBarriers.clear();
         }
         
-        if (!bufferBarriers.empty())
-        {
-            vkCmdPipelineBarrier(
-                CurrentCommandBuffer->CommandBuffer,
-                beforeStageFlags, afterStageFlags,
-                0, // dependencyFlags
-                0, nullptr, // memory barriers
-                static_cast<uint32>(bufferBarriers.size()), bufferBarriers.data(),
-                0, nullptr // image barriers
-            );
-        }
-        
-        bufferBarriers.clear();
         StateTracker.ClearBarriers();
     }
 
     void FVulkanCommandList::TrackResourcesAndBarriers(const FGraphicsState& State)
     {
+        LUMINA_PROFILE_SCOPE();
+        
         if (State.Bindings != CurrentGraphicsState.Bindings)
         {
             for (SIZE_T i = 0; i < State.Bindings.size(); ++i)
@@ -1167,7 +1195,7 @@ namespace Lumina
                 SetResourceStatesForBindingSet(State.Bindings[i]);
             }
         }
-
+        
         if (State.IndexBuffer.Buffer && State.IndexBuffer.Buffer != CurrentGraphicsState.IndexBuffer.Buffer)
         {
             RequireBufferState(State.IndexBuffer.Buffer, EResourceStates::IndexBuffer);
@@ -1180,6 +1208,8 @@ namespace Lumina
                 RequireBufferState(Binding.Buffer, EResourceStates::VertexBuffer);
             }
         }
+
+        SetResourceStateForRenderPass(State.RenderPass);
 
         if (State.IndirectParams && State.IndirectParams != CurrentGraphicsState.IndirectParams)
         {

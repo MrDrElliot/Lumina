@@ -8,10 +8,9 @@
 #include "glm/gtc/type_ptr.inl"
 #include "Renderer/RenderContext.h"
 #include "Renderer/RHIGlobals.h"
-#include "Scene/SceneManager.h"
-#include "scene/entity/components/lightcomponent.h"
-#include "scene/entity/components/staticmeshcomponent.h"
-#include "Scene/Entity/Systems/DebugCameraEntitySystem.h"
+#include "World/entity/components/lightcomponent.h"
+#include "World/entity/components/staticmeshcomponent.h"
+#include "World/Entity/Systems/DebugCameraEntitySystem.h"
 #include "thumbnails/thumbnailmanager.h"
 
 namespace Lumina
@@ -21,21 +20,20 @@ namespace Lumina
     FMaterialInstanceEditorTool::FMaterialInstanceEditorTool(IEditorToolContext* Context, CObject* InAsset)
         : FAssetEditorTool(Context, InAsset->GetName().c_str(), InAsset)
     {
-        FSceneManager* SceneManager = GEngine->GetEngineSubsystem<FSceneManager>();
-        FScene* NewScene = SceneManager->CreateScene(ESceneType::Tool);
-        NewScene->RegisterSystem(NewObject<CDebugCameraEntitySystem>());
-
-        Entity DirectionalLightEntity = NewScene->CreateEntity(FTransform(), "Directional Light");
-        DirectionalLightEntity.AddComponent<SDirectionalLightComponent>();
-        
-        MeshEntity = NewScene->CreateEntity(FTransform(), "MeshEntity");
-        MeshEntity.AddComponent<SStaticMeshComponent>();
-        
-        MeshEntity.GetComponent<SStaticMeshComponent>().StaticMesh = CThumbnailManager::Get().CubeMesh;
-        MeshEntity.GetComponent<SStaticMeshComponent>().MaterialOverrides.resize(CThumbnailManager::Get().CubeMesh->Materials.size());
-        MeshEntity.GetComponent<SStaticMeshComponent>().MaterialOverrides[0] = Cast<CMaterialInterface>(InAsset);
-
-        Scene = NewScene;
+//        FScene* NewScene = SceneManager->CreateScene(ESceneType::Tool);
+//        NewScene->RegisterSystem(NewObject<CDebugCameraEntitySystem>());
+//
+//        Entity DirectionalLightEntity = NewScene->CreateEntity(FTransform(), "Directional Light");
+//        DirectionalLightEntity.AddComponent<SDirectionalLightComponent>();
+//        
+//        MeshEntity = NewScene->CreateEntity(FTransform(), "MeshEntity");
+//        MeshEntity.AddComponent<SStaticMeshComponent>();
+//        
+//        MeshEntity.GetComponent<SStaticMeshComponent>().StaticMesh = CThumbnailManager::Get().CubeMesh;
+//        MeshEntity.GetComponent<SStaticMeshComponent>().MaterialOverrides.resize(CThumbnailManager::Get().CubeMesh->Materials.size());
+//        MeshEntity.GetComponent<SStaticMeshComponent>().MaterialOverrides[0] = Cast<CMaterialInterface>(InAsset);
+//
+        //Scene = NewScene;
     }
     void FMaterialInstanceEditorTool::OnInitialize()
     {

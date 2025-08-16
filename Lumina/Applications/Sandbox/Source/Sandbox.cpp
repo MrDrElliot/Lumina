@@ -6,7 +6,7 @@
 #include "Core/Object/Class.h"
 #include "Core/Reflection/Type/LuminaTypes.h"
 #include "Input/Input.h"
-#include "Scene/Entity/Systems/EntitySystem.h"
+#include "World/Entity/Systems/EntitySystem.h"
 #include "Renderer/RenderContext.h"
 #include "Renderer/RenderManager.h"
 

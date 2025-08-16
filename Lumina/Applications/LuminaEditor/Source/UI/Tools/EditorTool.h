@@ -9,8 +9,7 @@
 #include "Core/UpdateContext.h"
 #include "Core/Functional/Function.h"
 #include "Memory/RefCounted.h"
-#include "Scene/Scene.h"
-#include "Scene/Entity/Entity.h"
+#include "World/Entity/Entity.h"
 #include "ImGuizmo.h"
 #include "Tools/UI/ImGui/ImGuiDesignIcons.h"
 
@@ -62,15 +61,13 @@ namespace Lumina
 
     public:
 
-        FEditorTool(IEditorToolContext* Context, const FString& DisplayName, FScene* Scene = nullptr);
+        FEditorTool(IEditorToolContext* Context, const FString& DisplayName, CWorld* InWorld = nullptr);
 
         virtual void Initialize();
         virtual void Deinitialize(const FUpdateContext& UpdateContext);
+        virtual FString GetToolName() const { return ToolName; }
         
-        FORCEINLINE virtual FString GetToolName() const { return ToolName; }
-        
-
-        FORCEINLINE ImGuiID CalculateDockspaceID() const
+        ImGuiID CalculateDockspaceID() const
         {
             uint32 dockspaceID = CurrLocationID;
             char const* const pEditorToolTypeName = GetUniqueTypeName();
@@ -78,15 +75,15 @@ namespace Lumina
             return dockspaceID;
         }
 
-        FORCEINLINE FInlineString GetToolWindowName(const FString& Name) const { return GetToolWindowName(Name.c_str(), CurrDockspaceID); }
+        FInlineString GetToolWindowName(const FString& Name) const { return GetToolWindowName(Name.c_str(), CurrDockspaceID); }
         
-        FORCEINLINE ImGuiWindowClass* GetWindowClass() { return &ToolWindowsClass; }
-        FORCEINLINE EEditorToolFlags GetToolFlags() const { return ToolFlags; }
-        FORCEINLINE bool HasFlag(EEditorToolFlags Flag) const {  return (ToolFlags & Flag) == Flag; }
+        ImGuiWindowClass* GetWindowClass() { return &ToolWindowsClass; }
+        EEditorToolFlags GetToolFlags() const { return ToolFlags; }
+        bool HasFlag(EEditorToolFlags Flag) const {  return (ToolFlags & Flag) == Flag; }
 
-        FORCEINLINE FScene* GetScene() const { return Scene; }
-        FORCEINLINE bool HasScene() const { return Scene != nullptr; }
-        FORCEINLINE ImGuiID GetCurrentDockspaceID() const { return CurrDockspaceID; }
+        CWorld* GetWorld() const { return World; }
+        bool HasWorld() const { return World != nullptr; }
+        ImGuiID GetCurrentDockspaceID() const { return CurrDockspaceID; }
 
         virtual void InitializeDockingLayout(ImGuiID InDockspaceID, const ImVec2& InDockspaceSize) const;
         
@@ -118,6 +115,13 @@ namespace Lumina
         
         /** Draw the optional viewport for this tool window, returns true if focused. */
         virtual bool DrawViewport(const FUpdateContext& UpdateContext, ImTextureID ViewportTexture);
+
+        /** Draws overlay elements on the viewport for tool actions. */
+        virtual void DrawViewportToolbar(const FUpdateContext& UpdateContext);
+
+        bool BeginViewportToolbarGroup(char const* GroupID, ImVec2 GroupSize, const ImVec2& Padding);
+        void EndViewportToolbarGroup();
+        
         
         /** Can there only ever be one of this tool? */
         virtual bool IsSingleton() const { return HasFlag(EEditorToolFlags::Tool_Singleton); }
@@ -187,7 +191,7 @@ namespace Lumina
         
         TVector<FToolWindow*>           ToolWindows;
         
-        FScene*                         Scene = nullptr;
+        TObjectHandle<CWorld>           World;
         Entity                          EditorEntity;
         ImTextureID                     SceneViewportTexture = 0;
 

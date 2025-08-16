@@ -7,6 +7,11 @@
 
 namespace Lumina
 {
+    static bool IsFloatType(ImGuiDataType dt)
+    {
+        return dt == ImGuiDataType_Float || dt == ImGuiDataType_Double;
+    }
+    
     template<typename T, ImGuiDataType_ DT>
     class FNumericPropertyCustomization : public IPropertyTypeCustomization
     {
@@ -22,8 +27,8 @@ namespace Lumina
         EPropertyChangeOp DrawProperty(TSharedPtr<FPropertyHandle> Property) override
         {
             FProperty* Prop = Property->Property;
-            float Speed = Prop->HasMetadata("Delta") ? std::stof(Prop->GetMetadata("Delta").c_str()) : 1.0f;
-
+            float Speed = Prop->HasMetadata("Delta") ? std::stof(Prop->GetMetadata("Delta").c_str()) : (IsFloatType(DT) ? 0.01f : 1.0f);
+            
             std::optional<float> MinOpt;
             std::optional<float> MaxOpt;
 

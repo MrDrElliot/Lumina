@@ -13,6 +13,7 @@
 #ifdef LE_PLATFORM_WINDOWS
 #include <windows.h>
 #include <dbghelp.h>
+#pragma comment(lib, "DbgHelp.lib")
 #endif
 
 inline void PrintCallStack()
@@ -83,7 +84,7 @@ inline LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS* exceptionInfo)
 }
 #endif
 
-#define NO_ENTRY() \
+#define LUMINA_NO_ENTRY() \
     LOG_ERROR("No Entry Hit in {0} at line {1}", __FILE__, __LINE__); \
     __debugbreak(); \
     std::unreachable(); \
@@ -132,10 +133,8 @@ do {                                                    \
     }                                                   \
 } while (false)
 #else
-#define Assert(...)
-#define AssertMsg(...)
-#define EnsureMsg(...)
+#define Assert(...) __VA_ARGS__;
+#define AssertMsg(...) __VA_ARGS__;
+#define EnsureMsg(...) __VA_ARGS__;
 #endif
 
-
-#define LUMINA_NO_ENTRY() AssertMsg(false, "No Entry function called!")

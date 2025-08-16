@@ -40,25 +40,7 @@ project "Lumina"
 	    "Engine/ThirdParty/fastgltf/src/**.cpp",
 	    "Engine/ThirdParty/fastgltf/deps/simdjson/**.h",
         "Engine/ThirdParty/fastgltf/deps/simdjson/**.cpp",
-            
-	   
-	    "Engine/ThirdParty/imgui/backends/imgui_impl_glfw.h",
-    	"Engine/ThirdParty/imgui/backends/imgui_impl_glfw.cpp",
-	    
-	    "Engine/ThirdParty/imgui/imgui_demo.cpp",
-	    
-	    "Engine/ThirdParty/imgui/backends/imgui_impl_vulkan.h",
-	    "Engine/ThirdParty/imgui/backends/imgui_impl_vulkan.cpp",
-
-		"Engine/ThirdParty/entt/src/**.hpp",
-	  	"Engine/ThirdParty/entt/src/**.cpp",
-	  	
-	  	"Engine/ThirdParty/rpmalloc/**.h",
-        "Engine/ThirdParty/rpmalloc/**.c",
         
-        "Engine/ThirdParty/xxhash/**.h",
-    	"Engine/ThirdParty/xxhash/**.c",
-
 	}
 
 
@@ -80,8 +62,10 @@ project "Lumina"
 	 	"EA",
 	 	"EnkiTS",
 	 	"Tracy",
+		"XXHash",
+		"RPMalloc",
+		"EnTT",
 	  	"%{VULKAN_SDK}/lib/vulkan-1.lib",
-	    "DbgHelp",
 	 }
 
 	defines
@@ -107,21 +91,23 @@ project "Lumina"
 	filter { "system:windows" }
 		defines { "LE_PLATFORM_WINDOWS", }
 		flags { "NoRuntimeChecks", "NoIncrementalLink" }
-		links { "Dbghelp", }
 
 	filter "configurations:Debug"
+	    runtime "Debug"
 		links { "%{VULKAN_SDK}/lib/shaderc_combinedd.lib", }
 		symbols "On"
 		editandcontinue "Off"
 		defines { "LE_DEBUG", "_DEBUG", }
 
 	filter "configurations:Release"
+		runtime "Release"
 		links { "%{VULKAN_SDK}/lib/shaderc_combined.lib", }
 		optimize "On"
 		defines { "LE_RELEASE", "NDEBUG", }
 
 	filter "configurations:Shipping"
 		links { "%{VULKAN_SDK}/lib/shaderc_combined.lib", }
+		runtime "Release"
 		optimize "On"
 		symbols "Off"
 		defines { "LE_SHIP" }

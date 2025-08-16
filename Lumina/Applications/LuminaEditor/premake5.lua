@@ -21,11 +21,13 @@ project "Editor"
 	links
 	 {
 		"Lumina",
-		"DbgHelp",
+		"ImGui",
     	"EA",
     	"EnkiTS",
-		"ImGui",
 		"Tracy",
+		"XXHash",
+		"RPMalloc",
+		"EnTT",
 	 }
 	 
 	files

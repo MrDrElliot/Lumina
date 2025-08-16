@@ -104,6 +104,9 @@ namespace Lumina
         LUMINA_API FProperty* GetProperty(const FName& Name);
         LUMINA_API virtual void AddProperty(FProperty* Property);
 
+        LUMINA_API void SerializeTaggedProperties(FArchive& Ar, void* Data);
+
+        
         template<typename PropertyType>
         PropertyType* GetProperty(const FName& Name)
         {
@@ -178,9 +181,6 @@ namespace Lumina
         {
             return (CClass*)GetSuperStruct();
         }
-
-
-        LUMINA_API void SerializeClassProperties(FArchive& Ar, void* Data);
         
 
         LUMINA_API CObject* GetDefaultObject() const

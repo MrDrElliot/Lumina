@@ -1624,6 +1624,23 @@ namespace eastl
 	using namespace Lumina;
 
 	template<>
+	struct hash<FVertexAttributeDesc>
+	{
+		size_t operator()(const FVertexAttributeDesc& Item) const
+		{
+			size_t hash = 0;
+			Hash::HashCombine(hash, Item.ArraySize);
+			Hash::HashCombine(hash, Item.bInstanced);
+			Hash::HashCombine(hash, Item.BufferIndex);
+			Hash::HashCombine(hash, Item.ElementStride);
+			Hash::HashCombine(hash, (uint32)Item.Format);
+			Hash::HashCombine(hash, Item.Offset);
+
+			return hash;
+		}
+	};
+	
+	template<>
 	struct hash<FBindingSetItem>
 	{
 		size_t operator()(const FBindingSetItem& Item) const

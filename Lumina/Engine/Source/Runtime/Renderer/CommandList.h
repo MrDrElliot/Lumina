@@ -89,6 +89,7 @@ namespace Lumina
         virtual void SetBufferState(FRHIBuffer* Buffer, EResourceStates StateBits) = 0;
         
         virtual void SetResourceStatesForBindingSet(FRHIBindingSet* BindingSet) = 0;
+        virtual void SetResourceStateForRenderPass(const FRenderPassBeginInfo& PassInfo) = 0;
         
         virtual void CommitBarriers() = 0;
 

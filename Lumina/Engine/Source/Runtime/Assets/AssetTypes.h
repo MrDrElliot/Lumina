@@ -16,7 +16,7 @@ namespace Lumina
         Material,
         MaterialInstance,
         Prefab,
-        Scene,
+        World,
         Max,
     };
 
@@ -52,7 +52,7 @@ namespace Lumina
             case EAssetType::MaterialInstance:      return "MaterialInstance";
             case EAssetType::Material:              return "Material";
             case EAssetType::Prefab:                return "Prefab";
-            case EAssetType::Scene:                 return "Scene";
+            case EAssetType::World:                 return "World";
             case EAssetType::Max:                   return "INVALID";
         }
 
