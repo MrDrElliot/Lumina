@@ -15,6 +15,13 @@ namespace Lumina
     using ICompletableTask =    enki::ICompletable;
     using TaskSetPartition =    enki::TaskSetPartition;
     using TaskFunction =        enki::TaskSetFunction;
+
+    enum class ETaskPriority
+    {
+        High   = 0,
+        Medium = 1,
+        Low    = 2,
+    };
     
     struct CompletionActionDelete : enki::ICompletable
     {
@@ -61,6 +68,36 @@ namespace Lumina
         CompletionActionDelete      TaskDeleter;
         enki::Dependency            Dependency;
     };
+
+    typedef TFunction<void (uint32 Index)> FParallelForTaskFunction;
+    class FParallelForTask : public ITaskSet
+    {
+    public:
+        FParallelForTask() = default;
+        FParallelForTask(FParallelForTaskFunction func_)
+            : Function(std::move(func_))
+        {
+            TaskDeleter.SetDependency(TaskDeleter.Dependency, this);
+        }
+        
+        FParallelForTask(uint32 setSize_, FParallelForTaskFunction func_)
+            : ITaskSet(setSize_), Function(std::move(func_))
+        {
+            TaskDeleter.SetDependency(TaskDeleter.Dependency, this);
+        }
+
+        void ExecuteRange(TaskSetPartition range_, uint32_t threadnum_) override
+        {
+            for (uint32 i = range_.start; i < range_.end; ++i)
+            {
+                Function(i);
+            }
+        }
+        
+        FParallelForTaskFunction    Function;
+        CompletionActionDelete      TaskDeleter;
+        enki::Dependency            Dependency;
+    };
     
     class LUMINA_API FTaskSystem : public TSingleton<FTaskSystem>
     {
@@ -96,9 +133,10 @@ namespace Lumina
          * 
          * @param Num Number of executions.
          * @param Function Callback
+         * @param Priority 
          * @return The task you can wait on, but should not be saved as it will be cleaned up automatically.
          */
-        FLambdaTask* ScheduleLambda(uint32 Num, TaskSetFunction&& Function)
+        FLambdaTask* ScheduleLambda(uint32 Num, TaskSetFunction&& Function, ETaskPriority Priority = ETaskPriority::Medium)
         {
             if (Num == 0)
             {
@@ -106,8 +144,35 @@ namespace Lumina
             }
             
             FLambdaTask* Task = Memory::New<FLambdaTask>(Num, std::move(Function));
+            Task->m_Priority = (enki::TaskPriority)Priority;
             ScheduleTask(Task);
             return Task;
+        }
+        
+        template<typename TFunc>
+        void ParallelFor(uint32 Num, TFunc&& Func, ETaskPriority Priority = ETaskPriority::Medium)
+        {
+            struct ParallelTask : ITaskSet
+            {
+                ParallelTask(TFunc&& InFunc, uint32 InNum)
+                    : Func(std::forward<TFunc>(InFunc))
+                {
+                    m_SetSize = InNum;
+                }
+
+                void ExecuteRange(TaskSetPartition range_, uint32_t threadnum_) override
+                {
+                    for (uint32 i = range_.start; i < range_.end; ++i)
+                        Func(i);
+                }
+
+                TFunc Func;
+            };
+
+            ParallelTask Task = ParallelTask(std::forward<TFunc>(Func), Num);
+            Task.m_Priority = (enki::TaskPriority)Priority;
+            ScheduleTask(&Task);
+            WaitForTask(&Task);
         }
         
         void ScheduleTask(ITaskSet* pTask)
@@ -120,9 +185,9 @@ namespace Lumina
             Scheduler.AddPinnedTask(pTask);
         }
 
-        void WaitForTask(const ITaskSet* pTask)
+        void WaitForTask(const ITaskSet* pTask, ETaskPriority Priority = ETaskPriority::Low)
         {
-            Scheduler.WaitforTask(pTask);
+            Scheduler.WaitforTask(pTask, (enki::TaskPriority)Priority);
         }
 
         void WaitForTask(const IPinnedTask* pTask)
@@ -136,7 +201,6 @@ namespace Lumina
         enki::TaskScheduler     Scheduler;
         uint32                  NumWorkers = 0;
         bool                    bInitialized = false;
-        std::atomic<uint32_t>   ActiveTasks = 0;
 
     };
 }

@@ -30,6 +30,7 @@ namespace Lumina
         bool IsReadyForRender() const;
 
         void GenerateBoundingBox();
+        void GenerateGPUBuffers();
 
         uint32 GetNumMaterials() const { return (uint32)Materials.size(); }
         CMaterialInterface* GetMaterialAtSlot(SIZE_T Slot) const;

@@ -36,16 +36,7 @@ namespace Lumina
             GEngine->GetEngineSubsystem<FWorldManager>()->AddWorld(World);
         
             World->InitializeWorld();
-            World->RegisterSystem(NewObject<CDebugCameraEntitySystem>());
-            
-            EditorEntity = World->ConstructEntity("Editor Entity");
-            EditorEntity.AddComponent<SCameraComponent>();
-            EditorEntity.AddComponent<SEditorComponent>();
-            EditorEntity.AddComponent<SVelocityComponent>().Speed = 50.0f;
-            EditorEntity.AddComponent<SHiddenComponent>();
-            EditorEntity.GetComponent<STransformComponent>().SetLocation(glm::vec3(0.0f, 0.0f, 2.0f));
-            
-            World->SetActiveCamera(EditorEntity);
+            EditorEntity = World->SetupEditorWorld();
             
             FToolWindow* NewWindow = CreateToolWindow(ViewportWindowName, [] (const FUpdateContext&, bool)
             {

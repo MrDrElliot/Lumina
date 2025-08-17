@@ -928,14 +928,17 @@ namespace Lumina
             bPipelineChanged = true;
         }
 
-        if (CurrentGraphicsState.RenderPass.IsValid() || bHasBarriers)
+        if (CurrentGraphicsState.RenderPass != State.RenderPass || bHasBarriers)
         {
             EndRenderPass();
         }
 
         CommitBarriers();
-        
-        BeginRenderPass(State.RenderPass);
+
+        if (!CurrentGraphicsState.RenderPass.IsValid())
+        {
+            BeginRenderPass(State.RenderPass);
+        }
 
         CurrentPipelineLayout = State.Pipeline->GetAPIResource<VkPipelineLayout, EAPIResourceType::PipelineLayout>();
         PushConstantVisibility = ((FVulkanGraphicsPipeline*)State.Pipeline)->PushConstantVisibility;

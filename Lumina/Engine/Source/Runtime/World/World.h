@@ -2,9 +2,9 @@
 #include "Core/Object/Object.h"
 #include "Core/UpdateContext.h"
 #include "World/Entity/Components/CameraComponent.h"
-#include "World.generated.h"
 #include "Core/Object/ObjectHandleTyped.h"
 #include "Entity/Registry/EntityRegistry.h"
+#include "World.generated.h"
 
 namespace Lumina
 {
@@ -27,6 +27,7 @@ namespace Lumina
         CWorld();
         void Serialize(FArchive& Ar) override;
         void InitializeWorld();
+        Entity SetupEditorWorld();
         void OnMarkedGarbage() override;
         void Tick(const FUpdateContext& Context);
         void ShutdownWorld();
@@ -62,7 +63,7 @@ namespace Lumina
         void DrawDebugBox(const glm::vec3& Center, const glm::vec3& Extents, const glm::quat& Rotation, const glm::vec4& Color, float Thickness = 1.0f, float Duration = 1.0f);
         void DrawDebugSphere(const glm::vec3& Center, float Radius, const glm::vec4& Color, uint8 Segments = 16, float Thickness = 1.0f, float Duration = 1.0f);
         void DrawDebugCone(const glm::vec3& Apex, const glm::vec3& Direction, float AngleRadians, float Length, const glm::vec4& Color, uint8 Segments = 16, uint8 Stacks = 4, float Thickness = 1.0f, float Duration = 1.0f);
-
+    
 
     private:
 

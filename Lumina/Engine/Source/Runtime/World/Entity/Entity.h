@@ -30,6 +30,8 @@ namespace Lumina
             Assert(World.IsValid())
         }
 
+        LUMINA_API FArchive& Serialize(FArchive& Ar);
+
         LUMINA_API bool IsValid() const                    { return EntityHandle != entt::null && World.IsValid(); }
         LUMINA_API bool IsChild();
         LUMINA_API Entity GetParent();
@@ -41,6 +43,7 @@ namespace Lumina
         LUMINA_API FTransform GetWorldTransform();
         LUMINA_API FTransform GetLocalTransform();
         
+        LUMINA_API glm::mat4 GetWorldMatrix()       { return GetComponent<STransformComponent>().GetMatrix(); }
         LUMINA_API glm::vec3 GetLocation()          { return GetComponent<STransformComponent>().GetLocation(); }
         LUMINA_API glm::quat GetRotation()          { return GetComponent<STransformComponent>().GetRotation(); }
         LUMINA_API glm::vec3 GetScale()             { return GetComponent<STransformComponent>().GetScale(); }
@@ -76,11 +79,11 @@ namespace Lumina
         template <typename T>
         SIZE_T RemoveComponent();
         
-        inline operator entt::entity() const               { return EntityHandle; }
-        inline operator uint32()                           { return static_cast<uint32>(EntityHandle); }
-        inline operator bool() const                       { return EntityHandle != entt::null && World.IsValid(); }
-        inline bool operator==(const Entity& other) const  { return EntityHandle == other.EntityHandle; }
-        inline bool operator!=(const Entity& other) const  { return !(*this == other); }
+        operator entt::entity() const               { return EntityHandle; }
+        operator uint32()                           { return static_cast<uint32>(EntityHandle); }
+        operator bool() const                       { return EntityHandle != entt::null && World.IsValid(); }
+        bool operator==(const Entity& other) const  { return EntityHandle == other.EntityHandle; }
+        bool operator!=(const Entity& other) const  { return !(*this == other); }
 
 
         

@@ -4,6 +4,7 @@
 #include "Assets/AssetTypes/Material/Material.h"
 #include "assets/assettypes/material/materialinstance.h"
 #include "Core/Object/Cast.h"
+#include "Renderer/RHIGlobals.h"
 
 
 namespace Lumina
@@ -21,7 +22,7 @@ namespace Lumina
 
     void CMesh::PostLoad()
     {
-        GenerateBoundingBox();
+        SetMeshResource(MeshResources);
     }
 
     CMaterialInterface* CMesh::GetMaterialAtSlot(SIZE_T Slot) const
@@ -45,6 +46,7 @@ namespace Lumina
     {
         MeshResources = NewResource;
         GenerateBoundingBox();
+        GenerateGPUBuffers();
     }
 
     bool CMesh::IsReadyForRender() const
@@ -87,5 +89,39 @@ namespace Lumina
             BoundingBox.Max.y = glm::max(Vertex.Position.y, BoundingBox.Max.y);
             BoundingBox.Max.z = glm::max(Vertex.Position.z, BoundingBox.Max.z);
         }
+    }
+
+    void CMesh::GenerateGPUBuffers()
+    {
+        FRHIBufferDesc VertexBufferDesc;
+        VertexBufferDesc.Size = sizeof(FVertex) * MeshResources.Vertices.size();
+        VertexBufferDesc.Stride = sizeof(FVertex);
+        VertexBufferDesc.Usage.SetMultipleFlags(BUF_VertexBuffer);
+        VertexBufferDesc.InitialState = EResourceStates::VertexBuffer;
+        VertexBufferDesc.bKeepInitialState = true;
+        VertexBufferDesc.DebugName = GetName().ToString() + "Vertex Buffer";
+        MeshResources.VertexBuffer = GRenderContext->CreateBuffer(VertexBufferDesc);
+        GRenderContext->SetObjectName(MeshResources.VertexBuffer, VertexBufferDesc.DebugName.c_str(), EAPIResourceType::Buffer);
+
+        
+
+        FRHIBufferDesc IndexBufferDesc;
+        IndexBufferDesc.Size = sizeof(uint32) * MeshResources.Indices.size();
+        IndexBufferDesc.Stride = sizeof(uint32);
+        IndexBufferDesc.Usage.SetMultipleFlags(BUF_IndexBuffer);
+        IndexBufferDesc.InitialState = EResourceStates::IndexBuffer;
+        IndexBufferDesc.bKeepInitialState = true;
+        IndexBufferDesc.DebugName = GetName().ToString() + "Index Buffer";
+        MeshResources.IndexBuffer = GRenderContext->CreateBuffer(IndexBufferDesc);
+        GRenderContext->SetObjectName(MeshResources.IndexBuffer, IndexBufferDesc.DebugName.c_str(), EAPIResourceType::Buffer);
+
+        FRHICommandListRef CommandList = GRenderContext->CreateCommandList(FCommandListInfo::Graphics());
+
+        CommandList->Open();
+        CommandList->WriteBuffer(MeshResources.VertexBuffer, MeshResources.Vertices.data(), 0, MeshResources.Vertices.size() * sizeof(FVertex));
+        CommandList->WriteBuffer(MeshResources.IndexBuffer, MeshResources.Indices.data(), 0, MeshResources.Indices.size() * sizeof(uint32));
+        CommandList->Close();
+        
+        GRenderContext->ExecuteCommandList(CommandList, ECommandQueue::Graphics);
     }
 }

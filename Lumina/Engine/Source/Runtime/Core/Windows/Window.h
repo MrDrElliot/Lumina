@@ -46,7 +46,8 @@ namespace Lumina
 
 	namespace Windowing
 	{
-		FWindow* GetPrimaryWindowHandle();
+		LUMINA_API extern FWindow* PrimaryWindow;
+		LUMINA_API FWindow* GetPrimaryWindowHandle();
 		void SetPrimaryWindowHandle(FWindow* InWindow);
 	}
 	

@@ -59,6 +59,8 @@ namespace Lumina
         bool bExitRequested = false;
         while(!ShouldExit() && !bExitRequested)
         {
+            LUMINA_PROFILE_FRAME();
+            
             GEngine->Update();
             
             bExitRequested = !ApplicationLoop();

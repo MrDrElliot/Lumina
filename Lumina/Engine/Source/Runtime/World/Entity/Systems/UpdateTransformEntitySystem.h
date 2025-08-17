@@ -11,7 +11,7 @@ namespace Lumina
         GENERATED_BODY()
     public:
 
-        DEFINE_SCENE_SYSTEM(CUpdateTransformEntitySystem, RequiresUpdate(EUpdateStage::FrameStart, EUpdatePriority::Highest))
+        DEFINE_SCENE_SYSTEM(CUpdateTransformEntitySystem, RequiresUpdate(EUpdateStage::PrePhysics), RequiresUpdate(EUpdateStage::Paused))
         
         void Initialize() override;
         void Shutdown() override;

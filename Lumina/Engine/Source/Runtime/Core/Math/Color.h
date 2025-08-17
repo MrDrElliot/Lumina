@@ -94,7 +94,19 @@ namespace Lumina
             return "R: " + eastl::to_string(R) + " G: " + eastl::to_string(G) + 
                    " B: " + eastl::to_string(B) + " A: " + eastl::to_string(A);
         }
-        
+
+        bool operator == (const FColor& Other) const
+        {
+            return R == Other.R
+                && G == Other.G
+                && B == Other.B
+                && A == Other.A;
+        }
+
+        bool operator != (const FColor& Color) const
+        {
+            return !(*this == Color);
+        }
     
         // Utility function to create a color from a grayscale value
         static FColor FromGrayscale(float value, float alpha = 1.0f)

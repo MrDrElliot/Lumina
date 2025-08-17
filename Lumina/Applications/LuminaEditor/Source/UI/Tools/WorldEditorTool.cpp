@@ -355,7 +355,7 @@ namespace Lumina
     
         SCameraComponent& CameraComponent = EditorEntity.GetComponent<SCameraComponent>();
     
-        glm::mat4 Matrix = SelectedEntity.GetWorldTransform().GetMatrix();
+        glm::mat4 Matrix = SelectedEntity.GetWorldMatrix();
     
         glm::mat4 ViewMatrix = CameraComponent.GetViewMatrix();
         glm::mat4 ProjectionMatrix = CameraComponent.GetProjectionMatrix();
@@ -597,18 +597,9 @@ namespace Lumina
         
         World = InWorld;
         GEngine->GetEngineSubsystem<FWorldManager>()->AddWorld(World);
-        
-        World->InitializeWorld();
-        World->RegisterSystem(NewObject<CDebugCameraEntitySystem>());
-            
-        EditorEntity = World->ConstructEntity("Editor Entity");
-        EditorEntity.AddComponent<SCameraComponent>();
-        EditorEntity.AddComponent<SEditorComponent>();
-        EditorEntity.AddComponent<SVelocityComponent>().Speed = 50.0f;
-        EditorEntity.AddComponent<SHiddenComponent>();
-        EditorEntity.GetComponent<STransformComponent>().SetLocation(glm::vec3(0.0f, 0.0f, 2.0f));
 
-        World->SetActiveCamera(EditorEntity);
+        World->InitializeWorld();
+        EditorEntity = World->SetupEditorWorld();
         
         SelectedEntity = {};
         OutlinerListView.MarkTreeDirty();
@@ -823,7 +814,7 @@ namespace Lumina
 
         PropertyTables.clear();
 
-        if (SelectedEntity)
+        if (SelectedEntity.IsValid())
         {
             for (const auto& [ID, Set] : World->GetMutableEntityRegistry().storage())
             {

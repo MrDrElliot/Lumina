@@ -42,6 +42,7 @@ namespace Lumina
 
         LUMINA_API void InitializeThreadHeap();
         LUMINA_API void ShutdownThreadHeap();
+        LUMINA_API bool SetThreadName(const char* Name);
     }
     
 

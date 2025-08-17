@@ -32,6 +32,9 @@ namespace Lumina
         TVector<FVertex>            Vertices;
         TVector<uint32>             Indices;
         TVector<FGeometrySurface>   GeometrySurfaces;
+        FRHIBufferRef               VertexBuffer;
+        FRHIBufferRef               IndexBuffer;
+
 
         SIZE_T GetNumSurfaces() const { return GeometrySurfaces.size(); }
         

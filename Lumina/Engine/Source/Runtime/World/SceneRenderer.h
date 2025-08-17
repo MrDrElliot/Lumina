@@ -9,6 +9,7 @@
 
 namespace Lumina
 {
+    class FRenderGraph;
     class CWorld;
     class FUpdateContext;
     struct FStaticMeshRenderProxy;
@@ -55,8 +56,6 @@ namespace Lumina
         void InitBuffers();
         void CreateImages();
         void OnSwapchainResized();
-
-        bool ResizeBufferIfNeeded(FRHIBufferRef& Buffer, SIZE_T DesiredSize) const;
     
     private:
 
@@ -65,17 +64,6 @@ namespace Lumina
         FSceneRenderSettings                RenderSettings;
         
         FRHIViewportRef                     SceneViewport;
-        
-        TVector<FVertex>                    CombinedVertex;
-        TVector<uint32>                     CombinedIndex;
-
-        std::atomic<SIZE_T>                 NextVertexBufferWritePos = {0};
-        FRHIBufferRef                       VertexBuffer;
-        TVector<FVertex>                    Vertices;
-
-        std::atomic<SIZE_T>                 NextIndexBufferWritePos = {0};
-        FRHIBufferRef                       IndexBuffer;
-        TVector<uint32>                     Indices;
 
         TVector<FSimpleElementVertex>       SimpleVertices;
         FRHIBindingLayoutRef                SimplePassLayout;
@@ -131,9 +119,6 @@ namespace Lumina
         TVector<FDrawIndexedIndirectArguments>  IndirectDrawArguments;
 
         FRHIBufferRef                       IndirectDrawBuffer;
-        THashMap<CStaticMesh*, SIZE_T>      MeshVertexOffset;
-        THashMap<CStaticMesh*, SIZE_T>      MeshIndexOffset;
-        TSet<CStaticMesh*>                  RegisteredMeshes;
         TSet<CMaterial*>                    RegisteredMaterials;
 
         TVector<FStaticMeshRenderProxy*>    StaticMeshProxies;

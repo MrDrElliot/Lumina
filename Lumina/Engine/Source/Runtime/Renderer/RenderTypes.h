@@ -347,6 +347,26 @@ namespace Lumina
             DebugName = Name;
             return *this;
         }
+
+        bool operator==(const FRenderPassBeginInfo& Other) const
+        {
+            return ColorAttachments   == Other.ColorAttachments
+                && ColorLoadOps       == Other.ColorLoadOps
+                && ColorStoreOps      == Other.ColorStoreOps
+                && ClearColorValues   == Other.ClearColorValues
+                && DepthAttachment    == Other.DepthAttachment
+                && DepthLoadOp        == Other.DepthLoadOp
+                && DepthStoreOp       == Other.DepthStoreOp
+                && ClearDepth         == Other.ClearDepth
+                && ClearStencil       == Other.ClearStencil
+                && DebugName          == Other.DebugName
+                && RenderArea         == Other.RenderArea;
+        }
+
+        bool operator!=(const FRenderPassBeginInfo& Other) const
+        {
+            return !(*this == Other);
+        }
     };
     
     struct FDescriptorBinding

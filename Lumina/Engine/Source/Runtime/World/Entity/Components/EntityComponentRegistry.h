@@ -3,6 +3,7 @@
 #include "Core/Functional/Function.h"
 #include "Core/Singleton/Singleton.h"
 #include "entt/entt.hpp"
+#include "World/Entity/Registry/EntityRegistry.h"
 
 namespace Lumina
 {
@@ -11,7 +12,7 @@ namespace Lumina
 
 namespace Lumina
 {
-    using EntityComponentAddFn = TFunction<SEntityComponent*(entt::entity, entt::registry&)>;
+    using EntityComponentAddFn = TFunction<SEntityComponent*(entt::entity, FEntityRegistry&)>;
 
     
     class LUMINA_API FEntityComponentRegistry : public TSingleton<FEntityComponentRegistry>
@@ -40,7 +41,7 @@ namespace Lumina
             AutoRegister_##Type() {                                              \
                 FEntityComponentRegistry::Get()->RegisterComponent(              \
                     #Type,                                                       \
-                    [](entt::entity e, entt::registry& reg) {                    \
+                    [](entt::entity e, FEntityRegistry& reg) {                    \
                         return &reg.emplace_or_replace<Type>(e);                 \
                     }                                                            \
                 );                                                               \

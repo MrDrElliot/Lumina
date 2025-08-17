@@ -10,7 +10,7 @@ namespace Lumina
     public:
         DECLARE_FPROPERTY(EPropertyTypeFlags::Struct)
 
-        FStructProperty(FFieldOwner InOwner, const FPropertyParams* Params)
+        FStructProperty(const FFieldOwner& InOwner, const FPropertyParams* Params)
             :FProperty(InOwner, Params)
         {
             auto* StructParams = (const FStructPropertyParams*)Params;
@@ -20,6 +20,7 @@ namespace Lumina
             SetElementSize(Struct->GetSize(), Struct->GetAlignment());
         }
 
+        void Serialize(FArchive& Ar, void* Value) override;
         void SetStruct(CStruct* InStruct) { Struct = InStruct; }
         CStruct* GetStruct() const { return Struct; }
 

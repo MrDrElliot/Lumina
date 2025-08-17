@@ -5,6 +5,9 @@
 #include "Core/Object/Class.h"
 #include "Entity/Components/EditorComponent.h"
 #include "Entity/Components/LineBatcherComponent.h"
+#include "Entity/Components/VelocityComponent.h"
+#include "Entity/Systems/DebugCameraEntitySystem.h"
+#include "Entity/Systems/UpdateTransformEntitySystem.h"
 #include "glm/gtx/matrix_decompose.hpp"
 #include "Subsystems/FCameraManager.h"
 #include "World/SceneRenderer.h"
@@ -23,72 +26,47 @@ namespace Lumina
     
         if (Ar.IsWriting())
         {
-            // --- Count entities once ---
-            SIZE_T NumEntities = EntityRegistry.view<entt::entity>().size<>();
-            Ar << NumEntities;
-    
-            for (auto entity : EntityRegistry.view<entt::entity>())
+            EntityRegistry.compact<>();
+            auto View = EntityRegistry.view<entt::entity>(entt::exclude<SEditorComponent>);
+
+            SIZE_T NumEntities = 0;
+            TVector<entt::entity> Parents;
+            Parents.reserve(View.size_hint());
+            
+            for (entt::entity entity : View)
             {
-                uint64_t EntityID = (uint64_t)entity;
-                Ar << EntityID;
-    
-                SIZE_T NumComponents = 0;
-                TVector<TPair<FName, TPair<CStruct*, SEntityComponent*>>> Components;
-    
-                for (auto [ID, Set] : EntityRegistry.storage())
+                // We only want to serialize top-level entities here, parents will serialize their children.
+                if (EntityRegistry.all_of<SRelationshipComponent>(entity))
                 {
-                    if (Set.contains(entity))
+                    auto& RelationshipComponent = EntityRegistry.get<SRelationshipComponent>(entity);
+                    if (RelationshipComponent.Parent.IsValid())
                     {
-                        if (void* ComponentPtr = Set.value(entity))
-                        {
-                            if (auto* EntityComponent = (SEntityComponent*)ComponentPtr)
-                            {
-                                if (CStruct* Type = EntityComponent->GetType())
-                                {
-                                    Components.emplace_back(Type->GetName(), eastl::make_pair(Type, EntityComponent));
-                                }
-                            }
-                        }
+                        continue;
                     }
                 }
-    
-                NumComponents = Components.size();
-                Ar << NumComponents;
-    
-                for (auto& [TypeName, Type] : Components)
-                {
-                    Ar << TypeName;
-                    Type.first->SerializeTaggedProperties(Ar, Type.second);
-                }
+                
+                Parents.emplace_back(entity);
+                NumEntities++;
+            }
+            
+            Ar << NumEntities;
+
+            for (entt::entity Parent : Parents)
+            {
+                Entity TopLevelEntity(Parent, this);
+                TopLevelEntity.Serialize(Ar);
             }
         }
         else if (Ar.IsReading())
         {
             EntityRegistry.clear<>();
-            
             SIZE_T NumEntities = 0;
             Ar << NumEntities;
-    
+
             for (SIZE_T i = 0; i < NumEntities; ++i)
             {
-                uint64_t EntityID = 0;
-                Ar << EntityID;
-    
-                entt::entity NewEntity = EntityRegistry.create();
-    
-                SIZE_T NumComponents = 0;
-                Ar << NumComponents;
-    
-                for (SIZE_T j = 0; j < NumComponents; ++j)
-                {
-                    FName TypeName;
-                    Ar << TypeName;
-    
-                    CStruct* Struct = FindObject<CStruct>("script://lumina", TypeName);
-                    auto Fn = FEntityComponentRegistry::Get()->GetComponentFn(Struct->GetName().c_str());
-                    SEntityComponent* NewComponent = Fn(NewEntity, EntityRegistry);
-                    Struct->SerializeTaggedProperties(Ar, NewComponent);
-                }
+                Entity NewEntity(EntityRegistry.create(), this);
+                NewEntity.Serialize(Ar);
             }
         }
     }
@@ -97,12 +75,30 @@ namespace Lumina
     {
         CameraManager = Memory::New<FCameraManager>();
         SceneRenderer = Memory::New<FSceneRenderer>(this);
+        RegisterSystem(NewObject<CUpdateTransformEntitySystem>());
+    }
+
+    Entity CWorld::SetupEditorWorld()
+    {
+        RegisterSystem(NewObject<CDebugCameraEntitySystem>());
+
+        Entity EditorEntity = ConstructEntity("Editor Entity");
+        EditorEntity.AddComponent<SCameraComponent>();
+        EditorEntity.AddComponent<SEditorComponent>();
+        EditorEntity.AddComponent<SVelocityComponent>().Speed = 50.0f;
+        EditorEntity.AddComponent<SHiddenComponent>();
+        EditorEntity.GetComponent<STransformComponent>().SetLocation(glm::vec3(0.0f, 0.0f, 2.0f));
+
+        SetActiveCamera(EditorEntity);
+
+        return EditorEntity;
     }
 
     void CWorld::OnMarkedGarbage()
     {
         Memory::Delete(SceneRenderer);
         Memory::Delete(CameraManager);
+        EntityRegistry.clear<>();
     }
 
     void CWorld::Tick(const FUpdateContext& Context)
@@ -125,7 +121,7 @@ namespace Lumina
             System->Update(EntityRegistry, Context);
         }
 
-        if (Context.GetUpdateStage() == EUpdateStage::FrameEnd)
+        if (bWantsToRender)
         {
             SceneRenderer->Render(Context);
         }

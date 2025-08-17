@@ -1,5 +1,6 @@
 ﻿#include "TaskSystem.h"
 
+#include "Core/Threading/Thread.h"
 #include "Memory/Memory.h"
 #include "Memory/MemoryLeakDetection.h"
 
@@ -8,7 +9,9 @@ namespace Lumina
 
     static void OnStartThread(uint32 threadNum)
     {
-        TracyCSetThreadName(eastl::to_string(threadNum).c_str())
+        FString ThreadName = "Worker: " + eastl::to_string(threadNum);
+        Threading::SetThreadName(ThreadName.c_str());
+        
         Memory::InitializeThreadHeap();
     }
 
@@ -32,7 +35,6 @@ namespace Lumina
         Assert(bInitialized == false)
         
         enki::TaskSchedulerConfig config;
-        config.numTaskThreadsToCreate = std::thread::hardware_concurrency();
         config.customAllocator.alloc = CustomAllocFunc;
         config.customAllocator.free = CustomFreeFunc;
         config.profilerCallbacks.threadStart = OnStartThread;

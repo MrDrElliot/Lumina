@@ -34,6 +34,7 @@ namespace Lumina
         void Initialize(const char* MainThreadName)
         {
             GMainThreadID = std::this_thread::get_id();
+            SetThreadName(MainThreadName);
         }
 
         void Shutdown()
@@ -50,5 +51,6 @@ namespace Lumina
         {
             rpmalloc_thread_finalize(1);
         }
+
     }
 }

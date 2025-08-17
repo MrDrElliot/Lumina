@@ -160,7 +160,7 @@ namespace Lumina
 
 	namespace Windowing
 	{
-		FWindow* PrimaryWindow = nullptr;
+		FWindow* PrimaryWindow;
 		
 		FWindow* GetPrimaryWindowHandle()
 		{

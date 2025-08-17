@@ -100,6 +100,7 @@ namespace Lumina
     struct FIndirectRenderBatch
     {
         CMaterialInterface* Material = nullptr;
+        CStaticMesh*        StaticMesh = nullptr;
         uint32              NumDraws;
         uint32              Offset;
     };
@@ -107,6 +108,7 @@ namespace Lumina
     struct FStaticMeshRender
     {
         CMaterialInterface* Material = nullptr;
+        CStaticMesh*        StaticMesh = nullptr;
         FGeometrySurface    Surface;
         glm::mat4           Matrix;
         uint32              VertexOffset;
