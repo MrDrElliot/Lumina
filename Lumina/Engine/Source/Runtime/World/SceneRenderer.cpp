@@ -15,6 +15,7 @@
 #include "glm/gtx/quaternion.hpp"
 #include "Core/Engine/Engine.h"
 #include "Core/Profiler/Profile.h"
+#include "Entity/Components/EditorComponent.h"
 #include "entity/components/EnvironmentComponent.h"
 #include "Entity/Components/LightComponent.h"
 #include "Entity/Components/LineBatcherComponent.h"
@@ -73,11 +74,11 @@ namespace Lumina
         SceneGlobalData.CameraData.InverseProjection =  CameraComponent.GetViewVolume().GetInverseProjectionMatrix();
         SceneGlobalData.Time =                          (float)World->GetTimeSinceSceneCreation();
         SceneGlobalData.DeltaTime =                     (float)World->GetSceneDeltaTime();
-        SceneGlobalData.FarPlane =                      0.01f;
-        SceneGlobalData.NearPlane =                     1000.0f;
+        SceneGlobalData.FarPlane =                      1000.0f;
+        SceneGlobalData.NearPlane =                     0.01f;
         
         SceneViewport->SetViewVolume(CameraComponent.GetViewVolume());
-
+        
         FRenderGraph RenderGraph;
         
         BuildPasses();
@@ -575,85 +576,59 @@ namespace Lumina
             ModelData.ModelMatrices.reserve(1000);
             LightData.NumLights = 0;
 
-            struct EntityProcessTask : public ITaskSet
+            FMutex Mutex;
+            auto Group = World->GetMutableEntityRegistry().group<SStaticMeshComponent>(entt::get<STransformComponent>);
+            FTaskSystem::Get().ParallelFor((uint32)Group.size(), [&](uint32 Index)
             {
-                EntityProcessTask(FEntityRegistry& Registry, TVector<FStaticMeshRender>& Renders)
-                    : EntityRegistry(Registry)
-                    , MeshRenders(Renders)
-                {
-                    Group = Registry.group<SStaticMeshComponent>(entt::get<STransformComponent>);
-                    m_SetSize = (uint32)Group.size();
-                }
+                LUMINA_PROFILE_SECTION("Build Render Proxies");
 
-                void ExecuteRange(TaskSetPartition range, uint32_t threadnum) override final
+                entt::entity entity = Group[Index];
+                SStaticMeshComponent& MeshComponent = Group.get<SStaticMeshComponent>(entity);
+                STransformComponent& TransformComponent = Group.get<STransformComponent>(entity);
+                
+                
+                CStaticMesh* Mesh = MeshComponent.StaticMesh;
+                if (!IsValid(Mesh))
+                    return;
+                
+                SIZE_T Surfaces = Mesh->GetMeshResource().GetNumSurfaces();
+                for (SIZE_T j = 0; j < Surfaces; ++j)
                 {
-                    for (uint64_t i = range.start; i < range.end; ++i)
+                    const FMeshResource& Resource = MeshComponent.StaticMesh->GetMeshResource();
+                    if (!Resource.IsSurfaceIndexValid(j))
                     {
-                        entt::entity entity = Group[i];
-                        SStaticMeshComponent& MeshComponent = Group.get<SStaticMeshComponent>(entity);
-                        STransformComponent& TransformComponent = Group.get<STransformComponent>(entity);
-
-                        CStaticMesh* Mesh = MeshComponent.StaticMesh;
-                    
-                        if (!IsValid(Mesh))
-                            continue;
-                        
-                        {
-                            LUMINA_PROFILE_SECTION("Build Render Proxies");
-
-                            SIZE_T Surfaces = Mesh->GetMeshResource().GetNumSurfaces();
-                            for (SIZE_T j = 0; j < Surfaces; ++j)
-                            {
-                                const FMeshResource& Resource = MeshComponent.StaticMesh->GetMeshResource();
-                                if (!Resource.IsSurfaceIndexValid(j))
-                                {
-                                    continue;
-                                }
-                        
-                                const FGeometrySurface& Surface = Resource.GetSurface(j);
-                                CMaterialInterface* Material = MeshComponent.GetMaterialForSlot(Surface.MaterialIndex);
-                                if (!IsValid(Material) || !Material->IsReadyForRender())
-                                {
-                                    continue;
-                                }
-                            
-                                FStaticMeshRender Proxy;
-                                Proxy.StaticMesh = Mesh;
-                                Proxy.Material = Material;
-                                Proxy.VertexOffset = 0;
-                                Proxy.FirstIndex = Surface.StartIndex;
-                                Proxy.Surface = Surface;
-                                Proxy.Matrix = TransformComponent.GetMatrix();
-
-                                // 64-bit key: [MaterialID:20 | MeshID:20 | FirstIndex:16 | IndexCount:8]
-                                auto id32 = [](const void* p){ return uint64(reinterpret_cast<uintptr_t>(p)) & 0xFFFFF; }; // 20 bits
-                                uint64_t mat     = id32(Proxy.Material);
-                                uint64_t mesh    = id32(Proxy.StaticMesh);
-                                uint64_t first16 = uint64(Proxy.FirstIndex & 0xFFFF);
-                                uint64_t idx8    = uint64(eastl::min<uint32_t>(Proxy.Surface.IndexCount, 0xFF));
-
-                                Proxy.SortKey = (mat << 44) | (mesh << 24) | (first16 << 8) | idx8;
-
-                                FScopeLock Lock(Mutex);
-                                MeshRenders.push_back(Proxy);
-                            }
-                        }
+                        continue;
                     }
+                
+                    const FGeometrySurface& Surface = Resource.GetSurface(j);
+                    CMaterialInterface* Material = MeshComponent.GetMaterialForSlot(Surface.MaterialIndex);
+                    if (!IsValid(Material) || !Material->IsReadyForRender())
+                    {
+                        continue;
+                    }
+                    
+                    FStaticMeshRender Proxy;
+                    Proxy.StaticMesh = Mesh;
+                    Proxy.Material = Material;
+                    Proxy.VertexOffset = 0;
+                    Proxy.FirstIndex = Surface.StartIndex;
+                    Proxy.Surface = Surface;
+                    Proxy.Matrix = TransformComponent.GetMatrix();
+                    
+                    // 64-bit key: [MaterialID:20 | MeshID:20 | FirstIndex:16 | IndexCount:8]
+                    auto id32 = [](const void* p){ return uint64(reinterpret_cast<uintptr_t>(p)) & 0xFFFFF; }; // 20 bits
+                    uint64 mat     = id32(Proxy.Material);
+                    uint64 mesh    = id32(Proxy.StaticMesh);
+                    uint64 first16 = uint64(Proxy.FirstIndex & 0xFFFF);
+                    uint64 idx8    = uint64(eastl::min<uint32_t>(Proxy.Surface.IndexCount, 0xFF));
+                    Proxy.SortKey = (mat << 44) | (mesh << 24) | (first16 << 8) | idx8;
+                
+                    FScopeLock Lock(Mutex);
+                    StaticMeshRenders.push_back(Proxy);
                 }
-
-                FMutex Mutex;
-                FEntityRegistry& EntityRegistry;
-                TVector<FStaticMeshRender>& MeshRenders;
-                decltype(EntityRegistry.group<SStaticMeshComponent>(entt::get<STransformComponent>)) Group;
-            };
-            {
-                LUMINA_PROFILE_SECTION("Process Mesh Components");
-                EntityProcessTask Task(World->GetMutableEntityRegistry(), StaticMeshRenders);
-                FTaskSystem::Get()->ScheduleTask(&Task);
-                FTaskSystem::Get()->WaitForTask(&Task);
-            }
-
-
+                
+            }, ETaskPriority::High);
+            
             {
                 LUMINA_PROFILE_SECTION("Sort Render Proxies");
                 eastl::sort(StaticMeshRenders.begin(), StaticMeshRenders.end());
@@ -761,6 +736,21 @@ namespace Lumina
             }
         }
 
+        //========================================================================================================================
+
+
+        {
+            auto Group = World->GetMutableEntityRegistry().group<>(entt::get<SCameraComponent>, entt::exclude<SEditorComponent>);
+            for (uint64 i = 0; i < Group.size(); ++i)
+            {
+                entt::entity entity = Group[i];
+                SCameraComponent& CameraComponent = Group.get<SCameraComponent>(entity);
+                World->DrawArrow(CameraComponent.GetPosition(), CameraComponent.GetForwardVector(), 1.0f, FColor::Blue);
+                World->DrawFrustum(CameraComponent.GetViewVolume().GetViewProjectionMatrix(), FColor::Green);
+            }
+        }
+
+        //========================================================================================================================
         
         {
             auto Group = World->GetMutableEntityRegistry().group<SSpotLightComponent>(entt::get<STransformComponent>);
@@ -1093,77 +1083,85 @@ namespace Lumina
         }
         
 
-        
-        FRHIBufferDesc IndirectBufferDesc;
-        IndirectBufferDesc.Size = sizeof(FDrawIndexedIndirectArguments) * (1024 * 1024 * 10);
-        IndirectBufferDesc.Stride = sizeof(uint32);
-        IndirectBufferDesc.Usage.SetMultipleFlags(BUF_Indirect);
-        IndirectBufferDesc.InitialState = EResourceStates::IndexBuffer;
-        IndirectBufferDesc.bKeepInitialState = true;
-        IndirectBufferDesc.DebugName = "Indirect Draw Buffer";
-        IndirectDrawBuffer = GRenderContext->CreateBuffer(IndirectBufferDesc);
-        GRenderContext->SetObjectName(IndirectDrawBuffer, IndirectBufferDesc.DebugName.c_str(), EAPIResourceType::Buffer);
+        {
+            FRHIBufferDesc IndirectBufferDesc;
+            IndirectBufferDesc.Size = sizeof(FDrawIndexedIndirectArguments) * (1024 * 1024 * 10);
+            IndirectBufferDesc.Stride = sizeof(uint32);
+            IndirectBufferDesc.Usage.SetMultipleFlags(BUF_Indirect);
+            IndirectBufferDesc.InitialState = EResourceStates::IndexBuffer;
+            IndirectBufferDesc.bKeepInitialState = true;
+            IndirectBufferDesc.DebugName = "Indirect Draw Buffer";
+            IndirectDrawBuffer = GRenderContext->CreateBuffer(IndirectBufferDesc);
+            GRenderContext->SetObjectName(IndirectDrawBuffer, IndirectBufferDesc.DebugName.c_str(), EAPIResourceType::Buffer);
+        }
     }
     
     void FSceneRenderer::CreateImages()
     {
         FIntVector2D Extent = Windowing::GetPrimaryWindowHandle()->GetExtent();
-        
-        FRHIImageDesc GBufferPosition;
-        GBufferPosition.Extent = Extent;
-        GBufferPosition.Flags.SetMultipleFlags(EImageCreateFlags::ColorAttachment, EImageCreateFlags::ShaderResource);
-        GBufferPosition.Format = EFormat::RGBA32_FLOAT;
-        GBufferPosition.Dimension = EImageDimension::Texture2D;
-        GBufferPosition.DebugName = "GBuffer - Position";
-        
-        GBuffer.Position = GRenderContext->CreateImage(GBufferPosition);
-        GRenderContext->SetObjectName(GBuffer.Position, "GBuffer - Position", EAPIResourceType::Image);
 
+        {
+            FRHIImageDesc GBufferPosition;
+            GBufferPosition.Extent = Extent;
+            GBufferPosition.Flags.SetMultipleFlags(EImageCreateFlags::ColorAttachment, EImageCreateFlags::ShaderResource);
+            GBufferPosition.Format = EFormat::RGBA32_FLOAT;
+            GBufferPosition.Dimension = EImageDimension::Texture2D;
+            GBufferPosition.DebugName = "GBuffer - Position";
         
-        FRHIImageDesc NormalDesc = {};
-        NormalDesc.Extent = Extent;
-        NormalDesc.Format = EFormat::RGBA16_FLOAT;
-        NormalDesc.Dimension = EImageDimension::Texture2D;
-        NormalDesc.Flags.SetMultipleFlags(EImageCreateFlags::ColorAttachment, EImageCreateFlags::ShaderResource);
-        NormalDesc.DebugName = "GBuffer - Normals";
-        
-        GBuffer.Normals = GRenderContext->CreateImage(NormalDesc);
-        GRenderContext->SetObjectName(GBuffer.Normals, "GBuffer - Normals", EAPIResourceType::Image);
+            GBuffer.Position = GRenderContext->CreateImage(GBufferPosition);
+            GRenderContext->SetObjectName(GBuffer.Position, "GBuffer - Position", EAPIResourceType::Image);
+        }
 
+        {
+            FRHIImageDesc NormalDesc = {};
+            NormalDesc.Extent = Extent;
+            NormalDesc.Format = EFormat::RGBA16_FLOAT;
+            NormalDesc.Dimension = EImageDimension::Texture2D;
+            NormalDesc.Flags.SetMultipleFlags(EImageCreateFlags::ColorAttachment, EImageCreateFlags::ShaderResource);
+            NormalDesc.DebugName = "GBuffer - Normals";
         
-        FRHIImageDesc MaterialDesc = {};
-        MaterialDesc.Extent = Extent;
-        MaterialDesc.Format = EFormat::RGBA8_UNORM;
-        MaterialDesc.Dimension = EImageDimension::Texture2D;
-        MaterialDesc.Flags.SetMultipleFlags(EImageCreateFlags::ColorAttachment, EImageCreateFlags::ShaderResource);
-        MaterialDesc.DebugName = "GBuffer - Material";
-        
-        GBuffer.Material = GRenderContext->CreateImage(MaterialDesc);
-        GRenderContext->SetObjectName(GBuffer.Material, "GBuffer - Material", EAPIResourceType::Image);
+            GBuffer.Normals = GRenderContext->CreateImage(NormalDesc);
+            GRenderContext->SetObjectName(GBuffer.Normals, "GBuffer - Normals", EAPIResourceType::Image);
+        }
 
+        {
+            FRHIImageDesc MaterialDesc = {};
+            MaterialDesc.Extent = Extent;
+            MaterialDesc.Format = EFormat::RGBA8_UNORM;
+            MaterialDesc.Dimension = EImageDimension::Texture2D;
+            MaterialDesc.Flags.SetMultipleFlags(EImageCreateFlags::ColorAttachment, EImageCreateFlags::ShaderResource);
+            MaterialDesc.DebugName = "GBuffer - Material";
         
-        FRHIImageDesc AlbedoDesc = {};
-        AlbedoDesc.Extent = Extent;
-        AlbedoDesc.Format = EFormat::RGBA8_UNORM;
-        AlbedoDesc.Dimension = EImageDimension::Texture2D;
-        AlbedoDesc.Flags.SetMultipleFlags(EImageCreateFlags::ColorAttachment, EImageCreateFlags::ShaderResource);
-        AlbedoDesc.DebugName = "GBuffer - Albedo";
-        
-        GBuffer.AlbedoSpec = GRenderContext->CreateImage(AlbedoDesc);
-        GRenderContext->SetObjectName(GBuffer.AlbedoSpec, "GBuffer - Albedo", EAPIResourceType::Image);
-        
-        
-        FRHIImageDesc DepthImageDesc;
-        DepthImageDesc.Extent = Extent;
-        DepthImageDesc.Flags.SetMultipleFlags(EImageCreateFlags::DepthAttachment, EImageCreateFlags::ShaderResource);
-        DepthImageDesc.Format = EFormat::D32;
-        DepthImageDesc.InitialState = EResourceStates::DepthWrite;
-        DepthImageDesc.bKeepInitialState = true;
-        DepthImageDesc.Dimension = EImageDimension::Texture2D;
-        DepthImageDesc.DebugName = "Depth Attachment";
+            GBuffer.Material = GRenderContext->CreateImage(MaterialDesc);
+            GRenderContext->SetObjectName(GBuffer.Material, "GBuffer - Material", EAPIResourceType::Image);
+        }
 
-        DepthAttachment = GRenderContext->CreateImage(DepthImageDesc);
-        GRenderContext->SetObjectName(DepthAttachment, "Depth Attachment", EAPIResourceType::Image);
+        {
+            FRHIImageDesc AlbedoDesc = {};
+            AlbedoDesc.Extent = Extent;
+            AlbedoDesc.Format = EFormat::RGBA8_UNORM;
+            AlbedoDesc.Dimension = EImageDimension::Texture2D;
+            AlbedoDesc.Flags.SetMultipleFlags(EImageCreateFlags::ColorAttachment, EImageCreateFlags::ShaderResource);
+            AlbedoDesc.DebugName = "GBuffer - Albedo";
+        
+            GBuffer.AlbedoSpec = GRenderContext->CreateImage(AlbedoDesc);
+            GRenderContext->SetObjectName(GBuffer.AlbedoSpec, "GBuffer - Albedo", EAPIResourceType::Image);
+        }
+        
+
+        {
+            FRHIImageDesc DepthImageDesc;
+            DepthImageDesc.Extent = Extent;
+            DepthImageDesc.Flags.SetMultipleFlags(EImageCreateFlags::DepthAttachment, EImageCreateFlags::ShaderResource);
+            DepthImageDesc.Format = EFormat::D32;
+            DepthImageDesc.InitialState = EResourceStates::DepthWrite;
+            DepthImageDesc.bKeepInitialState = true;
+            DepthImageDesc.Dimension = EImageDimension::Texture2D;
+            DepthImageDesc.DebugName = "Depth Attachment";
+
+            DepthAttachment = GRenderContext->CreateImage(DepthImageDesc);
+            GRenderContext->SetObjectName(DepthAttachment, "Depth Attachment", EAPIResourceType::Image);
+        }
 
         {
             FRHIImageDesc SSAODesc = {};

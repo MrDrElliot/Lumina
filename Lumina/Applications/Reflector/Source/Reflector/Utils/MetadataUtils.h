@@ -24,7 +24,6 @@ public:
 
     auto begin() const { return Metadata.begin(); }
     auto end() const { return Metadata.end(); }
-
     
     eastl::vector<FMetadataPair> Metadata;
     

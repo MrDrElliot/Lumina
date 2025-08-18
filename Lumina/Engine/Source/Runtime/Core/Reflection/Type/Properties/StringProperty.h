@@ -10,6 +10,7 @@ namespace Lumina
         FStringProperty(const FFieldOwner& InOwner, const FPropertyParams* Params)
             :FProperty(InOwner, Params)
         {
+            SetElementSize(sizeof(FString));
         }
 
         void Serialize(FArchive& Ar, void* Value) override;
@@ -24,6 +25,7 @@ namespace Lumina
         FNameProperty(FFieldOwner InOwner, const FPropertyParams* Params)
             :FProperty(InOwner, Params)
         {
+            SetElementSize(sizeof(FName));
         }
 
         void Serialize(FArchive& Ar, void* Value) override;

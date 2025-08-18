@@ -40,13 +40,14 @@ namespace Lumina
     void FEnumPropertyCustomization::UpdatePropertyValue(TSharedPtr<FPropertyHandle> Property)
     {
         FEnumProperty* EnumProperty = static_cast<FEnumProperty*>(Property->Property);
-        EnumProperty->GetInnerProperty()->SetIntPropertyValue(Property->PropertyPointer, CachedValue);
+        EnumProperty->GetInnerProperty()->SetIntPropertyValue(Property->Property->GetValuePtr<void>(Property->ContainerPtr), CachedValue);
+        
     }
 
     void FEnumPropertyCustomization::HandleExternalUpdate(TSharedPtr<FPropertyHandle> Property)
     {
         FEnumProperty* EnumProperty = static_cast<FEnumProperty*>(Property->Property);
         
-        CachedValue = EnumProperty->GetInnerProperty()->GetSignedIntPropertyValue(Property->PropertyPointer);
+        CachedValue = EnumProperty->GetInnerProperty()->GetSignedIntPropertyValue(Property->Property->GetValuePtr<void>(Property->ContainerPtr));
     }
 }

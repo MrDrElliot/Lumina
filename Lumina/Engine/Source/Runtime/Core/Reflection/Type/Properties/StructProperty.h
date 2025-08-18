@@ -17,7 +17,7 @@ namespace Lumina
             CStruct* InternalStruct = StructParams->StructFunc();
             Assert(InternalStruct)
             SetStruct(InternalStruct);
-            SetElementSize(Struct->GetSize(), Struct->GetAlignment());
+            SetElementSize(Struct->GetAlignedSize());
         }
 
         void Serialize(FArchive& Ar, void* Value) override;

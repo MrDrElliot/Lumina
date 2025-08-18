@@ -8,7 +8,7 @@
 
 namespace Lumina
 {
-    constexpr size_t InitialLinearAllocatorSize = 1 * 1024 * 1024; // 1 MB
+    constexpr size_t InitialLinearAllocatorSize = 1024;
     
     FRenderGraph::FRenderGraph()
         :GraphAllocator(InitialLinearAllocatorSize)

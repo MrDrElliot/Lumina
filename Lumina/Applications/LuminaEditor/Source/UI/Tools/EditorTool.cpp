@@ -76,7 +76,7 @@ namespace Lumina
 
         if (ImGui::MenuItem(LE_ICON_CONTENT_SAVE"##Save"))
         {
-            FTaskSystem::Get()->ScheduleLambda(1, [this](uint32 Start, uint32 End, uint32 Thread)
+            FTaskSystem::Get().ScheduleLambda(1, [this](uint32 Start, uint32 End, uint32 Thread)
             {
                 OnSave();
             });

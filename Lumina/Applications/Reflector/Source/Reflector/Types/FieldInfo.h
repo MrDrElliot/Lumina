@@ -36,6 +36,7 @@ namespace Lumina
         EPropertyTypeFlags                  Flags;
         eastl::string                       Name;
         eastl::string                       TypeName;
+        eastl::string                       RawFieldType;
         eastl::vector<eastl::string>        PropertyFlags;
     };
 }

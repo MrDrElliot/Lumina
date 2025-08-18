@@ -39,7 +39,7 @@ namespace Lumina
     #define REGISTER_ENTITY_COMPONENT(Type)                                      \
         struct AutoRegister_##Type {                                             \
             AutoRegister_##Type() {                                              \
-                FEntityComponentRegistry::Get()->RegisterComponent(              \
+                FEntityComponentRegistry::Get().RegisterComponent(              \
                     #Type,                                                       \
                     [](entt::entity e, FEntityRegistry& reg) {                    \
                         return &reg.emplace_or_replace<Type>(e);                 \

@@ -96,18 +96,20 @@ namespace Lumina::Reflection
         virtual void DefineSecondaryHeader(eastl::string& Stream, const eastl::string& FileID) = 0;
         virtual void DeclareImplementation(eastl::string& Stream) = 0;
         virtual void DeclareStaticRegistration(eastl::string& Stream) = 0;
+        bool DeclareGettersAndSetters(eastl::string& Stream, const eastl::string& FileID);
         
         void GenerateMetadata(const eastl::string& InMetadata);
 
-        eastl::string                   Project;
-        uint32_t                        GeneratedBodyLineNumber;
-        uint32_t                        LineNumber;
-        eastl::string                   HeaderID;
-        eastl::string                   DisplayName;
-        eastl::string                   QualifiedName;
-        eastl::string                   Namespace;
-        EType                           Type;
-        eastl::vector<FMetadataPair>    Metadata;
+        eastl::vector<eastl::shared_ptr<FReflectedProperty>>    Props;
+        eastl::string                                           Project;
+        uint32_t                                                GeneratedBodyLineNumber;
+        uint32_t                                                LineNumber;
+        eastl::string                                           HeaderID;
+        eastl::string                                           DisplayName;
+        eastl::string                                           QualifiedName;
+        eastl::string                                           Namespace;
+        EType                                                   Type;
+        eastl::vector<FMetadataPair>                            Metadata;
     };
     
 
@@ -165,8 +167,6 @@ namespace Lumina::Reflection
         void DeclareImplementation(eastl::string& Stream) override;
         void DeclareStaticRegistration(eastl::string& Stream) override;
         
-        eastl::vector<eastl::shared_ptr<FReflectedProperty>>        Props;
-
         eastl::string                                               Parent;
     };
 

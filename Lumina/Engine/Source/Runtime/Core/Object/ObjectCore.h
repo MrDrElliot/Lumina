@@ -198,11 +198,16 @@ namespace Lumina
         const char* ValueUTF8;
     };
 
+    typedef void (*SetterFuncPtr)(void* InContainer, const void* InValue);
+    typedef void (*GetterFuncPtr)(const void* InContainer, void* OutValue);
+
     struct FPropertyParams
     {
         const char*         Name;
         EPropertyFlags      PropertyFlags;
         EPropertyTypeFlags  TypeFlags;
+        SetterFuncPtr       SetterFunc;
+        GetterFuncPtr       GetterFunc;
         uint16              Offset;
     };
 

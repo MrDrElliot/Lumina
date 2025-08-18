@@ -29,7 +29,7 @@ namespace Lumina
         Application = App;
 
         
-        FTaskSystem::Get()->Initialize();
+        FTaskSystem::Get().Initialize();
         
         RenderManager = EngineSubsystems.AddSubsystem<FRenderManager>();
         EngineViewport = GRenderContext->CreateViewport(Windowing::GetPrimaryWindowHandle()->GetExtent());
@@ -76,7 +76,7 @@ namespace Lumina
         EngineSubsystems.RemoveSubsystem<FRenderManager>();
         
 
-        FTaskSystem::Get()->Shutdown();
+        FTaskSystem::Get().Shutdown();
         
         return false;
     }

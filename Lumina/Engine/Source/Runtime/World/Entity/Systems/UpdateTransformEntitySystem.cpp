@@ -1,8 +1,9 @@
 ﻿#include "UpdateTransformEntitySystem.h"
 
 #include "TaskSystem/TaskSystem.h"
+#include "World/Entity/Components/EditorComponent.h"
 #include "World/Entity/Components/RelationshipComponent.h"
-#include "World/entity/components/transformcomponent.h"
+#include "World/Entity/Components/Transformcomponent.h"
 
 namespace Lumina
 {
@@ -23,10 +24,21 @@ namespace Lumina
         
         auto Group = EntityRegistry.group<>(entt::get<STransformComponent>);
         auto RelationshipGroup = EntityRegistry.group<>(entt::get<STransformComponent, SRelationshipComponent>);
-        FTaskSystem::Get()->ParallelFor(Group.size(), [&](uint32 Index)
+        auto CameraView = EntityRegistry.view<SCameraComponent>(entt::exclude<SEditorComponent>);
+
+        FTaskSystem::Get().ParallelFor(Group.size(), [&](uint32 Index)
         {
             entt::entity entity = Group[Index];
             auto& transform = Group.get<STransformComponent>(entity);
+
+            if (CameraView.contains(entity))
+            {
+                auto& Camera = CameraView.get<SCameraComponent>(entity);
+                glm::vec3 UpdatedForward = transform.Transform.Rotation * glm::vec3(0.0f, 0.0f, -1.0f);
+                glm::vec3 UpdatedUp      = transform.Transform.Rotation * glm::vec3(0.0f, 1.0f,  0.0f);
+    
+                Camera.SetView(transform.Transform.Location, transform.Transform.Location + UpdatedForward, UpdatedUp);
+            }
             
             if (RelationshipGroup.contains(entity))
             {
@@ -52,6 +64,5 @@ namespace Lumina
                 transform.CachedTransform = transform.Transform;
             }
         });
-
     }
 }

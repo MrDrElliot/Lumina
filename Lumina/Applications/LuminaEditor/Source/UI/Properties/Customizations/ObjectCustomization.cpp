@@ -166,11 +166,11 @@ namespace Lumina
 
     void FCObjectPropertyCustomization::UpdatePropertyValue(TSharedPtr<FPropertyHandle> Property)
     {
-        *(FObjectHandle*)Property->PropertyPointer = ObjectHandle;
+        Property->Property->SetValue(Property->ContainerPtr, ObjectHandle);
     }
 
     void FCObjectPropertyCustomization::HandleExternalUpdate(TSharedPtr<FPropertyHandle> Property)
     {
-        ObjectHandle = *(FObjectHandle*)Property->PropertyPointer;
+        Property->Property->GetValue(Property->ContainerPtr, &ObjectHandle);
     }
 }

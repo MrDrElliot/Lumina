@@ -46,13 +46,15 @@ namespace Lumina
         void UpdatePropertyValue(TSharedPtr<FPropertyHandle> Property) override
         {
             CachedValue = DisplayValue;
-            *(ValueType*)Property->PropertyPointer = CachedValue;
+            Property->Property->SetValue(Property->ContainerPtr, CachedValue);
         }
 
         void HandleExternalUpdate(TSharedPtr<FPropertyHandle> Property) override
         {
-            const ValueType ActualValue = *(ValueType*)Property->PropertyPointer;
-            if (ActualValue != CachedValue)
+            ValueType ActualValue;
+            Property->Property->GetValue(Property->ContainerPtr, &ActualValue);
+        
+            if (CachedValue != ActualValue)
             {
                 CachedValue = DisplayValue = ActualValue;
             }
@@ -81,12 +83,12 @@ namespace Lumina
         
         void UpdatePropertyValue(TSharedPtr<FPropertyHandle> Property) override
         {
-            *(bool*)Property->PropertyPointer = bValue;
+            Property->Property->SetValue(Property->ContainerPtr, bValue);
         }
 
         void HandleExternalUpdate(TSharedPtr<FPropertyHandle> Property) override
         {
-            bValue = *(bool*)Property->PropertyPointer;
+            Property->Property->GetValue(Property->ContainerPtr, &bValue);
         }
 
         bool bValue;

@@ -122,27 +122,22 @@ namespace Lumina
             CPackage* NewPackage = CPackage::CreatePackage(GetSupportedType()->GetName().ToString(), QualifiedPath);
             CStaticMesh* NewMesh = NewObject<CStaticMesh>(NewPackage, FileName.c_str());
             NewMesh->MeshResources = MeshResource;
-            
-            FLambdaTask* Task = FTaskSystem::Get()->ScheduleLambda((uint32)ImportData.Textures.size(), [ImportData, RawPath, FullPath] (uint32 Start, uint32 End, uint32 Thread)
+
+            FTaskSystem::Get().ParallelFor((uint32)ImportData.Textures.size(), [&](uint32 Index)
             {
                 CTextureFactory* TextureFactory = CTextureFactory::StaticClass()->GetDefaultObject<CTextureFactory>();
-                
-                for(uint32 i = Start; i < End; ++i)
-                {
-                    const Import::Mesh::GLTF::FGLTFImage& Image = ImportData.Textures[i];
-                    FString ParentPath = Paths::Parent(RawPath);
-                    FString TexturePath = ParentPath + "/" + Image.RelativePath;
-                    FString TextureFileName = Paths::RemoveExtension(Paths::FileName(TexturePath));
+
+                const Import::Mesh::GLTF::FGLTFImage& Image = ImportData.Textures[Index];
+                FString ParentPath = Paths::Parent(RawPath);
+                FString TexturePath = ParentPath + "/" + Image.RelativePath;
+                FString TextureFileName = Paths::RemoveExtension(Paths::FileName(TexturePath));
+                                         
+                FString DestinationParent = Paths::Parent(FullPath);
+                FString TextureDestination = DestinationParent + "/" + TextureFileName;
                                              
-                    FString DestinationParent = Paths::Parent(FullPath);
-                    FString TextureDestination = DestinationParent + "/" + TextureFileName;
-                                                 
-                    TextureFactory->TryImport(TexturePath, TextureDestination);
-                }
+                TextureFactory->TryImport(TexturePath, TextureDestination);
             });
 
-            FTaskSystem::Get()->WaitForTask(Task);
-            
             for (SIZE_T i = 0; i < ImportData.Materials[Counter].size(); ++i)
             {
                 const Import::Mesh::GLTF::FGLTFMaterial& Material = ImportData.Materials[Counter][i];

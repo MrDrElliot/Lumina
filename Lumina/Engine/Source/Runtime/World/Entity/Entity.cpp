@@ -71,7 +71,7 @@ namespace Lumina
     
                 if (CStruct* Struct = FindObject<CStruct>("script://lumina", TypeName))
                 {
-                    auto Fn = FEntityComponentRegistry::Get()->GetComponentFn(Struct->GetName().c_str());
+                    auto Fn = FEntityComponentRegistry::Get().GetComponentFn(Struct->GetName().c_str());
                     SEntityComponent* NewComponent = Fn(GetHandle(), World->GetMutableEntityRegistry());
                     Struct->SerializeTaggedProperties(Ar, NewComponent);
                 }

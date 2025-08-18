@@ -391,7 +391,7 @@ namespace Lumina
             EditorTools.push_back(NewTool);
         }
 
-        if (!FProject::Get()->HasLoadedProject() && !FileBrowser.IsOpened())
+        if (!FProject::Get().HasLoadedProject() && !FileBrowser.IsOpened())
         {
             FileBrowser = ImGui::FileBrowser(ImGuiFileBrowserFlags_CloseOnEsc | ImGuiFileBrowserFlags_CreateNewDir);
             FileBrowser.SetTitle("Select Project to load.");
@@ -404,7 +404,7 @@ namespace Lumina
         if (FileBrowser.HasSelected())
         {
             std::filesystem::path Path = FileBrowser.GetSelected();
-            FProject::Get()->LoadProject(Path.string().c_str());
+            FProject::Get().LoadProject(Path.string().c_str());
             FileBrowser.ClearSelected();
             FileBrowser.Close();
             ContentBrowser->RefreshContentBrowser();

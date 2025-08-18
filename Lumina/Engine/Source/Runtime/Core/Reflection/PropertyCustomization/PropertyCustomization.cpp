@@ -4,9 +4,10 @@
 
 namespace Lumina
 {
-    FPropertyHandle::FPropertyHandle(void* InPropertyPointer, FProperty* InProperty)
-        : PropertyPointer(InPropertyPointer)
+    FPropertyHandle::FPropertyHandle(void* InContainerPtr, FProperty* InProperty, int64 InIndex)
+        : ContainerPtr(InContainerPtr)
         , Property(InProperty)
+        , Index(InIndex)
     {
     }
 

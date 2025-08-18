@@ -65,6 +65,50 @@ namespace Lumina
         UpdateMatrices();
     }
 
+    FFrustum FViewVolume::GetFrustum() const
+    {
+        FFrustum Frustum;
+        const glm::mat4& matrix = ViewProjectionMatrix;
+
+        Frustum.Planes[FFrustum::LEFT].x = matrix[0].w + matrix[0].x;
+        Frustum.Planes[FFrustum::LEFT].y = matrix[1].w + matrix[1].x;
+        Frustum.Planes[FFrustum::LEFT].z = matrix[2].w + matrix[2].x;
+        Frustum.Planes[FFrustum::LEFT].w = matrix[3].w + matrix[3].x;
+
+        Frustum.Planes[FFrustum::RIGHT].x = matrix[0].w - matrix[0].x;
+        Frustum.Planes[FFrustum::RIGHT].y = matrix[1].w - matrix[1].x;
+        Frustum.Planes[FFrustum::RIGHT].z = matrix[2].w - matrix[2].x;
+        Frustum.Planes[FFrustum::RIGHT].w = matrix[3].w - matrix[3].x;
+
+        Frustum.Planes[FFrustum::TOP].x = matrix[0].w - matrix[0].y;
+        Frustum.Planes[FFrustum::TOP].y = matrix[1].w - matrix[1].y;
+        Frustum.Planes[FFrustum::TOP].z = matrix[2].w - matrix[2].y;
+        Frustum.Planes[FFrustum::TOP].w = matrix[3].w - matrix[3].y;
+
+        Frustum.Planes[FFrustum::BOTTOM].x = matrix[0].w + matrix[0].y;
+        Frustum.Planes[FFrustum::BOTTOM].y = matrix[1].w + matrix[1].y;
+        Frustum.Planes[FFrustum::BOTTOM].z = matrix[2].w + matrix[2].y;
+        Frustum.Planes[FFrustum::BOTTOM].w = matrix[3].w + matrix[3].y;
+
+        Frustum.Planes[FFrustum::BACK].x = matrix[0].w + matrix[0].z;
+        Frustum.Planes[FFrustum::BACK].y = matrix[1].w + matrix[1].z;
+        Frustum.Planes[FFrustum::BACK].z = matrix[2].w + matrix[2].z;
+        Frustum.Planes[FFrustum::BACK].w = matrix[3].w + matrix[3].z;
+
+        Frustum.Planes[FFrustum::FRONT].x = matrix[0].w - matrix[0].z;
+        Frustum.Planes[FFrustum::FRONT].y = matrix[1].w - matrix[1].z;
+        Frustum.Planes[FFrustum::FRONT].z = matrix[2].w - matrix[2].z;
+        Frustum.Planes[FFrustum::FRONT].w = matrix[3].w - matrix[3].z;
+
+        for (auto i = 0; i < FFrustum::NUM; i++)
+        {
+            float length = glm::sqrt(Frustum.Planes[i].x * Frustum.Planes[i].x + Frustum.Planes[i].y * Frustum.Planes[i].y + Frustum.Planes[i].z * Frustum.Planes[i].z);
+            Frustum.Planes[i] /= length;
+        }
+
+        return Frustum;
+    }
+    
     void FViewVolume::UpdateMatrices()
     {
         ViewMatrix = glm::lookAt(ViewPosition, ViewPosition + ForwardVector, UpVector);

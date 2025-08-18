@@ -15,22 +15,8 @@ namespace Lumina
         
         void AppendDefinition(eastl::string& Stream) const override
         {
-            if (bInner)
-            {
-                Stream += "{ \"" +  Name + "\"" + ", Lumina::EPropertyFlags::None, " + "Lumina::EPropertyTypeFlags::Struct," +  " 0, Construct_CStruct_" + ClangUtils::MakeCodeFriendlyNamespace(TypeName) + " };\n";
-            }
-            else
-            {
-                if (Metadata.empty())
-                {
-                    Stream += "{ \"" +  Name + "\"" + ", Lumina::EPropertyFlags::None, " + "Lumina::EPropertyTypeFlags::Struct," +  " offsetof(" + Outer + ", " + Name + "), Construct_CStruct_" + ClangUtils::MakeCodeFriendlyNamespace(TypeName) + " };\n";
-                }
-                else
-                {
-                    Stream += "{ \"" +  Name + "\"" + ", Lumina::EPropertyFlags::None, " + "Lumina::EPropertyTypeFlags::Struct," +  " offsetof(" + Outer + ", " + Name + "), Construct_CStruct_" + ClangUtils::MakeCodeFriendlyNamespace(TypeName) + ", METADATA_PARAMS(std::size(" + Name + "_Metadata), " + Name + "_Metadata) " + "};\n";
-                }
-            }
-
+            eastl::string CustomData = "Construct_CStruct_" + ClangUtils::MakeCodeFriendlyNamespace(TypeName);
+            AppendPropertyDef(Stream, "Lumina::EPropertyFlags::None", "Lumina::EPropertyTypeFlags::Struct", CustomData);
         }
 
         const char* GetPropertyParamType() const override { return "FStructPropertyParams"; }

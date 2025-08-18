@@ -21,6 +21,8 @@ namespace Lumina
         virtual void* Allocate(SIZE_T Size, SIZE_T Alignment = alignof(std::max_align_t)) = 0;
 
         virtual void Free(void* Data) = 0;
+
+        virtual SIZE_T GetCapacity() { return 0; }
         
         // Clears or resets the allocator (depending on strategy).
         virtual void Reset() = 0;
@@ -48,9 +50,10 @@ namespace Lumina
     {
     public:
         
-        explicit FLinearAllocator(SIZE_T InitialSize)
+        explicit FLinearAllocator(SIZE_T InCapacity)
         {
-            Base = (uint8*)Memory::Malloc(InitialSize);
+            Capacity = InCapacity;
+            Base = (uint8*)Memory::Malloc(Capacity);
             Offset = 0;
         }
 
@@ -60,13 +63,13 @@ namespace Lumina
             Base = nullptr;
         }
         
-        void* Allocate(SIZE_T Size, SIZE_T Alignment = DEFAULT_ALIGNMENT) override
+        void* Allocate(SIZE_T Size, SIZE_T Alignment) override
         {
             SIZE_T CurrentPtr = reinterpret_cast<SIZE_T>(Base + Offset);
             SIZE_T AlignedPtr = (CurrentPtr + Alignment - 1) & ~(Alignment - 1);
             SIZE_T NextOffset = AlignedPtr - reinterpret_cast<SIZE_T>(Base) + Size;
-
-
+            LUM_ASSERT(NextOffset < Capacity)
+            
             void* Result = Base + (AlignedPtr - reinterpret_cast<SIZE_T>(Base));
             Offset = NextOffset;
             return Result;
@@ -79,12 +82,14 @@ namespace Lumina
             Offset = 0;
         }
 
+        SIZE_T GetCapacity() override { return Capacity; }
         SIZE_T GetUsed() const { return Offset; }
 
     private:
         
         uint8* Base = nullptr;
         SIZE_T Offset = 0;
+        SIZE_T Capacity = 0;
     };
 
 }

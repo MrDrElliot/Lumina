@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include <string>
 #include <EASTL/string.h>
 #include "EASTL/vector.h"
 #include "Reflector/Utils/MetadataUtils.h"
@@ -11,7 +12,7 @@ namespace Lumina
     public:
 
         virtual void AppendDefinition(eastl::string& Stream) const = 0;
-        void AppendPropertyDef(eastl::string& Stream, const char* PropertyFlags, const char* TypeFlags) const;
+        void AppendPropertyDef(eastl::string& Stream, const char* PropertyFlags, const char* TypeFlags, const eastl::string& CustomData = "") const;
         
         virtual const char* GetPropertyParamType() const { return "FPropertyParams"; }
 
@@ -20,12 +21,16 @@ namespace Lumina
         void GenerateMetadata(const eastl::string& InMetadata);
 
         virtual void DeclareCrossModuleReference(const eastl::string& API, eastl::string& Stream) { }
-        
+
+        eastl::string                   RawTypeName;
         eastl::string                   TypeName;
         eastl::string                   Namespace;
         eastl::string                   Name;
         eastl::string                   Outer;
         bool                            bInner = false;
-        eastl::vector<FMetadataPair>    Metadata; 
+        eastl::vector<FMetadataPair>    Metadata;
+
+        eastl::string                     GetterFunc;
+        eastl::string                     SetterFunc;
     };
 }

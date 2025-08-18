@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include "Lumina.h"
 #include "Core/Functional/Function.h"
 #include "Memory/SmartPtr.h"
 
@@ -10,16 +11,11 @@ namespace Lumina
     {
     public:
 
-        FPropertyHandle(void* InPropertyPointer, FProperty* InProperty);
-
-        template<typename T>
-        T* GetTypePropertyPtr()
-        {
-            return (T*)PropertyPointer;
-        }
+        FPropertyHandle(void* InContainerPtr, FProperty* InProperty, int64 InIndex = 0);
         
-        void* PropertyPointer;
+        void* ContainerPtr;
         FProperty* Property;
+        int64 Index = 0;
     };
 
     enum class LUMINA_API EPropertyChangeOp : uint8

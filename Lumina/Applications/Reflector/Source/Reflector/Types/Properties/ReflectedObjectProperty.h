@@ -15,21 +15,8 @@ namespace Lumina
         
         void AppendDefinition(eastl::string& Stream) const override
         {
-            if (bInner)
-            {
-                Stream += "{ \"" +  Name + "\"" + ", Lumina::EPropertyFlags::None, " + "Lumina::EPropertyTypeFlags::Object," +  " 0, Construct_CClass_" + ClangUtils::MakeCodeFriendlyNamespace(TypeName) + " };\n";
-            }
-            else
-            {
-                if (Metadata.empty())
-                {
-                    Stream += "{ \"" +  Name + "\"" + ", Lumina::EPropertyFlags::None, " + "Lumina::EPropertyTypeFlags::Object," +  " offsetof(" + Outer + ", " + Name + "), Construct_CClass_" + ClangUtils::MakeCodeFriendlyNamespace(TypeName) + " };\n";
-                }
-                else
-                {
-                    Stream += "{ \"" +  Name + "\"" + ", Lumina::EPropertyFlags::None, " + "Lumina::EPropertyTypeFlags::Object," +  " offsetof(" + Outer + ", " + Name + "), " + "Construct_CClass_" + ClangUtils::MakeCodeFriendlyNamespace(TypeName) + ", METADATA_PARAMS(std::size(" + Name + "_Metadata), " + Name + "_Metadata) " + "};\n";
-                }
-            }
+            eastl::string CustomData = "Construct_CClass_" + ClangUtils::MakeCodeFriendlyNamespace(TypeName);
+            AppendPropertyDef(Stream, "Lumina::EPropertyFlags::None", "Lumina::EPropertyTypeFlags::Object", CustomData);
         }
 
         const char* GetPropertyParamType() const override { return "FObjectPropertyParams"; }

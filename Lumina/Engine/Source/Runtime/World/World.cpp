@@ -285,7 +285,7 @@ namespace Lumina
 
     SCameraComponent& CWorld::GetActiveCamera() const
     {
-        return CameraManager->GetActiveCameraEntity().GetComponent<SCameraComponent>();
+        return *CameraManager->GetCameraComponent();
     }
 
     const TVector<TObjectHandle<CEntitySystem>>& CWorld::GetSystemsForUpdateStage(EUpdateStage Stage)
@@ -315,6 +315,18 @@ namespace Lumina
     {
         FLineBatcherComponent& Batcher = GetOrCreateLineBatcher();
         Batcher.DrawCone(Apex, Direction, AngleRadians, Length, Color, Segments, Stacks, Thickness, Duration);
+    }
+
+    void CWorld::DrawFrustum(const glm::mat4& Matrix, const glm::vec4& Color, float Thickness, float Duration)
+    {
+        FLineBatcherComponent& Batcher = GetOrCreateLineBatcher();
+        Batcher.DrawFrustum(Matrix, Color, Thickness, Duration);
+    }
+
+    void CWorld::DrawArrow(const glm::vec3& Start, const glm::vec3& Direction, float Length, const glm::vec4& Color, float Thickness, float Duration, float HeadSize)
+    {
+        FLineBatcherComponent& Batcher = GetOrCreateLineBatcher();
+        Batcher.DrawArrow(Start, Direction, Length, Color, Thickness, Duration, HeadSize);
     }
 
     FLineBatcherComponent& CWorld::GetOrCreateLineBatcher()

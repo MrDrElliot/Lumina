@@ -168,6 +168,87 @@ namespace Lumina
             }
         }
 
+        LUMINA_API void DrawFrustum(const glm::mat4& Matrix, const glm::vec4& Color, float Thickness = 1.0f, float Duration = 1.0f)
+        {
+            auto UnprojectCorner = [&](float x, float y, float z) -> glm::vec3
+            {
+                glm::vec4 ndc(x, y, z, 1.0f);
+                glm::vec4 world = glm::inverse(Matrix) * ndc;
+                return glm::vec3(world) / world.w;
+            };
+
+            // Compute near/far corners in NDC space
+            glm::vec3 corners[8];
+            
+            float nearZ = 0.01f;
+            float farZ  = 1.0f;
+
+            corners[0] = UnprojectCorner(-1, -1, nearZ); // NearBL
+            corners[1] = UnprojectCorner( 1, -1, nearZ); // NearBR
+            corners[2] = UnprojectCorner( 1,  1, nearZ); // NearTR
+            corners[3] = UnprojectCorner(-1,  1, nearZ); // NearTL
+
+            corners[4] = UnprojectCorner(-1, -1, farZ);  // FarBL
+            corners[5] = UnprojectCorner( 1, -1, farZ);  // FarBR
+            corners[6] = UnprojectCorner( 1,  1, farZ);  // FarTR
+            corners[7] = UnprojectCorner(-1,  1, farZ);  // FarTL
+            
+
+            // Draw near plane box
+            DrawLine(corners[0], corners[1], Color, Thickness, Duration);
+            DrawLine(corners[1], corners[2], Color, Thickness, Duration);
+            DrawLine(corners[2], corners[3], Color, Thickness, Duration);
+            DrawLine(corners[3], corners[0], Color, Thickness, Duration);
+
+            // Draw far plane box
+            DrawLine(corners[4], corners[5], Color, Thickness, Duration);
+            DrawLine(corners[5], corners[6], Color, Thickness, Duration);
+            DrawLine(corners[6], corners[7], Color, Thickness, Duration);
+            DrawLine(corners[7], corners[4], Color, Thickness, Duration);
+
+            // Connect near ↔ far corners
+            DrawLine(corners[0], corners[4], Color, Thickness, Duration);
+            DrawLine(corners[1], corners[5], Color, Thickness, Duration);
+            DrawLine(corners[2], corners[6], Color, Thickness, Duration);
+            DrawLine(corners[3], corners[7], Color, Thickness, Duration);
+        }
+
+        LUMINA_API void DrawArrow(const glm::vec3& Start, const glm::vec3& Direction, float Length, const glm::vec4& Color, float Thickness = 1.0f,
+                          float Duration = 1.0f,
+                          float HeadSize = 0.2f)
+        {
+            glm::vec3 End = Start + glm::normalize(Direction) * Length;
+
+            DrawLine(Start, End, Color, Thickness, Duration);
+
+            glm::vec3 Up(0, 1, 0);
+            if (glm::abs(glm::dot(glm::normalize(Direction), Up)) > 0.99f)
+            {
+                Up = glm::vec3(1, 0, 0);
+            }
+            glm::vec3 Right = glm::normalize(glm::cross(Direction, Up));
+            Up = glm::normalize(glm::cross(Right, Direction));
+
+            glm::vec3 Tip = End;
+            glm::vec3 BaseCenter = End - glm::normalize(Direction) * HeadSize;
+
+            // Four base corners of arrowhead pyramid
+            glm::vec3 Corner1 = BaseCenter + (Up + Right) * HeadSize * 0.5f;
+            glm::vec3 Corner2 = BaseCenter + (Up - Right) * HeadSize * 0.5f;
+            glm::vec3 Corner3 = BaseCenter + (-Up - Right) * HeadSize * 0.5f;
+            glm::vec3 Corner4 = BaseCenter + (-Up + Right) * HeadSize * 0.5f;
+
+            // Draw pyramid lines
+            DrawLine(Tip, Corner1, Color, Thickness, Duration);
+            DrawLine(Tip, Corner2, Color, Thickness, Duration);
+            DrawLine(Tip, Corner3, Color, Thickness, Duration);
+            DrawLine(Tip, Corner4, Color, Thickness, Duration);
+
+            DrawLine(Corner1, Corner2, Color, Thickness, Duration);
+            DrawLine(Corner2, Corner3, Color, Thickness, Duration);
+            DrawLine(Corner3, Corner4, Color, Thickness, Duration);
+            DrawLine(Corner4, Corner1, Color, Thickness, Duration);
+        }
 
         LUMINA_API void Flush()
         {

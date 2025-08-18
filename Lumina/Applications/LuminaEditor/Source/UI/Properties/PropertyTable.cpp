@@ -16,30 +16,30 @@
 namespace Lumina
 {
     
-    static FPropertyRow* CreatePropertyRow(void* InOwner, FProperty* InProperty, FPropertyRow* InParentRow, const FPropertyChangedEventCallbacks& InCallbacks, SIZE_T ArrayElementIndex = INDEX_NONE)
+    static FPropertyRow* CreatePropertyRow(TSharedPtr<FPropertyHandle> InPropHandle, FPropertyRow* InParentRow, const FPropertyChangedEventCallbacks& InCallbacks, SIZE_T ArrayElementIndex = INDEX_NONE)
     {
         FPropertyRow* NewRow = nullptr;
-        if (FArrayProperty* ArrayProperty = dynamic_cast<FArrayProperty*>(InProperty))
+        if (FArrayProperty* ArrayProperty = dynamic_cast<FArrayProperty*>(InPropHandle->Property))
         {
-            NewRow = Memory::New<FArrayPropertyRow>(InOwner, ArrayProperty, InParentRow, InCallbacks);
+            NewRow = Memory::New<FArrayPropertyRow>(InPropHandle, InParentRow, InCallbacks);
         }
-        else if (FStructProperty* StructProperty = dynamic_cast<FStructProperty*>(InProperty))
+        else if (FStructProperty* StructProperty = dynamic_cast<FStructProperty*>(InPropHandle->Property))
         {
-            NewRow = Memory::New<FStructPropertyRow>(InOwner, StructProperty, InParentRow, InCallbacks);
+            NewRow = Memory::New<FStructPropertyRow>(InPropHandle, InParentRow, InCallbacks);
         }
         else
         {
-            NewRow = Memory::New<FPropertyPropertyRow>(InOwner, InProperty, InParentRow, ArrayElementIndex, InCallbacks);
+            NewRow = Memory::New<FPropertyPropertyRow>(InPropHandle, InParentRow, ArrayElementIndex, InCallbacks);
         }
 
         return NewRow;
     }
     
-    FPropertyRow::FPropertyRow(FProperty* InProperty, FPropertyRow* InParentRow, const FPropertyChangedEventCallbacks& InCallbacks)
-        : ParentRow(InParentRow)
-        , Callbacks(InCallbacks)
+    FPropertyRow::FPropertyRow(const TSharedPtr<FPropertyHandle>& InPropHandle, FPropertyRow* InParentRow, const FPropertyChangedEventCallbacks& InCallbacks)
+        : Callbacks(InCallbacks)
+        , PropertyHandle(InPropHandle)
+        , ParentRow(InParentRow)
     {
-        Property = InProperty;
     }
 
     FPropertyRow::~FPropertyRow()
@@ -124,7 +124,7 @@ namespace Lumina
 
         if (bExpanded)
         {
-            bool bIsReadOnly = Property == nullptr ? false : Property->Metadata.HasMetadata("ReadOnly");
+            bool bIsReadOnly = PropertyHandle == nullptr ? false : PropertyHandle->Property->Metadata.HasMetadata("ReadOnly");
             ImGui::BeginDisabled(bIsReadOnly);
             const float ChildHeaderOffset = Offset + 20;
             for (FPropertyRow* Row : Children)
@@ -135,13 +135,11 @@ namespace Lumina
         }
     }
 
-    FPropertyPropertyRow::FPropertyPropertyRow(void* InPropertyPointer, FProperty* InProperty, FPropertyRow* InParentRow, int64 InArrayElementIndex, const FPropertyChangedEventCallbacks& InCallbacks)
-        : FPropertyRow(InProperty, InParentRow, InCallbacks)
-        , ArrayElementIndex(InArrayElementIndex)
+    FPropertyPropertyRow::FPropertyPropertyRow(const TSharedPtr<FPropertyHandle>& InPropHandle, FPropertyRow* InParentRow, int64 InArrayElementIndex, const FPropertyChangedEventCallbacks& InCallbacks)
+        : FPropertyRow(InPropHandle, InParentRow, InCallbacks)
     {
-        PropertyHandle = MakeSharedPtr<FPropertyHandle>(InPropertyPointer, InProperty);
-
-        switch (Property->GetType())
+        
+        switch (PropertyHandle->Property->GetType())
         {
         case EPropertyTypeFlags::None:
             break;
@@ -264,13 +262,13 @@ namespace Lumina
         ImGui::Dummy(ImVec2(Offset, 0));
         ImGui::SameLine();
 
-        FString DisplayName = ArrayElementIndex == INDEX_NONE ? Property->GetPropertyDisplayName() : eastl::to_string(ArrayElementIndex);
+        FString DisplayName = PropertyHandle->Index == 0 ? PropertyHandle->Property->GetPropertyDisplayName() : eastl::to_string(PropertyHandle->Index);
         ImGui::TextUnformatted(DisplayName.c_str());
     }
 
     void FPropertyPropertyRow::DrawEditor()
     {
-        bool bIsReadOnly = Property->Metadata.HasMetadata("ReadOnly");
+        bool bIsReadOnly = PropertyHandle->Property->Metadata.HasMetadata("ReadOnly");
         ImGui::BeginDisabled(bIsReadOnly);
         
         if (Customization)
@@ -294,7 +292,7 @@ namespace Lumina
     {
         FArrayPropertyRow* ArrayRow = static_cast<FArrayPropertyRow*>(ParentRow);
         FArrayProperty* ArrayProperty = static_cast<FArrayPropertyRow*>(ParentRow)->ArrayProperty;
-        FReflectArrayHelper Helper(ArrayProperty, ArrayRow->GetPropertyHandle()->PropertyPointer);
+        FReflectArrayHelper Helper(ArrayProperty, ArrayRow->GetPropertyHandle()->Property->GetValuePtr<void>(ArrayRow->GetPropertyHandle()->ContainerPtr));
         
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 4));
         ImGuiX::FlatButton(LE_ICON_DOTS_HORIZONTAL, ImVec2(18, 24), 428768833);
@@ -307,7 +305,7 @@ namespace Lumina
                 
             }
 
-            if (ArrayElementIndex > 0)
+            if (PropertyHandle->Index > 0)
             {
                 if (ImGui::MenuItem(LE_ICON_ARROW_UP" Move Element Up"))
                 {
@@ -316,7 +314,7 @@ namespace Lumina
             }
             
             
-            if (ArrayElementIndex < (Helper.Num() - 1))
+            if (PropertyHandle->Index < (Helper.Num() - 1))
             {
                 if (ImGui::MenuItem(LE_ICON_ARROW_DOWN" Move Element Down"))
                 {
@@ -326,7 +324,7 @@ namespace Lumina
 
             if (ImGui::MenuItem(LE_ICON_TRASH_CAN" Remove Element"))
             {
-                Helper.Remove(ArrayElementIndex);
+                Helper.Remove(PropertyHandle->Index);
                 ArrayRow->RebuildChildren();
             }
             ImGui::EndPopup();
@@ -335,11 +333,10 @@ namespace Lumina
         ImGuiX::ItemTooltip("Array Element Options");
     }
 
-    FArrayPropertyRow::FArrayPropertyRow(void* InPropPointer, FArrayProperty* InProperty, FPropertyRow* InParentRow, const FPropertyChangedEventCallbacks& InCallbacks)
-        : FPropertyRow(InProperty, InParentRow, InCallbacks)
-        , ArrayProperty(InProperty)
+    FArrayPropertyRow::FArrayPropertyRow(const TSharedPtr<FPropertyHandle>& InPropHandle, FPropertyRow* InParentRow, const FPropertyChangedEventCallbacks& InCallbacks)
+        : FPropertyRow(InPropHandle, InParentRow, InCallbacks)
+        , ArrayProperty(static_cast<FArrayProperty*>(InPropHandle->Property))
     {
-        PropertyHandle = MakeSharedPtr<FPropertyHandle>(InPropPointer, InProperty);
         RebuildChildren();
     }
 
@@ -363,7 +360,7 @@ namespace Lumina
 
     void FArrayPropertyRow::DrawEditor()
     {
-        FReflectArrayHelper Helper(ArrayProperty, PropertyHandle->PropertyPointer);
+        FReflectArrayHelper Helper(ArrayProperty, GetPropertyHandle()->Property->GetValuePtr<void>(GetPropertyHandle()->ContainerPtr));
         SIZE_T ElementCount = Helper.Num();
         
         ImGui::TextColored(ImVec4(0.24f, 0.24f, 0.24f, 1.0f), "%llu Elements", ElementCount);
@@ -373,13 +370,15 @@ namespace Lumina
     {
         DestroyChildren();
         
-        FReflectArrayHelper Helper(ArrayProperty, PropertyHandle->PropertyPointer);
+        FReflectArrayHelper Helper(ArrayProperty, GetPropertyHandle()->Property->GetValuePtr<void>(GetPropertyHandle()->ContainerPtr));
         SIZE_T ElementCount = Helper.Num();
 
         for (SIZE_T i = 0; i < ElementCount; ++i)
         {
             void* Pointer = Helper.GetRawAt(i);
-            FPropertyRow* NewRow = CreatePropertyRow(Pointer, ArrayProperty->GetInternalProperty(), this, Callbacks, i);
+            TSharedPtr<FPropertyHandle> ElementPropHandle = MakeSharedPtr<FPropertyHandle>(PropertyHandle->ContainerPtr, ArrayProperty->GetInternalProperty(), i);
+            
+            FPropertyRow* NewRow = CreatePropertyRow(ElementPropHandle, this, Callbacks, i);
             NewRow->SetIsArrayElement(true);
             Children.push_back(NewRow);
         }
@@ -393,7 +392,7 @@ namespace Lumina
     void FArrayPropertyRow::DrawExtraControlsSection()
     {
         //ImGui::BeginDisabled();
-        FReflectArrayHelper Helper(ArrayProperty, PropertyHandle->PropertyPointer);
+        FReflectArrayHelper Helper(ArrayProperty, GetPropertyHandle()->Property->GetValuePtr<void>(GetPropertyHandle()->ContainerPtr));
         
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 4));
         if (ImGuiX::FlatButton(LE_ICON_PLUS, ImVec2(18, 24), 428768833))
@@ -417,12 +416,10 @@ namespace Lumina
         //ImGui::EndDisabled();
     }
 
-    FStructPropertyRow::FStructPropertyRow(void* InPropPointer, FStructProperty* InProperty, FPropertyRow* InParentRow, const FPropertyChangedEventCallbacks& InCallbacks)
-        : FPropertyRow(InProperty, InParentRow, InCallbacks)
-        , StructProperty(InProperty)
+    FStructPropertyRow::FStructPropertyRow(const TSharedPtr<FPropertyHandle>& InPropHandle, FPropertyRow* InParentRow, const FPropertyChangedEventCallbacks& InCallbacks)
+        : FPropertyRow(InPropHandle, InParentRow, InCallbacks)
+        , StructProperty(static_cast<FStructProperty*>(InPropHandle->Property))
     {
-        PropertyHandle = MakeSharedPtr<FPropertyHandle>(InPropPointer, InProperty);
-
         FPropertyCustomizationRegistry* Registry = GEngine->GetDevelopmentToolsUI()->GetPropertyCustomizationRegistry();
         Customization = Registry->GetPropertyCustomizationForType(StructProperty->GetStruct()->GetName());
         
@@ -484,7 +481,7 @@ namespace Lumina
 
     void FStructPropertyRow::DrawEditor()
     {
-        bool bIsReadOnly = Property->Metadata.HasMetadata("ReadOnly");
+        bool bIsReadOnly = PropertyHandle->Property->Metadata.HasMetadata("ReadOnly");
         ImGui::BeginDisabled(bIsReadOnly);
         
         if (bExpanded)
@@ -510,7 +507,7 @@ namespace Lumina
             PropertyTable = nullptr;
         }
         
-        PropertyTable = Memory::New<FPropertyTable>(PropertyHandle->PropertyPointer, StructProperty->GetStruct());
+        PropertyTable = Memory::New<FPropertyTable>(PropertyHandle->Property->GetValuePtr<void>(PropertyHandle->ContainerPtr), StructProperty->GetStruct());
         PropertyTable->RebuildTree();
     }
 
@@ -521,10 +518,9 @@ namespace Lumina
         OwnerObject = InObj;
     }
 
-    void FCategoryPropertyRow::AddProperty(FProperty* InProperty)
+    void FCategoryPropertyRow::AddProperty(const TSharedPtr<FPropertyHandle>& InPropHandle)
     {
-        void* PropPointer = InProperty->GetValuePtr<void>(OwnerObject);
-        FPropertyRow* NewRow = CreatePropertyRow(PropPointer, InProperty, this, Callbacks);
+        FPropertyRow* NewRow = CreatePropertyRow(InPropHandle, this, Callbacks);
         Children.push_back(NewRow);
     }
 
@@ -585,8 +581,9 @@ namespace Lumina
                 }
                 
                 FCategoryPropertyRow* CategoryRow = FindOrCreateCategoryRow(Category);
-            
-                CategoryRow->AddProperty(Current);
+
+                TSharedPtr<FPropertyHandle> PropertyHandle = MakeSharedPtr<FPropertyHandle>(Object, Current);
+                CategoryRow->AddProperty(PropertyHandle);
             }
             
             Current = static_cast<FProperty*>(Current->Next);

@@ -9,13 +9,12 @@ project "Reflector"
     targetdir ("%{wks.location}/Binaries/" .. outputdir)
     objdir ("%{wks.location}/Intermediates/Obj/" .. outputdir .. "/%{prj.name}")
 
-	configurations { "Release", }
+    configurations { "Release" }
 
-	configmap {
-		["Release"] = "Release",
-		["Debug"] = "Release",
-		["Shipping"] = "Release",
-	}
+    filter "configurations:Release"
+        defines { "NDEBUG" }
+        optimize "On"
+        
 	removedefines { }
 
 	postbuildcommands 

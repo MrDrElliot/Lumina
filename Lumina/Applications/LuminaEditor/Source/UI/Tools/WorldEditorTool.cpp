@@ -356,73 +356,75 @@ namespace Lumina
         SCameraComponent& CameraComponent = EditorEntity.GetComponent<SCameraComponent>();
     
         glm::mat4 Matrix = SelectedEntity.GetWorldMatrix();
-    
         glm::mat4 ViewMatrix = CameraComponent.GetViewMatrix();
         glm::mat4 ProjectionMatrix = CameraComponent.GetProjectionMatrix();
 
-        ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, ViewportSize.x, ViewportSize.y);
-        
-        ImGuizmo::Manipulate(glm::value_ptr(ViewMatrix),
-                             glm::value_ptr(ProjectionMatrix),
-                             GuizmoOp,
-                             GuizmoMode,
-                             glm::value_ptr(Matrix));
-    
-        if (ImGuizmo::IsUsing())
+        if (CameraComponent.GetViewVolume().GetFrustum().IsInside(SelectedEntity.GetWorldTransform().Location))
         {
-            glm::mat4 worldMatrix = Matrix;
+            ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, ViewportSize.x, ViewportSize.y);
         
-            // Check for parent transform
-            if (SelectedEntity.IsChild())
+            ImGuizmo::Manipulate(glm::value_ptr(ViewMatrix),
+                                 glm::value_ptr(ProjectionMatrix),
+                                 GuizmoOp,
+                                 GuizmoMode,
+                                 glm::value_ptr(Matrix));
+    
+            if (ImGuizmo::IsUsing())
             {
-                glm::mat4 parentWorldMatrix = SelectedEntity.GetParent().GetWorldTransform().GetMatrix();
-                glm::mat4 parentWorldInverse = glm::inverse(parentWorldMatrix);
+                glm::mat4 worldMatrix = Matrix;
+        
+                // Check for parent transform
+                if (SelectedEntity.IsChild())
+                {
+                    glm::mat4 parentWorldMatrix = SelectedEntity.GetParent().GetWorldTransform().GetMatrix();
+                    glm::mat4 parentWorldInverse = glm::inverse(parentWorldMatrix);
                    
-                // Convert world transform to local transform by applying inverse parent transform
-                glm::mat4 localMatrix = parentWorldInverse * worldMatrix;
+                    // Convert world transform to local transform by applying inverse parent transform
+                    glm::mat4 localMatrix = parentWorldInverse * worldMatrix;
         
-                // Decompose local matrix instead of world
-                glm::vec3 translation, scale, skew;
-                glm::quat rotation;
-                glm::vec4 perspective;
+                    // Decompose local matrix instead of world
+                    glm::vec3 translation, scale, skew;
+                    glm::quat rotation;
+                    glm::vec4 perspective;
         
-                glm::decompose(localMatrix, scale, rotation, translation, skew, perspective);
+                    glm::decompose(localMatrix, scale, rotation, translation, skew, perspective);
         
-                STransformComponent& TransformComponent = SelectedEntity.GetComponent<STransformComponent>();
+                    STransformComponent& TransformComponent = SelectedEntity.GetComponent<STransformComponent>();
         
-                if (translation != TransformComponent.GetLocation() ||
-                    rotation != TransformComponent.GetRotation() ||
-                    scale != TransformComponent.GetScale())
-                {
-                    SelectedEntity.Patch<STransformComponent>([&](auto& Transform)
+                    if (translation != TransformComponent.GetLocation() ||
+                        rotation != TransformComponent.GetRotation() ||
+                        scale != TransformComponent.GetScale())
                     {
-                        Transform.SetLocation(translation);
-                        Transform.SetRotation(rotation);
-                        Transform.SetScale(scale);
-                    });
+                        SelectedEntity.Patch<STransformComponent>([&](auto& Transform)
+                        {
+                            Transform.SetLocation(translation);
+                            Transform.SetRotation(rotation);
+                            Transform.SetScale(scale);
+                        });
+                    }
                 }
-            }
-            else
-            {
-                // No parent, set world transform as local directly
-                glm::vec3 translation, scale, skew;
-                glm::quat rotation;
-                glm::vec4 perspective;
-        
-                glm::decompose(worldMatrix, scale, rotation, translation, skew, perspective);
-        
-                STransformComponent& TransformComponent = SelectedEntity.GetComponent<STransformComponent>();
-        
-                if (translation != TransformComponent.GetLocation() ||
-                    rotation != TransformComponent.GetRotation() ||
-                    scale != TransformComponent.GetScale())
+                else
                 {
-                    SelectedEntity.Patch<STransformComponent>([&](auto& Transform)
+                    // No parent, set world transform as local directly
+                    glm::vec3 translation, scale, skew;
+                    glm::quat rotation;
+                    glm::vec4 perspective;
+        
+                    glm::decompose(worldMatrix, scale, rotation, translation, skew, perspective);
+        
+                    STransformComponent& TransformComponent = SelectedEntity.GetComponent<STransformComponent>();
+        
+                    if (translation != TransformComponent.GetLocation() ||
+                        rotation != TransformComponent.GetRotation() ||
+                        scale != TransformComponent.GetScale())
                     {
-                        Transform.SetLocation(translation);
-                        Transform.SetRotation(rotation);
-                        Transform.SetScale(scale);
-                    });
+                        SelectedEntity.Patch<STransformComponent>([&](auto& Transform)
+                        {
+                            Transform.SetLocation(translation);
+                            Transform.SetRotation(rotation);
+                            Transform.SetScale(scale);
+                        });
+                    }
                 }
             }
         }
@@ -473,7 +475,7 @@ namespace Lumina
                     CStruct* Struct = *It;
                     if (Struct->IsChildOf(SEntityComponent::StaticStruct()))
                     {
-                        if (auto Fn = FEntityComponentRegistry::Get()->GetComponentFn(Struct->GetName().c_str()))
+                        if (auto Fn = FEntityComponentRegistry::Get().GetComponentFn(Struct->GetName().c_str()))
                         {
                             if (ImGui::Selectable(Struct->GetName().c_str(), false, ImGuiSelectableFlags_SpanAllColumns))
                             {

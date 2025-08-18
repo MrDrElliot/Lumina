@@ -23,12 +23,14 @@ namespace Lumina
     void FVec2PropertyCustomization::UpdatePropertyValue(TSharedPtr<FPropertyHandle> Property)
     {
         CachedValue = DisplayValue;
-        *(glm::vec2*)Property->PropertyPointer = CachedValue;
+        Property->Property->SetValue(Property->ContainerPtr, CachedValue);
     }
 
     void FVec2PropertyCustomization::HandleExternalUpdate(TSharedPtr<FPropertyHandle> Property)
     {
-        glm::vec2& ActualValue = *Property->GetTypePropertyPtr<glm::vec2>();
+        glm::vec2 ActualValue;
+        Property->Property->GetValue(Property->ContainerPtr, &ActualValue);
+        
         if (CachedValue != ActualValue)
         {
             CachedValue = DisplayValue = ActualValue;
@@ -54,12 +56,14 @@ namespace Lumina
     void FVec3PropertyCustomization::UpdatePropertyValue(TSharedPtr<FPropertyHandle> Property)
     {
         CachedValue = DisplayValue;
-        *(glm::vec3*)Property->PropertyPointer = CachedValue;
+        Property->Property->SetValue(Property->ContainerPtr, CachedValue);
     }
 
     void FVec3PropertyCustomization::HandleExternalUpdate(TSharedPtr<FPropertyHandle> Property)
     {
-        glm::vec3& ActualValue = *Property->GetTypePropertyPtr<glm::vec3>();
+        glm::vec3 ActualValue;
+        Property->Property->GetValue(Property->ContainerPtr, &ActualValue);
+        
         if (CachedValue != ActualValue)
         {
             CachedValue = DisplayValue = ActualValue;
@@ -85,12 +89,14 @@ namespace Lumina
     void FVec4PropertyCustomization::UpdatePropertyValue(TSharedPtr<FPropertyHandle> Property)
     {
         CachedValue = DisplayValue;
-        *(glm::vec4*)Property->PropertyPointer = CachedValue;
+        Property->Property->SetValue(Property->ContainerPtr, CachedValue);
     }
 
     void FVec4PropertyCustomization::HandleExternalUpdate(TSharedPtr<FPropertyHandle> Property)
     {
-        glm::vec4& ActualValue = *Property->GetTypePropertyPtr<glm::vec4>();
+        glm::vec4 ActualValue;
+        Property->Property->GetValue(Property->ContainerPtr, &ActualValue);
+        
         if (CachedValue != ActualValue)
         {
             CachedValue = DisplayValue = ActualValue;
@@ -171,12 +177,14 @@ namespace Lumina
     void FTransformPropertyCustomization::UpdatePropertyValue(TSharedPtr<FPropertyHandle> Property)
     {
         CachedValue = DisplayValue;
-        *(FTransform*)Property->PropertyPointer = CachedValue;
+        Property->Property->SetValue(Property->ContainerPtr, CachedValue);
     }
 
     void FTransformPropertyCustomization::HandleExternalUpdate(TSharedPtr<FPropertyHandle> Property)
     {
-        FTransform& ActualValue = *(FTransform*)Property->PropertyPointer;
+        FTransform ActualValue;
+        Property->Property->GetValue(Property->ContainerPtr, &ActualValue);
+        
         if (CachedValue != ActualValue)
         {
             CachedValue = DisplayValue = ActualValue;

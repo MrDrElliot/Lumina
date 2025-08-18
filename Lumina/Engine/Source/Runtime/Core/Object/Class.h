@@ -4,6 +4,7 @@
 #include "Module/API.h"
 #include "Object.h"
 #include "Core/Functional/Function.h"
+#include "Core/Templates/Align.h"
 #include "Initializer/ObjectInitializer.h"
 
 namespace Lumina
@@ -28,7 +29,7 @@ namespace Lumina
         CField() = default;
         
         
-        CField(CPackage* Package, FName InName, uint32 InSize, uint32 InAlignment, EObjectFlags InFlags)
+        CField(CPackage* Package, const FName& InName, uint32 InSize, uint32 InAlignment, EObjectFlags InFlags)
             : CObject(nullptr, InFlags, Package, InName)
             , Size(InSize)
             , Alignment(InAlignment)
@@ -36,6 +37,11 @@ namespace Lumina
         //~ End Internal Use Only Constructors
 
         FProperty* LinkedProperty = nullptr;
+
+        uint32 GetAlignedSize() const { return Align(Size, Alignment); }
+        uint32 GetSize() const { return Size; }
+        uint32 GetAlignment() const { return Alignment; }
+
         
         uint32 Size = 0;
         uint32 Alignment = 0;
@@ -84,7 +90,7 @@ namespace Lumina
         CStruct() = default;
 
         // Begin Internal Use Only Constructors 
-        CStruct(CPackage* Package, FName InName, uint32 InSize, uint32 InAlignment, EObjectFlags InFlags)
+        CStruct(CPackage* Package, const FName& InName, uint32 InSize, uint32 InAlignment, EObjectFlags InFlags)
             : CField(Package, InName, InSize, InAlignment, InFlags)
         {}
         //~ End Internal Use Only Constructors
@@ -95,9 +101,6 @@ namespace Lumina
 
         void RegisterDependencies() override;
         
-        FORCEINLINE uint32 GetSize() const { return Size; }
-        FORCEINLINE uint32 GetAlignment() const { return Alignment; }
-
         /** Struct this inherits from, may be null */
         CStruct* GetSuperStruct() const { return SuperStruct; }
 

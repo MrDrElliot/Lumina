@@ -7,13 +7,14 @@ template<typename T>
 class TSingleton
 {
 public:
+    friend T;
     virtual ~TSingleton() = default;
 
+    NODISCARD static T& Get() { static T Instance; return Instance; }
+private:
     TSingleton() = default;
-    TSingleton(const TSingleton* obj) = delete;
+    explicit TSingleton(const TSingleton* obj) = delete;
     TSingleton* operator = (const TSingleton*) = delete;
-
-    NODISCARD static T* Get() { static T Instance; return &Instance; }
 
     
 };

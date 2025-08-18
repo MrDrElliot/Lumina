@@ -37,7 +37,7 @@ namespace Lumina
             :Callbacks(InCallbacks)
         {}
         
-        FPropertyRow(FProperty* InProperty, FPropertyRow* InParentRow, const FPropertyChangedEventCallbacks& Callbacks);
+        FPropertyRow(const TSharedPtr<FPropertyHandle>& InPropHandle, FPropertyRow* InParentRow, const FPropertyChangedEventCallbacks& Callbacks);
         virtual ~FPropertyRow();
 
         virtual void DrawHeader(float Offset) { }
@@ -62,7 +62,7 @@ namespace Lumina
         FPropertyChangedEventCallbacks          Callbacks;
         EPropertyChangeOp                       ChangeOp = EPropertyChangeOp::None;
         TSharedPtr<IPropertyTypeCustomization>  Customization;
-        FProperty*                              Property = nullptr;
+        TSharedPtr<FPropertyHandle>             PropertyHandle;
         FPropertyRow*                           ParentRow = nullptr;
         TVector<FPropertyRow*>                  Children;
 
@@ -74,7 +74,7 @@ namespace Lumina
     {
     public:
 
-        FPropertyPropertyRow(void* InPropertyPointer, FProperty* InProperty, FPropertyRow* InParentRow, int64 InArrayElementIndex, const FPropertyChangedEventCallbacks& Callbacks);
+        FPropertyPropertyRow(const TSharedPtr<FPropertyHandle>& InPropHandle, FPropertyRow* InParentRow, int64 InArrayElementIndex, const FPropertyChangedEventCallbacks& Callbacks);
         void Update() override;
         void DrawHeader(float Offset) override;
         void DrawEditor() override;
@@ -85,15 +85,13 @@ namespace Lumina
         
     private:
 
-        int64                       ArrayElementIndex;
-        TSharedPtr<FPropertyHandle> PropertyHandle;
     };
 
     class FArrayPropertyRow : public FPropertyRow
     {
     public:
         
-        FArrayPropertyRow(void* InPropPointer, FArrayProperty* InProperty, FPropertyRow* InParentRow, const FPropertyChangedEventCallbacks& Callbacks);
+        FArrayPropertyRow(const TSharedPtr<FPropertyHandle>& InPropHandle, FPropertyRow* InParentRow, const FPropertyChangedEventCallbacks& Callbacks);
         void Update() override;
         void DrawHeader(float Offset) override;
         void DrawEditor() override;
@@ -105,7 +103,6 @@ namespace Lumina
 
 
         FArrayProperty*             ArrayProperty = nullptr;
-        TSharedPtr<FPropertyHandle> PropertyHandle;
 
     };
 
@@ -113,7 +110,7 @@ namespace Lumina
     {
     public:
         
-        FStructPropertyRow(void* InPropPointer, FStructProperty* InProperty, FPropertyRow* InParentRow, const FPropertyChangedEventCallbacks& InCallbacks);
+        FStructPropertyRow(const TSharedPtr<FPropertyHandle>& InPropHandle, FPropertyRow* InParentRow, const FPropertyChangedEventCallbacks& InCallbacks);
         ~FStructPropertyRow() override;
         void Update() override;
         void DrawHeader(float Offset) override;
@@ -124,7 +121,6 @@ namespace Lumina
     private:
         
         FStructProperty*            StructProperty = nullptr;
-        TSharedPtr<FPropertyHandle> PropertyHandle;
         FPropertyTable*             PropertyTable = nullptr;
     };
     
@@ -134,7 +130,7 @@ namespace Lumina
         
         FCategoryPropertyRow(void* InObj, const FName& InCategory, const FPropertyChangedEventCallbacks& InCallbacks);
 
-        void AddProperty(FProperty* InProperty);
+        void AddProperty(const TSharedPtr<FPropertyHandle>& InPropHandle);
         FName GetCategoryName() const { return Category; }
 
         void DrawHeader(float Offset) override;

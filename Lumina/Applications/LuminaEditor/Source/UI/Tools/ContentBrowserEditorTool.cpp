@@ -44,7 +44,7 @@ namespace Lumina
             DrawContentBrowser(Contxt, bIsFocused, ImVec2(Right, 0));
         });
         
-        SelectedPath = FProject::Get()->GetProjectContentDirectory().c_str();
+        SelectedPath = FProject::Get().GetProjectContentDirectory().c_str();
 
         ContentBrowserTileViewContext.DrawItemOverrideFunction = [this] (FTileViewItem* Item) -> bool
         {
@@ -527,7 +527,7 @@ namespace Lumina
                     }
                     else
                     {
-                        FTaskSystem::Get()->ScheduleLambda(1, [this, Factory, FStringFileName, PathString] (uint32 Start, uint32 End, uint32 ThreadNum_)
+                        FTaskSystem::Get().ScheduleLambda(1, [this, Factory, FStringFileName, PathString] (uint32 Start, uint32 End, uint32 ThreadNum_)
                         {
                             Factory->TryImport(FStringFileName, PathString);
                             RefreshContentBrowser();

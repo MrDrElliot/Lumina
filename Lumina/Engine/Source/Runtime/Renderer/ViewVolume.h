@@ -1,6 +1,8 @@
 ﻿#pragma once
 
 #include "Core/DisableAllWarnings.h"
+#include "Core/Math/Frustum.h"
+#include "Core/Object/ObjectMacros.h"
 #include "Module/API.h"
 PRAGMA_DISABLE_ALL_WARNINGS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -11,6 +13,7 @@ PRAGMA_ENABLE_ALL_WARNINGS
 
 namespace Lumina
 {
+    LUM_STRUCT()
     class LUMINA_API FViewVolume
     {
     public:
@@ -30,7 +33,10 @@ namespace Lumina
         const glm::mat4& GetViewProjectionMatrix() const { return ViewProjectionMatrix; }
         const glm::mat4& GetProjectionMatrix() const { return ProjectionMatrix; }
         const glm::mat4& GetInverseProjectionMatrix() const { return InverseProjectionMatrix; }
+        const glm::vec3& GetForwardVector() const { return ForwardVector; }
+        const glm::vec3& GetRightVector() const { return RightVector; }
 
+        FFrustum GetFrustum() const;
         float GetFOV() const { return FOV; }
         float GetAspectRatio() const { return AspectRatio; }
 
@@ -41,7 +47,7 @@ namespace Lumina
     private:
 
         void UpdateMatrices();
-    
+
         glm::vec3           ViewPosition;
         glm::vec3           ForwardVector;
         glm::vec3           UpVector;

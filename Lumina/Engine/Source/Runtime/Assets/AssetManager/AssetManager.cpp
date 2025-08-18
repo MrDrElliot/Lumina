@@ -107,7 +107,7 @@ namespace Lumina
 
         auto* Task = Memory::New<FAssetTask>(this, Request);
         Request->SetTask(Task);
-        FTaskSystem::Get()->ScheduleTask(Task);
+        FTaskSystem::Get().ScheduleTask(Task);
     }
     
 }

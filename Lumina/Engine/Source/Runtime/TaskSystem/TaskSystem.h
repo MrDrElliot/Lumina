@@ -163,7 +163,9 @@ namespace Lumina
                 void ExecuteRange(TaskSetPartition range_, uint32_t threadnum_) override
                 {
                     for (uint32 i = range_.start; i < range_.end; ++i)
+                    {
                         Func(i);
+                    }
                 }
 
                 TFunc Func;

@@ -3,7 +3,6 @@
 #include "Core/Object/Package/Package.h"
 #include "Paths/Paths.h"
 #include "Platform/Filesystem/FileHelper.h"
-#include "Project/Project.h"
 #include "TaskSystem/TaskSystem.h"
 
 namespace Lumina
@@ -29,7 +28,7 @@ namespace Lumina
         TVector<FString> PackagePaths;
         for (const auto& [ID, Path] : Paths::GetMountedPaths())
         {
-            FTaskSystem::Get()->ScheduleLambda(1, [this, Path](uint32, uint32, uint32)
+            FTaskSystem::Get().ScheduleLambda(1, [this, Path](uint32, uint32, uint32)
             {
                 for (const auto& Directory : std::filesystem::recursive_directory_iterator(Path.c_str()))
                 {

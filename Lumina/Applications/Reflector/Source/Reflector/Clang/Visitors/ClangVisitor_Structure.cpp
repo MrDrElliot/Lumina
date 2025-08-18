@@ -58,11 +58,12 @@ namespace Lumina::Reflection::Visitor
         Info.Type = FieldType;
         Info.Name = CursorName;
         Info.TypeName = TypeSpelling;
+        Info.RawFieldType = FieldQualType.getAsString().c_str();
 
         return Info;
     }
 
-    static FFieldInfo CreateSubFieldInfo(FClangParserContext* Context, const CXType& FieldType)
+    static FFieldInfo CreateSubFieldInfo(FClangParserContext* Context, const CXType& FieldType, const FFieldInfo& ParentField)
     {
         clang::QualType FieldQualType = ClangUtils::GetQualType(FieldType);
         
@@ -100,16 +101,17 @@ namespace Lumina::Reflection::Visitor
         Info.Flags = PropFlags;
         Info.Type = FieldType;
         Info.TypeName = FieldName;
-
+        Info.RawFieldType = ParentField.RawFieldType;
         return Info;
     }
     
     template<typename T>
-    eastl::shared_ptr<T> CreateProperty(const eastl::string& Name, const eastl::string& TypeName)
+    eastl::shared_ptr<T> CreateProperty(const FFieldInfo& Info)
     {
         eastl::shared_ptr<T> New = eastl::make_shared<T>();
-        New->Name = Name;
-        New->TypeName = TypeName;
+        New->Name = Info.Name;
+        New->TypeName = Info.TypeName;
+        New->RawTypeName = Info.RawFieldType;
         return New;
     }
 
@@ -119,83 +121,83 @@ namespace Lumina::Reflection::Visitor
         {
         case EPropertyTypeFlags::UInt8:
             {
-                NewProperty = CreateProperty<FReflectedUInt8Property>(FieldInfo.Name, FieldInfo.TypeName);
+                NewProperty = CreateProperty<FReflectedUInt8Property>(FieldInfo);
             }
             break;
         case EPropertyTypeFlags::UInt16:
             {
-                NewProperty = CreateProperty<FReflectedUInt16Property>(FieldInfo.Name, FieldInfo.TypeName);
+                NewProperty = CreateProperty<FReflectedUInt16Property>(FieldInfo);
             }
             break;
         case EPropertyTypeFlags::UInt32:
             {
-                NewProperty = CreateProperty<FReflectedUInt32Property>(FieldInfo.Name, FieldInfo.TypeName);
+                NewProperty = CreateProperty<FReflectedUInt32Property>(FieldInfo);
             }
             break;
         case EPropertyTypeFlags::UInt64:
             {
-                NewProperty = CreateProperty<FReflectedUInt64Property>(FieldInfo.Name, FieldInfo.TypeName);
+                NewProperty = CreateProperty<FReflectedUInt64Property>(FieldInfo);
             }
             break;
         case EPropertyTypeFlags::Int8:
             {
-                NewProperty = CreateProperty<FReflectedInt8Property>(FieldInfo.Name, FieldInfo.TypeName);
+                NewProperty = CreateProperty<FReflectedInt8Property>(FieldInfo);
             }
             break;
         case EPropertyTypeFlags::Int16:
             {
-                NewProperty = CreateProperty<FReflectedInt16Property>(FieldInfo.Name, FieldInfo.TypeName);
+                NewProperty = CreateProperty<FReflectedInt16Property>(FieldInfo);
             }
             break;
         case EPropertyTypeFlags::Int32:
             {
-                NewProperty = CreateProperty<FReflectedInt32Property>(FieldInfo.Name, FieldInfo.TypeName);
+                NewProperty = CreateProperty<FReflectedInt32Property>(FieldInfo);
             }
             break;
         case EPropertyTypeFlags::Int64:
             {
-                NewProperty = CreateProperty<FReflectedInt64Property>(FieldInfo.Name, FieldInfo.TypeName);
+                NewProperty = CreateProperty<FReflectedInt64Property>(FieldInfo);
             }
             break;
         case EPropertyTypeFlags::Float:
             {
-                NewProperty = CreateProperty<FReflectedFloatProperty>(FieldInfo.Name, FieldInfo.TypeName);
+                NewProperty = CreateProperty<FReflectedFloatProperty>(FieldInfo);
             }
             break;
         case EPropertyTypeFlags::Double:
             {
-                NewProperty = CreateProperty<FReflectedDoubleProperty>(FieldInfo.Name, FieldInfo.TypeName);
+                NewProperty = CreateProperty<FReflectedDoubleProperty>(FieldInfo);
             }
             break;
         case EPropertyTypeFlags::Bool:
             {
-                NewProperty = CreateProperty<FReflectedBoolProperty>(FieldInfo.Name, FieldInfo.TypeName);
+                NewProperty = CreateProperty<FReflectedBoolProperty>(FieldInfo);
             }
             break;
         case EPropertyTypeFlags::String:
             {
-                NewProperty = CreateProperty<FReflectedStringProperty>(FieldInfo.Name, FieldInfo.TypeName);
+                NewProperty = CreateProperty<FReflectedStringProperty>(FieldInfo);
             }
             break;
         case EPropertyTypeFlags::Name:
             {
-                NewProperty = CreateProperty<FReflectedNameProperty>(FieldInfo.Name, FieldInfo.TypeName);
+                NewProperty = CreateProperty<FReflectedNameProperty>(FieldInfo);
             }
             break;
         case EPropertyTypeFlags::Struct:
             {
-                NewProperty = CreateProperty<FReflectedStructProperty>(FieldInfo.Name, FieldInfo.TypeName);
+                NewProperty = CreateProperty<FReflectedStructProperty>(FieldInfo);
             }
             break;
         case EPropertyTypeFlags::Enum:
             {
-                NewProperty = CreateProperty<FReflectedEnumProperty>(FieldInfo.Name, FieldInfo.TypeName);
+                NewProperty = CreateProperty<FReflectedEnumProperty>(FieldInfo);
                 const CXCursor EnumCursor = clang_getTypeDeclaration(FieldInfo.Type);
 
                 if (clang_getCursorKind(EnumCursor) == CXCursor_EnumDecl)
                 {
                     CXType UnderlyingType = clang_getEnumDeclIntegerType(EnumCursor);
-                    FFieldInfo SubType = CreateSubFieldInfo(Context, UnderlyingType);
+                    FFieldInfo SubType = CreateSubFieldInfo(Context, UnderlyingType, FieldInfo);
                     if (!SubType.Validate(Context))
                     {
                         return false;
@@ -213,21 +215,21 @@ namespace Lumina::Reflection::Visitor
         case EPropertyTypeFlags::Object:
             {
                 const CXType ArgType = clang_Type_getTemplateArgumentAsType(FieldInfo.Type, 0);
-                FFieldInfo ParamFieldInfo = CreateSubFieldInfo(Context, ArgType);
+                FFieldInfo ParamFieldInfo = CreateSubFieldInfo(Context, ArgType, FieldInfo);
                 ParamFieldInfo.Name = FieldInfo.Name; // Replace the empty template property name with the parent.
                 if (!ParamFieldInfo.Validate(Context))
                 {
                     return false;
                 }
                 
-                NewProperty = CreateProperty<FReflectedObjectProperty>(ParamFieldInfo.Name, ParamFieldInfo.TypeName);
+                NewProperty = CreateProperty<FReflectedObjectProperty>(ParamFieldInfo);
             }
             break;
         case EPropertyTypeFlags::Vector:
             {
-                NewProperty = CreateProperty<FReflectedArrayProperty>(FieldInfo.Name, FieldInfo.TypeName);
+                NewProperty = CreateProperty<FReflectedArrayProperty>(FieldInfo);
                 const CXType ArgType = clang_Type_getTemplateArgumentAsType(FieldInfo.Type, 0);
-                FFieldInfo ParamFieldInfo = CreateSubFieldInfo(Context, ArgType);
+                FFieldInfo ParamFieldInfo = CreateSubFieldInfo(Context, ArgType, FieldInfo);
                 if (!ParamFieldInfo.Validate(Context))
                 {
                     return false;

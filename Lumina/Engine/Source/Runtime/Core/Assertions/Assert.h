@@ -138,3 +138,6 @@ do {                                                    \
 #define EnsureMsg(...) __VA_ARGS__;
 #endif
 
+
+#define LUM_ASSERT(x) Assert(x)
+

@@ -235,7 +235,7 @@ namespace Lumina
 
     	VkResult Result;
 	    {
-	    	LUMINA_PROFILE_SECTION("vkQueuePresentKHR");
+	    	LUMINA_PROFILE_SECTION_COLORED("vkQueuePresentKHR", tracy::Color::Aquamarine3);
 		    Result = vkQueuePresentKHR(Queue->Queue, &PresentInfo);
 	    }
 

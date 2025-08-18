@@ -84,7 +84,7 @@ namespace Lumina
         Window->Shutdown();
         Memory::Delete(Window);
 
-        FModuleManager::Get()->UnloadAllModules();
+        FModuleManager::Get().UnloadAllModules();
         
         return 0;
     }

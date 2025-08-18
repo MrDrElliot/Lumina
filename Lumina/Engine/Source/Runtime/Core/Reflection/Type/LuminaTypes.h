@@ -40,17 +40,18 @@ namespace Lumina
         void Init();
 
         LUMINA_API SIZE_T GetElementSize() const { return ElementSize; }
-        LUMINA_API void SetElementSize(SIZE_T Size, SIZE_T Align) { ElementSize = Lumina::Align(ElementSize, Align); }
+        LUMINA_API void SetElementSize(SIZE_T Size) { ElementSize = Size; }
         LUMINA_API virtual EPropertyTypeFlags GetType() { return TypeFlags; }
 
         template<typename ValueType>
-        ValueType* SetValuePtr(void* ContainerPtr, const ValueType& Value, int32 ArrayIndex = 0)
+        ValueType* SetValuePtr(void* ContainerPtr, const ValueType& Value, int32 ArrayIndex = 0) const
         {
             if (sizeof(Value) != ElementSize)
             {
+                LOG_ERROR("Attempted to set Property Value Ptr of incorrect size {} {} {}", GetPropertyName(), sizeof(Value), ElementSize);
                 return nullptr;
             }
-            
+
             ValueType* ValuePtr = GetValuePtr<ValueType>(ContainerPtr, ArrayIndex);
             *ValuePtr = Value;
             return ValuePtr;
@@ -72,16 +73,66 @@ namespace Lumina
             return (ValueType*)GetValuePtrInternal(const_cast<void*>(ContainerPtr), ArrayIndex);
         }
 
+        template<typename ValueType>
+        void SetValue(void* InContainer, const ValueType& InValue) const
+        {
+            if (!HasSetter())
+            {
+                SetValuePtr<ValueType>(InContainer, InValue, 0);
+            }
+            else
+            {
+                CallSetter(InContainer, &InValue);
+            }
+        }
+
+        template<typename ValueType>
+        void GetValue(void const* InContainer, ValueType* OutValue) const
+        {
+            if (!HasGetter())
+            {
+                const ValueType* Src = GetValuePtr<ValueType>(InContainer, 0);
+                *OutValue = *Src;
+            }
+            else
+            {
+                CallGetter(InContainer, OutValue);
+            }
+        }
+
         virtual void Serialize(FArchive& Ar, void* Value) { }
         virtual void SerializeItem(IStructuredArchive::FSlot Slot, void* Value, void const* Defaults = nullptr) { }
         
         FString GetTypeAsString() const;
 
-        FName GetMetadata(const FName& Name) { return Metadata.GetMetadata(Name); }
-        bool HasMetadata(const FName& Name) { return Metadata.HasMetadata(Name); }
+        FName GetMetadata(const FName& Key) { return Metadata.GetMetadata(Key); }
+        bool HasMetadata(const FName& Key) { return Metadata.HasMetadata(Key); }
 
         void OnMetadataFinalized();
         static FString MakeDisplayNameFromName(EPropertyTypeFlags TypeFlags, const FName& InName);
+
+        virtual bool HasSetter() const { return false; }
+
+        virtual bool HasGetter() const { return false; }
+
+        virtual bool HasSetterOrGetter() const { return false; }
+
+        virtual void CallSetter(void* Container, const void* InValue) const
+        {
+            if (!HasSetter())
+            {
+                LOG_CRITICAL("Calling a setter but the property has no setter defined.");
+            }
+        }
+
+        virtual void CallGetter(const void* Container, void* OutValue) const
+        {
+            if (!HasGetter())
+            {
+                LOG_CRITICAL("Calling a getter but the property has no getter defined.");
+            }
+        }
+
         
     private:
 
@@ -105,11 +156,64 @@ namespace Lumina
         
     };
 
+    template <typename PropertyBaseClass>
+    class TPropertyWithSetterAndGetter : public PropertyBaseClass
+    {
+    public:
+        
+        template <typename PropertyCodegenParams>
+        TPropertyWithSetterAndGetter(const FFieldOwner& InOwner, const PropertyCodegenParams* Prop)
+            : PropertyBaseClass(InOwner, Prop)
+            , SetterFunc(Prop->SetterFunc)
+            , GetterFunc(Prop->GetterFunc)
+        {
+        }
+
+        virtual bool HasSetter() const override
+        {
+            return !!SetterFunc;
+        }
+
+        virtual bool HasGetter() const override
+        {
+            return !!GetterFunc;
+        }
+
+        virtual bool HasSetterOrGetter() const override
+        {
+            return !!SetterFunc || !!GetterFunc;
+        }
+
+        virtual void CallSetter(void* Container, const void* InValue) const override
+        {
+            if (SetterFunc == nullptr)
+            {
+                LOG_CRITICAL("Calling a setter but the property has no setter defined.");
+                return;
+            }
+            SetterFunc(Container, InValue);
+        }
+
+        virtual void CallGetter(const void* Container, void* OutValue) const override
+        {
+            if (GetterFunc == nullptr)
+            {
+                LOG_CRITICAL("Calling a getter but the property has no getter defined.");
+            }
+            GetterFunc(Container, OutValue);
+        }
+
+    protected:
+
+        SetterFuncPtr SetterFunc = nullptr;
+        GetterFuncPtr GetterFunc = nullptr;
+    };
+
     class FNumericProperty : public FProperty
     {
     public:
 
-        FNumericProperty(FFieldOwner InOwner, const FPropertyParams* Params)
+        FNumericProperty(const FFieldOwner& InOwner, const FPropertyParams* Params)
             :FProperty(InOwner, Params)
         {}
 

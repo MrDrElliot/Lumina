@@ -880,7 +880,7 @@ namespace Lumina
 
     void FVulkanRenderContext::WaitEventQuery(IEventQuery* Query)
     {
-        LUMINA_PROFILE_SCOPE_COLORED(tracy::Color::Green);
+        LUMINA_PROFILE_SCOPE_COLORED(tracy::Color::Green3);
         FVulkanEventQuery* VkQuery = static_cast<FVulkanEventQuery*>(Query);
         if (VkQuery->CommandListID == 0)
         {
@@ -889,7 +889,7 @@ namespace Lumina
 
         FQueue* Queue = GetQueue(VkQuery->Queue);
         bool bSuccess = Queue->WaitCommandList(VkQuery->CommandListID, UINT64_MAX);
-        Assert(bSuccess);
+        Assert(bSuccess)
         
         (void)bSuccess;
     }

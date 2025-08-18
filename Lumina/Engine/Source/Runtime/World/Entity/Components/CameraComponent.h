@@ -17,34 +17,36 @@ namespace Lumina
             :ViewVolume(fov, aspect)
         {}
 
-        FORCEINLINE void SetView(const glm::vec3& Position, const glm::vec3& ViewDirection, const glm::vec3& UpDirection = glm::vec3(0, 1, 0))
+        void SetView(const glm::vec3& Position, const glm::vec3& ViewDirection, const glm::vec3& UpDirection = glm::vec3(0, 1, 0))
         {
             ViewVolume.SetView(Position, ViewDirection, UpDirection);
         }
         
-        FORCEINLINE void SetFOV(float NewFOV)
+        void SetFOV(float NewFOV)
         {
             ViewVolume.SetPerspective(NewFOV, ViewVolume.GetAspectRatio());
         }
         
-        FORCEINLINE void SetAspectRatio(float NewAspect)
+        void SetAspectRatio(float NewAspect)
         {
             ViewVolume.SetPerspective(ViewVolume.GetFOV(), NewAspect);
         }
 
-        FORCEINLINE void SetPosition(const glm::vec3& NewPosition)
+        void SetPosition(const glm::vec3& NewPosition)
         {
             ViewVolume.SetViewPosition(NewPosition);
         }
 
-        FORCEINLINE float GetFOV() const { return ViewVolume.GetFOV(); }
-        FORCEINLINE float GetAspectRatio() const { return ViewVolume.GetAspectRatio(); }
-        FORCEINLINE const glm::vec3& GetPosition() const { return ViewVolume.GetViewPosition(); }
-        FORCEINLINE const glm::mat4& GetViewMatrix() const { return ViewVolume.GetViewMatrix(); }
-        FORCEINLINE const glm::mat4& GetProjectionMatrix() const { return ViewVolume.GetProjectionMatrix(); }
-        FORCEINLINE const glm::mat4& GetViewProjectionMatrix() const { return ViewVolume.GetViewProjectionMatrix(); }
-        FORCEINLINE const FViewVolume& GetViewVolume() const { return ViewVolume; }
-
+        float GetFOV() const { return ViewVolume.GetFOV(); }
+        float GetAspectRatio() const { return ViewVolume.GetAspectRatio(); }
+        const glm::vec3& GetPosition() const { return ViewVolume.GetViewPosition(); }
+        const glm::mat4& GetViewMatrix() const { return ViewVolume.GetViewMatrix(); }
+        const glm::mat4& GetProjectionMatrix() const { return ViewVolume.GetProjectionMatrix(); }
+        const glm::mat4& GetViewProjectionMatrix() const { return ViewVolume.GetViewProjectionMatrix(); }
+        const FViewVolume& GetViewVolume() const { return ViewVolume; }
+        const glm::vec3& GetForwardVector() const { return ViewVolume.GetForwardVector(); }
+        const glm::vec3& GetRightVector() const { return ViewVolume.GetRightVector(); }
+        
     private:
         
         FViewVolume ViewVolume;

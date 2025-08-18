@@ -110,4 +110,4 @@ project "Lumina"
 		runtime "Release"
 		optimize "On"
 		symbols "Off"
-		defines { "LE_SHIP" }
+		defines { "LE_SHIP", "NDEBUG", }

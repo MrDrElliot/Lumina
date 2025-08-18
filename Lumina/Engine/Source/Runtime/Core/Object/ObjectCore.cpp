@@ -101,7 +101,7 @@ namespace Lumina
 
         CObjectBase* Object = AllocateCObjectMemory(Params.Class, Flags);
         
-        Memory::Memzero(Object, Params.Class->GetSize());
+        Memory::Memzero(Object, Params.Class->GetAlignedSize());
         new (Object) CObjectBase(const_cast<CClass*>(Params.Class), Params.Flags, Package, UniqueName);
 
         CObject* Obj = (CObject*)Object;
@@ -292,16 +292,29 @@ namespace Lumina
     TPropertyType* NewFProperty(FFieldOwner Owner, const FPropertyParams* Param)
     {
         const TPropertyParamType* TypedParam = static_cast<const TPropertyParamType*>(Param);
+        TPropertyType* Type = nullptr;
         
-        TPropertyType* Type = Memory::New<TPropertyType>(Owner, TypedParam);
+        if(Param->GetterFunc || Param->SetterFunc)
+        {
+            Type = Memory::New<TPropertyWithSetterAndGetter<TPropertyType>>(Owner, TypedParam);
+        }
+        else
+        {
+            Type = Memory::New<TPropertyType>(Owner, TypedParam);
+        }
 
-        ConstructPropertyMetadata(Type, TypedParam->NumMetaData, TypedParam->MetaDataArray);
+#ifdef WITH_DEVELOPMENT_TOOLS
 
+        if (TypedParam->NumMetaData)
+        {
+            ConstructPropertyMetadata(Type, TypedParam->NumMetaData, TypedParam->MetaDataArray);
+        }
+#endif
         return Type;
     }
     
     
-    void ConstructProperties(FFieldOwner FieldOwner, const FPropertyParams* const*& Properties, uint32& NumProperties)
+    void ConstructProperties(const FFieldOwner& FieldOwner, const FPropertyParams* const*& Properties, uint32& NumProperties)
     {
         const FPropertyParams* Param = *--Properties;
 
@@ -445,6 +458,8 @@ namespace Lumina
         ObjectParms.Package = CStruct::StaticPackage();
         
         CStruct* FinalClass = (CStruct*)StaticAllocateObject(ObjectParms);
+        FinalClass->Size = Params.SizeOf;
+        FinalClass->Alignment = Params.AlignOf;
         *OutStruct = FinalClass;
         
         CObjectForceRegistration(FinalClass);
