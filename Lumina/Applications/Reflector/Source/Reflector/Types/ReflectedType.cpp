@@ -2,63 +2,44 @@
 
 #include <iostream>
 
+#include "Engine/Source/Runtime/Core/Templates/Optional.h"
 #include "Properties/ReflectedProperty.h"
 
 
 namespace Lumina::Reflection
 {
-    bool FReflectedType::DeclareGettersAndSetters(eastl::string& Stream, const eastl::string& FileID)
+    bool FReflectedType::DeclareAccessors(eastl::string& Stream, const eastl::string& FileID)
     {
-        eastl::vector<eastl::string> Getters;
-        eastl::vector<eastl::string> Setters;
-        for (const eastl::shared_ptr<FReflectedProperty>& Prop : Props)
+        // First pass: check if any property has accessors
+        bool bHasAnyAccessor = false;
+        for (const auto& Prop : Props)
         {
-            if (!Prop->GetterFunc.empty())
+            if (Prop->HasAccessors())
             {
-                Getters.push_back(Prop->GetterFunc);
-            }
-
-            if (!Prop->SetterFunc.empty())
-            {
-                Setters.push_back(Prop->SetterFunc);
+                bHasAnyAccessor = true;
+                break;
             }
         }
 
-        if (!Getters.empty() || !Setters.empty())
+        if (!bHasAnyAccessor)
         {
-            Stream += "#define " + FileID + "_" + eastl::to_string(GeneratedBodyLineNumber) + "ACCESSORS \\\n";
-            for (size_t i = 0; i < Getters.size(); ++i)
-            {
-                const eastl::string& Getter = Getters[i];
-                Stream += "static void " + Getter + "_WrapperImpl(const void* Object, void* OutValue);";
-                if (i != Getters.size() - 1 || !Setters.empty())
-                {
-                    Stream += " \\\n";
-                }
-                else
-                {
-                    Stream += "\n";
-                }
-            }
-
-            for (size_t i = 0; i < Setters.size(); ++i)
-            {
-                const eastl::string& Setter = Setters[i];
-                Stream += "static void " + Setter + "_WrapperImpl(void* Object, const void* InValue);";
-                if (i != Setters.size() - 1)
-                {
-                    Stream += " \\\n";
-                }
-                else
-                {
-                    Stream += "\n";
-                }
-            }
-
-            Stream += "\n\n";
+            return false;
         }
 
-        return !Getters.empty() || !Setters.empty();
+        Stream += "#define " + FileID + "_" + eastl::to_string(GeneratedBodyLineNumber) + "_ACCESSORS \\\n";
+
+        for (const auto& Prop : Props)
+        {
+            Prop->DeclareAccessors(Stream, FileID);
+        }
+
+        // Remove "\\\n from last accessor."
+        Stream.pop_back();
+        Stream.pop_back();
+        
+        Stream += "\n\n";
+        
+        return true;
     }
 
     void FReflectedType::GenerateMetadata(const eastl::string& InMetadata)
@@ -183,12 +164,12 @@ namespace Lumina::Reflection
             return;
         }
 
-        bool bDeclared = DeclareGettersAndSetters(Stream, FileID);
+        bool bDeclared = DeclareAccessors(Stream, FileID);
         
         Stream += "#define " + FileID + "_" + eastl::to_string(GeneratedBodyLineNumber) + "_GENERATED_BODY \\\n";
         if (bDeclared)
         {
-            Stream += FileID + "_" + eastl::to_string(GeneratedBodyLineNumber) + "ACCESSORS \\\n";
+            Stream += FileID + "_" + eastl::to_string(GeneratedBodyLineNumber) + "_ACCESSORS \\\n";
         }
         Stream += "\tstatic class Lumina::CStruct* StaticStruct();\\\n";
         if (!Parent.empty())
@@ -266,25 +247,7 @@ namespace Lumina::Reflection
         {
             for (const eastl::shared_ptr<FReflectedProperty>& Prop : Props)
             {
-                if (!Prop->GetterFunc.empty())
-                {
-                    Stream += "void " + QualifiedName + "::" + Prop->GetterFunc + "_WrapperImpl(const void* Object, void* OutValue)\n";
-                    Stream += "{\n";
-                    Stream += "\tconst " + DisplayName + "* Obj = (const " + DisplayName + "*)Object;\n";
-                    Stream += "\t" + Prop->RawTypeName + "& Result = *(" + Prop->RawTypeName + "*)OutValue;\n";
-                    Stream += "\tResult = (" + Prop->RawTypeName + ")Obj->" + Prop->GetterFunc + "();\n";
-                    Stream += "}\n";
-                }
-
-                if (!Prop->SetterFunc.empty())
-                {
-                    Stream += "void " + QualifiedName + "::" + Prop->SetterFunc + "_WrapperImpl(void* Object, const void* InValue)\n";
-                    Stream += "{\n";
-                    Stream += "\t" + QualifiedName + "* " + "Obj = (" + QualifiedName + "*)Object;\n";
-                    Stream += "\tconst " + Prop->RawTypeName + "& Value = *(const " + Prop->RawTypeName + "*)InValue;\n";
-                    Stream += "\tObj->" + Prop->SetterFunc + "(Value);\n";
-                    Stream += "}\n";
-                }
+                Prop->DefineAccessors(Stream, this);
             }
             
             for (const eastl::shared_ptr<FReflectedProperty>& Prop : Props)
@@ -384,13 +347,13 @@ namespace Lumina::Reflection
 
     void FReflectedClass::DefineSecondaryHeader(eastl::string& Stream, const eastl::string& FileID)
     {
-        bool bDeclared = DeclareGettersAndSetters(Stream, FileID);
+        bool bDeclared = DeclareAccessors(Stream, FileID);
         
         Stream += "#define " + FileID + "_" + eastl::to_string(GeneratedBodyLineNumber) + "_GENERATED_BODY \\\n";
         Stream += "public: \\\n";
         if (bDeclared)
         {
-            Stream += FileID + "_" + eastl::to_string(GeneratedBodyLineNumber) + "ACCESSORS \\\n";
+            Stream += FileID + "_" + eastl::to_string(GeneratedBodyLineNumber) + "_ACCESSORS \\\n";
         }
         Stream += "\t" + FileID + "_" + eastl::to_string(LineNumber) + "_CLASS \\\n";
         Stream += "private: \\\n";
@@ -450,25 +413,7 @@ namespace Lumina::Reflection
         {
             for (const eastl::shared_ptr<FReflectedProperty>& Prop : Props)
             {
-                if (!Prop->GetterFunc.empty())
-                {
-                    Stream += "void " + QualifiedName + "::" + Prop->GetterFunc + "_WrapperImpl(const void* Object, void* OutValue)\n";
-                    Stream += "{\n";
-                    Stream += "\tconst " + DisplayName + "* Obj = (const " + DisplayName + "*)Object;\n";
-                    Stream += "\t" + Prop->RawTypeName + "& Result = *(" + Prop->RawTypeName + "*)OutValue;\n";
-                    Stream += "\tResult = (" + Prop->RawTypeName + ")Obj->" + Prop->GetterFunc + "();\n";
-                    Stream += "}\n";
-                }
-
-                if (!Prop->SetterFunc.empty())
-                {
-                    Stream += "void " + QualifiedName + "::" + Prop->SetterFunc + "_WrapperImpl(void* Object, const void* InValue)\n";
-                    Stream += "{\n";
-                    Stream += "\t" + QualifiedName + "* " + "Obj = (" + QualifiedName + "*)Object;\n";
-                    Stream += "\tconst " + Prop->RawTypeName + "& Value = *(const " + Prop->RawTypeName + "*)InValue;\n";
-                    Stream += "\tObj->" + Prop->SetterFunc + "(Value);\n";
-                    Stream += "}\n";
-                }
+                Prop->DefineAccessors(Stream, this);
             }
             
             for (const eastl::shared_ptr<FReflectedProperty>& Prop : Props)

@@ -227,7 +227,9 @@ namespace Lumina::Reflection::Visitor
             break;
         case EPropertyTypeFlags::Vector:
             {
-                NewProperty = CreateProperty<FReflectedArrayProperty>(FieldInfo);
+                auto ArrayProperty = CreateProperty<FReflectedArrayProperty>(FieldInfo);
+                NewProperty = ArrayProperty;
+
                 const CXType ArgType = clang_Type_getTemplateArgumentAsType(FieldInfo.Type, 0);
                 FFieldInfo ParamFieldInfo = CreateSubFieldInfo(Context, ArgType, FieldInfo);
                 if (!ParamFieldInfo.Validate(Context))
@@ -246,6 +248,9 @@ namespace Lumina::Reflection::Visitor
                     Context->FlushLogs();
                     return false;
                 }
+
+                ArrayProperty->ElementTypeName = clang_getCString(clang_getTypeSpelling(ArgType));
+                
                 FieldProperty->bInner = true; // This property "belongs" to the array.
             }
             break;

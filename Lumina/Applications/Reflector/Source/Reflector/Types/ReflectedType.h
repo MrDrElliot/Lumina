@@ -96,7 +96,8 @@ namespace Lumina::Reflection
         virtual void DefineSecondaryHeader(eastl::string& Stream, const eastl::string& FileID) = 0;
         virtual void DeclareImplementation(eastl::string& Stream) = 0;
         virtual void DeclareStaticRegistration(eastl::string& Stream) = 0;
-        bool DeclareGettersAndSetters(eastl::string& Stream, const eastl::string& FileID);
+
+        bool DeclareAccessors(eastl::string& Stream, const eastl::string& FileID);
         
         void GenerateMetadata(const eastl::string& InMetadata);
 

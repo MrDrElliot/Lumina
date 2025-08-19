@@ -441,6 +441,7 @@ namespace Lumina
         ObjectParms.Package = CEnum::StaticPackage();
 
         CEnum* NewEnum = (CEnum*)StaticAllocateObject(ObjectParms);
+        
         *OutEnum = NewEnum;
 
         for (int16 i = 0; i < Params.NumParams; i++)
@@ -460,6 +461,7 @@ namespace Lumina
         CStruct* FinalClass = (CStruct*)StaticAllocateObject(ObjectParms);
         FinalClass->Size = Params.SizeOf;
         FinalClass->Alignment = Params.AlignOf;
+        
         *OutStruct = FinalClass;
         
         CObjectForceRegistration(FinalClass);

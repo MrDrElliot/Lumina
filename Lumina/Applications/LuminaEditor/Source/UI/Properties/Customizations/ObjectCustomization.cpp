@@ -160,17 +160,16 @@ namespace Lumina
         ImGui::EndChild();
 
         ImGui::PopID();
-
         return bWasChanged ? EPropertyChangeOp::Updated : EPropertyChangeOp::None;
     }
 
     void FCObjectPropertyCustomization::UpdatePropertyValue(TSharedPtr<FPropertyHandle> Property)
     {
-        Property->Property->SetValue(Property->ContainerPtr, ObjectHandle);
+        Property->Property->SetValue(Property->ContainerPtr, ObjectHandle, Property->Index);
     }
 
     void FCObjectPropertyCustomization::HandleExternalUpdate(TSharedPtr<FPropertyHandle> Property)
     {
-        Property->Property->GetValue(Property->ContainerPtr, &ObjectHandle);
+        Property->Property->GetValue(Property->ContainerPtr, &ObjectHandle, Property->Index);
     }
 }

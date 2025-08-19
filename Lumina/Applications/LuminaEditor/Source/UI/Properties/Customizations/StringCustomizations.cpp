@@ -21,13 +21,13 @@ namespace Lumina
     void FNamePropertyCustomization::UpdatePropertyValue(TSharedPtr<FPropertyHandle> Property)
     {
         CachedValue = DisplayValue;
-        Property->Property->SetValue(Property->ContainerPtr, CachedValue);
+        Property->Property->SetValue(Property->ContainerPtr, CachedValue, Property->Index);
     }
 
     void FNamePropertyCustomization::HandleExternalUpdate(TSharedPtr<FPropertyHandle> Property)
     {
         FName ActualValue;
-        Property->Property->GetValue(Property->ContainerPtr, &ActualValue);
+        Property->Property->GetValue(Property->ContainerPtr, &ActualValue, Property->Index);
         
         if (CachedValue != ActualValue)
         {
@@ -46,13 +46,13 @@ namespace Lumina
     void FStringPropertyCustomization::UpdatePropertyValue(TSharedPtr<FPropertyHandle> Property)
     {
         CachedValue = DisplayValue;
-        Property->Property->SetValue(Property->ContainerPtr, CachedValue);
+        Property->Property->SetValue(Property->ContainerPtr, CachedValue, Property->Index);
     }
 
     void FStringPropertyCustomization::HandleExternalUpdate(TSharedPtr<FPropertyHandle> Property)
     {
         FString ActualValue;
-        Property->Property->GetValue(Property->ContainerPtr, &ActualValue);
+        Property->Property->GetValue(Property->ContainerPtr, &ActualValue, Property->Index);
         
         if (CachedValue != ActualValue)
         {

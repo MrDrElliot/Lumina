@@ -74,11 +74,11 @@ namespace Lumina
         }
 
         template<typename ValueType>
-        void SetValue(void* InContainer, const ValueType& InValue) const
+        void SetValue(void* InContainer, const ValueType& InValue, uint32 ArrayIndex = 0) const
         {
             if (!HasSetter())
             {
-                SetValuePtr<ValueType>(InContainer, InValue, 0);
+                SetValuePtr<ValueType>(InContainer, InValue, ArrayIndex);
             }
             else
             {
@@ -87,11 +87,11 @@ namespace Lumina
         }
 
         template<typename ValueType>
-        void GetValue(void const* InContainer, ValueType* OutValue) const
+        void GetValue(void const* InContainer, ValueType* OutValue, uint32 ArrayIndex = 0) const
         {
             if (!HasGetter())
             {
-                const ValueType* Src = GetValuePtr<ValueType>(InContainer, 0);
+                const ValueType* Src = GetValuePtr<ValueType>(InContainer, ArrayIndex);
                 *OutValue = *Src;
             }
             else
@@ -240,25 +240,25 @@ namespace Lumina
         };
 
         /** Convert the address of a value of the property to the proper type */
-        static FORCEINLINE const TCPPType* GetPropertyValuePtr(const void* Ptr)
+        static const TCPPType* GetPropertyValuePtr(const void* Ptr)
         {
             return (const TCPPType*)Ptr;
         }
 
         /** Convert the address of a value of the property to the proper type */
-        static FORCEINLINE TCPPType* GetPropertyValuePtr(void* Ptr)
+        static TCPPType* GetPropertyValuePtr(void* Ptr)
         {
             return (TCPPType*)Ptr;
         }
 
         /** Get the value of the property from an address */
-        static FORCEINLINE TCPPType const& GetPropertyValue(void const* A)
+        static TCPPType const& GetPropertyValue(void const* A)
         {
             return *GetPropertyValuePtr(A);
         }
 
         /** Set the value of a property at an address */
-        static FORCEINLINE void SetPropertyValue(void* Ptr, const TCPPType& Value)
+        static void SetPropertyValue(void* Ptr, const TCPPType& Value)
         {
             *GetPropertyValuePtr(Ptr) = Value;
         }

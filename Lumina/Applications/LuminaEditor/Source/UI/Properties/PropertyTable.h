@@ -74,7 +74,7 @@ namespace Lumina
     {
     public:
 
-        FPropertyPropertyRow(const TSharedPtr<FPropertyHandle>& InPropHandle, FPropertyRow* InParentRow, int64 InArrayElementIndex, const FPropertyChangedEventCallbacks& Callbacks);
+        FPropertyPropertyRow(const TSharedPtr<FPropertyHandle>& InPropHandle, FPropertyRow* InParentRow, const FPropertyChangedEventCallbacks& Callbacks);
         void Update() override;
         void DrawHeader(float Offset) override;
         void DrawEditor() override;

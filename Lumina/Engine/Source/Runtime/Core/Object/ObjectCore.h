@@ -201,6 +201,22 @@ namespace Lumina
     typedef void (*SetterFuncPtr)(void* InContainer, const void* InValue);
     typedef void (*GetterFuncPtr)(const void* InContainer, void* OutValue);
 
+    // Add an element to the array
+    typedef void (*ArrayPushBackPtr)(void* InContainer, const void* InValue);
+
+    // Get the number of elements in the array
+    typedef size_t (*ArrayGetNumPtr)(const void* InContainer);
+
+    // Remove an element at a given index
+    typedef void (*ArrayRemoveAtPtr)(void* InContainer, size_t Index);
+
+    // Clear the array
+    typedef void (*ArrayClearPtr)(void* InContainer);
+    
+    // Access an element by index (mutable)
+    typedef void* (*ArrayGetAtPtr)(void* InContainer, size_t Index);
+
+    
     struct FPropertyParams
     {
         const char*         Name;
@@ -211,7 +227,7 @@ namespace Lumina
         uint16              Offset;
     };
 
-    struct FNumericPropertyParams : public FPropertyParams
+    struct FNumericPropertyParams : FPropertyParams
     {
         #ifdef WITH_DEVELOPMENT_TOOLS
         uint16 NumMetaData;
@@ -219,7 +235,7 @@ namespace Lumina
         #endif
     };
 
-    struct FStringPropertyParams : public FPropertyParams
+    struct FStringPropertyParams : FPropertyParams
     {
         #ifdef WITH_DEVELOPMENT_TOOLS
         uint16 NumMetaData;
@@ -227,7 +243,7 @@ namespace Lumina
         #endif
     };
 
-    struct FNamePropertyParams : public FPropertyParams
+    struct FNamePropertyParams : FPropertyParams
     {
         #ifdef WITH_DEVELOPMENT_TOOLS
         uint16 NumMetaData;
@@ -235,17 +251,7 @@ namespace Lumina
         #endif
     };
 
-    struct FObjectPropertyParams : public FPropertyParams
-    {
-        CClass*            (*ClassFunc)();
-
-        #ifdef WITH_DEVELOPMENT_TOOLS
-        uint16 NumMetaData;
-        const FMetaDataPairParam* MetaDataArray;
-        #endif
-    };
-
-    struct FClassPropertyParams : public FPropertyParams
+    struct FObjectPropertyParams : FPropertyParams
     {
         CClass*            (*ClassFunc)();
 
@@ -255,7 +261,17 @@ namespace Lumina
         #endif
     };
 
-    struct FStructPropertyParams : public FPropertyParams
+    struct FClassPropertyParams : FPropertyParams
+    {
+        CClass*            (*ClassFunc)();
+
+        #ifdef WITH_DEVELOPMENT_TOOLS
+        uint16 NumMetaData;
+        const FMetaDataPairParam* MetaDataArray;
+        #endif
+    };
+
+    struct FStructPropertyParams : FPropertyParams
     {
         CStruct*            (*StructFunc)();
 
@@ -265,7 +281,7 @@ namespace Lumina
         #endif
     };
 
-    struct FEnumPropertyParams : public FPropertyParams
+    struct FEnumPropertyParams : FPropertyParams
     {
         CEnum*              (*EnumFunc)();
 
@@ -275,8 +291,14 @@ namespace Lumina
         #endif
     };
 
-    struct FArrayPropertyParams : public FPropertyParams
+    struct FArrayPropertyParams : FPropertyParams
     {
+        ArrayPushBackPtr    PushBackFn;
+        ArrayGetNumPtr      GetNumFn;
+        ArrayRemoveAtPtr    RemoveAtFn;
+        ArrayClearPtr       ClearFn;
+        ArrayGetAtPtr       GetAtFn;
+        
         #ifdef WITH_DEVELOPMENT_TOOLS
         uint16 NumMetaData;
         const FMetaDataPairParam* MetaDataArray;

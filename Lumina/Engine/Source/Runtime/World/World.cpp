@@ -7,6 +7,7 @@
 #include "Entity/Components/LineBatcherComponent.h"
 #include "Entity/Components/VelocityComponent.h"
 #include "Entity/Systems/DebugCameraEntitySystem.h"
+#include "Entity/Components/StaticMeshComponent.h"
 #include "Entity/Systems/UpdateTransformEntitySystem.h"
 #include "glm/gtx/matrix_decompose.hpp"
 #include "Subsystems/FCameraManager.h"
@@ -76,7 +77,11 @@ namespace Lumina
         CameraManager = Memory::New<FCameraManager>();
         SceneRenderer = Memory::New<FSceneRenderer>(this);
         RegisterSystem(NewObject<CUpdateTransformEntitySystem>());
+
+        EntityRegistry.on_construct<SStaticMeshComponent>().connect<&FEntityRegistry::emplace_or_replace<FDirtyRenderStateComponent>>();
+        EntityRegistry.on_construct<SStaticMeshComponent>().connect<&CWorld::OnStaticMeshComponentConstructed>(this);
     }
+
 
     Entity CWorld::SetupEditorWorld()
     {
@@ -274,7 +279,7 @@ namespace Lumina
 
     void CWorld::DestroyEntity(Entity Entity)
     {
-        Assert(Entity.IsValid());
+        Assert(Entity.IsValid())
         EntityRegistry.destroy(Entity);
     }
 
@@ -328,6 +333,12 @@ namespace Lumina
         FLineBatcherComponent& Batcher = GetOrCreateLineBatcher();
         Batcher.DrawArrow(Start, Direction, Length, Color, Thickness, Duration, HeadSize);
     }
+
+    void CWorld::OnStaticMeshComponentConstructed(entt::entity entt)
+    {
+        EntityRegistry.get<SStaticMeshComponent>(entt).EntityPrivate = Entity(entt, this);
+    }
+
 
     FLineBatcherComponent& CWorld::GetOrCreateLineBatcher()
     {

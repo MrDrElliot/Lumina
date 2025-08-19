@@ -83,6 +83,7 @@ namespace Lumina
         
         BuildPasses();
         
+        
         RenderGraph.AddPass<RG_Transfer>(FRGEvent("Write Scene Buffer"), nullptr, [&](ICommandList& CmdList)
         {
             LUMINA_PROFILE_SECTION_COLORED("Write Scene Buffer", tracy::Color::Orange4);
@@ -576,6 +577,15 @@ namespace Lumina
             ModelData.ModelMatrices.reserve(1000);
             LightData.NumLights = 0;
 
+            auto Test = World->GetMutableEntityRegistry().group<>(entt::get<SStaticMeshComponent, FDirtyRenderStateComponent>);
+            Test.each([&] (entt::entity entt, auto& StaticMeshComponent, auto& DirtyStateComponent)
+            {
+                
+               
+            });
+
+            World->GetMutableEntityRegistry().clear<FDirtyRenderStateComponent>();
+            
             FMutex Mutex;
             auto Group = World->GetMutableEntityRegistry().group<SStaticMeshComponent>(entt::get<STransformComponent>);
             FTaskSystem::Get().ParallelFor((uint32)Group.size(), [&](uint32 Index)

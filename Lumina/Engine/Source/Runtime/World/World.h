@@ -68,6 +68,8 @@ namespace Lumina
 
     private:
 
+        void OnStaticMeshComponentConstructed(entt::entity entt);
+        
         FLineBatcherComponent& GetOrCreateLineBatcher();
     
     private:

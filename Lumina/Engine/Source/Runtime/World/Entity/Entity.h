@@ -91,7 +91,6 @@ namespace Lumina
 
         entt::entity EntityHandle;
         TObjectHandle<CWorld> World;
-    
     };
 
     
@@ -163,12 +162,7 @@ namespace Lumina
     template <typename T>
     T& Entity::GetOrAddComponent()
     {
-        if (HasComponent<T>())
-        {
-            return GetComponent<T>();
-        }
-
-        return AddComponent<T>();
+        return World->GetMutableEntityRegistry().get_or_emplace<T>(EntityHandle);
     }
 
     template <typename T>

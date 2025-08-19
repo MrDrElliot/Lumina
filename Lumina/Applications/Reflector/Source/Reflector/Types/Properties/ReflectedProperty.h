@@ -5,6 +5,11 @@
 #include "EASTL/vector.h"
 #include "Reflector/Utils/MetadataUtils.h"
 
+namespace Lumina::Reflection
+{
+    class FReflectedType;
+}
+
 namespace Lumina
 {
     class FReflectedProperty
@@ -22,6 +27,10 @@ namespace Lumina
 
         virtual void DeclareCrossModuleReference(const eastl::string& API, eastl::string& Stream) { }
 
+        virtual bool HasAccessors();
+        virtual bool DeclareAccessors(eastl::string& Stream, const eastl::string& FileID);
+        virtual bool DefineAccessors(eastl::string& Stream, Reflection::FReflectedType* ReflectedType);
+
         eastl::string                   RawTypeName;
         eastl::string                   TypeName;
         eastl::string                   Namespace;
@@ -30,7 +39,7 @@ namespace Lumina
         bool                            bInner = false;
         eastl::vector<FMetadataPair>    Metadata;
 
-        eastl::string                     GetterFunc;
-        eastl::string                     SetterFunc;
+        eastl::string                   GetterFunc;
+        eastl::string                   SetterFunc;
     };
 }

@@ -66,7 +66,6 @@ namespace Lumina
     void* FProperty::GetValuePtrInternal(void* ContainerPtr, int32 ArrayIndex) const
     {
         void* PropertyPtr = (uint8*)ContainerPtr + Offset;
-        return (uint8*)PropertyPtr + ArrayIndex * (size_t)ElementSize;
+        return (uint8*)PropertyPtr + ArrayIndex * ElementSize;
     }
-    
 }
