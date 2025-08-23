@@ -6,19 +6,17 @@ namespace Lumina
 {
     CMaterialInterface* SStaticMeshComponent::GetMaterialForSlot(SIZE_T Slot)
     {
-        if (!StaticMesh.IsValid())
-        {
-            return nullptr;
-        }
+        LUMINA_PROFILE_SCOPE();
         
         if (Slot < MaterialOverrides.size() && MaterialOverrides[Slot])
         {
             return MaterialOverrides[Slot];
         }
-        else
+        else if (StaticMesh.IsValid())
         {
             return StaticMesh->GetMaterialAtSlot(Slot);
         }
-    }
 
+        return nullptr;
+    }
 }

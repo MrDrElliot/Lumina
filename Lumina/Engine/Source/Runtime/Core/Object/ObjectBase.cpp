@@ -292,7 +292,7 @@ namespace Lumina
         {
             if (Entry.Object)
             {
-                Entry.Object->MarkGarbage();
+                Entry.Object.load(std::memory_order_relaxed)->MarkGarbage();
             }
         }
         

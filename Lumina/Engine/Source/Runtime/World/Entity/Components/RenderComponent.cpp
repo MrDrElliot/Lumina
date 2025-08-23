@@ -4,9 +4,4 @@
 
 namespace Lumina
 {
-    bool SRenderComponent::ShouldCreateRenderState()
-    {
-        return true;
-    }
-
 }

@@ -141,3 +141,12 @@ do {                                                    \
 
 #define LUM_ASSERT(x) Assert(x)
 
+
+#if defined(_MSC_VER)
+    #include <xmmintrin.h>
+    #define LUM_PREFETCH(addr) _mm_prefetch(reinterpret_cast<const char*>(addr), _MM_HINT_T0)
+#elif defined(__GNUC__) || defined(__clang__)
+    #define LUM_PREFETCH(addr) __builtin_prefetch(addr, 0 /* read */, 3 /* temporal locality */)
+#else
+    #define LUM_PREFETCH(addr) ((void)0) // fallback: no-op
+#endif

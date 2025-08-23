@@ -41,5 +41,4 @@ namespace Lumina
         
         LUMINA_API CObject* Resolve() const;
     };
-    
 }

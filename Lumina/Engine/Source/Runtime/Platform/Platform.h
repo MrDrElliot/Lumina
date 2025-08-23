@@ -30,13 +30,13 @@
 #endif
 
 /** Promise expression is true. Compiler can optimize accordingly with undefined behavior if wrong. Static analyzers understand this.  */
-#ifndef ASSUME
+#ifndef LUMINA_ASSUME
     #if defined(__clang__)
-        #define ASSUME(x) __builtin_assume(x)
+        #define LUMINA_ASSUME(x) __builtin_assume(x)
     #elif defined(_MSC_VER)
-        #define ASSUME(x) __assume(x)
+        #define LUMINA_ASSUME(x) __assume(x)
     #else
-        #define ASSUME(x)
+        #define LUMINA_ASSUME(x)
     #endif
 #endif
 

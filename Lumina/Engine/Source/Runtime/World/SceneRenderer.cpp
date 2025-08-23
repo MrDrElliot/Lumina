@@ -568,86 +568,87 @@ namespace Lumina
             InstanceData.reserve(1000);
             LightData.NumLights = 0;
 
+            TFixedVector<glm::mat4, 2000> Transforms;
+            
             FMutex Mutex;
             auto Group = World->GetMutableEntityRegistry().group<SStaticMeshComponent>(entt::get<STransformComponent>);
-            FTaskSystem::Get().ParallelFor((uint32)Group.size(), [&](uint32 Index)
+            LUMINA_PROFILE_SECTION("Build Render Proxies");
+            Group.each([&] (SStaticMeshComponent& MeshComponent, STransformComponent& TransformComponent)
             {
-                LUMINA_PROFILE_SECTION("Build Render Proxies");
-                
-                entt::entity entity = Group[Index];
-                SStaticMeshComponent& MeshComponent = Group.get<SStaticMeshComponent>(entity);
-                STransformComponent& TransformComponent = Group.get<STransformComponent>(entity);
-                
                 CStaticMesh* Mesh = MeshComponent.StaticMesh;
                 if (!IsValid(Mesh))
+                {
                     return;
-                
+                }
                 
                 SIZE_T Surfaces = Mesh->GetMeshResource().GetNumSurfaces();
                 for (SIZE_T j = 0; j < Surfaces; ++j)
                 {
+                    LUMINA_PROFILE_SECTION("Process Mesh Surface");
+
                     const FMeshResource& Resource = MeshComponent.StaticMesh->GetMeshResource();
                     if (!Resource.IsSurfaceIndexValid(j))
                     {
-                        continue;
+                        return;
                     }
-                
+            
                     const FGeometrySurface& Surface = Resource.GetSurface(j);
                     CMaterialInterface* Material = MeshComponent.GetMaterialForSlot(Surface.MaterialIndex);
                     if (!IsValid(Material) || !Material->IsReadyForRender())
                     {
                         continue;
                     }
-                    
+                
                     FStaticMeshRender Proxy;
                     Proxy.StaticMesh = Mesh;
                     Proxy.Material = Material;
-                    Proxy.VertexOffset = 0;
                     Proxy.FirstIndex = Surface.StartIndex;
-                    Proxy.Surface = Surface;
-                    Proxy.Matrix = TransformComponent.GetMatrix();
-                
-                    // 64-bit key: [MaterialID:20 | MeshID:20 | FirstIndex:16 | IndexCount:8]
-                    auto id32 = [](const void* p){ return uint64(reinterpret_cast<uintptr_t>(p)) & 0xFFFFF; }; // 20 bits
-                    uint64 mat     = id32(Proxy.Material);
-                    uint64 mesh    = id32(Proxy.StaticMesh);
-                    uint64 first16 = uint64(Proxy.FirstIndex & 0xFFFF);
-                    uint64 idx8    = uint64(eastl::min<uint32_t>(Proxy.Surface.IndexCount, 0xFF));
-                    Proxy.SortKey = (mat << 44) | (mesh << 24) | (first16 << 8) | idx8;
-                
-                    FScopeLock Lock(Mutex);
+                    Proxy.SurfaceIndexCount = Surface.IndexCount;
+                    Proxy.TransformIdx = (uint32)Transforms.size();
+
+                    Transforms.push_back(TransformComponent.GetMatrix());
+
+                    {
+                        // 64-bit key: [MaterialID:20 | MeshID:20 | FirstIndex:16 | IndexCount:8]
+                        auto id32 = [](const void* p){ return uint64(reinterpret_cast<uintptr_t>(p)) & 0xFFFFF; }; // 20 bits
+                        uint64 mat     = id32(Proxy.Material);
+                        uint64 mesh    = id32(Proxy.StaticMesh);
+                        uint64 first16 = uint64(Proxy.FirstIndex & 0xFFFF);
+                        uint64 idx8    = uint64(eastl::min<uint32_t>(Surface.IndexCount, 0xFF));
+                        Proxy.SortKey = (mat << 44) | (mesh << 24) | (first16 << 8) | idx8;
+                    }
+
                     StaticMeshRenders.push_back(Proxy);
                 }
-                
-            }, ETaskPriority::High);
+            });
+            
             
             {
                 LUMINA_PROFILE_SECTION("Sort Render Proxies");
                 eastl::sort(StaticMeshRenders.begin(), StaticMeshRenders.end());
             }
             
+            
             {   
                 LUMINA_PROFILE_SECTION("Build Indirect Draw Arguments");
                 
                 const FStaticMeshRender* PrevProxy = nullptr;
-            
-                for (SIZE_T i = 0; i < StaticMeshRenders.size(); ++i)
+
+                for (const FStaticMeshRender& Render : StaticMeshRenders)
                 {
-                    const FStaticMeshRender& Proxy = StaticMeshRenders[i];
-                    
-                    if (!PrevProxy || (PrevProxy->SortKey != Proxy.SortKey))
+                    if (!PrevProxy || (PrevProxy->SortKey != Render.SortKey))
                     {
                         FIndirectRenderBatch Batch;
                         Batch.NumDraws = 1;
-                        Batch.StaticMesh = Proxy.StaticMesh;
-                        Batch.Material = Proxy.Material;
+                        Batch.StaticMesh = Render.StaticMesh;
+                        Batch.Material = Render.Material;
                         Batch.Offset = IndirectDrawArguments.size();
                         RenderBatches.push_back(Batch);
 
                         FDrawIndexedIndirectArguments DrawArgument;
-                        DrawArgument.BaseVertexLocation     = Proxy.VertexOffset;
-                        DrawArgument.StartIndexLocation     = Proxy.FirstIndex;
-                        DrawArgument.IndexCount             = Proxy.Surface.IndexCount;
+                        DrawArgument.BaseVertexLocation     = 0;
+                        DrawArgument.StartIndexLocation     = Render.FirstIndex;
+                        DrawArgument.IndexCount             = Render.SurfaceIndexCount;
                         DrawArgument.StartInstanceLocation  = (uint32)InstanceData.size();
                         DrawArgument.InstanceCount          = 1;
 
@@ -658,8 +659,8 @@ namespace Lumina
                         IndirectDrawArguments.back().InstanceCount++;
                     }
 
-                    InstanceData.emplace_back(Proxy.Matrix);
-                    PrevProxy = &Proxy;
+                    InstanceData.emplace_back(Transforms[Render.TransformIdx]);
+                    PrevProxy = &Render;
                 }
             }
             

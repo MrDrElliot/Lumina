@@ -80,6 +80,7 @@ namespace Lumina
 
     bool CMaterial::IsReadyForRender() const
     {
+        LUMINA_PROFILE_SCOPE();
         return VertexShader != nullptr && PixelShader != nullptr && BindingLayout != nullptr && BindingSet != nullptr;
     }
 

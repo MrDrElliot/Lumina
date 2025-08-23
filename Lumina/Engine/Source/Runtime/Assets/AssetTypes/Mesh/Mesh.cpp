@@ -27,6 +27,8 @@ namespace Lumina
 
     CMaterialInterface* CMesh::GetMaterialAtSlot(SIZE_T Slot) const
     {
+        LUMINA_PROFILE_SCOPE();
+
         return Materials.empty() ? nullptr : Cast<CMaterialInterface>(Materials[Slot].Get());
     }
 

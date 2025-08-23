@@ -103,19 +103,17 @@ namespace Lumina
 
     struct FStaticMeshRender
     {
-        CMaterialInterface* Material = nullptr;
-        CStaticMesh*        StaticMesh = nullptr;
-        FGeometrySurface    Surface;
-        glm::mat4           Matrix;
-        uint32              VertexOffset;
-        uint32              FirstIndex;
-        SIZE_T              SortKey;
+        uint64 SortKey;
+        uint32 FirstIndex;
+        uint32 TransformIdx;
+        uint16 SurfaceIndexCount;
+        CMaterialInterface* Material;
+        CStaticMesh* StaticMesh;
 
         auto operator <=> (const FStaticMeshRender& Other) const
         {
             return SortKey <=> Other.SortKey;
         }
-        
     };
 
     /** A batch of mesh elements that contain the same material and vertex buffer. */

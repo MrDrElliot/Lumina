@@ -107,14 +107,14 @@ namespace Lumina
         }
 
         
-        friend bool operator==(const TObjectHandle& Handle, nullptr_t)
+        friend bool operator==(const TObjectHandle& InHandle, nullptr_t)
         {
-            return !Handle.IsValid();
+            return !InHandle.IsValid();
         }
 
-        friend bool operator!=(const TObjectHandle& Handle, nullptr_t)
+        friend bool operator!=(const TObjectHandle& InHandle, nullptr_t)
         {
-            return Handle.IsValid();
+            return InHandle.IsValid();
         }
 
         bool operator==(ReferencedType* Other) const { return Get() == Other; }
@@ -140,6 +140,7 @@ namespace Lumina
         
         bool IsValid() const
         {
+            if (*this == FObjectHandle()) return false;
             return Get() != nullptr;
         }
 

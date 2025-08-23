@@ -235,6 +235,8 @@ namespace Lumina
 
     bool IsValid(CObjectBase* Obj)
     {
+        LUMINA_PROFILE_SCOPE();
+        
         if (Obj == nullptr)
         {
             return false;

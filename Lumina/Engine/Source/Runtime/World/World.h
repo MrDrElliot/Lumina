@@ -67,23 +67,7 @@ namespace Lumina
         void DrawDebugCone(const glm::vec3& Apex, const glm::vec3& Direction, float AngleRadians, float Length, const glm::vec4& Color, uint8 Segments = 16, uint8 Stacks = 4, float Thickness = 1.0f, float Duration = 1.0f);
         void DrawFrustum(const glm::mat4& Matrix, const glm::vec4& Color, float Thickness = 1.0f, float Duration = 1.0f);
         void DrawArrow(const glm::vec3& Start, const glm::vec3& Direction, float Length, const glm::vec4& Color, float Thickness = 1.0f, float Duration = 1.0f, float HeadSize = 0.2f);
-
-
-        template<typename T>
-        requires std::is_base_of_v<SRenderComponent, T>
-        void OnRenderComponentConstructed(entt::entity entity)
-        {
-            T& Renderable = EntityRegistry.get<T>(entity);
-            Renderable.EntityPrivate = Entity(entity, this);
-            Renderable.MarkRenderStateDirty();
-        }
-
-        template<typename T>
-        requires std::is_base_of_v<SRenderComponent, T>
-        void OnRenderComponentDestructed(entt::entity entity)
-        {
-            
-        }
+    
         
     private:
         

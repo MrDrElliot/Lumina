@@ -17,14 +17,6 @@
 
 namespace Lumina
 {
-
-    template<typename TComponent>
-    static void RegisterRenderComponent(FEntityRegistry& registry, CWorld* world)
-    {
-        registry.on_construct<TComponent>().connect<&CWorld::OnRenderComponentConstructed<TComponent>>(world);
-        registry.on_destroy<TComponent>().connect<&CWorld::OnRenderComponentDestructed<TComponent>>(world);
-    }
-    
     CWorld::CWorld()
     {
     }
@@ -85,8 +77,6 @@ namespace Lumina
         CameraManager = Memory::New<FCameraManager>();
         SceneRenderer = Memory::New<FSceneRenderer>(this);
         RegisterSystem(NewObject<CUpdateTransformEntitySystem>());
-
-        RegisterRenderComponent<SStaticMeshComponent>(EntityRegistry, this);
     }
     
     Entity CWorld::SetupEditorWorld()
