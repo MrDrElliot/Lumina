@@ -1,11 +1,14 @@
 #pragma once
 
+
 #include "Core/DisableAllWarnings.h"
-#include "EASTL/list.h"
-#include "EASTL/span.h"
+#include "EASTL/vector_map.h"
 #include "Platform/GenericPlatform.h"
 
+#define LUMINA_USE_EASTL 1
+
 PRAGMA_DISABLE_ALL_WARNINGS
+#if defined(LUMINA_USE_EASTL)
 #include "EASTL/hash_map.h"
 #include "EASTL/unordered_map.h"
 #include "EASTL/vector.h"
@@ -16,6 +19,22 @@ PRAGMA_DISABLE_ALL_WARNINGS
 #include "EASTL/set.h"
 #include "EASTL/stack.h"
 #include "EASTL/unordered_set.h"
+#include "EASTL/bitset.h"
+#include "EASTL/bitvector.h"
+#include "EASTL/list.h"
+#include "EASTL/span.h"
+#else
+#include <bitset>
+#include <map>
+#include <queue>
+#include <set>
+#include <span>
+#include <stack>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
+#endif
+
 PRAGMA_ENABLE_ALL_WARNINGS
 
 
@@ -28,23 +47,59 @@ namespace Lumina
     // Commonly used containers aliases
     //-------------------------------------------------------------------------
 
-    template<typename T> using TVector =                                                eastl::vector<T>;
-    template<typename T> using TSpan =                                                  eastl::span<T>;
-    template<typename T, eastl_size_t S, bool bOverflow = true> using TFixedVector =    eastl::fixed_vector<T, S, bOverflow>;
-    template<typename T, eastl_size_t S> using TArray =                                 eastl::array<T, S>;
-                                                                                        
-    template<typename K, typename V> using TUnorderedMap =                              eastl::unordered_map<K, V>;
-    template<typename K, typename V> using TOrderedMap =                                eastl::map<K, V>;
-    template<typename K, typename V, typename H = eastl::hash<K>, typename E = eastl::equal_to<K>> using THashMap =           eastl::hash_map<K, V, H, E>;
-    template<typename K, typename V> using TPair =                                      eastl::pair<K, V>;
-    template<typename T> using TList =                                                  eastl::list<T>;
-    template<typename T> using TSet =                                                   eastl::set<T>;
-    template<typename T> using THashSet =                                               eastl::hash_set<T>;
-    template<typename T> using TUnorderedSet =                                          eastl::unordered_set<T>;
-                                                                                        
-    template<typename T> using TQueue =                                                 eastl::queue<T>;
-    template<typename T> using TDeque =                                                 eastl::deque<T>;
-    template<typename T, typename C = TVector<T>> using TStack =                        eastl::stack<T, C>;
+#ifdef LUMINA_USE_EASTL
+
+    template <size_t N> using TBitSet                                               = eastl::bitset<N>;
+    using TBitVector                                                                = eastl::bitvector<>;
+    template <typename T> using TVector                                             = eastl::vector<T>;
+    template <typename K, typename V> using TVectorMap                              = eastl::vector_map<K, V>;
+    template <typename T> using TSpan                                               = eastl::span<T>;
+    template <typename T, size_t S, bool bOverflow = true> using TFixedVector       = eastl::fixed_vector<T, S, bOverflow>;
+    template <typename T, size_t S> using TArray                                    = eastl::array<T, S>;
+
+    template <typename K, typename V> using TUnorderedMap                           = eastl::unordered_map<K, V>;
+    template <typename K, typename V> using TOrderedMap                             = eastl::map<K, V>;
+    template <typename K, typename V, typename H = eastl::hash<K>, typename E = eastl::equal_to<K>> using THashMap = eastl::hash_map<K, V, H, E>;
+    template <typename K, typename V> using TPair                                   = eastl::pair<K, V>;
+    template <typename T> using TList                                               = eastl::list<T>;
+    template <typename T> using TSet                                                = eastl::set<T>;
+    template <typename T> using THashSet                                            = eastl::hash_set<T>;
+    template <typename T> using TUnorderedSet                                       = eastl::unordered_set<T>;
+
+    template <typename T> using TQueue                                              = eastl::queue<T>;
+    template <typename T> using TDeque                                              = eastl::deque<T>;
+    template <typename T, typename C = TVector<T>> using TStack                     = eastl::stack<T, C>;
+
+#else
+
+    template <size_t N> using TBitSet = std::bitset<N>;
+    // no direct std::bitvector equivalent → fallback to vector<bool>
+    using TBitVector = std::vector<bool>;
+    template <typename T> using TVector = std::vector<T>;
+    template <typename T> using TSpan = std::span<T>;
+    template <typename T, size_t S> using TArray = std::array<T, S>;
+
+    template <typename K, typename V> using TUnorderedMap = std::unordered_map<K, V>;
+    template <typename K, typename V> using TOrderedMap = std::map<K, V>;
+    // std::unordered_map is the closest thing to hash_map
+    template <typename K, typename V, typename H = std::hash<K>, typename E = std::equal_to<K>> using THashMap = std::unordered_map<K, V, H, E>;
+    template <typename K, typename V> using TPair = std::pair<K, V>;
+    template <typename T> using TList = std::list<T>;
+    template <typename T> using TSet = std::set<T>;
+    template <typename T> using THashSet = std::unordered_set<T>;
+    template <typename T> using TUnorderedSet = std::unordered_set<T>;
+
+    template <typename T> using TQueue = std::queue<T>;
+    template <typename T> using TDeque = std::deque<T>;
+    template <typename T, typename C = TVector<T>> using TStack = std::stack<T, C>;
+
+    // Note: no std::fixed_vector. Could fallback to std::array with manual growth,
+    // or implement a custom wrapper if you rely on EASTL fixed_vector semantics.
+    template <typename T, size_t S, bool bOverflow = true> using TFixedVector = std::array<T, S>;
+
+#endif
+
+
     
 
     using Blob = TVector<uint8>;

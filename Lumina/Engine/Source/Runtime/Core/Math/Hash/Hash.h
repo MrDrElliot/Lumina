@@ -4,6 +4,7 @@
 
 #include "Containers/Array.h"
 #include "Containers/String.h"
+#include "Core/Profiler/Profile.h"
 #include "Module/API.h"
 #include "Platform/GenericPlatform.h"
 

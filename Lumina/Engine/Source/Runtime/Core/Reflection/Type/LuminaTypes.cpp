@@ -8,10 +8,12 @@ namespace Lumina
     {
         eastl::visit([this]<typename T0>(T0& Value)
         {
-            if constexpr (std::is_pointer_v<std::decay_t<T0>>)
-            {
-                Value->AddProperty(this);
-            }
+            static_assert(std::disjunction_v<
+                std::is_same<std::decay_t<T0>, CStruct*>,
+                std::is_same<std::decay_t<T0>, FField*>>, "Value must be CStruct* or FField*");
+            
+            Value->AddProperty(this);
+            
         }, Owner.Variant);
    
     }

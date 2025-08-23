@@ -1,4 +1,5 @@
 ﻿#pragma once
+
 #include "Core/Object/Object.h"
 #include "Core/UpdateContext.h"
 #include "World/Entity/Components/CameraComponent.h"
@@ -8,6 +9,7 @@
 
 namespace Lumina
 {
+    struct SRenderComponent;
     class FCameraManager;
     struct FLineBatcherComponent;
     class FSceneRenderer;
@@ -66,13 +68,30 @@ namespace Lumina
         void DrawFrustum(const glm::mat4& Matrix, const glm::vec4& Color, float Thickness = 1.0f, float Duration = 1.0f);
         void DrawArrow(const glm::vec3& Start, const glm::vec3& Direction, float Length, const glm::vec4& Color, float Thickness = 1.0f, float Duration = 1.0f, float HeadSize = 0.2f);
 
-    private:
 
-        void OnStaticMeshComponentConstructed(entt::entity entt);
+        template<typename T>
+        requires std::is_base_of_v<SRenderComponent, T>
+        void OnRenderComponentConstructed(entt::entity entity)
+        {
+            T& Renderable = EntityRegistry.get<T>(entity);
+            Renderable.EntityPrivate = Entity(entity, this);
+            Renderable.MarkRenderStateDirty();
+        }
+
+        template<typename T>
+        requires std::is_base_of_v<SRenderComponent, T>
+        void OnRenderComponentDestructed(entt::entity entity)
+        {
+            
+        }
+        
+    private:
         
         FLineBatcherComponent& GetOrCreateLineBatcher();
     
     private:
+
+        FLineBatcherComponent*                          LineBatcherComponent;
 
         FCameraManager*                                 CameraManager = nullptr;
         FSceneRenderer*                                 SceneRenderer = nullptr;

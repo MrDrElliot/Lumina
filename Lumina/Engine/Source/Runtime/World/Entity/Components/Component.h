@@ -15,10 +15,14 @@ namespace Lumina
 		{
 			return nullptr;
 		}
+
+	protected:
+		
 		
 	};
 
-#define ENTITY_COMPONENT(Type) \
+	
+#define ENTITY_COMPONENT() \
     virtual Lumina::CStruct* GetType() override { return StaticStruct(); }
 }
 

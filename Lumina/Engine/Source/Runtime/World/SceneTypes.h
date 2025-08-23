@@ -6,7 +6,6 @@ namespace Lumina
 {
     struct FModelData;
     class CStaticMesh;
-    class FScene;
 
     enum class ESceneType : uint8
     {

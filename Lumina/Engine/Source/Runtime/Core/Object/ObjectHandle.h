@@ -2,7 +2,7 @@
 #include "Module/API.h"
 #include "Platform/GenericPlatform.h"
 #include "Platform/Platform.h"
-
+#include <compare>
 
 namespace Lumina
 {
@@ -36,6 +36,7 @@ namespace Lumina
 
         NODISCARD bool operator!() const { return Resolve() == nullptr; }
         NODISCARD explicit operator bool() const { return Resolve() != nullptr; }
+        NODISCARD auto operator<=>(const FObjectHandle&) const = default;
 
         
         LUMINA_API CObject* Resolve() const;

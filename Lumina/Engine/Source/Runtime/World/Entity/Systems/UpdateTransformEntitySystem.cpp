@@ -1,8 +1,11 @@
 ﻿#include "UpdateTransformEntitySystem.h"
 
+#include "Core/Object/Class.h"
 #include "TaskSystem/TaskSystem.h"
+#include "World/Entity/Components/DirtyComponent.h"
 #include "World/Entity/Components/EditorComponent.h"
 #include "World/Entity/Components/RelationshipComponent.h"
+#include "World/Entity/Components/RenderComponent.h"
 #include "World/Entity/Components/Transformcomponent.h"
 
 namespace Lumina
@@ -22,7 +25,7 @@ namespace Lumina
     {
         LUMINA_PROFILE_SCOPE();
         
-        auto Group = EntityRegistry.group<>(entt::get<STransformComponent>);
+        auto Group = EntityRegistry.group<>(entt::get<STransformComponent, FDirtyTransform>);
         auto RelationshipGroup = EntityRegistry.group<>(entt::get<STransformComponent, SRelationshipComponent>);
         auto CameraView = EntityRegistry.view<SCameraComponent>(entt::exclude<SEditorComponent>);
 
@@ -58,11 +61,10 @@ namespace Lumina
                 transform.WorldTransform = transform.Transform;
             }
             
-            if (transform.CachedTransform != transform.Transform || RelationshipGroup.contains(entity))
-            {
-                transform.CachedMatrix    = transform.WorldTransform.GetMatrix();
-                transform.CachedTransform = transform.Transform;
-            }
+            transform.CachedMatrix = transform.WorldTransform.GetMatrix();
+            
         });
+
+        EntityRegistry.clear<FDirtyTransform>();
     }
 }

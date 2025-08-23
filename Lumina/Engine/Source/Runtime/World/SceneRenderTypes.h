@@ -77,11 +77,6 @@ namespace Lumina
         float Power = 1.5f;
     };
 
-    struct FModelData
-    {
-        TVector<glm::mat4> ModelMatrices;
-    };
-
     struct FSceneRegisteredMeshAsset
     {
         CStaticMesh* Mesh;
@@ -101,6 +96,7 @@ namespace Lumina
     {
         CMaterialInterface* Material = nullptr;
         CStaticMesh*        StaticMesh = nullptr;
+        FRHIBuffer*         VertexBuffer;
         uint32              NumDraws;
         uint32              Offset;
     };
@@ -115,11 +111,38 @@ namespace Lumina
         uint32              FirstIndex;
         SIZE_T              SortKey;
 
-        bool operator < (const FStaticMeshRender& Other) const
+        auto operator <=> (const FStaticMeshRender& Other) const
         {
-            return SortKey < Other.SortKey;
+            return SortKey <=> Other.SortKey;
         }
         
+    };
+
+    /** A batch of mesh elements that contain the same material and vertex buffer. */
+    struct FMeshBatch
+    {
+        struct FElement
+        {
+            uint32          FirstIndex;
+            uint32          NumInstances;
+            uint64          IndexOffset;
+            uint32          NumIndices;
+            uint64          IndirectDrawOffset;
+        };
+        
+        TFixedVector<FElement, 4>   Elements;
+        
+        CMaterialInterface*         Material;
+        
+        FRHIBufferRef               VertexBuffer;
+        FRHIBufferRef               IndexBuffer;
+
+        uint64                      IndirectOffset;
+    };
+    
+    struct FInstanceData
+    {
+        glm::mat4 Transform;
     };
 
     struct FPointLightProxy
@@ -133,17 +156,6 @@ namespace Lumina
         uint64 NumVertices;
         uint64 NumIndices;
     };
-
-    struct FSceneRenderData final
-    {
-        FSceneRenderData() = default;
-        FSceneRenderData(const FSceneRenderData&) = delete;
-        FSceneRenderData& operator=(const FSceneRenderData&) = delete;
-
-        FSceneRenderData(FSceneRenderData&&) noexcept = default;
-        FSceneRenderData& operator=(FSceneRenderData&&) noexcept = default;
-    };
-
 
     struct FSceneGlobalData
     {

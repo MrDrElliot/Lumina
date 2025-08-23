@@ -83,7 +83,6 @@ namespace Lumina
         
         BuildPasses();
         
-        
         RenderGraph.AddPass<RG_Transfer>(FRGEvent("Write Scene Buffer"), nullptr, [&](ICommandList& CmdList)
         {
             LUMINA_PROFILE_SECTION_COLORED("Write Scene Buffer", tracy::Color::Orange4);
@@ -549,15 +548,7 @@ namespace Lumina
 
         return ViewportState;
     }
-
-    void FSceneRenderer::OnStaticMeshComponentCreated()
-    {
-    }
-
-    void FSceneRenderer::OnStaticMeshComponentDestroyed()
-    {
-    }
-
+    
     void FSceneRenderer::BuildPasses()
     {
         LUMINA_PROFILE_SCOPE();
@@ -573,33 +564,24 @@ namespace Lumina
             IndirectDrawArguments.clear();
             IndirectDrawArguments.reserve(1000);
             
-            ModelData.ModelMatrices.clear();
-            ModelData.ModelMatrices.reserve(1000);
+            InstanceData.clear();
+            InstanceData.reserve(1000);
             LightData.NumLights = 0;
 
-            auto Test = World->GetMutableEntityRegistry().group<>(entt::get<SStaticMeshComponent, FDirtyRenderStateComponent>);
-            Test.each([&] (entt::entity entt, auto& StaticMeshComponent, auto& DirtyStateComponent)
-            {
-                
-               
-            });
-
-            World->GetMutableEntityRegistry().clear<FDirtyRenderStateComponent>();
-            
             FMutex Mutex;
             auto Group = World->GetMutableEntityRegistry().group<SStaticMeshComponent>(entt::get<STransformComponent>);
             FTaskSystem::Get().ParallelFor((uint32)Group.size(), [&](uint32 Index)
             {
                 LUMINA_PROFILE_SECTION("Build Render Proxies");
-
+                
                 entt::entity entity = Group[Index];
                 SStaticMeshComponent& MeshComponent = Group.get<SStaticMeshComponent>(entity);
                 STransformComponent& TransformComponent = Group.get<STransformComponent>(entity);
                 
-                
                 CStaticMesh* Mesh = MeshComponent.StaticMesh;
                 if (!IsValid(Mesh))
                     return;
+                
                 
                 SIZE_T Surfaces = Mesh->GetMeshResource().GetNumSurfaces();
                 for (SIZE_T j = 0; j < Surfaces; ++j)
@@ -624,7 +606,7 @@ namespace Lumina
                     Proxy.FirstIndex = Surface.StartIndex;
                     Proxy.Surface = Surface;
                     Proxy.Matrix = TransformComponent.GetMatrix();
-                    
+                
                     // 64-bit key: [MaterialID:20 | MeshID:20 | FirstIndex:16 | IndexCount:8]
                     auto id32 = [](const void* p){ return uint64(reinterpret_cast<uintptr_t>(p)) & 0xFFFFF; }; // 20 bits
                     uint64 mat     = id32(Proxy.Material);
@@ -666,7 +648,7 @@ namespace Lumina
                         DrawArgument.BaseVertexLocation     = Proxy.VertexOffset;
                         DrawArgument.StartIndexLocation     = Proxy.FirstIndex;
                         DrawArgument.IndexCount             = Proxy.Surface.IndexCount;
-                        DrawArgument.StartInstanceLocation  = (uint32)ModelData.ModelMatrices.size();
+                        DrawArgument.StartInstanceLocation  = (uint32)InstanceData.size();
                         DrawArgument.InstanceCount          = 1;
 
                         IndirectDrawArguments.push_back(DrawArgument);
@@ -676,7 +658,7 @@ namespace Lumina
                         IndirectDrawArguments.back().InstanceCount++;
                     }
 
-                    ModelData.ModelMatrices.push_back(Proxy.Matrix);
+                    InstanceData.emplace_back(Proxy.Matrix);
                     PrevProxy = &Proxy;
                 }
             }
@@ -684,7 +666,7 @@ namespace Lumina
             if (!StaticMeshRenders.empty())
             {
                 LUMINA_PROFILE_SECTION("Write Buffers");
-                CommandList->WriteBuffer(ModelDataBuffer, ModelData.ModelMatrices.data(), 0, ModelData.ModelMatrices.size() * sizeof(glm::mat4));
+                CommandList->WriteBuffer(ModelDataBuffer, InstanceData.data(), 0, InstanceData.size() * sizeof(FInstanceData));
                 CommandList->WriteBuffer(IndirectDrawBuffer, IndirectDrawArguments.data(), 0, IndirectDrawArguments.size() * sizeof(FDrawIndexedIndirectArguments));
             }
         }

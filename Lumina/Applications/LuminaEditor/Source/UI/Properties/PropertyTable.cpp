@@ -6,7 +6,6 @@
 #include "Core/Reflection/PropertyCustomization/PropertyCustomization.h"
 #include "Core/Reflection/Type/LuminaTypes.h"
 #include "Core/Reflection/Type/Properties/ArrayProperty.h"
-#include "Core/Reflection/Type/Properties/ObjectProperty.h"
 #include "Core/Reflection/Type/Properties/StructProperty.h"
 #include "Customizations/CoreTypeCustomization.h"
 #include "Tools/UI/DevelopmentToolUI.h"
@@ -19,11 +18,11 @@ namespace Lumina
     static FPropertyRow* CreatePropertyRow(const TSharedPtr<FPropertyHandle>& InPropHandle, FPropertyRow* InParentRow, const FPropertyChangedEventCallbacks& InCallbacks)
     {
         FPropertyRow* NewRow = nullptr;
-        if (FArrayProperty* ArrayProperty = dynamic_cast<FArrayProperty*>(InPropHandle->Property))
+        if (dynamic_cast<FArrayProperty*>(InPropHandle->Property))
         {
             NewRow = Memory::New<FArrayPropertyRow>(InPropHandle, InParentRow, InCallbacks);
         }
-        else if (FStructProperty* StructProperty = dynamic_cast<FStructProperty*>(InPropHandle->Property))
+        else if (dynamic_cast<FStructProperty*>(InPropHandle->Property))
         {
             NewRow = Memory::New<FStructPropertyRow>(InPropHandle, InParentRow, InCallbacks);
         }
@@ -375,8 +374,7 @@ namespace Lumina
         
         for (SIZE_T i = 0; i < ElementCount; ++i)
         {
-            TSharedPtr<FPropertyHandle> ElementPropHandle = MakeSharedPtr<FPropertyHandle>(ArrayProperty->GetValuePtr<void>(GetPropertyHandle()->ContainerPtr), ArrayProperty->GetInternalProperty(), i);
-            
+            TSharedPtr<FPropertyHandle> ElementPropHandle = MakeSharedPtr<FPropertyHandle>(ArrayProperty->GetAt(ContainerPtr, i), ArrayProperty->GetInternalProperty(), 0);
             FPropertyRow* NewRow = CreatePropertyRow(ElementPropHandle, this, Callbacks);
             NewRow->SetIsArrayElement(true);
             Children.push_back(NewRow);
@@ -391,19 +389,12 @@ namespace Lumina
     void FArrayPropertyRow::DrawExtraControlsSection()
     {
         //ImGui::BeginDisabled();
-        void* ArrayContainerPtr = GetPropertyHandle()->Property->GetValuePtr<void>(GetPropertyHandle()->ContainerPtr);
 
-        
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 4));
         if (ImGuiX::FlatButton(LE_ICON_PLUS, ImVec2(18, 24), 428768833))
         {
             ArrayProperty->PushBack(PropertyHandle->ContainerPtr, nullptr);
             RebuildChildren();
-
-            if (GetPropertyHandle()->Property->HasSetter())
-            {
-                GetPropertyHandle()->Property->CallSetter(GetPropertyHandle()->ContainerPtr, ArrayContainerPtr);
-            }
         }
         ImGui::PopStyleVar();
         ImGuiX::ItemTooltip("Add array element");
@@ -414,11 +405,6 @@ namespace Lumina
         {
             ArrayProperty->Clear(PropertyHandle->ContainerPtr);
             RebuildChildren();
-
-            if (GetPropertyHandle()->Property->HasSetter())
-            {
-                GetPropertyHandle()->Property->CallSetter(GetPropertyHandle()->ContainerPtr, ArrayContainerPtr);
-            }
             
         }
         ImGui::PopStyleVar();

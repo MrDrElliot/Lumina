@@ -103,7 +103,7 @@ namespace Lumina
             Stream += "\tResult = (" + RawTypeName + ")Obj->" + GetterFunc + "();\n";
             Stream += "}\n";
         }
-
+        
         if (!SetterFunc.empty())
         {
             Stream += "void " + ReflectedType->QualifiedName + "::" + SetterFunc + "_WrapperImpl(void* Object, const void* InValue)\n";

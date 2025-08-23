@@ -1,14 +1,12 @@
 #include "RenderComponent.h"
 
+#include "World/SceneRenderer.h"
+
 namespace Lumina
 {
-    void SRenderComponent::MarkRenderStateDirty()
+    bool SRenderComponent::ShouldCreateRenderState()
     {
-        EntityPrivate.GetOrAddComponent<FDirtyRenderStateComponent>().bNeedsRenderProxyUpdate = true;
+        return true;
     }
 
-    void SRenderComponent::MarkRenderTransformDirty()
-    {
-        EntityPrivate.GetOrAddComponent<FDirtyRenderStateComponent>().bNeedsTransformUpdate = true;
-    }
 }

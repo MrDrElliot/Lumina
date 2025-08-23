@@ -12,7 +12,7 @@ namespace Lumina
     {
         GENERATED_BODY()
         ENTITY_COMPONENT()
-
+        
         STransformComponent() = default;
         STransformComponent(const FTransform& InTransform)
             : Transform(InTransform)
@@ -59,12 +59,14 @@ namespace Lumina
 
         LUM_PROPERTY(Editable, Category = "Transform")
         FTransform Transform;
-
+        
         FTransform WorldTransform = Transform;
-        FTransform CachedTransform = FTransform(glm::vec3(-1.0f));
-        glm::mat4 CachedMatrix = glm::mat4(1.0f);
+        
+        glm::mat4 CachedMatrix = WorldTransform.GetMatrix();
     };
 
     REGISTER_ENTITY_COMPONENT(STransformComponent);
-    
+
+    struct FDirtyTransform : SEntityComponent { };
+
 }

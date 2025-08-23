@@ -56,7 +56,7 @@ namespace Lumina
         Stream += "\t" + ReflectedType->DisplayName + "* Obj = (" + ReflectedType->DisplayName + "*)Object;\n";
         Stream += "\tif(InValue)\n";
         Stream += "\t{\n";
-        Stream += "\t\tObj->" + Name + ".push_back(*(" + ElementTypeName + "*)InValue);\n";
+        Stream += "\t\tObj->" + Name + ".push_back(*(const " + ElementTypeName + "*)InValue);\n";
         Stream += "\t}\n";
         Stream += "\telse\n";
         Stream += "\t{\n";

@@ -11,7 +11,7 @@ namespace Lumina
     struct LUMINA_API SVelocityComponent : SEntityComponent
     {
         GENERATED_BODY()
-        ENTITY_COMPONENT(SVelocityComponent)
+        ENTITY_COMPONENT()
 
         LUM_PROPERTY(ReadOnly)
         glm::vec3 Velocity;

@@ -17,6 +17,14 @@
 
 namespace Lumina
 {
+
+    template<typename TComponent>
+    static void RegisterRenderComponent(FEntityRegistry& registry, CWorld* world)
+    {
+        registry.on_construct<TComponent>().connect<&CWorld::OnRenderComponentConstructed<TComponent>>(world);
+        registry.on_destroy<TComponent>().connect<&CWorld::OnRenderComponentDestructed<TComponent>>(world);
+    }
+    
     CWorld::CWorld()
     {
     }
@@ -78,11 +86,9 @@ namespace Lumina
         SceneRenderer = Memory::New<FSceneRenderer>(this);
         RegisterSystem(NewObject<CUpdateTransformEntitySystem>());
 
-        EntityRegistry.on_construct<SStaticMeshComponent>().connect<&FEntityRegistry::emplace_or_replace<FDirtyRenderStateComponent>>();
-        EntityRegistry.on_construct<SStaticMeshComponent>().connect<&CWorld::OnStaticMeshComponentConstructed>(this);
+        RegisterRenderComponent<SStaticMeshComponent>(EntityRegistry, this);
     }
-
-
+    
     Entity CWorld::SetupEditorWorld()
     {
         RegisterSystem(NewObject<CDebugCameraEntitySystem>());
@@ -333,32 +339,18 @@ namespace Lumina
         FLineBatcherComponent& Batcher = GetOrCreateLineBatcher();
         Batcher.DrawArrow(Start, Direction, Length, Color, Thickness, Duration, HeadSize);
     }
-
-    void CWorld::OnStaticMeshComponentConstructed(entt::entity entt)
-    {
-        EntityRegistry.get<SStaticMeshComponent>(entt).EntityPrivate = Entity(entt, this);
-    }
-
-
+    
     FLineBatcherComponent& CWorld::GetOrCreateLineBatcher()
     {
-        auto Group = EntityRegistry.group<FLineBatcherComponent>();
-
-        if (!Group.empty())
+        if (LineBatcherComponent)
         {
-            FLineBatcherComponent* Batcher = nullptr;
-            Group.each([&Batcher](auto& Comp)
-            {
-                if (!Batcher)
-                {
-                    Batcher = &Comp;
-                }
-            });
-            return *Batcher;
+            return *LineBatcherComponent; 
         }
-
+        
         Entity LineBatcherEntity = ConstructEntity("LineBatcher", FTransform());
         LineBatcherEntity.AddComponent<SHiddenComponent>();
-        return LineBatcherEntity.AddComponent<FLineBatcherComponent>();
+        LineBatcherComponent = &LineBatcherEntity.AddComponent<FLineBatcherComponent>();
+        
+        return *LineBatcherComponent;
     }
 }

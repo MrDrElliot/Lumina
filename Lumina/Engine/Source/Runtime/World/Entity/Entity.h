@@ -10,13 +10,6 @@
 
 namespace Lumina
 {
-    template <typename T, typename MemberPtr, typename Value>
-    constexpr bool is_member_assignable_v = requires(T& t, MemberPtr member, Value&& val)
-    {
-        { t.*member = std::forward<Value>(val) };
-    };
-    
-    
     class Entity
     {
     public:
@@ -54,10 +47,7 @@ namespace Lumina
 
         template <typename T>
         bool HasComponent() const;
-
-        template <typename T, typename... Args>
-        T& SetComponentProperty(Args&&... args);
-
+        
         template <typename T>
         T* TryGetComponent();
 
@@ -66,9 +56,6 @@ namespace Lumina
 
         template<typename T, typename... Func>
         T& Patch(Func&&... func);
-
-        template<typename T>
-        T& AddOrReplace();
 
         template<typename T>
         T& GetOrAddComponent();
@@ -105,35 +92,6 @@ namespace Lumina
     {
         return World->GetConstEntityRegistry().all_of<T>(EntityHandle);
     }
-
-    template <typename T, typename... Args>
-    T& Entity::SetComponentProperty(Args&&... args)
-    {
-        static_assert(sizeof...(args) % 2 == 0, "Arguments must be (member, value) pairs");
-
-        using TupleType = std::tuple<std::decay_t<Args>...>;
-        constexpr size_t N = sizeof...(Args) / 2;
-
-        [&]<std::size_t... I>(std::index_sequence<I...>)
-        {
-            static_assert((is_member_assignable_v<T, std::tuple_element_t<I * 2, TupleType>, std::tuple_element_t<I * 2 + 1, TupleType>> && ...),
-                "At least one (member, value) pair is not assignable");
-            
-        }(std::make_index_sequence<N>{});
-
-        auto& registry = World->GetMutableEntityRegistry();
-        registry.patch<T>(EntityHandle, [args_tuple = std::make_tuple(std::forward<Args>(args)...)](T& component)
-        {
-            [&]<std::size_t... I>(std::index_sequence<I...>)
-            {
-                (..., (
-                    component.*std::get<I * 2>(args_tuple) = std::get<I * 2 + 1>(args_tuple)
-                ));
-            }(std::make_index_sequence<N>{});
-        });
-
-        return registry.get<T>(EntityHandle);
-    }
     
     template <typename T>
     T* Entity::TryGetComponent()
@@ -151,12 +109,6 @@ namespace Lumina
     T& Entity::Patch(Func&&... func)
     {
         return World->GetMutableEntityRegistry().patch<T>(GetHandle(), std::forward<Func>(func)...);
-    }
-
-    template <typename T>
-    T& Entity::AddOrReplace()
-    {
-        return World->GetMutableEntityRegistry().emplace_or_replace<T>(EntityHandle);
     }
 
     template <typename T>

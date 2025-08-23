@@ -45,6 +45,16 @@ namespace Lumina
         SIZE_T GetNumIndices() const { return MeshResources.Indices.size(); }
         
         const FAABB& GetAABB() const { return BoundingBox; }
+
+        template<typename TLambda>
+        void ForEachSurface(TLambda&& Lambda)
+        {
+            for (const FGeometrySurface& Surface : MeshResources.GeometrySurfaces)
+            {
+                Lambda(Surface);
+            }
+        }
+        
         
         LUM_PROPERTY(Editable, Category = "Materials")
         TVector<TObjectHandle<CMaterialInterface>> Materials;

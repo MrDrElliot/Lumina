@@ -12,7 +12,7 @@ namespace Lumina
     {
         void operator()(S* p) const
         {
-            Memory::Delete(p); // assuming you have a custom allocator
+            Memory::Delete(p);
         }
     };
 
@@ -23,18 +23,16 @@ namespace Lumina
     template<typename S> using TSharedFromThis =    eastl::enable_shared_from_this<S>;
 
     template<typename T, typename... Args>
+    requires (std::is_constructible_v<T, Args...>)
     TSharedPtr<T> MakeSharedPtr(Args&&... args)
     {
-       // static_assert(std::is_constructible_v<T, Args&&...>, "Cannot instantiate T with Args");
-
         return eastl::make_shared<T>(std::forward<Args>(args)...);
     }
 
     template<typename T, typename... Args>
+    requires (std::is_constructible_v<T, Args...>)
     TUniquePtr<T> MakeUniquePtr(Args&&... args)
     {
-        //static_assert(std::is_constructible_v<T, Args&&...>, "Cannot instantiate T with Args");
-
         return eastl::make_unique<T>(std::forward<Args>(args)...);
     }
 }

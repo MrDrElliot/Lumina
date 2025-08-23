@@ -13,8 +13,6 @@ namespace Lumina
 
 namespace Lumina
 {
-    class FScene;
-    
     class LUMINA_API FWorldManager : public ISubsystem
     {
     public:

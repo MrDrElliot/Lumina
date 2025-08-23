@@ -16,6 +16,7 @@
 #include "World/Entity/Components/VelocityComponent.h"
 #include "Tools/UI/ImGui/ImGuiX.h"
 #include "World/WorldManager.h"
+#include "World/Entity/Components/DirtyComponent.h"
 #include "World/Entity/Systems/DebugCameraEntitySystem.h"
 
 
@@ -418,6 +419,9 @@ namespace Lumina
                         rotation != TransformComponent.GetRotation() ||
                         scale != TransformComponent.GetScale())
                     {
+                        /** In the editor, we always mark the currently selected entity as needing transform updates */
+                        SelectedEntity.AddComponent<FDirtyTransform>();
+                        
                         SelectedEntity.Patch<STransformComponent>([&](auto& Transform)
                         {
                             Transform.SetLocation(translation);

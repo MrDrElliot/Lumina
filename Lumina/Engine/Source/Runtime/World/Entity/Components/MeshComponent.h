@@ -13,10 +13,9 @@ namespace Lumina
     {
         GENERATED_BODY()
 
-        void SetMaterialOverrides(TVector<TObjectHandle<CMaterialInterface>> Overrides)
+        void SetMaterialOverrides(const TVector<TObjectHandle<CMaterialInterface>>& Overrides)
         {
-            MarkRenderStateDirty();
-            MaterialOverrides = std::move(Overrides);
+            MaterialOverrides = Overrides;
         }
         
         LUM_PROPERTY(Editable, Setter, Category = "Materials")

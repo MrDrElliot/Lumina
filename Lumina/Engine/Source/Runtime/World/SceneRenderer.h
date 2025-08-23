@@ -1,29 +1,27 @@
 #pragma once
 
 #include "SceneRenderTypes.h"
-#include "Entity/Components/StaticMeshComponent.h"
-#include "Memory/SmartPtr.h"
-#include "Renderer/DescriptorTableManager.h"
+#include "Containers/SparseArray.h"
 #include "Renderer/RenderResource.h"
 #include "Renderer/RenderTypes.h"
+#include "Entity/Components/RenderComponent.h"
 
 namespace Lumina
 {
     class FRenderGraph;
     class CWorld;
     class FUpdateContext;
-    struct FStaticMeshRenderProxy;
     class CStaticMesh;
     class FPrimitiveDrawManager;
     struct FMaterialTexturesData;
-    class AMaterialInstance;
+    class CMaterialInstance;
     class FRenderer;
-    
     
     class FSceneRenderer
     {
     public:
         
+        friend struct SRenderComponent;
        
         FSceneRenderer(CWorld* InWorld);
         virtual ~FSceneRenderer();
@@ -44,10 +42,10 @@ namespace Lumina
     
     protected:
 
-        FViewportState MakeViewportStateFromImage(const FRHIImage* Image);
+        void BuildIndirectDrawBuffer();
 
-        void OnStaticMeshComponentCreated();
-        void OnStaticMeshComponentDestroyed();
+        
+        FViewportState MakeViewportStateFromImage(const FRHIImage* Image);
 
         void BuildPasses();
         void BuildDrawCalls();
@@ -57,12 +55,14 @@ namespace Lumina
         void CreateImages();
         void OnSwapchainResized();
     
+
     private:
 
         CWorld*                             World = nullptr;
         FSceneRenderStats                   SceneRenderStats;
         FSceneRenderSettings                RenderSettings;
-        
+        FSceneLightData                     LightData;
+
         FRHIViewportRef                     SceneViewport;
 
         TVector<FSimpleElementVertex>       SimpleVertices;
@@ -109,10 +109,9 @@ namespace Lumina
 
         ESceneRenderGBuffer                 GBufferDebugMode = ESceneRenderGBuffer::RenderTarget;
 
-        FSceneLightData                     LightData;
-        FModelData                          ModelData;
-
-        TVector<FPointLightProxy>           PointLightProxies;
+        TVector<FInstanceData>                  InstanceData;
+        
+        TVector<FPointLightProxy>               PointLightProxies;
 
         TVector<FStaticMeshRender>              StaticMeshRenders;
         TVector<FIndirectRenderBatch>           RenderBatches;
@@ -120,10 +119,6 @@ namespace Lumina
 
         FRHIBufferRef                       IndirectDrawBuffer;
         TSet<CMaterial*>                    RegisteredMaterials;
-
-        TVector<FStaticMeshRenderProxy*>    StaticMeshProxies;
-        
-        TSharedPtr<FDescriptorTableManager> DescriptorTableManager;
     };
     
 }

@@ -18,6 +18,7 @@ namespace Lumina
     EPropertyChangeOp FCObjectPropertyCustomization::DrawProperty(TSharedPtr<FPropertyHandle> Property)
     {
         FObjectProperty* ObjectProperty = static_cast<FObjectProperty*>(Property->Property);
+        
         CObject* Obj = ObjectHandle.Resolve();
         bool bWasChanged = false;
         

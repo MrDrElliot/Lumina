@@ -1,6 +1,6 @@
 #pragma once
 
-#include "EntityComponentRegistry.h"
+
 #include "MeshComponent.h"
 #include "Assets/AssetTypes/Mesh/StaticMesh/StaticMesh.h"
 #include "Core/Object/ObjectHandleTyped.h"
@@ -16,9 +16,15 @@ namespace Lumina
         
         void SetStaticMesh(const TObjectHandle<CStaticMesh>& InMesh)
         {
-            MarkRenderStateDirty();
+            if (InMesh == StaticMesh)
+            {
+                return;
+            }
+            
             StaticMesh = InMesh;
         }
+        
+        
         TObjectHandle<CStaticMesh> GetStaticMesh() const { return StaticMesh; }
 
         CMaterialInterface* GetMaterialForSlot(SIZE_T Slot);
@@ -29,5 +35,5 @@ namespace Lumina
     };
 
     REGISTER_ENTITY_COMPONENT(SStaticMeshComponent);
-    
+
 }
