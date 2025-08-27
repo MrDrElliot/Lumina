@@ -21,6 +21,7 @@ namespace Lumina
     TMulticastDelegate<double> FCoreDelegates::OnEngineUpdate;
     
     FApplication* FApplication::Instance = nullptr;
+    FCommandLineParser FApplication::CommandLine;
 
     FApplication::FApplication(const FString& InApplicationName, uint32 AppFlags)
     {
@@ -31,14 +32,16 @@ namespace Lumina
 
     int32 FApplication::Run(int argc, char** argv)
     {
-        FrameMarkNamed("main");
+        LUMINA_PROFILE_SCOPE();
         LOG_TRACE("Initializing Application: {0}", ApplicationName.c_str());
 
+        CommandLine.Parse(argc, argv);
+        
         //---------------------------------------------------------------
         // Application initialization.
         //--------------------------------------------------------------
 
-        PreInitStartup(argc, argv);
+        PreInitStartup();
         CreateApplicationWindow();
         CreateEngine();
 
@@ -102,7 +105,7 @@ namespace Lumina
     }
 
 
-    void FApplication::PreInitStartup(int argc, char** argv)
+    void FApplication::PreInitStartup()
     {
         Paths::Mount("engine://", Paths::GetEngineContentDirectory());
     }

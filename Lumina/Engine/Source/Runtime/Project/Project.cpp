@@ -7,6 +7,7 @@
 
 #include "Assets/AssetRegistry/AssetRegistry.h"
 #include "Core/Engine/Engine.h"
+#include "Core/Module/ModuleManager.h"
 #include "Paths/Paths.h"
 
 
@@ -41,7 +42,20 @@ namespace Lumina
         }
 
         Paths::Mount("project://", GetProjectContentDirectory());
-        GEngine->GetEngineSubsystem<FAssetRegistry>()->ProjectLoaded();
+        
+        if (auto* Registry = GEngine->GetEngineSubsystem<FAssetRegistry>())
+        {
+            Registry->ProjectLoaded();
+        }
+
+        FString ProjectSolutionPath = Paths::Parent(Paths::RemoveExtension(ProjectPath));
+        FString Path = ProjectSolutionPath + "/Binaries/Debug/" + Settings.ProjectName + ".dll";
+
+        if (Paths::Exists(Path))
+        {
+            FModuleManager::Get().LoadModule(Path);
+        }
+        
         bHasProjectLoaded = true;
     }
 

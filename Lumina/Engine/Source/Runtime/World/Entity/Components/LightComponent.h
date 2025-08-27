@@ -73,6 +73,9 @@ namespace Lumina
         LUM_PROPERTY(Editable, Color, Category = "Light")
         glm::vec3 Color = glm::vec4(1.0f);
 
+        LUM_PROPERTY(Editable, Category = "Light")
+        glm::vec3 Direction = glm::vec3(0.0f, 0.3f, 0.8f);
+
         LUM_PROPERTY(Editable, Category = "Light", ClampMin = 0.0f)
         float Intensity = 10.0f;
 

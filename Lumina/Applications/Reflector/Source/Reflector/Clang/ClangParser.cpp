@@ -116,11 +116,12 @@ namespace Lumina::Reflection
         eastl::string PrjPath = Project.ParentPath + "/Source/";
         FullIncludePaths.push_back("-I" + PrjPath);
         clangArgs.push_back(FullIncludePaths.back().c_str());
-        
+
+        eastl::string LuminaDirectory = std::getenv("LUMINA_DIR");
         for (const char* Path : GIncludePaths)
         {
-            eastl::string SlnPath = std::filesystem::path(SolutionPath.c_str()).parent_path().string().c_str();
-            eastl::string FullPath = SlnPath + Path;
+            //eastl::string SlnPath = std::filesystem::path(SolutionPath.c_str()).parent_path().string().c_str();
+            eastl::string FullPath = LuminaDirectory + Path;
             FullIncludePaths.emplace_back("-I" + FullPath);
             clangArgs.emplace_back(FullIncludePaths.back().c_str());
             if (!std::filesystem::exists(FullPath.c_str()))

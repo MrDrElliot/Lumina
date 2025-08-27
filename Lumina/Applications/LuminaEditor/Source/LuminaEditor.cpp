@@ -1,11 +1,24 @@
 #include "LuminaEditor.h"
 #include "EntryPoint.h"
 #include "Lumina_eastl.cpp"
+#include "Core/Module/ModuleManager.h"
 #include "Renderer/RenderResource.h"
 #include "UI/EditorUI.h"
 
 namespace Lumina
 {
+    bool FEditorEngine::Init(FApplication* App)
+    {
+
+        TOptional<FString> Project = FApplication::CommandLine.Get("project");
+        if (Project.has_value())
+        {
+            FProject::Get().LoadProject(Project.value());
+        }
+        
+        return FEngine::Init(App);
+    }
+
     IDevelopmentToolUI* FEditorEngine::CreateDevelopmentTools()
     {
         return Memory::New<FEditorUI>();

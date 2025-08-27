@@ -15,6 +15,7 @@ namespace Lumina
     {
     public:
 
+        bool Init(FApplication* App) override;
         IDevelopmentToolUI* CreateDevelopmentTools() override;
     
     };

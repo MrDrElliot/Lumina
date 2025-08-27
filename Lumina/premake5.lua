@@ -5,8 +5,8 @@ project "Lumina"
 		
 	outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
     
-    targetdir ("%{wks.location}/Binaries/" .. outputdir)
-    objdir ("%{wks.location}/Intermediates/Obj/" .. outputdir .. "/%{prj.name}")    
+    targetdir ("%{LuminaEngineDirectory}/Binaries/" .. outputdir)
+    objdir ("%{LuminaEngineDirectory}/Intermediates/Obj/" .. outputdir .. "/%{prj.name}")    
 	
     	
 	files
@@ -14,8 +14,8 @@ project "Lumina"
 		"Engine/Source/**.h",
 		"Engine/Source/**.cpp",
 		
-		"%{wks.location}/Intermediates/Reflection/Lumina/**.h",
-		"%{wks.location}/Intermediates/Reflection/Lumina/**.cpp",
+		"%{LuminaEngineDirectory}/Intermediates/Reflection/Lumina/**.h",
+		"%{LuminaEngineDirectory}/Intermediates/Reflection/Lumina/**.cpp",
 		
 		"Engine/ThirdParty/stb_image/**.h",
 
@@ -49,7 +49,7 @@ project "Lumina"
 		"Engine/Source",
 		"Engine/Source/Runtime",
 		"Engine/ThirdParty/",
-		"%{wks.location}/Intermediates/Reflection/%{prj.name}",
+		"%{LuminaEngineDirectory}/Intermediates/Reflection/%{prj.name}",
 		
 	    reflection_directory();
 		includedependencies();

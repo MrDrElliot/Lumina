@@ -595,12 +595,15 @@ namespace Lumina
             ImGuiTableFlags_NoBordersInBodyUntilResize | 
             ImGuiTableFlags_SizingFixedFit;
 
+        const float TableHeight = Math::Max( 0.0f, bFillRemainingSpace ? ImGui::GetContentRegionAvail().y - 1 : Math::Max(100.0f, MinimumHeight));
+        const ImVec2 TableSize = ImVec2(ImGui::GetContentRegionAvail().x - 1, TableHeight);
+        
         ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(4, 8));
         ImGui::PushID(this);
 
-        if (ImGui::BeginTable("GridTable", 2, Flags))
+        if (ImGui::BeginTable("GridTable", 2, Flags, TableSize))
         {
-            ImGui::TableSetupColumn("##Header", ImGuiTableColumnFlags_WidthFixed, 175);
+            ImGui::TableSetupColumn("##Header", ImGuiTableColumnFlags_WidthFixed, 200);
             ImGui::TableSetupColumn("##Editor", ImGuiTableColumnFlags_WidthStretch);
             
             for (FCategoryPropertyRow* Category : Categories)

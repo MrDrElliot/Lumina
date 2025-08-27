@@ -22,13 +22,20 @@ namespace Lumina
     template<eastl_size_t S> using TInlineString = eastl::fixed_string<char, S, true>;
     using FInlineString = eastl::fixed_string<char, 255, true>;
     using FWString = eastl::basic_string<wchar_t>;
-    
+
+    // Concept: requires a .length() member and .data() returning a const char*
+    template<typename T>
+    concept StringLike = requires(T s)
+    {
+        { s.length() } -> std::convertible_to<size_t>;
+        { s.data() }   -> std::convertible_to<const char*>;
+    };
     
     namespace StringUtils
     {
         // Checks if a string starts with a specific substring.
-        template<typename StringType>
-        inline bool StartsWith(StringType const& inStr, char const* pStringToMatch)
+        template<StringLike StringType>
+        inline bool StartsWith(const StringType& inStr, char const* pStringToMatch)
         {
             size_t const matchStrLen = strlen(pStringToMatch);
 
@@ -41,7 +48,7 @@ namespace Lumina
             return strncmp(inStr.c_str(), pStringToMatch, matchStrLen) == 0;
         }
         
-        template<typename StringType>
+        template<StringLike StringType>
         inline bool EndsWith( StringType const& inStr, char const* pStringToMatch )
         {
             size_t const matchStrLen = strlen( pStringToMatch );
@@ -56,7 +63,7 @@ namespace Lumina
             return strcmp( pSubString, pStringToMatch ) == 0;
         }
 
-        template<typename StringType>
+        template<StringLike StringType>
         inline StringType ReplaceAllOccurrences( StringType const& originalString, char const* pSearchString, char const* pReplacement )
         {
             int32_t const searchLength = (int32_t) strlen( pSearchString );
@@ -78,7 +85,7 @@ namespace Lumina
             return copiedString;
         }
 
-        template<typename StringType>
+        template<StringLike StringType>
         inline StringType& ReplaceAllOccurrencesInPlace( StringType& originalString, char const* pSearchString, char const* pReplacement )
         {
             int32_t const searchLength = (int32_t) strlen( pSearchString );
@@ -99,19 +106,19 @@ namespace Lumina
             return originalString;
         }
 
-        template<typename StringType>
+        template<StringLike StringType>
         inline StringType RemoveAllOccurrences( StringType const& originalString, char const* searchString )
         {
             return ReplaceAllOccurrences( originalString, searchString, "" );
         }
 
-        template<typename StringType>
+        template<StringLike StringType>
         inline StringType& RemoveAllOccurrencesInPlace( StringType& originalString, char const* searchString )
         {
             return ReplaceAllOccurrencesInPlace( originalString, searchString, "" );
         }
 
-        template<typename StringType>
+        template<StringLike StringType>
         inline StringType StripAllWhitespace( StringType const& originalString )
         {
             StringType strippedString = originalString;
@@ -127,7 +134,7 @@ namespace Lumina
             strncpy_s( string, origStringLength + 1, tmp.c_str(), tmp.length() );
         }
 
-        template<typename StringType, typename StringTypeVector>
+        template<StringLike StringType, typename StringTypeVector>
         inline void Split( StringType const& str, StringTypeVector& results, char const* pDelimiter = " ", bool ignoreEmptyStrings = true )
         {
             size_t idx, lastIdx = 0;
@@ -159,7 +166,7 @@ namespace Lumina
         }
 
         // Trim leading and trailing whitespace from a string
-        template<typename StringType>
+        template<StringLike StringType>
         inline StringType Trim(StringType const& originalString)
         {
             StringType trimmedString = originalString;
@@ -171,7 +178,7 @@ namespace Lumina
         }
         
         // Converts string to lower case
-        template<typename StringType>
+        template<StringLike StringType>
         inline StringType ToLower(StringType const& originalString)
         {
             StringType lowerString = originalString;
@@ -180,7 +187,7 @@ namespace Lumina
         }
 
         // Converts string to upper case
-        template<typename StringType>
+        template<StringLike StringType>
         inline StringType ToUpper(StringType const& originalString)
         {
             StringType upperString = originalString;
@@ -189,7 +196,7 @@ namespace Lumina
         }
 
         // Joins a list of strings with a delimiter
-        template<typename StringType, typename StringTypeVector>
+        template<StringLike StringType, typename StringTypeVector>
         inline StringType Join(const StringTypeVector& strings, const StringType& delimiter)
         {
             StringType result;
@@ -203,7 +210,7 @@ namespace Lumina
         }
 
         // Check if a string contains a substring
-        template<typename StringType>
+        template<StringLike StringType>
         inline bool Contains(const StringType& str, const StringType& substring)
         {
             return str.find(substring) != StringType::npos;

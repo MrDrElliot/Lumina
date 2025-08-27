@@ -1,46 +1,41 @@
-
+-- Path to the engine root (set via environment variable)
 LuminaEngineDirectory = os.getenv("LUMINA_DIR")
+outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
+include(os.getenv("LUMINA_DIR") .. "/Dependencies.lua")
 
 workspace "$PROJECT_NAME"
-	configurations { "Debug", "Release", "Shipping" }
-	targetdir "Build"
-	startproject "$PROJECT_NAME"
-	conformancemode "On"
+    configurations { "Debug", "Release", "Shipping" }
+    architecture "x86_64"
+    startproject "$PROJECT_NAME"
 
-	language "C++"
-	cppdialect "C++20"
-	staticruntime "Off"
+    language "C++"
+    cppdialect "C++20"
+    staticruntime "Off"
+    conformancemode "On"
 
-	flags  { "MultiProcessorCompile" }
+    flags { "MultiProcessorCompile" }
 
-	defines
-	{
-		"_CRT_SECURE_NO_WARNINGS",
-		"GLM_FORCE_DEPTH_ZERO_TO_ONE",
-		"IMGUI_DEFINE_MATH_OPERATORS",
-	}
+    defines {
+        "EASTL_USER_DEFINED_ALLOCATOR=1",
+        "_CRT_SECURE_NO_WARNINGS",
+        "GLM_FORCE_DEPTH_ZERO_TO_ONE",
+        "IMGUI_DEFINE_MATH_OPERATORS",
+    }
 
-	filter "action:vs"
+    filter "configurations:Debug"
+        optimize "Off"
+        symbols "On"
 
-	filter "language:C++ or language:C"
-		architecture "x86_64"
+    filter "configurations:Release"
+        optimize "On"
+        symbols "Default"
 
-	filter "configurations:Debug"
-		optimize "Off"
-		symbols "On"
+    filter "configurations:Shipping"
+        optimize "Full"
+        symbols "Off"
 
-	filter "configurations:Release"
-		optimize "On"
-		symbols "Default"
-
-	filter "configurations:Shipping"
-		optimize "Full"
-		symbols "Off"
-
-	filter "system:windows"
-		buildoptions
-		{
-			"/-Wno-old-style-cast",
+    filter "system:windows"
+        buildoptions {
             "/EHsc",
             "/Zc:preprocessor",
             "/Zc:__cplusplus",
@@ -48,15 +43,46 @@ workspace "$PROJECT_NAME"
             "/MP",
         }
 
-    group "Dependencies"
-		include(path.join(LuminaEngineDirectory, "Lumina/Engine/ThirdParty/glfw"))
-		include(path.join(LuminaEngineDirectory, "Lumina/Engine/ThirdParty/imgui"))
-	group ""
+    filter {}
 
-	group "Engine"
-    	include(path.join(LuminaEngineDirectory, "Lumina"))
-	group ""
+-- =============================
+-- Game Project
+-- =============================
 
-	group "Games"
-		include "Source"
-	group ""
+
+project "$PROJECT_NAME"
+    kind "SharedLib"
+    language "C++"
+
+    targetdir ("Binaries/%{cfg.buildcfg}")
+    objdir ("Intermediates/Obj/%{cfg.buildcfg}")
+
+    files 
+    { 
+        "Source/**.h",
+        "Source/**.cpp",
+        "%{wks.location}/Intermediates/Reflection/%{prj.name}/**.h",
+		"%{wks.location}/Intermediates/Reflection/%{prj.name}/**.cpp",
+    }
+
+    includedirs 
+    {
+        "Source", -- game source
+        path.join(LuminaEngineDirectory, "Lumina/Engine/Source"),
+        path.join(LuminaEngineDirectory, "Lumina/Engine/Source/Runtime"),
+        path.join(LuminaEngineDirectory, "Lumina/Engine/ThirdParty"),
+        path.join(LuminaEngineDirectory, "Intermediates/Reflection/Lumina"),
+
+        reflection_directory();
+		includedependencies();
+    }
+
+    links 
+    {
+        path.join(LuminaEngineDirectory, "Binaries", outputdir, "Lumina")
+    }
+
+    prebuildcommands
+    {
+        "\"%{LuminaEngineDirectory}/Tools/Reflector.exe\" \"%{wks.location}%{wks.name}.sln\" && echo Reflection completed."
+    }

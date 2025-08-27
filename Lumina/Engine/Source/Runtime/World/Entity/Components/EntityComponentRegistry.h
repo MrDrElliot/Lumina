@@ -8,12 +8,9 @@
 namespace Lumina
 {
     struct SEntityComponent;
-}
+    class FEntityRegistry;
 
-namespace Lumina
-{
-    using EntityComponentAddFn = TFunction<SEntityComponent*(entt::entity, FEntityRegistry&)>;
-
+    using EntityComponentAddFn = SEntityComponent* (*)(entt::entity, FEntityRegistry&);
     
     class LUMINA_API FEntityComponentRegistry : public TSingleton<FEntityComponentRegistry>
     {
@@ -25,29 +22,41 @@ namespace Lumina
             EntityComponentAddFn Fn;
         };
 
-        void RegisterComponent(const char* Name, EntityComponentAddFn Fn);
-        EntityComponentAddFn GetComponentFn(const char* Name);
+        void RegisterComponent(const char* Name, EntityComponentAddFn Fn)
+        {
+            Registrations.push_back({ Name, Fn });
+        }
+
+        EntityComponentAddFn GetComponentFn(const char* Name)
+        {
+            for (auto& reg : Registrations)
+            {
+                if (strcmp(reg.Name, Name) == 0)
+                    return reg.Fn;
+            }
+            return nullptr;
+        }
 
     private:
-    
         TFixedVector<FRegistration, 200> Registrations;
     };
 }
 
+
 namespace Lumina
 {
     #define REGISTER_ENTITY_COMPONENT(Type)                                      \
-        struct AutoRegister_##Type {                                             \
-            AutoRegister_##Type() {                                              \
-                FEntityComponentRegistry::Get().RegisterComponent(              \
-                    #Type,                                                       \
-                    [](entt::entity e, FEntityRegistry& reg) {                    \
-                        return &reg.emplace_or_replace<Type>(e);                 \
-                    }                                                            \
-                );                                                               \
-            }                                                                    \
-        };                                                                       \
+        namespace {                                                              \
+            SEntityComponent* AddComponent_##Type(entt::entity e, FEntityRegistry& reg) \
+            {                                                                     \
+                return &reg.emplace_or_replace<Type>(e);                          \
+            }                                                                     \
+        }                                                                         \
+        struct AutoRegister_##Type {                                              \
+            AutoRegister_##Type() {                                               \
+                FEntityComponentRegistry::Get().RegisterComponent(#Type, AddComponent_##Type); \
+            }                                                                     \
+        };                                                                        \
         inline AutoRegister_##Type AutoRegisterInstance_##Type
 }
-
 

@@ -62,6 +62,11 @@ namespace Lumina
         float Radius            = 10.0f;
         uint32 Type             = 0;
     };
+
+    struct FSkyLight
+    {
+        glm::vec4 Color;
+    };
     
     struct FSceneLightData
     {
@@ -75,6 +80,12 @@ namespace Lumina
         float Radius = 1.0f;
         float Intensity = 2.0f;
         float Power = 1.5f;
+    };
+
+    struct FEnvironmentSettings
+    {
+        glm::vec3 SunDirection;
+        uint32 Padding0;
     };
 
     struct FSceneRegisteredMeshAsset
@@ -169,6 +180,7 @@ namespace Lumina
         bool bDrawAABB = false;
         bool bSSAO = false;
         FSSAOSettings SSAOSettings;
+        FEnvironmentSettings EnvironmentSettings;
     };
 }
 

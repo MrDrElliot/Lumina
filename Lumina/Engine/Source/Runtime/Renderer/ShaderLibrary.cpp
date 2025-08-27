@@ -26,7 +26,8 @@ namespace Lumina
         {
             return It->second;
         }
-        
+
+        LOG_WARN("Shader with key [{}] not found.", Key);
         return nullptr;
     }
 

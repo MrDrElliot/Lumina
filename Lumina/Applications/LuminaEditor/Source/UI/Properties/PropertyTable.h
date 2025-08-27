@@ -40,6 +40,7 @@ namespace Lumina
         FPropertyRow(const TSharedPtr<FPropertyHandle>& InPropHandle, FPropertyRow* InParentRow, const FPropertyChangedEventCallbacks& Callbacks);
         virtual ~FPropertyRow();
 
+        virtual uint32 GetHeaderWidth() const { return 120; }
         virtual void DrawHeader(float Offset) { }
         virtual void DrawEditor() { }
 
@@ -168,6 +169,9 @@ namespace Lumina
         FPropertyChangedEventCallbacks ChangeEventCallbacks;
         
     private:
+
+        bool                                    bFillRemainingSpace = true;
+        float                                   MinimumHeight = 400.0f;
 
         CStruct*                                Struct = nullptr;
         void*                                   Object = nullptr;

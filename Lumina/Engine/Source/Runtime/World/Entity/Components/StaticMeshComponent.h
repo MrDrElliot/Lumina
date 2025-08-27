@@ -16,18 +16,13 @@ namespace Lumina
         
         void SetStaticMesh(const TObjectHandle<CStaticMesh>& InMesh)
         {
-            if (InMesh == StaticMesh)
-            {
-                return;
-            }
-            
             StaticMesh = InMesh;
         }
         
         
         TObjectHandle<CStaticMesh> GetStaticMesh() const { return StaticMesh; }
 
-        CMaterialInterface* GetMaterialForSlot(SIZE_T Slot);
+        CMaterialInterface* GetMaterialForSlot(SIZE_T Slot) const;
         
         LUM_PROPERTY(Editable, Getter, Setter, Category = "Mesh")
         TObjectHandle<CStaticMesh> StaticMesh;

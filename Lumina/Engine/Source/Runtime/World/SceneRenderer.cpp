@@ -22,12 +22,10 @@
 #include "Entity/Components/StaticMeshComponent.h"
 #include "Paths/Paths.h"
 #include "Renderer/RenderContext.h"
-#include "Renderer/RenderManager.h"
 #include "Renderer/RHIStaticStates.h"
 #include "Renderer/ShaderCompiler.h"
 #include "Renderer/RenderGraph/RenderGraph.h"
 #include "Renderer/RenderGraph/RenderGraphDescriptor.h"
-#include "Subsystems/FCameraManager.h"
 #include "TaskSystem/TaskSystem.h"
 #include "Tools/Import/ImportHelpers.h"
 
@@ -49,6 +47,12 @@ namespace Lumina
         InitBuffers();
         CreateImages();
         InitResources();
+
+        World->GetMutableEntityRegistry().on_construct<SEnvironmentComponent>().connect<&FSceneRenderer::AddEnvironmentComponent>(this);
+        World->GetMutableEntityRegistry().on_destroy<SEnvironmentComponent>().connect<&FSceneRenderer::RemoveEnvironmentComponent>(this);
+
+        World->GetMutableEntityRegistry().on_construct<SDirectionalLightComponent>().connect<&FSceneRenderer::AddDirectionalLightComponent>(this);
+        World->GetMutableEntityRegistry().on_destroy<SDirectionalLightComponent>().connect<&FSceneRenderer::RemoveDirectionalLightcomponent>(this);
     }
 
     FSceneRenderer::~FSceneRenderer()
@@ -386,6 +390,73 @@ namespace Lumina
             });
         }
 
+        if (EnvironmentComponent)
+        {
+            RenderGraph.AddPass<RG_Raster>(FRGEvent("Environment Pass"), nullptr, [&](ICommandList& CmdList)
+            {
+                LUMINA_PROFILE_SECTION_COLORED("Environment Pass", tracy::Color::Green3);
+            
+                FRHIVertexShaderRef VertexShader = GRenderContext->GetShaderLibrary()->GetShader<FRHIVertexShader>("FullscreenQuad.vert");
+                FRHIPixelShaderRef PixelShader = GRenderContext->GetShaderLibrary()->GetShader<FRHIPixelShader>("Skybox.frag");
+                if (!VertexShader || !PixelShader)
+                {
+                    return;
+                }
+            
+                FRasterState RasterState;
+                RasterState.SetCullNone();
+    
+                FBlendState BlendState;
+                FBlendState::RenderTarget RenderTarget;
+                BlendState.SetRenderTarget(0, RenderTarget);
+    
+                FDepthStencilState DepthState;
+                DepthState.EnableDepthTest();
+                DepthState.SetDepthFunc(EComparisonFunc::GreaterOrEqual);
+                DepthState.DisableDepthWrite();
+            
+                FRenderState RenderState;
+                RenderState.SetRasterState(RasterState);
+                RenderState.SetDepthStencilState(DepthState);
+                RenderState.SetBlendState(BlendState);
+            
+                FGraphicsPipelineDesc Desc;
+                Desc.SetRenderState(RenderState);
+                Desc.AddBindingLayout(BindingLayout);
+                Desc.AddBindingLayout(EnvironmentLayout);
+                Desc.SetVertexShader(VertexShader);
+                Desc.SetPixelShader(PixelShader);
+    
+                FRHIGraphicsPipelineRef Pipeline = GRenderContext->CreateGraphicsPipeline(Desc);
+
+                FGraphicsState GraphicsState;
+                GraphicsState.AddBindingSet(BindingSet);
+                GraphicsState.AddBindingSet(EnvironmentBindingSet);
+                GraphicsState.SetPipeline(Pipeline);
+            
+                FRenderPassBeginInfo BeginInfo; BeginInfo
+                .SetDebugName("Environment Pass")
+                .AddColorAttachment(GetRenderTarget())
+                .SetColorLoadOp(ERenderLoadOp::Clear)
+                .SetColorStoreOp(ERenderStoreOp::Store)
+
+                .SetDepthAttachment(DepthAttachment)
+                .SetDepthLoadOp(ERenderLoadOp::Load)
+                .SetDepthStoreOp(ERenderStoreOp::Store)
+                .SetRenderArea(GetRenderTarget()->GetExtent());
+            
+                GraphicsState.SetRenderPass(BeginInfo);
+            
+                GraphicsState.SetViewport(MakeViewportStateFromImage(GetRenderTarget()));
+
+                CmdList.SetGraphicsState(GraphicsState);
+
+                SceneRenderStats.NumDrawCalls++;
+                SceneRenderStats.NumVertices += 3;
+                CmdList.Draw(3, 1, 0, 0); 
+            });
+        }
+        
         RenderGraph.AddPass<RG_Raster>(FRGEvent("Lighting Pass"), nullptr, [&](ICommandList& CmdList)
         {
             LUMINA_PROFILE_SECTION_COLORED("Lighting Pass", tracy::Color::Red2);
@@ -399,13 +470,13 @@ namespace Lumina
             
             FRasterState RasterState;
             RasterState.SetCullNone();
-    
+            
             FBlendState BlendState;
             FBlendState::RenderTarget RenderTarget;
             BlendState.SetRenderTarget(0, RenderTarget);
     
             FDepthStencilState DepthState;
-            DepthState.DisableDepthTest();
+            DepthState.EnableDepthTest();
             DepthState.DisableDepthWrite();
             
             FRenderState RenderState;
@@ -430,9 +501,8 @@ namespace Lumina
             FRenderPassBeginInfo BeginInfo; BeginInfo
             .SetDebugName("Lighting Pass")
             .AddColorAttachment(GetRenderTarget())
-            .SetColorLoadOp(ERenderLoadOp::Clear)
+            .SetColorLoadOp(ERenderLoadOp::Load)
             .SetColorStoreOp(ERenderStoreOp::Store)
-            .SetColorClearColor(FColor::Black)
             
             .SetDepthAttachment(DepthAttachment)
             .SetDepthLoadOp(ERenderLoadOp::Load)
@@ -448,7 +518,6 @@ namespace Lumina
             SceneRenderStats.NumVertices += 3;
             CmdList.Draw(3, 1, 0, 0); 
         });
-        
 
         RenderGraph.AddPass<RG_Raster>(FRGEvent("Debug Draw Pass"), nullptr, [&](ICommandList& CmdList)
         {
@@ -466,7 +535,6 @@ namespace Lumina
     
             FBlendState BlendState;
             FBlendState::RenderTarget RenderTarget;
-            RenderTarget.DisableBlend();
             BlendState.SetRenderTarget(0, RenderTarget);
     
             FDepthStencilState DepthState;
@@ -536,7 +604,27 @@ namespace Lumina
     {
         CreateImages();
     }
-    
+
+    void FSceneRenderer::AddEnvironmentComponent(entt::entity entity)
+    {
+        EnvironmentComponent = &World->GetMutableEntityRegistry().get<SEnvironmentComponent>(entity);
+    }
+
+    void FSceneRenderer::RemoveEnvironmentComponent(entt::entity entity)
+    {
+        EnvironmentComponent = nullptr;
+    }
+
+    void FSceneRenderer::AddDirectionalLightComponent(entt::entity entity)
+    {
+        DirectionalLightComponent = &World->GetMutableEntityRegistry().get<SDirectionalLightComponent>(entity);
+    }
+
+    void FSceneRenderer::RemoveDirectionalLightcomponent(entt::entity entity)
+    {
+        DirectionalLightComponent = nullptr;
+    }
+
     FViewportState FSceneRenderer::MakeViewportStateFromImage(const FRHIImage* Image)
     {
         float SizeY = (float)Image->GetSizeY();
@@ -555,25 +643,20 @@ namespace Lumina
 
         ICommandList* CommandList = GRenderContext->GetCommandList(ECommandQueue::Graphics);
         {
+            LUMINA_PROFILE_SECTION("Build Render Proxies");
+            
             RenderBatches.clear();
-            RenderBatches.reserve(1000);
-            
             StaticMeshRenders.clear();
-            StaticMeshRenders.reserve(1000);
-            
             IndirectDrawArguments.clear();
-            IndirectDrawArguments.reserve(1000);
-            
             InstanceData.clear();
-            InstanceData.reserve(1000);
             LightData.NumLights = 0;
 
-            TFixedVector<glm::mat4, 2000> Transforms;
+            //========================================================================================================================
             
-            FMutex Mutex;
-            auto Group = World->GetMutableEntityRegistry().group<SStaticMeshComponent>(entt::get<STransformComponent>);
-            LUMINA_PROFILE_SECTION("Build Render Proxies");
-            Group.each([&] (SStaticMeshComponent& MeshComponent, STransformComponent& TransformComponent)
+            TRenderVector<glm::mat4> Transforms;
+            
+            auto Group = World->GetMutableEntityRegistry().group<SStaticMeshComponent, STransformComponent>();
+            Group.each([&] (const SStaticMeshComponent& MeshComponent, const STransformComponent& TransformComponent)
             {
                 CStaticMesh* Mesh = MeshComponent.StaticMesh;
                 if (!IsValid(Mesh))
@@ -606,19 +689,21 @@ namespace Lumina
                     Proxy.SurfaceIndexCount = Surface.IndexCount;
                     Proxy.TransformIdx = (uint32)Transforms.size();
 
-                    Transforms.push_back(TransformComponent.GetMatrix());
+                    Transforms.emplace_back(TransformComponent.GetMatrix());
 
                     {
+                        LUMINA_PROFILE_SECTION("Create Sort Key");
+
                         // 64-bit key: [MaterialID:20 | MeshID:20 | FirstIndex:16 | IndexCount:8]
                         auto id32 = [](const void* p){ return uint64(reinterpret_cast<uintptr_t>(p)) & 0xFFFFF; }; // 20 bits
                         uint64 mat     = id32(Proxy.Material);
                         uint64 mesh    = id32(Proxy.StaticMesh);
                         uint64 first16 = uint64(Proxy.FirstIndex & 0xFFFF);
-                        uint64 idx8    = uint64(eastl::min<uint32_t>(Surface.IndexCount, 0xFF));
+                        uint64 idx8    = uint64(eastl::min<uint32>(Surface.IndexCount, 0xFF));
                         Proxy.SortKey = (mat << 44) | (mesh << 24) | (first16 << 8) | idx8;
                     }
 
-                    StaticMeshRenders.push_back(Proxy);
+                    StaticMeshRenders.emplace_back(Proxy);
                 }
             });
             
@@ -633,22 +718,24 @@ namespace Lumina
                 LUMINA_PROFILE_SECTION("Build Indirect Draw Arguments");
                 
                 const FStaticMeshRender* PrevProxy = nullptr;
-
-                for (const FStaticMeshRender& Render : StaticMeshRenders)
+                
+                for (SIZE_T i = 0; i < StaticMeshRenders.size(); ++i)
                 {
-                    if (!PrevProxy || (PrevProxy->SortKey != Render.SortKey))
+                    const auto& Proxy = StaticMeshRenders[i];
+                    
+                    if (!PrevProxy || (PrevProxy->SortKey != Proxy.SortKey))
                     {
                         FIndirectRenderBatch Batch;
                         Batch.NumDraws = 1;
-                        Batch.StaticMesh = Render.StaticMesh;
-                        Batch.Material = Render.Material;
+                        Batch.StaticMesh = Proxy.StaticMesh;
+                        Batch.Material = Proxy.Material;
                         Batch.Offset = IndirectDrawArguments.size();
                         RenderBatches.push_back(Batch);
 
                         FDrawIndexedIndirectArguments DrawArgument;
                         DrawArgument.BaseVertexLocation     = 0;
-                        DrawArgument.StartIndexLocation     = Render.FirstIndex;
-                        DrawArgument.IndexCount             = Render.SurfaceIndexCount;
+                        DrawArgument.StartIndexLocation     = Proxy.FirstIndex;
+                        DrawArgument.IndexCount             = Proxy.SurfaceIndexCount;
                         DrawArgument.StartInstanceLocation  = (uint32)InstanceData.size();
                         DrawArgument.InstanceCount          = 1;
 
@@ -659,8 +746,8 @@ namespace Lumina
                         IndirectDrawArguments.back().InstanceCount++;
                     }
 
-                    InstanceData.emplace_back(Transforms[Render.TransformIdx]);
-                    PrevProxy = &Render;
+                    InstanceData.emplace_back(Transforms[Proxy.TransformIdx]);
+                    PrevProxy = &Proxy;
                 }
             }
             
@@ -669,21 +756,6 @@ namespace Lumina
                 LUMINA_PROFILE_SECTION("Write Buffers");
                 CommandList->WriteBuffer(ModelDataBuffer, InstanceData.data(), 0, InstanceData.size() * sizeof(FInstanceData));
                 CommandList->WriteBuffer(IndirectDrawBuffer, IndirectDrawArguments.data(), 0, IndirectDrawArguments.size() * sizeof(FDrawIndexedIndirectArguments));
-            }
-        }
-
-        //========================================================================================================================
-
-        {
-            auto Group = World->GetMutableEntityRegistry().group<SEnvironmentComponent>();
-            if (!Group.empty())
-            {
-                SEnvironmentComponent& EnvironmentComponent = Group.get<SEnvironmentComponent>(Group[0]);
-                RenderSettings.bSSAO = EnvironmentComponent.bSSAOEnabled;
-                RenderSettings.SSAOSettings.Intensity = EnvironmentComponent.SSAOInfo.Intensity;
-                RenderSettings.SSAOSettings.Power = EnvironmentComponent.SSAOInfo.Power;
-                RenderSettings.SSAOSettings.Radius = EnvironmentComponent.SSAOInfo.Radius;
-                CommandList->WriteBuffer(SSAOSettingsBuffer, &RenderSettings.SSAOSettings, 0, sizeof(FSSAOSettings));
             }
         }
 
@@ -780,29 +852,44 @@ namespace Lumina
 
             }
         }
+
         
+        //========================================================================================================================
+
 
         {
-            auto Group = World->GetMutableEntityRegistry().group<SDirectionalLightComponent>(entt::get<STransformComponent>);
-            for (uint64 i = 0; i < Group.size(); ++i)
+            if (DirectionalLightComponent)
             {
-                entt::entity entity = Group[i];
-
-                const SDirectionalLightComponent& DirectionalLightComponent = Group.get<SDirectionalLightComponent>(entity);
-                const FTransform& Transform = Group.get<STransformComponent>(entity).WorldTransform;
-
                 FLight DirectionalLight;
                 DirectionalLight.Type = LIGHT_TYPE_DIRECTIONAL;
                 
-                DirectionalLight.Color = glm::vec4(DirectionalLightComponent.Color, DirectionalLightComponent.Intensity);
-                glm::vec3 Forward = Transform.Rotation * glm::vec3(0.0f, 0.0f, -1.0f);
-                DirectionalLight.Direction = glm::vec4(glm::normalize(Forward), 0.0f);
+                DirectionalLight.Color = glm::vec4(DirectionalLightComponent->Color, DirectionalLightComponent->Intensity);
+                DirectionalLight.Direction = glm::vec4(glm::normalize(DirectionalLightComponent->Direction), 1.0f);
+                
+                RenderSettings.EnvironmentSettings.SunDirection = DirectionalLight.Direction;
                 
                 LightData.Lights[LightData.NumLights++] = Memory::Move(DirectionalLight);
             }
         }
+        
 
         CommandList->WriteBuffer(LightDataBuffer, &LightData, 0, sizeof(FSceneLightData));
+
+        //========================================================================================================================
+
+        {
+            if (EnvironmentComponent)
+            {
+                RenderSettings.bSSAO                                = EnvironmentComponent->bSSAOEnabled;
+                RenderSettings.SSAOSettings.Intensity               = EnvironmentComponent->SSAOInfo.Intensity;
+                RenderSettings.SSAOSettings.Power                   = EnvironmentComponent->SSAOInfo.Power;
+                RenderSettings.SSAOSettings.Radius                  = EnvironmentComponent->SSAOInfo.Radius;
+                
+                CommandList->WriteBuffer(SSAOSettingsBuffer, &RenderSettings.SSAOSettings, 0, sizeof(FSSAOSettings));
+                CommandList->WriteBuffer(EnvironmentBuffer, &RenderSettings.EnvironmentSettings, 0, sizeof(FEnvironmentSettings));
+
+            }
+        }
     }
 
     void FSceneRenderer::BuildDrawCalls()
@@ -933,14 +1020,14 @@ namespace Lumina
         }
         
         {
-            FBindingLayoutDesc SkyboxLayoutDesc;
-            SkyboxLayoutDesc.AddItem(FBindingLayoutItem::Texture_SRV(0));
-            SkyboxLayoutDesc.StageFlags.SetFlag(ERHIShaderType::Fragment);
-            SkyboxBindingLayout = GRenderContext->CreateBindingLayout(SkyboxLayoutDesc);
+            FBindingLayoutDesc EnvironmentLayoutDesc;
+            EnvironmentLayoutDesc.AddItem(FBindingLayoutItem::Buffer_UD(0));
+            EnvironmentLayoutDesc.StageFlags.SetFlag(ERHIShaderType::Fragment);
+            EnvironmentLayout = GRenderContext->CreateBindingLayout(EnvironmentLayoutDesc);
 
-            FBindingSetDesc SkyboxSetDesc;
-            SkyboxSetDesc.AddItem(FBindingSetItem::TextureSRV(0, CubeMap));
-            SkyboxBindingSet = GRenderContext->CreateBindingSet(SkyboxSetDesc, SkyboxBindingLayout);
+            FBindingSetDesc EnvironmentDesc;
+            EnvironmentDesc.AddItem(FBindingSetItem::BufferCBV(0, EnvironmentBuffer));
+            EnvironmentBindingSet = GRenderContext->CreateBindingSet(EnvironmentDesc, EnvironmentLayout);
         }
         
     }
@@ -996,6 +1083,17 @@ namespace Lumina
             BufferDesc.DebugName = "SSAO Settings";
             SSAOSettingsBuffer = GRenderContext->CreateBuffer(BufferDesc);
             GRenderContext->SetObjectName(SSAOSettingsBuffer, BufferDesc.DebugName.c_str(), EAPIResourceType::Buffer);
+        }
+
+        {
+            FRHIBufferDesc BufferDesc;
+            BufferDesc.Size = sizeof(FEnvironmentSettings);
+            BufferDesc.Stride = sizeof(FEnvironmentSettings);
+            BufferDesc.Usage.SetMultipleFlags(BUF_UniformBuffer, BUF_Dynamic);
+            BufferDesc.MaxVersions = 3;
+            BufferDesc.DebugName = "Environment Settings";
+            EnvironmentBuffer = GRenderContext->CreateBuffer(BufferDesc);
+            GRenderContext->SetObjectName(EnvironmentBuffer, BufferDesc.DebugName.c_str(), EAPIResourceType::Buffer);
         }
 
         {

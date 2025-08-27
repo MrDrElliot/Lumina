@@ -22,7 +22,7 @@ namespace Lumina
         void LoadProject(const FString& ProjectPath);
         
 
-        FORCEINLINE bool HasLoadedProject() const { return bHasProjectLoaded; }
+        bool HasLoadedProject() const { return bHasProjectLoaded; }
         const FString& GetProjectPath() const { return Settings.ProjectPath; }
         FString GetProjectRootDirectory() const;
         

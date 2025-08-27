@@ -13,33 +13,59 @@
 int main(int argc, char* argv[])
 {
     Lumina::FStringHash::Initialize();
+
+    eastl::string SolutionToReflect;
+
+    // Argument validation
+    if (argc < 2) 
+    {
+        std::cerr << "Usage: " << (argc > 0 ? argv[0] : "Reflector.exe") 
+                  << " <path_to_solution_or_project_directory>\n";
+        std::cerr << "Alternative: Set LUMINA_DIR environment variable to use default Lumina.sln\n";
+        return 1;
+    }
     
-    const char* LuminaDirectory = std::getenv("LUMINA_DIR");
-    if (!LuminaDirectory)
+    std::filesystem::path slnPath = argv[1];
+
+    if (std::filesystem::exists(slnPath))
     {
-        std::cerr << "LUMINA_DIR environment variable not set.\n";
-        return 1;
+        std::cerr << "Reflecting Solution: " << slnPath.generic_string().c_str() << "\n";
+        SolutionToReflect = slnPath.generic_string().c_str();
+    }
+    else
+    {
+        const char* LuminaDirectory = std::getenv("LUMINA_DIR");
+        if (!LuminaDirectory)
+        {
+            std::cerr << "LUMINA_DIR environment variable not set.\n";
+            return 1;
+        }
+
+        SolutionToReflect = LuminaDirectory;
+        SolutionToReflect += "\\Lumina.sln";
+
+        std::cout.setf(std::ios::fixed, std::ios::floatfield);
+        std::cout.precision(2);
+
+        std::cout << "===============================================\n";
+        std::cout << "Lumina Reflection Tool\n";
+        std::cout << "===============================================\n";
+
+        std::cout << "\n";
+
+        if (!std::filesystem::exists(SolutionToReflect.c_str()))
+        {
+            std::cerr << "Failed to find Lumina.sln at: " << SolutionToReflect.c_str() << "\n";
+            return 1;
+        }
     }
 
-    eastl::string LuminaEditor(LuminaDirectory);
-    LuminaEditor += "\\Lumina.sln";
-
-    std::cout.setf(std::ios::fixed, std::ios::floatfield);
-    std::cout.precision(2);
-
-    std::cout << "===============================================\n";
-    std::cout << "Lumina Reflection Tool\n";
-    std::cout << "===============================================\n";
-
-    std::cout << "\n";
-
-    if (!std::filesystem::exists(LuminaEditor.c_str()))
+    if (SolutionToReflect.empty())
     {
-        std::cerr << "Failed to find Lumina.sln at: " << LuminaEditor.c_str() << "\n";
-        return 1;
+        std::cout << "[WARNING] Specified path does not exist: " << slnPath.string() << "\n";
     }
 
-    Lumina::Reflection::FTypeReflector TypeReflector(LuminaEditor);
+    Lumina::Reflection::FTypeReflector TypeReflector(SolutionToReflect);
 
     double parseTime = 0.0;
     {

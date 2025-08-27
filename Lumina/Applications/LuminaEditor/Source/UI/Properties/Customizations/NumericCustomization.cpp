@@ -15,9 +15,9 @@ namespace Lumina
 
     EPropertyChangeOp FVec2PropertyCustomization::DrawProperty(TSharedPtr<FPropertyHandle> Property)
     {
-        ImGui::DragFloat2("##", glm::value_ptr(DisplayValue), 0.1f);
+        ImGui::DragFloat2("##", glm::value_ptr(DisplayValue), 0.01f);
 
-        return ImGui::IsItemDeactivatedAfterEdit() ? EPropertyChangeOp::Updated : EPropertyChangeOp::None;
+        return ImGui::IsItemEdited() ? EPropertyChangeOp::Updated : EPropertyChangeOp::None;
     }
 
     void FVec2PropertyCustomization::UpdatePropertyValue(TSharedPtr<FPropertyHandle> Property)
@@ -47,10 +47,10 @@ namespace Lumina
         }
         else
         {
-            ImGui::DragFloat3("##", glm::value_ptr(DisplayValue), 0.1f);
+            ImGui::DragFloat3("##", glm::value_ptr(DisplayValue), 0.01f);
         }
 
-        return ImGui::IsItemDeactivatedAfterEdit() ? EPropertyChangeOp::Updated : EPropertyChangeOp::None;
+        return ImGui::IsItemEdited() ? EPropertyChangeOp::Updated : EPropertyChangeOp::None;
     }
     
     void FVec3PropertyCustomization::UpdatePropertyValue(TSharedPtr<FPropertyHandle> Property)
@@ -80,10 +80,10 @@ namespace Lumina
         }
         else
         {
-            ImGui::DragFloat4("##", glm::value_ptr(DisplayValue), 0.1f);
+            ImGui::DragFloat4("##", glm::value_ptr(DisplayValue), 0.01f);
         }
 
-        return ImGui::IsItemDeactivatedAfterEdit() ? EPropertyChangeOp::Updated : EPropertyChangeOp::None;
+        return ImGui::IsItemEdited() ? EPropertyChangeOp::Updated : EPropertyChangeOp::None;
     }
 
     void FVec4PropertyCustomization::UpdatePropertyValue(TSharedPtr<FPropertyHandle> Property)

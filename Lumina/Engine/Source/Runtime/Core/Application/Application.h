@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Core/Engine/Engine.h"
-
+#include "Core/Utils/CommandLineParser.h"
 
 namespace Lumina
 {
@@ -49,7 +49,7 @@ namespace Lumina
 		
 	private:
 
-		void PreInitStartup(int argc, char** argv);
+		void PreInitStartup();
 		bool CreateApplicationWindow();
 		bool FatalError(const FString& Error);
 		
@@ -64,6 +64,10 @@ namespace Lumina
 		static FApplication*		Instance;
 		
 		uint32						ApplicationFlags = 0;
+
+	public:
+
+		static FCommandLineParser	CommandLine;
 	};
 
 	/* Implemented by client */

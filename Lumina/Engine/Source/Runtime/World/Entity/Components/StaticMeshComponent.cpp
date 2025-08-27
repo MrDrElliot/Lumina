@@ -1,18 +1,24 @@
 ﻿#include "StaticMeshComponent.h"
+
+#include "assets/assettypes/material/MaterialInterface.h"
 #include "Renderer/RHIIncl.h"
 
 
 namespace Lumina
 {
-    CMaterialInterface* SStaticMeshComponent::GetMaterialForSlot(SIZE_T Slot)
+    CMaterialInterface* SStaticMeshComponent::GetMaterialForSlot(SIZE_T Slot) const
     {
         LUMINA_PROFILE_SCOPE();
         
-        if (Slot < MaterialOverrides.size() && MaterialOverrides[Slot])
+        if (Slot < MaterialOverrides.size())
         {
-            return MaterialOverrides[Slot];
+            if (CMaterialInterface* Interface = MaterialOverrides[Slot])
+            {
+                return Interface;
+            }
         }
-        else if (StaticMesh.IsValid())
+        
+        if (StaticMesh.IsValid())
         {
             return StaticMesh->GetMaterialAtSlot(Slot);
         }

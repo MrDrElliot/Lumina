@@ -19,7 +19,8 @@ project "Reflector"
 
 	postbuildcommands 
 	{
-	    "{COPYFILE} \"%{wks.location}/External/LLVM/bin/libclang.dll\" \"%{wks.location}/Binaries/%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}/\""
+	    "{COPYFILE} \"%{wks.location}/External/LLVM/bin/libclang.dll\" \"%{wks.location}/Binaries/%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}/\"",
+    	"{COPYFILE} \"%{cfg.targetdir}/%{prj.name}.exe\" \"%{wks.location}/Tools/\""
 	}
 
 

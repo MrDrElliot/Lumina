@@ -20,16 +20,16 @@
 
 namespace Lumina
 {
-    struct FModuleInfo
+    struct LUMINA_API FModuleInfo
     {
         FName ModuleName;
-        TUniquePtr<IModuleInterface> ModuleInterface;
+        TSharedPtr<IModuleInterface> ModuleInterface;
         void* Module;
     };
     
     using ModuleInitFunc = IModuleInterface* (*)();
     
-    class FModuleManager : public TSingleton<FModuleManager>
+    class LUMINA_API FModuleManager : public TSingleton<FModuleManager>
     {
     public:
         

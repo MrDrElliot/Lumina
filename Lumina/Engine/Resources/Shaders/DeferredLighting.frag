@@ -57,6 +57,55 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0)
 }
 // ----------------------------------------------------------------------------
 
+vec3 EvaluateLightContribution(FLight Light, vec3 Position, vec3 N, vec3 V, vec3 Albedo, float Roughness, float Metallic, vec3 F0)
+{
+    vec3 L;
+    float Attenuation = 1.0;
+    float Falloff = 1.0;
+
+    if (Light.Type == LIGHT_TYPE_DIRECTIONAL) 
+    {
+        L = normalize(Light.Direction.xyz);
+    }
+    else
+    {
+        vec3 LightToFrag = Light.Position.xyz - Position;
+        float Distance = length(LightToFrag);
+        L = LightToFrag / Distance; 
+        Attenuation = 1.0 / (Distance * Distance);
+
+        if (Light.Type == LIGHT_TYPE_SPOT) 
+        {
+            vec3 LightDir = normalize(-Light.Direction.xyz);
+            float CosTheta = dot(LightDir, L);
+            float InnerCos = Light.ConeAngles.x;
+            float OuterCos = Light.ConeAngles.y;
+            Falloff = clamp((CosTheta - OuterCos) / max(InnerCos - OuterCos, 0.001), 0.0, 1.0);
+        }
+    }
+
+    // Radiance
+    vec3 Radiance = Light.Color.rgb * Light.Color.a * Attenuation * Falloff;
+
+    // Half vector
+    vec3 H = normalize(V + L);
+
+    // BRDF terms
+    float NDF = DistributionGGX(N, H, Roughness);
+    float G   = GeometrySmith(N, V, L, Roughness);
+    vec3  F   = fresnelSchlick(max(dot(H, V), 0.0), F0);
+
+    vec3 Numerator   = NDF * G * F;
+    float Denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
+    vec3 Spec = Numerator / Denominator;
+
+    vec3 kS = F;
+    vec3 kD = (vec3(1.0) - kS) * (1.0 - Metallic);
+
+    float NdotL = max(dot(N, L), 0.0);
+
+    return (kD * Albedo / PI + Spec) * Radiance * NdotL;
+}
 
 // ----------------------------------------------------------------------------
 
@@ -66,7 +115,6 @@ void main()
     vec3 Position = (GetInverseCameraView() * vec4(PositionVS, 1.0f)).xyz;
     
     vec3 Albedo = texture(uAlbedoSpec, vUV).rgb;
-    
     
     vec3 Normal = texture(uNormal, vUV).rgb * 2.0 - 1.0;
     mat3 inverseViewMatrix3x3 = transpose(inverse(mat3(GetInverseCameraView())));
@@ -90,102 +138,15 @@ void main()
     for(uint LightIndex = 0; LightIndex < GetNumLights(); ++LightIndex)
     {
         FLight Light = GetLightAt(LightIndex);
-        
-        switch(Light.Type)
-        {
-            case LIGHT_TYPE_DIRECTIONAL:
-            {
-                vec3 L = normalize(-Light.Direction.xyz);
-                vec3 H = normalize(V + L);
-                vec3 Radiance = Light.Color.rgb * Light.Color.a;
-
-                float NDF = DistributionGGX(N, H, Roughness);
-                float G = GeometrySmith(N, V, L, Roughness);
-                vec3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);
-
-                vec3 Numerator = NDF * G * F;
-                float Denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
-                vec3 Spec = Numerator / Denominator;
-                vec3 kS = F;
-                vec3 kD = vec3(1.0) - kS;
-                kD *= 1.0 - Metallic;
-
-                float NdotL = max(dot(N, L), 0.0);
-
-                Lo += (kD * Albedo / PI + Spec) * Radiance * NdotL;
-                break;
-            }
-            case LIGHT_TYPE_POINT:
-            {
-                vec3 L = normalize(Light.Position.xyz - Position);
-                vec3 H = normalize(V + L);
-                float Distance = length(Light.Position.xyz - Position);
-                float Attenuation = 1.0 / (Distance * Distance);
-                vec3 Radiance = Light.Color.rgb * Light.Color.a * Attenuation;
-
-                float NDF = DistributionGGX(N, H, Roughness);
-                float G = GeometrySmith(N, V, L, Roughness);
-                vec3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);
-
-                vec3 Numerator = NDF * G * F;
-                float Denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
-                vec3 Spec = Numerator / Denominator;
-                vec3 kS = F;
-
-                vec3 kD = vec3(1.0) - kS;
-
-                kD *= 1.0 - Metallic;
-
-                float NdotL = max(dot(N, L), 0.0);
-
-                Lo += (kD * Albedo / PI + Spec) * Radiance * NdotL;
-                break;
-            }
-            case LIGHT_TYPE_SPOT:
-            {
-                vec3 L = normalize(Light.Position.xyz - Position);
-                vec3 H = normalize(V + L);
-                float Distance = length(Light.Position.xyz - Position);
-
-                vec3 LightDir = normalize(-Light.Direction.xyz);
-
-                float CosTheta = dot(LightDir, L);
-
-                float InnerCos = Light.ConeAngles.x;
-                float OuterCos = Light.ConeAngles.y;
-
-                float Falloff = clamp((CosTheta - OuterCos) / max(InnerCos - OuterCos, 0.001), 0.0, 1.0);
-
-                float Attenuation = 1.0 / (Distance * Distance);
-                vec3 Radiance = Light.Color.rgb * Light.Color.a * Attenuation * Falloff;
-
-                float NDF = DistributionGGX(N, H, Roughness);
-                float G = GeometrySmith(N, V, L, Roughness);
-                vec3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);
-                
-                vec3 kS = F;
-                vec3 kD = vec3(1.0) - kS;
-                kD *= 1.0 - Metallic;
-
-                float NdotL = max(dot(N, L), 0.0);
-                
-                vec3 Numerator = NDF * G * F;
-                float Denominator = 4.0 * max(dot(N, V), 0.0) * NdotL + 0.0001;
-                vec3 Spec = Numerator / Denominator;
-
-
-                Lo += (kD * Albedo / PI + Spec) * Radiance * NdotL;
-                break;
-            }
-        }
+        Lo += EvaluateLightContribution(Light, Position, N, V, Albedo, Roughness, Metallic, F0);
     }
     
-    vec3 Ambient = vec3(0.1) * Albedo * AmbientOcclusion;
+    vec3 Ambient = vec3(0.25) * Albedo * AmbientOcclusion;
     vec3 Color = Ambient + Lo;
     
     Color = Color / (Color + vec3(1.0));
     
     Color = pow(Color, vec3(1.0/2.2));
-
+    
     outColor = vec4(Color, 1.0);
 }

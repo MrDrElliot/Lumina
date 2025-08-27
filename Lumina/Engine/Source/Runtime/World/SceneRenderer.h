@@ -8,6 +8,16 @@
 
 namespace Lumina
 {
+    struct SDirectionalLightComponent;
+}
+
+namespace Lumina
+{
+    struct SEnvironmentComponent;
+}
+
+namespace Lumina
+{
     class FRenderGraph;
     class CWorld;
     class FUpdateContext;
@@ -16,6 +26,8 @@ namespace Lumina
     struct FMaterialTexturesData;
     class CMaterialInstance;
     class FRenderer;
+
+    template<typename T> using TRenderVector = TFixedVector<T, 2024>;
     
     class FSceneRenderer
     {
@@ -41,9 +53,11 @@ namespace Lumina
         void SetGBufferDebugMode(ESceneRenderGBuffer Mode) { GBufferDebugMode = Mode; }
     
     protected:
-
-        void BuildIndirectDrawBuffer();
-
+        
+        void AddEnvironmentComponent(entt::entity entity);
+        void RemoveEnvironmentComponent(entt::entity entity);
+        void AddDirectionalLightComponent(entt::entity entity);
+        void RemoveDirectionalLightcomponent(entt::entity entity);
         
         FViewportState MakeViewportStateFromImage(const FRHIImage* Image);
 
@@ -59,30 +73,35 @@ namespace Lumina
     private:
 
         CWorld*                             World = nullptr;
+        SEnvironmentComponent*              EnvironmentComponent = nullptr;
+        SDirectionalLightComponent*         DirectionalLightComponent = nullptr;
+        
         FSceneRenderStats                   SceneRenderStats;
         FSceneRenderSettings                RenderSettings;
         FSceneLightData                     LightData;
 
         FRHIViewportRef                     SceneViewport;
 
-        TVector<FSimpleElementVertex>       SimpleVertices;
+        TRenderVector<FSimpleElementVertex>  SimpleVertices;
         FRHIBindingLayoutRef                SimplePassLayout;
 
         
         FRHIBufferRef                       SimpleVertexBuffer;
         FRHIBufferRef                       SceneDataBuffer;
+        FRHIBufferRef                       EnvironmentBuffer;
         FRHIBufferRef                       ModelDataBuffer;
         FRHIBufferRef                       LightDataBuffer;
         FRHIBufferRef                       SSAOKernalBuffer;
         FRHIBufferRef                       SSAOSettingsBuffer;
+        FRHIBufferRef                       IndirectDrawBuffer;
 
         FRHIInputLayoutRef                  VertexLayoutInput;
         FRHIInputLayoutRef                  SimpleVertexLayoutInput;
 
         FSceneGlobalData                    SceneGlobalData;
 
-        FRHIBindingLayoutRef                SkyboxBindingLayout;
-        FRHIBindingSetRef                   SkyboxBindingSet;
+        FRHIBindingLayoutRef                EnvironmentLayout;
+        FRHIBindingSetRef                   EnvironmentBindingSet;
         FRHIBindingSetRef                   LightingPassSet;
         FRHIBindingLayoutRef                LightingPassLayout;
 
@@ -109,16 +128,14 @@ namespace Lumina
 
         ESceneRenderGBuffer                 GBufferDebugMode = ESceneRenderGBuffer::RenderTarget;
 
-        TVector<FInstanceData>                  InstanceData;
+        TRenderVector<FInstanceData>                  InstanceData;
         
-        TVector<FPointLightProxy>               PointLightProxies;
+        TRenderVector<FPointLightProxy>               PointLightProxies;
 
-        TVector<FStaticMeshRender>              StaticMeshRenders;
-        TVector<FIndirectRenderBatch>           RenderBatches;
-        TVector<FDrawIndexedIndirectArguments>  IndirectDrawArguments;
+        TRenderVector<FStaticMeshRender>              StaticMeshRenders;
+        TRenderVector<FIndirectRenderBatch>           RenderBatches;
+        TRenderVector<FDrawIndexedIndirectArguments>  IndirectDrawArguments;
 
-        FRHIBufferRef                       IndirectDrawBuffer;
-        TSet<CMaterial*>                    RegisteredMaterials;
     };
     
 }
