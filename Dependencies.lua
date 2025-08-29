@@ -23,6 +23,7 @@ IncludeDir["EABase"] =                  "%{LuminaEngineDirectory}/Lumina/Engine/
 IncludeDir["rpmalloc"] =                "%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/rpmalloc/"
 IncludeDir["xxhash"] =                  "%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/xxhash/"
 IncludeDir["tracy"] =                  	"%{LuminaEngineDirectory}/Lumina/Engine/ThirdParty/tracy/public"
+IncludeDir["physx"] =                  	"%{LuminaEngineDirectory}/External/Physx/physx/include"
 
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 

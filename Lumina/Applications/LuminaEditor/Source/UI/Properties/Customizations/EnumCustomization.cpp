@@ -12,6 +12,8 @@ namespace Lumina
 
         const char* PreviewValue = EnumProperty->GetEnum()->GetNameAtValue(CachedValue).c_str();
 
+        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
+        
         if (ImGui::BeginCombo("##", PreviewValue))
         {
             for (int64 i = 0; i < EnumCount; ++i)
@@ -33,6 +35,8 @@ namespace Lumina
 
             ImGui::EndCombo();
         }
+
+        ImGui::PopItemWidth();
 
         return bWasChanged ? EPropertyChangeOp::Updated : EPropertyChangeOp::None;
     }

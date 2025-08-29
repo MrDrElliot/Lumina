@@ -23,6 +23,13 @@ namespace Lumina
 
     void FAssetRegistry::BuildAssetDictionary()
     {
+
+        if (bCurrentlyProcessing.exchange(true))
+        {
+            bHasQueuedRequest.store(true);
+            return;
+        }
+        
         ClearAssets();
         
         TVector<FString> PackagePaths;
@@ -30,6 +37,7 @@ namespace Lumina
         {
             FTaskSystem::Get().ScheduleLambda(1, [this, Path](uint32, uint32, uint32)
             {
+                PendingTasks.fetch_add(1);
                 for (const auto& Directory : std::filesystem::recursive_directory_iterator(Path.c_str()))
                 {
                     if (!Directory.is_directory() && Directory.path().extension() == ".lasset")
@@ -77,6 +85,16 @@ namespace Lumina
                         AddAsset(Data);
                     }
                 }
+
+                if (PendingTasks.fetch_sub(1) == 1)
+                {
+                    bCurrentlyProcessing.store(false);
+                }
+
+                if (bHasQueuedRequest.exchange(false))
+                {
+                    BuildAssetDictionary();
+                }
             });
         }
     }
@@ -111,14 +129,12 @@ namespace Lumina
 
     void FAssetRegistry::AddAsset(const FAssetData& Data)
     {
-        FScopeLock Lock(DataGatheringMutex);
         Assets.push_back(Data);
         AssetPathMap.insert_or_assign(FName(Data.Path), Data);
     }
 
     void FAssetRegistry::ClearAssets()
     {
-        FScopeLock Lock(DataGatheringMutex);
         Assets.clear();
         AssetPathMap.clear();
     }

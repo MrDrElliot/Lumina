@@ -38,9 +38,11 @@ namespace Lumina
             float* Min = MinOpt ? &MinOpt.value() : nullptr;
             float* Max = MaxOpt ? &MaxOpt.value() : nullptr;
 
+            ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
             ImGui::DragScalar("##Value", DT, &DisplayValue, Speed, Min, Max);
+            ImGui::PopItemWidth();
 
-            return ImGui::IsItemDeactivatedAfterEdit() ? EPropertyChangeOp::Updated : EPropertyChangeOp::None;
+            return ImGui::IsItemEdited() ? EPropertyChangeOp::Updated : EPropertyChangeOp::None;
         }
         
         void UpdatePropertyValue(TSharedPtr<FPropertyHandle> Property) override
@@ -76,9 +78,11 @@ namespace Lumina
         
         EPropertyChangeOp DrawProperty(TSharedPtr<FPropertyHandle> Property) override
         {
+            ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
             ImGui::Checkbox("##", &bValue);
-
-            return ImGui::IsItemDeactivatedAfterEdit() ? EPropertyChangeOp::Updated : EPropertyChangeOp::None;
+            ImGui::PopItemWidth();
+            
+            return ImGui::IsItemEdited() ? EPropertyChangeOp::Updated : EPropertyChangeOp::None;
         }
         
         void UpdatePropertyValue(TSharedPtr<FPropertyHandle> Property) override

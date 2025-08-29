@@ -6,6 +6,8 @@ namespace Lumina
 {
     EPropertyChangeOp FNamePropertyCustomization::DrawProperty(TSharedPtr<FPropertyHandle> Property)
     {
+        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
+
         // We have to modify a copy here because modifying FName::c_str() will directly modify the global value in the name hash.
         FString NameCopy = DisplayValue.ToString();
         
@@ -14,6 +16,8 @@ namespace Lumina
             DisplayValue = FName(NameCopy);
             return EPropertyChangeOp::Updated;
         }
+
+        ImGui::PopItemWidth();
 
         return EPropertyChangeOp::None;
     }
@@ -37,8 +41,12 @@ namespace Lumina
 
     EPropertyChangeOp FStringPropertyCustomization::DrawProperty(TSharedPtr<FPropertyHandle> Property)
     {
+        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
+
         ImGui::InputText("##Name", const_cast<char*>(DisplayValue.c_str()), 256);
 
+        ImGui::PopItemWidth();
+        
         return ImGui::IsItemDeactivatedAfterEdit() ? EPropertyChangeOp::Updated : EPropertyChangeOp::None;
     }
 

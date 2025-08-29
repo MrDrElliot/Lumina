@@ -6,8 +6,8 @@
 
 namespace Lumina
 {
-    template<typename T> struct FNeedsRenderState            : SEntityComponent {};
-    template<typename T> struct FNeedsRenderStateUpdated     : SEntityComponent {};
-    template<typename T> struct FNeedsRenderStateDestroyed   : SEntityComponent {};
-    template<typename T> struct FNeedsRenderTransformUpdated : SEntityComponent {};
+    template<typename T> struct FNeedsRenderState            {};
+    template<typename T> struct FNeedsRenderStateUpdated     {};
+    template<typename T> struct FNeedsRenderStateDestroyed   {};
+    template<typename T> struct FNeedsRenderTransformUpdated {};
 }

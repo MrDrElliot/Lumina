@@ -15,14 +15,14 @@ namespace Lumina
             case EMaterialInputType::Float:
                 {
                     ImGui::SetNextItemWidth(100.0f);
-                    ImGui::DragFloat("##Value", (float*)NodeValue + Index, 0.1f);
+                    ImGui::DragFloat("##Value", (float*)NodeValue + Index, 0.01f);
                     ReturnSize = 100.0f;
                 }
                 break;
             case EMaterialInputType::Float2:
                 {
                     ImGui::SetNextItemWidth(150.0f);
-                    ImGui::DragFloat2("##Value", (float*)NodeValue, 0.1f);
+                    ImGui::DragFloat2("##Value", (float*)NodeValue, 0.01f);
                     ReturnSize = 150.0f;
                 }
                 break;

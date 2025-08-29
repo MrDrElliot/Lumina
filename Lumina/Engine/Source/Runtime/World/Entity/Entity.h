@@ -43,7 +43,10 @@ namespace Lumina
         
         
         template <typename T, typename... Args>
-        T& AddComponent(Args&&... args);
+        decltype(auto) Emplace(Args&&... args);
+
+        template<typename T, typename... Args>
+        T& EmplaceOrReplace(Args&&... args);
 
         template <typename T>
         bool HasComponent() const;
@@ -82,11 +85,17 @@ namespace Lumina
 
     
     template <typename T, typename... Args>
-    T& Entity::AddComponent(Args&&... args)
+    decltype(auto) Entity::Emplace(Args&&... args)
+    {
+        return World->GetMutableEntityRegistry().emplace<T>(EntityHandle, std::forward<Args>(args)...);
+    }
+
+    template <typename T, typename ... Args>
+    T& Entity::EmplaceOrReplace(Args&&... args)
     {
         return World->GetMutableEntityRegistry().emplace_or_replace<T>(EntityHandle, std::forward<Args>(args)...);
     }
-    
+
     template <typename T>
     bool Entity::HasComponent() const
     {

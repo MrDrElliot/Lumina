@@ -1,5 +1,4 @@
 ﻿#include "MaterialEditorTool.h"
-#include "imnodes/imnodes.h"
 #include "Assets/AssetTypes/Material/Material.h"
 #include "Assets/AssetTypes/Textures/Texture.h"
 #include "Core/Engine/Engine.h"

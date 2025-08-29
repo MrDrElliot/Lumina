@@ -6,10 +6,10 @@
 namespace Lumina
 {
     LUM_STRUCT()
-    struct LUMINA_API SInterpolatingMovementComponent : SEntityComponent
+    struct LUMINA_API SInterpolatingMovementComponent
     {
         GENERATED_BODY()
-        ENTITY_COMPONENT()
+        ENTITY_COMPONENT(SInterpolatingMovementComponent);
 
         LUM_PROPERTY(Editable, Category = "Interp")
         FTransform Start;
@@ -23,7 +23,5 @@ namespace Lumina
         float Alpha = 0.0f;
         bool bForward = true;
     };
-
-    REGISTER_ENTITY_COMPONENT(SInterpolatingMovementComponent);
-
+    
 }

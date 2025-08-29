@@ -7,7 +7,7 @@
 namespace Lumina
 {
     LUM_STRUCT()
-    struct LUMINA_API SRenderComponent : SEntityComponent
+    struct LUMINA_API SRenderComponent
     {
         GENERATED_BODY()
         

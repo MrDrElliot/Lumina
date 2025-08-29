@@ -7,6 +7,7 @@
 
 #include "RHIGlobals.h"
 #include "Core/Profiler/Profile.h"
+#include "Tools/UI/UITextureCache.h"
 #include "Tools/UI/ImGui/ImGuiRenderer.h"
 
 namespace Lumina
@@ -27,7 +28,9 @@ namespace Lumina
         #if WITH_DEVELOPMENT_TOOLS
         ImGuiRenderer->Deinitialize();
         Memory::Delete(ImGuiRenderer);
+        FUITextureCache::Get().Clear();
         #endif
+
         
         GRenderContext->Deinitialize();
         Memory::Delete(GRenderContext);

@@ -12,6 +12,7 @@
 #include "Renderer/API/Vulkan/VulkanMacros.h"
 #include "Renderer/API/Vulkan/VulkanRenderContext.h"
 #include "Renderer/API/Vulkan/VulkanSwapchain.h"
+#include "Tools/UI/UITextureCache.h"
 
 namespace Lumina
 {
@@ -103,12 +104,13 @@ namespace Lumina
 
     void FVulkanImGuiRender::Deinitialize()
     {
-    	VulkanRenderContext->WaitIdle();
+		VulkanRenderContext->WaitIdle();
+		
     	for (auto& KVP : ImageCache)
     	{
     		ImGui_ImplVulkan_RemoveTexture(KVP.second);
     	}
-    	
+		
     	ImGui_ImplVulkan_Shutdown();
     	
     	vkDestroyDescriptorPool(VulkanRenderContext->GetDevice()->GetDevice(), DescriptorPool, VK_ALLOC_CALLBACK);

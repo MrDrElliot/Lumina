@@ -4,6 +4,7 @@
 #include "Lumina.h"
 #include "Core/UpdateContext.h"
 #include "Core/Delegates/Delegate.h"
+#include "entt/entt.hpp"
 #include "Renderer/RHIFwd.h"
 #include "Renderer/RHIIncl.h"
 #include "Subsystems/Subsystem.h"
@@ -53,6 +54,8 @@ namespace Lumina
         LUMINA_API virtual void DrawDevelopmentTools();
         LUMINA_API IDevelopmentToolUI* GetDevelopmentToolsUI() const { return DeveloperToolUI; }
         #endif
+
+        LUMINA_API entt::locator<entt::meta_ctx>::node_type GetEngineMetaContext() const;
 
         template<typename T>
         T* GetEngineSubsystem()

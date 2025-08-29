@@ -16,20 +16,26 @@ int main(int argc, char* argv[])
 
     eastl::string SolutionToReflect;
 
-    // Argument validation
-    if (argc < 2) 
-    {
-        std::cerr << "Usage: " << (argc > 0 ? argv[0] : "Reflector.exe") 
-                  << " <path_to_solution_or_project_directory>\n";
-        std::cerr << "Alternative: Set LUMINA_DIR environment variable to use default Lumina.sln\n";
-        return 1;
-    }
-    
-    std::filesystem::path slnPath = argv[1];
+    std::filesystem::path slnPath;
 
-    if (std::filesystem::exists(slnPath))
+    std::cout.setf(std::ios::fixed, std::ios::floatfield);
+    std::cout.precision(2);
+
+    std::cout << "===============================================\n";
+    std::cout << "Lumina Reflection Tool\n";
+    std::cout << "===============================================\n\n";
+    
+    if (argc >= 2)
     {
-        std::cerr << "Reflecting Solution: " << slnPath.generic_string().c_str() << "\n";
+        slnPath = argv[1];
+
+        if (!std::filesystem::exists(slnPath))
+        {
+            std::cerr << "Provided path does not exist: " << slnPath.generic_string().c_str() << "\n";
+            return 1;
+        }
+
+        std::cout << "Reflecting Solution: " << slnPath.generic_string().c_str() << "\n";
         SolutionToReflect = slnPath.generic_string().c_str();
     }
     else
@@ -37,21 +43,14 @@ int main(int argc, char* argv[])
         const char* LuminaDirectory = std::getenv("LUMINA_DIR");
         if (!LuminaDirectory)
         {
-            std::cerr << "LUMINA_DIR environment variable not set.\n";
+            std::cerr << "Usage: " << (argc > 0 ? argv[0] : "Reflector.exe") 
+                      << " <path_to_solution_or_project_directory>\n";
+            std::cerr << "Or set LUMINA_DIR environment variable to point to Lumina root.\n";
             return 1;
         }
 
         SolutionToReflect = LuminaDirectory;
         SolutionToReflect += "\\Lumina.sln";
-
-        std::cout.setf(std::ios::fixed, std::ios::floatfield);
-        std::cout.precision(2);
-
-        std::cout << "===============================================\n";
-        std::cout << "Lumina Reflection Tool\n";
-        std::cout << "===============================================\n";
-
-        std::cout << "\n";
 
         if (!std::filesystem::exists(SolutionToReflect.c_str()))
         {
@@ -60,16 +59,18 @@ int main(int argc, char* argv[])
         }
     }
 
-    if (SolutionToReflect.empty())
+    
+    if (SolutionToReflect.empty() || std::filesystem::path(SolutionToReflect.c_str()).extension() != ".sln")
     {
-        std::cout << "[WARNING] Specified path does not exist: " << slnPath.string() << "\n";
+        std::cout << "[WARNING] Specified path does not exist, or is not a solution file: " << slnPath.string() << "\n";
+        return 1;
     }
 
     Lumina::Reflection::FTypeReflector TypeReflector(SolutionToReflect);
 
     double parseTime = 0.0;
     {
-        std::cout << "[Reflection] Starting Solution Parsing...\n";
+        std::cout << "[Reflection] Starting Solution Parsing... " << SolutionToReflect.c_str() << "\n";
         auto start = std::chrono::high_resolution_clock::now();
 
         if (!TypeReflector.ParseSolution())
@@ -131,7 +132,6 @@ int main(int argc, char* argv[])
         BumpTime = duration.count();
 
         std::cout << "[Reflection] Project file bump completed in " << BumpTime << " seconds.\n";
-
     }
     
     std::cout << "\n";

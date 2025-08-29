@@ -124,10 +124,18 @@ namespace Lumina
             Flags |= ImGuiTreeNodeFlags_Selected;
         }
         
-        const FInlineString DisplayName = ItemToDraw->GetDisplayName();
+        FInlineString DisplayName = ItemToDraw->GetDisplayName();
+        if (ItemToDraw->HasChildren())
+        {
+            DisplayName.append(" (");
+            DisplayName.append(eastl::to_string(ItemToDraw->Children.size()).c_str());
+            DisplayName.append(")");
+        }
+        
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(ItemToDraw->GetDisplayColor()));
+        
         ItemToDraw->bExpanded = ImGui::TreeNodeEx("##TreeNode", Flags, "%s", DisplayName.c_str());
-
+        
         if (ImGui::IsItemClicked(ImGuiMouseButton_Left))
         {
             SetSelection(ItemToDraw, Context);
@@ -136,7 +144,7 @@ namespace Lumina
         if (ImGui::BeginDragDropSource())
         {
             ItemToDraw->SetDragDropPayloadData();
-            ImGui::Text("Test");
+            ImGui::Text(DisplayName.c_str());
             ImGui::EndDragDropSource();
         }
 

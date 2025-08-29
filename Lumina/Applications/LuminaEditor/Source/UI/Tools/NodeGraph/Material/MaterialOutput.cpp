@@ -5,6 +5,7 @@
 #include "Core/Engine/Engine.h"
 #include "Core/Object/Cast.h"
 #include "Core/Object/ObjectArray.h"
+#include "imgui-node-editor/imgui_node_editor_internal.h"
 #include "Nodes/MaterialGraphNode.h"
 #include "Renderer/RenderManager.h"
 #include "Tools/UI/ImGui/ImGuiRenderer.h"
@@ -23,23 +24,23 @@ namespace Lumina
             {
             case EMaterialInputType::Float:
                 {
-                    ImGui::SetNextItemWidth(100.0f);
-                    ImGui::DragFloat("##Value", (float*)NodeValue);
-                    ReturnSize = 100.0f;
+                    ImGui::SetNextItemWidth(60.0f);
+                    ImGui::DragFloat("##Value", (float*)NodeValue, 0.01f);
+                    ReturnSize = 60.0f;
                 }
                 break;
             case EMaterialInputType::Float2:
                 {
-                    ImGui::SetNextItemWidth(150.0f);
-                    ImGui::DragFloat2("##Value", (float*)NodeValue);
-                    ReturnSize = 150.0f;
+                    ImGui::SetNextItemWidth(120.0f);
+                    ImGui::DragFloat2("##Value", (float*)NodeValue, 0.01f);
+                    ReturnSize = 120.0f;
                 }
                 break;
             case EMaterialInputType::Float3:
                 {
-                    ImGui::SetNextItemWidth(150.0f);
+                    ImGui::SetNextItemWidth(120.0f);
                     ImGui::ColorEdit3("##Value", (float*)NodeValue);
-                    ReturnSize = 150.0f;
+                    ReturnSize = 120.0f;
                 }
                 break;
             case EMaterialInputType::Float4:
@@ -58,34 +59,13 @@ namespace Lumina
 
                     if (Texture != nullptr)
                     {
-                        FRHIImageRef Image = Texture->RHIImage;
-                        if (Image)
+                        if (FRHIImageRef& Image = Texture->RHIImage)
                         {
                             ImTextureRef ImText = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer()->GetOrCreateImTexture(Image);
-                            ImGui::Image(ImText, {164.0f, 164.0f});
+                            ImGui::Image(ImText, ImVec2(164.0f, 164.0f));
                         }
                     }
-
-                    if (ImGui::Button("Choose Texture"))
-                    {
-                        ImGui::OpenPopup("ObjectSelectorPopup");
-                    }
-
-                    ImGui::SetNextWindowSize({ 300.0f, 300.0f });
-
-                    if (ImGui::BeginPopup("ObjectSelectorPopup"))
-                    {
-                        FARFilter Filter;
-                        Filter.ClassNames.push_back("CTexture");
-
-                        if (ImGuiX::ObjectSelector(Filter, Texture))
-                        {
-                            MaterialNode->SetNodeValue(Texture);    
-                        }
-                        
-                        ImGui::EndPopup();
-                    }
-
+                    
                     ReturnSize = 200.0f;
                 }
                 break;

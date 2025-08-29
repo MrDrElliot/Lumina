@@ -269,7 +269,7 @@ namespace Lumina
     {
         bool bIsReadOnly = PropertyHandle->Property->Metadata.HasMetadata("ReadOnly");
         ImGui::BeginDisabled(bIsReadOnly);
-        
+
         if (Customization)
         {
             ChangeOp = Customization->UpdateAndDraw(PropertyHandle);
@@ -603,7 +603,7 @@ namespace Lumina
 
         if (ImGui::BeginTable("GridTable", 2, Flags, TableSize))
         {
-            ImGui::TableSetupColumn("##Header", ImGuiTableColumnFlags_WidthFixed, 200);
+            ImGui::TableSetupColumn("##Header", ImGuiTableColumnFlags_WidthFixed, 145);
             ImGui::TableSetupColumn("##Editor", ImGuiTableColumnFlags_WidthStretch);
             
             for (FCategoryPropertyRow* Category : Categories)

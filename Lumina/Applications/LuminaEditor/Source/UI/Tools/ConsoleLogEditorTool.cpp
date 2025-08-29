@@ -85,9 +85,9 @@ namespace Lumina
             ImGui::TableSetupColumn("Logger", ImGuiTableColumnFlags_WidthFixed, 60.0f);
             ImGui::TableSetupColumn("Message", ImGuiTableColumnFlags_WidthStretch);
             ImGui::TableHeadersRow();
-
+            
             ImGuiListClipper Clipper;
-            Clipper.Begin((int)NewMessageSize);
+            Clipper.Begin((int)NewMessageSize, 35);
 
             while (Clipper.Step())
             {
@@ -95,16 +95,15 @@ namespace Lumina
                 {
                     const FConsoleMessage& Message = Messages[i];
         
-                    // Filtering logic
                     switch (Message.Level)
                     {
-                    case spdlog::level::trace:    if (!bShowTrace) continue; break;
-                    case spdlog::level::debug:    if (!bShowDebug) continue; break;
-                    case spdlog::level::info:     if (!bShowInfo)  continue; break;
-                    case spdlog::level::warn:     if (!bShowWarn)  continue; break;
-                    case spdlog::level::err:      if (!bShowError) continue; break;
-                    case spdlog::level::critical: if (!bShowCritical) continue; break;
-                    default: break;
+                        case spdlog::level::trace:    if (!bShowTrace) continue; break;
+                        case spdlog::level::debug:    if (!bShowDebug) continue; break;
+                        case spdlog::level::info:     if (!bShowInfo)  continue; break;
+                        case spdlog::level::warn:     if (!bShowWarn)  continue; break;
+                        case spdlog::level::err:      if (!bShowError) continue; break;
+                        case spdlog::level::critical: if (!bShowCritical) continue; break;
+                        default: break;
                     }
         
                         

@@ -28,11 +28,13 @@ namespace Lumina::Reflection
 
         /** Bumps the project files to trigger a reload of new reflection files */
         void Bump();
+        
 
     private:
 
         bool WriteGeneratedFiles(const FClangParser& Parser);
         
         FProjectSolution Solution;
+        bool bWroteFiles = false;
     };
 }

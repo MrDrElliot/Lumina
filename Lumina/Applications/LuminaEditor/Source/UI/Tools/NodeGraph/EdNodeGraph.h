@@ -1,11 +1,11 @@
 ﻿#pragma once
 
 #include "EdGraphNode.h"
-#include "imnodes/imnodes_internal.h"
 #include "Containers/Array.h"
 #include "Core/Functional/Function.h"
 #include "Core/Object/ObjectHandleTyped.h"
 #include "EdNodeGraph.generated.h"
+#include "imgui-node-editor/imgui_node_editor.h"
 
 namespace Lumina
 {
@@ -36,13 +36,14 @@ namespace Lumina
 
         
         CEdNodeGraph();
-        virtual ~CEdNodeGraph() override;
+        ~CEdNodeGraph() override;
 
         virtual void Initialize();
         virtual void Shutdown();
         void Serialize(FArchive& Ar) override;
         
         void DrawGraph();
+        virtual void DrawGraphContextMenu();
         virtual void OnDrawGraph();
         
         void RegisterGraphAction(const FString& ActionName, const TFunction<void()>& ActionCallback);
@@ -74,7 +75,7 @@ namespace Lumina
         TFunction<void(CEdGraphNode*)>                  NodeSelectedCallback;
     private:
         
-        ImNodesEditorContext* ImNodesContext = nullptr;
+        ax::NodeEditor::EditorContext* Context = nullptr;
     };
     
     

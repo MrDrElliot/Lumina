@@ -1,19 +1,30 @@
 ﻿#include "EdNodeGraph.h"
 
 #include "EdGraphNode.h"
-#include "EdNodeGraphPin.h"
-#include "imnodes/imnodes.h"
-#include "Core/Math/Math.h"
 #include "Core/Object/Class.h"
 #include <Core/Reflection/Type/LuminaTypes.h>
 
+#include "Drawing.h"
+#include "imgui_internal.h"
 #include "Core/Object/Cast.h"
 #include "Core/Profiler/Profile.h"
-
-#define SHOW_DEBUG 0
+#include "imgui-node-editor/imgui_node_editor_internal.h"
+#include "Tools/UI/ImGui/ImGuiX.h"
 
 namespace Lumina
 {
+    static void DrawPinIcon(bool bConnected, int Alpha, ImVec4 Color)
+    {
+        EIconType iconType = EIconType::Circle;
+        Color.w = Alpha / 255.0f;
+        
+        Icon(ImVec2(24.f, 24.0f), iconType, bConnected, Color, ImColor(32, 32, 32, Alpha));
+    }
+
+    static ImRect ImGui_GetItemRect()
+    {
+        return ImRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
+    }
     
     uint16 GNodeID = 0;
     
@@ -27,55 +38,16 @@ namespace Lumina
 
     void CEdNodeGraph::Initialize()
     {
-        ImNodesContext = ImNodes::EditorContextCreate();
-    
-        ImNodesIO& io = ImNodes::GetIO();
-        io.LinkDetachWithModifierClick.Modifier = &ImGui::GetIO().KeyCtrl;
-        io.MultipleSelectModifier.Modifier = &ImGui::GetIO().KeyCtrl;
-    
-        ImNodesStyle& style = ImNodes::GetStyle();
-        style.Flags |= ImNodesStyleFlags_GridLinesPrimary | ImNodesStyleFlags_GridSnapping;
-    
-        // Node appearance
-        style.NodeCornerRounding = 5.0f; // Rounded corners for nodes
-        style.NodePadding = ImVec2(10.0f, 10.0f); // Padding inside nodes
-        style.NodeBorderThickness = 2.0f; // Thinner node borders
-    
-        // Link appearance
-        style.LinkThickness = 2.0f; // Thinner links
-        style.LinkLineSegmentsPerLength = 1.0f;
-        style.LinkHoverDistance = 4.0f;
-    
-        // Pin appearance
-        style.PinCircleRadius = 6.0f; // Larger pin circles
-        style.PinQuadSideLength = 8.0f; // Larger pin quads
-        style.PinTriangleSideLength = 8.0f; // Larger pin triangles
-        style.PinLineThickness = 1.5f; // Thinner pin lines
-        style.PinHoverRadius = 8.0f; // Larger hover area for pins
-        style.PinOffset = 10.0f; // Offset pins further from node edges
-    
-        // Mini-map settings
-        style.MiniMapPadding = ImVec2(5.0f, 5.0f);
-        style.MiniMapOffset = ImVec2(15.0f, 15.0f);
-    
-        style.Colors[ImNodesCol_NodeBackground] = IM_COL32(50, 50, 50, 255);
-        style.Colors[ImNodesCol_TitleBarHovered] = IM_COL32(70, 130, 180, 255); // SteelBlue
-        style.Colors[ImNodesCol_TitleBarSelected] = IM_COL32(100, 149, 237, 255); // CornflowerBlue
-    
-    
-        style.Colors[ImNodesCol_NodeOutline] = IM_COL32_BLACK;
-        style.Colors[ImNodesCol_Link] = IM_COL32(200, 200, 200, 255);
-        style.Colors[ImNodesCol_Pin] = IM_COL32(255, 255, 255, 255);
-        style.Colors[ImNodesCol_PinHovered] = IM_COL32(70, 130, 180, 255);
-        style.Colors[ImNodesCol_GridLine] = IM_COL32(30, 30, 30, 255);
-        style.Colors[ImNodesCol_GridLinePrimary] = IM_COL32(60, 60, 60, 255);
-    
-        style.GridSpacing = 20.0f;
+        ax::NodeEditor::Config config;
+        config.SettingsFile = "Simple.json";
+        Context = ax::NodeEditor::CreateEditor(&config);
+        
     }
 
     void CEdNodeGraph::Shutdown()
     {
-        ImNodes::EditorContextFree(ImNodesContext);
+        ax::NodeEditor::DestroyEditor(Context);
+        Context = nullptr;
     }
 
     void CEdNodeGraph::Serialize(FArchive& Ar)
@@ -85,217 +57,120 @@ namespace Lumina
 
     void CEdNodeGraph::DrawGraph()
     {
-        //ImNodes::EditorContextSet(ImNodesContext);
         LUMINA_PROFILE_SCOPE();
+
+        using namespace ax;
         
-        ImNodes::BeginNodeEditor();
+        NodeEditor::SetCurrentEditor(Context);
 
-        if (ImNodes::IsEditorHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
-        {
-            ImGui::OpenPopup("RightClickMenu");
-        }
+        NodeEditor::Begin("Node Editor");
 
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8.f, 8.f));
-        if (ImGui::BeginPopup("RightClickMenu"))
-        {
-            const ImVec2 MousePos = ImGui::GetMousePosOnOpeningCurrentPopup();
-
-            bool bWasHoveringNode = false;
-            for (SIZE_T i = 0; i < Nodes.size(); ++i)
-            {
-                CEdGraphNode* Node = Nodes[i];
-                if (Node == nullptr)
-                    continue;
-                
-                const int NodeID = (int)Node->GetNodeID();
-                const ImVec2 NodePos = ImNodes::GetNodeScreenSpacePos(NodeID);
-                const ImVec2 NodeSize = ImNodes::GetNodeDimensions(NodeID);
-
-                ImRect NodeRect(NodePos, NodePos + NodeSize);
-
-                if (NodeRect.Contains(MousePos))
-                {
-                    if (ImGui::BeginMenu(Node->GetNodeDisplayName().c_str()))
-                    {
-                        if (ImGui::MenuItem("Destroy"))
-                        {
-                            NodesToDestroy.push(Node);
-                        }
-
-                        Node->DrawContextMenu();
-                        
-                        ImGui::EndMenu();
-                    }
-                    
-                    bWasHoveringNode = true;
-                    break;
-                }
-            }
-
-            if (!bWasHoveringNode)
-            {
-                if (ImGui::BeginMenu("New Node"))
-                {
-                    for (CClass* NodeClass : SupportedNodes)
-                    {
-                        CEdGraphNode* CDO = Cast<CEdGraphNode>(NodeClass->GetDefaultObject());
-                        if (ImGui::MenuItem(CDO->GetNodeDisplayName().c_str()))
-                        {
-                            CEdGraphNode* NewNode = CreateNode(NodeClass);
-                            uint64 NodeID = NewNode->NodeID;
-                            ImNodes::SetNodeScreenSpacePos(NodeID, MousePos);
-                            ImVec2 NodePos = ImNodes::GetNodeGridSpacePos(NodeID);
-                            NewNode->SetGridPos(NodePos.x, NodePos.y);
-                        }
-                    }
-                    ImGui::EndMenu();
-                }
-            }
-    
-            ImGui::EndPopup();
-        }
-        ImGui::PopStyleVar();
+        Graph::GraphNodeBuilder NodeBuilder;
 
         TVector<TPair<CEdNodeGraphPin*, CEdNodeGraphPin*>> Links;
         Links.reserve(40);
         
-        THashMap<uint32, CEdNodeGraphPin*> PinMap;
-        PinMap.reserve(40);
-
-        for (uint64 i = 0; i < Nodes.size(); ++i)
+        for (CEdGraphNode* Node : Nodes)
         {
-            CEdGraphNode* Node = Nodes[i];
-            if (Node == nullptr)
-                continue;
-            
-            uint64 NodeID = Node->GetNodeID();
-            
-            ImNodes::PushColorStyle(ImNodesCol_TitleBar, Node->GetNodeTitleColor());
+            NodeBuilder.Begin(Node->GetNodeID());
 
-            ImNodes::BeginNode(NodeID);
-
-            if (!Node->bInitialPosSet)
+            if (!Node->WantsTitlebar())
             {
-                ImNodes::SetNodeGridSpacePos(NodeID, { Node->GetNodeX(), Node->GetNodeY() });
-                Node->bInitialPosSet = true;
+                ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
             }
-
-            ImVec2 NodePos = ImNodes::GetNodeGridSpacePos(NodeID);
-            Node->SetGridPos(NodePos.x, NodePos.y);
-
-            ImNodes::BeginNodeTitleBar();
             
+            NodeBuilder.Header(ImGui::ColorConvertU32ToFloat4(Node->GetNodeTitleColor()));
+            
+            if (!Node->WantsTitlebar())
+            {
+                ImGui::PopStyleVar();
+            }
+            
+            ImGui::Spring(0);
             Node->DrawNodeTitleBar();
-            ImGui::Dummy(ImVec2(Node->GetMinNodeSize().x, 0.1f));
-            
-            ImNodes::EndNodeTitleBar();
+            ImGui::Spring(1);
+            ImGui::Dummy(ImVec2(Node->GetMinNodeTitleBarSize()));
+            ImGui::Spring(0);
+            NodeBuilder.EndHeader();
 
-            const TVector<CEdNodeGraphPin*>& OutputPins = Node->GetOutputPins();
-            for (uint64 j = 0; j < OutputPins.size(); ++j)
+            if (Node->GetInputPins().empty())
             {
-                CEdNodeGraphPin* Pin = OutputPins[j];
-    
-                ImNodes::PushColorStyle(ImNodesCol_Pin, Pin->GetPinColor());
-    
-                ImNodesPinShape Shape = (Pin->HasConnection()) ? ImNodesPinShape_QuadFilled : ImNodesPinShape_Quad;
-    
-                ImNodes::BeginOutputAttribute(Pin->GetGUID(), Shape);
-                
-                ImGui::TextUnformatted(Pin->GetPinName().c_str());
-
-                ImGui::SameLine();
-            
-                if (Pin->HasConnection() && Pin->ShouldHideDuringConnection())
-                {
-                    ImGui::Dummy(ImVec2(0.0f, 1.0f));
-                }
-                else
-                {
-                    float DrawWidth = Pin->DrawPin();
-                }
-    
-                ImNodes::EndOutputAttribute();
-    
-                ImNodes::PopColorStyle();
-    
-                ImGui::Spacing();
-    
-                PinMap.insert_or_assign(Pin->GetGUID(), Pin);
-            }
-
-            const TVector<CEdNodeGraphPin*>& InputPins = Node->GetInputPins();
-            for (uint64 j = 0; j < InputPins.size(); ++j)
-            {
-                CEdNodeGraphPin* Pin = InputPins[j];
-                
-                ImNodes::PushColorStyle(ImNodesCol_Pin, Pin->GetPinColor());
-                
-                ImNodesPinShape Shape = (Pin->HasConnection()) ? ImNodesPinShape_CircleFilled : ImNodesPinShape_Circle;
-                
-                ImNodes::BeginInputAttribute(Pin->GetGUID(), Shape);
-
-                ImGui::TextUnformatted(Pin->GetPinName().c_str());
-                
-                ImGui::SameLine();
-                
-                if (Pin->HasConnection() && Pin->ShouldHideDuringConnection())
-                {
-                    ImGui::Dummy(ImVec2(1.0f, 1.0f));
-                }
-                else
-                {
-                    Pin->DrawPin();
-                }
-                
-                ImNodes::EndInputAttribute();
-                
-                ImNodes::PopColorStyle();
-                
-                ImGui::Spacing();
-                
-                PinMap.insert_or_assign(Pin->GetGUID(), Pin);
+                ImGui::BeginVertical("inputs", ImVec2(0,0), 0.0f);
+                ImGui::Dummy(ImVec2(0,0));
+                ImGui::EndVertical();
             }
             
-            for (uint64 j = 0; j < InputPins.size(); ++j)
+            for (CEdNodeGraphPin* InputPin : Node->GetInputPins())
             {
-                CEdNodeGraphPin* InputPin = InputPins[j];
-                
-                Assert(InputPin->GetConnections().size() <= 1)
-
                 for (CEdNodeGraphPin* Connection : InputPin->GetConnections())
                 {
                     Links.emplace_back(TPair(InputPin, Connection));
                 }
+                
+                NodeBuilder.Input(InputPin->GetGUID());
+
+                ImGui::PushID(InputPin);
+                {
+                    DrawPinIcon(InputPin->HasConnection(), 255.0f, ImGui::ColorConvertU32ToFloat4(InputPin->GetPinColor()));
+                    ImGui::Spring(0);
+                    //if (!InputPin->HasConnection() || !InputPin->ShouldHideDuringConnection())
+                    //{
+                    //    InputPin->DrawPin();
+                    //}
+                    ImGui::TextUnformatted(InputPin->GetPinName().c_str());
+                    ImGui::Spring(0);
+                }
+                ImGui::PopID();
+                
+                NodeBuilder.EndInput();
             }
-
-            if (Node->HasError())
-            {
-                FString ErrorString("ERROR: " + Node->GetError());
-    
-                ImVec2 textPos = ImGui::GetCursorScreenPos();
-                ImVec2 textSize = ImGui::CalcTextSize(ErrorString.c_str());
-
-                float padding = 4.0f;
-                ImVec2 bgMin(textPos.x - padding, textPos.y - padding);
-                ImVec2 bgMax(textPos.x + textSize.x + padding, textPos.y + textSize.y + padding);
-
-                ImDrawList* drawList = ImGui::GetWindowDrawList();
-                drawList->AddRectFilled(bgMin, bgMax, IM_COL32(50, 0, 0, 200), 4.0f);
-
-                // Draw the text over the background
-                ImGui::TextColored(ImVec4(1, 1, 1, 1), ErrorString.c_str());
-            }
-
             
-            ImNodes::EndNode();
-            ImNodes::PopColorStyle();
+            
+            for (CEdNodeGraphPin* OutputPin : Node->GetOutputPins())
+            {
+                NodeBuilder.Output(OutputPin->GetGUID());
+                
+                ImGui::PushID(OutputPin);
+                {
+                    ImGui::Spring(0);
+                    //if (!OutputPin->HasConnection() || !OutputPin->ShouldHideDuringConnection())
+                    //{
+                    //    OutputPin->DrawPin();
+                    //}
+                    ImGui::Spring(1, 1);
+                    ImGui::TextUnformatted(OutputPin->GetPinName().c_str());
+                    ImGui::Spring(0);
+                    DrawPinIcon(OutputPin->HasConnection(), 255.0f, ImGui::ColorConvertU32ToFloat4(OutputPin->GetPinColor()));
+                }
+                ImGui::PopID();
 
+                NodeBuilder.EndOutput();
+            }
+            
+            NodeBuilder.End(Node->WantsTitlebar());
         }
+
+        NodeEditor::Suspend();
+        {
+            if (NodeEditor::ShowBackgroundContextMenu())
+            {
+                ImGui::OpenPopup("Create New Node");
+            }
+
+            if (ImGui::BeginPopup("Create New Node"))
+            {
+                DrawGraphContextMenu();
+            
+                ImGui::EndPopup();
+            }
+        }
+        
+        NodeEditor::Resume();
 
         bool bAnyNodeSelected = false;
         for (CEdGraphNode* Node : Nodes)
         {
-            if (ImNodes::IsNodeSelected(Node->GetNodeID()))
+            if (NodeEditor::IsNodeSelected(Node->GetNodeID()))
             {
                 bAnyNodeSelected = true;
                 if (NodeSelectedCallback)
@@ -312,69 +187,87 @@ namespace Lumina
                 NodeSelectedCallback(nullptr);
             }
         }
-
-        for (int i = 0; i < Links.size(); ++i)
-        {
-            const TPair<CEdNodeGraphPin*, CEdNodeGraphPin*>& Pair = Links[i];
         
-            ImNodes::Link(i, Pair.first->GetGUID(), Pair.second->GetGUID());
+        uint32 LinkID = 1;
+        for (auto& [Start, End] : Links)
+        {
+            NodeEditor::Link(LinkID++, Start->GetGUID(), End->GetGUID());
         }
-    
-        ImNodes::MiniMap(0.2f, ImNodesMiniMapLocation_BottomRight);
-        ImNodes::EndNodeEditor();
         
-        int Start, End;
-        if (ImNodes::IsLinkCreated(&Start, &End))
+        if (NodeEditor::BeginCreate())
         {
-            CEdNodeGraphPin* StartPin = nullptr;
-            CEdNodeGraphPin* EndPin = nullptr;
-    
-            for (CEdGraphNode* Node : Nodes)
+            NodeEditor::PinId StartPinID, EndPinID;
+            if (NodeEditor::QueryNewLink(&StartPinID, &EndPinID))
             {
-                StartPin = Node->GetPin(Start, ENodePinDirection::Output);
-                if (StartPin)
+                if (((StartPinID && EndPinID) && (StartPinID != EndPinID)) && NodeEditor::AcceptNewItem())
                 {
-                    break;
+                    CEdNodeGraphPin* StartPin = nullptr;
+                    CEdNodeGraphPin* EndPin = nullptr;
+
+                    for (CEdGraphNode* Node : Nodes)
+                    {
+                        StartPin = Node->GetPin(StartPinID.Get(), ENodePinDirection::Output);
+                        if (StartPin) break;
+                    }
+
+                    for (CEdGraphNode* Node : Nodes)
+                    {
+                        EndPin = Node->GetPin(EndPinID.Get(), ENodePinDirection::Input);
+                        if (EndPin) break;
+                    }
+
+                    bool bValid = true;
+
+                    if (!StartPin || !EndPin || StartPin == EndPin || StartPin->OwningNode == EndPin->OwningNode)
+                    {
+                        bValid = false;
+                    }
+
+                    if (EndPin && EndPin->HasConnection())
+                    {
+                        bValid = false;
+                    }
+
+                    if (bValid)
+                    {
+                        StartPin->AddConnection(EndPin);
+                        EndPin->AddConnection(StartPin);
+
+                        ValidateGraph();
+                    }
                 }
             }
+        }
+        NodeEditor::EndCreate();
+        
+        
+        if (NodeEditor::BeginDelete())
+        {
 
-            for (CEdGraphNode* Node : Nodes)
+            NodeEditor::NodeId NodeId = 0;
+            while (NodeEditor::QueryDeletedNode(&NodeId))
             {
-                EndPin = Node->GetPin(End, ENodePinDirection::Input);
-                if (EndPin)
+                if (NodeEditor::AcceptDeletedItem())
                 {
-                    break;
+                    NodesToDestroy.push(Nodes[NodeId.Get()]);
                 }
             }
-
-            if (!StartPin || !EndPin || StartPin == EndPin || StartPin->OwningNode == EndPin->OwningNode)
-            {
-                return;
-            }
-
-            if (EndPin->HasConnection())
-            {
-                return; // Disallow connection if the input pin is already occupied
-            }
-
-            // Allow the connection
-            StartPin->AddConnection(EndPin);
-            EndPin->AddConnection(StartPin);
             
-            ValidateGraph();
-        }
-        
-        {
-            int ID;
-            if (ImNodes::IsLinkDestroyed(&ID))
+            NodeEditor::LinkId DeletedLinkId;
+            while (NodeEditor::QueryDeletedLink(&DeletedLinkId))
             {
-                const TPair<CEdNodeGraphPin*, CEdNodeGraphPin*>& Pair = Links[ID];
+                if (NodeEditor::AcceptDeletedItem())
+                {
+                    const TPair<CEdNodeGraphPin*, CEdNodeGraphPin*>& Pair = Links[DeletedLinkId.Get() - 1];
 
-                Pair.first->RemoveConnection(Pair.second);
-                Pair.second->RemoveConnection(Pair.first);
-                ValidateGraph();
+                    Pair.first->RemoveConnection(Pair.second);
+                    Pair.second->RemoveConnection(Pair.first);
+                    ValidateGraph();
+                }
             }
         }
+        NodeEditor::EndDelete();
+
 
         while (!NodesToDestroy.empty())
         {
@@ -415,6 +308,73 @@ namespace Lumina
             ToDestroy->MarkGarbage();
             ValidateGraph();
         }
+    
+        NodeEditor::End();
+        
+        NodeEditor::SetCurrentEditor(nullptr);
+    }
+
+    void CEdNodeGraph::DrawGraphContextMenu()
+    {
+        ImVec2 PopupSize(200, 350);
+        ImGui::SetNextWindowSize(PopupSize, ImGuiCond_Once);
+
+        ImGuiTextFilter Filter;
+        Filter.Draw("Node");
+        
+        THashMap<FName, TVector<CClass*>> CategoryMap;
+        THashMap<FName, bool> Expanded;
+        for (CClass* NodeClass : SupportedNodes)
+        {
+            CEdGraphNode* CDO = Cast<CEdGraphNode>(NodeClass->GetDefaultObject());
+            FName Category = CDO->GetNodeCategory().c_str();
+            
+            if (Filter.PassFilter(CDO->GetNodeDisplayName().c_str()))
+            {
+                CategoryMap[Category].push_back(NodeClass);
+                Expanded[Category] = true;
+            }
+            else
+            {
+                Expanded[Category] = false;
+            }
+        }
+
+        ImVec2 ChildSize = ImVec2(-1, PopupSize.y - 40);
+        if (ImGui::BeginChild("NodeList", ChildSize, false, ImGuiWindowFlags_HorizontalScrollbar))
+        {
+            for (const auto& [Category, NodeClasses] : CategoryMap)
+            {
+                ImGuiTreeNodeFlags Flags = ImGuiTreeNodeFlags_Framed;
+                if (Expanded.at(Category))
+                {
+                    Flags |= ImGuiTreeNodeFlags_DefaultOpen;
+                }
+                
+                if (ImGui::CollapsingHeader(Category.c_str(), Flags))
+                {
+                    ImGui::Indent(10);
+                
+                    for (CClass* NodeClass : NodeClasses)
+                    {
+                        CEdGraphNode* NodeCDO = NodeClass->GetDefaultObject<CEdGraphNode>();
+                        ImGui::PushID(NodeCDO);
+                        if (ImGui::Selectable(NodeCDO->GetNodeDisplayName().c_str()))
+                        {
+                            CEdGraphNode* NewNode = CreateNode(NodeClass);
+                            ax::NodeEditor::SetNodePosition(NewNode->GetNodeID(), ax::NodeEditor::ScreenToCanvas(ImGui::GetMousePosOnOpeningCurrentPopup()));
+                            ImGui::CloseCurrentPopup();
+                        }
+
+                        ImGuiX::ItemTooltip("%s", NodeCDO->GetNodeTooltip().c_str());
+                        ImGui::PopID();
+                    }
+
+                    ImGui::Unindent(10);
+                }
+            }
+            ImGui::EndChild();
+        }
     }
 
 
@@ -452,7 +412,7 @@ namespace Lumina
     {
         SIZE_T NewID = Nodes.size();
         InNode->FullName = InNode->GetNodeDisplayName() + "_" + eastl::to_string(NewID);
-        InNode->NodeID = NewID;
+        InNode->NodeID = NewID + 1;
         InNode->Index = NewID;
 
         Nodes.push_back(InNode);
@@ -469,5 +429,3 @@ namespace Lumina
     }
     
 }
-
-#undef SHOW_DEBUG

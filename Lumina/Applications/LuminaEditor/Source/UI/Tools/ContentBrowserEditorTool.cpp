@@ -46,6 +46,30 @@ namespace Lumina
         
         SelectedPath = FProject::Get().GetProjectContentDirectory().c_str();
 
+        ContentBrowserTileViewContext.DragDropFunction = [this] (FTileViewItem* DropItem)
+        {
+            auto* TypedDroppedItem = (FContentBrowserTileViewItem*)DropItem;
+            if (!TypedDroppedItem->IsDirectory())
+            {
+                return;
+            }
+            
+            const ImGuiPayload* Payload = ImGui::AcceptDragDropPayload(FContentBrowserTileViewItem::DragDropID, ImGuiDragDropFlags_AcceptBeforeDelivery);
+            if (Payload && Payload->IsDelivery())
+            {
+                uintptr_t* RawPtr = (uintptr_t*)Payload->Data;
+                auto* SourceItem = (FContentBrowserTileViewItem*)*RawPtr;
+
+                if (SourceItem == TypedDroppedItem)
+                {
+                    return;
+                }
+
+                HandleContentBrowserDragDrop(TypedDroppedItem, SourceItem);
+                
+            }
+        };
+
         ContentBrowserTileViewContext.DrawItemOverrideFunction = [this] (FTileViewItem* Item) -> bool
         {
             FContentBrowserTileViewItem* ContentItem = static_cast<FContentBrowserTileViewItem*>(Item);
@@ -81,7 +105,11 @@ namespace Lumina
             ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1, 1, 1, 0.05f)); 
             ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1, 1, 1, 0.3f));
             ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(1, 1, 1, 0.5f));
-            if (ImGui::ImageButton("##", ImTexture, ImVec2(125.0f, 125.0f)))
+            
+            ImGui::ImageButton("##", ImTexture, ImVec2(125.0f, 125.0f));
+
+            // Enable double click.
+            if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
             {
                 ImGui::PopStyleColor(3);
                 return true;
@@ -227,7 +255,8 @@ namespace Lumina
 
                 for (auto& Directory : AllPaths)
                 {
-                    ContentBrowserTileView.AddItemToTree<FContentBrowserTileViewItem>(nullptr, Directory);
+                    bool bIsDirectory = std::filesystem::is_directory(Directory.c_str());
+                    ContentBrowserTileView.AddItemToTree<FContentBrowserTileViewItem>(nullptr, Directory, bIsDirectory);
                 }
             }
         };
@@ -307,6 +336,37 @@ namespace Lumina
         ImGui::DockBuilderSplitNode(bottomCenterDockID, ImGuiDir_Right, 0.5f, &bottomRightDockID, &bottomCenterDockID);
 
         ImGui::DockBuilderDockWindow(GetToolWindowName("Content").c_str(), bottomCenterDockID);
+    }
+
+    void FContentBrowserEditorTool::HandleContentBrowserDragDrop(FContentBrowserTileViewItem* Drop, FContentBrowserTileViewItem* Payload)
+    {
+        bool bWroteSomething = false;
+        /** If the payload is a folder, and is empty, we don't need to do much besides moving the folder */
+        if (Payload->IsDirectory())
+        {
+            std::filesystem::path SourcePath = Payload->GetPath().c_str();
+            FString SourceFileName = SourcePath.filename().generic_string().c_str();
+            
+            FString DestPath = Drop->GetPath() + "/" + SourceFileName;
+
+            try
+            {
+                std::filesystem::rename(SourcePath, DestPath.c_str());
+                LOG_INFO("[ContentBrowser] Moved folder {0} -> {1}", SourcePath.string(), DestPath);
+            }
+            catch (const std::filesystem::filesystem_error& e)
+            {
+                LOG_ERROR("[ContentBrowser] Failed to move folder: {0}", e.what());
+            }
+
+            bWroteSomething = true;
+        }
+
+
+        if (bWroteSomething)
+        {
+            RefreshContentBrowser();
+        }
     }
 
     void FContentBrowserEditorTool::DrawDirectoryBrowser(const FUpdateContext& Contxt, bool bIsFocused, ImVec2 Size)

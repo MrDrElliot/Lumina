@@ -119,9 +119,30 @@ namespace Lumina::Reflection
     void FTypeReflector::Bump()
     {
         Solution.DirtyProjectFiles();
+        
+        try
+        {
+            std::filesystem::current_path(Solution.GetParentPath().c_str());
+
+            eastl::string PremakeFile = Solution.GetParentPath() + "/Tools/premake5.exe";
+            eastl::string Command = "\"" + PremakeFile + "\" vs2022";
+
+            int result = std::system(Command.c_str());  // NOLINT(concurrency-mt-unsafe)
+            if (result == -1)
+            {
+                std::cerr << "Failed to launch premake (system() error).\n";
+            }
+            else if (result != 0)
+            {
+                std::cerr << "Premake failed with exit code " << result << "\n";
+            }
+        }
+        catch (const std::filesystem::filesystem_error& e)
+        {
+            std::cerr << "Filesystem error while setting working directory: " << e.what() << "\n";
+        }
     }
-
-
+    
     bool FTypeReflector::WriteGeneratedFiles(const FClangParser& Parser)
     {
         FCodeGenerator Generator(Solution, Parser.ParsingContext.ReflectionDatabase);

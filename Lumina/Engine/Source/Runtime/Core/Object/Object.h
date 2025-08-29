@@ -71,6 +71,9 @@ namespace Lumina
 
         /** Called when a property on this object has been modified externally */
         LUMINA_API virtual void PostPropertyChange(FProperty* ChangedProperty) {}
+
+        /** Renames this object, optionally changing it's package */
+        LUMINA_API virtual bool Rename(const FName& NewName, CPackage* NewPackage = nullptr);
         
     private:
 

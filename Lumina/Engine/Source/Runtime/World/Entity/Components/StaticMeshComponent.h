@@ -12,7 +12,7 @@ namespace Lumina
     struct LUMINA_API SStaticMeshComponent : SMeshComponent
     {
         GENERATED_BODY()
-        ENTITY_COMPONENT()
+        ENTITY_COMPONENT(SStaticMeshComponent);
         
         void SetStaticMesh(const TObjectHandle<CStaticMesh>& InMesh)
         {
@@ -28,7 +28,4 @@ namespace Lumina
         TObjectHandle<CStaticMesh> StaticMesh;
         
     };
-
-    REGISTER_ENTITY_COMPONENT(SStaticMeshComponent);
-
 }

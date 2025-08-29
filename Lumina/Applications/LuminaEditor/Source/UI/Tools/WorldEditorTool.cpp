@@ -420,7 +420,7 @@ namespace Lumina
                         scale != TransformComponent.GetScale())
                     {
                         /** In the editor, we always mark the currently selected entity as needing transform updates */
-                        SelectedEntity.AddComponent<FDirtyTransform>();
+                        SelectedEntity.Emplace<FDirtyTransform>();
                         
                         SelectedEntity.Patch<STransformComponent>([&](auto& Transform)
                         {
@@ -474,19 +474,15 @@ namespace Lumina
                 ImGui::TableNextRow();
                 ImGui::TableSetColumnIndex(0);
 
-                for (TObjectIterator<CStruct> It; It; ++It)
+                for(auto &&[id, type]: entt::resolve())
                 {
-                    CStruct* Struct = *It;
-                    if (Struct->IsChildOf(SEntityComponent::StaticStruct()))
+                    using namespace entt::literals;
+                    std::string StringName(type.info().name());
+                    if (ImGui::Selectable(StringName.c_str(), false, ImGuiSelectableFlags_SpanAllColumns))
                     {
-                        if (auto Fn = FEntityComponentRegistry::Get().GetComponentFn(Struct->GetName().c_str()))
-                        {
-                            if (ImGui::Selectable(Struct->GetName().c_str(), false, ImGuiSelectableFlags_SpanAllColumns))
-                            {
-                                Fn(SelectedEntity.GetHandle(), World->GetMutableEntityRegistry());
-                                bComponentAdded = true;
-                            }
-                        }
+                        void* RegistryPtr = &World->GetMutableEntityRegistry(); // EnTT will try to make a copy if not passed by *.
+                        (void)type.invoke("addcomponent"_hs, {}, SelectedEntity.GetHandle(), RegistryPtr);
+                        bComponentAdded = true;
                     }
                 }
                 
@@ -560,7 +556,7 @@ namespace Lumina
         ToolContext->PushModal("Rename Entity", ImVec2(600.0f, 350.0f), [this, Ent](const FUpdateContext& Context) -> bool
         {
             Entity CopyEntity = Ent;
-            FName& Name = CopyEntity.AddComponent<SNameComponent>().Name;
+            FName& Name = CopyEntity.EmplaceOrReplace<SNameComponent>().Name;
             FString CopyName = Name.ToString();
             
             if (ImGui::InputText("##Name", const_cast<char*>(CopyName.c_str()), 256, ImGuiInputTextFlags_EnterReturnsTrue))
@@ -710,98 +706,106 @@ namespace Lumina
         }
 
         ImGui::BeginChild("EntityEditor", ImGui::GetContentRegionAvail(), true);
+
+        if (ImGui::CollapsingHeader(SelectedEntity.GetComponent<SNameComponent>().Name.c_str(), ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed))
+        {
+            ImGui::BeginDisabled();
+            int ID = (int)SelectedEntity.GetHandle();
+            ImGui::DragInt("ID", &ID);
+            ImGui::InputText("Name", (char*)SelectedEntity.GetComponent<SNameComponent>().Name.c_str(), 256);
+            ImGui::EndDisabled();
+
+            ImGui::Separator();
         
-        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.15f, 0.35f, 0.15f, 1.0f));
-        if (ImGui::Button("Add Component", ImVec2(ImGui::GetContentRegionAvail().x / 2, 0.0f)))
-        {
-            PushAddComponentModal(SelectedEntity);
-        }
-        ImGui::PopStyleColor();
-
-        ImGui::SameLine();
-
-        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.45f, 0.15f, 0.15f, 1.0f));
-        if (ImGui::Button("Destroy", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f)))
-        {
-            EntityDestroyRequests.push(SelectedEntity);
-        }
-        ImGui::PopStyleColor();
-
-        ImGui::Spacing();
-        ImGui::SeparatorText("Components");
-        ImGui::Spacing();
-        
-        for (FPropertyTable* Table : PropertyTables)
-        {
-            ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.0f);
-            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(4, 6));
-
-            ImVec2 cursor = ImGui::GetCursorScreenPos();
-            ImVec2 size = ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetFrameHeight());
-            ImU32 bgColor = IM_COL32(60, 60, 60, 255);
-            ImGui::GetWindowDrawList()->AddRectFilled(cursor, ImVec2(cursor.x + size.x, cursor.y + size.y), bgColor);
-
-            ImGui::PushStyleColor(ImGuiCol_Header,        0);
-            ImGui::PushStyleColor(ImGuiCol_HeaderHovered, 0);
-            ImGui::PushStyleColor(ImGuiCol_HeaderActive,  0);
-
-            if (ImGui::CollapsingHeader(Table->GetType()->GetName().c_str(), ImGuiTreeNodeFlags_DefaultOpen))
+            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.15f, 0.35f, 0.15f, 1.0f));
+            if (ImGui::Button("Add Component", ImVec2(ImGui::GetContentRegionAvail().x / 2, 0.0f)))
             {
-                ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.45f, 0.15f, 0.15f, 1.0f));
-                ImGui::PushID(Table);
-                
-                bool bWasRemoved = false;
-                if (Table->GetType() != STransformComponent::StaticStruct() && Table->GetType() != SNameComponent::StaticStruct())
-                {
-                    if (ImGui::Button("Remove", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f)))
-                    {
-                        for (const auto& [ID, Set] : World->GetMutableEntityRegistry().storage())
-                        {
-                            if (Set.contains(SelectedEntity.GetHandle()))
-                            {
-                                void* ComponentPtr = Set.value(SelectedEntity.GetHandle());
-                                if (ComponentPtr == nullptr)
-                                {
-                                    continue;
-                                }
-                    
-                                SEntityComponent* EntityComponent = (SEntityComponent*)ComponentPtr;
-                                CStruct* Type = EntityComponent->GetType();
+                PushAddComponentModal(SelectedEntity);
+            }
+            ImGui::PopStyleColor();
 
-                                if (Table->GetType() == Type)
+            ImGui::SameLine();
+
+            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.45f, 0.15f, 0.15f, 1.0f));
+            if (ImGui::Button("Destroy", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f)))
+            {
+                EntityDestroyRequests.push(SelectedEntity);
+            }
+            ImGui::PopStyleColor();
+
+            ImGui::Spacing();
+            ImGui::SeparatorText("Components");
+            ImGui::Spacing();
+        
+            for (FPropertyTable* Table : PropertyTables)
+            {
+                ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.0f);
+                ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(4, 6));
+
+                ImVec2 cursor = ImGui::GetCursorScreenPos();
+                ImVec2 size = ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetFrameHeight());
+                ImU32 bgColor = IM_COL32(60, 60, 60, 255);
+                ImGui::GetWindowDrawList()->AddRectFilled(cursor, ImVec2(cursor.x + size.x, cursor.y + size.y), bgColor);
+
+                ImGui::PushStyleColor(ImGuiCol_Header,        0);
+                ImGui::PushStyleColor(ImGuiCol_HeaderHovered, 0);
+                ImGui::PushStyleColor(ImGuiCol_HeaderActive,  0);
+
+                if (ImGui::CollapsingHeader(Table->GetType()->GetName().c_str(), ImGuiTreeNodeFlags_DefaultOpen))
+                {
+                    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.45f, 0.15f, 0.15f, 1.0f));
+                    ImGui::PushID(Table);
+                
+                    bool bWasRemoved = false;
+                    if (Table->GetType() != STransformComponent::StaticStruct() && Table->GetType() != SNameComponent::StaticStruct())
+                    {
+                        if (ImGui::Button("Remove", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f)))
+                        {
+                            for (const auto& [ID, Set] : World->GetMutableEntityRegistry().storage())
+                            {
+                                if (Set.contains(SelectedEntity.GetHandle()))
                                 {
-                                    Set.remove(SelectedEntity.GetHandle());
-                                    bWasRemoved = true;
-                                    break;
+                                    using namespace entt::literals;
+
+                                    auto ReturnValue = entt::resolve(Set.type()).invoke("staticstruct"_hs, {});
+                                    void** Type = ReturnValue.try_cast<void*>();
+
+                                    if (Table->GetType() == *(CStruct**)Type)
+                                    {
+                                        Set.remove(SelectedEntity.GetHandle());
+                                        bWasRemoved = true;
+                                        break;
+                                    }
                                 }
                             }
                         }
                     }
-                }
                 
-                ImGui::PopID();
-                ImGui::PopStyleColor();
+                    ImGui::PopID();
+                    ImGui::PopStyleColor();
 
-                if (bWasRemoved)
-                {
-                    ImGui::PopStyleColor(3);
-                    ImGui::PopStyleVar(2);
-                    RebuildPropertyTables();
-                    break;
+                    if (bWasRemoved)
+                    {
+                        ImGui::PopStyleColor(3);
+                        ImGui::PopStyleVar(2);
+                        RebuildPropertyTables();
+                        break;
+                    }
+                
+                
+                    ImGui::Indent();
+                    Table->DrawTree();
+                    ImGui::Unindent();
                 }
-                
-                
-                ImGui::Indent();
-                Table->DrawTree();
-                ImGui::Unindent();
+
+                ImGui::PopStyleColor(3);
+                ImGui::PopStyleVar(2);
+
+                ImGui::Spacing();
             }
 
-            ImGui::PopStyleColor(3);
-            ImGui::PopStyleVar(2);
-
-            ImGui::Spacing();
         }
-
+        
         ImGui::EndChild();
     }
 
@@ -826,29 +830,17 @@ namespace Lumina
             {
                 if (Set.contains(SelectedEntity.GetHandle()))
                 {
-                    void* ComponentPtr = Set.value(SelectedEntity.GetHandle());
-                    if (ComponentPtr == nullptr)
+                    if (auto func = entt::resolve(Set.type()).func("staticstruct"_hs); func)
                     {
-                        continue;
-                    }
-                    
-                    SEntityComponent* EntityComponent = (SEntityComponent*)ComponentPtr;
-                    CStruct* Type = EntityComponent->GetType();
-                    if (Type != nullptr)
-                    {
-                        FPropertyTable* NewTable = Memory::New<FPropertyTable>(ComponentPtr, Type);
-                        NewTable->SetPostEditCallback([this](const FPropertyChangedEvent& Event)
+                        auto ReturnValue = func.invoke(Set.type());
+                        void** Type = ReturnValue.try_cast<void*>();
+                        
+                        if (Type != nullptr)
                         {
-                            if (Event.OuterStruct->IsChildOf(STransformComponent::StaticStruct()))
-                            {
-                                //SelectedEntity.GetOrAddComponent<FDirtyRenderStateComponent>().bNeedsTransformUpdate = true;
-                            }
-                            else if (Event.OuterStruct->IsChildOf(SRenderComponent::StaticStruct()))
-                            {
-                                //SelectedEntity.GetOrAddComponent<FDirtyRenderStateComponent>().bNeedsRenderProxyUpdate = true;
-                            }
-                        });
-                        PropertyTables.emplace_back(NewTable)->RebuildTree();
+                            void* ComponentPtr = Set.value(SelectedEntity.GetHandle());
+                            FPropertyTable* NewTable = Memory::New<FPropertyTable>(ComponentPtr, *(CStruct**)Type);
+                            PropertyTables.emplace_back(NewTable)->RebuildTree();
+                        }
                     }
                 }
             }
@@ -857,7 +849,7 @@ namespace Lumina
 
     void FWorldEditorTool::CreateEntity()
     {
-        World->ConstructEntity("New Entity");
+        World->ConstructEntity("Entity");
         OutlinerListView.MarkTreeDirty();
     }
 

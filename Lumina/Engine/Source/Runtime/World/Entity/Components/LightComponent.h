@@ -10,7 +10,7 @@ namespace Lumina
     struct LUMINA_API SPointLightComponent : SRenderComponent
     {
         GENERATED_BODY()
-        ENTITY_COMPONENT()
+        ENTITY_COMPONENT(SPointLightComponent);
         
         LUM_PROPERTY(Editable, Color, Category = "Light")
         glm::vec3 LightColor = glm::vec3(1.0f);
@@ -27,7 +27,7 @@ namespace Lumina
     struct LUMINA_API SSpotLightComponent : SRenderComponent
     {
         GENERATED_BODY()
-        ENTITY_COMPONENT()
+        ENTITY_COMPONENT(SSpotLightComponent);
 
         LUM_PROPERTY(Editable, Color, Category = "Light")
         glm::vec3 LightColor = glm::vec3(1.0f);
@@ -68,7 +68,7 @@ namespace Lumina
     struct LUMINA_API SDirectionalLightComponent : SRenderComponent
     {
         GENERATED_BODY()
-        ENTITY_COMPONENT()
+        ENTITY_COMPONENT(SDirectionalLightComponent);
 
         LUM_PROPERTY(Editable, Color, Category = "Light")
         glm::vec3 Color = glm::vec4(1.0f);
@@ -82,9 +82,4 @@ namespace Lumina
         LUM_PROPERTY(Editable)
         bool bCastShadows;
     };
-
-    REGISTER_ENTITY_COMPONENT(SPointLightComponent);
-    REGISTER_ENTITY_COMPONENT(SSpotLightComponent);
-    REGISTER_ENTITY_COMPONENT(SDirectionalLightComponent);
-
 }

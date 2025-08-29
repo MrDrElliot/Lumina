@@ -32,10 +32,10 @@ namespace Lumina
     };
     
     LUM_STRUCT()
-    struct LUMINA_API SEnvironmentComponent : SEntityComponent
+    struct LUMINA_API SEnvironmentComponent
     {
         GENERATED_BODY()
-        ENTITY_COMPONENT()
+        ENTITY_COMPONENT(SEnvironmentComponent);
         
         LUM_PROPERTY(Editable, Category = "Lighting")
         SAmbientLight AmbientLight;
@@ -47,6 +47,4 @@ namespace Lumina
         SSSAOInfo SSAOInfo;
         
     };
-
-    REGISTER_ENTITY_COMPONENT(SEnvironmentComponent);
 }

@@ -70,4 +70,9 @@ namespace Lumina
     {
         
     }
+
+    bool CObject::Rename(const FName& NewName, CPackage* NewPackage)
+    {
+        return false;
+    }
 }

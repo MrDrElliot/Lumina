@@ -8,10 +8,10 @@
 namespace Lumina
 {
     LUM_STRUCT()
-    struct LUMINA_API STransformComponent : SEntityComponent
+    struct LUMINA_API STransformComponent
     {
         GENERATED_BODY()
-        ENTITY_COMPONENT()
+        ENTITY_COMPONENT(STransformComponent);
         
         STransformComponent() = default;
         STransformComponent(const FTransform& InTransform)
@@ -64,9 +64,7 @@ namespace Lumina
         
         glm::mat4 CachedMatrix = WorldTransform.GetMatrix();
     };
-
-    REGISTER_ENTITY_COMPONENT(STransformComponent);
-
-    struct FDirtyTransform : SEntityComponent { };
+    
+    struct FDirtyTransform { };
 
 }

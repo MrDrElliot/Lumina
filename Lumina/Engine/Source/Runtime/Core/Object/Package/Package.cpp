@@ -189,8 +189,6 @@ namespace Lumina
         
         PackageHeader.ImportTableOffset = Writer.Tell();
         Writer << Package->ImportTable;
-
-
         
         for (CObject* Export : SaveContext.Exports)
         {
@@ -296,6 +294,7 @@ namespace Lumina
         if (ObjectPackage != this)
         {
             ObjectPackage->LoadObject(Object);
+            Object->SetFlag(OF_Public);
             return;
         }
 
@@ -343,10 +342,9 @@ namespace Lumina
         {
             LOG_WARN("Mismatched size when loading object {}: expected {}, got {}", Object->GetName().ToString(), ExpectedSize, ActualSize);
         }
-
-
+        
         Object->ClearFlags(OF_NeedsLoad);
-
+        Object->SetFlag(OF_WasLoaded);
         
         Object->PostLoad();
         

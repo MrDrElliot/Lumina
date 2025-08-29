@@ -33,6 +33,8 @@ namespace Lumina
 
         virtual void OnSelectionStateChanged() { }
 
+        virtual void SetDragDropPayloadData() const { }
+        
         virtual FInlineString GetDisplayName() const
         {
             return GetName().c_str();
@@ -66,6 +68,9 @@ namespace Lumina
 
         /** Called when an item has been selected in the tree */
         TFunction<void(FTileViewItem*)>                         ItemSelectedFunction;
+
+        /** Called when we have a drag-drop operation on a target */
+        TFunction<void(FTileViewItem*)>                         DragDropFunction;
     };
 
     class LUMINA_API FTileViewWidget
@@ -98,7 +103,7 @@ namespace Lumina
         
         void RebuildTree(FTileViewContext Context, bool bKeepSelections = false);
         
-        void DrawItem(FTileViewItem* ItemToDraw, const FTileViewContext& Context);
+        void DrawItem(FTileViewItem* ItemToDraw, const FTileViewContext& Context, ImVec2 DrawSize);
 
         void SetSelection(FTileViewItem* Item, FTileViewContext Context);
         void ClearSelection();

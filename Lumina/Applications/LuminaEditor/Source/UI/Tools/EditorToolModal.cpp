@@ -42,8 +42,12 @@ namespace Lumina
         
         ImGui::OpenPopup(ActiveModal->Title.c_str());
         
-        ImGui::SetNextWindowSize(ActiveModal->Size);
+        ImGuiViewport* viewport = ImGui::GetMainViewport();
+        ImVec2 center = ImVec2(viewport->GetCenter().x, viewport->GetCenter().y);
 
+        ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+        ImGui::SetNextWindowSize(ActiveModal->Size, ImGuiCond_Appearing);
+        
         if (ImGui::BeginPopupModal(ActiveModal->Title.c_str(), nullptr, ImGuiWindowFlags_NoResize))
         {
             if (ActiveModal->DrawModal(UpdateContext))

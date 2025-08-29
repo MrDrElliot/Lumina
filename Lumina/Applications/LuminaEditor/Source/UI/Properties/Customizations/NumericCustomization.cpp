@@ -15,8 +15,12 @@ namespace Lumina
 
     EPropertyChangeOp FVec2PropertyCustomization::DrawProperty(TSharedPtr<FPropertyHandle> Property)
     {
+        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
+        
         ImGui::DragFloat2("##", glm::value_ptr(DisplayValue), 0.01f);
 
+        ImGui::PopItemWidth();
+        
         return ImGui::IsItemEdited() ? EPropertyChangeOp::Updated : EPropertyChangeOp::None;
     }
 
@@ -41,6 +45,8 @@ namespace Lumina
     {
         FStructProperty* StructProperty = static_cast<FStructProperty*>(Property->Property);
 
+        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
+
         if (StructProperty->Metadata.HasMetadata("Color"))
         {
             ImGui::ColorEdit3("##", glm::value_ptr(DisplayValue));
@@ -49,6 +55,8 @@ namespace Lumina
         {
             ImGui::DragFloat3("##", glm::value_ptr(DisplayValue), 0.01f);
         }
+        
+        ImGui::PopItemWidth();
 
         return ImGui::IsItemEdited() ? EPropertyChangeOp::Updated : EPropertyChangeOp::None;
     }
@@ -74,6 +82,8 @@ namespace Lumina
     {
         FStructProperty* StructProperty = static_cast<FStructProperty*>(Property->Property);
 
+        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
+
         if (StructProperty->Metadata.HasMetadata("Color"))
         {
             ImGui::ColorEdit4("##", glm::value_ptr(DisplayValue));
@@ -83,6 +93,8 @@ namespace Lumina
             ImGui::DragFloat4("##", glm::value_ptr(DisplayValue), 0.01f);
         }
 
+        ImGui::PopItemWidth();
+        
         return ImGui::IsItemEdited() ? EPropertyChangeOp::Updated : EPropertyChangeOp::None;
     }
 
@@ -108,6 +120,8 @@ namespace Lumina
         constexpr float HeaderWidth = 24;
 
         bool bWasChanged = false;
+        
+        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
         
         ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(0, 2));
         if (ImGui::BeginTable("Transform", 2, ImGuiTableFlags_None))
@@ -169,6 +183,7 @@ namespace Lumina
             ImGui::EndTable();
         }
         ImGui::PopStyleVar();
+        ImGui::PopItemWidth();
 
         return bWasChanged ? EPropertyChangeOp::Updated : EPropertyChangeOp::None;
         

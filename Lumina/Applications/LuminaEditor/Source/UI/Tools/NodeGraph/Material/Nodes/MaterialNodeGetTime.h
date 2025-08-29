@@ -13,6 +13,7 @@ namespace Lumina
         GENERATED_BODY()
     public:
 
+        FInlineString GetNodeCategory() const override { return "Utility"; }
         FString GetNodeDisplayName() const override { return "Time"; }
         void* GetNodeDefaultValue() override { return nullptr; }
         uint32 GenerateExpression(FMaterialCompiler* Compiler) override;

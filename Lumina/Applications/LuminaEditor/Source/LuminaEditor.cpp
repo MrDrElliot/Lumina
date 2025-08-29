@@ -4,6 +4,7 @@
 #include "Core/Module/ModuleManager.h"
 #include "Renderer/RenderResource.h"
 #include "UI/EditorUI.h"
+#include "World/Entity/Components/Component.h"
 
 namespace Lumina
 {
@@ -16,7 +17,12 @@ namespace Lumina
             FProject::Get().LoadProject(Project.value());
         }
         
-        return FEngine::Init(App);
+        
+        bool bSuccess = FEngine::Init(App);
+
+        entt::locator<entt::meta_ctx>::reset(GetEngineMetaContext());
+
+        return bSuccess;
     }
 
     IDevelopmentToolUI* FEditorEngine::CreateDevelopmentTools()

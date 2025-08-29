@@ -1,62 +1,34 @@
 ﻿#pragma once
+#include "Module/API.h"
 #include "Containers/Array.h"
-#include "Core/Functional/Function.h"
 #include "Core/Singleton/Singleton.h"
-#include "entt/entt.hpp"
-#include "World/Entity/Registry/EntityRegistry.h"
 
 namespace Lumina
 {
-    struct SEntityComponent;
-    class FEntityRegistry;
+    using RegisterFunc = void(*)();
 
-    using EntityComponentAddFn = SEntityComponent* (*)(entt::entity, FEntityRegistry&);
-    
     class LUMINA_API FEntityComponentRegistry : public TSingleton<FEntityComponentRegistry>
     {
     public:
 
-        struct FRegistration
+        void AddDeferred(RegisterFunc fn)
         {
-            const char* Name;
-            EntityComponentAddFn Fn;
-        };
-
-        void RegisterComponent(const char* Name, EntityComponentAddFn Fn)
-        {
-            Registrations.push_back({ Name, Fn });
+            Registrants.push_back(fn);
         }
 
-        EntityComponentAddFn GetComponentFn(const char* Name)
+        void RegisterAll()
         {
-            for (auto& reg : Registrations)
+            while (!Registrants.empty())
             {
-                if (strcmp(reg.Name, Name) == 0)
-                    return reg.Fn;
+                auto fn = Registrants.back();
+                Registrants.pop_back();
+
+                fn();
             }
-            return nullptr;
         }
 
     private:
-        TFixedVector<FRegistration, 200> Registrations;
+        
+        TVector<RegisterFunc> Registrants;
     };
 }
-
-
-namespace Lumina
-{
-    #define REGISTER_ENTITY_COMPONENT(Type)                                      \
-        namespace {                                                              \
-            SEntityComponent* AddComponent_##Type(entt::entity e, FEntityRegistry& reg) \
-            {                                                                     \
-                return &reg.emplace_or_replace<Type>(e);                          \
-            }                                                                     \
-        }                                                                         \
-        struct AutoRegister_##Type {                                              \
-            AutoRegister_##Type() {                                               \
-                FEntityComponentRegistry::Get().RegisterComponent(#Type, AddComponent_##Type); \
-            }                                                                     \
-        };                                                                        \
-        inline AutoRegister_##Type AutoRegisterInstance_##Type
-}
-

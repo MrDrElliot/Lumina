@@ -21,7 +21,9 @@ namespace Lumina
         
         CObject* Obj = ObjectHandle.Resolve();
         bool bWasChanged = false;
-        
+
+        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
+
         ImGui::PushID(this);
         if (ImGui::BeginChild("OP", ImVec2(-1, 0), ImGuiChildFlags_AutoResizeY, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse))
         {
@@ -161,6 +163,9 @@ namespace Lumina
         ImGui::EndChild();
 
         ImGui::PopID();
+
+        ImGui::PopItemWidth();
+        
         return bWasChanged ? EPropertyChangeOp::Updated : EPropertyChangeOp::None;
     }
 

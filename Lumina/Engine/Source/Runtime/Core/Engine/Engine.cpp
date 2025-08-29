@@ -6,6 +6,7 @@
 #include "Core/Object/GarbageCollection/GarbageCollector.h"
 #include "Core/Profiler/Profile.h"
 #include "Input/InputSubsystem.h"
+#include "Physics/Physics.h"
 #include "Renderer/RenderContext.h"
 #include "World/WorldManager.h"
 #include "Renderer/RenderManager.h"
@@ -30,11 +31,14 @@ namespace Lumina
 
         
         FTaskSystem::Get().Initialize();
+        Physics::Initialize();
         
         RenderManager = EngineSubsystems.AddSubsystem<FRenderManager>();
         EngineViewport = GRenderContext->CreateViewport(Windowing::GetPrimaryWindowHandle()->GetExtent());
         
         ProcessNewlyLoadedCObjects();
+        
+        FEntityComponentRegistry::Get().RegisterAll();
         
         InputSubsystem = EngineSubsystems.AddSubsystem<FInputSubsystem>();
         AssetRegistry = EngineSubsystems.AddSubsystem<FAssetRegistry>();
@@ -68,7 +72,8 @@ namespace Lumina
         EngineSubsystems.RemoveSubsystem<FAssetRegistry>();
         EngineSubsystems.RemoveSubsystem<FAssetManager>();
         EngineSubsystems.RemoveSubsystem<FWorldManager>();
-
+        Physics::Shutdown();
+        
         ShutdownCObjectSystem();
         
         EngineViewport.SafeRelease();
@@ -204,7 +209,12 @@ namespace Lumina
             Application->RenderDeveloperTools(UpdateContext);
         }
     }
-    #endif
+
+    entt::locator<entt::meta_ctx>::node_type FEngine::GetEngineMetaContext() const
+    {
+        return entt::locator<entt::meta_ctx>::handle(); 
+    }
+#endif
     
     void FEngine::SetEngineViewportSize(const FIntVector2D& InSize)
     {

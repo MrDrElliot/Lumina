@@ -13,7 +13,7 @@ namespace Lumina
         }
     
         float PaneWidth = ImGui::GetContentRegionAvail().x;
-        constexpr float ThumbnailSize = 125.0f;
+        constexpr float ThumbnailSize = 100.0f;
         float CellSize = ThumbnailSize + ImGui::GetStyle().ItemSpacing.x;
         int ItemsPerRow = std::max(1, int(PaneWidth / CellSize));
 
@@ -30,7 +30,7 @@ namespace Lumina
             ImGui::PushID(Item);
             ImGui::BeginGroup();
 
-            DrawItem(Item, Context);
+            DrawItem(Item, Context, ImVec2(ThumbnailSize, ThumbnailSize));
 
             ImFont* Font = ImGui::GetIO().Fonts->Fonts[3];
             ImGui::PushFont(Font);
@@ -91,7 +91,7 @@ namespace Lumina
         bDirty = false;
     }
 
-    void FTileViewWidget::DrawItem(FTileViewItem* ItemToDraw, const FTileViewContext& Context)
+    void FTileViewWidget::DrawItem(FTileViewItem* ItemToDraw, const FTileViewContext& Context, ImVec2 DrawSize)
     {
         if (Context.DrawItemOverrideFunction)
         {
@@ -102,7 +102,7 @@ namespace Lumina
         }
         else
         {
-            if (ImGui::Button("##", ImVec2(125.0f, 125.0f)))
+            if (ImGui::Button("##", DrawSize))
             {
                 SetSelection(ItemToDraw, Context);
             }
@@ -111,6 +111,27 @@ namespace Lumina
         if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Right) && ItemToDraw->HasContextMenu())
         {
             ImGui::OpenPopup("ItemContextMenu");
+        }
+
+        
+        if (ImGui::BeginDragDropSource())
+        {
+            ItemToDraw->SetDragDropPayloadData();
+            if (Context.DrawItemOverrideFunction)
+            {
+                Context.DrawItemOverrideFunction(ItemToDraw);
+            }
+            ImGui::EndDragDropSource();
+        }
+
+        if (ImGui::BeginDragDropTarget())
+        {
+            if (Context.DragDropFunction)
+            {
+                Context.DragDropFunction(ItemToDraw);
+            }
+            
+            ImGui::EndDragDropTarget();
         }
         
         if (ItemToDraw->HasContextMenu())

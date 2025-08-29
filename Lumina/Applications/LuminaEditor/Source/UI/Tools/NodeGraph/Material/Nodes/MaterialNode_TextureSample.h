@@ -19,6 +19,7 @@ namespace Lumina
         void Serialize(FArchive& Ar) override;
         
         void BuildNode() override;
+        FInlineString GetNodeCategory() const override { return "Textures"; }
         void* GetNodeDefaultValue() override { return &Texture; }
         FString GetNodeDisplayName() const override { return "TextureSample"; }
         uint32 GenerateExpression(FMaterialCompiler* Compiler) override;

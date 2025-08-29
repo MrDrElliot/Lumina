@@ -413,10 +413,10 @@ namespace Lumina
             {
                 FRHIBuffer* UploadBuffer;
                 uint64 UploadOffset;
-                void* UploadCPUVA;
-                UploadManager->SuballocateBuffer(Size, &UploadBuffer, &UploadOffset, &UploadCPUVA, MakeVersion(CurrentCommandBuffer->RecordingID, Info.CommandQueue, false));
+                void* UploadCPU;
+                UploadManager->SuballocateBuffer(Size, &UploadBuffer, &UploadOffset, &UploadCPU, MakeVersion(CurrentCommandBuffer->RecordingID, Info.CommandQueue, false));
 
-                Memory::Memcpy(UploadCPUVA, Data, Size);
+                Memory::Memcpy(UploadCPU, Data, Size);
                 CopyBuffer(UploadBuffer, UploadOffset, Buffer, Offset, Size);
             }
             else

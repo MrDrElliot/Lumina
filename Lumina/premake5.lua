@@ -8,6 +8,15 @@ project "Lumina"
     targetdir ("%{LuminaEngineDirectory}/Binaries/" .. outputdir)
     objdir ("%{LuminaEngineDirectory}/Intermediates/Obj/" .. outputdir .. "/%{prj.name}")    
 	
+	prebuildcommands
+    {
+        "\"%{LuminaEngineDirectory}/Binaries/Release-windows-x86_64/Reflector.exe\" \"%{wks.location}%{wks.name}.sln\" && echo Reflection completed."
+    }
+
+	postbuildcommands
+	{
+		'{COPYFILE} "%{LuminaEngineDirectory}/External/PhysX/physx/bin/win.x86_64.vc143.mt/checked/*.dll" "%{cfg.targetdir}"',
+	}
     	
 	files
 	{
@@ -55,6 +64,12 @@ project "Lumina"
 		includedependencies();
 	}
 	
+	libdirs
+	{
+		"%{VULKAN_SDK}/lib",
+		"%{LuminaEngineDirectory}/External/PhysX/physx/bin/win.x86_64.vc143.mt/checked/",
+	}
+
 	links
 	 {
 	 	"GLFW",
@@ -65,7 +80,12 @@ project "Lumina"
 		"XXHash",
 		"RPMalloc",
 		"EnTT",
-	  	"%{VULKAN_SDK}/lib/vulkan-1.lib",
+	  	"vulkan-1.lib",
+		"PhysXExtensions_static_64.lib",
+		"PhysX_64.lib",
+		"PhysXPvdSDK_static_64.lib",
+		"PhysXCommon_64.lib",
+		"PhysXFoundation_64.lib",
 	 }
 
 	defines

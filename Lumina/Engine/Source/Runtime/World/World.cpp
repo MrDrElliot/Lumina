@@ -7,7 +7,6 @@
 #include "Entity/Components/LineBatcherComponent.h"
 #include "Entity/Components/VelocityComponent.h"
 #include "Entity/Systems/DebugCameraEntitySystem.h"
-#include "Entity/Components/StaticMeshComponent.h"
 #include "Entity/Systems/UpdateTransformEntitySystem.h"
 #include "glm/gtx/matrix_decompose.hpp"
 #include "Subsystems/FCameraManager.h"
@@ -84,10 +83,10 @@ namespace Lumina
         RegisterSystem(NewObject<CDebugCameraEntitySystem>());
 
         Entity EditorEntity = ConstructEntity("Editor Entity");
-        EditorEntity.AddComponent<SCameraComponent>();
-        EditorEntity.AddComponent<SEditorComponent>();
-        EditorEntity.AddComponent<SVelocityComponent>().Speed = 50.0f;
-        EditorEntity.AddComponent<SHiddenComponent>();
+        EditorEntity.Emplace<SCameraComponent>();
+        EditorEntity.Emplace<SEditorComponent>();
+        EditorEntity.Emplace<SVelocityComponent>().Speed = 50.0f;
+        EditorEntity.Emplace<SHiddenComponent>();
         EditorEntity.GetComponent<STransformComponent>().SetLocation(glm::vec3(0.0f, 0.0f, 2.0f));
 
         SetActiveCamera(EditorEntity);
@@ -97,6 +96,15 @@ namespace Lumina
 
     void CWorld::OnMarkedGarbage()
     {
+        for (uint8 i = 0; i < (uint8)EUpdateStage::Max; ++i)
+        {
+            for (CEntitySystem* System : SystemUpdateList[i])
+            {
+                System->MarkGarbage();
+            }
+            SystemUpdateList->clear();
+        }
+        
         Memory::Delete(SceneRenderer);
         Memory::Delete(CameraManager);
         EntityRegistry.clear<>();
@@ -175,7 +183,12 @@ namespace Lumina
     Entity CWorld::ConstructEntity(const FName& Name, const FTransform& Transform)
     {
         entt::entity NewEntity = EntityRegistry.create();
-        EntityRegistry.emplace<SNameComponent>(NewEntity).Name = Name;
+
+        FString StringName(Name.c_str());
+        StringName += "_" + eastl::to_string((int)NewEntity);
+        
+        EntityRegistry.emplace<SNameComponent>(NewEntity).Name = StringName;
+        
         EntityRegistry.emplace<STransformComponent>(NewEntity).Transform = Transform;
         
         return Entity(NewEntity, this);
@@ -338,8 +351,8 @@ namespace Lumina
         }
         
         Entity LineBatcherEntity = ConstructEntity("LineBatcher", FTransform());
-        LineBatcherEntity.AddComponent<SHiddenComponent>();
-        LineBatcherComponent = &LineBatcherEntity.AddComponent<FLineBatcherComponent>();
+        LineBatcherEntity.Emplace<SHiddenComponent>();
+        LineBatcherComponent = &LineBatcherEntity.Emplace<FLineBatcherComponent>();
         
         return *LineBatcherComponent;
     }

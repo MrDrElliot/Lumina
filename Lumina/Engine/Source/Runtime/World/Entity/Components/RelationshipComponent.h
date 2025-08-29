@@ -6,7 +6,7 @@
 
 namespace Lumina
 {
-    struct SRelationshipComponent : SEntityComponent
+    struct SRelationshipComponent
     {
         constexpr static SIZE_T MaxChildren = 32;
         

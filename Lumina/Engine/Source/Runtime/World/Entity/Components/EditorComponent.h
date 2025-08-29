@@ -1,13 +1,11 @@
 #pragma once
 
-#include "Component.h"
-
 namespace Lumina
 {
-    struct SEditorComponent : SEntityComponent
+    struct SEditorComponent
     {
         bool bEnabled = true;
     };
 
-    struct SHiddenComponent : SEntityComponent { };
+    struct SHiddenComponent { };
 }

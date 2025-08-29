@@ -14,8 +14,6 @@ namespace Lumina
     };
 
     LUMINA_API FNameHashMap* GNameCache = nullptr;
-
-    static FMutex HashMutex;
     
     void FName::Initialize()
     {
@@ -43,9 +41,9 @@ namespace Lumina
 
             GNameCache->try_emplace(ID, Char);
 
-#if _DEBUG
+            #if _DEBUG
             StringView = Char;
-#endif
+            #endif
         }
         else
         {

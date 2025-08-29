@@ -17,7 +17,6 @@
 #include "Tools/WorldEditorTool.h"
 #include "Tools/AssetEditors/MaterialEditor/MaterialEditorTool.h"
 #include "Tools/UI/ImGui/imfilebrowser.h"
-#include "imnodes/imnodes.h"
 #include <Assets/AssetHeader.h>
 #include <client/TracyProfiler.hpp>
 #include "Assets/AssetTypes/Material/Material.h"
@@ -76,8 +75,6 @@ namespace Lumina
 
     void FEditorUI::Initialize(const FUpdateContext& UpdateContext)
     {
-        ImNodes::CreateContext();
-
         FString Path = Paths::Combine(Paths::GetEngineResourceDirectory().c_str(), "Textures");
         
         FolderIcon          = Import::Textures::CreateTextureFromImport(GRenderContext, Path + "/Folder.png", false);
@@ -153,8 +150,6 @@ namespace Lumina
         
         WorldEditorTool = nullptr;
         ConsoleLogTool = nullptr;
-
-        ImNodes::DestroyContext();
     }
 
     void FEditorUI::OnStartFrame(const FUpdateContext& UpdateContext)
@@ -314,29 +309,45 @@ namespace Lumina
                 {
                     CObject* Object = *It;
                     if (Object == nullptr) continue;
-                    
+
                     FString PackageName = Object->GetPackage() ? Object->GetPackage()->GetName().ToString() : "None";
                     PackageToObjects[PackageName].push_back(Object);
                 }
-                
+
                 for (const auto& Pair : PackageToObjects)
                 {
                     const FString& PackageName = Pair.first;
                     const TVector<CObject*>& Objects = Pair.second;
 
-                    ImGuiTreeNodeFlags Flags = 0;
+                    ImGuiTreeNodeFlags Flags = ImGuiTreeNodeFlags_DefaultOpen;
                     if (ImGui::TreeNodeEx(PackageName.c_str(), Flags))
                     {
-                        if (ImGui::BeginTable(PackageName.c_str(), 1, ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable))
+                        if (ImGui::BeginTable(("##Table_" + PackageName).c_str(), 3, ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable | ImGuiTableFlags_SizingStretchSame))
                         {
                             ImGui::TableSetupColumn("Object Name");
+                            ImGui::TableSetupColumn("Class");
+                            ImGui::TableSetupColumn("Flags");
                             ImGui::TableHeadersRow();
 
                             for (CObject* Object : Objects)
                             {
                                 ImGui::TableNextRow();
+
+                                // Column 0: Name
                                 ImGui::TableSetColumnIndex(0);
                                 ImGui::TextUnformatted(Object->GetName().ToString().c_str());
+
+                                // Column 1: Class
+                                ImGui::TableSetColumnIndex(1);
+                                if (Object->GetClass())
+                                    ImGui::TextUnformatted(Object->GetClass()->GetName().ToString().c_str());
+                                else
+                                    ImGui::TextUnformatted("None");
+
+                                // Column 2: Flags
+                                ImGui::TableSetColumnIndex(2);
+                                FInlineString FlagsStr = ObjectFlagsToString(Object->GetFlags());
+                                ImGui::TextUnformatted(FlagsStr.c_str());
                             }
 
                             ImGui::EndTable();
@@ -348,7 +359,7 @@ namespace Lumina
 
             ImGui::End();
         }
-
+        
         FEditorTool* ToolToClose = nullptr;
         
         for (FEditorTool* Tool : EditorTools)
@@ -904,9 +915,8 @@ namespace Lumina
     void FEditorUI::DrawTitleBarMenu(const FUpdateContext& UpdateContext)
     {
         LUMINA_PROFILE_SCOPE();
-
+        
         ImGui::Text(LE_ICON_GAVEL);
-        ImGui::SameLine();
 
         ImGui::PushStyleColor(ImGuiCol_PopupBg, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.8f, 0.8f, 0.8f, 1.0f));
@@ -1016,6 +1026,7 @@ namespace Lumina
         }
         
         ImGui::PopStyleColor(2);
+
     }
     
     void FEditorUI::DrawTitleBarInfoStats(const FUpdateContext& UpdateContext)

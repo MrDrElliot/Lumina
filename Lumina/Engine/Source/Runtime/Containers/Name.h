@@ -48,7 +48,9 @@ namespace Lumina
         auto operator<=>(const FName& Other) const { return ID <=> Other.ID; }
         
     private:
-        FStringView     StringView;
+        #if LE_DEBUG
+        FInlineString   StringView;
+        #endif
         uint64          ID = 0;
     };
     

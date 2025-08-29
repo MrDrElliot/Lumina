@@ -255,13 +255,14 @@ namespace Lumina::ImGuiX
         ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
 
         GLFWwindow* Window = (GLFWwindow*) ImGui::GetWindowViewport()->PlatformHandle;
-        
+
+        ImGui::BeginHorizontal("TitleBar");
+
         if (ImGuiX::FlatButton(LE_ICON_WINDOW_MINIMIZE "##Min", ImVec2(s_windowControlButtonWidth, -1)))
         {
             glfwIconifyWindow(Window);
         }
 
-        ImGui::SameLine();
         
         if (ImGuiX::FlatButton(LE_ICON_WINDOW_RESTORE "##Res", ImVec2(s_windowControlButtonWidth, -1)))
         {
@@ -275,7 +276,6 @@ namespace Lumina::ImGuiX
             }
         }
 
-        ImGui::SameLine();
 
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.7f, 0.1f, 0.1f, 1.0f));
         if (ImGuiX::FlatButton(LE_ICON_WINDOW_CLOSE "##X", ImVec2(s_windowControlButtonWidth, -1)))
@@ -285,6 +285,8 @@ namespace Lumina::ImGuiX
 
         ImGui::PopStyleColor();
         ImGui::PopStyleVar(2);
+
+        ImGui::EndHorizontal();
     }
 
 

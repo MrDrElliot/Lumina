@@ -8,14 +8,12 @@
 namespace Lumina
 {
     LUM_STRUCT()
-    struct LUMINA_API SNameComponent : SEntityComponent
+    struct LUMINA_API SNameComponent
     {
         GENERATED_BODY()
-        ENTITY_COMPONENT()        
+        ENTITY_COMPONENT(SNameComponent)
 
         LUM_PROPERTY(Editable)
         FName Name;
     };
-    
-    REGISTER_ENTITY_COMPONENT(SNameComponent);
 }

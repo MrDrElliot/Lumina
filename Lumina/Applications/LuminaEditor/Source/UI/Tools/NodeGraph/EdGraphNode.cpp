@@ -3,6 +3,7 @@
 #include "EdNodeGraphPin.h"
 #include "Core/Math/Hash/Hash.h"
 #include "Material/MaterialGraphTypes.h"
+#include "imgui-node-editor/imgui_node_editor.h"
 
 namespace Lumina
 {
@@ -40,6 +41,32 @@ namespace Lumina
                 Pin->Serialize(Ar);
             }
         }
+    }
+
+    void CEdGraphNode::PushNodeStyle()
+    {
+        using namespace ax;
+
+        NodeEditor::PushStyleColor(NodeEditor::StyleColor_NodeBg,        ImColor(128, 128, 128, 200));
+        NodeEditor::PushStyleColor(NodeEditor::StyleColor_NodeBorder,    ImColor( 32,  32,  32, 200));
+        NodeEditor::PushStyleColor(NodeEditor::StyleColor_PinRect,       ImColor( 60, 180, 255, 150));
+        NodeEditor::PushStyleColor(NodeEditor::StyleColor_PinRectBorder, ImColor( 60, 180, 255, 150));
+
+        NodeEditor::PushStyleVar(NodeEditor::StyleVar_NodePadding,  ImVec4(0, 0, 0, 0));
+        NodeEditor::PushStyleVar(NodeEditor::StyleVar_NodeRounding, 10);
+        NodeEditor::PushStyleVar(NodeEditor::StyleVar_SourceDirection, ImVec2(0.0f,  1.0f));
+        NodeEditor::PushStyleVar(NodeEditor::StyleVar_TargetDirection, ImVec2(0.0f, -1.0f));
+        NodeEditor::PushStyleVar(NodeEditor::StyleVar_LinkStrength, 0.0f);
+        NodeEditor::PushStyleVar(NodeEditor::StyleVar_PinBorderWidth, 1.0f);
+        NodeEditor::PushStyleVar(NodeEditor::StyleVar_PinRadius, 5.0f);
+    }
+
+    void CEdGraphNode::PopNodeStyle()
+    {
+        using namespace ax;
+
+        NodeEditor::PopStyleColor(4);
+        NodeEditor::PopStyleVar(7);
     }
 
     void CEdGraphNode::DrawNodeTitleBar()

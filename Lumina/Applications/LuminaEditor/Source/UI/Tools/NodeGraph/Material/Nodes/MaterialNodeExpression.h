@@ -31,8 +31,10 @@ namespace Lumina
         void Serialize(FArchive& Ar) override;
         void BuildNode() override;
         
-        CMaterialInput* A;
-        CMaterialInput* B;
+        FInlineString GetNodeCategory() const override { return "Math"; }
+        
+        CMaterialInput* A = nullptr;
+        CMaterialInput* B = nullptr;
 
         LUM_PROPERTY(Editable, Category = "Value")
         float ConstA = 0;
@@ -282,6 +284,7 @@ namespace Lumina
         
         void BuildNode() override;
 
+        FInlineString GetNodeCategory() const override { return "Utility"; }
         FString GetNodeDisplayName() const override { return "WorldPosition"; }
         void* GetNodeDefaultValue() override { return nullptr; }
         uint32 GenerateExpression(FMaterialCompiler* Compiler) override { return 0; }
@@ -296,6 +299,7 @@ namespace Lumina
         
         void BuildNode() override;
 
+        FInlineString GetNodeCategory() const override { return "Utility"; }
         FString GetNodeDisplayName() const override { return "CameraPosition"; }
         void* GetNodeDefaultValue() override { return nullptr; }
         uint32 GenerateExpression(FMaterialCompiler* Compiler) override { return 0; }
@@ -314,6 +318,7 @@ namespace Lumina
 
         void Serialize(FArchive& Ar) override;
 
+        FInlineString GetNodeCategory() const override { return "Constants"; }
         void DrawContextMenu() override;
         void DrawNodeTitleBar() override;
         void BuildNode() override;

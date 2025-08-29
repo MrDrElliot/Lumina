@@ -46,6 +46,7 @@ namespace Lumina
 		void Deinitialize() override;
 
 		void BuildAssetDictionary();
+		
 
 		void GetAssets(const FARFilter& Filter, TVector<FAssetData>& OutAssets);
 		FAssetData GetAsset(const FString& Path);
@@ -58,11 +59,11 @@ namespace Lumina
 
 		void AddAsset(const FAssetData& Data);
 		void ClearAssets();
-		
-		FMutex						DataGatheringMutex;
-		
+
+		std::atomic<int>			PendingTasks{0};
+		std::atomic_bool 			bHasQueuedRequest{false};
+		std::atomic_bool 			bCurrentlyProcessing{false};
 		TSet<FName>					CorruptedAssets;
-		
 		TVector<FAssetData> 		Assets;
 		THashMap<FName, FAssetData> AssetPathMap;
 	};

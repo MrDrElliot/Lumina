@@ -11,6 +11,7 @@
 #include "Nodes/MaterialNode_TextureSample.h"
 #include "Nodes/MaterialOutputNode.h"
 #include "UI/Tools/NodeGraph/EdNodeGraphPin.h"
+#include "UI/Tools/NodeGraph/EdNode_Reroute.h"
 
 
 namespace Lumina
@@ -92,6 +93,7 @@ namespace Lumina
             EndPin->AddConnection(StartPin);
         }
         
+        RegisterGraphNode(CEdNode_Reroute::StaticClass());
         
         RegisterGraphNode(CMaterialExpression_Addition::StaticClass());
         RegisterGraphNode(CMaterialExpression_Subtraction::StaticClass());

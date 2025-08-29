@@ -108,7 +108,7 @@ namespace Lumina
                 R->SetComponentMask(EComponentMask::R);
 
                 CMaterialOutput* G = Cast<CMaterialOutput>(CreatePin(CMaterialOutput::StaticClass(), "Y", ENodePinDirection::Output, EMaterialInputType::Float));
-                R->SetPinColor(IM_COL32(10, 255, 10, 255));
+                G->SetPinColor(IM_COL32(10, 255, 10, 255));
                 G->SetHideDuringConnection(false);
                 G->SetPinName("Y");
                 G->SetComponentMask(EComponentMask::G);

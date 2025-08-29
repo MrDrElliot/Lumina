@@ -32,20 +32,27 @@ namespace Lumina
 
         void PostCreateCDO() override;
         
-        virtual ~CEdGraphNode() override;
+        ~CEdGraphNode() override;
 
         virtual void BuildNode() { }
 
         void Serialize(FArchive& Ar) override;
+
+        virtual FInlineString GetNodeCategory() const { return "General"; }
         
         FString GetNodeFullName() { return FullName; }
+        virtual bool WantsTitlebar() const { return true; }
         virtual FString GetNodeDisplayName() const { return "Node"; }
         virtual FString GetNodeTooltip() const { return "No Tooltip"; }
         virtual uint32 GetNodeTitleColor() const { return IM_COL32(200, 35, 35, 255); }
-        virtual ImVec2 GetMinNodeSize() const { return ImVec2(100, 150); }
+        virtual ImVec2 GetMinNodeBodySize() const { return ImVec2(100, 150); }
+        virtual ImVec2 GetMinNodeTitleBarSize() const { return ImVec2(100, 28); }
 
         void SetDebugExecutionOrder(uint32 Order) { DebugExecutionOrder = Order; }
         uint32 GetDebugExecutionOrder() const { return DebugExecutionOrder; }
+
+        virtual void PushNodeStyle();
+        virtual void PopNodeStyle();
 
         virtual void DrawContextMenu() { }
         virtual void DrawNodeTitleBar();
