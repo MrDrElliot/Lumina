@@ -1,60 +1,39 @@
 #pragma once
 #include "Containers/Array.h"
 #include "Containers/Name.h"
+#include "Core/Assertions/Assert.h"
+#include "Core/Profiler/Profile.h"
+#include "Core/Singleton/Singleton.h"
 #include "Core/Threading/Thread.h"
 
 
 namespace Lumina
 {
+    class CClass;
+    class CPackage;
     class CObjectBase;
+}
 
-    class FObjectNameHashBucket
+namespace Lumina
+{
+
+    using FObjectHashBucket = THashSet<CObjectBase*>;
+
+    class LUMINA_API FObjectHashTables : public TSingleton<FObjectHashTables>
     {
     public:
 
-        void AddObject(const FName& PackageName, const FName& ObjectName, CObjectBase* Object)
-        {
-            FScopeLock Lock(Mutex);
-            
-            ObjectNameHash[PackageName][ObjectName] = Object;
-        }
+        void AddObject(CObjectBase* Object);
 
-        void RemoveObject(const FName& PackageName, const FName& ObjectName)
-        {
-            FScopeLock Lock(Mutex);
-            
-            if (ObjectNameHash.find(PackageName) != ObjectNameHash.end())
-            {
-                auto& Hash = ObjectNameHash.at(PackageName);
-                Hash.erase(ObjectName);
-            }
-        }
+        void RemoveObject(CObjectBase* Object);
 
-        CObjectBase* FindObject(const FName& PackageName, const FName& ObjectName) const
-        {
-            FScopeLock Lock(Mutex);
-            
-            auto OuterIt = ObjectNameHash.find(PackageName);
-            if (OuterIt != ObjectNameHash.end())
-            {
-                auto InnerIt = OuterIt->second.find(ObjectName);
-                if (InnerIt != OuterIt->second.end())
-                {
-                    return InnerIt->second;
-                }
-            }
-            return nullptr;
-        }
+        CObjectBase* FindObject(CClass* ObjectClass, CPackage* Package, const FName& ObjectName, bool bExactClass = false);
 
-        void Clear()
-        {
-            ObjectNameHash.clear();
-        }
+        void Clear();
 
         mutable FMutex Mutex;
-        THashMap<FName, THashMap<FName, CObjectBase*>> ObjectNameHash;
+        THashMap<FName,     FObjectHashBucket>  ObjectNameHash;
+        THashMap<CPackage*, FObjectHashBucket>  ObjectPackageHash;
+        THashMap<CClass*,   FObjectHashBucket>  ObjectClassHash;
     };
-    
-    
-    extern LUMINA_API FObjectNameHashBucket ObjectNameHashBucket;
 }

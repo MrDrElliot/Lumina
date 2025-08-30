@@ -23,7 +23,6 @@ namespace Lumina
 
     void FAssetRegistry::BuildAssetDictionary()
     {
-
         if (bCurrentlyProcessing.exchange(true))
         {
             bHasQueuedRequest.store(true);
@@ -47,7 +46,7 @@ namespace Lumina
                         Data.Name = Directory.path().filename().stem().generic_string().c_str();
                     
                         FString VirtualPath = Paths::ConvertToVirtualPath(Data.Path);
-                        CPackage* Package = FindObject<CPackage>(FName(VirtualPath));
+                        CPackage* Package = FindObject<CPackage>(nullptr, VirtualPath);
                     
                         FString ClassPath;
                         if (Package == nullptr)

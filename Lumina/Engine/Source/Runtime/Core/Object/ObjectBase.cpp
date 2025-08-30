@@ -1,6 +1,8 @@
 ﻿
 #include "ObjectBase.h"
 
+#include <utility>
+
 #include "Class.h"
 #include "DeferredRegistry.h"
 #include "Lumina.h"
@@ -15,7 +17,6 @@
 namespace Lumina
 {
 
-    LUMINA_API FObjectNameHashBucket               ObjectNameHashBucket;    
     LUMINA_API FCObjectArray                       GObjectArray;
 
     struct FPendingRegistrantInfo
@@ -58,17 +59,15 @@ namespace Lumina
     CObjectBase::~CObjectBase()
     {
         Assert(IsMarkedGarbage())
-
-        FName PackageName = PackagePrivate ? PackagePrivate->GetName() : NAME_None;
-
-        ObjectNameHashBucket.RemoveObject(PackageName, NamePrivate);
+        
+        FObjectHashTables::Get().RemoveObject(this);
 
         GObjectArray.Deallocate(InternalIndex);
     }
 
     CObjectBase::CObjectBase(EObjectFlags InFlags)
         : ObjectFlags(InFlags)
-        , NamePrivate(NAME_None)
+        , NamePrivate()
         , InternalIndex(0)
         , LoaderIndex(0)
     {
@@ -125,10 +124,19 @@ namespace Lumina
         uint32 Index = GObjectArray.Allocate(this).Index;
         AddObject(NamePrivate, Index);
     }
+    
 
-    void CObjectBase::Rename(TCHAR* NewName)
+    void CObjectBase::HandleNameChange(FName NewName, CPackage* NewPackage) noexcept
     {
-        //@TODO...
+        FObjectHashTables::Get().RemoveObject(this);
+        
+        NamePrivate = std::move(NewName);
+        if (NewPackage != PackagePrivate)
+        {
+            PackagePrivate = NewPackage;
+        }
+
+        FObjectHashTables::Get().AddObject(this);
     }
 
     void CObjectBase::MarkGarbage()
@@ -151,7 +159,7 @@ namespace Lumina
         InternalIndex = InInternalIndex;
 
         FName PackageName = PackagePrivate ? PackagePrivate->GetName() : NAME_None;
-        ObjectNameHashBucket.AddObject(PackageName, Name, this);
+        FObjectHashTables::Get().AddObject(this);
     }
 
     void CObjectBase::GetPath(FString& OutPath) const
@@ -298,7 +306,7 @@ namespace Lumina
         
         GarbageCollection::CollectGarbage();
 
-        ObjectNameHashBucket.Clear();
+        FObjectHashTables::Get().Clear();
     }
 
 

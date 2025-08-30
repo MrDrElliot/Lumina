@@ -43,7 +43,8 @@ namespace Lumina
         LUMINA_API bool HasAllFlags(EObjectFlags Flags) const { return EnumHasAllFlags(ObjectFlags, Flags); }
         
 
-        LUMINA_API void Rename(TCHAR* NewName);
+        /** Low level object rename, will remove and reload into hash buckets. Only call this if you've verified it's safe */
+        LUMINA_API void HandleNameChange(FName NewName, CPackage* NewPackage = nullptr) noexcept;
         
         /** Adds this object to the pending deletion queue, recommended to manually null the memory to avoid stale access */
         LUMINA_API void MarkGarbage();

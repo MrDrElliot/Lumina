@@ -299,7 +299,7 @@ namespace Lumina
 
         if (bShowObjectDebug)
         {
-            ImGui::SetNextWindowSize({ 700.0f, 600.0f }, ImGuiCond_FirstUseEver);
+            ImGui::SetNextWindowSize(ImVec2(700.0f, 600.0f), ImGuiCond_FirstUseEver);
             FString Name = "CObject List - Num: " + eastl::to_string(GObjectArray.GetNumObjectsAlive());
 
             if (ImGui::Begin(Name.c_str(), &bShowObjectDebug))

@@ -1,7 +1,10 @@
 ﻿#include "Class.h"
 #include "Object.h"
+
+#include "ObjectRedirector.h"
 #include "Core/Reflection/Type/LuminaTypes.h"
 #include "Core/Reflection/Type/Properties/ArrayProperty.h"
+#include "Package/Package.h"
 
 /** Low level CObject registration. */
 extern Lumina::FClassRegistrationInfo Registration_Info_CClass_Lumina_CObject;
@@ -73,6 +76,34 @@ namespace Lumina
 
     bool CObject::Rename(const FName& NewName, CPackage* NewPackage)
     {
-        return false;
+        FName SafeName = NewName;
+
+
+        bool bCreateRedirector = false;
+        if (HasAnyFlag(OF_Public))
+        {
+            bool bPackage = GetClass() == CPackage::StaticClass();
+
+            bCreateRedirector = (bPackage == false);
+        }
+
+        FName OldName = GetName();
+        CPackage* OldPackage = GetPackage();
+        
+        HandleNameChange(SafeName, NewPackage);
+
+        if (bCreateRedirector)
+        {
+            CObjectRedirector* Redirector = FindObject<CObjectRedirector>(OldPackage, OldName);
+
+            if (Redirector == nullptr)
+            {
+                Redirector = NewObject<CObjectRedirector>(OldPackage, OldName, OF_Public);
+            }
+
+            Redirector->RedirectionObject = this;
+        }
+        
+        return true;
     }
 }

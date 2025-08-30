@@ -72,7 +72,7 @@ namespace Lumina
                 ImGui::SetDragDropPayload(DragDropID, &IntPtr, sizeof(uintptr_t));
             }
 
-            const char* GetTooltipText() const override { return "Test"; }
+            const char* GetTooltipText() const override { return VirtualPath.c_str(); }
             bool HasContextMenu() override { return true; }
 
             FName GetName() const override
@@ -80,6 +80,7 @@ namespace Lumina
                 return Paths::FileName(Path, true);
             }
 
+            void SetPath(FStringView NewPath) { Path = NewPath; Paths::ConvertToVirtualPath(Path); }
             const FString& GetPath() const { return Path; }
             const FString& GetVirtualPath() const { return VirtualPath; }
             bool IsDirectory() const { return bDirectory; }

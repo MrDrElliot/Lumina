@@ -18,12 +18,11 @@ namespace Lumina
                 return *this;
             }
 
-            FWString WString = UTF8_TO_WIDE(LoadedString);
-            Obj = FindObject<CObject>(WString.c_str());
+            Obj = FindObject<CObject>(nullptr, LoadedString);
 
             if (Obj && bLoadIfFindFails)
             {
-                Obj = LoadObject<CObject>(WString.c_str());
+                Obj = LoadObject<CObject>(nullptr, LoadedString);
             }
             
         }

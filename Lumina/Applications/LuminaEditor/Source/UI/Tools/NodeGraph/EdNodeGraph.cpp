@@ -29,9 +29,10 @@ namespace Lumina
     uint16 GNodeID = 0;
     
     CEdNodeGraph::CEdNodeGraph()
+        : NodeSelectedCallback()
     {
     }
-    
+
     CEdNodeGraph::~CEdNodeGraph()
     {
     }

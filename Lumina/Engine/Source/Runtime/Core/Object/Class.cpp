@@ -14,7 +14,7 @@ namespace Lumina
 
         if (Package && Package[0] != '\0')
         {
-            PackageObject = FindObject<CPackage>(Package);
+            PackageObject = FindObject<CPackage>(nullptr, Package);
             if (PackageObject == nullptr)
             {
                 PackageObject = NewObject<CPackage>(nullptr, Package);
@@ -22,7 +22,7 @@ namespace Lumina
         }
         
         *OutClass = (CClass*)Memory::Malloc(sizeof(CClass), alignof(CClass));
-        *OutClass = ::new (*OutClass) CClass(PackageObject, FName(Name), Size, Alignment, EObjectFlags::OF_None, InClassConstructor);
+        *OutClass = ::new (*OutClass) CClass(PackageObject, FName(Name), Size, Alignment, OF_None, InClassConstructor);
         
         CClass* NewClass = *OutClass;
         CClass* SuperClass = SuperClassFn();
@@ -73,11 +73,11 @@ namespace Lumina
     }
 
 
-    static CStruct* StaticGetBaseStructureInternal(FName Name)
+    static CStruct* StaticGetBaseStructureInternal(const FName& Name)
     {
-        FName QualifiedName = FName(FString("script://lumina.") + Name.c_str());
-        CStruct* Result = (CStruct*)FindObjectFast(CStruct::StaticClass(), QualifiedName);
+        static CPackage* CoreObjectPackage = FindObject<CPackage>(nullptr, "script://lumina");
         
+        CStruct* Result = (CStruct*)FindObjectFast(CStruct::StaticClass(), CoreObjectPackage, Name);
         return Result;
     }
 

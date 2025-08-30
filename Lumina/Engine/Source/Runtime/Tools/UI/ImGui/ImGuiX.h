@@ -103,7 +103,7 @@ namespace Lumina::ImGuiX
                 FString VirtualPath = Paths::ConvertToVirtualPath(Data.Path);
                 VirtualPath += "." + Data.Name.ToString();
                 FName AssetName = VirtualPath.c_str();
-                OutSelected = LoadObject<T>(AssetName);
+                OutSelected = LoadObject<T>(nullptr, AssetName);
                 
                 ImGui::PopID();
                 ImGui::CloseCurrentPopup();

@@ -87,7 +87,7 @@ namespace Lumina::Paths
 
     FString GetExtension(const FString& InPath)
     {
-        size_t Dot = InPath.find_last_of(".");
+        size_t Dot = InPath.find_last_of('.');
         if (Dot != FString::npos && Dot + 1 < InPath.length())
         {
             return InPath.substr(Dot + 1);

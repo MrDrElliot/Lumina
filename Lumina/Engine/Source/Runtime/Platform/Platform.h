@@ -35,8 +35,10 @@
         #define LUMINA_ASSUME(x) __builtin_assume(x)
     #elif defined(_MSC_VER)
         #define LUMINA_ASSUME(x) __assume(x)
+    #elif defined(__GNUC__)
+        #define LUMINA_ASSUME(x) do { if (!(x)) __builtin_unreachable(); } while(0)
     #else
-        #define LUMINA_ASSUME(x)
+        #define LUMINA_ASSUME(x) ((void)0)
     #endif
 #endif
 

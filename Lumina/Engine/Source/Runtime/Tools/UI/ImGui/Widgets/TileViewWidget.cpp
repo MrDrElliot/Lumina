@@ -1,6 +1,7 @@
 ﻿#include "TileViewWidget.h"
 
 #include "Assets/AssetPath.h"
+#include "Tools/UI/ImGui/ImGuiX.h"
 
 namespace Lumina
 {
@@ -107,6 +108,8 @@ namespace Lumina
                 SetSelection(ItemToDraw, Context);
             }
         }
+
+        ImGuiX::ItemTooltip("%s", ItemToDraw->GetTooltipText());
 
         if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Right) && ItemToDraw->HasContextMenu())
         {

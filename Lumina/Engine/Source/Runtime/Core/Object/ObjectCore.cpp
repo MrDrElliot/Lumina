@@ -30,20 +30,8 @@ namespace Lumina
         
         return GCObjectAllocator.AllocateCObject(InClass->GetSize(), Alignment);
     }
-
-    FString GetObjectNameFromPath(const FString& InPath)
-    {
-        SIZE_T Pos = InPath.find_last_of("/");
-        if (Pos != FString::npos)
-        {
-            return InPath.substr(Pos + 1);
-        }
-
-        return InPath;
-    }
-
     
-    FName MakeUniqueObjectName(const CClass* Class, const CPackage* Package, const FName& InBaseName)
+    FName MakeUniqueObjectName(CClass* Class, CPackage* Package, const FName& InBaseName)
     {
         FScopeLock Lock(ObjectNameMutex);
         
@@ -61,7 +49,7 @@ namespace Lumina
         }
         
         // First, try the base name directly
-        if (FindObjectFast(Class, FullName) == nullptr)
+        if (FindObjectFast(Class, Package, FullName) == nullptr)
         {
             return BaseName;
         }
@@ -75,7 +63,7 @@ namespace Lumina
             int32_t Index = ++Class->ClassUnique;
             FString String = BaseName.ToString() + "_" + eastl::to_string(Index);
             TestName = FName(String);
-            FoundObj = FindObjectFast(Class, TestName);
+            FoundObj = FindObjectFast(Class, Package, FullName);
         }
         while (FoundObj != nullptr);
 
@@ -88,14 +76,14 @@ namespace Lumina
         CPackage* Package = nullptr;
         if (Params.Package != NAME_None)
         {
-            Package = FindObject<CPackage>(Params.Package);
+            Package = FindObject<CPackage>(nullptr, Params.Package);
             if (Package == nullptr)
             {
                 Package = NewObject<CPackage>(nullptr, Params.Package);
             }
         }
         
-        FName UniqueName = MakeUniqueObjectName(Params.Class, Package, Params.Name);
+        FName UniqueName = MakeUniqueObjectName(const_cast<CClass*>(Params.Class), Package, Params.Name);
         Params.Name = UniqueName;
         EObjectFlags Flags = Params.Flags;
 
@@ -112,23 +100,61 @@ namespace Lumina
         return Obj;
     }
     
-    CObject* FindObjectFast(const CClass* InClass, const FName& QualifiedName)
+    CObject* FindObjectFast(CClass* InClass, CPackage* Package, const FName& Name, bool bExactClass)
     {
-        FString PackageName = GetPackageFromQualifiedObjectName(QualifiedName.ToString());
-        FString ObjectName = GetObjectNameFromQualifiedName(QualifiedName.ToString());
+        LUMINA_PROFILE_SCOPE();
         
-        CObject* ReturnObject = (CObject*)ObjectNameHashBucket.FindObject(PackageName.c_str(), ObjectName.c_str());
-        return ReturnObject;
+        if (Name == NAME_None)
+        {
+            return nullptr;
+        }
+        
+        if (Package != nullptr)
+        {
+            return (CObject*)FObjectHashTables::Get().FindObject(InClass, Package, Name, bExactClass);
+        }
+
+        FString NameAsString = Name.ToString();
+        size_t Position = NameAsString.find('.');
+        if (Position != FString::npos)
+        {
+            // Extract package path (everything before the delimiter)
+            FString PackagePath = NameAsString.substr(0, Position);
+        
+            // Extract object name (everything after the delimiter)  
+            FString ObjectNameStr = NameAsString.substr(Position + 1);
+
+            CPackage* FoundPackage = (CPackage*)FindObjectFast(CPackage::StaticClass(), nullptr, PackagePath, true);
+            if (FoundPackage == nullptr)
+            {
+                // This can fail silently, because if the package doesn't exist here, it might be loaded soon.
+                return nullptr;
+            }
+
+            return (CObject*)FObjectHashTables::Get().FindObject(InClass, FoundPackage, ObjectNameStr, bExactClass);
+            
+        }
+        
+        return (CObject*)FObjectHashTables::Get().FindObject(InClass, Package, Name, bExactClass);
     }
     
-    CObject* StaticLoadObject(const CClass* InClass, const FName& QualifiedName)
+    CObject* StaticLoadObject(CClass* InClass, CPackage* Package, const FName& Name, const FName& FileName)
     {
-        CObject* FoundObject = FindObjectFast(InClass, QualifiedName);
+        CObject* FoundObject = nullptr;
+        
+        FoundObject = FindObjectFast(InClass, Package, Name);
 
         if (FoundObject == nullptr || FoundObject->HasAnyFlag(OF_NeedsLoad))
         {
+            FString NameAsString = Name.ToString();
+            size_t Position = NameAsString.find('.');
+            if (Position == FString::npos && Package != nullptr)
+            {
+                NameAsString = FString().append(Package->GetName().ToString()).append(".").append(Name.ToString()); 
+            }
+            
             FAssetManager* Manager = GEngine->GetEngineSubsystem<FAssetManager>();
-            FAssetRequest* Request = Manager->LoadAsset(QualifiedName.ToString());
+            FAssetRequest* Request = Manager->LoadAsset(NameAsString);
             Request->AddListener([&FoundObject](CObject* LoadedObject)
             {
                 FoundObject = LoadedObject;
@@ -140,11 +166,6 @@ namespace Lumina
         return FoundObject;
     }
 
-    void ResolveObjectPath(FString& OutPath, const FStringView& InPath)
-    {
-        
-    }
-
     FString GetPackageFromQualifiedObjectName(const FString& FullyQualifiedName)
     {
         size_t DotPos = FullyQualifiedName.rfind('.');
@@ -154,7 +175,7 @@ namespace Lumina
         }
 
         // If there is no package, we don't want to return the object name.
-        return NAME_None.c_str();
+        return FName().ToString();
     }
 
     LUMINA_API FString GetObjectNameFromQualifiedName(const FString& FullyQualifiedName)

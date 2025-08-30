@@ -1,5 +1,7 @@
 ﻿#pragma once
+#include "Containers/String.h"
 #include "Core/LuminaMacros.h"
+#include "Module/API.h"
 
 
 namespace Lumina
@@ -26,7 +28,7 @@ namespace Lumina
         OF_WasLoaded            = 1 << 4,
 
         /** Object is referenced outside of it's package */
-        OF_Public              = 1 << 5,
+        OF_Public               = 1 << 5,
     };
 
     ENUM_CLASS_FLAGS(EObjectFlags);

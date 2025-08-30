@@ -110,7 +110,7 @@ public: \
     using Super = TBaseClass; \
     inline static Lumina::CClass* StaticClass() { return GetPrivateStaticClass(); } \
     inline static const TCHAR* StaticPackage() { return TEXT(TPackage); } \
-    inline void* operator new(const size_t InSize, EInternal InMem, Lumina::FName InName = Lumina::NAME_None, Lumina::EObjectFlags InSetFlags = Lumina::OF_None) \
+    inline void* operator new(const size_t InSize, EInternal InMem, Lumina::FName InName = NAME_None, Lumina::EObjectFlags InSetFlags = Lumina::OF_None) \
     { \
         Lumina::FConstructCObjectParams Params(StaticClass()); \
         Params.Name = InName; \

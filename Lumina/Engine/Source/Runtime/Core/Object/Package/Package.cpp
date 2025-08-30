@@ -3,6 +3,7 @@
 #include "Assets/AssetRegistry/AssetRegistry.h"
 #include "Core/Engine/Engine.h"
 #include "Core/Object/Class.h"
+#include "Core/Object/GarbageCollection/GarbageCollector.h"
 #include "Core/Profiler/Profile.h"
 #include "Paths/Paths.h"
 #include "Platform/Filesystem/FileHelper.h"
@@ -52,7 +53,7 @@ namespace Lumina
         FString VirtualPath = Paths::ConvertToVirtualPath(FileName.c_str());
         FName FileNameName = VirtualPath.c_str();
         
-        CPackage* Package = FindObject<CPackage>(FileNameName);
+        CPackage* Package = FindObject<CPackage>(nullptr, FileNameName);
         if (Package == nullptr)
         {
             FileHelper::CreateNewFile(FullName, true);
@@ -68,10 +69,11 @@ namespace Lumina
 
     bool CPackage::DestroyPackage(const FString& PackageName)
     {
-        CPackage* Package = FindObject<CPackage>(FName(PackageName));
+        // First we need to load the package */
+        CPackage* Package = LoadPackage(PackageName);
         if (Package == nullptr)
         {
-            return true;
+            return false;
         }
 
         for (FObjectExport& Export : Package->ExportTable)
@@ -81,8 +83,12 @@ namespace Lumina
                 Export.Object->MarkGarbage();
             }
         }
+        
+        Package->ExportTable.clear();
 
         Package->MarkGarbage();
+
+        GarbageCollection::CollectGarbage();
 
         return true;
     }
@@ -98,7 +104,7 @@ namespace Lumina
         }
 
         FString VirtualPath = Paths::ConvertToVirtualPath(FullName);
-        CPackage* Package = FindObject<CPackage>(VirtualPath.c_str());
+        CPackage* Package = FindObject<CPackage>(nullptr, VirtualPath.c_str());
         if (Package)
         {
             // Package is already loaded.
@@ -142,7 +148,8 @@ namespace Lumina
             FString ObjectName = GetObjectNameFromQualifiedName(Export.ObjectName.ToString());
             ObjectName = RemoveNumberSuffixFromObject(ObjectName);
             
-            CClass* ObjectClass = FindObject<CClass>(Export.ClassName);
+            CClass* ObjectClass = FindObject<CClass>(nullptr, Export.ClassName);
+            
             CObject* Object = NewObject(ObjectClass, Package, FName(ObjectName));
             Object->SetFlag(OF_NeedsLoad);
             Object->LoaderIndex = FObjectPackageIndex::FromExport(i).GetRaw();
@@ -279,7 +286,12 @@ namespace Lumina
     {
         
     }
-    
+
+    bool CPackage::Rename(const FName& NewName, CPackage* NewPackage)
+    {
+        return CObject::Rename(NewName, NewPackage);
+    }
+
     void CPackage::LoadObject(CObject* Object)
     {
         LUMINA_PROFILE_SCOPE();
@@ -381,7 +393,7 @@ namespace Lumina
             FObjectImport& Import = ImportTable[ArrayIndex];
             FString FullPath = Paths::ResolveVirtualPath(Import.Package.ToString());
             CPackage* Package = LoadPackage(FName(FullPath));
-            Import.Object = FindObject<CObject>(Import.ObjectName);
+            Import.Object = FindObject<CObject>(Package, Import.ObjectName);
             
             return ImportTable[ArrayIndex].Object;
         }

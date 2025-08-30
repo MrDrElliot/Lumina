@@ -133,7 +133,7 @@ namespace Lumina
                 FString ObjectName = ContentItem->GetName().ToString();
                 FString QualifiedName = Paths::RemoveExtension(ContentItem->GetVirtualPath()) + "." + ObjectName;
 
-                CObject* Asset = LoadObject<CObject>(FName(QualifiedName));
+                CObject* Asset = LoadObject<CObject>(nullptr, QualifiedName);
                 ToolContext->OpenAssetEditor(Asset);
             }
         };
@@ -212,19 +212,23 @@ namespace Lumina
                     {
                         try
                         {
-                            FString PackagePath = ContentItem->GetVirtualPath();
+                            FString PackagePath = ContentItem->GetPath();
                             FString ObjectName = ContentItem->GetName().ToString();
                             FString QualifiedName = ContentItem->GetVirtualPath() + "." + ObjectName;
 
-                            if (CObject* AliveObject = FindObject<CObject>(FName(QualifiedName)))
+                            if (CObject* AliveObject = FindObject<CObject>(nullptr, QualifiedName))
                             {
                                 ToolContext->OnDestroyAsset(AliveObject);
                             }
                         
-                            if (CPackage::DestroyPackage(PackagePath) && std::filesystem::remove(ContentItem->GetPath().c_str()))
+                            if (CPackage::DestroyPackage(PackagePath))
                             {
-                                RefreshContentBrowser();
-                                ImGuiX::Notifications::NotifySuccess("Successfully deleted: \"%s\"", PackagePath.c_str());
+                                if (std::filesystem::remove(PackagePath.c_str()))
+                                {
+                                    GEngine->GetEngineSubsystem<FAssetRegistry>()->BuildAssetDictionary();
+                                    RefreshContentBrowser();
+                                    ImGuiX::Notifications::NotifySuccess("Successfully deleted: \"%s\"", PackagePath.c_str());
+                                }
                             }
                             else
                             {
@@ -341,30 +345,65 @@ namespace Lumina
     void FContentBrowserEditorTool::HandleContentBrowserDragDrop(FContentBrowserTileViewItem* Drop, FContentBrowserTileViewItem* Payload)
     {
         bool bWroteSomething = false;
+        
         /** If the payload is a folder, and is empty, we don't need to do much besides moving the folder */
         if (Payload->IsDirectory())
         {
-            std::filesystem::path SourcePath = Payload->GetPath().c_str();
-            FString SourceFileName = SourcePath.filename().generic_string().c_str();
+            if (std::filesystem::is_empty(Payload->GetPath().c_str()))
+            {
+                std::filesystem::path SourcePath = Payload->GetPath().c_str();
+                FString SourceFileName = SourcePath.filename().generic_string().c_str();
             
-            FString DestPath = Drop->GetPath() + "/" + SourceFileName;
+                FString DestPath = Drop->GetPath() + "/" + SourceFileName;
+                
+                try
+                {
+                    std::filesystem::rename(SourcePath, DestPath.c_str());
+                    LOG_INFO("[ContentBrowser] Moved folder {0} -> {1}", SourcePath.string(), DestPath);
+                    bWroteSomething = true;
+                }
+                catch (const std::filesystem::filesystem_error& e)
+                {
+                    LOG_ERROR("[ContentBrowser] Failed to move folder: {0}", e.what());
+                }
+            }
+            else
+            {
+                //... Moving all assets in a folder :(
+            }
+        }
+
+
+        if (!Payload->IsDirectory())
+        {
+            std::filesystem::path SourcePath = Payload->GetPath().c_str();
+            FString DestPath = Drop->GetPath() + "/" + SourcePath.filename().generic_string().c_str();
+            FString FileName = SourcePath.filename().stem().generic_string().c_str();
 
             try
             {
                 std::filesystem::rename(SourcePath, DestPath.c_str());
-                LOG_INFO("[ContentBrowser] Moved folder {0} -> {1}", SourcePath.string(), DestPath);
+        
+                FString NewVirtualPath = Drop->GetVirtualPath() + "/" + FileName; 
+                
+                if (CPackage* Package = CPackage::LoadPackage(Payload->GetPath()))
+                {
+                    Package->Rename(NewVirtualPath);
+                }
+
+                LOG_INFO("[ContentBrowser] Moved asset {0} -> {1}", SourcePath.string(), DestPath);
+                bWroteSomething = true;
             }
             catch (const std::filesystem::filesystem_error& e)
             {
-                LOG_ERROR("[ContentBrowser] Failed to move folder: {0}", e.what());
+                LOG_ERROR("[ContentBrowser] Failed to move asset: {0}", e.what());
             }
-
-            bWroteSomething = true;
         }
-
+        
 
         if (bWroteSomething)
         {
+            GEngine->GetEngineSubsystem<FAssetRegistry>()->BuildAssetDictionary();
             RefreshContentBrowser();
         }
     }

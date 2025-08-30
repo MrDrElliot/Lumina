@@ -1,8 +1,24 @@
 #pragma once
 
-#include "Containers/Name.h"
 
-#define NAME_None FName("NAME_None")
+#define REGISTER_NAME(num, name) name = num,
+
+#define INTRINSIC_NAMES \
+    REGISTER_NAME(0, None) \
+    
+#include "Platform/GenericPlatform.h"
+
+enum class EName : uint32
+{
+    INTRINSIC_NAMES
+
+    NumIntrinsicName
+};
+#undef REGISTER_NAME
+
+#define REGISTER_NAME(num, name) inline constexpr EName NAME_##name = EName::name;
+    INTRINSIC_NAMES
+#undef REGISTER_NAME
 
 #define ENUM_CLASS_FLAGS(Enum) \
 inline           Enum& operator|=(Enum& Lhs, Enum Rhs) { return Lhs = (Enum)((__underlying_type(Enum))Lhs | (__underlying_type(Enum))Rhs); } \

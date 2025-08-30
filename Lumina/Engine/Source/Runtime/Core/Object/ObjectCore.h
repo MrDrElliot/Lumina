@@ -22,13 +22,11 @@ namespace Lumina
 namespace Lumina
 {
 
-    LUMINA_API FName MakeUniqueObjectName(const CClass* Class, const CPackage* Package, const FName& InBaseName = NAME_None);
+    LUMINA_API FName MakeUniqueObjectName(CClass* Class, CPackage* Package, const FName& InBaseName = NAME_None);
     LUMINA_API CObject* StaticAllocateObject(FConstructCObjectParams& Params);
 
-    LUMINA_API CObject* FindObjectFast(const CClass* InClass, const FName& QualifiedName);
-    LUMINA_API CObject* StaticLoadObject(const CClass* InClass, const FName& QualifiedName);
-    
-    LUMINA_API void ResolveObjectPath(FString& OutPath, const FStringView& InPath);
+    LUMINA_API CObject* FindObjectFast(CClass* InClass, CPackage* Package, const FName& Name, bool bExactClass = false);
+    LUMINA_API CObject* StaticLoadObject(CClass* InClass, CPackage* Package, const FName& Name, const FName& FileName = NAME_None);
     
     LUMINA_API FString GetPackageFromQualifiedObjectName(const FString& FullyQualifiedName);
     LUMINA_API FString GetObjectNameFromQualifiedName(const FString& FullyQualifiedName);
@@ -38,31 +36,19 @@ namespace Lumina
     LUMINA_API void ResolveObjectName(FName& Name);
 
     LUMINA_API bool IsValid(CObjectBase* Obj);
-    
-    template<typename T>
-    T* FindObject(const FName& QualifiedName)
-    {
-        return (T*)FindObjectFast(T::StaticClass(), QualifiedName);
-    }
 
     template<typename T>
-    T* FindObject(const FName& Package, const FName& Name)
+    requires(std::is_base_of_v<CObject, T>)
+    T* FindObject(CPackage* Package, const FName& Name, bool bExactClass = false)
     {
-        FString QualifiedName = Package.ToString() + "." + Name.ToString();
-        return (T*)FindObjectFast(T::StaticClass(), FName(QualifiedName));
+        return (T*)FindObjectFast(T::StaticClass(), Package, Name, bExactClass);
     }
     
     template<typename T>
-    T* LoadObject(const FName& QualifiedName)
+    requires(std::is_base_of_v<CObject, T>)
+    T* LoadObject(CPackage* Package, const FName& Name, const FName& Filename = NAME_None)
     {
-        return (T*)StaticLoadObject(T::StaticClass(), QualifiedName);
-    }
-
-    template<typename T>
-    T* LoadObject(const FName& Package, const FName& Name)
-    {
-        FString QualifiedName = Package.ToString() + "." + Name.ToString();
-        return (T*)StaticLoadObject(T::StaticClass(), FName(QualifiedName));
+        return (T*)StaticLoadObject(T::StaticClass(), Package, Name, Filename);
     }
     
     LUMINA_API CObject* NewObject(CClass* InClass, const CPackage* Package = nullptr, const FName& Name = NAME_None, EObjectFlags Flags = OF_None);

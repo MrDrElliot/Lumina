@@ -14,7 +14,10 @@ namespace Lumina
     bool FAssetRequest::Process()
     {
         FString FullPath = Paths::RemoveExtension(AssetPath);
+
+        // The extension is just an easy way to get the string after the "." delimiter.
         FString Name = Paths::GetExtension(AssetPath);
+        
         FullPath = Paths::ResolveVirtualPath(FullPath);
 
         CPackage* Package = CPackage::LoadPackage(FullPath.c_str());
@@ -24,8 +27,7 @@ namespace Lumina
             return false;
         }
         
-        FName QualifiedName = MakeFullyQualifiedObjectName(Package, Name.c_str());
-        PendingObject = FindObject<CObject>(QualifiedName);
+        PendingObject = FindObject<CObject>(Package, Name);
 
         Package->LoadObject(PendingObject);
         

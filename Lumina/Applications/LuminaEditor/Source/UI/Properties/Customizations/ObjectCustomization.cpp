@@ -123,7 +123,7 @@ namespace Lumina
                         {
                             VirtualPath += "." + Asset.Name.ToString();
                             FName AssetName = VirtualPath.c_str();
-                            Obj = LoadObject<CObject>(AssetName);
+                            Obj = LoadObject<CObject>(nullptr, AssetName, Asset.Path);
                             ObjectHandle = GObjectArray.ToHandle(Obj);
                             ImGui::CloseCurrentPopup();
 

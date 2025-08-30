@@ -11,11 +11,7 @@ namespace Lumina
     using FMutex =              std::mutex;
     using FRecursiveMutex =     std::recursive_mutex;
     using FScopeLock =          std::scoped_lock<FMutex>;
-
-    // ------------------------------------------------------------------------------
-    
     using FRecursiveScopeLock = std::lock_guard<FRecursiveMutex>;
-
 
     namespace Threading
     {
