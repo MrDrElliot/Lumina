@@ -55,7 +55,7 @@ namespace Lumina::Paths
 
     FString Parent(const FString& Path)
     {
-        return std::filesystem::path(Path.c_str()).parent_path().string().c_str();
+        return std::filesystem::path(Path.c_str()).parent_path().generic_string().c_str();
     }
 
     FString DirName(const FString& InPath)

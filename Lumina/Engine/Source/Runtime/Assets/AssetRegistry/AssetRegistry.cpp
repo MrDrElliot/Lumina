@@ -9,132 +9,151 @@ namespace Lumina
 {
     void FAssetRegistry::ProjectLoaded()
     {
-        BuildAssetDictionary();
+        RunInitialDiscovery();
     }
 
     void FAssetRegistry::Initialize(FSubsystemManager& Manager)
     {
-        BuildAssetDictionary();
+        
     }
 
     void FAssetRegistry::Deinitialize()
     {
     }
 
-    void FAssetRegistry::BuildAssetDictionary()
+    void FAssetRegistry::RunInitialDiscovery()
     {
-        if (bCurrentlyProcessing.exchange(true))
-        {
-            bHasQueuedRequest.store(true);
-            return;
-        }
+        LUMINA_PROFILE_SCOPE();
         
         ClearAssets();
         
         TVector<FString> PackagePaths;
         for (const auto& [ID, Path] : Paths::GetMountedPaths())
         {
-            FTaskSystem::Get().ScheduleLambda(1, [this, Path](uint32, uint32, uint32)
+            for (const auto& Directory : std::filesystem::recursive_directory_iterator(Path.c_str()))
             {
-                PendingTasks.fetch_add(1);
-                for (const auto& Directory : std::filesystem::recursive_directory_iterator(Path.c_str()))
+                if (!Directory.is_directory() && Directory.path().extension() == ".lasset")
                 {
-                    if (!Directory.is_directory() && Directory.path().extension() == ".lasset")
-                    {
-                        FAssetData Data;
-                        Data.Path = Directory.path().generic_string().c_str();
-                        Data.Name = Directory.path().filename().stem().generic_string().c_str();
-                    
-                        FString VirtualPath = Paths::ConvertToVirtualPath(Data.Path);
-                        CPackage* Package = FindObject<CPackage>(nullptr, VirtualPath);
-                    
-                        FString ClassPath;
-                        if (Package == nullptr)
-                        {
-                            TVector<uint8> PackageData;
-                            if (!FileHelper::LoadFileToArray(PackageData, Data.Path, 0, sizeof(FPackageHeader)))
-                            {
-                                LOG_ERROR("[AssetRegistry] - Invalid package found {0}", Data.Path);
-                                {
-                                    CorruptedAssets.emplace(Data.Path);
-                                }
-                                continue;
-                            }
-                    
-                            FMemoryReader Reader(PackageData);
-                            FPackageHeader Header;
-                            Reader << Header;
-                            ClassPath = Header.ClassPath;
-                    
-                            if (ClassPath.empty() || Header.Version != 1)
-                            {
-                                LOG_ERROR("[AssetRegistry] - Invalid package found {0}", Data.Path);
-                                {
-                                    CorruptedAssets.emplace(Data.Path);
-                                }
-                                continue;
-                            }
-                        }
-                        else
-                        {
-                            ClassPath = Package->TopLevelClassName;
-                        }
-                    
-                        Data.ClassName = ClassPath;
-                        AddAsset(Data);
-                    }
+                    PackagePaths.push_back(Directory.path().generic_string().c_str());
                 }
-
-                if (PendingTasks.fetch_sub(1) == 1)
+                else if (Directory.is_directory())
                 {
-                    bCurrentlyProcessing.store(false);
+                    FName VirtualPath = Paths::ConvertToVirtualPath(Directory.path().generic_string().c_str());
+                    AssetsByPath.insert(VirtualPath);
                 }
-
-                if (bHasQueuedRequest.exchange(false))
-                {
-                    BuildAssetDictionary();
-                }
-            });
-        }
-    }
-
-    void FAssetRegistry::GetAssets(const FARFilter& Filter, TVector<FAssetData>& OutAssets)
-    {
-        for (const FAssetData& Data : Assets)
-        {
-            bool classMatches = Filter.ClassNames.empty() || 
-                eastl::find(Filter.ClassNames.begin(), Filter.ClassNames.end(), Data.ClassName) != Filter.ClassNames.end();
-
-            bool pathMatches = Filter.Paths.empty() || 
-                eastl::find(Filter.Paths.begin(), Filter.Paths.end(), Data.Path) != Filter.Paths.end();
-
-            if (classMatches && pathMatches)
-            {
-                OutAssets.push_back(Data);
             }
         }
+
+
+        uint32 NumPackages = (uint32)PackagePaths.size();
+        FTaskSystem::Get().ScheduleLambda(NumPackages, [this, PackagePaths = std::move(PackagePaths)] (uint32 Start, uint32 End, uint32 Thread)
+        {
+            for (uint32 i = Start; i < End; ++i)
+            {
+                const FString& PathString = PackagePaths[i];
+                ProcessPackagePath(PathString);
+            }
+        });
+        
     }
 
-    FAssetData FAssetRegistry::GetAsset(const FString& Path)
+    void FAssetRegistry::AddLoadedPackage(CPackage* Package)
     {
-        FName PathName(Path);
-        if (AssetPathMap.find(PathName) != AssetPathMap.end())
+        FName PathName = Package->GetName();
+        LUM_ASSERT(AssetPackageMap.find(PathName) == AssetPackageMap.end())
+
+        FName AssetName = Paths::FileName(Package->GetName().ToString());
+        
+        FAssetData* AssetData = Memory::New<FAssetData>();
+        AssetData->AssetClass = Package->TopLevelClassName;
+        AssetData->AssetName = AssetName;
+        AssetData->FullPath = Package->GetName().ToString() + "." + AssetName.ToString();
+        AssetData->PackageName = Package->GetName();
+        
+        AssetPackageMap.emplace(PathName, AssetData);
+
+        FString ParentPath = Paths::Parent(AssetData->PackageName.ToString());
+        if (!ParentPath.empty() && ParentPath.back() == ':')
         {
-            return AssetPathMap[PathName];
+            ParentPath.append("//");
+        }
+        
+        AssetsByPath[ParentPath].push_back(AssetData);
+
+        GetOnAssetRegistryUpdated().Broadcast();
+    }
+
+    void FAssetRegistry::RemoveLoadedPackage(CPackage* Package)
+    {
+    }
+
+    FAssetRegistryUpdatedDelegate& FAssetRegistry::GetOnAssetRegistryUpdated()
+    {
+        return OnAssetRegistryUpdated;
+    }
+
+    const TVector<FAssetData*>& FAssetRegistry::GetAssetsForPath(const FName& Path)
+    {
+        return AssetsByPath[Path];
+    }
+
+    void FAssetRegistry::ProcessPackagePath(const FString& Path)
+    {
+        TVector<uint8> FileBinary;
+        if (!FileHelper::LoadFileToArray(FileBinary, Path) || FileBinary.empty())
+        {
+            return;
         }
 
-        return FAssetData();
-    }
+        FString VirtualPackagePath = Paths::ConvertToVirtualPath(Path);
+        FName PackagePathName = VirtualPackagePath;
+        
+        FAssetData* AssetData = Memory::New<FAssetData>();
 
-    void FAssetRegistry::AddAsset(const FAssetData& Data)
-    {
-        Assets.push_back(Data);
-        AssetPathMap.insert_or_assign(FName(Data.Path), Data);
+        FMemoryReader Reader(FileBinary);
+        FPackageHeader Header;
+        Reader << Header;
+        LUM_ASSERT(Header.Tag == PACKAGE_FILE_TAG)
+        
+        Reader.Seek(Header.ExportTableOffset);
+        
+        TVector<FObjectExport> Exports;
+        Reader << Exports;
+
+
+        AssetData->AssetClass = Header.ClassPath;
+        AssetData->AssetName = Paths::FileName(VirtualPackagePath);
+        AssetData->FullPath = VirtualPackagePath + "." + AssetData->AssetName.ToString();
+        AssetData->PackageName = VirtualPackagePath;
+
+        FScopeLock Lock(AssetsMutex);
+        Assets.emplace(AssetData);
+
+        AssetPackageMap.emplace(PackagePathName, AssetData);
+
+        FString ParentPath = Paths::Parent(VirtualPackagePath);
+        if (!ParentPath.empty() && ParentPath.back() == ':')
+        {
+            ParentPath.append("//");
+        }
+        AssetsByPath[ParentPath].push_back(AssetData);
+        
     }
 
     void FAssetRegistry::ClearAssets()
     {
+        for (FAssetData* Asset : Assets)
+        {
+            Memory::Delete(Asset);
+        }
+        
         Assets.clear();
-        AssetPathMap.clear();
+        AssetPackageMap.clear();
+        
+    }
+
+    void FAssetRegistry::BroadcastRegistryUpdate()
+    {
+        OnAssetRegistryUpdated.Broadcast();
     }
 }

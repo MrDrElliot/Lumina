@@ -30,7 +30,7 @@ namespace Lumina
             ImGui::TableSetColumnIndex(1);
             ImGui::Checkbox("##ImportMaterials", &Options.bImportMaterials);
 
-            if (Options.bImportMaterials)
+            if (!Options.bImportMaterials)
             {
                 // Import Materials
                 ImGui::TableNextRow();
@@ -39,7 +39,7 @@ namespace Lumina
                 ImGui::TableSetColumnIndex(1);
                 ImGui::Checkbox("##ImportTextures", &Options.bImportTextures);
             }
-            
+
             // Import Animations
             ImGui::TableNextRow();
             ImGui::TableSetColumnIndex(0);

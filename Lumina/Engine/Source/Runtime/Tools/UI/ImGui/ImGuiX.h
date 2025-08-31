@@ -86,50 +86,50 @@ namespace Lumina::ImGuiX
 
         
         TVector<FAssetData> FilteredAssets;
-        GEngine->GetEngineSubsystem<FAssetRegistry>()->GetAssets(Filter, FilteredAssets);
+        //GEngine->GetEngineSubsystem<FAssetRegistry>()->GetAssets(Filter, FilteredAssets);
         
         for (const FAssetData& Asset : FilteredAssets)
         {
             
-            if (!SearchFilter.PassFilter(Asset.Name.c_str()))
-            {
-                continue;
-            }
-            
-            const char* NameStr = Asset.Name.c_str();
-
-            auto OnSelected = [&] (const FAssetData& Data)
-            {
-                FString VirtualPath = Paths::ConvertToVirtualPath(Data.Path);
-                VirtualPath += "." + Data.Name.ToString();
-                FName AssetName = VirtualPath.c_str();
-                OutSelected = LoadObject<T>(nullptr, AssetName);
-                
-                ImGui::PopID();
-                ImGui::CloseCurrentPopup();
-                ImGui::EndGroup();
-            };
-            
-            ImGui::BeginGroup();
-            ImGui::PushID(Asset.Path.c_str());
-            if (ImGui::Button("Asset", ImVec2(64, 64)))
-            {
-                OnSelected(Asset);
-                return true;
-            }
-            
-            ImGui::SameLine();
-            
-            if (ImGui::Selectable(NameStr))
-            {
-                OnSelected(Asset);
-                return true;
-            }
-
-            if (ImGui::IsItemHovered())
-            {
-                ImGui::SetTooltip("%s", Asset.Path.c_str());
-            }
+            //if (!SearchFilter.PassFilter(Asset.Name.c_str()))
+            //{
+            //    continue;
+            //}
+            //
+            //const char* NameStr = Asset.Name.c_str();
+            //
+            //auto OnSelected = [&] (const FAssetData* Data)
+            //{
+            //    //FString VirtualPath = Paths::ConvertToVirtualPath(Data.Path);
+            //    //VirtualPath += "." + Data.Name.ToString();
+            //    FName AssetName = VirtualPath.c_str();
+            //    OutSelected = LoadObject<T>(nullptr, AssetName);
+            //    
+            //    ImGui::PopID();
+            //    ImGui::CloseCurrentPopup();
+            //    ImGui::EndGroup();
+            //};
+            //
+            //ImGui::BeginGroup();
+            ////ImGui::PushID(Asset.Path.c_str());
+            //if (ImGui::Button("Asset", ImVec2(64, 64)))
+            //{
+            //    OnSelected(Asset);
+            //    return true;
+            //}
+            //
+            //ImGui::SameLine();
+            //
+            //if (ImGui::Selectable(NameStr))
+            //{
+            //    OnSelected(Asset);
+            //    return true;
+            //}
+            //
+            //if (ImGui::IsItemHovered())
+            //{
+            //    //ImGui::SetTooltip("%s", Asset.Path.c_str());
+            //}
 
             ImGui::PopID();
             ImGui::EndGroup();

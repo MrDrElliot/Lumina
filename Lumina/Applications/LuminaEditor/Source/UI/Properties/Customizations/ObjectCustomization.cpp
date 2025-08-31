@@ -109,27 +109,27 @@ namespace Lumina
                     FARFilter Filter;
                     //Filter.ClassNames.push_back(ObjectProperty->GetPropertyClass()->GetName().ToString());
 
-                    TVector<FAssetData> FilteredAssets;
-                    GEngine->GetEngineSubsystem<FAssetRegistry>()->GetAssets(Filter, FilteredAssets);
-                    for (const FAssetData& Asset : FilteredAssets)
-                    {
-                        if (!SearchFilter.PassFilter(Asset.Path.c_str()))
-                        {
-                            continue;
-                        }
-                        
-                        FString VirtualPath = Paths::ConvertToVirtualPath(Asset.Path);
-                        if (ImGui::Selectable(VirtualPath.c_str()))
-                        {
-                            VirtualPath += "." + Asset.Name.ToString();
-                            FName AssetName = VirtualPath.c_str();
-                            Obj = LoadObject<CObject>(nullptr, AssetName, Asset.Path);
-                            ObjectHandle = GObjectArray.ToHandle(Obj);
-                            ImGui::CloseCurrentPopup();
-
-                            bWasChanged = true;
-                        }
-                    }
+                    //TVector<FAssetData> FilteredAssets;
+                    //GEngine->GetEngineSubsystem<FAssetRegistry>()->GetAssets(Filter, FilteredAssets);
+                    //for (const FAssetData& Asset : FilteredAssets)
+                    //{
+                    //    if (!SearchFilter.PassFilter(Asset.Path.c_str()))
+                    //    {
+                    //        continue;
+                    //    }
+                    //    
+                    //    FString VirtualPath = Paths::ConvertToVirtualPath(Asset.Path);
+                    //    if (ImGui::Selectable(VirtualPath.c_str()))
+                    //    {
+                    //        VirtualPath += "." + Asset.Name.ToString();
+                    //        FName AssetName = VirtualPath.c_str();
+                    //        Obj = LoadObject<CObject>(nullptr, AssetName, Asset.Path);
+                    //        ObjectHandle = GObjectArray.ToHandle(Obj);
+                    //        ImGui::CloseCurrentPopup();
+                    //
+                    //        bWasChanged = true;
+                    //    }
+                    //}
                 }
                 
                 ImGui::EndChild();

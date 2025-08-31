@@ -22,11 +22,72 @@
 namespace Lumina
 {
 
+    class FRenameModalState
+    {
+    public:
+        
+        char Buffer[256] = {};
+        bool bInitialized = false;
+    
+        void Initialize(const FString& CurrentName)
+        {
+            if (!bInitialized)
+            {
+                strncpy_s(Buffer, sizeof(Buffer), CurrentName.c_str(), _TRUNCATE);
+                bInitialized = true;
+            }
+        }
+    
+        void Reset()
+        {
+            memset(Buffer, 0, sizeof(Buffer));
+            bInitialized = false;
+        }
+    };
+
+    static bool PerformFileRename(const std::filesystem::path& OldPath, const std::string& NewName)
+    {
+        try
+        {
+            std::filesystem::path NewPath = OldPath.parent_path() / NewName;
+
+            bool bDirectory = std::filesystem::is_directory(OldPath);
+            
+            if (!bDirectory)
+            {
+                NewPath += OldPath.extension();
+            }
+        
+            if (std::filesystem::exists(NewPath))
+            {
+                LOG_ERROR("Destination path already exists: {0}", NewPath.string());
+                return false;
+            }
+            
+            if (!bDirectory)
+            {
+                if (CPackage* Package = CPackage::LoadPackage(OldPath.c_str()))
+                {
+                    FString NewVirtualPath = Paths::ConvertToVirtualPath(NewPath.generic_string().c_str()); 
+                    Package->Rename(NewVirtualPath);
+                }
+            }
+
+            std::filesystem::rename(OldPath, NewPath);
+            
+            return true;
+        }
+        catch (const std::filesystem::filesystem_error& e)
+        {
+            LOG_ERROR("Failed to rename file: {0}", e.what());
+            return false;
+        }
+    }
+    
     void FContentBrowserEditorTool::RefreshContentBrowser()
     {
         ContentBrowserTileView.MarkTreeDirty();
         OutlinerListView.MarkTreeDirty();
-        //GEngine->GetEngineSubsystem<FAssetRegistry>()->UpdateAssetDictionary();
     }
 
     void FContentBrowserEditorTool::OnInitialize()
@@ -46,6 +107,11 @@ namespace Lumina
         
         SelectedPath = FProject::Get().GetProjectContentDirectory().c_str();
 
+        GEngine->GetEngineSubsystem<FAssetRegistry>()->GetOnAssetRegistryUpdated().AddTFunction([this]
+        {
+            RefreshContentBrowser();
+        });
+        
         ContentBrowserTileViewContext.DragDropFunction = [this] (FTileViewItem* DropItem)
         {
             auto* TypedDroppedItem = (FContentBrowserTileViewItem*)DropItem;
@@ -76,30 +142,7 @@ namespace Lumina
             ImTextureID ImTexture;
             
             FAssetRegistry* Registry = GEngine->GetEngineSubsystem<FAssetRegistry>();
-            if (Registry->IsPathCorrupt(ContentItem->GetPath()))
-            {
-                ImTexture = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer()->GetOrCreateImTexture(FEditorUI::CorruptIcon);
-            }
-            else
-            {
-                FAssetData Asset = Registry->GetAsset(ContentItem->GetPath());
-                if (Asset.ClassName == "CMaterial" || Asset.ClassName == "CMaterialInstance")
-                {
-                    ImTexture = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer()->GetOrCreateImTexture(FEditorUI::MaterialIcon);
-                }
-                else if (Asset.ClassName == "CStaticMesh")
-                {
-                    ImTexture = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer()->GetOrCreateImTexture(FEditorUI::StaticMeshIcon);
-                }
-                else if (Asset.ClassName == "CTexture")
-                {
-                    ImTexture = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer()->GetOrCreateImTexture(FEditorUI::TextureIcon);
-                }
-                else
-                {
-                    ImTexture = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer()->GetOrCreateImTexture(FEditorUI::FolderIcon);
-                }
-            }
+            ImTexture = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer()->GetOrCreateImTexture(FEditorUI::FolderIcon);
             
             
             ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1, 1, 1, 0.05f)); 
@@ -138,7 +181,7 @@ namespace Lumina
             }
         };
         
-        ContentBrowserTileViewContext.DrawItemContextMenuFunction = [this] (const TVector<FTileViewItem*> Items)
+        ContentBrowserTileViewContext.DrawItemContextMenuFunction = [this] (const TVector<FTileViewItem*>& Items)
         {
             for (FTileViewItem* Item : Items)
             {
@@ -146,61 +189,38 @@ namespace Lumina
                 
                 if (ImGui::MenuItem("Rename"))
                 {
-                    ToolContext->PushModal("Rename", ImVec2(350.0f, 100.0f), [this, ContentItem](const FUpdateContext& Context) -> bool
+                    auto RenameState = MakeSharedPtr<FRenameModalState>();
+            
+                    ToolContext->PushModal("Rename", ImVec2(275.0f, 125.0f), [this, ContentItem, RenameState](const FUpdateContext&) -> bool
                     {
-                        static char Buf[256] = {};
-
-                        if (Buf[0] == '\0')
-                        {
-                            memset(Buf, 0, sizeof(Buf));
-                            strncpy(Buf, ContentItem->GetName().c_str(), sizeof(Buf) - 1);
-                            Buf[sizeof(Buf) - 1] = '\0';
-                        }
+                        RenameState->Initialize(ContentItem->GetName().ToString());
 
                         ImGui::SetKeyboardFocusHere();
-                        bool bSubmitted = ImGui::InputText("New Name", Buf, sizeof(Buf),
-                            ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_EnterReturnsTrue);
-        
-                        if (bSubmitted)
+                        ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+                        
+                        bool bSubmitted = ImGui::InputText("##", RenameState->Buffer, sizeof(RenameState->Buffer), ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_EnterReturnsTrue);
+                    
+                        if (bSubmitted && strlen(RenameState->Buffer) > 0)
                         {
-                            std::filesystem::path OldPath = ContentItem->GetPath().c_str();
-                            std::filesystem::path NewPath = OldPath.parent_path() / Buf;
-
-                            
-                            if (!std::filesystem::is_directory(OldPath))
+                            std::filesystem::path OldPath(ContentItem->GetPath().c_str());
+                    
+                            if (PerformFileRename(OldPath, RenameState->Buffer))
                             {
-                                NewPath += OldPath.extension();
-                            }
-            
-                            try
-                            {
-                                if (std::filesystem::exists(NewPath))
+                                if (std::filesystem::is_directory(RenameState->Buffer))
                                 {
-                                    throw std::filesystem::filesystem_error(
-                                        "Destination path already exists",
-                                        std::make_error_code(std::errc::file_exists)
-                                    );
+                                    RefreshContentBrowser();
                                 }
-                                
-                                std::filesystem::rename(OldPath, NewPath);
-
-                                if (!std::filesystem::is_directory(OldPath))
-                                {
-                                    
-                                }
-                                
-                                memset(Buf, 0, sizeof(Buf));
-                                RefreshContentBrowser();
-                                return true;
                             }
-                            catch (const std::filesystem::filesystem_error& e)
-                            {
-                                LOG_ERROR("Failed to rename file: {0}", e.what());
-                                return true;
-                            }
-                            
+                    
+                            RenameState->Reset();
+                            return true;
                         }
 
+                        if (ImGui::Button("Cancel"))
+                        {
+                            return true;
+                        }
+                        
                         return false;
                     });
                 }
@@ -213,22 +233,35 @@ namespace Lumina
                         try
                         {
                             FString PackagePath = ContentItem->GetPath();
-                            FString ObjectName = ContentItem->GetName().ToString();
-                            FString QualifiedName = ContentItem->GetVirtualPath() + "." + ObjectName;
 
-                            if (CObject* AliveObject = FindObject<CObject>(nullptr, QualifiedName))
+                            bool bWasSuccessful = false;
+
+                            if (std::filesystem::is_directory(PackagePath.c_str()))
                             {
-                                ToolContext->OnDestroyAsset(AliveObject);
+                                std::filesystem::remove(PackagePath.c_str());
+                                bWasSuccessful = true;
                             }
-                        
-                            if (CPackage::DestroyPackage(PackagePath))
+                            else
                             {
-                                if (std::filesystem::remove(PackagePath.c_str()))
+                                FString ObjectName = ContentItem->GetName().ToString();
+                                FString QualifiedName = ContentItem->GetVirtualPath() + "." + ObjectName;
+
+                                if (CObject* AliveObject = FindObject<CObject>(nullptr, QualifiedName))
                                 {
-                                    GEngine->GetEngineSubsystem<FAssetRegistry>()->BuildAssetDictionary();
-                                    RefreshContentBrowser();
-                                    ImGuiX::Notifications::NotifySuccess("Successfully deleted: \"%s\"", PackagePath.c_str());
+                                    ToolContext->OnDestroyAsset(AliveObject);
                                 }
+                        
+                                if (CPackage::DestroyPackage(PackagePath))
+                                {
+                                    std::filesystem::remove(PackagePath.c_str());
+                                    bWasSuccessful = true;
+                                }
+                            }
+
+                            if (bWasSuccessful)
+                            {
+                                RefreshContentBrowser();
+                                ImGuiX::Notifications::NotifySuccess("Successfully deleted: \"%s\"", PackagePath.c_str());
                             }
                             else
                             {
@@ -249,18 +282,37 @@ namespace Lumina
         {
             if (Paths::Exists(SelectedPath))
             {
-                TVector<FString> AllPaths;
+                TFixedVector<FString, 24> DirectoryPaths;
+                
                 for (auto& Directory : std::filesystem::directory_iterator(SelectedPath.c_str()))
                 {
-                    AllPaths.push_back(Directory.path().generic_string().c_str());
+                    if (std::filesystem::is_directory(Directory))
+                    {
+                        FString VirtualPath = Paths::ConvertToVirtualPath(Directory.path().generic_string().c_str());
+                        LOG_INFO("Virtual {}", VirtualPath);
+                        DirectoryPaths.push_back(Directory.path().generic_string().c_str());
+                    }
                 }
 
-                CThumbnailManager::Get().GetOrLoadThumbnailsForPackages(AllPaths);
-
-                for (auto& Directory : AllPaths)
+                eastl::sort(DirectoryPaths.begin(), DirectoryPaths.end());
+                
+                for (const FString& Directory : DirectoryPaths)
                 {
-                    bool bIsDirectory = std::filesystem::is_directory(Directory.c_str());
-                    ContentBrowserTileView.AddItemToTree<FContentBrowserTileViewItem>(nullptr, Directory, bIsDirectory);
+                    ContentBrowserTileView.AddItemToTree<FContentBrowserTileViewItem>(nullptr, Directory, true);
+                }
+
+                FString FullPath = Paths::ConvertToVirtualPath(SelectedPath);
+                TVector<FAssetData*> Assets = GEngine->GetEngineSubsystem<FAssetRegistry>()->GetAssetsForPath(FullPath);
+
+                eastl::sort(Assets.begin(), Assets.end(), [](const FAssetData* A, const FAssetData* B)
+                {
+                    return A->AssetName.ToString() > B->AssetName.ToString();
+                });
+                
+                for (FAssetData* Asset : Assets)
+                {
+                    FullPath = Paths::ResolveVirtualPath(Asset->FullPath.ToString());
+                    ContentBrowserTileView.AddItemToTree<FContentBrowserTileViewItem>(nullptr, FullPath, true);
                 }
             }
         };
@@ -399,13 +451,6 @@ namespace Lumina
                 LOG_ERROR("[ContentBrowser] Failed to move asset: {0}", e.what());
             }
         }
-        
-
-        if (bWroteSomething)
-        {
-            GEngine->GetEngineSubsystem<FAssetRegistry>()->BuildAssetDictionary();
-            RefreshContentBrowser();
-        }
     }
 
     void FContentBrowserEditorTool::DrawDirectoryBrowser(const FUpdateContext& Contxt, bool bIsFocused, ImVec2 Size)
@@ -421,7 +466,6 @@ namespace Lumina
     {
         FString Path = Paths::GetEngineResourceDirectory();
         constexpr float Padding = 10.0f;
-        bool bWroteSomething = false;
 
         ImVec2 AdjustedSize = ImVec2(Size.x - 2 * Padding, Size.y - 2 * Padding);
 
@@ -494,7 +538,7 @@ namespace Lumina
                     FString PathString = NewPath.generic_string().c_str();
                     MakeUniquePath(PathString);
                     std::filesystem::create_directory(PathString.c_str());
-                    bWroteSomething = true;
+                    RefreshContentBrowser();
                 }
             }
             
@@ -546,7 +590,6 @@ namespace Lumina
                                 bool bShouldClose = CFactory::ShowCreationDialogue(Factory, PathString);
                                 if (bShouldClose)
                                 {
-                                    RefreshContentBrowser();
                                     ImGuiX::Notifications::NotifySuccess("Successfully Created: \"%s\"", PathString.c_str());
                                 }
                         
@@ -558,7 +601,6 @@ namespace Lumina
                             CObject* Object = Factory->TryCreateNew(PathString);
                             if (Object)
                             {
-                                bWroteSomething = true;
                                 ImGuiX::Notifications::NotifySuccess("Successfully Created: \"%s\"", PathString.c_str());
                             }
                             else
@@ -617,7 +659,6 @@ namespace Lumina
                             bool bShouldClose = CFactory::ShowImportDialogue(Factory, FStringFileName, PathString);
                             if (bShouldClose)
                             {
-                                RefreshContentBrowser();
                                 ImGuiX::Notifications::NotifySuccess("Successfully Imported: \"%s\"", PathString.c_str());
                             }
                     
@@ -629,7 +670,6 @@ namespace Lumina
                         FTaskSystem::Get().ScheduleLambda(1, [this, Factory, FStringFileName, PathString] (uint32 Start, uint32 End, uint32 ThreadNum_)
                         {
                             Factory->TryImport(FStringFileName, PathString);
-                            RefreshContentBrowser();
                             ImGuiX::Notifications::NotifySuccess("Successfully Imported: \"%s\"", PathString.c_str());
                         });
                     }
@@ -637,11 +677,6 @@ namespace Lumina
             }
         }
         
-        if (bWroteSomething)
-        {
-            RefreshContentBrowser();
-        }
-
         ContentBrowserTileView.Draw(ContentBrowserTileViewContext);
         ImGui::EndChild();
     

@@ -54,16 +54,19 @@ namespace Lumina
         FName FileNameName = VirtualPath.c_str();
         
         CPackage* Package = FindObject<CPackage>(nullptr, FileNameName);
-        if (Package == nullptr)
+        if (Package)
         {
-            FileHelper::CreateNewFile(FullName, true);
-            Package = NewObject<CPackage>(nullptr, FileNameName);
+            LOG_WARN("Attempted to create a package that already existed {}", FileName);
+            return Package;
         }
+        
+        Package = NewObject<CPackage>(nullptr, FileNameName);
 
         Package->TopLevelClassName = InTopLevelClassName;
         LOG_INFO("Created Package: \"{}\"", VirtualPath);
+
+        GEngine->GetEngineSubsystem<FAssetRegistry>()->AddLoadedPackage(Package);
         
-        GEngine->GetEngineSubsystem<FAssetRegistry>()->BuildAssetDictionary();
         return Package;
     }
 
@@ -199,7 +202,7 @@ namespace Lumina
         
         for (CObject* Export : SaveContext.Exports)
         {
-            Export->LoaderIndex = FObjectPackageIndex::FromExport(Package->ExportTable.size()).GetRaw();
+            Export->LoaderIndex = FObjectPackageIndex::FromExport((int64)Package->ExportTable.size()).GetRaw();
             Package->ExportTable.emplace_back(Export);
         }
         
@@ -245,6 +248,11 @@ namespace Lumina
             Package->Loader = MakeSharedPtr<FPackageLoader>(HeapData, FileBinary.size(), Package);
         }
 
+        if (!FileHelper::DoesFileExist(PathString))
+        {
+            FileHelper::CreateNewFile(PathString, true);
+        }
+        
         if (!FileHelper::SaveArrayToFile(FileBinary, PathString))
         {
             return false;

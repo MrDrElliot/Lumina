@@ -20,6 +20,7 @@ namespace Lumina
         Info.physicalDevice = PhysicalDevice;
         Info.device = Device;
         Info.pVulkanFunctions = &Functions;
+        Info.pAllocationCallbacks = VK_ALLOC_CALLBACK;
 
         VK_CHECK(vmaCreateAllocator(&Info, &Allocator));
 
@@ -41,7 +42,6 @@ namespace Lumina
         {
             if (kvp.first != VK_NULL_HANDLE)
             {
-                LOG_DEBUG("Destroying Buffer Object with VkBuffer: {}, VmaAllocation: {}", (void*)kvp.first, (void*)kvp.second);
                 vmaDestroyBuffer(Allocator, kvp.first, kvp.second);
             }
         }
@@ -52,7 +52,6 @@ namespace Lumina
         {
             if (kvp.first != VK_NULL_HANDLE)
             {
-                LOG_DEBUG("Destroying Image Object with VkImage: {}, VmaAllocation: {}", (void*)kvp.first, (void*)kvp.second);
                 vmaDestroyImage(Allocator, kvp.first, kvp.second);
             }
         }

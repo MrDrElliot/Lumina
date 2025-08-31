@@ -63,7 +63,7 @@ namespace Lumina
     template <typename K, typename V> using TPair                                   = eastl::pair<K, V>;
     template <typename T> using TList                                               = eastl::list<T>;
     template <typename T> using TSet                                                = eastl::set<T>;
-    template <typename T> using THashSet                                            = eastl::hash_set<T>;
+    template <typename T, typename H = eastl::hash<T>, typename E = eastl::equal_to<T>> using THashSet = eastl::hash_set<T, H>;
     template <typename T> using TUnorderedSet                                       = eastl::unordered_set<T>;
 
     template <typename T> using TQueue                                              = eastl::queue<T>;

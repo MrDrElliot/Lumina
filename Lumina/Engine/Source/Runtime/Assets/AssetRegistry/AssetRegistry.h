@@ -2,6 +2,7 @@
 
 #include <filesystem>
 
+#include "AssetData.h"
 #include "Assets/AssetHeader.h"
 #include "Core/DisableAllWarnings.h"
 #include "Subsystems/Subsystem.h"
@@ -21,20 +22,37 @@ DECLARE_MULTICAST_DELEGATE(FAssetRegistryUpdatedDelegate);
 
 namespace Lumina
 {
+	class CPackage;
+	struct FAssetData;
 	class CClass;
-
-	struct FAssetData
-	{
-		FName	Name;
-		FString	ClassName;
-		FString Path;
-	};
-
+	
 	struct FARFilter
 	{
 		TVector<FString> Paths;
 		TVector<FString> ClassNames;
 	};
+
+	struct FAssetDataPtrHash
+	{
+		size_t operator() (const FAssetData* Asset) const noexcept
+		{
+			size_t Seed;
+			Hash::HashCombine(Seed, Asset->FullPath);
+			
+			return Seed;
+		}
+	};
+
+	struct FAssetDataPtrEqual
+	{
+		bool operator()(const FAssetData* A, const FAssetData* B) const noexcept
+		{
+			return A->FullPath == B->FullPath;
+		}
+	};
+
+
+	using FAssetDataMap = THashSet<FAssetData*, FAssetDataPtrHash, FAssetDataPtrEqual>;
 	
 	
 	class LUMINA_API FAssetRegistry final : public ISubsystem
@@ -45,26 +63,36 @@ namespace Lumina
 		void Initialize(FSubsystemManager& Manager) override;
 		void Deinitialize() override;
 
-		void BuildAssetDictionary();
+		void RunInitialDiscovery();
+
+		void AddLoadedPackage(CPackage* Package);
+		void RemoveLoadedPackage(CPackage* Package);
 		
 
-		void GetAssets(const FARFilter& Filter, TVector<FAssetData>& OutAssets);
-		FAssetData GetAsset(const FString& Path);
+		FAssetRegistryUpdatedDelegate& GetOnAssetRegistryUpdated();
 
-		bool IsPathCorrupt(const FString& Path) { return CorruptedAssets.find(FName(Path)) != CorruptedAssets.end(); }
-
+		const TVector<FAssetData*>& GetAssetsForPath(const FName& Path);
 		
 	private:
-		
 
-		void AddAsset(const FAssetData& Data);
+		void ProcessPackagePath(const FString& Path);
+		
 		void ClearAssets();
 
-		std::atomic<int>			PendingTasks{0};
-		std::atomic_bool 			bHasQueuedRequest{false};
-		std::atomic_bool 			bCurrentlyProcessing{false};
-		TSet<FName>					CorruptedAssets;
-		TVector<FAssetData> 		Assets;
-		THashMap<FName, FAssetData> AssetPathMap;
+		void BroadcastRegistryUpdate();
+
+
+		FAssetRegistryUpdatedDelegate	OnAssetRegistryUpdated;
+		
+		FMutex							AssetsMutex;
+
+		/** Global hash of all registered assets */
+		FAssetDataMap 					Assets;
+
+		/** Package names to asset data */
+		THashMap<FName, FAssetData*>	AssetPackageMap;
+
+		/** Map if full names to assets saved on disk */
+		THashMap<FName, TVector<FAssetData*>> AssetsByPath;
 	};
 }

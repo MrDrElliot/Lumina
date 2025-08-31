@@ -361,9 +361,6 @@ namespace Lumina
         LUMINA_API void CreateImports();
         
 
-        LUMINA_API void CreateExport(CObject* Object);
-        LUMINA_API void CreateImport(CObject* Object);
-
         bool Rename(const FName& NewName, CPackage* NewPackage = nullptr) override;
         
         /**
