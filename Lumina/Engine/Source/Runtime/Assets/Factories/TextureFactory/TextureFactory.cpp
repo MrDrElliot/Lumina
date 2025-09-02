@@ -1,7 +1,10 @@
 #include "TextureFactory.h"
 
 #include "Assets/AssetHeader.h"
+#include "Assets/AssetRegistry/AssetRegistry.h"
 #include "Assets/AssetTypes/Textures/Texture.h"
+#include "Core/Engine/Engine.h"
+#include "Core/Object/Cast.h"
 #include "Core/Object/Package/Package.h"
 #include "Core/Serialization/MemoryArchiver.h"
 #include "Paths/Paths.h"
@@ -25,6 +28,11 @@ namespace Lumina
         return static_cast<uint8>(levels);
     }
 
+    CObject* CTextureFactory::CreateNew(const FName& Name, CPackage* Package)
+    {
+        return NewObject<CTexture>(Package, Name);
+    }
+
     void CTextureFactory::TryImport(const FString& RawPath, const FString& DestinationPath)
     {
         FString FullPath = DestinationPath;
@@ -34,11 +42,10 @@ namespace Lumina
         
         std::filesystem::path FilePath = RawPath.c_str();
 
-        
-        CPackage* NewPackage = CPackage::CreatePackage(GetSupportedType()->GetName().ToString(), DestinationPath);
-        CTexture* NewTexture = NewObject<CTexture>(NewPackage, FileName.c_str());
-        NewTexture->SetFlag(OF_NeedsLoad);
 
+        CTexture* NewTexture = Cast<CTexture>(TryCreateNew(DestinationPath));
+        NewTexture->SetFlag(OF_NeedsPostLoad);
+        
         FRHIImageDesc ImageDescription;
         ImageDescription.Format = EFormat::RGBA8_UNORM;
         ImageDescription.Extent = Import::Textures::ImportTexture(NewTexture->Pixels, RawPath);
@@ -51,10 +58,7 @@ namespace Lumina
         if (ImageDescription.Extent.X == 0 || ImageDescription.Extent.Y == 0)
         {
             LOG_ERROR("Attempted to import an image with an invalid size: X: {} Y: {}", ImageDescription.Extent.X, ImageDescription.Extent.Y);
-            return;
         }
-
-        CPackage::SavePackage(NewPackage, NewTexture, FullPath.c_str());
-        NewPackage->LoadObject(NewTexture);
+        
     }
 }

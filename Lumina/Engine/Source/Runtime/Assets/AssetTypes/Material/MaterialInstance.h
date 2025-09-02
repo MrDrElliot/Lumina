@@ -17,6 +17,9 @@ namespace Lumina
     public:
 
         CMaterialInstance();
+
+        bool IsAsset() const override { return true; }
+        
         CMaterial* GetMaterial() const override;
         bool SetScalarValue(const FName& Name, const float Value) override;
         bool SetVectorValue(const FName& Name, const glm::vec4& Value) override;

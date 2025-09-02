@@ -1,5 +1,7 @@
 #include "Factory.h"
 
+#include "Assets/AssetRegistry/AssetRegistry.h"
+#include "Core/Engine/Engine.h"
 #include "Core/Object/Package/Package.h"
 #include "Paths/Paths.h"
 #include "TaskSystem/TaskSystem.h"
@@ -8,11 +10,12 @@ namespace Lumina
 {
     CObject* CFactory::TryCreateNew(const FString& Path)
     {
-        CPackage* Package = CPackage::CreatePackage(GetSupportedType()->GetName().ToString(), Path);
+        CPackage* Package = CPackage::CreatePackage(Path);
         FString FileName = Paths::FileName(Path);
 
         CObject* New = CreateNew(FileName.c_str(), Package);
-        CPackage::SavePackage(Package, nullptr, Path.c_str());
+        New->SetFlag(OF_Public);
+        GEngine->GetEngineSubsystem<FAssetRegistry>()->AssetCreated(New);
 
         return New;
     }

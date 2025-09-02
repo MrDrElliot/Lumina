@@ -14,5 +14,4 @@ namespace Lumina
     {
         return NewObject<CMaterial>(Package, Name);
     }
-    
 }

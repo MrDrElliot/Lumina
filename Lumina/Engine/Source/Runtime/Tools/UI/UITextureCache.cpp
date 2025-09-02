@@ -4,48 +4,116 @@
 #include "ImGui/ImGuiRenderer.h"
 #include "Renderer/RenderManager.h"
 #include "Renderer/RHIGlobals.h"
+#include "TaskSystem/TaskSystem.h"
 #include "Tools/Import/ImportHelpers.h"
 
 namespace Lumina
 {
-    FRHIImageRef FUITextureCache::GetImage(const FString& Path)
+    FUITextureCache::FUITextureCache()
     {
-        FName PathName = Path;
+        if (IImGuiRenderer* ImGuiRenderer = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer())
+        {
+            FName SquareTexturePath = Paths::GetEngineResourceDirectory() + "/Textures/WhiteSquareTexture.png";
+            FRHIImageRef RHI = Import::Textures::CreateTextureFromImport(GRenderContext,
+                SquareTexturePath.ToString(), false);
 
-        return GetOrCreateGroup(PathName).first;
+            ImTextureRef ImTex = ImGuiRenderer->GetOrCreateImTexture(RHI);
+
+            SquareWhiteTexture = Memory::New<FEntry>();
+            SquareWhiteTexture->RHIImage = RHI;
+            SquareWhiteTexture->ImTexture = ImTex;
+            SquareWhiteTexture->State.store(ETextureState::Ready, std::memory_order_release);
+            Images.emplace(SquareTexturePath, SquareWhiteTexture);
+        }
     }
 
-    ImTextureRef FUITextureCache::GetImTexture(const FString& Path)
+    FRHIImageRef FUITextureCache::GetImage(const FName& Path)
     {
-        FName PathName = Path;
+        FEntry* Entry = GetOrCreateGroup(Path);
+        return Entry ? Entry->RHIImage : nullptr;
+    }
 
-        return GetOrCreateGroup(PathName).second;
+    ImTextureRef FUITextureCache::GetImTexture(const FName& Path)
+    {
+        FEntry* Entry = GetOrCreateGroup(Path);
+        return Entry ? Entry->ImTexture : ImTextureRef();
     }
 
     void FUITextureCache::Clear()
     {
+        for (auto& Pair : Images)
+        {
+            Memory::Delete(Pair.second);
+        }
+        
         Images.clear();
-        ImTextures.clear();
+
+        if (SquareWhiteTexture)
+        {
+            SquareWhiteTexture->RHIImage.SafeRelease();
+            SquareWhiteTexture->ImTexture = ImTextureRef();
+            SquareWhiteTexture->State.store(ETextureState::Empty, std::memory_order_release);
+            Memory::Delete(SquareWhiteTexture);
+        }
+        
+        bCleared = true;
     }
 
-    TPair<FRHIImageRef, ImTextureRef> FUITextureCache::GetOrCreateGroup(const FName& PathName)
+    FUITextureCache::FEntry* FUITextureCache::GetOrCreateGroup(const FName& PathName)
     {
-        TPair<FRHIImageRef, ImTextureRef> ReturnValue;
-        
-        if (Images.find(PathName) != Images.end())
+        if (bCleared)
         {
-            ReturnValue.first = Images.at(PathName);
-            ReturnValue.second = ImTextures.at(PathName);
-            return ReturnValue;
+            return nullptr;
+        }
+        
+        if (!Paths::Exists(PathName.ToString()))
+        {
+            return nullptr;
+        }
+        
+        auto Iter = Images.find(PathName);
+        if (Iter != Images.end())
+        {
+            FEntry* Entry = Iter->second;
+            if (Entry->State.load(std::memory_order_acquire) == ETextureState::Ready)
+            {
+                return Entry;
+            }
+
+            return SquareWhiteTexture;
         }
 
-        FString PathString = PathName.ToString();
-        ReturnValue.first = Import::Textures::CreateTextureFromImport(GRenderContext, PathString, false);
-        ReturnValue.second = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer()->GetOrCreateImTexture(ReturnValue.first);
+        FEntry* NewEntry = Memory::New<FEntry>();
+        NewEntry->State.store(ETextureState::Empty, std::memory_order_release);
 
-        Images.try_emplace(PathName, ReturnValue.first );
-        ImTextures.try_emplace(PathName, ReturnValue.second);
-        
-        return ReturnValue;
+        auto [InsertedIter, Inserted] = Images.try_emplace(PathName, NewEntry);
+        FEntry* Entry = InsertedIter->second;
+
+        if (!Inserted) // Another thread inserted it first
+        {
+            Memory::Delete(NewEntry);
+            
+            if (Entry->State.load(std::memory_order_acquire) == ETextureState::Ready)
+            {
+                return Entry;
+            }
+            
+            return SquareWhiteTexture;
+        }
+
+        ETextureState Expected = ETextureState::Empty;
+        if (Entry->State.compare_exchange_strong(Expected, ETextureState::Loading, std::memory_order_acq_rel))
+        {
+            FTaskSystem::Get().ScheduleLambda(1, [Entry, PathName](uint32, uint32, uint32)
+            {
+                FString PathString = PathName.ToString();
+                Entry->RHIImage = Import::Textures::CreateTextureFromImport(GRenderContext, PathString, false);
+                Entry->ImTexture = ImGuiX::ToImTextureRef(Entry->RHIImage);
+
+                Entry->State.store(ETextureState::Ready, std::memory_order_release);
+            });
+        }
+
+        return SquareWhiteTexture;
     }
 }

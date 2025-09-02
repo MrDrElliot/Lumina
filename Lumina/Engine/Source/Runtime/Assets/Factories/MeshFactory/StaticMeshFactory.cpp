@@ -1,11 +1,14 @@
 #include "StaticMeshFactory.h"
 
 #include "ImCurveEdit.h"
+#include "Assets/AssetRegistry/AssetRegistry.h"
 #include "Tools/Import/ImportHelpers.h"
 #include "Renderer/RHIIncl.h"
 #include "Assets/AssetTypes/Material/Material.h"
 #include "Assets/AssetTypes/Mesh/StaticMesh/StaticMesh.h"
 #include "Assets/Factories/TextureFactory/TextureFactory.h"
+#include "Core/Engine/Engine.h"
+#include "Core/Object/Cast.h"
 #include "Core/Object/Package/Package.h"
 #include "Paths/Paths.h"
 #include "TaskSystem/TaskSystem.h"
@@ -13,6 +16,11 @@
 
 namespace Lumina
 {
+    CObject* CStaticMeshFactory::CreateNew(const FName& Name, CPackage* Package)
+    {
+        return NewObject<CStaticMesh>(Package, Name);
+    }
+
     bool CStaticMeshFactory::DrawImportDialogue(const FString& RawPath, const FString& DestinationPath, bool& bShouldClose)
     {
         bool bShouldImport = false;
@@ -118,9 +126,10 @@ namespace Lumina
             
             FString FullPath = QualifiedPath;
             Paths::AddPackageExtension(FullPath);
-            
-            CPackage* NewPackage = CPackage::CreatePackage(GetSupportedType()->GetName().ToString(), QualifiedPath);
-            CStaticMesh* NewMesh = NewObject<CStaticMesh>(NewPackage, FileName.c_str());
+
+            CStaticMesh* NewMesh = Cast<CStaticMesh>(TryCreateNew(DestinationPath));
+            NewMesh->SetFlag(OF_NeedsPostLoad);
+
             NewMesh->MeshResources = MeshResource;
 
             FTaskSystem::Get().ParallelFor((uint32)ImportData.Textures.size(), [&](uint32 Index)
@@ -145,13 +154,10 @@ namespace Lumina
                 //CMaterial* NewMaterial = NewObject<CMaterial>(NewPackage, MaterialName.c_str());
                 NewMesh->Materials.push_back(nullptr);
             }
-            NewMesh->SetFlag(OF_NeedsLoad);
             
-            CPackage::SavePackage(NewPackage, NewMesh, FullPath.c_str());
-            NewPackage->LoadObject(NewMesh);
-
             Counter++;
         }
+        
 
         Options = {};
     }

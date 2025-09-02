@@ -109,8 +109,13 @@ namespace Lumina
             }
         }
 
-        ImGuiX::ItemTooltip("%s", ItemToDraw->GetTooltipText());
-
+        if (ImGui::BeginItemTooltip())
+        {
+            ItemToDraw->DrawTooltip();
+            ImGui::EndTooltip();
+        }
+        
+        
         if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Right) && ItemToDraw->HasContextMenu())
         {
             ImGui::OpenPopup("ItemContextMenu");

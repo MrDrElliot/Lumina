@@ -1,104 +1,14 @@
 ﻿#pragma once
+
 #include "TaskScheduler.h"
-#include "Core/Assertions/Assert.h"
-#include "Core/Functional/Function.h"
+#include "TaskTypes.h"
 #include "Core/Singleton/Singleton.h"
+#include "Core/Threading/Thread.h"
 #include "Memory/Memory.h"
-#include "Memory/SmartPtr.h"
 #include "Platform/GenericPlatform.h"
 
 namespace Lumina
 {
-
-    using ITaskSet =            enki::ITaskSet;
-    using IPinnedTask =         enki::IPinnedTask;
-    using ICompletableTask =    enki::ICompletable;
-    using TaskSetPartition =    enki::TaskSetPartition;
-    using TaskFunction =        enki::TaskSetFunction;
-
-    enum class ETaskPriority
-    {
-        High   = 0,
-        Medium = 1,
-        Low    = 2,
-    };
-    
-    struct CompletionActionDelete : enki::ICompletable
-    {
-        enki::Dependency    Dependency;
-    
-        // We override OnDependenciesComplete to provide an 'action' which occurs after
-        // the dependency task is complete.
-        void OnDependenciesComplete(enki::TaskScheduler* pTaskScheduler_, uint32_t threadNum_ ) override
-        {
-            // Call base class OnDependenciesComplete BEFORE deleting dependent task or self
-            enki::ICompletable::OnDependenciesComplete( pTaskScheduler_, threadNum_ );
-            
-            // In this example we delete the dependency, which is safe to do as the task
-            // manager will not dereference it at this point.
-            // However, the dependency task should have no other dependents,
-            // This class can have dependencies.
-            Memory::Delete(Dependency.GetDependencyTask()); // also deletes this as member
-        }
-    };
-    
-
-    typedef TFunction<void (uint32 Start, uint32 End, uint32 Thread)> TaskSetFunction;
-    class FLambdaTask : public ITaskSet
-    {
-    public:
-        FLambdaTask() = default;
-        FLambdaTask(TaskSetFunction func_)
-            : Function(std::move(func_))
-        {
-            TaskDeleter.SetDependency(TaskDeleter.Dependency, this);
-        }
-        FLambdaTask(uint32 setSize_, TaskSetFunction func_)
-            : ITaskSet(setSize_), Function(std::move(func_))
-        {
-            TaskDeleter.SetDependency(TaskDeleter.Dependency, this);
-        }
-
-        void ExecuteRange(TaskSetPartition range_, uint32_t threadnum_) override
-        {
-            Function(range_.start, range_.end, threadnum_);
-        }
-        
-        TaskSetFunction             Function;
-        CompletionActionDelete      TaskDeleter;
-        enki::Dependency            Dependency;
-    };
-
-    typedef TFunction<void (uint32 Index)> FParallelForTaskFunction;
-    class FParallelForTask : public ITaskSet
-    {
-    public:
-        FParallelForTask() = default;
-        FParallelForTask(FParallelForTaskFunction func_)
-            : Function(std::move(func_))
-        {
-            TaskDeleter.SetDependency(TaskDeleter.Dependency, this);
-        }
-        
-        FParallelForTask(uint32 setSize_, FParallelForTaskFunction func_)
-            : ITaskSet(setSize_), Function(std::move(func_))
-        {
-            TaskDeleter.SetDependency(TaskDeleter.Dependency, this);
-        }
-
-        void ExecuteRange(TaskSetPartition range_, uint32_t threadnum_) override
-        {
-            for (uint32 i = range_.start; i < range_.end; ++i)
-            {
-                Function(i);
-            }
-        }
-        
-        FParallelForTaskFunction    Function;
-        CompletionActionDelete      TaskDeleter;
-        enki::Dependency            Dependency;
-    };
-    
     class LUMINA_API FTaskSystem : public TSingleton<FTaskSystem>
     {
     public:
@@ -142,9 +52,27 @@ namespace Lumina
             {
                 return nullptr;
             }
-            
-            FLambdaTask* Task = Memory::New<FLambdaTask>(Num, std::move(Function));
-            Task->m_Priority = (enki::TaskPriority)Priority;
+
+            FLambdaTask* Task = nullptr;
+            {
+                FScopeLock Lock(LambdaTaskMutex);
+                if (!LambdaTaskPool.empty() )
+                {
+                    if (LambdaTaskPool.back()->GetIsComplete())
+                    {
+                        Task = LambdaTaskPool.back();
+                    }
+                    
+                    LambdaTaskPool.pop();
+                }
+            }
+
+            if (!Task)
+            {
+                Task = Memory::New<FLambdaTask>();
+            }
+
+            Task->Reset(Priority, Num, Memory::Move(Function));
             ScheduleTask(Task);
             return Task;
         }
@@ -197,9 +125,18 @@ namespace Lumina
             Scheduler.WaitforTask(pTask);
         }
 
+        void PushLambdaTaskToPool(FLambdaTask* InTask)
+        {
+            FScopeLock Lock(LambdaTaskMutex);
+            LambdaTaskPool.push(InTask);
+        }
+    
 
     private:
 
+        FMutex                  LambdaTaskMutex;
+        TQueue<FLambdaTask*>    LambdaTaskPool;
+        
         enki::TaskScheduler     Scheduler;
         uint32                  NumWorkers = 0;
         bool                    bInitialized = false;

@@ -12,6 +12,9 @@ namespace Lumina
         DEFINE_DEFAULT_CONSTRUCTOR_CALL(CObjectRedirector)
 
 
+        void Serialize(FArchive& Ar) override;
+        void Serialize(IStructuredArchive::FSlot Slot) override;
+        
         CObject* RedirectionObject;
     
     };

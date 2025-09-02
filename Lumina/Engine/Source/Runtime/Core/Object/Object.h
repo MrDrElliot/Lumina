@@ -63,6 +63,9 @@ namespace Lumina
         /** Called after classes Class Default Object has been created */
         LUMINA_API virtual void PostCreateCDO() {}
 
+        /** Is the object considered an asset? */
+        LUMINA_API virtual bool IsAsset() const { return false; }
+        
         /** Called just before the object is serialized from disk */
         LUMINA_API virtual void PreLoad() {}
         

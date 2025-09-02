@@ -17,5 +17,9 @@ namespace Lumina
 
         /** Path of the asset's class (script://lumina.CStaticMesh) */
         FName AssetClass;
+
+
+        LUMINA_API bool IsRedirector() const;
+        
     };
 }

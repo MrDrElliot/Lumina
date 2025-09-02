@@ -48,6 +48,8 @@ namespace Lumina
         virtual ImVec2 GetMinNodeBodySize() const { return ImVec2(100, 150); }
         virtual ImVec2 GetMinNodeTitleBarSize() const { return ImVec2(100, 28); }
 
+        virtual void DrawNodeBody() { };
+
         void SetDebugExecutionOrder(uint32 Order) { DebugExecutionOrder = Order; }
         uint32 GetDebugExecutionOrder() const { return DebugExecutionOrder; }
 

@@ -6,6 +6,7 @@
 #include "Assets/AssetTypes/Textures/Texture.h"
 #include "Core/Reflection/Type/Properties/ObjectProperty.h"
 #include "Renderer/RenderManager.h"
+#include "Tools/UI/UITextureCache.h"
 #include "Tools/UI/ImGui/ImGuiDesignIcons.h"
 #include "Tools/UI/ImGui/ImGuiRenderer.h"
 #include "Tools/UI/ImGui/ImGuiX.h"
@@ -33,24 +34,7 @@ namespace Lumina
             ImGui::BeginDisabled(Obj == nullptr);
 
             // Temporary stuff.
-            ImTextureID ButtonTexture = 0;
-            CClass* Class = ObjectProperty->GetPropertyClass();
-            if (Class == CMaterialInterface::StaticClass())
-            {
-                ButtonTexture = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer()->GetOrCreateImTexture(FEditorUI::MaterialIcon);
-            }
-            else if (Class == CTexture::StaticClass())
-            {
-                ButtonTexture = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer()->GetOrCreateImTexture(FEditorUI::TextureIcon);
-            }
-            else if (Class == CStaticMesh::StaticClass())
-            {
-                ButtonTexture = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer()->GetOrCreateImTexture(FEditorUI::StaticMeshIcon);
-            }
-            else
-            {
-                ButtonTexture = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer()->GetOrCreateImTexture(FEditorUI::CorruptIcon);
-            }
+            ImTextureRef ButtonTexture = FUITextureCache::Get().GetImTexture(Paths::GetEngineResourceDirectory() + "/Textures/SkeletalMeshIcon.png");
             
             ImGui::ImageButton(Label, ButtonTexture, ImVec2(64, 64));
             ImGui::EndDisabled();
@@ -107,29 +91,25 @@ namespace Lumina
                 if (ImGui::BeginChild("##OptList", ChildSize, false, ImGuiChildFlags_NavFlattened))
                 {
                     FARFilter Filter;
-                    //Filter.ClassNames.push_back(ObjectProperty->GetPropertyClass()->GetName().ToString());
+                    Filter.ClassNames.push_back(ObjectProperty->GetPropertyClass()->GetName().ToString());
 
-                    //TVector<FAssetData> FilteredAssets;
-                    //GEngine->GetEngineSubsystem<FAssetRegistry>()->GetAssets(Filter, FilteredAssets);
-                    //for (const FAssetData& Asset : FilteredAssets)
-                    //{
-                    //    if (!SearchFilter.PassFilter(Asset.Path.c_str()))
-                    //    {
-                    //        continue;
-                    //    }
-                    //    
-                    //    FString VirtualPath = Paths::ConvertToVirtualPath(Asset.Path);
-                    //    if (ImGui::Selectable(VirtualPath.c_str()))
-                    //    {
-                    //        VirtualPath += "." + Asset.Name.ToString();
-                    //        FName AssetName = VirtualPath.c_str();
-                    //        Obj = LoadObject<CObject>(nullptr, AssetName, Asset.Path);
-                    //        ObjectHandle = GObjectArray.ToHandle(Obj);
-                    //        ImGui::CloseCurrentPopup();
-                    //
-                    //        bWasChanged = true;
-                    //    }
-                    //}
+                    const FAssetDataMap& FilteredAssets = GEngine->GetEngineSubsystem<FAssetRegistry>()->GetAssets();
+                    for (const FAssetData* Asset : FilteredAssets)
+                    {
+                        if (!SearchFilter.PassFilter(Asset->AssetName.c_str()))
+                        {
+                            continue;
+                        }
+                        
+                        if (ImGui::Selectable(Asset->FullPath.c_str()))
+                        {
+                            Obj = LoadObject<CObject>(nullptr, Asset->FullPath);
+                            ObjectHandle = GObjectArray.ToHandle(Obj);
+                            ImGui::CloseCurrentPopup();
+                    
+                            bWasChanged = true;
+                        }
+                    }
                 }
                 
                 ImGui::EndChild();

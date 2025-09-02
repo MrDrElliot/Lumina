@@ -15,10 +15,12 @@ namespace Lumina
         
     public:
 
+        
         void Serialize(FArchive& Ar) override;
         void Serialize(IStructuredArchive::FSlot Slot) override;
         void PostLoad() override;
-        
+
+        bool IsAsset() const override { return true; }
         
         FRHIImageDesc   ImageDescription;
         TVector<uint8>  Pixels;

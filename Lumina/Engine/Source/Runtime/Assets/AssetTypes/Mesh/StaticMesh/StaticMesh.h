@@ -8,8 +8,10 @@ namespace Lumina
     class LUMINA_API CStaticMesh : public CMesh
     {
         GENERATED_BODY()
-    public:
         
+    public:
+
+        bool IsAsset() const override { return true; }
 
     };
 }

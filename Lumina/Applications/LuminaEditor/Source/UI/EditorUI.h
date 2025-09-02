@@ -95,17 +95,10 @@ namespace Lumina
         bool                                            bShowObjectDebug = false;
         bool                                            bShowRenderDebug = false;
         bool                                            bShowMemoryDebug = false;
+        bool                                            bShowAssetRegistry = false;
 
         TQueue<FEditorTool*>                            ToolsPendingAdd;
         TQueue<FEditorTool*>                            ToolsPendingDestroy;
-
-    public:
-        
-        static FRHIImageRef                             FolderIcon;
-        static FRHIImageRef                             MaterialIcon;
-        static FRHIImageRef                             CorruptIcon;
-        static FRHIImageRef                             StaticMeshIcon;
-        static FRHIImageRef                             TextureIcon;
         
     };
 

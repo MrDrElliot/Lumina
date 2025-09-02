@@ -209,9 +209,6 @@ namespace Lumina
         /** Byte offset from the file start to the thumbnail */
         uint64 ThumbnailDataOffset;
 
-        /** The class for the asset at this packages top level (e.g. A static mesh). */
-        FString ClassPath;
-
         friend FArchive& operator << (FArchive& Ar, FPackageHeader& Data)
         {
             Ar << Data.Tag;
@@ -222,7 +219,6 @@ namespace Lumina
             Ar << Data.ExportCount;
             Ar << Data.ObjectDataOffset;
             Ar << Data.ThumbnailDataOffset;
-            Ar << Data.ClassPath;
 
             return Ar;
         }
@@ -325,7 +321,7 @@ namespace Lumina
          * @param FileName 
          * @return 
          */
-        LUMINA_API static CPackage* CreatePackage(const FString& InTopLevelClassName, const FString& FileName);
+        LUMINA_API static CPackage* CreatePackage(const FString& FileName);
 
         /**
          * 
@@ -360,7 +356,7 @@ namespace Lumina
         LUMINA_API void CreateExports();
         LUMINA_API void CreateImports();
         
-
+        
         bool Rename(const FName& NewName, CPackage* NewPackage = nullptr) override;
         
         /**
@@ -380,15 +376,24 @@ namespace Lumina
         LUMINA_API bool LoadObjects();
         
 
+        
         LUMINA_API CObject* IndexToObject(const FObjectPackageIndex& Index);
 
         /** Returns the thumbnail data for this package */
         LUMINA_API TSharedPtr<FPackageThumbnail> GetPackageThumbnail() const { return PackageThumbnail; }
 
+        LUMINA_API FString GetPackageFilename() const;
+
+        
+        LUMINA_API void MarkDirty() { bDirty = true; }
+        LUMINA_API void ClearDirty() { bDirty = false; }
+        LUMINA_API bool IsDirty() const { return bDirty; }
+        
     public:
 
+        uint32                           bDirty:1=0;
+        
         TSharedPtr<FArchive>             Loader;
-        FString                          TopLevelClassName;
         TVector<FObjectImport>           ImportTable;
         TVector<FObjectExport>           ExportTable;
         

@@ -28,6 +28,7 @@ namespace Lumina
         #if WITH_DEVELOPMENT_TOOLS
         ImGuiRenderer->Deinitialize();
         Memory::Delete(ImGuiRenderer);
+        ImGuiRenderer = nullptr;
         FUITextureCache::Get().Clear();
         #endif
 

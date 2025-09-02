@@ -33,7 +33,7 @@ namespace Lumina
     protected:
 
         TObjectHandle<CObject>      Asset;
-        uint8                       bAssetLoadBroadcasted:1;
         FPropertyTable              PropertyTable;
+        uint8                       bAssetLoadBroadcasted:1;
     };
 }

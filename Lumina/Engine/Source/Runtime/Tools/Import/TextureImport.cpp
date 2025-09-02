@@ -48,16 +48,14 @@ namespace Lumina::Import::Textures
         FRHIImageRef ReturnImage = RenderContext->CreateImage(ImageDescription);
 
         const uint32 Width = ImageDescription.Extent.X;
-        const uint32 Height = ImageDescription.Extent.Y;
         const SIZE_T RowPitch = Width * 4;
 
-        FRHICommandListRef TransferCommandList = RenderContext->CreateCommandList(FCommandListInfo::Graphics());
+        FRHICommandListRef TransferCommandList = RenderContext->CreateCommandList(FCommandListInfo::Transfer());
         TransferCommandList->Open();
         TransferCommandList->WriteImage(ReturnImage, 0, 0, Pixels.data(), RowPitch, 0);
         TransferCommandList->Close();
-        RenderContext->ExecuteCommandList(TransferCommandList, ECommandQueue::Graphics);
+        RenderContext->ExecuteCommandList(TransferCommandList, ECommandQueue::Transfer);
 
         return ReturnImage;
     }
-    
 }

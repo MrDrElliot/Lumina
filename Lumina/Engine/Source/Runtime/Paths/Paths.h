@@ -20,12 +20,6 @@ namespace Lumina::Paths
     /** Gets the directory where the Lumina engine is installed. */
     LUMINA_API FString GetEngineDirectory();
     
-    /** Returns the parent directory of the given path. */
-    LUMINA_API FString Parent(const FString& Path);
-
-    /** Returns the directory portion of the given path (equivalent to dirname). */
-    LUMINA_API FString DirName(const FString& InPath);
-    
     /** 
      * Returns the filename from the given path.
      * @param InPath The full path.
@@ -41,7 +35,7 @@ namespace Lumina::Paths
     LUMINA_API FString RemoveExtension(const FString& InPath);
     
     /** Checks whether the given file or directory exists. */
-    LUMINA_API bool Exists(const FString& Filename);
+    LUMINA_API bool Exists(FStringView Filename);
 
     /** 
      * Checks if the given directory is under a specific parent directory.
@@ -73,13 +67,13 @@ namespace Lumina::Paths
     LUMINA_API void ReplaceFilename(FString& Path, const FString& NewFilename);
     
     /** Gets the path to the engine's resource directory. */
-    LUMINA_API FString GetEngineResourceDirectory();
+    LUMINA_API const FString& GetEngineResourceDirectory();
 
     /** Gets the path to the engine's content directory */
-    LUMINA_API FString GetEngineContentDirectory();
+    LUMINA_API const FString& GetEngineContentDirectory();
 
     /** Gets the path to the engine's shaders */
-    LUMINA_API FString GetEngineShadersDirectory();
+    LUMINA_API const FString& GetEngineShadersDirectory();
     
     /** Gets the engine installation directory (one level above the engine binary). */
     LUMINA_API FString GetEngineInstallDirectory();
@@ -97,6 +91,13 @@ namespace Lumina::Paths
     
     // -------------------------------------------------------------------
 
+    template<typename T>
+    concept ValidStringType = requires(T s)
+    {
+        typename            T::value_type;
+        { s.c_str() }       -> std::convertible_to<const typename T::value_type*>;
+    };
+    
     /**
      * Combines multiple path segments into a single normalized path string.
      * @param InPaths One or more path fragments to join.
@@ -107,5 +108,24 @@ namespace Lumina::Paths
     {
         std::filesystem::path Path = (std::filesystem::path(std::forward<Paths>(InPaths)) /= ...);
         return Path.string().c_str();
+    }
+
+    
+    template<ValidStringType StringType>
+    StringType Parent(const StringType& path)
+    {
+        return std::filesystem::path::path(path.c_str()).parent_path().generic_string().c_str();
+    }
+    
+
+    template<ValidStringType StringType>
+    StringType DirName(const StringType& String)
+    {
+        size_t LastSlash = String.find_last_of("/\\");
+        if (LastSlash != FString::npos)
+        {
+            return String.substr(0, LastSlash);
+        }
+        return String;
     }
 }

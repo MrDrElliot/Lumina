@@ -1,6 +1,7 @@
 ﻿#include "MaterialNode_TextureSample.h"
 #include "Assets/AssetTypes/Textures/Texture.h"
 #include "Core/Object/Cast.h"
+#include "Tools/UI/ImGui/ImGuiX.h"
 #include "UI/Tools/NodeGraph/Material/MaterialCompiler.h"
 
 namespace Lumina
@@ -56,5 +57,13 @@ namespace Lumina
     void CMaterialExpression_TextureSample::SetNodeValue(void* Value)
     {
         Texture = (CTexture*)Value;
+    }
+
+    void CMaterialExpression_TextureSample::DrawNodeBody()
+    {
+        if (Texture.IsValid() && Texture->RHIImage.IsValid())
+        {
+            ImGui::Image(ImGuiX::ToImTextureRef(Texture->RHIImage), ImVec2(126.0f, 126.f));
+        }
     }
 }

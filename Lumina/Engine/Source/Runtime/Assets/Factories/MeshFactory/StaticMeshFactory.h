@@ -13,6 +13,7 @@ namespace Lumina
         GENERATED_BODY()
     public:
 
+        CObject* CreateNew(const FName& Name, CPackage* Package) override;
         CClass* GetSupportedType() const override { return CStaticMesh::StaticClass(); }
         FString GetAssetName() const override { return "Static Mesh"; }
         FString GetDefaultAssetCreationName(const FString& InPath) override { return "NewMesh"; }

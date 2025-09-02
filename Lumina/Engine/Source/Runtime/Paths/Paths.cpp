@@ -51,22 +51,6 @@ namespace Lumina::Paths
 
         return CachedDirectories[EngineDirectoryName];
     }
-    
-
-    FString Parent(const FString& Path)
-    {
-        return std::filesystem::path(Path.c_str()).parent_path().generic_string().c_str();
-    }
-
-    FString DirName(const FString& InPath)
-    {
-        size_t LastSlash = InPath.find_last_of("/\\");
-        if (LastSlash != FString::npos)
-        {
-            return InPath.substr(0, LastSlash);
-        }
-        return InPath;
-    }
 
     FString FileName(const FString& InPath, bool bRemoveExtension)
     {
@@ -117,9 +101,9 @@ namespace Lumina::Paths
         return InPath;
     }
 
-    bool Exists(const FString& Filename)
+    bool Exists(FStringView Filename)
     {
-        return std::filesystem::exists(Filename.c_str());
+        return std::filesystem::exists(Filename.data());
     }
 
     bool IsUnderDirectory(const FString& ParentDirectory, const FString& Directory)
@@ -234,7 +218,7 @@ namespace Lumina::Paths
         Path = NewFilename;
     }
 
-    FString GetEngineResourceDirectory()
+    const FString& GetEngineResourceDirectory()
     {
         if (CachedDirectories.find(EngineResourceDirectoryName) == CachedDirectories.end())
         {
@@ -245,7 +229,7 @@ namespace Lumina::Paths
         return CachedDirectories[EngineResourceDirectoryName];
     }
 
-    FString GetEngineContentDirectory()
+    const FString& GetEngineContentDirectory()
     {
         if (CachedDirectories.find(EngineContentDirectoryName) == CachedDirectories.end())
         {
@@ -255,7 +239,7 @@ namespace Lumina::Paths
         return CachedDirectories[EngineContentDirectoryName];
     }
 
-    FString GetEngineShadersDirectory()
+    const FString& GetEngineShadersDirectory()
     {
         if (CachedDirectories.find(EngineShadersDirectoryName) == CachedDirectories.end())
         {

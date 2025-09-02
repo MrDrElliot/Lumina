@@ -1,6 +1,7 @@
 #include "ImGuiX.h"
 
 #include "ImGuiDesignIcons.h"
+#include "ImGuiRenderer.h"
 #include "imgui_internal.h"
 #include "Assets/AssetRegistry/AssetRegistry.h"
 #include "Core/Engine/Engine.h"
@@ -9,6 +10,7 @@
 #include "Core/Windows/Window.h"
 #include "GLFW/glfw3.h"
 #include "Paths/Paths.h"
+#include "Renderer/RenderManager.h"
 
 #define IMDRAW_DEBUG
 
@@ -248,7 +250,12 @@ namespace Lumina::ImGuiX
         ImGui::Dummy( seperatorSize );
         ImGui::SameLine( 0, 0 );
     }
-    
+
+    ImTextureRef ToImTextureRef(FRHIImage* Image)
+    {
+        return GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer()->GetOrCreateImTexture(Image);
+    }
+
     void ApplicationTitleBar::DrawWindowControls()
     {
         ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0);

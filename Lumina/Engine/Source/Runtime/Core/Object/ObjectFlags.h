@@ -24,11 +24,15 @@ namespace Lumina
         /** Does this object need to be loaded after creation? */
         OF_NeedsLoad            = 1 << 3,
 
-        /** Was this object loaded from a package */
-        OF_WasLoaded            = 1 << 4,
+        /** Does this object need PostLoad called? This will not deserialize the object again. */
+        OF_NeedsPostLoad        = 1 << 4,
 
-        /** Object is referenced outside of it's package */
-        OF_Public               = 1 << 5,
+        /** Was this object loaded from a package */
+        OF_WasLoaded            = 1 << 5,
+
+        /** Object is public outside of it's package (assets and such) */
+        OF_Public               = 1 << 6,
+        
     };
 
     ENUM_CLASS_FLAGS(EObjectFlags);
@@ -46,6 +50,7 @@ namespace Lumina
         if (EnumHasAnyFlags(Flags, OF_DefaultObject))   Result += "OF_DefaultObject|";
         if (EnumHasAnyFlags(Flags, OF_MarkedGarbage))   Result += "OF_MarkedGarbage|";
         if (EnumHasAnyFlags(Flags, OF_NeedsLoad))       Result += "OF_NeedsLoad|";
+        if (EnumHasAnyFlags(Flags, OF_NeedsLoad))       Result += "OF_NeedsPostLoad|";
         if (EnumHasAnyFlags(Flags, OF_WasLoaded))       Result += "OF_WasLoaded|";
         if (EnumHasAnyFlags(Flags, OF_Public))          Result += "OF_Public|";
 

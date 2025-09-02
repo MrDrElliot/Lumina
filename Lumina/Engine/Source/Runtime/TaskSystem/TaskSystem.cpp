@@ -2,7 +2,6 @@
 
 #include "Core/Threading/Thread.h"
 #include "Memory/Memory.h"
-#include "Memory/MemoryLeakDetection.h"
 
 namespace Lumina
 {
@@ -46,7 +45,14 @@ namespace Lumina
 
     void FTaskSystem::Shutdown()
     {
+        FScopeLock Lock(LambdaTaskMutex);
+        
         Scheduler.WaitforAllAndShutdown();
+        while (!LambdaTaskPool.empty())
+        {
+            LambdaTaskPool.pop();
+        }
+        
         bInitialized = false;
     }
 }

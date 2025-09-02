@@ -329,7 +329,7 @@ namespace Lumina
         FName               ParameterName;
 
         LUM_PROPERTY(Editable, Color, Category = "Value")
-        glm::vec4           Value;
+        glm::vec4           Value = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
         
         EMaterialInputType  ValueType = EMaterialInputType::Wildcard;
     };
@@ -348,6 +348,8 @@ namespace Lumina
         FString GetNodeDisplayName() const override { return "Float"; }
         uint32 GenerateExpression(FMaterialCompiler* Compiler) override;
         void GenerateDefinition(FMaterialCompiler* Compiler) override;
+
+        void DrawNodeBody() override;
         
     };
 
@@ -365,7 +367,8 @@ namespace Lumina
         FString GetNodeDisplayName() const override { return "Vec2"; }
         uint32 GenerateExpression(FMaterialCompiler* Compiler) override;
         void GenerateDefinition(FMaterialCompiler* Compiler) override;
-        
+
+        void DrawNodeBody() override;
     };
 
     LUM_CLASS()
@@ -384,6 +387,8 @@ namespace Lumina
         uint32 GenerateExpression(FMaterialCompiler* Compiler) override;
         void GenerateDefinition(FMaterialCompiler* Compiler) override;
 
+        void DrawNodeBody() override;
+        
     };
 
     LUM_CLASS()
@@ -400,6 +405,8 @@ namespace Lumina
         FString GetNodeDisplayName() const override { return "Vec4"; }
         uint32 GenerateExpression(FMaterialCompiler* Compiler) override;
         void GenerateDefinition(FMaterialCompiler* Compiler) override;
+
+        void DrawNodeBody() override;
 
     };
 }

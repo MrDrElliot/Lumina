@@ -105,6 +105,9 @@ namespace Lumina
     class LUMINA_API FName
     {
     public:
+
+        // Helps with string API concepts.
+        using value_type = char;
         
         static void Initialize();
 
@@ -148,7 +151,12 @@ namespace Lumina
         FString ToString() const
         {
             const char* Str = c_str();
-            return Str ? FString(Str) : FString("NAME_None");
+            return FString(Str);
+        }
+
+        SIZE_T Length() const
+        {
+            return strlen(GNameTable->GetString(ID));
         }
 
         FName& operator=(const EName) { ID = 0; return *this; }

@@ -144,13 +144,13 @@ namespace Lumina
         
         FoundObject = FindObjectFast(InClass, Package, Name);
 
-        if (FoundObject == nullptr || FoundObject->HasAnyFlag(OF_NeedsLoad))
+        if (FoundObject == nullptr || FoundObject->HasAnyFlag(OF_NeedsLoad | OF_NeedsPostLoad))
         {
             FString NameAsString = Name.ToString();
             size_t Position = NameAsString.find('.');
             if (Position == FString::npos && Package != nullptr)
             {
-                NameAsString = FString().append(Package->GetName().ToString()).append(".").append(Name.ToString()); 
+                NameAsString = Package->GetName().ToString().append(".").append(Name.ToString()); 
             }
             
             FAssetManager* Manager = GEngine->GetEngineSubsystem<FAssetManager>();

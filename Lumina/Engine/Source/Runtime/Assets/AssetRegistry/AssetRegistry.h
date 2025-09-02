@@ -64,14 +64,19 @@ namespace Lumina
 		void Deinitialize() override;
 
 		void RunInitialDiscovery();
+		void OnInitialDiscoveryCompleted();
 
-		void AddLoadedPackage(CPackage* Package);
-		void RemoveLoadedPackage(CPackage* Package);
-		
+		void AssetCreated(CObject* Asset);
+		void AssetDeleted(CPackage* Package);
+		void AssetRenamed(CObject* Asset, const FString& OldPackagePath);
+		void AssetSaved(CPackage* Package);
 
-		FAssetRegistryUpdatedDelegate& GetOnAssetRegistryUpdated();
+		FAssetRegistryUpdatedDelegate& GetOnAssetRegistryUpdated() { return OnAssetRegistryUpdated; }
 
+		const THashMap<FName, FAssetData*>& GetAssetPackageMap() const { return AssetPackageMap; }
+		const THashMap<FName, TVector<FAssetData*>>& GetAssetsByPath() const { return AssetsByPath; }
 		const TVector<FAssetData*>& GetAssetsForPath(const FName& Path);
+		const FAssetDataMap& GetAssets() const { return Assets; }
 		
 	private:
 

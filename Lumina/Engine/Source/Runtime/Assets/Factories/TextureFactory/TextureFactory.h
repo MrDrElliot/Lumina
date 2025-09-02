@@ -13,7 +13,8 @@ namespace Lumina
     {
         GENERATED_BODY()
     public:
-        
+
+        CObject* CreateNew(const FName& Name, CPackage* Package) override;
         CClass* GetSupportedType() const override { return CTexture::StaticClass(); }
         FString GetAssetName() const override { return "Texture"; }
         FString GetDefaultAssetCreationName(const FString& InPath) override { return "NewTexture"; }

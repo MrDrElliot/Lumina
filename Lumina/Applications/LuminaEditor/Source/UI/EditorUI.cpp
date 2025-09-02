@@ -59,12 +59,6 @@ namespace Lumina
         return FString(buffer);
     }
     
-    FRHIImageRef FEditorUI::FolderIcon;
-    FRHIImageRef FEditorUI::StaticMeshIcon;
-    FRHIImageRef FEditorUI::TextureIcon;
-    FRHIImageRef FEditorUI::MaterialIcon;
-    FRHIImageRef FEditorUI::CorruptIcon;
-
     FEditorUI::FEditorUI()
     {
     }
@@ -75,14 +69,6 @@ namespace Lumina
 
     void FEditorUI::Initialize(const FUpdateContext& UpdateContext)
     {
-        FString Path = Paths::Combine(Paths::GetEngineResourceDirectory().c_str(), "Textures");
-        
-        FolderIcon          = Import::Textures::CreateTextureFromImport(GRenderContext, Path + "/Folder.png", false);
-        StaticMeshIcon      = Import::Textures::CreateTextureFromImport(GRenderContext, Path + "/StaticMeshIcon.png", false);
-        TextureIcon         = Import::Textures::CreateTextureFromImport(GRenderContext, Path + "/TextureIcon.png", false);
-        MaterialIcon        = Import::Textures::CreateTextureFromImport(GRenderContext, Path + "/ShaderIcon.png", false);
-        CorruptIcon         = Import::Textures::CreateTextureFromImport(GRenderContext, Path + "/CorruptAssetIcon.png", false);
-
         PropertyCustomizationRegistry = Memory::New<FPropertyCustomizationRegistry>();
         PropertyCustomizationRegistry->RegisterPropertyCustomization(TBaseStructure<glm::vec2>::Get()->GetName(), [this]()
         {
@@ -139,14 +125,10 @@ namespace Lumina
     {
         while (!EditorTools.empty())
         {
+            // Pops internally.
             DestroyTool(UpdateContext, EditorTools[0]);
         }
 
-        FolderIcon.SafeRelease();
-        StaticMeshIcon.SafeRelease();
-        TextureIcon.SafeRelease();
-        MaterialIcon.SafeRelease();
-        CorruptIcon.SafeRelease();
         
         WorldEditorTool = nullptr;
         ConsoleLogTool = nullptr;
@@ -258,6 +240,48 @@ namespace Lumina
             UpdateContext.GetSubsystem<FRenderManager>()->GetImGuiRenderer()->DrawRenderDebugInformationWindow(&bShowRenderDebug, UpdateContext);
         }
 
+        if (bShowAssetRegistry)
+        {
+            ImGui::SetNextWindowSize(ImVec2(800, 900));
+            if (ImGui::Begin("Asset Registry", &bShowAssetRegistry))
+            {
+                static ImGuiTableFlags flags =
+                    ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable |
+                    ImGuiTableFlags_Hideable   | ImGuiTableFlags_BordersOuter |
+                    ImGuiTableFlags_BordersV   | ImGuiTableFlags_RowBg |
+                    ImGuiTableFlags_SizingStretchProp;
+
+                if (ImGui::BeginTable("AssetRegistryTable", 3, flags))
+                {
+                    ImGui::TableSetupColumn("Package", ImGuiTableColumnFlags_WidthStretch);
+                    ImGui::TableSetupColumn("Path",    ImGuiTableColumnFlags_WidthStretch);
+                    ImGui::TableSetupColumn("Name",    ImGuiTableColumnFlags_WidthStretch);
+                    ImGui::TableHeadersRow();
+
+                    const auto& AssetsByPath = UpdateContext.GetSubsystem<FAssetRegistry>()->GetAssetsByPath();
+                    for (auto& [Path, AssetVec] : AssetsByPath)
+                    {
+                        for (auto* Asset : AssetVec)
+                        {
+                            ImGui::TableNextRow();
+
+                            ImGui::TableSetColumnIndex(0);
+                            ImGui::TextUnformatted(Asset->PackageName.ToString().c_str());
+
+                            ImGui::TableSetColumnIndex(1);
+                            ImGui::TextUnformatted(Path.ToString().c_str());
+
+                            ImGui::TableSetColumnIndex(2);
+                            ImGui::TextUnformatted(Asset->AssetName.ToString().c_str());
+                        }
+                    }
+
+                    ImGui::EndTable();
+                }
+            }
+            ImGui::End();
+        }
+
         if (bShowMemoryDebug)
         {
             if (!ImGui::Begin("Memory Debug", &bShowMemoryDebug, ImGuiWindowFlags_AlwaysAutoResize))
@@ -302,7 +326,7 @@ namespace Lumina
             ImGui::SetNextWindowSize(ImVec2(700.0f, 600.0f), ImGuiCond_FirstUseEver);
             FString Name = "CObject List - Num: " + eastl::to_string(GObjectArray.GetNumObjectsAlive());
 
-            if (ImGui::Begin(Name.c_str(), &bShowObjectDebug))
+            if (ImGui::Begin(Name.c_str(), (bool*)&bShowObjectDebug))
             {
                 THashMap<FString, TVector<CObject*>> PackageToObjects;
                 for (TObjectIterator<CObject> It; It; ++It)
@@ -1008,8 +1032,11 @@ namespace Lumina
             {
                 GRenderContext->SetVSyncEnabled(!bVSyncEnabled);
             }
+
+            ImGui::MenuItem("Asset Registry", nullptr, &bShowAssetRegistry, !bShowAssetRegistry);
             
             ImGui::MenuItem("CObject List", nullptr, &bShowObjectDebug, !bShowObjectDebug);
+            
             if (ImGui::MenuItem("Profiler", nullptr))
             {
                 FString LuminaDirEnv = std::getenv("LUMINA_DIR");

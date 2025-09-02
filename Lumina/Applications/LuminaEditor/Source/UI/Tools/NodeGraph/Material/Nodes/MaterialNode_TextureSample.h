@@ -25,6 +25,7 @@ namespace Lumina
         uint32 GenerateExpression(FMaterialCompiler* Compiler) override;
         void GenerateDefinition(FMaterialCompiler* Compiler) override;
         void SetNodeValue(void* Value) override;
+        void DrawNodeBody() override;
 
         LUM_PROPERTY(Editable, Category = "Texture")
         TObjectHandle<CTexture> Texture;

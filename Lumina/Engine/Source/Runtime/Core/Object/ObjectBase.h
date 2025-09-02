@@ -95,7 +95,11 @@ namespace Lumina
         }
 
         LUMINA_API void GetPath(FString& OutPath) const;
+
+        
         LUMINA_API FString GetPathName() const;
+
+        /** Returns the name using this objects path name (package). (project://package.thisobject) */
         LUMINA_API FName GetFullyQualifiedName() const;
     
     private:

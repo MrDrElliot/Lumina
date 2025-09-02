@@ -1,10 +1,23 @@
 ﻿#pragma once
 #include "EditorTool.h"
+#include "Assets/AssetRegistry/AssetData.h"
+#include "Core/Object/ObjectRedirector.h"
+#include "Core/Object/Package/Package.h"
 #include "Paths/Paths.h"
 #include "Renderer/RHIFwd.h"
 #include "Tools/UI/ImGui/imfilebrowser.h"
 #include "Tools/UI/ImGui/Widgets/TileViewWidget.h"
 #include "Tools/UI/ImGui/Widgets/TreeListView.h"
+
+namespace Lumina
+{
+    class CObjectRedirector;
+}
+
+namespace Lumina
+{
+    struct FAssetData;
+}
 
 namespace Lumina
 {
@@ -30,12 +43,10 @@ namespace Lumina
             
             FInlineString GetDisplayName() const override
             {
-                //@TODO this is pretty gross.
-                FString IconString(LE_ICON_FOLDER);
-                FString NameString(GetName().c_str());
-                FString CombinedString(IconString + " " + NameString);
-
-                return FInlineString(CombinedString.c_str());
+                return FInlineString()
+                .append(LE_ICON_FOLDER)
+                .append(" ")
+                .append(GetName().c_str());
             }
 
             FName GetName() const override
@@ -57,12 +68,16 @@ namespace Lumina
         {
         public:
             
-            FContentBrowserTileViewItem(FTileViewItem* InParent, const FString& InPath, bool bIsDirectory)
+            FContentBrowserTileViewItem(FTileViewItem* InParent, const FString& InPath, FAssetData* InAssetData)
                 : FTileViewItem(InParent)
-                , bDirectory(bIsDirectory)
                 , Path(InPath)
                 , VirtualPath(Paths::ConvertToVirtualPath(InPath))
-            {}
+            {
+                if (InAssetData)
+                {
+                    AssetData = *InAssetData;
+                }
+            }
 
             constexpr static const char* DragDropID = "ContentBrowserItem";
             
@@ -72,22 +87,71 @@ namespace Lumina
                 ImGui::SetDragDropPayload(DragDropID, &IntPtr, sizeof(uintptr_t));
             }
 
-            const char* GetTooltipText() const override { return VirtualPath.c_str(); }
+            void DrawTooltip() const override
+            {
+                bool bIsAsset = !AssetData.AssetClass.IsNone();
+                
+                ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(50, 200, 50, 255));
+                ImGui::TextUnformatted(Paths::FileName(VirtualPath).c_str());
+                ImGui::PopStyleColor();
+
+                if (bIsAsset)
+                {
+                    ImGui::Text(LE_ICON_FILE " %s", AssetData.AssetClass.c_str());
+                }
+                else
+                {
+                    ImGui::TextUnformatted(LE_ICON_FOLDER " Directory");
+                }
+                
+                ImGui::Separator();
+
+                ImGui::Text(LE_ICON_FOLDER " %s", VirtualPath.c_str());
+
+                if (bIsAsset)
+                {
+                    FString FullPath = Path + ".lasset";
+                    
+                    if (std::filesystem::exists(FullPath.c_str()))
+                    {
+                        uint64 Size = std::filesystem::file_size(FullPath.c_str());
+                        ImGui::Text(LE_ICON_FILE_CODE " Size: %llu", Size);
+                    }
+                }
+            }
+            
             bool HasContextMenu() override { return true; }
 
             FName GetName() const override
             {
-                return Paths::FileName(Path, true);
+                FInlineString NameString;
+                if (!AssetData.PackageName.IsNone())
+                {
+                    if (CPackage* Package = FindObject<CPackage>(nullptr, AssetData.PackageName))
+                    {
+                        if (Package->IsDirty())
+                        {
+                            NameString.append(Paths::FileName(Path, true).c_str()).append(" " LE_ICON_ARCHIVE_ALERT);
+                            return NameString;
+                        }
+                    }
+                }
+                
+                NameString.append(Paths::FileName(Path, true).c_str());
+                return NameString;
             }
+
+            FString GetFileName() const { return Paths::FileName(Path, true); }
 
             void SetPath(FStringView NewPath) { Path = NewPath; Paths::ConvertToVirtualPath(Path); }
             const FString& GetPath() const { return Path; }
             const FString& GetVirtualPath() const { return VirtualPath; }
-            bool IsDirectory() const { return bDirectory; }
+            bool IsDirectory() const { return AssetData.AssetClass.IsNone(); }
+            const FAssetData& GetAssetData() const { return AssetData; }
             
         private:
 
-            uint32                  bDirectory:1=0;
+            FAssetData              AssetData;
             FString                 Path;
             FString                 VirtualPath;
         };
@@ -117,6 +181,8 @@ namespace Lumina
         
     private:
 
+        bool HandleRenameEvent(const FString& OldPath, FString NewPath);
+        
         void DrawDirectoryBrowser(const FUpdateContext& Contxt, bool bIsFocused, ImVec2 Size);
         void DrawContentBrowser(const FUpdateContext& Contxt, bool bIsFocused, ImVec2 Size);
 

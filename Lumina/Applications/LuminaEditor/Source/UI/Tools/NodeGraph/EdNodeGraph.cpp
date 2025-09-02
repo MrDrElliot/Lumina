@@ -125,6 +125,9 @@ namespace Lumina
                 
                 NodeBuilder.EndInput();
             }
+
+            NodeBuilder.Middle();
+            Node->DrawNodeBody();
             
             
             for (CEdNodeGraphPin* OutputPin : Node->GetOutputPins())

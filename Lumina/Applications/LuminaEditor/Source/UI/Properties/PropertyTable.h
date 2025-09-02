@@ -170,7 +170,7 @@ namespace Lumina
         
     private:
 
-        bool                                    bFillRemainingSpace = true;
+        bool                                    bFillRemainingSpace = false;
         float                                   MinimumHeight = 400.0f;
 
         CStruct*                                Struct = nullptr;

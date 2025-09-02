@@ -2,7 +2,9 @@
 
 #include "Assets/AssetRegistry/AssetRegistry.h"
 #include "Core/Engine/Engine.h"
+#include "Core/Object/Cast.h"
 #include "Core/Object/Class.h"
+#include "Core/Object/ObjectRedirector.h"
 #include "Core/Object/GarbageCollection/GarbageCollector.h"
 #include "Core/Profiler/Profile.h"
 #include "Paths/Paths.h"
@@ -31,7 +33,7 @@ namespace Lumina
     FObjectImport::FObjectImport(CObject* InObject)
     {
         Package = InObject->GetPackage()->GetName();
-        ObjectName = InObject->GetFullyQualifiedName().c_str();
+        ObjectName = InObject->GetName().c_str();
         ClassName = InObject->GetClass()->GetFullyQualifiedName();
         Object = InObject;
     }
@@ -42,7 +44,7 @@ namespace Lumina
         
     }
 
-    CPackage* CPackage::CreatePackage(const FString& InTopLevelClassName, const FString& FileName)
+    CPackage* CPackage::CreatePackage(const FString& FileName)
     {
         FString FullName = FileName;
         if (!Paths::HasExtension(FullName, ".lasset"))
@@ -62,17 +64,16 @@ namespace Lumina
         
         Package = NewObject<CPackage>(nullptr, FileNameName);
 
-        Package->TopLevelClassName = InTopLevelClassName;
         LOG_INFO("Created Package: \"{}\"", VirtualPath);
-
-        GEngine->GetEngineSubsystem<FAssetRegistry>()->AddLoadedPackage(Package);
+        
+        Package->MarkDirty();
         
         return Package;
     }
 
     bool CPackage::DestroyPackage(const FString& PackageName)
     {
-        // First we need to load the package */
+        // First we need to load the package before destroying it.*/
         CPackage* Package = LoadPackage(PackageName);
         if (Package == nullptr)
         {
@@ -89,6 +90,8 @@ namespace Lumina
         
         Package->ExportTable.clear();
 
+        GEngine->GetEngineSubsystem<FAssetRegistry>()->AssetDeleted(Package);
+        
         Package->MarkGarbage();
 
         GarbageCollection::CollectGarbage();
@@ -127,11 +130,9 @@ namespace Lumina
         
         Package->Loader = MakeSharedPtr<FPackageLoader>(HeapData, FileBinary.size(), Package);
         FPackageLoader& Reader = *(FPackageLoader*)Package->Loader.get();
-
         
         FPackageHeader PackageHeader;
         Reader << PackageHeader;
-        Package->TopLevelClassName = PackageHeader.ClassPath;
 
         Reader.Seek((int64)PackageHeader.ImportTableOffset);
         Reader << Package->ImportTable;
@@ -141,7 +142,7 @@ namespace Lumina
 
         for (const FObjectImport& Name : Package->ImportTable)
         {
-            LOG_INFO("Import: {}", Name.ObjectName);
+            
         }
         
         for (SIZE_T i = 0; i < Package->ExportTable.size(); ++i)
@@ -155,12 +156,18 @@ namespace Lumina
             
             CObject* Object = NewObject(ObjectClass, Package, FName(ObjectName));
             Object->SetFlag(OF_NeedsLoad);
+
+            if (Object->IsAsset())
+            {
+                Object->SetFlag(OF_Public);
+            }
+            
             Object->LoaderIndex = FObjectPackageIndex::FromExport(i).GetRaw();
 
             Export.Object = Object;
         }
 
-        LOG_INFO("Loaded Package: \"{}\" - ( [{}] Exports | [{}] Imports )", Package->GetName(), Package->ExportTable.size(), Package->ImportTable.size());
+        LOG_INFO("Loaded Package: \"{}\" - ( [{}] Exports | [{}] Imports | [{}] Bytes)", Package->GetName(), Package->ExportTable.size(), Package->ImportTable.size(), Package->Loader->TotalSize());
 
         return Package;
     }
@@ -183,7 +190,6 @@ namespace Lumina
         FPackageHeader PackageHeader;
         PackageHeader.Tag = PACKAGE_FILE_TAG;
         PackageHeader.Version = 1;
-        PackageHeader.ClassPath = Package->TopLevelClassName;
 
         // Skip the header until we've built the tables.
         Writer.Seek(sizeof(FPackageHeader));
@@ -257,8 +263,10 @@ namespace Lumina
         {
             return false;
         }
+
+        Package->ClearDirty();
         
-        LOG_INFO("Saved Package: \"{}\" - ( [{}] Exports | [{}] Imports )", Package->GetName(), Package->ExportTable.size(), Package->ImportTable.size());
+        LOG_INFO("Saved Package: \"{}\" - ( [{}] Exports | [{}] Imports | [{}] Bytes)", Package->GetName(), Package->ExportTable.size(), Package->ImportTable.size(), Package->Loader->TotalSize());
         return true;
     }
 
@@ -314,7 +322,6 @@ namespace Lumina
         if (ObjectPackage != this)
         {
             ObjectPackage->LoadObject(Object);
-            Object->SetFlag(OF_Public);
             return;
         }
 
@@ -365,7 +372,7 @@ namespace Lumina
         
         Object->ClearFlags(OF_NeedsLoad);
         Object->SetFlag(OF_WasLoaded);
-        
+
         Object->PostLoad();
         
         // Reset the state of the loader to the previous object.
@@ -402,6 +409,12 @@ namespace Lumina
             FString FullPath = Paths::ResolveVirtualPath(Import.Package.ToString());
             CPackage* Package = LoadPackage(FName(FullPath));
             Import.Object = FindObject<CObject>(Package, Import.ObjectName);
+
+            if (CObjectRedirector* Redirector = Cast<CObjectRedirector>(Import.Object))
+            {
+                LoadObject(Redirector);
+                Import.Object = Redirector->RedirectionObject;
+            }
             
             return ImportTable[ArrayIndex].Object;
         }
@@ -419,5 +432,10 @@ namespace Lumina
         }
         
         return nullptr;
+    }
+
+    FString CPackage::GetPackageFilename() const
+    {
+        return Paths::FileName(GetName().c_str(), true);
     }
 }

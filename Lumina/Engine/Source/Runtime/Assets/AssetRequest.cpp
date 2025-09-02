@@ -1,5 +1,8 @@
 
 #include "AssetRequest.h"
+
+#include "Core/Object/Cast.h"
+#include "Core/Object/ObjectRedirector.h"
 #include "Core/Object/Package/Package.h"
 #include "Paths/Paths.h"
 #include "Platform/Filesystem/FileHelper.h"
@@ -28,8 +31,24 @@ namespace Lumina
         }
         
         PendingObject = FindObject<CObject>(Package, Name);
+        if (PendingObject != nullptr)
+        {
+            if (PendingObject->HasAnyFlag(OF_NeedsLoad))
+            {
+                Package->LoadObject(PendingObject);
+            }
+        
+            if (PendingObject->HasAnyFlag(OF_NeedsPostLoad))
+            {
+                PendingObject->PostLoad();
+                PendingObject->ClearFlags(OF_NeedsPostLoad);
+            }
 
-        Package->LoadObject(PendingObject);
+            if (CObjectRedirector* Redirector = Cast<CObjectRedirector>(PendingObject))
+            {
+                PendingObject = Redirector->RedirectionObject;
+            }
+        }
         
         return true;
     }
