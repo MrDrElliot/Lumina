@@ -43,6 +43,14 @@ namespace Lumina
     {
     public:
 
+        FLambdaTask(ETaskPriority Priority, uint32 SetSize, TaskSetFunction TaskFunctor)
+        {
+            m_Priority = (enki::TaskPriority)Priority;
+            m_SetSize = SetSize;
+            Function = Memory::Move(TaskFunctor);
+            TaskRecycle.SetDependency(TaskRecycle.Dependency, this);
+        }
+        
         FLambdaTask()
         {
             TaskRecycle.SetDependency(TaskRecycle.Dependency, this);

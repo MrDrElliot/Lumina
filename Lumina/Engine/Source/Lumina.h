@@ -21,7 +21,6 @@
 
 #ifdef  _MSC_VER
 #pragma warning (push)
-#pragma warning (disable: 26495)    // [Static Analyzer] Variable 'XXX' is uninitialized. Always initialize a member variable (type.6).
 #endif
 
 

@@ -76,7 +76,7 @@ namespace Lumina
         LUMINA_API virtual void PostPropertyChange(FProperty* ChangedProperty) {}
 
         /** Renames this object, optionally changing it's package */
-        LUMINA_API virtual bool Rename(const FName& NewName, CPackage* NewPackage = nullptr);
+        LUMINA_API virtual bool Rename(const FName& NewName, CPackage* NewPackage = nullptr, bool bCreateRedirector = true);
         
     private:
 

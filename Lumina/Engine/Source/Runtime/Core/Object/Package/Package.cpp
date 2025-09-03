@@ -303,11 +303,6 @@ namespace Lumina
         
     }
 
-    bool CPackage::Rename(const FName& NewName, CPackage* NewPackage)
-    {
-        return CObject::Rename(NewName, NewPackage);
-    }
-
     void CPackage::LoadObject(CObject* Object)
     {
         LUMINA_PROFILE_SCOPE();

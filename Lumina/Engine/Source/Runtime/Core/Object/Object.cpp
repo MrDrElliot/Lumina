@@ -74,17 +74,17 @@ namespace Lumina
         
     }
 
-    bool CObject::Rename(const FName& NewName, CPackage* NewPackage)
+    bool CObject::Rename(const FName& NewName, CPackage* NewPackage, bool bCreateRedirector)
     {
         FName SafeName = NewName;
 
 
-        bool bCreateRedirector = false;
-        if (HasAnyFlag(OF_Public))
+        bool bShouldCreateRedirector = false;
+        if (HasAnyFlag(OF_Public) && bCreateRedirector)
         {
             bool bPackage = GetClass() == CPackage::StaticClass();
 
-            bCreateRedirector = (bPackage == false);
+            bShouldCreateRedirector = (bPackage == false);
         }
 
         FName OldName = GetName();
@@ -92,7 +92,7 @@ namespace Lumina
         
         HandleNameChange(SafeName, NewPackage);
 
-        if (bCreateRedirector)
+        if (bShouldCreateRedirector)
         {
             CObjectRedirector* Redirector = FindObject<CObjectRedirector>(OldPackage, OldName);
 

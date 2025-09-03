@@ -48,7 +48,9 @@ namespace Lumina
         virtual ImVec2 GetMinNodeBodySize() const { return ImVec2(100, 150); }
         virtual ImVec2 GetMinNodeTitleBarSize() const { return ImVec2(100, 28); }
 
-        virtual void DrawNodeBody() { };
+        virtual void DrawNodeBody() { }
+
+        virtual bool IsDeletable() const { return true; }
 
         void SetDebugExecutionOrder(uint32 Order) { DebugExecutionOrder = Order; }
         uint32 GetDebugExecutionOrder() const { return DebugExecutionOrder; }
@@ -92,7 +94,6 @@ namespace Lumina
 
 
         uint64      NodeID = 0;
-        SIZE_T      Index = 0;
         FString     FullName;
         FString     Error;
         bool        bHasError;

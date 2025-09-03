@@ -146,6 +146,7 @@ namespace Lumina
 
         if (CPackage::SavePackage(World->GetPackage(), World, FullPath.c_str()))
         {
+            GetEngineSystem<FAssetRegistry>().AssetSaved(World);
             ImGuiX::Notifications::NotifySuccess("Successfully saved package: \"%s\"", World->GetPathName().c_str());
         }
         else

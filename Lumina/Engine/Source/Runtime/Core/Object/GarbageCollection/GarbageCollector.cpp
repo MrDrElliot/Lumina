@@ -12,7 +12,7 @@
 
 namespace Lumina::GarbageCollection
 {
-    static TQueue<CObjectBase*> PendingDeletes;
+    static TFixedVector<CObjectBase*, 2024> PendingDeletes;
     static FMutex DeletesLock;
     
     void AddGarbage(CObjectBase* Obj)
@@ -29,7 +29,7 @@ namespace Lumina::GarbageCollection
         Obj->OnMarkedGarbage();
         
         FScopeLock Lock(DeletesLock);
-        PendingDeletes.push(Obj);
+        PendingDeletes.push_back(Obj);
     }
 
     void CollectGarbage()
@@ -37,8 +37,8 @@ namespace Lumina::GarbageCollection
         LUMINA_PROFILE_SCOPE();
         while (!PendingDeletes.empty())
         {
-            CObjectBase* Obj = PendingDeletes.front();
-            PendingDeletes.pop();
+            CObjectBase* Obj = PendingDeletes.back();
+            PendingDeletes.pop_back();
 
             Assert(Obj->IsMarkedGarbage())
 

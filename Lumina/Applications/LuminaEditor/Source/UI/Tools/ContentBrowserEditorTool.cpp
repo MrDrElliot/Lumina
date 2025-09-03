@@ -6,7 +6,9 @@
 #include "Assets/Definition/AssetDefinition.h"
 #include "Assets/Factories/Factory.h"
 #include "Core/Engine/Engine.h"
+#include "Core/Object/ObjectIterator.h"
 #include "Core/Object/Package/Package.h"
+#include "EASTL/sort.h"
 #include "Paths/Paths.h"
 #include "Project/Project.h"
 #include "Renderer/RenderManager.h"
@@ -56,7 +58,20 @@ namespace Lumina
     {
         using namespace Import::Textures;
 
+        for (TObjectIterator<CFactory> It; It; ++It)
+        {
+            CFactory* Factory = *It;
+            if (Factory->HasAnyFlag(OF_DefaultObject))
+            {
+                if (CClass* AssetClass = Factory->GetSupportedType())
+                {
+                    FilterState.emplace(AssetClass->GetName().c_str(), true);
+                }
+            }
+        }
 
+        FilterState.emplace(CObjectRedirector::StaticClass()->GetName().c_str(), false);
+        
         CreateToolWindow("Content", [this] (const FUpdateContext& Contxt, bool bIsFocused)
         {
             float Left = 200.0f;
@@ -102,17 +117,17 @@ namespace Lumina
         {
             FContentBrowserTileViewItem* ContentItem = static_cast<FContentBrowserTileViewItem*>(Item);
 
-            ImTextureRef ImTexture = FUITextureCache::Get().GetImTexture(Paths::GetEngineResourceDirectory() + "/Textures/Folder.png");
+            ImTextureRef ImTexture = GetEngineSystem<FRenderManager>().GetTextureCache()->GetImTexture(Paths::GetEngineResourceDirectory() + "/Textures/Folder.png");
 
             if ((!ContentItem->IsDirectory()))
             {
                 if (ContentItem->GetAssetData().IsRedirector())
                 {
-                    ImTexture = FUITextureCache::Get().GetImTexture(Paths::GetEngineResourceDirectory() + "/Textures/Redirect.png");
+                    ImTexture = GetEngineSystem<FRenderManager>().GetTextureCache()->GetImTexture(Paths::GetEngineResourceDirectory() + "/Textures/Redirect.png");
                 }
                 else
                 {
-                    ImTexture = FUITextureCache::Get().GetImTexture(Paths::GetEngineResourceDirectory() + "/Textures/SkeletalMeshIcon.png");
+                    ImTexture = GetEngineSystem<FRenderManager>().GetTextureCache()->GetImTexture(Paths::GetEngineResourceDirectory() + "/Textures/SkeletalMeshIcon.png");
                 }
             }
             
@@ -321,8 +336,12 @@ namespace Lumina
                 
                 for (FAssetData* Asset : Assets)
                 {
-                    FullPath = Paths::ResolveVirtualPath(Asset->FullPath.ToString());
-                    ContentBrowserTileView.AddItemToTree<FContentBrowserTileViewItem>(nullptr, FullPath, Asset);
+                    FName ShortClassName = Paths::GetExtension(Asset->AssetClass.ToString());
+                    if (FilterState.at(ShortClassName))
+                    {
+                        FullPath = Paths::ResolveVirtualPath(Asset->FullPath.ToString());
+                        ContentBrowserTileView.AddItemToTree<FContentBrowserTileViewItem>(nullptr, FullPath, Asset);
+                    }
                 }
             }
         };
@@ -404,6 +423,26 @@ namespace Lumina
         ImGui::DockBuilderDockWindow(GetToolWindowName("Content").c_str(), bottomCenterDockID);
     }
 
+    void FContentBrowserEditorTool::DrawToolMenu(const FUpdateContext& UpdateContext)
+    {
+        if (ImGui::BeginMenu(LE_ICON_FILTER " Filter"))
+        {
+            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, 2));
+            ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8, 2));
+
+            for (auto& [Name, State] : FilterState)
+            {
+                if (ImGui::Checkbox(Name.c_str(), &State))
+                {
+                    RefreshContentBrowser();
+                }
+            }
+
+            ImGui::PopStyleVar(2);
+            ImGui::EndMenu();
+        }
+    }
+
     void FContentBrowserEditorTool::HandleContentBrowserDragDrop(FContentBrowserTileViewItem* Drop, FContentBrowserTileViewItem* Payload)
     {
         bool bWroteSomething = false;
@@ -471,6 +510,13 @@ namespace Lumina
                     
                     /** We need all objects to be loaded to rename a package */
                     OldPackage->LoadObjects();
+
+                    bool bCreateRedirectors = true;
+                    
+                    FAssetRegistry* AssetRegistry = GEngine->GetEngineSubsystem<FAssetRegistry>();
+                    const THashSet<FName>& References = AssetRegistry->GetReferences(OldPackage->GetName());
+
+                    //@TODO bCreateRedirectors = References.empty();
                     
                     FString OldAssetName = Paths::FileName(OldPath, true);
                     FString NewAssetName = Paths::FileName(NewPath, true);
@@ -484,19 +530,17 @@ namespace Lumina
                     {
                         if (Object->IsAsset())
                         {
-                            Object->Rename(NewAssetName, NewPackage);
-                            GEngine->GetEngineSubsystem<FAssetRegistry>()->AssetRenamed(Object, OldPath);
+                            Object->Rename(NewAssetName, NewPackage, bCreateRedirectors);
+                            AssetRegistry->AssetRenamed(Object, OldPath);
                         }
                         else
                         {
                             Object->Rename(Object->GetName(), NewPackage);
                         }
-                        
                     }
 
                     CPackage::SavePackage(OldPackage, nullptr, OldPath);
                     CPackage::SavePackage(NewPackage, nullptr, NewPath);
-                    
                 }
             }
             else
@@ -727,7 +771,7 @@ namespace Lumina
                     }
                     else
                     {
-                        FTaskSystem::Get().ScheduleLambda(1, [this, Factory, FStringFileName, PathString] (uint32 Start, uint32 End, uint32 ThreadNum_)
+                        Task::AsyncTask(1, [this, Factory, FStringFileName, PathString] (uint32 Start, uint32 End, uint32 ThreadNum_)
                         {
                             Factory->TryImport(FStringFileName, PathString);
                             ImGuiX::Notifications::NotifySuccess("Successfully Imported: \"%s\"", PathString.c_str());

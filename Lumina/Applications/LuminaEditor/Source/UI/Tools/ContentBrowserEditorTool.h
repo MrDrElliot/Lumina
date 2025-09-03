@@ -176,6 +176,7 @@ namespace Lumina
 
         void InitializeDockingLayout(ImGuiID InDockspaceID, const ImVec2& InDockspaceSize) const override;
 
+        void DrawToolMenu(const FUpdateContext& UpdateContext) override;
 
         void HandleContentBrowserDragDrop(FContentBrowserTileViewItem* Drop, FContentBrowserTileViewItem* Payload);
         
@@ -194,5 +195,6 @@ namespace Lumina
 
         FString                     SelectedPath;
         ImGui::FileBrowser          FileBrowser;
+        THashMap<FName, bool>       FilterState;
     };
 }

@@ -8,7 +8,7 @@
 namespace Lumina
 {
     LUM_CLASS()
-    class CFactory : public CObject
+    class LUMINA_API CFactory : public CObject
     {
         GENERATED_BODY()
 
@@ -16,7 +16,7 @@ namespace Lumina
         
         virtual FString GetAssetName() const { return ""; }
         
-        LUMINA_API CObject* TryCreateNew(const FString& Path);
+        CObject* TryCreateNew(const FString& Path);
         
         virtual CObject* CreateNew(const FName& Name, CPackage* Package) { return nullptr; }
         
@@ -26,8 +26,8 @@ namespace Lumina
 
         virtual CClass* GetSupportedType() const { return nullptr; }
 
-        LUMINA_API static bool ShowImportDialogue(CFactory* Factory, const FString& RawPath, const FString& DestinationPath);
-        LUMINA_API static bool ShowCreationDialogue(CFactory* Factory, const FString& Path);
+        static bool ShowImportDialogue(CFactory* Factory, const FString& RawPath, const FString& DestinationPath);
+        static bool ShowCreationDialogue(CFactory* Factory, const FString& Path);
 
         virtual bool HasImportDialogue() const { return false; }
         virtual bool HasCreationDialogue() const { return false; }

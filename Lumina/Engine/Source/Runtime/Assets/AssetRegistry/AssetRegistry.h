@@ -51,7 +51,6 @@ namespace Lumina
 		}
 	};
 
-
 	using FAssetDataMap = THashSet<FAssetData*, FAssetDataPtrHash, FAssetDataPtrEqual>;
 	
 	
@@ -60,7 +59,7 @@ namespace Lumina
 	public:
 
 		void ProjectLoaded();
-		void Initialize(FSubsystemManager& Manager) override;
+		void Initialize() override;
 		void Deinitialize() override;
 
 		void RunInitialDiscovery();
@@ -69,7 +68,7 @@ namespace Lumina
 		void AssetCreated(CObject* Asset);
 		void AssetDeleted(CPackage* Package);
 		void AssetRenamed(CObject* Asset, const FString& OldPackagePath);
-		void AssetSaved(CPackage* Package);
+		void AssetSaved(CObject* Asset);
 
 		FAssetRegistryUpdatedDelegate& GetOnAssetRegistryUpdated() { return OnAssetRegistryUpdated; }
 
@@ -77,10 +76,12 @@ namespace Lumina
 		const THashMap<FName, TVector<FAssetData*>>& GetAssetsByPath() const { return AssetsByPath; }
 		const TVector<FAssetData*>& GetAssetsForPath(const FName& Path);
 		const FAssetDataMap& GetAssets() const { return Assets; }
+
+		const THashSet<FName>& GetReferences(const FName& Asset);
 		
 	private:
 
-		void ProcessPackagePath(const FString& Path);
+		void ProcessPackagePath(FStringView Path);
 		
 		void ClearAssets();
 
@@ -99,5 +100,8 @@ namespace Lumina
 
 		/** Map if full names to assets saved on disk */
 		THashMap<FName, TVector<FAssetData*>> AssetsByPath;
+
+		/** Asset to it's dependencies */
+		THashMap<FName, THashSet<FName>> ReferenceMap;
 	};
 }

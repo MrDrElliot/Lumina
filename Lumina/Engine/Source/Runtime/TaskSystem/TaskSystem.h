@@ -9,17 +9,17 @@
 
 namespace Lumina
 {
-    class LUMINA_API FTaskSystem : public TSingleton<FTaskSystem>
+    LUMINA_API extern class FTaskSystem* GTaskSystem;
+
+    class FTaskSystem
     {
     public:
-
         
         bool IsBusy() const { return Scheduler.GetIsShutdownRequested(); }
         uint32_t GetNumWorkers() const { return NumWorkers; }
-        bool IsInitialized() const { return bInitialized; }
 
-        void Initialize();
-        void Shutdown();
+        static void Initialize();
+        static void Shutdown();
         
         void WaitForAll() 
         {
@@ -32,11 +32,11 @@ namespace Lumina
          * executed in order. The ranges will be random, but they will all be executed only once, but if you -
          * need the index to be consistent. This will not work for you. Here's an example of a parallel for loop.
          *
-         * FTaskSystem::Get()->ScheduleLambda(10, [](uint32 Start, uint32 End, uint32 Thread)
+         * Task::AsyncTask(10, [](uint32 Start, uint32 End, uint32 Thread)
          * {
          *      for(uint32 i = Start; i < End; ++i)
          *      {
-         *          //.... i will be randomly distributed.
+         *          //.... [i] will be randomly distributed.
          *      }
          * });
          *
@@ -46,27 +46,25 @@ namespace Lumina
          * @param Priority 
          * @return The task you can wait on, but should not be saved as it will be cleaned up automatically.
          */
-        FLambdaTask* ScheduleLambda(uint32 Num, TaskSetFunction&& Function, ETaskPriority Priority = ETaskPriority::Medium)
+        LUMINA_API FLambdaTask* ScheduleLambda(uint32 Num, TaskSetFunction&& Function, ETaskPriority Priority = ETaskPriority::Medium)
         {
             if (Num == 0)
             {
+                LOG_WARN("Task Size of [0] passed to task system.");
                 return nullptr;
             }
 
             FLambdaTask* Task = nullptr;
+            if (!LambdaTaskPool.empty())
             {
-                FScopeLock Lock(LambdaTaskMutex);
-                if (!LambdaTaskPool.empty() )
+                if (LambdaTaskPool.back()->GetIsComplete())
                 {
-                    if (LambdaTaskPool.back()->GetIsComplete())
-                    {
-                        Task = LambdaTaskPool.back();
-                    }
-                    
-                    LambdaTaskPool.pop();
+                    Task = LambdaTaskPool.back();
                 }
+                
+                LambdaTaskPool.pop();
             }
-
+            
             if (!Task)
             {
                 Task = Memory::New<FLambdaTask>();
@@ -76,6 +74,7 @@ namespace Lumina
             ScheduleTask(Task);
             return Task;
         }
+
         
         template<typename TFunc>
         void ParallelFor(uint32 Num, TFunc&& Func, ETaskPriority Priority = ETaskPriority::Medium)
@@ -105,29 +104,28 @@ namespace Lumina
             WaitForTask(&Task);
         }
         
-        void ScheduleTask(ITaskSet* pTask)
+        LUMINA_API void ScheduleTask(ITaskSet* pTask)
         {
             Scheduler.AddTaskSetToPipe(pTask);
         }
 
-        void ScheduleTask(IPinnedTask* pTask)
+        LUMINA_API void ScheduleTask(IPinnedTask* pTask)
         {
             Scheduler.AddPinnedTask(pTask);
         }
 
-        void WaitForTask(const ITaskSet* pTask, ETaskPriority Priority = ETaskPriority::Low)
+        LUMINA_API void WaitForTask(const ITaskSet* pTask, ETaskPriority Priority = ETaskPriority::Low)
         {
             Scheduler.WaitforTask(pTask, (enki::TaskPriority)Priority);
         }
 
-        void WaitForTask(const IPinnedTask* pTask)
+        LUMINA_API void WaitForTask(const IPinnedTask* pTask)
         {
             Scheduler.WaitforTask(pTask);
         }
 
         void PushLambdaTaskToPool(FLambdaTask* InTask)
         {
-            FScopeLock Lock(LambdaTaskMutex);
             LambdaTaskPool.push(InTask);
         }
     
@@ -139,7 +137,17 @@ namespace Lumina
         
         enki::TaskScheduler     Scheduler;
         uint32                  NumWorkers = 0;
-        bool                    bInitialized = false;
-
     };
+
+
+    namespace Task
+    {
+        LUMINA_API FLambdaTask* AsyncTask(uint32 Num, TaskSetFunction&& Function, ETaskPriority Priority = ETaskPriority::Medium);
+
+        template<typename TFunc>
+        inline void ParallelFor(uint32 Num, TFunc&& Func, ETaskPriority Priority = ETaskPriority::Medium)
+        {
+            GTaskSystem->ParallelFor(Num, std::forward<TFunc>(Func), Priority);
+        }
+    }
 }

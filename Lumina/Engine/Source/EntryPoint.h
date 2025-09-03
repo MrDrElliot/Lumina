@@ -1,6 +1,5 @@
 #pragma once
 
-
 #ifdef _DEBUG
 #ifdef LE_PLATFORM_WINDOWS
 #include <crtdbg.h>
@@ -11,9 +10,6 @@
 
 
 extern Lumina::FApplication* Lumina::CreateApplication(int argc, char** argv);
-
-inline bool gApplicationRunning = true;
-
 
 inline int GuardedMain(int argc, char** argv)
 {
@@ -37,7 +33,6 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 {
 	return GuardedMain(__argc, __argv);
 }
-
 #endif
 
 int main(int argc, char** argv)

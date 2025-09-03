@@ -15,6 +15,7 @@
 #include "glm/gtx/quaternion.hpp"
 #include "Core/Engine/Engine.h"
 #include "Core/Profiler/Profile.h"
+#include "EASTL/sort.h"
 #include "Entity/Components/EditorComponent.h"
 #include "entity/components/EnvironmentComponent.h"
 #include "Entity/Components/LightComponent.h"

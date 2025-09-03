@@ -357,8 +357,6 @@ namespace Lumina
         LUMINA_API void CreateImports();
         
         
-        bool Rename(const FName& NewName, CPackage* NewPackage = nullptr) override;
-        
         /**
          * Actually serialize the object from this package. After this function is finished,
          * the object will be fully loaded. If it's called without OF_NeedsLoad, data serialization

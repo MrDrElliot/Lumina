@@ -6,7 +6,7 @@
 
 namespace Lumina
 {
-    void FInputSubsystem::Initialize(FSubsystemManager& Manager)
+    void FInputSubsystem::Initialize()
     {
     }
 

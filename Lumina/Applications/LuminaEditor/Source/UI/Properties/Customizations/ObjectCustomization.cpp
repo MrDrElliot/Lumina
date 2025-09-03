@@ -34,7 +34,7 @@ namespace Lumina
             ImGui::BeginDisabled(Obj == nullptr);
 
             // Temporary stuff.
-            ImTextureRef ButtonTexture = FUITextureCache::Get().GetImTexture(Paths::GetEngineResourceDirectory() + "/Textures/SkeletalMeshIcon.png");
+            ImTextureRef ButtonTexture = GetEngineSystem<FRenderManager>().GetTextureCache()->GetImTexture(Paths::GetEngineResourceDirectory() + "/Textures/SkeletalMeshIcon.png");
             
             ImGui::ImageButton(Label, ButtonTexture, ImVec2(64, 64));
             ImGui::EndDisabled();

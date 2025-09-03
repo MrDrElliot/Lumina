@@ -25,7 +25,7 @@ namespace Lumina
         {
             LUMINA_PROFILE_SCOPE();
             
-            glm::vec3 newMin( std::numeric_limits<float>::max());
+            glm::vec3 newMin(std::numeric_limits<float>::max());
             glm::vec3 newMax(-std::numeric_limits<float>::max());
 
             for (int i = 0; i < 8; i++)

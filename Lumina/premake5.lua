@@ -109,7 +109,6 @@ project "Lumina"
 	filter "system:linux"
 		defines { "LE_PLATFORM_LINUX" }
 
-
 	filter { "system:windows" }
 		defines { "LE_PLATFORM_WINDOWS", }
 		flags { "NoRuntimeChecks", "NoIncrementalLink" }

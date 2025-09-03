@@ -3,6 +3,7 @@
 #include "WorldManager.h"
 #include "Core/Engine/Engine.h"
 #include "Core/Object/Class.h"
+#include "EASTL/sort.h"
 #include "Entity/Components/EditorComponent.h"
 #include "Entity/Components/LineBatcherComponent.h"
 #include "Entity/Components/VelocityComponent.h"

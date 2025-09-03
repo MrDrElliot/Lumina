@@ -8,9 +8,9 @@
 
 namespace Lumina::FileHelper
 {
-    bool SaveArrayToFile(const TVector<uint8>& Array, const FString& Path, uint32 WriteFlags)
+    bool SaveArrayToFile(const TVector<uint8>& Array, FStringView Path, uint32 WriteFlags)
     {
-        std::filesystem::path FilePath = Path.c_str();
+        std::filesystem::path FilePath = Path.data();
 
         
         std::ofstream outFile(FilePath, std::ios::binary | std::ios::trunc);
@@ -30,11 +30,11 @@ namespace Lumina::FileHelper
         return true;
     }
 
-    bool LoadFileToArray(TVector<uint8>& Result, const FString& Path, uint32 ReadFlags)
+    bool LoadFileToArray(TVector<uint8>& Result, FStringView Path, uint32 ReadFlags)
     {
         Result.clear();
         
-        std::ifstream InFile(Path.c_str(), std::ios::binary | std::ios::ate);
+        std::ifstream InFile(Path.data(), std::ios::binary | std::ios::ate);
         if (!InFile)
         {
             Result.clear();
@@ -65,11 +65,11 @@ namespace Lumina::FileHelper
         return true;
     }
 
-    bool LoadFileToArray(TVector<uint8>& Result, const FString& Path, uint32 Seek, uint32 ReadSize, uint32 ReadFlags)
+    bool LoadFileToArray(TVector<uint8>& Result, FStringView Path, uint32 Seek, uint32 ReadSize, uint32 ReadFlags)
     {
         Result.clear();
         
-        std::ifstream InFile(Path.c_str(), std::ios::binary | std::ios::ate);
+        std::ifstream InFile(Path.data(), std::ios::binary | std::ios::ate);
         if (!InFile)
         {
             Result.clear();
@@ -101,9 +101,9 @@ namespace Lumina::FileHelper
         return true;
     }
 
-    FString FileFinder(const FString& FileName, const FString& IteratorPath, bool bRecursive)
+    FString FileFinder(FStringView FileName, FStringView IteratorPath, bool bRecursive)
     {
-        std::filesystem::path Path = IteratorPath.c_str();
+        std::filesystem::path Path = IteratorPath.data();
 
         if (!std::filesystem::exists(Path) || !std::filesystem::is_directory(Path))
         {
@@ -118,7 +118,7 @@ namespace Lumina::FileHelper
         {
             for (const auto& Entry : std::filesystem::recursive_directory_iterator(Path, Options))
             {
-                if (Entry.is_regular_file() && Entry.path().filename() == FileName.c_str())
+                if (Entry.is_regular_file() && Entry.path().filename() == FileName.data())
                 {
                     return Entry.path().string().c_str();
                 }
@@ -128,7 +128,7 @@ namespace Lumina::FileHelper
         {
             for (const auto& Entry : std::filesystem::directory_iterator(Path, Options))
             {
-                if (Entry.is_regular_file() && Entry.path().filename() == FileName.c_str())
+                if (Entry.is_regular_file() && Entry.path().filename() == FileName.data())
                 {
                     return Entry.path().string().c_str();
                 }
@@ -138,12 +138,12 @@ namespace Lumina::FileHelper
         return "";
     }
     
-    bool LoadFileIntoString(FString& OutString, const FString& Path, uint32 ReadFlags)
+    bool LoadFileIntoString(FString& OutString, FStringView Path, uint32 ReadFlags)
     {
-        std::ifstream file(Path.c_str(), std::ios::in);
+        std::ifstream file(Path.data(), std::ios::in);
         if (!file.is_open())
         {
-            LOG_ERROR("Failed to open file: {0}", Path.c_str());
+            LOG_ERROR("Failed to open file: {0}", Path.data());
             return false;
         }
 
@@ -155,12 +155,12 @@ namespace Lumina::FileHelper
         return OutString.size();
     }
 
-    bool SaveStringToFile(const FStringView& String, const FString& Path, uint32 WriteFlags)
+    bool SaveStringToFile(FStringView String, FStringView Path, uint32 WriteFlags)
     {
-        std::ofstream file(Path.c_str(), std::ios::out | std::ios::trunc);
+        std::ofstream file(Path.data(), std::ios::out | std::ios::trunc);
         if (!file.is_open())
         {
-            LOG_ERROR("Failed to open file for writing: {0}", Path.c_str());
+            LOG_ERROR("Failed to open file for writing: {0}", Path.data());
             return false;
         }
 
@@ -170,16 +170,16 @@ namespace Lumina::FileHelper
         return true;
     }
 
-    bool DoesFileExist(const FString& FilePath)
+    bool DoesFileExist(FStringView FilePath)
     {
-        return std::filesystem::exists(FilePath.c_str());
+        return std::filesystem::exists(FilePath.data());
     }
 
-    bool CreateNewFile(const FString& FilePath, bool bBinary, uint32 Flags)
+    bool CreateNewFile(FStringView FilePath, bool bBinary, uint32 Flags)
     {
-        if (std::filesystem::exists(FilePath.c_str())) 
+        if (std::filesystem::exists(FilePath.data())) 
         {
-            LOG_ERROR("File already exists: {0}", FilePath.c_str());
+            LOG_ERROR("File already exists: {0}", FilePath.data());
             return false;
         }
 
@@ -189,10 +189,10 @@ namespace Lumina::FileHelper
             Mode |= std::ios::binary;
         }
 
-        std::ofstream File(FilePath.c_str(), Mode);
+        std::ofstream File(FilePath.data(), Mode);
         if (!File.is_open())
         {
-            LOG_ERROR("Failed to create file: {0}", FilePath.c_str());
+            LOG_ERROR("Failed to create file: {0}", FilePath.data());
             return false;
         }
 
@@ -200,11 +200,11 @@ namespace Lumina::FileHelper
         return true;
     }
 
-    uint64 GetFileSize(const FString& FilePath)
+    uint64 GetFileSize(FStringView FilePath)
     {
-        if (std::filesystem::exists(FilePath.c_str()))
+        if (std::filesystem::exists(FilePath.data()))
         {
-            return std::filesystem::file_size(FilePath.c_str());
+            return std::filesystem::file_size(FilePath.data());
         }
 
         return 0;

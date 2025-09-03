@@ -62,7 +62,7 @@ namespace Lumina
         Request.OnCompleted = Memory::Move(OnCompleted);
         PushRequest(Request);
         
-        FTaskSystem::Get().ScheduleLambda(1, [this, Request = Memory::Move(Request)] (uint32 Start, uint32 End, uint32 ThreadNum_)
+        Task::AsyncTask(1, [this, Request = Memory::Move(Request)] (uint32 Start, uint32 End, uint32 ThreadNum_)
         {
             FString FileName = Paths::FileName(Request.Path);
             LOG_DEBUG("Compiling Shader: {0} - Thread: {1}", FileName, Threading::GetThreadID());
@@ -169,7 +169,7 @@ namespace Lumina
         
         PushRequest(Request);
         
-        FTaskSystem::Get().ScheduleLambda(1, [this, Request = Memory::Move(Request)] (uint32 Start, uint32 End, uint32 ThreadNum_)
+        Task::AsyncTask(1, [this, Request = Memory::Move(Request)] (uint32 Start, uint32 End, uint32 ThreadNum_)
         {
             shaderc::CompileOptions Options;
             Options.SetIncluder(std::make_unique<FShaderCIncluder>());

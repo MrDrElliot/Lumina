@@ -13,13 +13,14 @@ namespace Lumina
         RunInitialDiscovery();
     }
 
-    void FAssetRegistry::Initialize(FSubsystemManager& Manager)
+    void FAssetRegistry::Initialize()
     {
         
     }
 
     void FAssetRegistry::Deinitialize()
     {
+        ClearAssets();
     }
 
     void FAssetRegistry::RunInitialDiscovery()
@@ -28,7 +29,7 @@ namespace Lumina
         
         ClearAssets();
         
-        TVector<FString> PackagePaths;
+        TFixedVector<FInlineString, 256> PackagePaths;
         for (const auto& [ID, Path] : Paths::GetMountedPaths())
         {
             for (const auto& Directory : std::filesystem::recursive_directory_iterator(Path.c_str()))
@@ -44,23 +45,21 @@ namespace Lumina
                 }
             }
         }
-
-
+        
         uint32 NumPackages = (uint32)PackagePaths.size();
-        FTaskSystem::Get().ScheduleLambda(NumPackages, [this, PackagePaths = std::move(PackagePaths)] (uint32 Start, uint32 End, uint32 Thread)
+        Task::AsyncTask(NumPackages, [this, PackagePaths = std::move(PackagePaths)] (uint32 Start, uint32 End, uint32)
         {
             for (uint32 i = Start; i < End; ++i)
             {
-                const FString& PathString = PackagePaths[i];
+                const FInlineString& PathString = PackagePaths[i];
                 ProcessPackagePath(PathString);
             }
-
+        
             if (End == PackagePaths.size())
             {
                 OnInitialDiscoveryCompleted();
             }
         });
-        
     }
 
     void FAssetRegistry::OnInitialDiscoveryCompleted()
@@ -133,45 +132,77 @@ namespace Lumina
 
     void FAssetRegistry::AssetRenamed(CObject* Asset, const FString& OldPackagePath)
     {
-        CPackage* NewPackage = Asset->GetPackage();
+        CPackage* Package = Asset->GetPackage();
         CPackage* OldPackage = FindObject<CPackage>(nullptr, Paths::ConvertToVirtualPath(OldPackagePath));
-        
-        FName NewPackagePathName = NewPackage->GetName();
-        
-        LUM_ASSERT(AssetPackageMap.find(NewPackage->GetName()) == AssetPackageMap.end())
-        LUM_ASSERT(AssetPackageMap.find(OldPackage->GetName()) != AssetPackageMap.end())
-        
-        FString NewParentPath = Paths::Parent(NewPackage->GetName().ToString());
-
-        auto MakeParentPackagePath = [] (FString& ParentPath)
+        if (OldPackage)
         {
-            if (!ParentPath.empty() && ParentPath.back() == ':')
-            {
-                ParentPath.append("//");
-            }
-        };
-
-        MakeParentPackagePath(NewParentPath);
-
-        FAssetData* OldData = AssetPackageMap[OldPackage->GetName()];
-        OldData->AssetClass = CObjectRedirector::StaticClass()->GetFullyQualifiedName();
+            FName NewPackagePathName = Package->GetName();
         
-        FAssetData* Data = Memory::New<FAssetData>();
-        Data->AssetName = Asset->GetName();
-        Data->PackageName = NewPackage->GetName();
-        Data->FullPath = Asset->GetFullyQualifiedName();
-        Data->AssetClass = Asset->GetClass()->GetFullyQualifiedName();
+            LUM_ASSERT(AssetPackageMap.find(Package->GetName()) == AssetPackageMap.end())
+            LUM_ASSERT(AssetPackageMap.find(OldPackage->GetName()) != AssetPackageMap.end())
+        
+            FString NewParentPath = Paths::Parent(Package->GetName().ToString());
 
-        AssetsByPath[NewParentPath].push_back(Data);
-        AssetPackageMap[NewPackage->GetName()] = Data;
-        Assets.emplace(Data);
+            auto MakeParentPackagePath = [] (FString& ParentPath)
+            {
+                if (!ParentPath.empty() && ParentPath.back() == ':')
+                {
+                    ParentPath.append("//");
+                }
+            };
+
+            MakeParentPackagePath(NewParentPath);
+
+            FAssetData* OldData = AssetPackageMap[OldPackage->GetName()];
+            OldData->AssetClass = CObjectRedirector::StaticClass()->GetFullyQualifiedName();
+        
+            FAssetData* Data = Memory::New<FAssetData>();
+            Data->AssetName = Asset->GetName();
+            Data->PackageName = Package->GetName();
+            Data->FullPath = Asset->GetFullyQualifiedName();
+            Data->AssetClass = Asset->GetClass()->GetFullyQualifiedName();
+
+            AssetsByPath[NewParentPath].push_back(Data);
+            AssetPackageMap[Package->GetName()] = Data;
+            Assets.emplace(Data);
+        }
 
         GetOnAssetRegistryUpdated().Broadcast();
     }
 
-    void FAssetRegistry::AssetSaved(CPackage* Package)
+    void FAssetRegistry::AssetSaved(CObject* Asset)
     {
+        CPackage* Package = Asset->GetPackage();
+
+        FString FullPathName = Paths::ResolveVirtualPath(Package->GetName().ToString());
+        Paths::AddPackageExtension(FullPathName);
         
+        TVector<uint8> FileBinary;
+        if (!FileHelper::LoadFileToArray(FileBinary, FullPathName) || FileBinary.empty())
+        {
+            return;
+        }
+
+        FMemoryReader Reader(FileBinary);
+        FPackageHeader Header;
+        Reader << Header;
+        LUM_ASSERT(Header.Tag == PACKAGE_FILE_TAG)
+
+        Reader.Seek(Header.ImportTableOffset);
+
+        TVector<FObjectImport> Imports;
+        Reader << Imports;
+
+        auto& Set = ReferenceMap[Package->GetName()];
+        Set.clear();
+        
+        for (const FObjectImport& Import : Imports)
+        {
+            Set.insert(Import.Package);
+            //.. Process references.
+        }
+
+        GetOnAssetRegistryUpdated().Broadcast();
     }
 
     const TVector<FAssetData*>& FAssetRegistry::GetAssetsForPath(const FName& Path)
@@ -179,15 +210,22 @@ namespace Lumina
         return AssetsByPath[Path];
     }
 
-    void FAssetRegistry::ProcessPackagePath(const FString& Path)
+    const THashSet<FName>& FAssetRegistry::GetReferences(const FName& Asset)
     {
+        return ReferenceMap.at(Asset);
+    }
+
+    void FAssetRegistry::ProcessPackagePath(FStringView Path)
+    {
+        FScopeLock Lock(AssetsMutex);
+
         TVector<uint8> FileBinary;
         if (!FileHelper::LoadFileToArray(FileBinary, Path) || FileBinary.empty())
         {
             return;
         }
 
-        FString VirtualPackagePath = Paths::ConvertToVirtualPath(Path);
+        FString VirtualPackagePath = Paths::ConvertToVirtualPath(Path.data());
         FName PackagePathName = VirtualPackagePath;
         FString PackageFileName = Paths::FileName(VirtualPackagePath, true);
         
@@ -202,23 +240,33 @@ namespace Lumina
         
         TVector<FObjectExport> Exports;
         Reader << Exports;
-
+        
         FString PackageAssetClass;
-        for (const FObjectExport& ExportTable : Exports)
+        for (const FObjectExport& Export : Exports)
         {
-            if (ExportTable.ObjectName == PackagePathName.ToString() + "." + PackageFileName)
+            if (Export.ObjectName == PackagePathName.ToString() + "." + PackageFileName)
             {
-                PackageAssetClass = ExportTable.ClassName.ToString();
-                break;
+                PackageAssetClass = Export.ClassName.ToString();
             }
         }
-        
+
         AssetData->AssetClass = PackageAssetClass;
         AssetData->AssetName = Paths::FileName(VirtualPackagePath);
         AssetData->FullPath = VirtualPackagePath + "." + AssetData->AssetName.ToString();
         AssetData->PackageName = VirtualPackagePath;
 
-        FScopeLock Lock(AssetsMutex);
+        Reader.Seek(Header.ImportTableOffset);
+
+        TVector<FObjectImport> Imports;
+        Reader << Imports;
+
+        ReferenceMap.insert(VirtualPackagePath);
+        for (const FObjectImport& Import : Imports)
+        {
+            ReferenceMap[VirtualPackagePath].insert(Import.Package);
+            //.. Process references.
+        }
+
         Assets.emplace(AssetData);
 
         AssetPackageMap.emplace(PackagePathName, AssetData);
@@ -234,6 +282,8 @@ namespace Lumina
 
     void FAssetRegistry::ClearAssets()
     {
+        FScopeLock Lock(AssetsMutex);
+
         for (FAssetData* Asset : Assets)
         {
             Memory::Delete(Asset);
@@ -241,7 +291,7 @@ namespace Lumina
         
         Assets.clear();
         AssetPackageMap.clear();
-        
+        AssetsByPath.clear();
     }
 
     void FAssetRegistry::BroadcastRegistryUpdate()

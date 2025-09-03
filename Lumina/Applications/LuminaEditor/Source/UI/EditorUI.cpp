@@ -242,40 +242,68 @@ namespace Lumina
 
         if (bShowAssetRegistry)
         {
-            ImGui::SetNextWindowSize(ImVec2(800, 900));
+            ImGui::SetNextWindowSize(ImVec2(1000, 900));
             if (ImGui::Begin("Asset Registry", &bShowAssetRegistry))
             {
                 static ImGuiTableFlags flags =
-                    ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable |
+                    ImGuiTableFlags_Reorderable |
                     ImGuiTableFlags_Hideable   | ImGuiTableFlags_BordersOuter |
                     ImGuiTableFlags_BordersV   | ImGuiTableFlags_RowBg |
                     ImGuiTableFlags_SizingStretchProp;
 
-                if (ImGui::BeginTable("AssetRegistryTable", 3, flags))
+                if (ImGui::BeginTable("AssetRegistryTable", 5, flags))
                 {
                     ImGui::TableSetupColumn("Package", ImGuiTableColumnFlags_WidthStretch);
+                    ImGui::TableSetupColumn("Class",   ImGuiTableColumnFlags_WidthStretch);
                     ImGui::TableSetupColumn("Path",    ImGuiTableColumnFlags_WidthStretch);
                     ImGui::TableSetupColumn("Name",    ImGuiTableColumnFlags_WidthStretch);
+                    ImGui::TableSetupColumn("References", ImGuiTableColumnFlags_WidthStretch);
                     ImGui::TableHeadersRow();
-
-                    const auto& AssetsByPath = UpdateContext.GetSubsystem<FAssetRegistry>()->GetAssetsByPath();
+                
+                    FAssetRegistry* Registry = UpdateContext.GetSubsystem<FAssetRegistry>();
+                    const auto& AssetsByPath = Registry->GetAssetsByPath();
+                
                     for (auto& [Path, AssetVec] : AssetsByPath)
                     {
                         for (auto* Asset : AssetVec)
                         {
+                            const THashSet<FName>& ReferencePackages = Registry->GetReferences(Asset->PackageName);
+                
                             ImGui::TableNextRow();
 
                             ImGui::TableSetColumnIndex(0);
                             ImGui::TextUnformatted(Asset->PackageName.ToString().c_str());
-
+                            
                             ImGui::TableSetColumnIndex(1);
-                            ImGui::TextUnformatted(Path.ToString().c_str());
-
+                            ImGui::TextUnformatted(Asset->AssetClass.ToString().c_str());
+                
                             ImGui::TableSetColumnIndex(2);
+                            ImGui::TextUnformatted(Path.ToString().c_str());
+                
+                            ImGui::TableSetColumnIndex(3);
                             ImGui::TextUnformatted(Asset->AssetName.ToString().c_str());
+
+                            ImGui::TableSetColumnIndex(4);
+                            FString TreeNodeId = "References##" + Asset->PackageName.ToString();
+                            if (ReferencePackages.empty())
+                            {
+                                ImGui::TextDisabled("No references");
+                            }
+                            else
+                            {
+                                FString LabelText = eastl::to_string(ReferencePackages.size()) + " reference(s)";
+                        
+                                if (ImGui::TreeNode(TreeNodeId.c_str(), "%s", LabelText.c_str()))
+                                {
+                                    for (const FName& RefPackage : ReferencePackages)
+                                    {
+                                        ImGui::BulletText("%s", RefPackage.ToString().c_str());
+                                    }
+                                    ImGui::TreePop();
+                                }
+                            }
                         }
                     }
-
                     ImGui::EndTable();
                 }
             }
@@ -653,7 +681,7 @@ namespace Lumina
         // We will also use this value as a suffix to create window titles, but we could perfectly have an indirection to allocate and use nicer names for window names (e.g. 0001, 0002).
         EditorTool->PrevDockspaceID = EditorTool->CurrDockspaceID;
         EditorTool->CurrDockspaceID = EditorTool->CalculateDockspaceID();
-        Assert(EditorTool->CurrDockspaceID != 0)
+        LUM_ASSERT(EditorTool->CurrDockspaceID != 0)
         
 
         ImGui::End();
@@ -665,11 +693,11 @@ namespace Lumina
     {
         LUMINA_PROFILE_SCOPE();
 
-        // This is the second Begin(), as MyEditor_UpdateDocLocationAndLayout() has already done one
+        // This is the second Begin(), as SubmitToolMainWindow() has already done one
         // (Therefore only the p_open and flags of the first call to Begin() applies)
         ImGui::Begin(Tool->GetToolName().c_str());
         
-        Assert(ImGui::GetCurrentWindow()->BeginCount == 2)
+        LUM_ASSERT(ImGui::GetCurrentWindow()->BeginCount == 2)
         
         const ImGuiID dockspaceID = Tool->GetCurrentDockspaceID();
         const ImVec2 DockspaceSize = ImGui::GetContentRegionAvail();

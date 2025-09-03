@@ -1,8 +1,6 @@
 #pragma once
 
 #include <vulkan/vulkan_core.h>
-
-#include "GUID/GUID.h"
 #include "Tools/UI/ImGui/ImGuiRenderer.h"
 
 namespace Lumina
@@ -14,7 +12,7 @@ namespace Lumina
     {
     public:
         
-        void Initialize(FSubsystemManager& Manager) override;
+        void Initialize() override;
         void Deinitialize() override;
         
         void OnStartFrame(const FUpdateContext& UpdateContext) override;
@@ -26,7 +24,8 @@ namespace Lumina
         ImTextureID GetOrCreateImTexture(FRHIImageRef Image) override;
 
     private:
-        
+
+        FMutex TextureMutex;
         VkDescriptorPool DescriptorPool = VK_NULL_HANDLE;
         FVulkanRenderContext* VulkanRenderContext = nullptr;
 

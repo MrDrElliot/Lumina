@@ -8,7 +8,7 @@
 
 namespace Lumina
 {
-    void FWorldManager::Initialize(FSubsystemManager& Manager)
+    void FWorldManager::Initialize()
     {
     }
 

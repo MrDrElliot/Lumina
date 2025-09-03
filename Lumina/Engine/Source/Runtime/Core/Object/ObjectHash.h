@@ -19,7 +19,7 @@ namespace Lumina
 
     using FObjectHashBucket = THashSet<CObjectBase*>;
 
-    class LUMINA_API FObjectHashTables : public TSingleton<FObjectHashTables>
+    class FObjectHashTables : public TSingleton<FObjectHashTables>
     {
     public:
 

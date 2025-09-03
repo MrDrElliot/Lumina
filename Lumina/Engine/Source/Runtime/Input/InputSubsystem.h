@@ -9,7 +9,7 @@ namespace Lumina
     {
     public:
 
-        void Initialize(FSubsystemManager& Manager) override;
+        void Initialize() override;
         void Update(const FUpdateContext& UpdateContext);
         void Deinitialize() override;
 

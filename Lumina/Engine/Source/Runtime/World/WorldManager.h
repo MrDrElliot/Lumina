@@ -23,7 +23,7 @@ namespace Lumina
             TObjectHandle<CWorld>   World;
         };
 
-        void Initialize(FSubsystemManager& Manager) override;
+        void Initialize() override;
         void Deinitialize() override;
 
         void TickWorlds(const FUpdateContext& UpdateContext);

@@ -75,7 +75,7 @@ namespace Lumina
     
     private:
 
-        FLineBatcherComponent*                          LineBatcherComponent;
+        FLineBatcherComponent*                          LineBatcherComponent = nullptr;
 
         FCameraManager*                                 CameraManager = nullptr;
         FSceneRenderer*                                 SceneRenderer = nullptr;

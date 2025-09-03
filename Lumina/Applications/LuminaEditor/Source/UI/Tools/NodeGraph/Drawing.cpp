@@ -1,9 +1,12 @@
 ﻿#include "Drawing.h"
 #include "Renderer/RHIIncl.h"
 #include <imgui_internal.h>
+
+#include "Core/Engine/Engine.h"
 #include "imgui-node-editor/imgui_node_editor.h"
 #include "imgui-node-editor/imgui_node_editor_internal.h"
 #include "Paths/Paths.h"
+#include "Renderer/RenderManager.h"
 #include "Tools/UI/UITextureCache.h"
 
 namespace Lumina
@@ -308,7 +311,7 @@ void Graph::GraphNodeBuilder::End(bool bWantsTitlebar)
         const auto HalfBorderWidth = ax::NodeEditor::GetStyle().NodeBorderWidth * 0.5f;
         float NodeRounding = ax::NodeEditor::GetStyle().NodeRounding;
 
-        ImTextureRef Texture = FUITextureCache::Get().GetImTexture(Paths::GetEngineResourceDirectory() + "/Textures/NodeTitleBackground.png");
+        ImTextureRef Texture = GetEngineSystem<FRenderManager>().GetTextureCache()->GetImTexture(Paths::GetEngineResourceDirectory() + "/Textures/NodeTitleBackground.png");
         
         NodeMin = ax::NodeEditor::GetNodePosition(CurrentNodeId);
         NodeMax = ax::NodeEditor::GetNodeSize(CurrentNodeId);

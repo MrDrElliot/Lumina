@@ -7,16 +7,16 @@ namespace Lumina
 {
     using RegisterFunc = void(*)();
 
-    class LUMINA_API FEntityComponentRegistry : public TSingleton<FEntityComponentRegistry>
+    class FEntityComponentRegistry : public TSingleton<FEntityComponentRegistry>
     {
     public:
 
-        void AddDeferred(RegisterFunc fn)
+        LUMINA_API void AddDeferred(RegisterFunc fn)
         {
             Registrants.push_back(fn);
         }
 
-        void RegisterAll()
+        LUMINA_API void RegisterAll()
         {
             while (!Registrants.empty())
             {
@@ -27,8 +27,14 @@ namespace Lumina
             }
         }
 
+        void Clear()
+        {
+            Registrants.clear();
+            Registrants.shrink_to_fit();
+        }
+
     private:
         
-        TVector<RegisterFunc> Registrants;
+        TFixedVector<RegisterFunc, 2024> Registrants;
     };
 }

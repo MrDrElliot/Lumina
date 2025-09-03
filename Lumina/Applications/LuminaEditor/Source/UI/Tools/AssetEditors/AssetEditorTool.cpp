@@ -33,6 +33,7 @@ namespace Lumina
 
         if (CPackage::SavePackage(Asset->GetPackage(), Asset, FullPath.c_str()))
         {
+            GetEngineSystem<FAssetRegistry>().AssetSaved(Asset);
             ImGuiX::Notifications::NotifySuccess("Successfully saved package: \"%s\"", Asset->GetPathName().c_str());
         }
         else

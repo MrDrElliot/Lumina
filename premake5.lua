@@ -44,6 +44,7 @@ workspace "Lumina"
 
 	filter "system:windows"
 		linkoptions { "/IGNORE:4099", }
+		defines { "LE_PLATFORM_WINDOWS", }
 		buildoptions 
 		{
             "/EHsc",

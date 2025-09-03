@@ -16,7 +16,7 @@ namespace Lumina
     {
     }
 
-    void FAssetManager::Initialize(FSubsystemManager& Manager)
+    void FAssetManager::Initialize()
     {
     }
 
@@ -107,7 +107,7 @@ namespace Lumina
 
         auto* Task = Memory::New<FAssetTask>(this, Request);
         Request->SetTask(Task);
-        FTaskSystem::Get().ScheduleTask(Task);
+        GTaskSystem->ScheduleTask(Task);
     }
     
 }

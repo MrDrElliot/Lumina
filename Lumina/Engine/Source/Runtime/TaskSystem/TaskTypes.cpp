@@ -22,7 +22,7 @@ namespace Lumina
         // Call base class OnDependenciesComplete BEFORE deleting dependent task or self
         enki::ICompletable::OnDependenciesComplete( pTaskScheduler_, threadNum_ );
 
-        FTaskSystem::Get().PushLambdaTaskToPool((FLambdaTask*)Dependency.GetDependencyTask());
+        GTaskSystem->PushLambdaTaskToPool((FLambdaTask*)Dependency.GetDependencyTask());
             
     }
 }

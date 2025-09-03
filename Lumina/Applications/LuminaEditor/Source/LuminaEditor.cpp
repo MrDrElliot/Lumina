@@ -4,20 +4,11 @@
 #include "Core/Module/ModuleManager.h"
 #include "Renderer/RenderResource.h"
 #include "UI/EditorUI.h"
-#include "World/Entity/Components/Component.h"
 
 namespace Lumina
 {
     bool FEditorEngine::Init(FApplication* App)
     {
-
-        TOptional<FString> Project = FApplication::CommandLine.Get("project");
-        if (Project.has_value())
-        {
-            FProject::Get().LoadProject(Project.value());
-        }
-        
-        
         bool bSuccess = FEngine::Init(App);
 
         entt::locator<entt::meta_ctx>::reset(GetEngineMetaContext());

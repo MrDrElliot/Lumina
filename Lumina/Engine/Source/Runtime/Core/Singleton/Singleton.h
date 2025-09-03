@@ -1,20 +1,22 @@
 #pragma once
-#include "Module/API.h"
-#include "Platform/Platform.h"
 
-/** Defines a simple singleton class */
 template<typename T>
 class TSingleton
 {
 public:
     friend T;
-    virtual ~TSingleton() = default;
 
-    NODISCARD static T& Get() { static T Instance; return Instance; }
+    //@ TODO Horrible, just awful. Remove entirely.
+    static T& Get()
+    {
+        static T Instance;
+        return Instance;
+    }
+
 private:
-    TSingleton() = default;
-    explicit TSingleton(const TSingleton* obj) = delete;
-    TSingleton* operator = (const TSingleton*) = delete;
 
-    
+    TSingleton() = default;
+    TSingleton(const TSingleton&) = delete;
+    TSingleton& operator=(const TSingleton&) = delete;
 };
+

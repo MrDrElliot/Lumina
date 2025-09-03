@@ -78,8 +78,8 @@ namespace Lumina
     
             if (!Free.empty())
             {
-                Index = Free.front();
-                Free.pop();
+                Index = Free.back();
+                Free.pop_back();
     
                 NewGen = Objects[Index].Generation.load(std::memory_order_relaxed) + 1;
     
@@ -116,7 +116,7 @@ namespace Lumina
             Objects[index].Object.store(nullptr, std::memory_order_release);
             Objects[index].Generation.fetch_add(1u, std::memory_order_acq_rel);
     
-            Free.push(index);
+            Free.push_back(index);
             NumAlive.fetch_sub(1u, std::memory_order_relaxed);
         }
     
@@ -134,7 +134,7 @@ namespace Lumina
             Objects[Index].Object.store(nullptr, std::memory_order_release);
             Objects[Index].Generation.fetch_add(1u, std::memory_order_acq_rel);
     
-            Free.push(Index);
+            Free.push_back(Index);
             NumAlive.fetch_sub(1u, std::memory_order_relaxed);
         }
         
@@ -222,7 +222,7 @@ namespace Lumina
         // e.g., Objects.resize(kMaxCapacity); then HighWatermark = kMaxCapacity.
         TFixedVector<FEntry, 2024> Objects;
     
-        TQueue<uint32>             Free;
+        TFixedVector<uint32, 1024> Free;
     
     private:
         std::atomic<uint32>        NumAlive { 0 };

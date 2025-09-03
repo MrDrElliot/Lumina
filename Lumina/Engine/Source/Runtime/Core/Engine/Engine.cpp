@@ -30,7 +30,7 @@ namespace Lumina
         Application = App;
 
         
-        FTaskSystem::Get().Initialize();
+        FTaskSystem::Initialize();
         Physics::Initialize();
         
         RenderManager = EngineSubsystems.AddSubsystem<FRenderManager>();
@@ -68,20 +68,19 @@ namespace Lumina
         delete DeveloperToolUI;
         #endif
 
-        EngineSubsystems.RemoveSubsystem<FInputSubsystem>();
-        EngineSubsystems.RemoveSubsystem<FAssetRegistry>();
-        EngineSubsystems.RemoveSubsystem<FAssetManager>();
         EngineSubsystems.RemoveSubsystem<FWorldManager>();
-        Physics::Shutdown();
+        EngineSubsystems.RemoveSubsystem<FAssetManager>();
+        EngineSubsystems.RemoveSubsystem<FAssetRegistry>();
+        EngineSubsystems.RemoveSubsystem<FInputSubsystem>();
         
         ShutdownCObjectSystem();
         
         EngineViewport.SafeRelease();
         
         EngineSubsystems.RemoveSubsystem<FRenderManager>();
-        
 
-        FTaskSystem::Get().Shutdown();
+        Physics::Shutdown();
+        FTaskSystem::Shutdown();
         
         return false;
     }
@@ -95,12 +94,8 @@ namespace Lumina
         //-------------------------------------------------------------------------
         
         UpdateContext.MarkFrameStart();
-        RenderManager->FrameStart(UpdateContext);
-
-        bool bRunEngineUpdate = true;
         
-        
-        if (bRunEngineUpdate)
+        if (!Windowing::GetPrimaryWindowHandle()->IsMinimized())
         {
             UpdateContext.UpdateStage = EUpdateStage::FrameStart;
 
@@ -108,6 +103,7 @@ namespace Lumina
             //-------------------------------------------------------------------
             {
                 LUMINA_PROFILE_SECTION("FrameStart");
+                RenderManager->FrameStart(UpdateContext);
                 
                 InputSubsystem->Update(UpdateContext);
                 

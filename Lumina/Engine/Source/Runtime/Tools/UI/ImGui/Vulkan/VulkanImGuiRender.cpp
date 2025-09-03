@@ -43,9 +43,9 @@ namespace Lumina
 		}
 	}
 	
-    void FVulkanImGuiRender::Initialize(FSubsystemManager& Manager)
+    void FVulkanImGuiRender::Initialize()
     {
-		IImGuiRenderer::Initialize(Manager);
+		IImGuiRenderer::Initialize();
     	LUMINA_PROFILE_SCOPE();
 
         VkDescriptorPoolSize PoolSizes[] = { { VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
@@ -67,8 +67,6 @@ namespace Lumina
         PoolInfo.poolSizeCount = (uint32)std::size(PoolSizes);
         PoolInfo.pPoolSizes = PoolSizes;
 		
-		FRenderManager* RenderManager = Manager.GetSubsystem<FRenderManager>();
-
 		VulkanRenderContext = (FVulkanRenderContext*)GRenderContext;
 		
         VK_CHECK(vkCreateDescriptorPool(VulkanRenderContext->GetDevice()->GetDevice(), &PoolInfo, VK_ALLOC_CALLBACK, &DescriptorPool));
@@ -328,6 +326,7 @@ namespace Lumina
     ImTextureID FVulkanImGuiRender::GetOrCreateImTexture(FRHIImageRef Image)
     {
     	LUMINA_PROFILE_SCOPE();
+		FScopeLock Lock(TextureMutex);
 		
     	if(Image == nullptr)
     	{

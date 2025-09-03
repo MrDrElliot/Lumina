@@ -25,7 +25,7 @@ namespace Lumina
         bool bShouldClose = false;
         if (Factory->DrawImportDialogue(RawPath, DestinationPath, bShouldClose))
         {
-            FTaskSystem::Get().ScheduleLambda(1, [Factory, RawPath, DestinationPath](uint32 Start, uint32 End, uint32 Thread)
+            Task::AsyncTask(1, [Factory, RawPath, DestinationPath](uint32 Start, uint32 End, uint32 Thread)
             {
                 Factory->TryImport(RawPath, DestinationPath);
             });
@@ -39,7 +39,7 @@ namespace Lumina
         bool bShouldClose = false;
         if (Factory->DrawCreationDialogue(Path, bShouldClose))
         {
-            FTaskSystem::Get().ScheduleLambda(1, [Factory, Path](uint32 Start, uint32 End, uint32 Thread)
+            Task::AsyncTask(1, [Factory, Path](uint32 Start, uint32 End, uint32 Thread)
             {
                 Factory->TryCreateNew(Path);    
             });

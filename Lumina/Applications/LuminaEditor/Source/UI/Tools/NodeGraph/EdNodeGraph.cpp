@@ -68,13 +68,16 @@ namespace Lumina
 
         Graph::GraphNodeBuilder NodeBuilder;
 
+        THashMap<uint32, uint64> NodeIDToIndex;
         TVector<TPair<CEdNodeGraphPin*, CEdNodeGraphPin*>> Links;
         Links.reserve(40);
-        
+
+        uint32 Index = 0;
         for (CEdGraphNode* Node : Nodes)
         {
             NodeBuilder.Begin(Node->GetNodeID());
-
+            NodeIDToIndex.emplace(Node->GetNodeID(), Index);
+            
             if (!Node->WantsTitlebar())
             {
                 ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
@@ -114,10 +117,7 @@ namespace Lumina
                 {
                     DrawPinIcon(InputPin->HasConnection(), 255.0f, ImGui::ColorConvertU32ToFloat4(InputPin->GetPinColor()));
                     ImGui::Spring(0);
-                    //if (!InputPin->HasConnection() || !InputPin->ShouldHideDuringConnection())
-                    //{
-                    //    InputPin->DrawPin();
-                    //}
+
                     ImGui::TextUnformatted(InputPin->GetPinName().c_str());
                     ImGui::Spring(0);
                 }
@@ -137,10 +137,7 @@ namespace Lumina
                 ImGui::PushID(OutputPin);
                 {
                     ImGui::Spring(0);
-                    //if (!OutputPin->HasConnection() || !OutputPin->ShouldHideDuringConnection())
-                    //{
-                    //    OutputPin->DrawPin();
-                    //}
+
                     ImGui::Spring(1, 1);
                     ImGui::TextUnformatted(OutputPin->GetPinName().c_str());
                     ImGui::Spring(0);
@@ -152,6 +149,7 @@ namespace Lumina
             }
             
             NodeBuilder.End(Node->WantsTitlebar());
+            Index++;
         }
 
         NodeEditor::Suspend();
@@ -160,13 +158,14 @@ namespace Lumina
             {
                 ImGui::OpenPopup("Create New Node");
             }
-
+            
             if (ImGui::BeginPopup("Create New Node"))
             {
                 DrawGraphContextMenu();
             
                 ImGui::EndPopup();
             }
+            
         }
         
         NodeEditor::Resume();
@@ -251,9 +250,10 @@ namespace Lumina
             NodeEditor::NodeId NodeId = 0;
             while (NodeEditor::QueryDeletedNode(&NodeId))
             {
-                if (NodeEditor::AcceptDeletedItem())
+                CEdGraphNode* Node = Nodes[NodeIDToIndex.at(NodeId.Get())];
+                if (NodeEditor::AcceptDeletedItem() && Node->IsDeletable())
                 {
-                    NodesToDestroy.push(Nodes[NodeId.Get()]);
+                    NodesToDestroy.push(Node);
                 }
             }
             
@@ -270,6 +270,7 @@ namespace Lumina
                 }
             }
         }
+        
         NodeEditor::EndDelete();
 
 
@@ -304,10 +305,19 @@ namespace Lumina
                 }
             }
 
-            CEdGraphNode* BackNode = Nodes.back();
-            Nodes.erase(Nodes.begin() + ToDestroy->Index);
-            BackNode->Index = ToDestroy->Index;
-            BackNode->bInitialPosSet = false;
+            NodeEditor::DeleteNode(ToDestroy->GetNodeID());
+
+            uint32 ToDestroyIndex = NodeIDToIndex.at(ToDestroy->GetNodeID());
+            auto it = Nodes.erase_unsorted(Nodes.begin() + ToDestroyIndex);
+
+            NodeIDToIndex.erase(ToDestroy->GetNodeID());
+            
+            if (it != Nodes.end())
+            {
+                CEdGraphNode* MovedNode = it->Get();
+                MovedNode->bInitialPosSet = false;
+                NodeIDToIndex[MovedNode->GetNodeID()] = ToDestroyIndex;
+            }
             
             ToDestroy->MarkGarbage();
             ValidateGraph();
@@ -417,7 +427,6 @@ namespace Lumina
         SIZE_T NewID = Nodes.size();
         InNode->FullName = InNode->GetNodeDisplayName() + "_" + eastl::to_string(NewID);
         InNode->NodeID = NewID + 1;
-        InNode->Index = NewID;
 
         Nodes.push_back(InNode);
 

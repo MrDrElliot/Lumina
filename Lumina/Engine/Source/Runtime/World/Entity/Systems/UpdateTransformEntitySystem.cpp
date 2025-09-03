@@ -29,7 +29,7 @@ namespace Lumina
         auto RelationshipGroup = EntityRegistry.group<>(entt::get<STransformComponent, SRelationshipComponent>);
         auto CameraView = EntityRegistry.view<SCameraComponent>(entt::exclude<SEditorComponent>);
 
-        FTaskSystem::Get().ParallelFor(Group.size(), [&](uint32 Index)
+        Task::ParallelFor(Group.size(), [&](uint32 Index)
         {
             entt::entity entity = Group[Index];
             auto& transform = Group.get<STransformComponent>(entity);

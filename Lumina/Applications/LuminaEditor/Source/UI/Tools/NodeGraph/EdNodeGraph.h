@@ -73,6 +73,9 @@ namespace Lumina
         TQueue<CEdGraphNode*>                           NodesToDestroy;
         
         TFunction<void(CEdGraphNode*)>                  NodeSelectedCallback;
+
+        THashMap<uint64, SIZE_T> NodeIDToIndex;
+
     private:
         
         ax::NodeEditor::EditorContext* Context = nullptr;

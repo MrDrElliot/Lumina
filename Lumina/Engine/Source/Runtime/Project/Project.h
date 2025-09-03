@@ -1,34 +1,33 @@
 ﻿#pragma once
 #include "Containers/String.h"
 #include "Core/Singleton/Singleton.h"
+#include "Module/API.h"
 
 namespace Lumina
 {
-    class LUMINA_API FProject : public TSingleton<FProject>
+    class FProject : public TSingleton<FProject>
     {
     public:
 
         FProject()
-            : Settings()
-            , bHasProjectLoaded(false)
+            : bHasProjectLoaded(false)
         {}
         
-        struct FSettings
+        LUMINA_API struct FSettings
         {
             FString ProjectName;
             FString ProjectPath;
         };
 
-        void LoadProject(const FString& ProjectPath);
+        LUMINA_API void LoadProject(const FString& ProjectPath);
         
-
-        bool HasLoadedProject() const { return bHasProjectLoaded; }
-        const FString& GetProjectPath() const { return Settings.ProjectPath; }
-        FString GetProjectRootDirectory() const;
+        LUMINA_API bool HasLoadedProject() const { return bHasProjectLoaded; }
+        LUMINA_API const FString& GetProjectPath() const { return Settings.ProjectPath; }
+        LUMINA_API FString GetProjectRootDirectory() const;
         
-        const FSettings& GetProjectSettings() const { return Settings; }
+        LUMINA_API const FSettings& GetProjectSettings() const { return Settings; }
 
-        FString GetProjectContentDirectory() const;
+        LUMINA_API FString GetProjectContentDirectory() const;
     
 
     private:

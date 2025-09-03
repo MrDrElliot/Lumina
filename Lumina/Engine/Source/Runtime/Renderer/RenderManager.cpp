@@ -12,24 +12,27 @@
 
 namespace Lumina
 {
-    void FRenderManager::Initialize(FSubsystemManager& Manager)
+    void FRenderManager::Initialize()
     {
         GRenderContext = Memory::New<FVulkanRenderContext>();
         GRenderContext->Initialize();
 
         #if WITH_DEVELOPMENT_TOOLS
         ImGuiRenderer = Memory::New<FVulkanImGuiRender>();
-        ImGuiRenderer->Initialize(Manager);
+        ImGuiRenderer->Initialize();
+        TextureCache = Memory::New<FUITextureCache>();
         #endif
     }
 
     void FRenderManager::Deinitialize()
     {
         #if WITH_DEVELOPMENT_TOOLS
+        Memory::Delete(TextureCache);
+        TextureCache = nullptr;
+        
         ImGuiRenderer->Deinitialize();
         Memory::Delete(ImGuiRenderer);
         ImGuiRenderer = nullptr;
-        FUITextureCache::Get().Clear();
         #endif
 
         

@@ -1,15 +1,13 @@
 ﻿#pragma once
 #include "imgui.h"
-#include "Core/Singleton/Singleton.h"
-#include "Core/Threading/Thread.h"
 #include "Renderer/RHIFwd.h"
 
 namespace Lumina
 {
-    class LUMINA_API FUITextureCache : public TSingleton<FUITextureCache>
+    class FUITextureCache
     {
     public:
-
+        
         enum class ETextureState : uint8
         {
             Empty,
@@ -25,12 +23,13 @@ namespace Lumina
         };
 
         FUITextureCache();
-
-        FRHIImageRef GetImage(const FName& Path);
-        ImTextureRef GetImTexture(const FName& Path);
-
-        void Clear();
+        ~FUITextureCache();
         
+        LUMINA_API FRHIImageRef GetImage(const FName& Path);
+        LUMINA_API ImTextureRef GetImTexture(const FName& Path);
+
+        bool HasImagesPendingLoad() const;
+    
     private:
 
         FEntry* GetOrCreateGroup(const FName& PathName);
@@ -38,9 +37,8 @@ namespace Lumina
     private:
         
         THashMap<FName, FEntry*>    Images;
-        FEntry*                     SquareWhiteTexture = nullptr;
 
-        uint32                      bCleared:1=0;
+        TPair<FName, FEntry*>       SquareWhiteTexture;
     };
     
 }

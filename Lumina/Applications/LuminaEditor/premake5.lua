@@ -54,14 +54,15 @@ project "Editor"
 	 
 	filter "system:linux"
 		defines { "LE_PLATFORM_LINUX" }
+		
+	filter { "system:windows" }	
+		flags { "NoRuntimeChecks", "NoIncrementalLink" }
+		defines { "LE_PLATFORM_WINDOWS" }
 
 	filter "configurations:Debug"
 		symbols "On"
 		defines { "LE_DEBUG", "_DEBUG", }
 
-	filter { "system:windows" }	
-		flags { "NoRuntimeChecks", "NoIncrementalLink" }
-		defines { "LE_PLATFORM_WINDOWS" }
 
 
 	filter "configurations:Release"

@@ -11,7 +11,7 @@ namespace Lumina
 {
     void FAssetRequest::WaitForTask()
     {
-        FTaskSystem::Get().WaitForTask(Task);
+        GTaskSystem->WaitForTask(Task);
     }
 
     bool FAssetRequest::Process()

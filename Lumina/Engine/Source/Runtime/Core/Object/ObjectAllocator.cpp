@@ -13,6 +13,10 @@ namespace Lumina
     {
     }
 
+    FCObjectAllocator::~FCObjectAllocator()
+    {
+    }
+
     CObjectBase* FCObjectAllocator::AllocateCObject(uint32 Size, uint32 Alignment)
     {
         void* RawMemory = Memory::Malloc(Size + Alignment - 1);

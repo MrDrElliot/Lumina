@@ -29,13 +29,13 @@ namespace Lumina
     
     using ModuleInitFunc = IModuleInterface* (*)();
     
-    class LUMINA_API FModuleManager : public TSingleton<FModuleManager>
+    class FModuleManager : public TSingleton<FModuleManager>
     {
     public:
         
 
-        IModuleInterface* LoadModule(const FString& ModuleName);
-        bool UnloadModule(const FString& ModuleName);
+        LUMINA_API IModuleInterface* LoadModule(const FString& ModuleName);
+        LUMINA_API bool UnloadModule(const FString& ModuleName);
 
         void UnloadAllModules();
 

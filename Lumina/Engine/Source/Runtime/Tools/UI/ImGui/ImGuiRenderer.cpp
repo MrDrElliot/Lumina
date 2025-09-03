@@ -25,7 +25,7 @@ namespace Lumina
 	}
 
 	
-    void IImGuiRenderer::Initialize(FSubsystemManager& Manager)
+    void IImGuiRenderer::Initialize()
     {
 
         IMGUI_CHECKVERSION();

@@ -11,20 +11,34 @@ namespace Lumina
 {
     FUITextureCache::FUITextureCache()
     {
-        if (IImGuiRenderer* ImGuiRenderer = GEngine->GetEngineSubsystem<FRenderManager>()->GetImGuiRenderer())
+        FName SquareTexturePath = Paths::GetEngineResourceDirectory() + "/Textures/WhiteSquareTexture.png";
+        FRHIImageRef RHI = Import::Textures::CreateTextureFromImport(GRenderContext, SquareTexturePath.ToString(), false);
+
+        ImTextureRef ImTex = ImGuiX::ToImTextureRef(RHI);
+
+        SquareWhiteTexture.first = SquareTexturePath;
+        
+        SquareWhiteTexture.second = Memory::New<FEntry>();
+        SquareWhiteTexture.second->RHIImage = RHI;
+        SquareWhiteTexture.second->ImTexture = ImTex;
+        SquareWhiteTexture.second->State.store(ETextureState::Ready, std::memory_order_release);
+        Images.emplace(SquareTexturePath, SquareWhiteTexture.second);
+    }
+
+    FUITextureCache::~FUITextureCache()
+    {
+        while (HasImagesPendingLoad()) {  }
+
+        Memory::Delete(SquareWhiteTexture.second);
+        SquareWhiteTexture.second = nullptr;
+        Images.erase(SquareWhiteTexture.first);
+        
+        for (auto& Pair : Images)
         {
-            FName SquareTexturePath = Paths::GetEngineResourceDirectory() + "/Textures/WhiteSquareTexture.png";
-            FRHIImageRef RHI = Import::Textures::CreateTextureFromImport(GRenderContext,
-                SquareTexturePath.ToString(), false);
-
-            ImTextureRef ImTex = ImGuiRenderer->GetOrCreateImTexture(RHI);
-
-            SquareWhiteTexture = Memory::New<FEntry>();
-            SquareWhiteTexture->RHIImage = RHI;
-            SquareWhiteTexture->ImTexture = ImTex;
-            SquareWhiteTexture->State.store(ETextureState::Ready, std::memory_order_release);
-            Images.emplace(SquareTexturePath, SquareWhiteTexture);
+            Memory::Delete(Pair.second);
         }
+        
+        Images.clear();
     }
 
     FRHIImageRef FUITextureCache::GetImage(const FName& Path)
@@ -39,37 +53,22 @@ namespace Lumina
         return Entry ? Entry->ImTexture : ImTextureRef();
     }
 
-    void FUITextureCache::Clear()
+    bool FUITextureCache::HasImagesPendingLoad() const
     {
-        for (auto& Pair : Images)
+        for (auto& [Name, Entry] : Images)
         {
-            Memory::Delete(Pair.second);
+            if (Entry->State.load() == ETextureState::Loading)
+            {
+                return true;
+            }
         }
-        
-        Images.clear();
 
-        if (SquareWhiteTexture)
-        {
-            SquareWhiteTexture->RHIImage.SafeRelease();
-            SquareWhiteTexture->ImTexture = ImTextureRef();
-            SquareWhiteTexture->State.store(ETextureState::Empty, std::memory_order_release);
-            Memory::Delete(SquareWhiteTexture);
-        }
-        
-        bCleared = true;
+        return false;
     }
-
+    
     FUITextureCache::FEntry* FUITextureCache::GetOrCreateGroup(const FName& PathName)
     {
-        if (bCleared)
-        {
-            return nullptr;
-        }
-        
-        if (!Paths::Exists(PathName.ToString()))
-        {
-            return nullptr;
-        }
+        LUMINA_PROFILE_SCOPE();
         
         auto Iter = Images.find(PathName);
         if (Iter != Images.end())
@@ -80,7 +79,7 @@ namespace Lumina
                 return Entry;
             }
 
-            return SquareWhiteTexture;
+            return SquareWhiteTexture.second;
         }
 
         FEntry* NewEntry = Memory::New<FEntry>();
@@ -98,13 +97,15 @@ namespace Lumina
                 return Entry;
             }
             
-            return SquareWhiteTexture;
+            return SquareWhiteTexture.second;
         }
+
+        
 
         ETextureState Expected = ETextureState::Empty;
         if (Entry->State.compare_exchange_strong(Expected, ETextureState::Loading, std::memory_order_acq_rel))
         {
-            FTaskSystem::Get().ScheduleLambda(1, [Entry, PathName](uint32, uint32, uint32)
+            Task::AsyncTask(1, [Entry, PathName](uint32, uint32, uint32)
             {
                 FString PathString = PathName.ToString();
                 Entry->RHIImage = Import::Textures::CreateTextureFromImport(GRenderContext, PathString, false);
@@ -114,6 +115,6 @@ namespace Lumina
             });
         }
 
-        return SquareWhiteTexture;
+        return SquareWhiteTexture.second;
     }
 }

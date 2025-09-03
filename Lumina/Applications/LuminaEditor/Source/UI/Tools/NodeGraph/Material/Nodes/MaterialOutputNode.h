@@ -22,6 +22,8 @@ namespace Lumina
         uint32 GenerateExpression(FMaterialCompiler* Compiler) override { return 1;}
         void GenerateDefinition(FMaterialCompiler* Compiler) override;
 
+        bool IsDeletable() const override { return false; }
+
         CEdNodeGraphPin* BaseColorPin = nullptr;
         CEdNodeGraphPin* MetallicPin = nullptr;
         CEdNodeGraphPin* RoughnessPin = nullptr;

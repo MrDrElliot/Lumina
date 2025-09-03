@@ -5,54 +5,58 @@
 
 namespace Lumina
 {
+    LUMINA_API FTaskSystem* GTaskSystem = nullptr;
 
-    static void OnStartThread(uint32 threadNum)
+    namespace
     {
-        FString ThreadName = "Worker: " + eastl::to_string(threadNum);
-        Threading::SetThreadName(ThreadName.c_str());
+        void OnStartThread(uint32 threadNum)
+        {
+            FString ThreadName = "Worker: " + eastl::to_string(threadNum);
+            Threading::SetThreadName(ThreadName.c_str());
         
-        Memory::InitializeThreadHeap();
-    }
+            Memory::InitializeThreadHeap();
+        }
 
-    static void OnStopThread( uint32_t threadNum )
-    {
-        Memory::ShutdownThreadHeap();
-    }
+        void OnStopThread(uint32_t threadNum)
+        {
+            Memory::ShutdownThreadHeap();
+        }
 
-    static void* CustomAllocFunc(size_t alignment, size_t size, void* userData_, const char* file_, int line_)
-    {
-        return Memory::Malloc(size, alignment);
-    }
+        void* CustomAllocFunc(size_t alignment, size_t size, void* userData_, const char* file_, int line_)
+        {
+            return Memory::Malloc(size, alignment);
+        }
 
-    static void CustomFreeFunc(void* ptr, size_t size, void* userData_, const char* file_, int line_)
-    {
-        Memory::Free(ptr);
+        void CustomFreeFunc(void* ptr, size_t size, void* userData_, const char* file_, int line_)
+        {
+            Memory::Free(ptr);
+        }
     }
     
     void FTaskSystem::Initialize()
     {
-        Assert(bInitialized == false)
+        GTaskSystem = Memory::New<FTaskSystem>();
         
         enki::TaskSchedulerConfig config;
-        config.customAllocator.alloc = CustomAllocFunc;
-        config.customAllocator.free = CustomFreeFunc;
-        config.profilerCallbacks.threadStart = OnStartThread;
-        config.profilerCallbacks.threadStop = OnStopThread;
+        config.customAllocator.alloc            = CustomAllocFunc;
+        config.customAllocator.free             = CustomFreeFunc;
+        config.profilerCallbacks.threadStart    = OnStartThread;
+        config.profilerCallbacks.threadStop     = OnStopThread;
 
-        Scheduler.Initialize(config);
-        bInitialized = true;
+        GTaskSystem->Scheduler.Initialize(config);
     }
 
     void FTaskSystem::Shutdown()
     {
-        FScopeLock Lock(LambdaTaskMutex);
+        GTaskSystem->Scheduler.WaitforAllAndShutdown();
         
-        Scheduler.WaitforAllAndShutdown();
-        while (!LambdaTaskPool.empty())
-        {
-            LambdaTaskPool.pop();
-        }
+        Memory::Delete(GTaskSystem);
         
-        bInitialized = false;
+        GTaskSystem = nullptr;
+    }
+
+    FLambdaTask* Task::AsyncTask(uint32 Num, TaskSetFunction&& Function, ETaskPriority Priority)
+    {
+        return GTaskSystem->ScheduleLambda(Num, std::move(Function), Priority);
     }
 }

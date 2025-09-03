@@ -56,7 +56,7 @@ namespace Lumina
         #endif
 
         LUMINA_API entt::locator<entt::meta_ctx>::node_type GetEngineMetaContext() const;
-
+        
         template<typename T>
         T* GetEngineSubsystem()
         {
@@ -84,4 +84,10 @@ namespace Lumina
     
     LUMINA_API extern FEngine* GEngine;
 
+    template<typename T>
+    static T& GetEngineSystem()
+    {
+        return *GEngine->GetEngineSubsystem<T>();
+    }
+    
 }

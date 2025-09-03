@@ -132,7 +132,7 @@ namespace Lumina
 
             NewMesh->MeshResources = MeshResource;
 
-            FTaskSystem::Get().ParallelFor((uint32)ImportData.Textures.size(), [&](uint32 Index)
+            Task::ParallelFor((uint32)ImportData.Textures.size(), [&](uint32 Index)
             {
                 CTextureFactory* TextureFactory = CTextureFactory::StaticClass()->GetDefaultObject<CTextureFactory>();
 
