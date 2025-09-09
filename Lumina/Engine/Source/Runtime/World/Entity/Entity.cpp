@@ -7,6 +7,120 @@ namespace Lumina
 {
     FArchive& Entity::Serialize(FArchive& Ar)
     {
+        if (Ar.IsWriting())
+        {
+            Assert(World.IsValid())
+            
+            SIZE_T NumComponents = 0;
+            TVector<TPair<FName, TPair<CStruct*, void*>>> Components;
+            Components.reserve(10);
+            
+            for (auto [ID, Set] : World->GetMutableEntityRegistry().storage())
+            {
+                if (Set.contains(GetHandle()))
+                {
+                    using namespace entt::literals;
+                    
+                    void* ComponentPointer = Set.value(GetHandle());
+                    auto ReturnValue = entt::resolve(Set.type()).invoke("staticstruct"_hs, {});
+                    void** Type = ReturnValue.try_cast<void*>();
+                    if (Type)
+                    {
+                        if (CStruct* StructType = *(CStruct**)Type)
+                        {
+                            Components.emplace_back(StructType->GetQualifiedName(), eastl::make_pair(StructType, ComponentPointer));
+                        }
+                    }
+                }
+            }
+    
+            NumComponents = Components.size();
+            Ar << NumComponents;
+    
+            for (auto& [TypeName, Type] : Components)
+            {
+                Ar << TypeName;
+                Type.first->SerializeTaggedProperties(Ar, Type.second);
+            }
+    
+            if (World->GetMutableEntityRegistry().all_of<SRelationshipComponent>(GetHandle()))
+            {
+                auto& rel = World->GetMutableEntityRegistry().get<SRelationshipComponent>(GetHandle());
+                SIZE_T NumChildren = rel.Size;
+                Ar << NumChildren;
+
+                for (SIZE_T i = 0; i < NumChildren; ++i)
+                {
+                    rel.Children[i].Serialize(Ar);
+                }
+            }
+            else
+            {
+                SIZE_T NumChildren = 0;
+                Ar << NumChildren;
+            }
+        }
+        else if (Ar.IsReading())
+        {
+            SIZE_T NumComponents = 0;
+            Ar << NumComponents;
+    
+            for (SIZE_T i = 0; i < NumComponents; ++i)
+            {
+                FName TypeName;
+                Ar << TypeName;
+    
+                if (CStruct* Struct = FindObject<CStruct>(nullptr, TypeName))
+                {
+                    using namespace entt::literals;
+                    void* RegistryPtr = &World->GetMutableEntityRegistry();
+                    entt::hashed_string HashString(Struct->GetName().c_str());
+                    if (entt::meta_type Meta = entt::resolve(HashString))
+                    {
+                        entt::meta_any RetVal = Meta.invoke("addcomponent"_hs, {}, GetHandle(), RegistryPtr);
+                        void** Type = RetVal.try_cast<void*>();
+
+                        Struct->SerializeTaggedProperties(Ar, *Type);
+                    }
+                }
+                else
+                {
+                    
+                }
+            }
+    
+            SIZE_T NumChildren = 0;
+            Ar << NumChildren;
+    
+            if (NumChildren > 0)
+            {
+                auto& rel = World->GetMutableEntityRegistry().emplace<SRelationshipComponent>(GetHandle());
+    
+                for (SIZE_T i = 0; i < NumChildren; ++i)
+                {
+                    // Create new child entity
+                    entt::entity ChildHandle = World->GetMutableEntityRegistry().create();
+                    rel.Children[rel.Size] = Entity(ChildHandle, World);
+                    rel.Size++;
+    
+                    Entity ChildEntity(ChildHandle, World);
+                    ChildEntity.Serialize(Ar);
+    
+                    // Patch parent relationship
+                    if (World->GetMutableEntityRegistry().all_of<SRelationshipComponent>(ChildHandle))
+                    {
+                        auto& childRel = World->GetMutableEntityRegistry().get<SRelationshipComponent>(ChildHandle);
+                        childRel.Parent = *this;
+                    }
+                    else
+                    {
+                        auto& childRel = World->GetMutableEntityRegistry().emplace<SRelationshipComponent>(ChildHandle);
+                        childRel.Parent = *this;
+                    }
+                }
+            }
+        }
+    
         return Ar;
     }
     

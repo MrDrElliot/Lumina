@@ -1,19 +1,14 @@
 #pragma once
 #include "imgui.h"
-#include "ImGuiDesignIcons.h"
 #include "Core/Object/Class.h"
 #include "Assets/AssetPath.h"
 #include "Assets/AssetRegistry/AssetRegistry.h"
-#include "Core/Functional/Function.h"
+#include "Containers/Function.h"
 #include "glm/glm.hpp"
 #include "Platform/GenericPlatform.h"
-
-
 #include "Containers/Array.h"
 #include "Core/Engine/Engine.h"
-#include "Core/Object/ObjectCore.h"
 #include "Module/API.h"
-#include "Paths/Paths.h"
 #include "Platform/WindowsPlatform.h"
 
 namespace Lumina

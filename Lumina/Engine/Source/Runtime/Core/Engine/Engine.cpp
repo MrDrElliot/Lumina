@@ -3,6 +3,7 @@
 #include "Core/Windows/Window.h"
 #include "Assets/AssetRegistry/AssetRegistry.h"
 #include "Core/Application/Application.h"
+#include "Core/Module/ModuleManager.h"
 #include "Core/Object/GarbageCollection/GarbageCollector.h"
 #include "Core/Profiler/Profile.h"
 #include "Input/InputSubsystem.h"
@@ -81,6 +82,7 @@ namespace Lumina
 
         Physics::Shutdown();
         FTaskSystem::Shutdown();
+        FModuleManager::Get().UnloadAllModules();
         
         return false;
     }
@@ -112,7 +114,7 @@ namespace Lumina
                 DeveloperToolUI->Update(UpdateContext);
                 #endif
                 
-                WorldManager->TickWorlds(UpdateContext);
+                WorldManager->UpdateWorlds(UpdateContext);
             }
 
             // Pre Physics
@@ -126,7 +128,7 @@ namespace Lumina
                 DeveloperToolUI->Update(UpdateContext);
                 #endif
                 
-                WorldManager->TickWorlds(UpdateContext);
+                WorldManager->UpdateWorlds(UpdateContext);
             }
 
             // During Physics
@@ -140,7 +142,7 @@ namespace Lumina
                 DeveloperToolUI->Update(UpdateContext);
                 #endif
                 
-                WorldManager->TickWorlds(UpdateContext);
+                WorldManager->UpdateWorlds(UpdateContext);
             }
 
             // Post Physics
@@ -154,7 +156,7 @@ namespace Lumina
                 DeveloperToolUI->Update(UpdateContext);
                 #endif
 
-                WorldManager->TickWorlds(UpdateContext);
+                WorldManager->UpdateWorlds(UpdateContext);
             }
 
             // Paused
@@ -167,7 +169,7 @@ namespace Lumina
                 DeveloperToolUI->Update(UpdateContext);
                 #endif
 
-                WorldManager->TickWorlds(UpdateContext);
+                WorldManager->UpdateWorlds(UpdateContext);
             }
 
             // Frame End
@@ -180,7 +182,7 @@ namespace Lumina
                 DeveloperToolUI->Update(UpdateContext);
                 #endif
 
-                WorldManager->TickWorlds(UpdateContext);
+                WorldManager->UpdateWorlds(UpdateContext);
                 
                 #if WITH_DEVELOPMENT_TOOLS
                 DeveloperToolUI->EndFrame(UpdateContext);

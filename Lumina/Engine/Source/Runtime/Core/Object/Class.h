@@ -3,7 +3,7 @@
 #include "Lumina.h"
 #include "Module/API.h"
 #include "Object.h"
-#include "Core/Functional/Function.h"
+#include "Containers/Function.h"
 #include "Core/Templates/Align.h"
 #include "Initializer/ObjectInitializer.h"
 
@@ -116,23 +116,21 @@ namespace Lumina
             return (PropertyType*)GetProperty(Name);
         }
 
-        template<typename PropertyType>
+        template<typename PropertyType, typename TFunc>
         requires std::is_base_of_v<FProperty, PropertyType>
-        void ForEachProperty(TMoveOnlyFunction<void(PropertyType*)> Callback)
+        void ForEachProperty(TFunc&& Func)
         {
             PropertyType* Current = (PropertyType*)LinkedProperty;
             while (Current != nullptr)
             {
                 if (typeid(PropertyType) == typeid(*Current))
                 {
-                    Callback(Current);
+                    Func(Current);
                 }
                 Current = (PropertyType*)Current->Next;
             }
         }
-
-        LUMINA_API void ForEachProperty(TMoveOnlyFunction<void(FProperty*)> Callback);
-
+        
         template<class T>
         bool IsChildOf() const
         {

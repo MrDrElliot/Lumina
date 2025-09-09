@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Core/Engine/Engine.h"
 #include "EntityComponentRegistry.h"
 #include "entt/entt.hpp"
 #include "World/Entity/Registry/EntityRegistry.h"
@@ -7,18 +8,20 @@
 namespace Lumina
 {
 #define ENTITY_COMPONENT(Type) \
-    static void* GetStaticVoidType() { return Type::StaticStruct(); } \
-    static Lumina::Type& AddComponent(entt::entity e, void* reg) { \
-        return static_cast<Lumina::FEntityRegistry*>(reg)->emplace_or_replace<Type>(e); \
+    static void* GetComponentStructType() { return Type::StaticStruct(); } \
+    static void* AddComponent(entt::entity e, void* reg) { \
+        return &static_cast<Lumina::FEntityRegistry*>(reg)->emplace_or_replace<Type>(e); \
     } \
     static void RegisterMeta() { \
         using namespace entt::literals; \
-        entt::meta_factory<Type>().func<&Type::GetStaticVoidType>("staticstruct"_hs); \
+        entt::locator<entt::meta_ctx>::reset(GEngine->GetEngineMetaContext()); \
+        entt::meta_factory<Type>{}.type(#Type ## _hs); \
+        entt::meta_factory<Type>().func<&Type::GetComponentStructType>("staticstruct"_hs); \
         entt::meta_factory<Type>().func<&Type::AddComponent>("addcomponent"_hs); \
     } \
     struct DeferredAutoRegister { \
         DeferredAutoRegister() { \
-            Lumina::FEntityComponentRegistry::Get().AddDeferred(&Type::RegisterMeta); \
+            Lumina::ECS::AddDeferredComponentRegistry(&Type::RegisterMeta); \
         } \
     }; \
     static inline DeferredAutoRegister DeferredAutoRegisterInstance;

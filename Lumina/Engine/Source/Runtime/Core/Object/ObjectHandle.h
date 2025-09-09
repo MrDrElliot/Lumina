@@ -17,6 +17,7 @@ namespace Lumina
         uint32 Index = 0;
         uint32 Generation = 0;
 
+        LUMINA_API FObjectHandle(nullptr_t);
         LUMINA_API FObjectHandle() = default;
         LUMINA_API FObjectHandle(uint32 InIndex, uint32 InGeneration);
         LUMINA_API FObjectHandle(const CObject* Object);
@@ -37,6 +38,7 @@ namespace Lumina
         NODISCARD bool operator!() const { return Resolve() == nullptr; }
         NODISCARD explicit operator bool() const { return Resolve() != nullptr; }
         NODISCARD auto operator<=>(const FObjectHandle&) const = default;
+        FObjectHandle& operator = (nullptr_t) { return *this = FObjectHandle(); }
 
         
         LUMINA_API CObject* Resolve() const;

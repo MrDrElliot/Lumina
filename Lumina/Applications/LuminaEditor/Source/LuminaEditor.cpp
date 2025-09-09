@@ -2,6 +2,7 @@
 #include "EntryPoint.h"
 #include "Lumina_eastl.cpp"
 #include "Core/Module/ModuleManager.h"
+#include "Project/Project.h"
 #include "Renderer/RenderResource.h"
 #include "UI/EditorUI.h"
 
@@ -9,7 +10,18 @@ namespace Lumina
 {
     bool FEditorEngine::Init(FApplication* App)
     {
+        TOptional<FString> Project = FApplication::CommandLine.Get("project");
+        if (Project.has_value())
+        {
+            FProject::Get().LoadProject(Project.value());
+        }
+        
         bool bSuccess = FEngine::Init(App);
+
+        if (FProject::Get().HasLoadedProject())
+        {
+            AssetRegistry->RunInitialDiscovery();
+        }
 
         entt::locator<entt::meta_ctx>::reset(GetEngineMetaContext());
 

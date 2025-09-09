@@ -2,7 +2,7 @@
 
 #include "EdGraphNode.h"
 #include "Containers/Array.h"
-#include "Core/Functional/Function.h"
+#include "Containers/Function.h"
 #include "Core/Object/ObjectHandleTyped.h"
 #include "EdNodeGraph.generated.h"
 #include "imgui-node-editor/imgui_node_editor.h"

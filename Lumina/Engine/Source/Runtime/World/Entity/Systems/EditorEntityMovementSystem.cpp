@@ -1,6 +1,8 @@
-﻿#include "DebugCameraEntitySystem.h"
+﻿#include "EditorEntityMovementSystem.h"
 #include "Core/Application/Application.h"
+#include "Core/Windows/Window.h"
 #include "Events/MouseCodes.h"
+#include "GLFW/glfw3.h"
 #include "Input/Input.h"
 #include "Input/InputSubsystem.h"
 #include "World/Entity/Entity.h"
@@ -11,18 +13,20 @@
 
 namespace Lumina
 {
-    void CDebugCameraEntitySystem::Initialize()
+    void CEditorEntityMovementSystem::Initialize()
     {
         
     }
 
-    void CDebugCameraEntitySystem::Shutdown()
+    void CEditorEntityMovementSystem::Shutdown()
     {
         
     }
 
-    void CDebugCameraEntitySystem::Update(FEntityRegistry& EntityRegistry, const FUpdateContext& UpdateContext)
+    void CEditorEntityMovementSystem::Update(FEntityRegistry& EntityRegistry, const FUpdateContext& UpdateContext)
     {
+        LUMINA_PROFILE_SCOPE();
+        
         double DeltaTime = UpdateContext.GetDeltaTime();
         
         for (auto CameraEntity : EntityRegistry.view<SEditorComponent, SCameraComponent>())
@@ -68,7 +72,7 @@ namespace Lumina
             // Mouse look
             if (Input::IsMouseButtonPressed(Mouse::ButtonRight))
             {
-                glfwSetInputMode(Windowing::GetPrimaryWindowHandle()->GetWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+                GEngine->GetEngineSubsystem<FInputSubsystem>()->SetCursorMode(GLFW_CURSOR_DISABLED);
     
                 float MousePitchDelta = UpdateContext.GetSubsystem<FInputSubsystem>()->GetMouseDeltaPitch();
                 float MouseYawDelta   = UpdateContext.GetSubsystem<FInputSubsystem>()->GetMouseDeltaYaw();
@@ -85,7 +89,7 @@ namespace Lumina
             }
             else
             {
-                glfwSetInputMode(Windowing::GetPrimaryWindowHandle()->GetWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+                GEngine->GetEngineSubsystem<FInputSubsystem>()->SetCursorMode(GLFW_CURSOR_NORMAL);
             }
     
             // Update camera view

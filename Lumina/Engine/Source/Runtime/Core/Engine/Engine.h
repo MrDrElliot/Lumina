@@ -78,7 +78,8 @@ namespace Lumina
         FAssetRegistry*         AssetRegistry =         nullptr;
         FWorldManager*          WorldManager =          nullptr;
         FRenderManager*         RenderManager =         nullptr;
-
+        
+        
         FRHIViewportRef         EngineViewport;
     };
     

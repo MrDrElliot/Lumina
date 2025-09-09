@@ -23,7 +23,7 @@ namespace Lumina
         Worlds.clear();
     }
 
-    void FWorldManager::TickWorlds(const FUpdateContext& UpdateContext)
+    void FWorldManager::UpdateWorlds(const FUpdateContext& UpdateContext)
     {
         LUMINA_PROFILE_SCOPE();
         for (FManagedWorld& World : Worlds)
@@ -33,23 +33,29 @@ namespace Lumina
                 continue;
             }
             
-            World.World->Tick(UpdateContext);
+            World.World->Update(UpdateContext);
         }
     }
 
     void FWorldManager::RemoveWorld(CWorld* World)
     {
-        size_t idx = World->WorldIndex;
+        if (Worlds.empty())
+        {
+            return;
+        }
+
+        size_t idx  = World->WorldIndex;
         size_t last = Worlds.size() - 1;
 
         if (idx != last)
         {
             eastl::swap(Worlds[idx], Worlds[last]);
-            Worlds[idx].World->WorldIndex = idx; 
+            Worlds[idx].World->WorldIndex = idx;
         }
 
         Worlds.pop_back();
     }
+
     
     void FWorldManager::AddWorld(CWorld* World)
     {

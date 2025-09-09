@@ -137,6 +137,9 @@ namespace Lumina
     void FObjectHashTables::Clear()
     {
         FScopeLock Lock(Mutex);
+        
         ObjectNameHash.clear();
+        ObjectPackageHash.clear();
+        ObjectClassHash.clear();
     }
 }

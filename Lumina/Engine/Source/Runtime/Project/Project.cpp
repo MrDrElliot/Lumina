@@ -8,7 +8,9 @@
 #include "Assets/AssetRegistry/AssetRegistry.h"
 #include "Core/Engine/Engine.h"
 #include "Core/Module/ModuleManager.h"
+#include "Core/Object/ObjectBase.h"
 #include "Paths/Paths.h"
+#include "world/entity/components/EntityComponentRegistry.h"
 
 
 namespace Lumina
@@ -16,44 +18,21 @@ namespace Lumina
 
     void FProject::LoadProject(const FString& ProjectPath)
     {
-        FString ProjectJson;
-        if (!FileHelper::LoadFileIntoString(ProjectJson, ProjectPath))
-        {
-            LOG_ERROR("Failed to load project at location: {0}", ProjectPath);
-            return;
-        }
-        
+        Settings.ProjectName = Paths::FileName(ProjectPath, true);
         Settings.ProjectPath = ProjectPath;
         
-        try
-        {
-            nlohmann::json JsonData = nlohmann::json::parse(ProjectJson.c_str());
-
-            if (JsonData.contains("ProjectName"))
-            {
-                Settings.ProjectName = JsonData["ProjectName"].get<std::string>().c_str();
-            }
-
-            LOG_INFO("Loaded project: {0} from {1}", Settings.ProjectName.c_str(), Settings.ProjectPath.c_str());
-        }
-        catch (const std::exception& e)
-        {
-            LOG_ERROR("Failed to parse project JSON: {0}", e.what());
-        }
-
         Paths::Mount("project://", GetProjectContentDirectory());
-        
-        if (auto* Registry = GEngine->GetEngineSubsystem<FAssetRegistry>())
-        {
-            Registry->ProjectLoaded();
-        }
 
         FString ProjectSolutionPath = Paths::Parent(Paths::RemoveExtension(ProjectPath));
         FString Path = ProjectSolutionPath + "/Binaries/Debug/" + Settings.ProjectName + ".dll";
 
         if (Paths::Exists(Path))
         {
-            FModuleManager::Get().LoadModule(Path);
+            if (IModuleInterface* Module = FModuleManager::Get().LoadModule(Path))
+            {
+                ProcessNewlyLoadedCObjects();
+                FEntityComponentRegistry::Get().RegisterAll();
+            }
         }
         
         bHasProjectLoaded = true;

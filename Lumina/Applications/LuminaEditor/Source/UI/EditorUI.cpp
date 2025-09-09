@@ -7,7 +7,7 @@
 #include "Memory/Memory.h"
 #include "Project/Project.h"
 #include "Renderer/RenderContext.h"
-#include "World/Entity/Systems/DebugCameraEntitySystem.h"
+#include "World/Entity/Systems/EditorEntityMovementSystem.h"
 #include "Tools/ConsoleLogEditorTool.h"
 #include "Tools/ContentBrowserEditorTool.h"
 #include "Tools/EditorTool.h"
@@ -19,6 +19,8 @@
 #include "Tools/UI/ImGui/imfilebrowser.h"
 #include <Assets/AssetHeader.h>
 #include <client/TracyProfiler.hpp>
+
+#include "assets/assettypes/archetype/archetype.h"
 #include "Assets/AssetTypes/Material/Material.h"
 #include "Assets/AssetTypes/Material/MaterialInstance.h"
 #include "Assets/AssetTypes/Mesh/StaticMesh/StaticMesh.h"
@@ -33,6 +35,7 @@
 #include "Renderer/RenderManager.h"
 #include "Renderer/RHIGlobals.h"
 #include "Tools/GamePreviewTool.h"
+#include "Tools/AssetEditors/ArchetypeEditor/ArchetypeEditorTool.h"
 #include "World/SceneRenderer.h"
 #include "Tools/AssetEditors/MaterialEditor/MaterialInstanceEditorTool.h"
 #include "Tools/AssetEditors/MeshEditor/MeshEditorTool.h"
@@ -90,25 +93,26 @@ namespace Lumina
         EditorWindowClass.ClassId = ImHashStr("EditorWindowClass");
         EditorWindowClass.DockingAllowUnclassed = false;
         EditorWindowClass.ViewportFlagsOverrideSet = ImGuiViewportFlags_NoAutoMerge;
-        EditorWindowClass.ViewportFlagsOverrideClear = ImGuiViewportFlags_NoDecoration | ImGuiViewportFlags_NoTaskBarIcon;
+        EditorWindowClass.ViewportFlagsOverrideClear = ImGuiViewportFlags_NoTaskBarIcon;
         EditorWindowClass.ParentViewportId = 0; // Top level window
-        EditorWindowClass.DockingAllowUnclassed = false;
         EditorWindowClass.DockingAlwaysTabBar = true;
 
 
         SubsystemManager = UpdateContext.GetSubsystemManager();
         AssetRegistry = UpdateContext.GetSubsystem<FAssetRegistry>();
 
-        
         CWorld* NewWorld = NewObject<CWorld>();
         WorldEditorTool = CreateTool<FWorldEditorTool>(this, NewWorld);
         
         WorldEditorTool->GetOnPreviewStartRequestedDelegate().AddTFunction([this]
         {
-            CWorld* PreviewWorld = NewObject<CWorld>();
-
-            GamePreviewTool = CreateTool<FGamePreviewTool>(this, PreviewWorld);
-            WorldEditorTool->NotifyPlayInEditorStart();
+            if (CWorld* PreviewWorld = CWorld::DuplicateWorldForPIE(WorldEditorTool->GetWorld()))
+            {
+                PreviewWorld->SetIsPlayInEditorWorld(true);
+                PreviewWorld->SetPaused(false);
+                GamePreviewTool = CreateTool<FGamePreviewTool>(this, PreviewWorld);
+                WorldEditorTool->NotifyPlayInEditorStart();
+            }
         });
 
         WorldEditorTool->GetOnPreviewStopRequestedDelegate().AddTFunction([this]
@@ -158,7 +162,7 @@ namespace Lumina
         ImGui::SetNextWindowSize(viewport->WorkSize);
         ImGui::SetNextWindowViewport(viewport->ID);
 
-        constexpr ImGuiWindowFlags WindowFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoCollapse
+        constexpr ImGuiWindowFlags WindowFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse
         | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
 
         ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
@@ -196,7 +200,7 @@ namespace Lumina
             ImGui::DockSpace(DockspaceID, viewport->WorkSize, 0, &EditorWindowClass);
             ImGui::PopStyleVar();
         }
-
+        
         
         ImGui::End();
 
@@ -232,7 +236,7 @@ namespace Lumina
 
         if (bDearImGuiDemoWindowOpen)
         {
-            //ImGui::ShowDemoWindow(&bDearImGuiDemoWindowOpen);
+            ImGui::ShowDemoWindow(&bDearImGuiDemoWindowOpen);
         }
 
         if (bShowRenderDebug)
@@ -456,7 +460,7 @@ namespace Lumina
 
         if (!FProject::Get().HasLoadedProject() && !FileBrowser.IsOpened())
         {
-            FileBrowser = ImGui::FileBrowser(ImGuiFileBrowserFlags_CloseOnEsc | ImGuiFileBrowserFlags_CreateNewDir);
+            FileBrowser = ImGui::FileBrowser(ImGuiFileBrowserFlags_CloseOnEsc);
             FileBrowser.SetTitle("Select Project to load.");
             FileBrowser.SetTypeFilters({".lproject"});
 
@@ -471,22 +475,25 @@ namespace Lumina
             FileBrowser.ClearSelected();
             FileBrowser.Close();
             ContentBrowser->RefreshContentBrowser();
+            GEngine->GetEngineSubsystem<FAssetRegistry>()->RunInitialDiscovery();
         }
         
         if (ModalManager.HasModal())
         {
             ModalManager.DrawDialogue(UpdateContext);
         }
+        
     }
 
     void FEditorUI::OnUpdate(const FUpdateContext& UpdateContext)
     {
         LUMINA_PROFILE_SCOPE();
+        
         for (FEditorTool* Tool : EditorTools)
         {
             if (Tool->HasWorld())
             {
-                Tool->SceneUpdate(UpdateContext);
+                Tool->WorldUpdate(UpdateContext);
             }
         }
     }
@@ -547,6 +554,10 @@ namespace Lumina
             else if (InAsset->IsA<CMaterialInstance>())
             {
                 NewTool = CreateTool<FMaterialInstanceEditorTool>(this, InAsset);
+            }
+            else if (InAsset->IsA<CArchetype>())
+            {
+                NewTool = CreateTool<FArchetypeEditorTool>(this, InAsset);
             }
             else if (InAsset->IsA<CWorld>())
             {
@@ -665,7 +676,7 @@ namespace Lumina
         
         // Set WindowClass based on per-document ID, so tabs from Document A are not dockable in Document B etc. We could be using any ID suiting us, e.g. &doc
         // We also set ParentViewportId to request the platform back-end to set parent/child relationship at the windowing level
-        EditorTool->ToolWindowsClass.ClassId = EditorTool->GetID();
+        EditorTool->ToolWindowsClass.ClassId = 0;//EditorTool->GetID();
         EditorTool->ToolWindowsClass.ViewportFlagsOverrideSet = ImGuiViewportFlags_NoTaskBarIcon | ImGuiViewportFlags_NoDecoration;
         EditorTool->ToolWindowsClass.ParentViewportId = ImGui::GetWindowViewport()->ID;
         EditorTool->ToolWindowsClass.DockingAllowUnclassed = true;
@@ -767,7 +778,7 @@ namespace Lumina
             ImGui::DockBuilderFinish(Tool->GetCurrentDockspaceID());
         }
 
-        // FIXME-DOCK: This is a little tricky to explain but we currently need this to use the pattern of sharing a same dockspace between tabs of a same tab bar
+        // FIXME-DOCK: This is a little tricky to explain, but we currently need this to use the pattern of sharing a same dockspace between tabs of a same tab bar
         bool bVisible = true;
         if (ImGui::GetCurrentWindow()->Hidden)
         {
@@ -827,6 +838,8 @@ namespace Lumina
         {
             for (FEditorTool::FToolWindow* Window : Tool->ToolWindows)
             {
+                LUMINA_PROFILE_SECTION("Setup and Draw Tool Window");
+
                 const FInlineString ToolWindowName = FEditorTool::GetToolWindowName(Window->Name.c_str(), Tool->GetCurrentDockspaceID());
 
                 // When multiple documents are open, floating tools only appear for focused one
@@ -849,6 +862,8 @@ namespace Lumina
             
                 if (Window->bViewport)
                 {
+                    LUMINA_PROFILE_SECTION("Draw Viewport");
+
                     constexpr ImGuiWindowFlags viewportWindowFlags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNavFocus;
                     ImGui::SetNextWindowClass(&Tool->ToolWindowsClass);
 
@@ -862,55 +877,7 @@ namespace Lumina
                     if (DrawViewportWindow)
                     {
                         FSceneRenderer* SceneRenderer = Tool->GetWorld()->GetRenderer();
-                        
-                        FRHIImageRef PositionTarget = SceneRenderer->GetGBuffer().Normals;
-
-                        FRenderManager* RenderManager = UpdateContext.GetSubsystem<FRenderManager>();
-                        IImGuiRenderer* ImGuiRenderer = RenderManager->GetImGuiRenderer();
-
-                        ImTextureID ViewportTexture = 0;
-                        switch (SceneRenderer->GetGBufferDebugMode())
-                        {
-                            case ESceneRenderGBuffer::RenderTarget:
-                                {
-                                    ViewportTexture = ImGuiRenderer->GetOrCreateImTexture(SceneRenderer->GetRenderTarget());
-                                }
-                            break;
-
-                            case ESceneRenderGBuffer::Albedo:
-                                {
-                                    ViewportTexture = ImGuiRenderer->GetOrCreateImTexture(SceneRenderer->GetGBuffer().AlbedoSpec);
-                                }
-                            break;
-                            case ESceneRenderGBuffer::Position:
-                                {
-                                    ViewportTexture = ImGuiRenderer->GetOrCreateImTexture(SceneRenderer->GetGBuffer().Position);
-                                }
-                            break;
-                            
-                            case ESceneRenderGBuffer::Normals:
-                                {
-                                    ViewportTexture = ImGuiRenderer->GetOrCreateImTexture(SceneRenderer->GetGBuffer().Normals);
-                                }
-                            break;
-                            
-                            case ESceneRenderGBuffer::Material:
-                                {
-                                    ViewportTexture = ImGuiRenderer->GetOrCreateImTexture(SceneRenderer->GetGBuffer().Material);
-                                }
-                            break;
-                            
-                        case ESceneRenderGBuffer::Depth:
-                                {
-                                    ViewportTexture = ImGuiRenderer->GetOrCreateImTexture(SceneRenderer->GetDepthAttachment());
-                                }
-                            break;
-                        case ESceneRenderGBuffer::SSAO:
-                            {
-                                ViewportTexture = ImGuiRenderer->GetOrCreateImTexture(SceneRenderer->GetSSAOImage());
-                            }
-                            break;
-                        }
+                        ImTextureRef ViewportTexture = ImGuiX::ToImTextureRef(SceneRenderer->GetRenderTarget());
                         
                         Tool->bViewportFocused = ImGui::IsWindowFocused();
                         Tool->bViewportHovered = ImGui::IsWindowHovered();
@@ -922,18 +889,20 @@ namespace Lumina
                 }
                 else
                 {
+                    LUMINA_PROFILE_SECTION("Draw Viewport");
+
                     ImGuiWindowFlags ToolWindowFlags = ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNavFocus;
 
                     ImGui::SetNextWindowClass(&Tool->ToolWindowsClass);
 
                     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImGui::GetStyle().WindowPadding);
-                    bool const drawToolWindow = ImGui::Begin(ToolWindowName.c_str(), &Window->bOpen, ToolWindowFlags);
+                    bool const DrawToolWindow = ImGui::Begin(ToolWindowName.c_str(), &Window->bOpen, ToolWindowFlags);
                     ImGui::PopStyleVar();
 
-                    if (drawToolWindow)
+                    if (DrawToolWindow)
                     {
-                        bool const isToolWindowFocused = ImGui::IsWindowFocused(ImGuiFocusedFlags_ChildWindows | ImGuiFocusedFlags_DockHierarchy);
-                        Window->DrawFunction(UpdateContext, isToolWindowFocused);
+                        const bool bToolWindowFocused = ImGui::IsWindowFocused(ImGuiFocusedFlags_ChildWindows | ImGuiFocusedFlags_DockHierarchy);
+                        Window->DrawFunction(UpdateContext, bToolWindowFocused);
                     }
                     
                     ImGui::End();
@@ -946,7 +915,6 @@ namespace Lumina
         {
             Tool->SetEditorCameraEnabled(Tool->bViewportFocused);
         }
-        
     }
 
     void FEditorUI::CreateGameViewportTool(const FUpdateContext& UpdateContext)

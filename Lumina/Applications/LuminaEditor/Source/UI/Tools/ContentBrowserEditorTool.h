@@ -1,7 +1,6 @@
 ﻿#pragma once
 #include "EditorTool.h"
 #include "Assets/AssetRegistry/AssetData.h"
-#include "Core/Object/ObjectRedirector.h"
 #include "Core/Object/Package/Package.h"
 #include "Paths/Paths.h"
 #include "Renderer/RHIFwd.h"

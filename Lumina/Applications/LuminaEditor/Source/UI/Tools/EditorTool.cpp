@@ -10,7 +10,7 @@
 #include "TaskSystem/TaskSystem.h"
 #include "Tools/UI/ImGui/ImGuiX.h"
 #include "World/WorldManager.h"
-#include "World/Entity/Systems/DebugCameraEntitySystem.h"
+#include "World/Entity/Systems/EditorEntityMovementSystem.h"
 
 namespace Lumina
 {
@@ -61,8 +61,9 @@ namespace Lumina
         
         if (HasWorld())
         {
-            //UpdateContext.GetSubsystem<FWorldManager>()->RemoveWorld(World);
-            //World.MarkGarbage();
+            World->ShutdownWorld();
+            UpdateContext.GetSubsystem<FWorldManager>()->RemoveWorld(World);
+            World.MarkGarbage();
         }
         
         ToolWindows.clear();
@@ -111,7 +112,7 @@ namespace Lumina
         DrawToolMenu(UpdateContext);
     }
 
-    bool FEditorTool::DrawViewport(const FUpdateContext& UpdateContext, ImTextureID ViewportTexture)
+    bool FEditorTool::DrawViewport(const FUpdateContext& UpdateContext, ImTextureRef ViewportTexture)
     {
         const ImVec2 ViewportSize(eastl::max(ImGui::GetContentRegionAvail().x, 64.0f), eastl::max(ImGui::GetContentRegionAvail().y, 64.0f));
         const ImVec2 WindowPosition = ImGui::GetWindowPos();

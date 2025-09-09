@@ -7,6 +7,6 @@ namespace Lumina
 {
     bool FAssetData::IsRedirector() const
     {
-        return AssetClass == CObjectRedirector::StaticClass()->GetFullyQualifiedName();
+        return AssetClass == CObjectRedirector::StaticClass()->GetQualifiedName();
     }
 }

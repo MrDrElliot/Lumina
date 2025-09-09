@@ -23,8 +23,8 @@ namespace Lumina
 
     FObjectExport::FObjectExport(CObject* InObject)
     {
-        ObjectName = InObject->GetFullyQualifiedName().c_str();
-        ClassName = InObject->GetClass()->GetFullyQualifiedName();
+        ObjectName = InObject->GetQualifiedName().c_str();
+        ClassName = InObject->GetClass()->GetQualifiedName();
         Offset = 0;
         Size = 0;
         Object = InObject;
@@ -34,7 +34,7 @@ namespace Lumina
     {
         Package = InObject->GetPackage()->GetName();
         ObjectName = InObject->GetName().c_str();
-        ClassName = InObject->GetClass()->GetFullyQualifiedName();
+        ClassName = InObject->GetClass()->GetQualifiedName();
         Object = InObject;
     }
 
@@ -46,12 +46,6 @@ namespace Lumina
 
     CPackage* CPackage::CreatePackage(const FString& FileName)
     {
-        FString FullName = FileName;
-        if (!Paths::HasExtension(FullName, ".lasset"))
-        {
-            Paths::AddPackageExtension(FullName);
-        }
-        
         FString VirtualPath = Paths::ConvertToVirtualPath(FileName.c_str());
         FName FileNameName = VirtualPath.c_str();
         
@@ -175,6 +169,11 @@ namespace Lumina
     bool CPackage::SavePackage(CPackage* Package, CObject* Asset, const FName& FileName)
     {
         LUMINA_PROFILE_SCOPE();
+
+        if (Package == nullptr)
+        {
+            return false;
+        }
 
         FString PathString = FileName.ToString();
         if (!Paths::HasExtension(PathString, "lasset"))
@@ -325,7 +324,7 @@ namespace Lumina
         // Validate index
         if (LoaderIndex < 0 || LoaderIndex >= (int64)ExportTable.size())
         {
-            LOG_ERROR("Invalid loader index {} for object {}", LoaderIndex, Object->GetFullyQualifiedName());
+            LOG_ERROR("Invalid loader index {} for object {}", LoaderIndex, Object->GetQualifiedName());
             return;
         }
 
@@ -432,5 +431,13 @@ namespace Lumina
     FString CPackage::GetPackageFilename() const
     {
         return Paths::FileName(GetName().c_str(), true);
+    }
+
+    FString CPackage::GetFullPackageFilePath() const
+    {
+        FString Path = Paths::ConvertToVirtualPath(GetName().ToString());
+        Paths::AddPackageExtension(Path);
+
+        return Path;
     }
 }

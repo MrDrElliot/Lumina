@@ -14,7 +14,7 @@
 #include "Renderer/ShaderCompiler.h"
 #include "World/entity/components/lightcomponent.h"
 #include "World/entity/components/staticmeshcomponent.h"
-#include "World/Entity/Systems/DebugCameraEntitySystem.h"
+#include "World/Entity/Systems/EditorEntityMovementSystem.h"
 #include "Thumbnails/ThumbnailManager.h"
 #include "Tools/UI/ImGui/ImGuiX.h"
 #include "UI/Tools/NodeGraph/Material/MaterialCompiler.h"

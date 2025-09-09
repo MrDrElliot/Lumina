@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include "Lumina.h"
-#include "Core/Functional/Function.h"
+#include "Containers/Function.h"
 #include "Memory/SmartPtr.h"
 
 namespace Lumina

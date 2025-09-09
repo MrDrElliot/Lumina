@@ -297,7 +297,7 @@ namespace Lumina::ImGuiX
     }
 
 
-    void ApplicationTitleBar::Draw( TFunction<void()>&& menuDrawFunction, float menuSectionDesiredWidth, TFunction<void()>&& controlsSectionDrawFunction, float controlsSectionDesiredWidth)
+    void ApplicationTitleBar::Draw(TFunction<void()>&& menuDrawFunction, float menuSectionDesiredWidth, TFunction<void()>&& controlsSectionDrawFunction, float controlsSectionDesiredWidth)
     {
         Rect = glm::vec4(1.0f);
     

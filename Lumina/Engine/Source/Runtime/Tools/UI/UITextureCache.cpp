@@ -2,6 +2,7 @@
 
 #include "Core/Engine/Engine.h"
 #include "ImGui/ImGuiRenderer.h"
+#include "Paths/Paths.h"
 #include "Renderer/RenderManager.h"
 #include "Renderer/RHIGlobals.h"
 #include "TaskSystem/TaskSystem.h"

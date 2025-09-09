@@ -15,7 +15,6 @@ namespace Lumina::Reflection
         
         const eastl::string& GetPath() const { return Path; }
         const eastl::string& GetParentPath() const { return ParentPath; }
-        bool DirtyProjectFiles();
 
         void AddReflectedProject(const FReflectedProject& Project) { ReflectedProjects.push_back(Project); }
         bool HasProjects() const { return !ReflectedProjects.empty(); }

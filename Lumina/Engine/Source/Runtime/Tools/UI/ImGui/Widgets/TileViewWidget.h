@@ -2,7 +2,7 @@
 #include "imgui.h"
 #include "Containers/Array.h"
 #include "Containers/Name.h"
-#include "Core/Functional/Function.h"
+#include "Containers/Function.h"
 #include "Core/Templates/Forward.h"
 #include "Memory/Memory.h"
 
@@ -81,10 +81,10 @@ namespace Lumina
 
         void ClearTree();
 
-        FORCEINLINE void MarkTreeDirty() { bDirty = true; }
+        void MarkTreeDirty() { bDirty = true; }
 
-        FORCEINLINE bool IsCurrentlyDrawing() const { return bCurrentlyDrawing; }
-        FORCEINLINE bool IsDirty() const { return bDirty; }
+        bool IsCurrentlyDrawing() const { return bCurrentlyDrawing; }
+        bool IsDirty() const { return bDirty; }
         
         template<typename T, typename... Args>
         requires (std::is_base_of_v<FTileViewItem, T> && std::is_constructible_v<T, Args...>)

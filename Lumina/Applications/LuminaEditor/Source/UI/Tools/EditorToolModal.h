@@ -2,15 +2,11 @@
 #include "imgui.h"
 #include "Containers/String.h"
 #include "Core/UpdateContext.h"
-#include "Core/Functional/Function.h"
+#include "Containers/Function.h"
 
 namespace Lumina
 {
     class FEditorToolModal;
-}
-
-namespace Lumina
-{
     class FUpdateContext;
 }
 

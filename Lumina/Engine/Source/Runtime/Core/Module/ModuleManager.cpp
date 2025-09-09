@@ -54,20 +54,23 @@ namespace Lumina
         }
 
         FModuleInfo& Info = it->second;
-        ModuleHashMap.erase(it);
 
         if (Info.ModuleInterface)
         {
             Info.ModuleInterface->ShutdownModule();
         }
+        
+        ModuleHashMap.erase(it);
+        Info.ModuleInterface.reset();
+        void* ModulePtr = Info.Module;
 
-        bool freed = Platform::FreeDLLHandle(Info.Module);
+        bool freed = Platform::FreeDLLHandle(ModulePtr);
         if (!freed)
         {
             LOG_ERROR("Failed to free DLL handle for module: {}", ModuleName);
             return false;
         }
-
+        
         return true;
     }
 

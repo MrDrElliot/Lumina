@@ -60,22 +60,27 @@ namespace Lumina
             FSystemListViewItem(FTreeListViewItem* InParent, CEntitySystem* InSystem)
                 : FTreeListViewItem(InParent)
                 , System(InSystem)
-            {}
+            {
+                Hash = System->GetName();
+                Name = System->GetName();
+            }
 
             ~FSystemListViewItem() override { }
 
             const char* GetTooltipText() const override { return GetName().c_str(); }
             bool HasContextMenu() override { return true; }
-            uint64 GetHash() const override { return System->GetSystemID(); }
+            uint64 GetHash() const override { return Hash; }
             FName GetName() const override
             {
-                return System->GetName();
+                return Name;
             }
 
             CEntitySystem* GetSystem() const { return System; }
             
         private:
 
+            uint64 Hash;
+            FName Name;
             TObjectHandle<CEntitySystem> System;
         };
         
@@ -93,11 +98,10 @@ namespace Lumina
         void DrawToolMenu(const FUpdateContext& UpdateContext) override;
         void InitializeDockingLayout(ImGuiID InDockspaceID, const ImVec2& InDockspaceSize) const override;
 
-        void DrawViewportOverlayElements(const FUpdateContext& UpdateContext, ImTextureID ViewportTexture, ImVec2 ViewportSize) override;
+        void DrawViewportOverlayElements(const FUpdateContext& UpdateContext, ImTextureRef ViewportTexture, ImVec2 ViewportSize) override;
         void DrawViewportToolbar(const FUpdateContext& UpdateContext) override;
 
         void PushAddComponentModal(const Entity& Entity);
-        void PushAddSystemModal();
         void PushRenameEntityModal(Entity Ent);
 
         
@@ -123,7 +127,6 @@ namespace Lumina
 
         void RebuildPropertyTables();
         void CreateEntity();
-        void CreateSystem(CClass* SystemClass);
 
         void CopyEntity(Entity& To, const Entity& From);
 

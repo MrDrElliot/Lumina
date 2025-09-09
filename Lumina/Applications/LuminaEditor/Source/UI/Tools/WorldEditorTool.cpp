@@ -7,6 +7,7 @@
 #include "Core/Object/ObjectIterator.h"
 #include "Core/Object/Package/Package.h"
 #include "glm/gtx/matrix_decompose.hpp"
+#include "Paths/Paths.h"
 #include "World/SceneRenderer.h"
 #include "World/Entity/Components/CameraComponent.h"
 #include "World/Entity/Components/NameComponent.h"
@@ -17,7 +18,7 @@
 #include "Tools/UI/ImGui/ImGuiX.h"
 #include "World/WorldManager.h"
 #include "World/Entity/Components/DirtyComponent.h"
-#include "World/Entity/Systems/DebugCameraEntitySystem.h"
+#include "World/Entity/Systems/EditorEntityMovementSystem.h"
 
 
 namespace Lumina
@@ -135,8 +136,6 @@ namespace Lumina
 
     void FWorldEditorTool::OnDeinitialize(const FUpdateContext& UpdateContext)
     {
-        GEngine->GetEngineSubsystem<FWorldManager>()->RemoveWorld(World);
-        World.MarkGarbage();
     }
 
     void FWorldEditorTool::OnSave()
@@ -338,13 +337,8 @@ namespace Lumina
         ImGui::DockBuilderDockWindow(GetToolWindowName(SystemOutlinerName).c_str(), dockRightBottomRight);
     }
 
-    void FWorldEditorTool::DrawViewportOverlayElements(const FUpdateContext& UpdateContext, ImTextureID ViewportTexture, ImVec2 ViewportSize)
+    void FWorldEditorTool::DrawViewportOverlayElements(const FUpdateContext& UpdateContext, ImTextureRef ViewportTexture, ImVec2 ViewportSize)
     {
-        if (SelectedEntity.IsValid() == false)
-        {
-            return;
-        }
-
         if (bViewportHovered)
         {
             if (ImGui::IsKeyPressed(ImGuiKey_Space))
@@ -357,39 +351,36 @@ namespace Lumina
     
         SCameraComponent& CameraComponent = EditorEntity.GetComponent<SCameraComponent>();
     
-        glm::mat4 Matrix = SelectedEntity.GetWorldMatrix();
         glm::mat4 ViewMatrix = CameraComponent.GetViewMatrix();
         glm::mat4 ProjectionMatrix = CameraComponent.GetProjectionMatrix();
 
-        if (CameraComponent.GetViewVolume().GetFrustum().IsInside(SelectedEntity.GetWorldTransform().Location))
-        {
-            ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, ViewportSize.x, ViewportSize.y);
+        ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, ViewportSize.x, ViewportSize.y);
         
-            ImGuizmo::Manipulate(glm::value_ptr(ViewMatrix),
-                                 glm::value_ptr(ProjectionMatrix),
-                                 GuizmoOp,
-                                 GuizmoMode,
-                                 glm::value_ptr(Matrix));
+        if (SelectedEntity.IsValid() && CameraComponent.GetViewVolume().GetFrustum().IsInside(SelectedEntity.GetWorldTransform().Location))
+        {
+            glm::mat4 EntityMatrix = SelectedEntity.GetWorldMatrix();
+
+            ImGuizmo::Manipulate(glm::value_ptr(ViewMatrix), glm::value_ptr(ProjectionMatrix), GuizmoOp, GuizmoMode, glm::value_ptr(EntityMatrix));
     
             if (ImGuizmo::IsUsing())
             {
-                glm::mat4 worldMatrix = Matrix;
+                glm::mat4 worldMatrix = EntityMatrix;
         
                 // Check for parent transform
                 if (SelectedEntity.IsChild())
                 {
-                    glm::mat4 parentWorldMatrix = SelectedEntity.GetParent().GetWorldTransform().GetMatrix();
-                    glm::mat4 parentWorldInverse = glm::inverse(parentWorldMatrix);
+                    glm::mat4 ParentWorldMatrix = SelectedEntity.GetParent().GetWorldTransform().GetMatrix();
+                    glm::mat4 ParentWorldInverse = glm::inverse(ParentWorldMatrix);
                    
                     // Convert world transform to local transform by applying inverse parent transform
-                    glm::mat4 localMatrix = parentWorldInverse * worldMatrix;
+                    glm::mat4 LocalMatrix = ParentWorldInverse * worldMatrix;
         
                     // Decompose local matrix instead of world
                     glm::vec3 translation, scale, skew;
                     glm::quat rotation;
                     glm::vec4 perspective;
         
-                    glm::decompose(localMatrix, scale, rotation, translation, skew, perspective);
+                    glm::decompose(LocalMatrix, scale, rotation, translation, skew, perspective);
         
                     STransformComponent& TransformComponent = SelectedEntity.GetComponent<STransformComponent>();
         
@@ -478,7 +469,7 @@ namespace Lumina
                 for(auto &&[id, type]: entt::resolve())
                 {
                     using namespace entt::literals;
-                    std::string StringName(type.info().name());
+                    FString StringName(type.info().name().data());
                     if (ImGui::Selectable(StringName.c_str(), false, ImGuiSelectableFlags_SpanAllColumns))
                     {
                         void* RegistryPtr = &World->GetMutableEntityRegistry(); // EnTT will try to make a copy if not passed by *.
@@ -488,51 +479,6 @@ namespace Lumina
                 }
                 
                 ImGui::PopID();
-                ImGui::EndTable();
-            }
-            
-            ImGui::PopStyleColor();
-
-            if (ImGui::Button("Cancel"))
-            {
-                return true;
-            }
-            
-            if (bComponentAdded)
-            {
-                RebuildPropertyTables();
-            }
-            
-            return bComponentAdded;
-        });
-    }
-
-    void FWorldEditorTool::PushAddSystemModal()
-    {
-        ToolContext->PushModal("Add System", ImVec2(600.0f, 350.0f), [this](const FUpdateContext& Context) -> bool
-        {
-            bool bComponentAdded = false;
-
-            float const tableHeight = ImGui::GetContentRegionAvail().y - ImGui::GetFrameHeightWithSpacing() - ImGui::GetStyle().ItemSpacing.y;
-            ImGui::PushStyleColor(ImGuiCol_Header, IM_COL32(40, 40, 40, 255));
-            if (ImGui::BeginTable("Options List", 1, ImGuiTableFlags_NoSavedSettings | ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollY, ImVec2(ImGui::GetContentRegionAvail().x, tableHeight)))
-            {
-                ImGui::TableSetupColumn("Label", ImGuiTableColumnFlags_WidthStretch);
-
-                ImGui::TableNextRow();
-                ImGui::TableSetColumnIndex(0);
-
-                TVector<TObjectHandle<CEntitySystem>> Systems;
-                CEntitySystemRegistry::Get().GetRegisteredSystems(Systems);
-
-                for (CEntitySystem* EntitySystem : Systems)
-                {
-                    if (ImGui::Selectable(EntitySystem->GetClass()->GetName().c_str(), false, ImGuiSelectableFlags_SpanAllColumns))
-                    {
-                        CreateSystem(EntitySystem->GetClass());
-                    }
-                }
-                
                 ImGui::EndTable();
             }
             
@@ -594,6 +540,7 @@ namespace Lumina
         
         if (World.IsValid())
         {
+            World->ShutdownWorld();
             GEngine->GetEngineSubsystem<FWorldManager>()->RemoveWorld(World);
             World.MarkGarbage();
         }
@@ -606,6 +553,8 @@ namespace Lumina
         
         SelectedEntity = {};
         OutlinerListView.MarkTreeDirty();
+
+        SystemsListView.MarkTreeDirty();
     }
 
     void FWorldEditorTool::RebuildSceneOutliner(FTreeListView* View)
@@ -688,13 +637,6 @@ namespace Lumina
 
     void FWorldEditorTool::DrawSystems(const FUpdateContext& UpdateContext, bool bFocused)
     {
-        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.15f, 0.35f, 0.15f, 1.0f));
-        if (ImGui::Button("New System", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f)))
-        {
-            PushAddSystemModal();
-        }
-        ImGui::PopStyleColor();
-        
         SystemsListView.Draw(SystemsContext);
     }
 
@@ -852,14 +794,6 @@ namespace Lumina
     {
         World->ConstructEntity("Entity");
         OutlinerListView.MarkTreeDirty();
-    }
-
-    void FWorldEditorTool::CreateSystem(CClass* SystemClass)
-    {
-        CEntitySystem* NewSystem = NewObject<CEntitySystem>(SystemClass);
-        World->RegisterSystem(NewSystem);
-        
-        SystemsListView.MarkTreeDirty();
     }
 
     void FWorldEditorTool::CopyEntity(Entity& To, const Entity& From)

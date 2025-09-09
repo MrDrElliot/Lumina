@@ -8,7 +8,9 @@ namespace Lumina
 {
     void CInterpolatingMovementSystem::Update(FEntityRegistry& EntityRegistry, const FUpdateContext& UpdateContext)
     {
-        auto Group = EntityRegistry.group<SInterpolatingMovementComponent, STransformComponent>();
+        LUMINA_PROFILE_SCOPE();
+
+        auto Group = EntityRegistry.group<SInterpolatingMovementComponent>(entt::get<STransformComponent>);
         Group.each([&](SInterpolatingMovementComponent& MoveComp, STransformComponent& TransformComp)
         {
             float DeltaAlpha = 1.0f * UpdateContext.GetDeltaTime();

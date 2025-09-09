@@ -26,7 +26,7 @@ namespace Lumina
         void Initialize() override;
         void Deinitialize() override;
 
-        void TickWorlds(const FUpdateContext& UpdateContext);
+        void UpdateWorlds(const FUpdateContext& UpdateContext);
 
         void RemoveWorld(CWorld* World);
         void AddWorld(CWorld* World);

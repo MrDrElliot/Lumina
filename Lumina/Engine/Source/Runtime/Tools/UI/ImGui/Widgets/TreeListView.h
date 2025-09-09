@@ -2,7 +2,7 @@
 #include "imgui.h"
 #include "Containers/Array.h"
 #include "Containers/Name.h"
-#include "Core/Functional/Function.h"
+#include "Containers/Function.h"
 #include "Memory/Memory.h"
 
 namespace Lumina

@@ -14,8 +14,8 @@ namespace Lumina
         
         FAssetEditorTool(IEditorToolContext* Context, const FString& AssetName, CObject* InAsset)
             : FEditorTool(Context, AssetName, nullptr)
-            , bAssetLoadBroadcasted(false)
             , PropertyTable(FPropertyTable(InAsset, InAsset->GetClass()))
+            , bAssetLoadBroadcasted(false)
         {
             Asset = InAsset;
             PropertyTable.RebuildTree();

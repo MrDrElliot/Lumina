@@ -3,14 +3,19 @@
 #include "WorldManager.h"
 #include "Core/Engine/Engine.h"
 #include "Core/Object/Class.h"
+#include "Core/Object/ObjectIterator.h"
+#include "Core/Object/Package/Package.h"
+#include "Core/Serialization/MemoryArchiver.h"
+#include "Core/Serialization/ObjectArchiver.h"
 #include "EASTL/sort.h"
 #include "Entity/Components/EditorComponent.h"
 #include "Entity/Components/LineBatcherComponent.h"
 #include "Entity/Components/VelocityComponent.h"
-#include "Entity/Systems/DebugCameraEntitySystem.h"
+#include "Entity/Systems/EditorEntityMovementSystem.h"
 #include "Entity/Systems/UpdateTransformEntitySystem.h"
 #include "glm/gtx/matrix_decompose.hpp"
 #include "Subsystems/FCameraManager.h"
+#include "TaskSystem/TaskSystem.h"
 #include "World/SceneRenderer.h"
 #include "World/Entity/Components/RelationshipComponent.h"
 #include "World/entity/systems/EntitySystem.h"
@@ -24,9 +29,10 @@ namespace Lumina
     void CWorld::Serialize(FArchive& Ar)
     {
         CObject::Serialize(Ar);
-    
+        
         if (Ar.IsWriting())
         {
+            
             EntityRegistry.compact<>();
             auto View = EntityRegistry.view<entt::entity>(entt::exclude<SEditorComponent>);
 
@@ -60,6 +66,7 @@ namespace Lumina
         }
         else if (Ar.IsReading())
         {
+            
             EntityRegistry.clear<>();
             SIZE_T NumEntities = 0;
             Ar << NumEntities;
@@ -74,15 +81,27 @@ namespace Lumina
 
     void CWorld::InitializeWorld()
     {
+        LUM_ASSERT(CameraManager == nullptr)
+        LUM_ASSERT(SceneRenderer == nullptr)
+        
         CameraManager = Memory::New<FCameraManager>();
         SceneRenderer = Memory::New<FSceneRenderer>(this);
-        RegisterSystem(NewObject<CUpdateTransformEntitySystem>());
+
+        TVector<TObjectHandle<CEntitySystem>> Systems;
+        CEntitySystemRegistry::Get().GetRegisteredSystems(Systems);
+        
+        for (CEntitySystem* System : Systems)
+        {
+            if (System->GetRequiredUpdatePriorities())
+            {
+                CEntitySystem* DuplicateSystem = NewObject<CEntitySystem>(System->GetClass());
+                RegisterSystem(DuplicateSystem);
+            }
+        }
     }
     
     Entity CWorld::SetupEditorWorld()
     {
-        RegisterSystem(NewObject<CDebugCameraEntitySystem>());
-
         Entity EditorEntity = ConstructEntity("Editor Entity");
         EditorEntity.Emplace<SCameraComponent>();
         EditorEntity.Emplace<SEditorComponent>();
@@ -95,40 +114,38 @@ namespace Lumina
         return EditorEntity;
     }
 
-    void CWorld::OnMarkedGarbage()
+    void CWorld::Update(const FUpdateContext& Context)
     {
-        for (uint8 i = 0; i < (uint8)EUpdateStage::Max; ++i)
-        {
-            for (CEntitySystem* System : SystemUpdateList[i])
-            {
-                System->MarkGarbage();
-            }
-            SystemUpdateList->clear();
-        }
-        
-        Memory::Delete(SceneRenderer);
-        Memory::Delete(CameraManager);
-        EntityRegistry.clear<>();
-    }
+        LUMINA_PROFILE_SCOPE();
 
-    void CWorld::Tick(const FUpdateContext& Context)
-    {
-        if (Context.GetUpdateStage() == EUpdateStage::FrameStart)
+        const EUpdateStage Stage = Context.GetUpdateStage();
+        const bool bWantsToRender = Stage == EUpdateStage::FrameEnd;
+
+        if (Stage == EUpdateStage::FrameStart)
         {
             DeltaTime = Context.GetDeltaTime();
             TimeSinceCreation += DeltaTime;
         }
 
-        bool bWantsToRender = Context.GetUpdateStage() == EUpdateStage::FrameEnd;
-        
-        if ((IsPaused() && Context.GetUpdateStage() != EUpdateStage::Paused) && !bWantsToRender)
+        bool bShouldUpdateSystems = true;
+
+        if (bPaused && Stage != EUpdateStage::Paused)
         {
-            return;
+            bShouldUpdateSystems = false;
         }
-        
-        for (CEntitySystem* System : SystemUpdateList[(uint32)Context.GetUpdateStage()])
+        else if (!bPaused && Stage == EUpdateStage::Paused)
         {
-            System->Update(EntityRegistry, Context);
+            bShouldUpdateSystems = false;
+        }
+
+        if (bShouldUpdateSystems)
+        {
+            auto& SystemVector = SystemUpdateList[(uint32)Stage];
+            Task::ParallelFor((uint32)SystemVector.size(), [this, SystemVector, Context](uint32 Index)
+            {
+                CEntitySystem* System = SystemVector[Index];
+                System->Update(EntityRegistry, Context);
+            });
         }
 
         if (bWantsToRender)
@@ -142,7 +159,6 @@ namespace Lumina
         Memory::Delete(SceneRenderer);
         Memory::Delete(CameraManager);
         
-        GEngine->GetEngineSubsystem<FWorldManager>()->RemoveWorld(this);
         for (uint8 i = 0; i < (uint8)EUpdateStage::Max; i++)
         {
             for (CEntitySystem* System : SystemUpdateList[i])
@@ -270,14 +286,13 @@ namespace Lumina
                 {
                     if (ToRemove->Children[i] == Child)
                     {
-                        // Shift remaining children down to fill the gap
                         for (SIZE_T j = i; j < ToRemove->Size - 1; ++j)
                         {
                             ToRemove->Children[j] = ToRemove->Children[j + 1];
                         }
     
                         --ToRemove->Size;
-                        break; // Child found and removed, exit loop
+                        break;
                     }
                 }
             }
@@ -301,6 +316,32 @@ namespace Lumina
     SCameraComponent& CWorld::GetActiveCamera() const
     {
         return *CameraManager->GetCameraComponent();
+    }
+
+    CWorld* CWorld::DuplicateWorldForPIE(CWorld* OwningWorld)
+    {
+        CPackage* OuterPackage = OwningWorld->GetPackage();
+        if (OuterPackage == nullptr)
+        {
+            return nullptr;
+        }
+
+        TVector<uint8> Data;
+        {
+            FMemoryWriter Writer(Data);
+            FObjectProxyArchiver Ar(Writer, true);
+
+            OwningWorld->Serialize(Ar);
+        }
+        
+        FMemoryReader Reader(Data);
+        FObjectProxyArchiver Ar(Reader, true);
+        
+        CWorld* PIEWorld = NewObject<CWorld>();
+
+        PIEWorld->Serialize(Ar);
+        
+        return PIEWorld;
     }
 
     const TVector<TObjectHandle<CEntitySystem>>& CWorld::GetSystemsForUpdateStage(EUpdateStage Stage)

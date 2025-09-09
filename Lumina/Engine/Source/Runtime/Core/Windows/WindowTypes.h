@@ -2,7 +2,7 @@
 
 #include "Core/Math/Math.h"
 #include "Events/Event.h"
-#include "Core/Functional/Function.h"
+#include "Containers/Function.h"
 
 namespace Lumina
 {

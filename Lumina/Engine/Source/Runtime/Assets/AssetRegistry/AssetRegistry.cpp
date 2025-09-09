@@ -154,13 +154,13 @@ namespace Lumina
             MakeParentPackagePath(NewParentPath);
 
             FAssetData* OldData = AssetPackageMap[OldPackage->GetName()];
-            OldData->AssetClass = CObjectRedirector::StaticClass()->GetFullyQualifiedName();
+            OldData->AssetClass = CObjectRedirector::StaticClass()->GetQualifiedName();
         
             FAssetData* Data = Memory::New<FAssetData>();
             Data->AssetName = Asset->GetName();
             Data->PackageName = Package->GetName();
-            Data->FullPath = Asset->GetFullyQualifiedName();
-            Data->AssetClass = Asset->GetClass()->GetFullyQualifiedName();
+            Data->FullPath = Asset->GetQualifiedName();
+            Data->AssetClass = Asset->GetClass()->GetQualifiedName();
 
             AssetsByPath[NewParentPath].push_back(Data);
             AssetPackageMap[Package->GetName()] = Data;
@@ -212,7 +212,7 @@ namespace Lumina
 
     const THashSet<FName>& FAssetRegistry::GetReferences(const FName& Asset)
     {
-        return ReferenceMap.at(Asset);
+        return ReferenceMap[Asset];
     }
 
     void FAssetRegistry::ProcessPackagePath(FStringView Path)
@@ -292,6 +292,9 @@ namespace Lumina
         Assets.clear();
         AssetPackageMap.clear();
         AssetsByPath.clear();
+        ReferenceMap.clear();
+
+        BroadcastRegistryUpdate();
     }
 
     void FAssetRegistry::BroadcastRegistryUpdate()

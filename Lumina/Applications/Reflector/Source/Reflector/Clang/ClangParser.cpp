@@ -5,7 +5,6 @@
 #include "Visitors/ClangTranslationUnit.h"
 
 
-#define OPTIMIZE_HEADER_WRITES 0
 
 namespace Lumina::Reflection
 {
@@ -33,61 +32,6 @@ namespace Lumina::Reflection
         const eastl::string AmalgamationPath = ProjectReflectionDirectory + "/ReflectHeaders.h";
         std::filesystem::create_directories(ProjectReflectionDirectory.c_str());
 
-#if OPTIMIZE_HEADER_WRITES // Only parse recently modified headers.
-        
-        for (const FReflectedHeader& Header : Headers)
-        {
-            const eastl::string ReflectionCounterpart = ProjectReflectionDirectory + "/" + Header.FileName + ".generated.h";
-
-            bool bNeedsReflection = false;
-
-            if (!std::filesystem::exists(ReflectionCounterpart.c_str()))
-            {
-                if (Header.HeaderPath.find(".generated.h") != eastl::string::npos)
-                {
-                    bNeedsReflection = true;
-                }
-            }
-            else
-            {
-                auto HeaderTime = std::filesystem::last_write_time(Header.HeaderPath.c_str());
-                auto GeneratedTime = std::filesystem::last_write_time(ReflectionCounterpart.c_str());
-
-                if (HeaderTime > GeneratedTime)
-                {
-                    bNeedsReflection = true;
-                }
-            }
-
-            
-            if (bNeedsReflection)
-            {
-                AmalgamationFile << "#include \"" << Header.HeaderPath.c_str() << "\"\n";
-                if (ParsingContext.bInitialPass)
-                {
-                    ParsingContext.NumHeadersReflected++;
-                }
-            }
-            else
-            {
-                for (auto& DatabaseProject : ParsingContext.ReflectionDatabase.ReflectedProjects)
-                {
-                    if (DatabaseProject.Name == Project.Name)
-                    {
-                        auto& headers = DatabaseProject.Headers;
-                        headers.erase(
-                            eastl::remove_if(headers.begin(), headers.end(), [&](const FReflectedHeader& DbHeader)
-                            {
-                                return DbHeader.HeaderPath == Header.HeaderPath;
-                            }), headers.end()
-                        );
-                    }
-                }
-            }
-        }
-        
-#else
-        // Clean the intermediate reflection directory
         for (const auto& Entry : std::filesystem::directory_iterator(ProjectReflectionDirectory.c_str()))
         {
             std::error_code ec;
@@ -106,7 +50,7 @@ namespace Lumina::Reflection
             AmalgamationFile << "#include \"" << Header.HeaderPath.c_str() << "\"\n";
             ParsingContext.NumHeadersReflected++;
         }
-#endif
+
         AmalgamationFile.close();
 
         

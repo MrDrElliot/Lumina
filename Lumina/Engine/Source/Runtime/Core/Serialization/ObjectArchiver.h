@@ -22,10 +22,21 @@ namespace Lumina
         FObjectProxyArchiver(FArchive& InInnerAr, bool bInLoadIfFindFails)
             : FProxyArchive(InInnerAr)
             , bLoadIfFindFails(bInLoadIfFindFails)
-        {}
+        {
+            if (InInnerAr.IsReading())
+            {
+                SetFlag(EArchiverFlags::Reading);
+            }
+            else
+            {
+                SetFlag(EArchiverFlags::Writing);
+            }
+        }
+
         
         
         LUMINA_API virtual FArchive& operator<<(CObject*& Obj) override;
+        LUMINA_API virtual FArchive& operator<<(FObjectHandle& Value) override;
 
 
     private:

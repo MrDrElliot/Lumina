@@ -7,6 +7,7 @@
 #include "Assets/Factories/Factory.h"
 #include "Core/Engine/Engine.h"
 #include "Core/Object/ObjectIterator.h"
+#include "Core/Object/ObjectRedirector.h"
 #include "Core/Object/Package/Package.h"
 #include "EASTL/sort.h"
 #include "Paths/Paths.h"
@@ -78,7 +79,9 @@ namespace Lumina
             float Right = ImGui::GetContentRegionAvail().x - Left;
             
             DrawDirectoryBrowser(Contxt, bIsFocused, ImVec2(Left, 0));
+            
             ImGui::SameLine();
+
             DrawContentBrowser(Contxt, bIsFocused, ImVec2(Right, 0));
         });
         
@@ -213,7 +216,7 @@ namespace Lumina
                             if (CObject* TestObject = FindObject<CObject>(nullptr, TestAssetName))
                             {
                                 ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(200, 55, 55, 255));
-                                ImGui::TextWrapped("Already Exists: %s", TestObject->GetFullyQualifiedName().c_str());
+                                ImGui::TextWrapped("Already Exists: %s", *TestObject->GetQualifiedName());
                                 ImGui::PopStyleColor();
                                 
                                 if (ImGui::Button("Cancel"))
@@ -576,7 +579,7 @@ namespace Lumina
         ImGui::SetCursorPos(ImGui::GetCursorPos() + ImVec2(Padding, Padding));
 
         ImGui::BeginChild("Content", AdjustedSize, true, ImGuiWindowFlags_None);
-
+        
         if (ImGui::IsWindowHovered() && !ImGui::IsAnyItemHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Right))
         {
             ImGui::OpenPopup("ContentContextMenu");
@@ -780,8 +783,62 @@ namespace Lumina
                 }
             }
         }
+
+        ImGui::BeginHorizontal("Breadcrumbs");
+
+        std::filesystem::path SelectedFSPath = SelectedPath.c_str();
+        std::filesystem::path current;
+        bool bStarted = false;
+
+        for (auto it = SelectedFSPath.begin(); it != SelectedFSPath.end(); ++it)
+        {
+            current /= *it;
+
+            if (!bStarted)
+            {
+                if (it->string() == "Content")
+                {
+                    bStarted = true;
+                }
+                else
+                {
+                    continue;
+                }
+            }
+
+            ImGui::PushID(std::distance(SelectedFSPath.begin(), it));
+            {
+                ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(4, 2));
+                ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(2, 0));
+                if (ImGui::Button(it->string().c_str()))
+                {
+                    SelectedPath = current.generic_string().c_str();
+                    ContentBrowserTileView.MarkTreeDirty();
+                }
+                ImGui::PopStyleVar(2);
+            }
+            ImGui::PopID();
+
+            auto next = it;
+            ++next;
+            
+            if (next != SelectedFSPath.end())
+            {
+                ImGui::TextUnformatted(LE_ICON_ARROW_RIGHT);
+            }
+        }
+
+        ImGui::EndHorizontal();
+
+        ImGuiTextFilter SearchFilter;
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(4, 2));
+        SearchFilter.Draw("##Search", 450.0f);
+        ImGui::PopStyleVar();
+
+        ImGui::Separator();
         
         ContentBrowserTileView.Draw(ContentBrowserTileViewContext);
+        
         ImGui::EndChild();
     
     }

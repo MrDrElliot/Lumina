@@ -102,49 +102,49 @@ namespace Lumina
             return *this;
         }
     
-        FORCEINLINE FArchive& operator<<(uint8& Value)
+        virtual FArchive& operator<<(uint8& Value)
         {
             Serialize(&Value, 1);
             return *this;
         }
 
-        FORCEINLINE FArchive& operator<<(int8& Value)
+        virtual FArchive& operator<<(int8& Value)
         {
             Serialize(&Value, 1);
             return *this;
         }
     
-        FORCEINLINE FArchive& operator<<(uint16& Value)
+        virtual FArchive& operator<<(uint16& Value)
         {
             ByteOrderSerialize(Value);
             return *this;
         }
     
-        FORCEINLINE FArchive& operator<<(int16& Value)
+        virtual FArchive& operator<<(int16& Value)
         {
             ByteOrderSerialize(reinterpret_cast<uint16&>(Value));
             return *this;
         }
     
-        FORCEINLINE FArchive& operator<<(uint32& Value)
+        virtual FArchive& operator<<(uint32& Value)
         {
             ByteOrderSerialize(Value);
             return *this;
         }
     
-        FORCEINLINE FArchive& operator<<(int32& Value)
+        virtual FArchive& operator<<(int32& Value)
         {
             ByteOrderSerialize(reinterpret_cast<uint32&>(Value));
             return *this;
         }
 
-        FORCEINLINE FArchive& operator<<( bool& D)
+        virtual FArchive& operator<<( bool& D)
         {
             SerializeBool(D);
             return *this;
         }
 
-        FORCEINLINE FArchive& operator<<(float& Value)
+        virtual FArchive& operator<<(float& Value)
         {
             static_assert(sizeof(float) == sizeof(uint32_t), "Unexpected float size");
             uint32 Temp;
@@ -154,7 +154,7 @@ namespace Lumina
             return *this;
         }
 
-        FORCEINLINE FArchive& operator<<(double& Value)
+        virtual FArchive& operator<<(double& Value)
         {
             static_assert(sizeof(double) == sizeof(uint64), "Unexpected double size");
             uint64 Temp;
@@ -165,13 +165,13 @@ namespace Lumina
         }
 
 
-        FORCEINLINE FArchive& operator<<(uint64& Value)
+        virtual FArchive& operator<<(uint64& Value)
         {
             ByteOrderSerialize(Value);
             return *this;
         }
 
-        FORCEINLINE FArchive& operator<<(int64& Value)
+        virtual FArchive& operator<<(int64& Value)
         {
             ByteOrderSerialize(reinterpret_cast<uint64&>(Value));
             return *this;
@@ -179,7 +179,7 @@ namespace Lumina
 
         virtual void SerializeBool(bool& D);
     
-        FORCEINLINE FArchive& operator<<(Lumina::FString& str)
+        virtual FArchive& operator<<(Lumina::FString& str)
         {
             if (IsReading())
             {
@@ -218,7 +218,7 @@ namespace Lumina
             return *this;
         }
 
-        FORCEINLINE FArchive& operator<<(FName& str)
+        virtual FArchive& operator<<(FName& str)
         {
             FString String(str.c_str());
             *this << String;
@@ -232,7 +232,7 @@ namespace Lumina
         //-------------------------------------------------------------------------
 
         template<typename ValueType>
-        FORCEINLINE FArchive& operator << (TVector<ValueType>& Array)
+        FArchive& operator << (TVector<ValueType>& Array)
         {
             SIZE_T SerializeNum = IsReading() ? 0 : Array.size();
             *this << SerializeNum;

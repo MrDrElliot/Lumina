@@ -118,8 +118,7 @@ namespace Lumina::Reflection
 
     void FTypeReflector::Bump()
     {
-        Solution.DirtyProjectFiles();
-        
+#if 0
         try
         {
             std::filesystem::current_path(Solution.GetParentPath().c_str());
@@ -141,6 +140,7 @@ namespace Lumina::Reflection
         {
             std::cerr << "Filesystem error while setting working directory: " << e.what() << "\n";
         }
+#endif
     }
     
     bool FTypeReflector::WriteGeneratedFiles(const FClangParser& Parser)

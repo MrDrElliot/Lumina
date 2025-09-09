@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "Core/Functional/Function.h"
+#include "Containers/Function.h"
 #include "Core/Reflection/PropertyChangedEvent.h"
 #include "Core/Reflection/PropertyCustomization/PropertyCustomization.h"
 #include "Memory/SmartPtr.h"

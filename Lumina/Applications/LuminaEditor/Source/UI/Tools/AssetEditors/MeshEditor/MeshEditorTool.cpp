@@ -10,7 +10,6 @@
 #include "World/Entity/Components/LightComponent.h"
 #include "World/Entity/Components/StaticMeshComponent.h"
 #include "World/Entity/Components/VelocityComponent.h"
-#include "World/Entity/Systems/DebugCameraEntitySystem.h"
 #include "Tools/UI/ImGui/ImGuiFonts.h"
 #include "Tools/UI/ImGui/ImGuiX.h"
 
@@ -22,19 +21,15 @@ namespace Lumina
     FMeshEditorTool::FMeshEditorTool(IEditorToolContext* Context, CObject* InAsset)
     : FAssetEditorTool(Context, InAsset->GetName().c_str(), InAsset)
     {
-        //FSceneManager* SceneManager = GEngine->GetEngineSubsystem<FSceneManager>();
-        //FScene* NewScene = SceneManager->CreateScene(ESceneType::Tool);
-        //NewScene->RegisterSystem(NewObject<CDebugCameraEntitySystem>());
-        //
-        //Entity DirectionalLightEntity = NewScene->CreateEntity(FTransform(), "Directional Light");
-        //DirectionalLightEntity.AddComponent<SDirectionalLightComponent>();
-        //
-        //MeshEntity = NewScene->CreateEntity(FTransform(), "MeshEntity");
-        //
-        //MeshEntity.AddComponent<SStaticMeshComponent>().StaticMesh = Cast<CStaticMesh>(InAsset);
-        //MeshEntity.GetComponent<STransformComponent>().SetLocation(glm::vec3(0.0f, 0.0f, -2.5f));
-        //
-        //Scene = NewScene;
+        World = NewObject<CWorld>();
+
+        Entity DirectionalLightEntity = World->ConstructEntity("Directional Light");
+        DirectionalLightEntity.Emplace<SDirectionalLightComponent>();
+        
+        MeshEntity = World->ConstructEntity("MeshEntity");
+        
+        MeshEntity.Emplace<SStaticMeshComponent>().StaticMesh = Cast<CStaticMesh>(InAsset);
+        MeshEntity.GetComponent<STransformComponent>().SetLocation(glm::vec3(0.0f, 0.0f, -2.5f));
     }
 
     void FMeshEditorTool::OnInitialize()

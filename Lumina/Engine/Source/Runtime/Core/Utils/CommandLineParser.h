@@ -61,23 +61,25 @@ namespace Lumina
             return Args.find(NormalizeKey(name)) != Args.end();
         }
     
-        NODISCARD TOptional<FString> Get(const FString& name, const FString& defaultValue = "") const
+        NODISCARD TOptional<FString> Get(const FString& Name) const
         {
-            auto it = Args.find(NormalizeKey(name));
-            return it != Args.end() ? it->second : defaultValue;
+            auto it = Args.find(NormalizeKey(Name));
+            return it != Args.end() ? it->second : TOptional<FString>();
         }
     
-        NODISCARD TOptional<int> GetInt(const FString& name, int defaultValue = 0) const
+        NODISCARD TOptional<int> GetInt(const FString& name) const
         {
             auto it = Args.find(NormalizeKey(name));
-            return it != Args.end() ? std::stoi(it->second.c_str()) : defaultValue;
+            return it != Args.end() ? std::stoi(it->second.c_str()) : TOptional<int>();
         }
     
-        NODISCARD TOptional<bool> GetBool(const FString& name, bool defaultValue = false) const
+        NODISCARD TOptional<bool> GetBool(const FString& name) const
         {
             auto it = Args.find(NormalizeKey(name));
             if (it == Args.end())
-                return defaultValue;
+            {
+                return TOptional<bool>();
+            }
     
             FString val = StringUtils::ToLower(it->second);
             return val.empty() || val == "1" || val == "true" || val == "yes";
@@ -96,7 +98,7 @@ namespace Lumina
         }
     
     private:
-        THashMap<FString, FString> Args;
+        THashMap<FName, FString> Args;
         TVector<FString> PositionalArgs;
     };
 

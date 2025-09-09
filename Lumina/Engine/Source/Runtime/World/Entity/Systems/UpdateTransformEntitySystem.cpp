@@ -25,7 +25,7 @@ namespace Lumina
     {
         LUMINA_PROFILE_SCOPE();
         
-        auto Group = EntityRegistry.group<>(entt::get<STransformComponent, FDirtyTransform>);
+        auto Group = EntityRegistry.group<>(entt::get<STransformComponent>);
         auto RelationshipGroup = EntityRegistry.group<>(entt::get<STransformComponent, SRelationshipComponent>);
         auto CameraView = EntityRegistry.view<SCameraComponent>(entt::exclude<SEditorComponent>);
 

@@ -4,8 +4,8 @@
 #include <entt/entt.hpp>
 #include "Core/Object/Object.h"
 #include "Core/Object/ObjectHandleTyped.h"
-#include "EntitySystem.generated.h"
 #include "Core/UpdateContext.h"
+#include "EntitySystem.generated.h"
 
 
 namespace Lumina
@@ -47,24 +47,19 @@ namespace Lumina
         friend class CWorld;
         
         void PostCreateCDO() override;
-
-        /** System ID */
-        virtual uint32 GetSystemID() const { return INDEX_NONE; }
-
+        
         /** Retrieves the update priority and stage for this system */
         virtual const FUpdatePriorityList* GetRequiredUpdatePriorities() { return nullptr; }
 
-        /** Called when the system is first constructed for the scene */
+        /** Called when the system is first constructed for the world */
         virtual void Initialize() { }
 
-        /** Called when the system is removed from the scene, (and scene shutdown) */
-        virtual void Shutdown() { }
-
-    protected:
-
-        /** Called per-update */
+        /** Called per-update, for each required system */
         virtual void Update(FEntityRegistry& EntityRegistry, const FUpdateContext& UpdateContext) { }
 
+        /** Called when the system is removed from the world, (and world shutdown) */
+        virtual void Shutdown() { }
+    
     private:
 
         /** We do not allow mutation of the scene through systems */
@@ -75,7 +70,5 @@ namespace Lumina
 
 
 #define DEFINE_SCENE_SYSTEM(Type, ... )\
-constexpr const static uint32 EntitySystemID = Lumina::Hash::FNV1a::GetHash32(#Type);\
-virtual uint32 GetSystemID() const override final { return Type::EntitySystemID; }\
 static const FUpdatePriorityList PriorityList; \
 virtual const FUpdatePriorityList* GetRequiredUpdatePriorities() override { static const FUpdatePriorityList PriorityList = FUpdatePriorityList(__VA_ARGS__); return &PriorityList; }

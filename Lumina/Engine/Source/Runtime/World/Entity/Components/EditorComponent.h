@@ -1,11 +1,13 @@
 #pragma once
 
+#include "Module/API.h"
+
 namespace Lumina
 {
-    struct SEditorComponent
+    struct LUMINA_API SEditorComponent
     {
         bool bEnabled = true;
     };
 
-    struct SHiddenComponent { };
+    struct LUMINA_API SHiddenComponent { };
 }

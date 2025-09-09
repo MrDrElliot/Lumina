@@ -20,8 +20,6 @@ namespace Lumina
 
     void FRenderGraph::Execute()
     {
-
-        
         AllocateTransientResources();
         
         for (FRGPassHandle Pass : Passes)

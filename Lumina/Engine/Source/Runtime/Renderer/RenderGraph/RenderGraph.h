@@ -58,16 +58,14 @@ namespace Lumina
                 Alloc,
                 Dealloc,
             };
-
-            
         };
         
 
     private:
 
-        FRHICommandListRef      GraphicsCommandList;
-        FRHICommandListRef      ComputeCommandList;
-        FRHICommandListRef      TransferCommandList;
+        FRHICommandListRef              GraphicsCommandList;
+        FRHICommandListRef              ComputeCommandList;
+        FRHICommandListRef              TransferCommandList;
 
         TRGHandleRegistry<FRGBuffer>    BufferRegistry;
         TRGHandleRegistry<FRGImage>     ImageRegistry;

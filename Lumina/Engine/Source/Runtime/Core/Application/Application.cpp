@@ -63,12 +63,12 @@ namespace Lumina
         while(!ShouldExit() && !bExitRequested)
         {
             LUMINA_PROFILE_FRAME();
+
+            Window->ProcessMessages();
             
             GEngine->Update();
             
             bExitRequested = !ApplicationLoop();
-            
-            Window->ProcessMessages();
         }
 
         
@@ -86,8 +86,6 @@ namespace Lumina
         
         Window->Shutdown();
         Memory::Delete(Window);
-
-        FModuleManager::Get().UnloadAllModules();
         
         return 0;
     }

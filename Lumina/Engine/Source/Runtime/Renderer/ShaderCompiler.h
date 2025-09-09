@@ -3,7 +3,7 @@
 
 #include "Containers/Array.h"
 #include "Containers/String.h"
-#include "Core/Functional/Function.h"
+#include "Containers/Function.h"
 #include "Core/Threading/Thread.h"
 #include "EASTL/internal/atomic/atomic.h"
 

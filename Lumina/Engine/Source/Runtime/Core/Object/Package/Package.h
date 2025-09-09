@@ -381,6 +381,7 @@ namespace Lumina
         LUMINA_API TSharedPtr<FPackageThumbnail> GetPackageThumbnail() const { return PackageThumbnail; }
 
         LUMINA_API FString GetPackageFilename() const;
+        LUMINA_API FString GetFullPackageFilePath() const;
 
         
         LUMINA_API void MarkDirty() { bDirty = true; }

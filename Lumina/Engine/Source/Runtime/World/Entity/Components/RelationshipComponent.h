@@ -1,4 +1,6 @@
 #pragma once
+
+#include "Module/API.h"
 #include "Containers/Array.h"
 #include "Platform/GenericPlatform.h"
 #include "World/Entity/Entity.h"
@@ -6,7 +8,7 @@
 
 namespace Lumina
 {
-    struct SRelationshipComponent
+    struct LUMINA_API SRelationshipComponent
     {
         constexpr static SIZE_T MaxChildren = 32;
         

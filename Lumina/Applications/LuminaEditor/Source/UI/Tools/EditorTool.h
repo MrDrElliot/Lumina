@@ -7,7 +7,7 @@
 #include "Containers/Array.h"
 #include "Containers/String.h"
 #include "Core/UpdateContext.h"
-#include "Core/Functional/Function.h"
+#include "Containers/Function.h"
 #include "Memory/RefCounted.h"
 #include "World/Entity/Entity.h"
 #include "ImGuizmo.h"
@@ -98,8 +98,8 @@ namespace Lumina
         // Get the unique typename for this tool to be used for docking
         virtual char const* GetUniqueTypeName() const = 0;
         
-        /** Called just before updating the scene at each stage */
-        virtual void SceneUpdate(const FUpdateContext& UpdateContext) { }
+        /** Called just before updating the world at each stage */
+        virtual void WorldUpdate(const FUpdateContext& UpdateContext) { }
 
         /** Once per-frame update */
         virtual void Update(const FUpdateContext& UpdateContext) { }
@@ -111,10 +111,10 @@ namespace Lumina
         virtual void DrawToolMenu(const FUpdateContext& UpdateContext) { }
 
         /** Viewport overlay to draw any elements to the window's viewport */
-        virtual void DrawViewportOverlayElements(const FUpdateContext& UpdateContext, ImTextureID ViewportTexture, ImVec2 ViewportSize) { }
+        virtual void DrawViewportOverlayElements(const FUpdateContext& UpdateContext, ImTextureRef ViewportTexture, ImVec2 ViewportSize) { }
         
         /** Draw the optional viewport for this tool window, returns true if focused. */
-        virtual bool DrawViewport(const FUpdateContext& UpdateContext, ImTextureID ViewportTexture);
+        virtual bool DrawViewport(const FUpdateContext& UpdateContext, ImTextureRef ViewportTexture);
 
         /** Draws overlay elements on the viewport for tool actions. */
         virtual void DrawViewportToolbar(const FUpdateContext& UpdateContext);
@@ -139,7 +139,7 @@ namespace Lumina
         virtual void OnUndo() { }
 
         /** @TODO Cache and compare */
-        INLINE uint32 GetID() { return Hash::GetHash32(GetToolName()); }
+        uint32 GetID() const { return Hash::GetHash32(GetToolName()); }
 
         ImGuiID GetCurrDockID() const        { return CurrDockID; }
         ImGuiID GetDesiredDockID() const     { return DesiredDockID; }

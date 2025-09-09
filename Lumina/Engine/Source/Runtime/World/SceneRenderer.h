@@ -73,8 +73,6 @@ namespace Lumina
     private:
 
         CWorld*                             World = nullptr;
-        SEnvironmentComponent*              EnvironmentComponent = nullptr;
-        SDirectionalLightComponent*         DirectionalLightComponent = nullptr;
         
         FSceneRenderStats                   SceneRenderStats;
         FSceneRenderSettings                RenderSettings;
@@ -126,7 +124,7 @@ namespace Lumina
         FRHIImageRef                        SSAOImage;
         FRHIImageRef                        SSAOBlur;
 
-        ESceneRenderGBuffer                 GBufferDebugMode = ESceneRenderGBuffer::RenderTarget;
+        ESceneRenderGBuffer                           GBufferDebugMode = ESceneRenderGBuffer::RenderTarget;
 
         TRenderVector<FInstanceData>                  InstanceData;
         

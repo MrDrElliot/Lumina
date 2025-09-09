@@ -16,8 +16,6 @@ namespace Lumina
 
     void FGamePreviewTool::OnDeinitialize(const FUpdateContext& UpdateContext)
     {
-        GEngine->GetEngineSubsystem<FWorldManager>()->RemoveWorld(World);
-        World.MarkGarbage();
     }
 
     void FGamePreviewTool::Update(const FUpdateContext& UpdateContext)
@@ -35,7 +33,7 @@ namespace Lumina
         ImGui::DockBuilderDockWindow(GetToolWindowName(ViewportWindowName).c_str(), InDockspaceID);
     }
 
-    void FGamePreviewTool::DrawViewportOverlayElements(const FUpdateContext& UpdateContext, ImTextureID ViewportTexture, ImVec2 ViewportSize)
+    void FGamePreviewTool::DrawViewportOverlayElements(const FUpdateContext& UpdateContext, ImTextureRef ViewportTexture, ImVec2 ViewportSize)
     {
         
     }

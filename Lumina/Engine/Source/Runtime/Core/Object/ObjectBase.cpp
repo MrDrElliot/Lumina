@@ -176,7 +176,7 @@ namespace Lumina
         return GetPackage()->GetName().ToString();
     }
 
-    FName CObjectBase::GetFullyQualifiedName() const
+    FName CObjectBase::GetQualifiedName() const
     {
         TInlineString<256> Path;
         Path.append(GetPathName().c_str())
@@ -298,9 +298,9 @@ namespace Lumina
     {
         for (FCObjectArray::FEntry& Entry : GObjectArray.Objects)
         {
-            if (Entry.Object)
+            if (CObjectBase* Object = Entry.Object.load(std::memory_order_relaxed))
             {
-                Entry.Object.load(std::memory_order_relaxed)->MarkGarbage();
+                Object->MarkGarbage();
             }
         }
         

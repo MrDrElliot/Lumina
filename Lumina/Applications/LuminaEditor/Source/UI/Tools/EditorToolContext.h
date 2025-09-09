@@ -1,7 +1,7 @@
 #pragma once
 #include "imgui.h"
 #include "Core/UpdateContext.h"
-#include "Core/Functional/Function.h"
+#include "Containers/Function.h"
 #include "Platform/WindowsPlatform.h"
 
 namespace Lumina

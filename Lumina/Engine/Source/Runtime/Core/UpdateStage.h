@@ -53,35 +53,35 @@ namespace Lumina
             ((*this << static_cast<Args&&>(args)), ...);
         }
 
-        inline void Reset()
+        void Reset()
         {
             memset(Priorities, (uint8) EUpdatePriority::Disabled, sizeof(Priorities));
         }
 
-        inline bool IsStageEnabled(EUpdateStage stage) const
+        bool IsStageEnabled(EUpdateStage stage) const
         {
             return Priorities[(uint8) stage] != (uint8) EUpdatePriority::Disabled;
         }
 
-        inline uint8 GetPriorityForStage(EUpdateStage stage) const
+        uint8 GetPriorityForStage(EUpdateStage stage) const
         {
             return Priorities[(uint8) stage];
         }
 
-        inline FUpdatePriorityList& SetStagePriority( FUpdateStagePriority&& stagePriority )
+        FUpdatePriorityList& SetStagePriority( FUpdateStagePriority&& stagePriority )
         {
             Priorities[(uint8) stagePriority.Stage] = (uint8)stagePriority.Priority;
             return *this;
         }
 
         // Set a priority for a given stage
-        inline FUpdatePriorityList& operator<<(FUpdateStagePriority&& stagePriority)
+        FUpdatePriorityList& operator<<(FUpdateStagePriority&& stagePriority)
         {
             Priorities[(uint8) stagePriority.Stage] = (uint8)stagePriority.Priority;
             return *this;
         }
 
-        inline bool AreAllStagesDisabled() const
+        bool AreAllStagesDisabled() const
         {
             static uint8 const disabledStages[(uint8) EUpdateStage::Max] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
             static_assert( sizeof( disabledStages ) == sizeof(Priorities), "disabled stages must be the same size as the priorities list" );

@@ -1,36 +1,24 @@
 #pragma once
-
+#include "InputSubsystem.h"
 #include "Events/KeyCodes.h"
-#include "Core/Windows/Window.h"
-#include <GLFW/glfw3.h>
 
-
-namespace Lumina::Input
+namespace Lumina
 {
-    
-    inline bool IsMouseButtonPressed(const KeyCode Key) 
+    namespace Input
     {
-        GLFWwindow* Window = Windowing::GetPrimaryWindowHandle()->GetWindow();
-        auto State = glfwGetMouseButton(Window, Key);
+        inline bool IsKeyPressed(KeyCode Key)
+        {
+            return GEngine->GetEngineSubsystem<FInputSubsystem>()->IsKeyPressed(Key);
+        }
 
-        return State == GLFW_PRESS;
+        inline bool IsMouseButtonPressed(MouseCode Button)
+        {
+            return GEngine->GetEngineSubsystem<FInputSubsystem>()->IsMouseButtonPressed(Button);
+        }
+
+        inline glm::vec2 GetMousePosition()
+        {
+            return GEngine->GetEngineSubsystem<FInputSubsystem>()->GetMousePosition();
+        }
     }
-
-    inline bool IsKeyPressed(const KeyCode Key)
-    {
-        GLFWwindow* Window = Windowing::GetPrimaryWindowHandle()->GetWindow();
-        auto State = glfwGetKey(Window, Key);
-
-        return State == GLFW_PRESS;
-    }
-
-    inline glm::vec2 GetMousePos()
-    {
-        GLFWwindow* Window = Windowing::GetPrimaryWindowHandle()->GetWindow();
-        double xpos, ypos;
-        glfwGetCursorPos(Window, &xpos, &ypos);
-
-        return { (float)xpos, (float)ypos };
-    }
-    
 }

@@ -7,34 +7,24 @@ namespace Lumina
 {
     using RegisterFunc = void(*)();
 
-    class FEntityComponentRegistry : public TSingleton<FEntityComponentRegistry>
+    class FEntityComponentRegistry
     {
     public:
 
-        LUMINA_API void AddDeferred(RegisterFunc fn)
-        {
-            Registrants.push_back(fn);
-        }
+        LUMINA_API static FEntityComponentRegistry& Get();
 
-        LUMINA_API void RegisterAll()
-        {
-            while (!Registrants.empty())
-            {
-                auto fn = Registrants.back();
-                Registrants.pop_back();
-
-                fn();
-            }
-        }
-
-        void Clear()
-        {
-            Registrants.clear();
-            Registrants.shrink_to_fit();
-        }
+        void AddDeferred(RegisterFunc fn);
+        void RegisterAll();
+        void Clear();
 
     private:
         
-        TFixedVector<RegisterFunc, 2024> Registrants;
+        TFixedVector<RegisterFunc, 100> Registrants;
     };
+    
+
+    namespace ECS
+    {
+        LUMINA_API void AddDeferredComponentRegistry(RegisterFunc Func);
+    }
 }

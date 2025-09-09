@@ -10,7 +10,7 @@
 #include "Renderer/RHIGlobals.h"
 #include "World/entity/components/lightcomponent.h"
 #include "World/entity/components/staticmeshcomponent.h"
-#include "World/Entity/Systems/DebugCameraEntitySystem.h"
+#include "World/Entity/Systems/EditorEntityMovementSystem.h"
 #include "thumbnails/thumbnailmanager.h"
 
 namespace Lumina

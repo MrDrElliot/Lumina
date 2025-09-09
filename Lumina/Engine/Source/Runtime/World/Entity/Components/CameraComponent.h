@@ -10,7 +10,7 @@ namespace Lumina
     struct LUMINA_API SCameraComponent
     {
         GENERATED_BODY()
-        ENTITY_COMPONENT(SCameraComponent);
+        ENTITY_COMPONENT(SCameraComponent)
         
         SCameraComponent(float fov = 90.0f, float aspect = 16.0f / 9.0f)
             :ViewVolume(fov, aspect)

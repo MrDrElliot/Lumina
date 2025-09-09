@@ -100,7 +100,7 @@ namespace Lumina
         LUMINA_API FString GetPathName() const;
 
         /** Returns the name using this objects path name (package). (project://package.thisobject) */
-        LUMINA_API FName GetFullyQualifiedName() const;
+        LUMINA_API FName GetQualifiedName() const;
     
     private:
         
@@ -195,14 +195,12 @@ namespace Lumina
 
     LUMINA_API void ShutdownCObjectSystem();
 
-    /** Involked from static constructor in generated code */
+    /** Invoked from static constructor in generated code */
     LUMINA_API void RegisterCompiledInInfo(CClass* (*RegisterFn)(), const TCHAR* Package, const TCHAR* Name);
 
     LUMINA_API void RegisterCompiledInInfo(CEnum* (*RegisterFn)(), const FEnumRegisterCompiledInInfo& Info);
 
     LUMINA_API void RegisterCompiledInInfo(CStruct* (*RegisterFn)(), const FStructRegisterCompiledInInfo& Info);
-
-    LUMINA_API CEnum* GetStaticEnum(CEnum* (*RegisterFn)(), const TCHAR* Name);
     
     LUMINA_API void RegisterCompiledInInfo(const FClassRegisterCompiledInInfo* Info, SIZE_T NumClassInfo);
 
@@ -210,6 +208,7 @@ namespace Lumina
 
     LUMINA_API void RegisterCompiledInInfo(const FEnumRegisterCompiledInInfo* EnumInfo, SIZE_T NumEnumInfo, const FClassRegisterCompiledInInfo* ClassInfo, SIZE_T NumClassInfo, const FStructRegisterCompiledInInfo* StructInfo, SIZE_T NumStructInfo);
 
+    LUMINA_API CEnum* GetStaticEnum(CEnum* (*RegisterFn)(), const TCHAR* Name);
     
     LUMINA_API void CObjectForceRegistration(CObjectBase* Object);
 

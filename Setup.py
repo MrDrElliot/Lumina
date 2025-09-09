@@ -9,6 +9,8 @@ except ImportError:
     import sys
     subprocess.check_call([sys.executable, "-m", "pip", "install", "colorama"])
     from colorama import Fore, Style, init
+
+    
 def extract_zip(zip_filename, extract_to):
     init(autoreset=True)  # Initialize colorama for colored output
 

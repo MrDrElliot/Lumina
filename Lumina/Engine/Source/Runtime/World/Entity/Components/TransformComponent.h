@@ -11,7 +11,7 @@ namespace Lumina
     struct LUMINA_API STransformComponent
     {
         GENERATED_BODY()
-        ENTITY_COMPONENT(STransformComponent);
+        ENTITY_COMPONENT(STransformComponent)
         
         STransformComponent() = default;
         STransformComponent(const FTransform& InTransform)

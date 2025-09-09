@@ -8,7 +8,7 @@
 namespace Lumina
 {
     LUM_CLASS()
-    class CAssetDefinition_Material : public CAssetDefinition
+    class LUMINA_API CAssetDefinition_Material : public CAssetDefinition
     {
         GENERATED_BODY()
     public:

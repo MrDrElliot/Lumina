@@ -5,6 +5,7 @@
 #include "assets/assettypes/mesh/staticmesh/staticmesh.h"
 #include "Assets/AssetTypes/Textures/Texture.h"
 #include "Core/Reflection/Type/Properties/ObjectProperty.h"
+#include "Paths/Paths.h"
 #include "Renderer/RenderManager.h"
 #include "Tools/UI/UITextureCache.h"
 #include "Tools/UI/ImGui/ImGuiDesignIcons.h"

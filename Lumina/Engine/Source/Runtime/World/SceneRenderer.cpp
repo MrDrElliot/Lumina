@@ -48,12 +48,6 @@ namespace Lumina
         InitBuffers();
         CreateImages();
         InitResources();
-
-        World->GetMutableEntityRegistry().on_construct<SEnvironmentComponent>().connect<&FSceneRenderer::AddEnvironmentComponent>(this);
-        World->GetMutableEntityRegistry().on_destroy<SEnvironmentComponent>().connect<&FSceneRenderer::RemoveEnvironmentComponent>(this);
-
-        World->GetMutableEntityRegistry().on_construct<SDirectionalLightComponent>().connect<&FSceneRenderer::AddDirectionalLightComponent>(this);
-        World->GetMutableEntityRegistry().on_destroy<SDirectionalLightComponent>().connect<&FSceneRenderer::RemoveDirectionalLightcomponent>(this);
     }
 
     FSceneRenderer::~FSceneRenderer()
@@ -83,6 +77,7 @@ namespace Lumina
         SceneGlobalData.NearPlane =                     0.01f;
         
         SceneViewport->SetViewVolume(CameraComponent.GetViewVolume());
+        
         
         FRenderGraph RenderGraph;
         
@@ -390,73 +385,70 @@ namespace Lumina
                 CmdList.Draw(3, 1, 0, 0); 
             });
         }
-
-        if (EnvironmentComponent)
+        
+        RenderGraph.AddPass<RG_Raster>(FRGEvent("Environment Pass"), nullptr, [&](ICommandList& CmdList)
         {
-            RenderGraph.AddPass<RG_Raster>(FRGEvent("Environment Pass"), nullptr, [&](ICommandList& CmdList)
+            LUMINA_PROFILE_SECTION_COLORED("Environment Pass", tracy::Color::Green3);
+        
+            FRHIVertexShaderRef VertexShader = GRenderContext->GetShaderLibrary()->GetShader<FRHIVertexShader>("FullscreenQuad.vert");
+            FRHIPixelShaderRef PixelShader = GRenderContext->GetShaderLibrary()->GetShader<FRHIPixelShader>("Skybox.frag");
+            if (!VertexShader || !PixelShader)
             {
-                LUMINA_PROFILE_SECTION_COLORED("Environment Pass", tracy::Color::Green3);
-            
-                FRHIVertexShaderRef VertexShader = GRenderContext->GetShaderLibrary()->GetShader<FRHIVertexShader>("FullscreenQuad.vert");
-                FRHIPixelShaderRef PixelShader = GRenderContext->GetShaderLibrary()->GetShader<FRHIPixelShader>("Skybox.frag");
-                if (!VertexShader || !PixelShader)
-                {
-                    return;
-                }
-            
-                FRasterState RasterState;
-                RasterState.SetCullNone();
+                return;
+            }
+        
+            FRasterState RasterState;
+            RasterState.SetCullNone();
     
-                FBlendState BlendState;
-                FBlendState::RenderTarget RenderTarget;
-                BlendState.SetRenderTarget(0, RenderTarget);
+            FBlendState BlendState;
+            FBlendState::RenderTarget RenderTarget;
+            BlendState.SetRenderTarget(0, RenderTarget);
     
-                FDepthStencilState DepthState;
-                DepthState.EnableDepthTest();
-                DepthState.SetDepthFunc(EComparisonFunc::GreaterOrEqual);
-                DepthState.DisableDepthWrite();
-            
-                FRenderState RenderState;
-                RenderState.SetRasterState(RasterState);
-                RenderState.SetDepthStencilState(DepthState);
-                RenderState.SetBlendState(BlendState);
-            
-                FGraphicsPipelineDesc Desc;
-                Desc.SetRenderState(RenderState);
-                Desc.AddBindingLayout(BindingLayout);
-                Desc.AddBindingLayout(EnvironmentLayout);
-                Desc.SetVertexShader(VertexShader);
-                Desc.SetPixelShader(PixelShader);
+            FDepthStencilState DepthState;
+            DepthState.EnableDepthTest();
+            DepthState.SetDepthFunc(EComparisonFunc::GreaterOrEqual);
+            DepthState.DisableDepthWrite();
+        
+            FRenderState RenderState;
+            RenderState.SetRasterState(RasterState);
+            RenderState.SetDepthStencilState(DepthState);
+            RenderState.SetBlendState(BlendState);
+        
+            FGraphicsPipelineDesc Desc;
+            Desc.SetRenderState(RenderState);
+            Desc.AddBindingLayout(BindingLayout);
+            Desc.AddBindingLayout(EnvironmentLayout);
+            Desc.SetVertexShader(VertexShader);
+            Desc.SetPixelShader(PixelShader);
     
-                FRHIGraphicsPipelineRef Pipeline = GRenderContext->CreateGraphicsPipeline(Desc);
+            FRHIGraphicsPipelineRef Pipeline = GRenderContext->CreateGraphicsPipeline(Desc);
 
-                FGraphicsState GraphicsState;
-                GraphicsState.AddBindingSet(BindingSet);
-                GraphicsState.AddBindingSet(EnvironmentBindingSet);
-                GraphicsState.SetPipeline(Pipeline);
-            
-                FRenderPassBeginInfo BeginInfo; BeginInfo
-                .SetDebugName("Environment Pass")
-                .AddColorAttachment(GetRenderTarget())
-                .SetColorLoadOp(ERenderLoadOp::Clear)
-                .SetColorStoreOp(ERenderStoreOp::Store)
+            FGraphicsState GraphicsState;
+            GraphicsState.AddBindingSet(BindingSet);
+            GraphicsState.AddBindingSet(EnvironmentBindingSet);
+            GraphicsState.SetPipeline(Pipeline);
+        
+            FRenderPassBeginInfo BeginInfo; BeginInfo
+            .SetDebugName("Environment Pass")
+            .AddColorAttachment(GetRenderTarget())
+            .SetColorLoadOp(ERenderLoadOp::Clear)
+            .SetColorStoreOp(ERenderStoreOp::Store)
 
-                .SetDepthAttachment(DepthAttachment)
-                .SetDepthLoadOp(ERenderLoadOp::Load)
-                .SetDepthStoreOp(ERenderStoreOp::Store)
-                .SetRenderArea(GetRenderTarget()->GetExtent());
-            
-                GraphicsState.SetRenderPass(BeginInfo);
-            
-                GraphicsState.SetViewport(MakeViewportStateFromImage(GetRenderTarget()));
+            .SetDepthAttachment(DepthAttachment)
+            .SetDepthLoadOp(ERenderLoadOp::Load)
+            .SetDepthStoreOp(ERenderStoreOp::Store)
+            .SetRenderArea(GetRenderTarget()->GetExtent());
+        
+            GraphicsState.SetRenderPass(BeginInfo);
+        
+            GraphicsState.SetViewport(MakeViewportStateFromImage(GetRenderTarget()));
 
-                CmdList.SetGraphicsState(GraphicsState);
+            CmdList.SetGraphicsState(GraphicsState);
 
-                SceneRenderStats.NumDrawCalls++;
-                SceneRenderStats.NumVertices += 3;
-                CmdList.Draw(3, 1, 0, 0); 
-            });
-        }
+            SceneRenderStats.NumDrawCalls++;
+            SceneRenderStats.NumVertices += 3;
+            CmdList.Draw(3, 1, 0, 0); 
+        });
         
         RenderGraph.AddPass<RG_Raster>(FRGEvent("Lighting Pass"), nullptr, [&](ICommandList& CmdList)
         {
@@ -604,26 +596,6 @@ namespace Lumina
     void FSceneRenderer::OnSwapchainResized()
     {
         CreateImages();
-    }
-
-    void FSceneRenderer::AddEnvironmentComponent(entt::entity entity)
-    {
-        EnvironmentComponent = &World->GetMutableEntityRegistry().get<SEnvironmentComponent>(entity);
-    }
-
-    void FSceneRenderer::RemoveEnvironmentComponent(entt::entity entity)
-    {
-        EnvironmentComponent = nullptr;
-    }
-
-    void FSceneRenderer::AddDirectionalLightComponent(entt::entity entity)
-    {
-        DirectionalLightComponent = &World->GetMutableEntityRegistry().get<SDirectionalLightComponent>(entity);
-    }
-
-    void FSceneRenderer::RemoveDirectionalLightcomponent(entt::entity entity)
-    {
-        DirectionalLightComponent = nullptr;
     }
 
     FViewportState FSceneRenderer::MakeViewportStateFromImage(const FRHIImage* Image)
@@ -859,18 +831,20 @@ namespace Lumina
 
 
         {
-            if (DirectionalLightComponent)
+
+            auto Group = World->GetMutableEntityRegistry().group<SDirectionalLightComponent>();
+            Group.each([this](SDirectionalLightComponent& DirectionalLightComponent)
             {
                 FLight DirectionalLight;
                 DirectionalLight.Type = LIGHT_TYPE_DIRECTIONAL;
                 
-                DirectionalLight.Color = glm::vec4(DirectionalLightComponent->Color, DirectionalLightComponent->Intensity);
-                DirectionalLight.Direction = glm::vec4(glm::normalize(DirectionalLightComponent->Direction), 1.0f);
+                DirectionalLight.Color = glm::vec4(DirectionalLightComponent.Color, DirectionalLightComponent.Intensity);
+                DirectionalLight.Direction = glm::vec4(glm::normalize(DirectionalLightComponent.Direction), 1.0f);
                 
                 RenderSettings.EnvironmentSettings.SunDirection = DirectionalLight.Direction;
                 
                 LightData.Lights[LightData.NumLights++] = Memory::Move(DirectionalLight);
-            }
+            });
         }
         
 
@@ -879,18 +853,18 @@ namespace Lumina
         //========================================================================================================================
 
         {
-            if (EnvironmentComponent)
+            auto Group = World->GetMutableEntityRegistry().group<SEnvironmentComponent>();
+            Group.each([this, CommandList] (SEnvironmentComponent& EnvironmentComponent)
             {
-                RenderSettings.bSSAO                                = EnvironmentComponent->bSSAOEnabled;
-                RenderSettings.SSAOSettings.Intensity               = EnvironmentComponent->SSAOInfo.Intensity;
-                RenderSettings.SSAOSettings.Power                   = EnvironmentComponent->SSAOInfo.Power;
-                RenderSettings.SSAOSettings.Radius                  = EnvironmentComponent->SSAOInfo.Radius;
-                
-                CommandList->WriteBuffer(SSAOSettingsBuffer, &RenderSettings.SSAOSettings, 0, sizeof(FSSAOSettings));
-                CommandList->WriteBuffer(EnvironmentBuffer, &RenderSettings.EnvironmentSettings, 0, sizeof(FEnvironmentSettings));
-
-            }
+                RenderSettings.bSSAO                                = EnvironmentComponent.bSSAOEnabled;
+                RenderSettings.SSAOSettings.Intensity               = EnvironmentComponent.SSAOInfo.Intensity;
+                RenderSettings.SSAOSettings.Power                   = EnvironmentComponent.SSAOInfo.Power;
+                RenderSettings.SSAOSettings.Radius                  = EnvironmentComponent.SSAOInfo.Radius;
+            });
         }
+
+        CommandList->WriteBuffer(SSAOSettingsBuffer, &RenderSettings.SSAOSettings, 0, sizeof(FSSAOSettings));
+        CommandList->WriteBuffer(EnvironmentBuffer, &RenderSettings.EnvironmentSettings, 0, sizeof(FEnvironmentSettings));
     }
 
     void FSceneRenderer::BuildDrawCalls()

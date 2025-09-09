@@ -4,6 +4,10 @@
 
 namespace Lumina
 {
+    FObjectHandle::FObjectHandle(nullptr_t)
+    {
+    }
+
     FObjectHandle::FObjectHandle(uint32 InIndex, uint32 InGeneration)
         : Index(InIndex)
         , Generation(InGeneration)

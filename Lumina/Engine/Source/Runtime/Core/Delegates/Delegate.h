@@ -2,7 +2,7 @@
 #include <stack>
 
 #include "Containers/Array.h"
-#include "Core/Functional/Function.h"
+#include "Containers/Function.h"
 
 
 namespace Lumina

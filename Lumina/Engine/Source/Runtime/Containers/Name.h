@@ -47,6 +47,7 @@ namespace Lumina
         static constexpr size_t INITIAL_CAPACITY = 16384;
         
     public:
+        
         FNameTable()
         {
             HashToString.reserve(INITIAL_CAPACITY);
@@ -168,7 +169,13 @@ namespace Lumina
         bool operator==(const EName) const { return ID == 0; }
         bool operator!=(const EName) const { return ID != 0; }
         
-        size_t hash() const { return static_cast<size_t>(ID); }
+        size_t hash() const { return ID; }
+
+        
+        const char* operator * () const
+        {
+            return c_str();
+        }
 
     private:
         #if _DEBUG

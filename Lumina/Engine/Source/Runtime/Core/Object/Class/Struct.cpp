@@ -1,6 +1,6 @@
 ﻿#include "Core/Object/Class.h"
 #include "Core/Object/Field.h"
-#include "Core/Functional/Function.h"
+#include "Containers/Function.h"
 #include "Core/Reflection/Type/LuminaTypes.h"
 
 IMPLEMENT_INTRINSIC_CLASS(CStruct, CField, LUMINA_API)
@@ -119,16 +119,6 @@ namespace Lumina
             void* ValuePtr = Current->GetValuePtr<void>(Data);
             Current->Serialize(Ar, ValuePtr);
         
-            Current = (FProperty*)Current->Next;
-        }
-    }
-
-    void CStruct::ForEachProperty(TMoveOnlyFunction<void(FProperty*)> Callback)
-    {
-        FProperty* Current = LinkedProperty;
-        while (Current != nullptr)
-        {
-            Callback(Current);
             Current = (FProperty*)Current->Next;
         }
     }

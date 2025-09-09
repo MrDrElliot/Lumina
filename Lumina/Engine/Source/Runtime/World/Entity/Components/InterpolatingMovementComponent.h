@@ -9,7 +9,7 @@ namespace Lumina
     struct LUMINA_API SInterpolatingMovementComponent
     {
         GENERATED_BODY()
-        ENTITY_COMPONENT(SInterpolatingMovementComponent);
+        ENTITY_COMPONENT(SInterpolatingMovementComponent)
 
         LUM_PROPERTY(Editable, Category = "Interp")
         FTransform Start;
@@ -20,6 +20,7 @@ namespace Lumina
         LUM_PROPERTY(Editable, Category = "Interp")
         float Speed = 1.0f;
 
+        FTransform OriginTransform;
         float Alpha = 0.0f;
         bool bForward = true;
     };
