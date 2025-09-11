@@ -13,11 +13,6 @@
     <td><img src="https://img.shields.io/badge/language-C++20-blue"></td>
     <td><img src="https://img.shields.io/badge/renderer-Vulkan-red"></td>
   </tr>
-  <tr>
-    <td><img src="https://img.shields.io/badge/reflection-custom-lightgrey"></td>
-    <td><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg"></td>
-    <td></td>
-  </tr>
 </table>
 
 
