@@ -18,7 +18,7 @@
 
 **Lumina** is a C++-based, Vulkan-powered game engine built as a hands-on learning project. Inspired by engines like Unreal and Godot, it emphasizes reflection, modularity, and a clean visual editor built with ImGui.
 
-> ⚠️ **Early development** – APIs and systems are in flux, and not everything is fully documented or stable yet. **THE PROJECT MOST LIKELY WON'T BUILD FOR YOU**
+> ⚠️ **Early development** – APIs and systems are in flux, and not everything is fully documented or stable yet. **THE PROJECT MOST LIKELY WON'T BUILD FOR YOU, IF YOU WOULD LIKE TO BUILD IT, PLEASE REACH OUT TO GET HELP**
 
 ---
 
