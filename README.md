@@ -58,11 +58,11 @@
 1. Clone the repo.
 2. Run `Setup.py` (this extracts external dependencies).
 3. Ensure you install VulkanMemoryAllocator whilst installing Vulkan.
-4. Ensure the `LUMINA_DIR` environment variable is set.
+4. Ensure the `LUMINA_DIR` environment variable is set to the engine install directory file path (e.g. C:/CoolStuff/LuminaGameEngine)
 5. Run `Scripts/Win-GenProjects.py`.
 6. Open the generated `.sln` in Visual Studio.
 7. Build the **Reflector** in `Release` mode.
-8. Set **Editor** as startup project.
+8. Set **Editor** as startup project. Select Debug mode.
 9. Build & run.
 
 ---
