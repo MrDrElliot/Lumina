@@ -87,10 +87,7 @@ namespace Lumina
         
         SelectedPath = FProject::Get().GetProjectContentDirectory().c_str();
 
-        GEngine->GetEngineSubsystem<FAssetRegistry>()->GetOnAssetRegistryUpdated().AddTFunction([this]
-        {
-            RefreshContentBrowser();
-        });
+        GEngine->GetEngineSubsystem<FAssetRegistry>()->GetOnAssetRegistryUpdated().AddMember(this, &FContentBrowserEditorTool::RefreshContentBrowser);
         
         ContentBrowserTileViewContext.DragDropFunction = [this] (FTileViewItem* DropItem)
         {

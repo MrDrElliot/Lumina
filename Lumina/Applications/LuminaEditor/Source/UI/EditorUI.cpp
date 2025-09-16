@@ -104,7 +104,7 @@ namespace Lumina
         CWorld* NewWorld = NewObject<CWorld>();
         WorldEditorTool = CreateTool<FWorldEditorTool>(this, NewWorld);
         
-        WorldEditorTool->GetOnPreviewStartRequestedDelegate().AddTFunction([this]
+        WorldEditorTool->GetOnPreviewStartRequestedDelegate().AddLambda([this]
         {
             if (CWorld* PreviewWorld = CWorld::DuplicateWorldForPIE(WorldEditorTool->GetWorld()))
             {
@@ -115,7 +115,7 @@ namespace Lumina
             }
         });
 
-        WorldEditorTool->GetOnPreviewStopRequestedDelegate().AddTFunction([this]
+        WorldEditorTool->GetOnPreviewStopRequestedDelegate().AddLambda([this]
         {
             ToolsPendingDestroy.push(GamePreviewTool);
         });

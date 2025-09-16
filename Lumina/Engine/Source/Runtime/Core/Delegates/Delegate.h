@@ -1,44 +1,49 @@
 #pragma once
-#include <stack>
-
 #include "Containers/Array.h"
 #include "Containers/Function.h"
 
 
 namespace Lumina
 {
-    template<typename Args = void>
+    template<typename... TArgs>
     class TMulticastDelegate
     {
     public:
-
-        // Add a static function to the invocation list
-        template<typename Func, typename... FuncArgs, std::enable_if_t<std::is_invocable<Func, Args>::value>* = nullptr>
-        void AddStatic(Func&& func)
-        {
-            InvokationList.push_back(std::forward<Func>(func));
-        }
         
-        void AddTFunction(TFunction<void(Args)> Functor)
+        template<typename TFunc>
+        requires(eastl::is_invocable_v<TFunc, TArgs...>)
+        void AddStatic(TFunc&& Func)
         {
-            InvokationList.push_back(std::move(Functor));
+            InvocationList.push_back(std::forward<TFunc>(Func));
         }
 
-        void RemoveTFunction(TFunction<void(Args)> Functor)
+        template<typename TObject, typename TMemFunc>
+        void AddMember(TObject* Object, TMemFunc&& MemberFunc)
         {
-            VectorRemove(InvokationList, Functor);
+            Add([Object, MemberFunc = std::forward<TMemFunc>(MemberFunc)](TArgs... Args)
+            {
+                (Object->*MemberFunc)(std::forward<TArgs>(Args)...);
+            });
+        }
+
+        template<typename TFunc>
+        requires(eastl::is_invocable_v<TFunc, TArgs...>)
+        void AddLambda(TFunc&& Func)
+        {
+            Add<TFunc>(std::forward<TFunc>(Func));
         }
         
-        template<typename... InvokeArgs>
-        void Broadcast(InvokeArgs... args)
+
+        template<typename... TCallArgs>
+        void Broadcast(TCallArgs... Args)
         {
             TFixedVector<uint32, 2> RemovalList;
 
-            for (int i = 0; i < InvokationList.size(); ++i)
+            for (int i = 0; i < InvocationList.size(); ++i)
             {
-                if (InvokationList[i] != nullptr)
+                if (InvocationList[i] != nullptr)
                 {
-                    InvokationList[i](std::forward<InvokeArgs>(args)...);
+                    InvocationList[i](std::forward<TCallArgs>(Args)...);
                 }
                 else
                 {
@@ -49,15 +54,22 @@ namespace Lumina
             for (SIZE_T i = RemovalList.size(); i-- > 0;)
             {
                 uint32 Removal = RemovalList[i];
-                InvokationList.erase(InvokationList.begin() + Removal);
+                InvocationList.erase(InvocationList.begin() + Removal);
             }
         }
 
-    
+    private:
+        
+        template<typename TCallable>
+        requires(eastl::is_invocable_v<TCallable, TArgs...>)
+        void Add(TCallable&& Callable)
+        {
+            InvocationList.emplace_back(std::forward<TCallable>(Callable));
+        }
     
     private:
 
-        TVector<TFunction<void(Args)>> InvokationList;
+        TVector<TFunction<void(TArgs...)>> InvocationList;
 
     };
 }
