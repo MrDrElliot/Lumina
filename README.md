@@ -57,12 +57,13 @@
 
 1. Clone the repo.
 2. Run `Setup.py` (this extracts external dependencies).
-3. Ensure the `LUMINA_DIR` environment variable is set.
-4. Run `Scripts/Win-GenProjects.py`.
-5. Open the generated `.sln` in Visual Studio.
-6. Build the **Reflector** in `Release` mode.
-7. Set **Editor** as startup project.
-8. Build & run.
+3. Ensure you install VulkanMemoryAllocator whilst installing Vulkan.
+4. Ensure the `LUMINA_DIR` environment variable is set.
+5. Run `Scripts/Win-GenProjects.py`.
+6. Open the generated `.sln` in Visual Studio.
+7. Build the **Reflector** in `Release` mode.
+8. Set **Editor** as startup project.
+9. Build & run.
 
 ---
 
