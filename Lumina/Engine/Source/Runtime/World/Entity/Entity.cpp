@@ -15,7 +15,7 @@ namespace Lumina
             TVector<TPair<FName, TPair<CStruct*, void*>>> Components;
             Components.reserve(10);
             
-            for (auto [ID, Set] : World->GetMutableEntityRegistry().storage())
+            for (auto [ID, Set] : World->GetEntityRegistry().storage())
             {
                 if (Set.contains(GetHandle()))
                 {
@@ -43,9 +43,9 @@ namespace Lumina
                 Type.first->SerializeTaggedProperties(Ar, Type.second);
             }
     
-            if (World->GetMutableEntityRegistry().all_of<SRelationshipComponent>(GetHandle()))
+            if (World->GetEntityRegistry().all_of<SRelationshipComponent>(GetHandle()))
             {
-                auto& rel = World->GetMutableEntityRegistry().get<SRelationshipComponent>(GetHandle());
+                auto& rel = World->GetEntityRegistry().get<SRelationshipComponent>(GetHandle());
                 SIZE_T NumChildren = rel.Size;
                 Ar << NumChildren;
 
@@ -73,7 +73,7 @@ namespace Lumina
                 if (CStruct* Struct = FindObject<CStruct>(nullptr, TypeName))
                 {
                     using namespace entt::literals;
-                    void* RegistryPtr = &World->GetMutableEntityRegistry();
+                    void* RegistryPtr = &World->GetEntityRegistry();
                     entt::hashed_string HashString(Struct->GetName().c_str());
                     if (entt::meta_type Meta = entt::resolve(HashString))
                     {
@@ -94,12 +94,12 @@ namespace Lumina
     
             if (NumChildren > 0)
             {
-                auto& rel = World->GetMutableEntityRegistry().emplace<SRelationshipComponent>(GetHandle());
+                auto& rel = World->GetEntityRegistry().emplace<SRelationshipComponent>(GetHandle());
     
                 for (SIZE_T i = 0; i < NumChildren; ++i)
                 {
                     // Create new child entity
-                    entt::entity ChildHandle = World->GetMutableEntityRegistry().create();
+                    entt::entity ChildHandle = World->GetEntityRegistry().create();
                     rel.Children[rel.Size] = Entity(ChildHandle, World);
                     rel.Size++;
     
@@ -107,14 +107,14 @@ namespace Lumina
                     ChildEntity.Serialize(Ar);
     
                     // Patch parent relationship
-                    if (World->GetMutableEntityRegistry().all_of<SRelationshipComponent>(ChildHandle))
+                    if (World->GetEntityRegistry().all_of<SRelationshipComponent>(ChildHandle))
                     {
-                        auto& childRel = World->GetMutableEntityRegistry().get<SRelationshipComponent>(ChildHandle);
+                        auto& childRel = World->GetEntityRegistry().get<SRelationshipComponent>(ChildHandle);
                         childRel.Parent = *this;
                     }
                     else
                     {
-                        auto& childRel = World->GetMutableEntityRegistry().emplace<SRelationshipComponent>(ChildHandle);
+                        auto& childRel = World->GetEntityRegistry().emplace<SRelationshipComponent>(ChildHandle);
                         childRel.Parent = *this;
                     }
                 }

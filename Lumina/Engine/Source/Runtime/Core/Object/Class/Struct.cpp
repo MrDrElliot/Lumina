@@ -50,7 +50,7 @@ namespace Lumina
         bLinked = true;
 
         if (SuperStruct)
-        {
+        { 
             SuperStruct->Link();
         }
 

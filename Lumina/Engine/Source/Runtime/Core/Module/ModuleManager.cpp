@@ -1,5 +1,5 @@
 ﻿#include "ModuleManager.h"
-
+#include "Platform/Platform.h"
 #include "ModuleInterface.h"
 #include "Paths/Paths.h"
 #include "Platform/Process/PlatformProcess.h"
@@ -17,8 +17,7 @@ namespace Lumina
             return nullptr;
         }
 
-        ModuleInitFunc InitFunctionPtr = reinterpret_cast<ModuleInitFunc>(
-            Platform::GetDLLExport(ModuleHandle, L"InitializeModule"));
+        ModuleInitFunc InitFunctionPtr = reinterpret_cast<ModuleInitFunc>(Platform::GetDLLExport(ModuleHandle, TEXT("InitializeModule")));
 
         if (!InitFunctionPtr)
         {
@@ -101,8 +100,9 @@ namespace Lumina
         FModuleInfo NewInfo;
         NewInfo.ModuleName = ModuleFName;
 
-        auto [insertIt, inserted] = ModuleHashMap.insert(eastl::make_pair(ModuleFName, Memory::Move(NewInfo)));
-        return &insertIt->second;
+        ModuleHashMap.emplace(ModuleFName, Memory::Move(NewInfo));
+
+        return &ModuleHashMap[ModuleFName];
     }
 
 }

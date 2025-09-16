@@ -6,6 +6,8 @@
 #include "Core/Object/ObjectHandleTyped.h"
 #include "Entity/Registry/EntityRegistry.h"
 #include "World.generated.h"
+#include "Entity/EntityWorld.h"
+#include "Renderer/RenderGraph/RenderGraph.h"
 
 namespace Lumina
 {
@@ -24,6 +26,7 @@ namespace Lumina
     {
         GENERATED_BODY()
         friend class FWorldManager;
+        friend struct FSystemContext;
     public:
 
         CWorld();
@@ -48,6 +51,8 @@ namespace Lumina
          * Called on every update stage and runs systems attached to this world.
          */
         void Update(const FUpdateContext& Context);
+        void Paused(const FUpdateContext& Context);
+        void Render(FRenderGraph& RenderGraph);
 
         /**
          * Called to shut down the world, destroys system, components, and entities.
@@ -62,14 +67,15 @@ namespace Lumina
         void ReparentEntity(Entity Child, Entity Parent);
         void DestroyEntity(Entity Entity);
         
-        FEntityRegistry& GetMutableEntityRegistry() { return EntityRegistry; }
-        const FEntityRegistry& GetConstEntityRegistry() const { return EntityRegistry; }
+        FEntityRegistry& GetEntityRegistry() { return EntityWorld.Registry; }
+        const FEntityRegistry& GetEntityRegistry_Immutable() const { return EntityWorld.Registry; }
 
+        
         void SetActiveCamera(Entity InEntity);
         SCameraComponent& GetActiveCamera() const;
 
-        double GetSceneDeltaTime() const { return DeltaTime; }
-        double GetTimeSinceSceneCreation() const { return TimeSinceCreation; }
+        double GetWorldDeltaTime() const { return DeltaTime; }
+        double GetTimeSinceWorldCreation() const { return TimeSinceCreation; }
 
         void SetPaused(bool bNewPause) { bPaused = bNewPause; }
         bool IsPaused() const { return bPaused; }
@@ -100,11 +106,11 @@ namespace Lumina
     
     private:
 
+        FEntityWorld                                    EntityWorld;
         FLineBatcherComponent*                          LineBatcherComponent = nullptr;
 
         FCameraManager*                                 CameraManager = nullptr;
         FSceneRenderer*                                 SceneRenderer = nullptr;
-        FEntityRegistry                                 EntityRegistry;
         
         TVector<TObjectHandle<CEntitySystem>>           SystemUpdateList[(int32)EUpdateStage::Max];
 

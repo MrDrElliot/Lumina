@@ -2,7 +2,6 @@
 #include "RenderGraphEvent.h"
 #include "RenderGraphTypes.h"
 #include "Renderer/RHIFwd.h"
-#include "Renderer/API/Vulkan/VulkanBarriers.h"
 
 
 namespace Lumina

@@ -3,6 +3,7 @@
 #include "RenderResource.h"
 #include "RenderTypes.h"
 #include "RHIFwd.h"
+#include "Shader.h"
 #include "Types/BitFlags.h"
 #include "Core/UpdateContext.h"
 
@@ -72,9 +73,9 @@ namespace Lumina
         
         //-------------------------------------------------------------------------------------
         
-        NODISCARD virtual FRHIVertexShaderRef CreateVertexShader(const TVector<uint32>& ByteCode) = 0;
-        NODISCARD virtual FRHIPixelShaderRef CreatePixelShader(const TVector<uint32>& ByteCode) = 0;
-        NODISCARD virtual FRHIComputeShaderRef CreateComputeShader(const TVector<uint32>& ByteCode) = 0;
+        NODISCARD virtual FRHIVertexShaderRef CreateVertexShader(const FShaderHeader& Shader) = 0;
+        NODISCARD virtual FRHIPixelShaderRef CreatePixelShader(const FShaderHeader& Shader) = 0;
+        NODISCARD virtual FRHIComputeShaderRef CreateComputeShader(const FShaderHeader& Shader) = 0;
 
         NODISCARD virtual IShaderCompiler* GetShaderCompiler() const = 0;
         NODISCARD virtual FRHIShaderLibraryRef GetShaderLibrary() const = 0;

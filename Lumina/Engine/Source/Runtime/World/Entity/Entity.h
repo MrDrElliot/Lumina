@@ -87,54 +87,54 @@ namespace Lumina
     template <typename T, typename... Args>
     decltype(auto) Entity::Emplace(Args&&... args)
     {
-        return World->GetMutableEntityRegistry().emplace<T>(EntityHandle, std::forward<Args>(args)...);
+        return World->GetEntityRegistry().emplace<T>(EntityHandle, std::forward<Args>(args)...);
     }
 
     template <typename T, typename ... Args>
     T& Entity::EmplaceOrReplace(Args&&... args)
     {
-        return World->GetMutableEntityRegistry().emplace_or_replace<T>(EntityHandle, std::forward<Args>(args)...);
+        return World->GetEntityRegistry().emplace_or_replace<T>(EntityHandle, std::forward<Args>(args)...);
     }
 
     template <typename T>
     bool Entity::HasComponent() const
     {
-        return World->GetConstEntityRegistry().all_of<T>(EntityHandle);
+        return World->GetEntityRegistry_Immutable().all_of<T>(EntityHandle);
     }
     
     template <typename T>
     T* Entity::TryGetComponent()
     {
-        return World->GetMutableEntityRegistry().try_get<T>(EntityHandle);
+        return World->GetEntityRegistry().try_get<T>(EntityHandle);
     }
 
     template <typename T>
     T& Entity::GetComponent()
     {
-        return World->GetMutableEntityRegistry().get<T>(EntityHandle);
+        return World->GetEntityRegistry().get<T>(EntityHandle);
     }
 
     template <typename T, typename ... Func>
     T& Entity::Patch(Func&&... func)
     {
-        return World->GetMutableEntityRegistry().patch<T>(GetHandle(), std::forward<Func>(func)...);
+        return World->GetEntityRegistry().patch<T>(GetHandle(), std::forward<Func>(func)...);
     }
 
     template <typename T>
     T& Entity::GetOrAddComponent()
     {
-        return World->GetMutableEntityRegistry().get_or_emplace<T>(EntityHandle);
+        return World->GetEntityRegistry().get_or_emplace<T>(EntityHandle);
     }
 
     template <typename T>
     const T& Entity::GetConstComponent() const
     {
-        return World->GetConstEntityRegistry().get<T>(EntityHandle);
+        return World->GetEntityRegistry_Immutable().get<T>(EntityHandle);
     }
 
     template <typename T>
     SIZE_T Entity::RemoveComponent()
     {
-        return World->GetMutableEntityRegistry().remove<T>(EntityHandle);
+        return World->GetEntityRegistry().remove<T>(EntityHandle);
     }
 }

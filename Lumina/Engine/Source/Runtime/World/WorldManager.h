@@ -19,14 +19,15 @@ namespace Lumina
 
         struct FManagedWorld
         {
-            EWorldType              Type;
-            TObjectHandle<CWorld>   World;
+            EWorldType  Type;
+            CWorld*     World;
         };
 
         void Initialize() override;
         void Deinitialize() override;
 
         void UpdateWorlds(const FUpdateContext& UpdateContext);
+        void RenderWorlds(const FUpdateContext& UpdateContext);
 
         void RemoveWorld(CWorld* World);
         void AddWorld(CWorld* World);

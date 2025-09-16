@@ -3,12 +3,13 @@
 #include "RenderGraphPass.h"
 #include "RenderGraphResources.h"
 #include "Core/Engine/Engine.h"
+#include "Renderer/RenderContext.h"
 #include "Renderer/RHIGlobals.h"
 
 
 namespace Lumina
 {
-    constexpr size_t InitialLinearAllocatorSize = 1024;
+    constexpr size_t InitialLinearAllocatorSize = 1024 * 10;
     
     FRenderGraph::FRenderGraph()
         :GraphAllocator(InitialLinearAllocatorSize)
@@ -20,6 +21,8 @@ namespace Lumina
 
     void FRenderGraph::Execute()
     {
+        LUMINA_PROFILE_SCOPE();
+        
         AllocateTransientResources();
         
         for (FRGPassHandle Pass : Passes)
@@ -38,7 +41,7 @@ namespace Lumina
     {
         for (const FRGBuffer* Buffer : BufferRegistry)
         {
-
+            
         }
 
         for (const FRGImage* Image : ImageRegistry)

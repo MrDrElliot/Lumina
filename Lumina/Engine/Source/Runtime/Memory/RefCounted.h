@@ -292,8 +292,8 @@ namespace eastl
 }
 
 template<typename T, typename... TArgs>
-requires std::is_constructible_v<T, TArgs...> && (!eastl::is_array_v<T>)
-FORCEINLINE Lumina::TRefCountPtr<T> MakeRefCount(TArgs&&... Args)
+requires std::is_constructible_v<T, TArgs...> && (!eastl::is_array_v<T>) && (!eastl::is_abstract_v<T>)
+Lumina::TRefCountPtr<T> MakeRefCount(TArgs&&... Args)
 {
 	return Lumina::TRefCountPtr<T>(Lumina::Memory::New<T>(std::forward<TArgs>(Args)...));
 }

@@ -472,7 +472,7 @@ namespace Lumina
                     FString StringName(type.info().name().data());
                     if (ImGui::Selectable(StringName.c_str(), false, ImGuiSelectableFlags_SpanAllColumns))
                     {
-                        void* RegistryPtr = &World->GetMutableEntityRegistry(); // EnTT will try to make a copy if not passed by *.
+                        void* RegistryPtr = &World->GetEntityRegistry(); // EnTT will try to make a copy if not passed by *.
                         (void)type.invoke("addcomponent"_hs, {}, SelectedEntity.GetHandle(), RegistryPtr);
                         bComponentAdded = true;
                     }
@@ -583,7 +583,7 @@ namespace Lumina
         };
         
 
-        for (auto EntityHandle : World->GetConstEntityRegistry().view<SNameComponent>(entt::exclude<SHiddenComponent>))
+        for (auto EntityHandle : World->GetEntityRegistry().view<SNameComponent>(entt::exclude<SHiddenComponent>))
         {
             Entity entity(EntityHandle, World);
 
@@ -630,7 +630,7 @@ namespace Lumina
         ImGui::PopStyleColor();
 
         ImGui::SeparatorText("Entities");
-        ImGui::Text("Num: %i", World->GetMutableEntityRegistry().view<SNameComponent>().size());
+        ImGui::Text("Num: %i", World->GetEntityRegistry().view<SNameComponent>().size());
 
         OutlinerListView.Draw(OutlinerContext);
     }
@@ -704,7 +704,7 @@ namespace Lumina
                     {
                         if (ImGui::Button("Remove", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f)))
                         {
-                            for (const auto& [ID, Set] : World->GetMutableEntityRegistry().storage())
+                            for (const auto& [ID, Set] : World->GetEntityRegistry().storage())
                             {
                                 if (Set.contains(SelectedEntity.GetHandle()))
                                 {
@@ -769,7 +769,7 @@ namespace Lumina
 
         if (SelectedEntity.IsValid())
         {
-            for (const auto& [ID, Set] : World->GetMutableEntityRegistry().storage())
+            for (const auto& [ID, Set] : World->GetEntityRegistry().storage())
             {
                 if (Set.contains(SelectedEntity.GetHandle()))
                 {

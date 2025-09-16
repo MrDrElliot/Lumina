@@ -13,8 +13,6 @@
 #include "VulkanResources.h"
 #include "VulkanSwapchain.h"
 #include "Core/Windows/Window.h"
-#include "..\..\StateTracking.h"
-
 
 #define VMA_IMPLEMENTATION
 #include <vma/vk_mem_alloc.h>
@@ -436,6 +434,8 @@ namespace Lumina
 
     void FVulkanRenderContext::Deinitialize()
     {
+        LUMINA_PROFILE_SCOPE();
+
         WaitIdle();
         
         GraphicsCommandList.SafeRelease();
@@ -490,6 +490,8 @@ namespace Lumina
 
     bool FVulkanRenderContext::FrameStart(const FUpdateContext& UpdateContext, uint8 InCurrentFrameIndex)
     {
+        LUMINA_PROFILE_SCOPE();
+
         CurrentFrameIndex = InCurrentFrameIndex;
 
         bool bSuccess = Swapchain->AcquireNextImage();
@@ -501,6 +503,8 @@ namespace Lumina
 
     bool FVulkanRenderContext::FrameEnd(const FUpdateContext& UpdateContext)
     {
+        LUMINA_PROFILE_SCOPE();
+
         GraphicsCommandList->CopyImage(GEngine->GetEngineViewport()->GetRenderTarget(), {}, Swapchain->GetCurrentImage(), {});
         
         GraphicsCommandList->Close();
@@ -524,6 +528,8 @@ namespace Lumina
     
     uint64 FVulkanRenderContext::ExecuteCommandLists(ICommandList* const* CommandLists, uint32 NumCommandLists, ECommandQueue QueueType)
     {
+        LUMINA_PROFILE_SCOPE();
+        
         FQueue* Queue = Queues[uint32(QueueType)];
 
         uint64 SubmissionID = Queue->Submit(CommandLists, NumCommandLists);
@@ -662,19 +668,19 @@ namespace Lumina
         }
     }
 
-    FRHIVertexShaderRef FVulkanRenderContext::CreateVertexShader(const TVector<uint32>& ByteCode)
+    FRHIVertexShaderRef FVulkanRenderContext::CreateVertexShader(const FShaderHeader& Shader)
     {
-        return MakeRefCount<FVulkanVertexShader>(VulkanDevice, ByteCode);
+        return MakeRefCount<FVulkanVertexShader>(VulkanDevice, Shader);
     }
 
-    FRHIPixelShaderRef FVulkanRenderContext::CreatePixelShader(const TVector<uint32>& ByteCode)
+    FRHIPixelShaderRef FVulkanRenderContext::CreatePixelShader(const FShaderHeader& Shader)
     {
-        return MakeRefCount<FVulkanPixelShader>(VulkanDevice, ByteCode);
+        return MakeRefCount<FVulkanPixelShader>(VulkanDevice, Shader);
     }
 
-    FRHIComputeShaderRef FVulkanRenderContext::CreateComputeShader(const TVector<uint32>& ByteCode)
+    FRHIComputeShaderRef FVulkanRenderContext::CreateComputeShader(const FShaderHeader& Shader)
     {
-        return MakeRefCount<FVulkanComputeShader>(VulkanDevice, ByteCode);
+        return MakeRefCount<FVulkanComputeShader>(VulkanDevice, Shader);
     }
 
     IShaderCompiler* FVulkanRenderContext::GetShaderCompiler() const
@@ -701,6 +707,8 @@ namespace Lumina
 
     bool FVulkanRenderContext::WriteDescriptorTable(FRHIDescriptorTable* Table, const FBindingSetItem& Binding)
     {
+        LUMINA_PROFILE_SCOPE();
+
         FVulkanDescriptorTable* DescriptorTable = static_cast<FVulkanDescriptorTable*>(Table);
         FVulkanBindingLayout* BindingLayout = static_cast<FVulkanBindingLayout*>(DescriptorTable->GetLayout());
 
@@ -806,6 +814,8 @@ namespace Lumina
     
     FRHIBindingLayoutRef FVulkanRenderContext::CreateBindingLayout(const FBindingLayoutDesc& Desc)
     {
+        LUMINA_PROFILE_SCOPE();
+
         auto Layout = MakeRefCount<FVulkanBindingLayout>(VulkanDevice, Desc);
         
         Layout->Bake();
@@ -815,6 +825,8 @@ namespace Lumina
 
     FRHIBindingLayoutRef FVulkanRenderContext::CreateBindlessLayout(const FBindlessLayoutDesc& Desc)
     {
+        LUMINA_PROFILE_SCOPE();
+
         auto Layout = MakeRefCount<FVulkanBindingLayout>(VulkanDevice, Desc);
         
         Layout->Bake();
@@ -922,33 +934,37 @@ namespace Lumina
                 {
                     FString StringPath = Dir.path().string().c_str();
 
-                    bool bSuccess = ShaderCompiler->CompileShader(StringPath, {}, [&, Dir = Memory::Move(Dir)] (const TVector<uint32>& Binaries)
+                    bool bSuccess = ShaderCompiler->CompileShader(StringPath, {}, [&, Dir = Memory::Move(Dir)] (const FShaderHeader& Header)
                     {
                         FString FileNameString = Dir.path().filename().string().c_str();
-                        
-                        if (Dir.path().extension() == ".vert")
-                        {
-                            FRHIVertexShaderRef Shader = CreateVertexShader(Binaries);
-                            Shader->SetKey(FileNameString.c_str());
-                            ShaderLibrary->AddShader(Shader);
-                            PipelineCache.PostShaderRecompiled(Shader.As<FVulkanVertexShader>());
 
-                        }
-                        else if (Dir.path().extension() == ".frag")
+                        switch (Header.Reflection.ShaderType)
                         {
-                            FRHIPixelShaderRef Shader = CreatePixelShader(Binaries);
-                            Shader->SetKey(FileNameString.c_str());
-                            ShaderLibrary->AddShader(Shader);
-                            PipelineCache.PostShaderRecompiled(Shader.As<FVulkanPixelShader>());
+                        case ERHIShaderType::Vertex:
+                            {
+                                FRHIVertexShaderRef Shader = CreateVertexShader(Header);
+                                Shader->SetKey(FileNameString.c_str());
+                                ShaderLibrary->AddShader(Shader);
+                                PipelineCache.PostShaderRecompiled(Shader.As<FVulkanVertexShader>());
+                            }
+                            break;
+                        case ERHIShaderType::Fragment:
+                            {
+                                FRHIPixelShaderRef Shader = CreatePixelShader(Header);
+                                Shader->SetKey(FileNameString.c_str());
+                                ShaderLibrary->AddShader(Shader);
+                                PipelineCache.PostShaderRecompiled(Shader.As<FVulkanPixelShader>());
+                            }
+                            break;
+                        case ERHIShaderType::Compute:
+                            {
+                                FRHIComputeShaderRef Shader = CreateComputeShader(Header);
+                                Shader->SetKey(FileNameString.c_str());
+                                ShaderLibrary->AddShader(Shader);
+                                PipelineCache.PostShaderRecompiled(Shader.As<FVulkanComputeShader>());
+                            }
+                            break;
                         }
-                        else if (Dir.path().extension() == ".comp")
-                        {
-                            FRHIComputeShaderRef Shader = CreateComputeShader(Binaries);
-                            Shader->SetKey(FileNameString.c_str());
-                            ShaderLibrary->AddShader(Shader);
-                            PipelineCache.PostShaderRecompiled(Shader.As<FVulkanComputeShader>());
-                        }
-                        
                     });
 
                     if (!bSuccess)

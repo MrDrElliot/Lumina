@@ -2,7 +2,6 @@
 
 
 #include "TrackedCommandBuffer.h"
-#include "VulkanBarriers.h"
 #include "VulkanPipelineStates.h"
 #include "Renderer/CommandList.h"
 

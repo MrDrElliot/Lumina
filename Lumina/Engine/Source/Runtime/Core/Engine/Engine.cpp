@@ -94,17 +94,17 @@ namespace Lumina
         //-------------------------------------------------------------------------
         // Update core engine state.
         //-------------------------------------------------------------------------
-        
-        UpdateContext.MarkFrameStart();
+
         
         if (!Windowing::GetPrimaryWindowHandle()->IsMinimized())
         {
-            UpdateContext.UpdateStage = EUpdateStage::FrameStart;
 
             // Frame Start
             //-------------------------------------------------------------------
             {
                 LUMINA_PROFILE_SECTION("FrameStart");
+                UpdateContext.UpdateStage = EUpdateStage::FrameStart;
+                
                 RenderManager->FrameStart(UpdateContext);
                 
                 InputSubsystem->Update(UpdateContext);
@@ -183,6 +183,7 @@ namespace Lumina
                 #endif
 
                 WorldManager->UpdateWorlds(UpdateContext);
+                WorldManager->RenderWorlds(UpdateContext);
                 
                 #if WITH_DEVELOPMENT_TOOLS
                 DeveloperToolUI->EndFrame(UpdateContext);

@@ -1,28 +1,18 @@
 ﻿#include "ShaderCompiler.h"
 
-#include "Assets/AssetPath.h"
+#include "RenderResource.h"
+#include "Core/Serialization/MemoryArchiver.h"
 #include "Core/Threading/Thread.h"
 #include "Memory/Memory.h"
 #include "Paths/Paths.h"
 #include "Platform/Filesystem/FileHelper.h"
 #include "shaderc/shaderc.hpp"
 #include "TaskSystem/TaskSystem.h"
+#include "SPIRV-Reflect/spirv_reflect.h"
 
 namespace Lumina
 {
-    struct FTestStruct
-    {
-        FTestStruct()
-        {
-            LOG_INFO("Constructor");
-        }
-
-        ~FTestStruct()
-        {
-            LOG_INFO("Destructor");
-        }
-    };
-
+    
     class FShaderCIncluder : public shaderc::CompileOptions::IncluderInterface
     {
         shaderc_include_result* GetInclude(const char* requested_source, shaderc_include_type type, const char* requesting_source, size_t include_depth) override
@@ -54,6 +44,90 @@ namespace Lumina
         }
     };
 
+    void FSpirVShaderCompiler::ReflectSpirv(TSpan<uint32> SpirV, FShaderReflection& Reflection)
+    {
+        SpvReflectShaderModule Module;
+        SpvReflectResult Result = spvReflectCreateShaderModule(SpirV.size_bytes(), SpirV.data(), &Module);
+        if (Result != SPV_REFLECT_RESULT_SUCCESS)
+        {
+            LOG_ERROR("Failed to create SPIR-V Reflect Module!");
+            return;
+        }
+        
+        switch (Module.shader_stage)
+        {
+        case SPV_REFLECT_SHADER_STAGE_VERTEX_BIT:
+            Reflection.ShaderType = ERHIShaderType::Vertex;
+            break;
+        case SPV_REFLECT_SHADER_STAGE_FRAGMENT_BIT:
+            Reflection.ShaderType = ERHIShaderType::Fragment;
+            break;
+        case SPV_REFLECT_SHADER_STAGE_COMPUTE_BIT:
+            Reflection.ShaderType = ERHIShaderType::Compute;
+            break;
+        }
+
+        uint32 NumDescriptorSets = 0;
+        Result = spvReflectEnumerateDescriptorSets(&Module, &NumDescriptorSets, nullptr);
+        if (Result != SPV_REFLECT_RESULT_SUCCESS)
+        {
+            LOG_ERROR("Failed to enumerate descriptor sets (count).");
+            return;
+        }
+
+        TVector<SpvReflectDescriptorSet*> ReflectSets(NumDescriptorSets);
+        Result = spvReflectEnumerateDescriptorSets(&Module, &NumDescriptorSets, ReflectSets.data());
+        if (Result != SPV_REFLECT_RESULT_SUCCESS)
+        {
+            LOG_ERROR("Failed to enumerate descriptor sets (data).");
+            return;
+        }
+
+        
+        for (uint32 SetIndex = 0; SetIndex < NumDescriptorSets; ++SetIndex)
+        {
+            SpvReflectDescriptorSet* ReflectSet = ReflectSets[SetIndex];
+
+            for (uint32 BindingIndex = 0; BindingIndex < ReflectSet->binding_count; ++BindingIndex)
+            {
+                SpvReflectDescriptorBinding* Binding = ReflectSet->bindings[BindingIndex];
+
+                Reflection.Bindings.push_back();
+                FShaderBinding& NewBinding = Reflection.Bindings.back();
+                
+                NewBinding.Name = Binding->name ? Binding->name : "";
+                NewBinding.Set = Binding->set;
+                NewBinding.Binding = Binding->binding;
+
+                if (Binding->descriptor_type == SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
+                {
+                    NewBinding.Type = ERHIBindingResourceType::Buffer_CBV;
+                    NewBinding.Size = Binding->block.size;
+                }
+                else if (Binding->descriptor_type == SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER)
+                {
+                    NewBinding.Type = ERHIBindingResourceType::Buffer_UAV;
+                    NewBinding.Size = Binding->block.size;
+                }
+                else if (Binding->descriptor_type == SPV_REFLECT_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
+                {
+                    NewBinding.Type = ERHIBindingResourceType::Texture_SRV;
+                }
+                else if (Binding->descriptor_type == SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLER)
+                {
+                    NewBinding.Type = ERHIBindingResourceType::Sampler;
+                }
+                else if (Binding->descriptor_type == SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_IMAGE)
+                {
+                    NewBinding.Type = ERHIBindingResourceType::Texture_UAV;
+                }
+            }
+        }
+        
+        spvReflectDestroyShaderModule(&Module);
+    }
+    
+    
     bool FSpirVShaderCompiler::CompileShader(const FString& ShaderPath, const FShaderCompileOptions& CompileOptions, CompletedFunc OnCompleted)
     {
         FRequest Request;
@@ -62,7 +136,7 @@ namespace Lumina
         Request.OnCompleted = Memory::Move(OnCompleted);
         PushRequest(Request);
         
-        Task::AsyncTask(1, [this, Request = Memory::Move(Request)] (uint32 Start, uint32 End, uint32 ThreadNum_)
+        Task::AsyncTask(1, [this, Request = Memory::Move(Request)] (uint32, uint32, uint32)
         {
             FString FileName = Paths::FileName(Request.Path);
             LOG_DEBUG("Compiling Shader: {0} - Thread: {1}", FileName, Threading::GetThreadID());
@@ -123,14 +197,21 @@ namespace Lumina
                 PopRequest();
                 return;
             }
-    
-            Request.OnCompleted(Memory::Move(Binaries));
+
+            
+            FShaderHeader Shader;
+            Shader.Binaries = Memory::Move(Binaries);
+            
+            ReflectSpirv(Shader.Binaries, Shader.Reflection);
+            
+            Request.OnCompleted(Memory::Move(Shader));
+            
             PopRequest();
         });
         
         return true;
     }
-
+    
     void FSpirVShaderCompiler::PushRequest(const FRequest& Request)
     {
         FScopeLock Lock(RequestMutex);
@@ -157,10 +238,10 @@ namespace Lumina
 
     void FSpirVShaderCompiler::Shutdown()
     {
-
+        
     }
 
-    bool FSpirVShaderCompiler::CompilerShaderRaw(const FString& ShaderString, const FShaderCompileOptions& CompileOptions, CompletedFunc OnCompleted)
+    bool FSpirVShaderCompiler::CompilerShaderRaw(FStringView ShaderString, const FShaderCompileOptions& CompileOptions, CompletedFunc OnCompleted)
     {
         FRequest Request;
         Request.Path = ShaderString;
@@ -219,8 +300,14 @@ namespace Lumina
                 PopRequest();
                 return;
             }
-    
-            Request.OnCompleted(Memory::Move(Binaries));
+
+            
+            FShaderHeader Shader;
+            Shader.Binaries = Memory::Move(Binaries);
+            
+            ReflectSpirv(Shader.Binaries, Shader.Reflection);
+            Request.OnCompleted(Memory::Move(Shader));
+            
             PopRequest();
         });
         

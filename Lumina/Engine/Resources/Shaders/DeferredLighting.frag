@@ -117,8 +117,7 @@ void main()
     vec3 Albedo = texture(uAlbedoSpec, vUV).rgb;
     
     vec3 Normal = texture(uNormal, vUV).rgb * 2.0 - 1.0;
-    mat3 inverseViewMatrix3x3 = transpose(inverse(mat3(GetInverseCameraView())));
-    Normal = normalize(inverseViewMatrix3x3 * Normal);
+    Normal = normalize(mat3(GetInverseCameraView()) * Normal);
     
     
     float AO = texture(uMaterial, vUV).r;

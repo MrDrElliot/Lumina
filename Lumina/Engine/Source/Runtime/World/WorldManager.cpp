@@ -26,6 +26,32 @@ namespace Lumina
     void FWorldManager::UpdateWorlds(const FUpdateContext& UpdateContext)
     {
         LUMINA_PROFILE_SCOPE();
+        
+        for (FManagedWorld& World : Worlds)
+        {
+            if (World.World->IsSuspended())
+            {
+                continue;
+            }
+
+            if (UpdateContext.GetUpdateStage() == EUpdateStage::Paused && World.World->IsPaused())
+            {
+                World.World->Paused(UpdateContext);
+                continue;
+            }
+            else if (!World.World->IsPaused())
+            {
+                World.World->Update(UpdateContext);
+            }
+        }
+    }
+
+    void FWorldManager::RenderWorlds(const FUpdateContext& UpdateContext)
+    {
+        LUMINA_PROFILE_SCOPE();
+
+        FRenderGraph RenderGraph;
+        
         for (FManagedWorld& World : Worlds)
         {
             if (World.World->IsSuspended())
@@ -33,8 +59,11 @@ namespace Lumina
                 continue;
             }
             
-            World.World->Update(UpdateContext);
+            World.World->Render(RenderGraph);
         }
+        
+        RenderGraph.Execute();
+
     }
 
     void FWorldManager::RemoveWorld(CWorld* World)

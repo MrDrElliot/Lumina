@@ -13,7 +13,7 @@ namespace Lumina
 
     public:
 
-        void Update(FEntityRegistry& EntityRegistry, const FUpdateContext& UpdateContext) override;
+        void Update(FSystemContext& SystemContext) override;
     
     };
 }

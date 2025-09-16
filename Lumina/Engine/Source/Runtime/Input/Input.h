@@ -20,5 +20,15 @@ namespace Lumina
         {
             return GEngine->GetEngineSubsystem<FInputSubsystem>()->GetMousePosition();
         }
+
+        inline float GetMouseDeltaPitch()
+        {
+            return GEngine->GetEngineSubsystem<FInputSubsystem>()->GetMouseDeltaPitch();
+        }
+
+        inline float GetMouseDeltaYaw()
+        {
+            return GEngine->GetEngineSubsystem<FInputSubsystem>()->GetMouseDeltaYaw();
+        }
     }
 }

@@ -4,6 +4,7 @@
 #include "VulkanMacros.h"
 #include "VulkanRenderContext.h"
 #include "Renderer/RenderResource.h"
+#include "Renderer/Shader.h"
 
 namespace Lumina
 {
@@ -191,33 +192,32 @@ namespace Lumina
         VkImage                     Image =                 VK_NULL_HANDLE;
         VkImageView                 ImageView =             VK_NULL_HANDLE;
     };
+
+    constexpr uint32 ShaderBinarySize = sizeof(uint32);
     
     class IVulkanShader : public IDeviceChild
     {
     public:
 
-        IVulkanShader(FVulkanDevice* InDevice, const TVector<uint32>& ByteCode, ERHIResourceType Type);
+        IVulkanShader(FVulkanDevice* InDevice, const FShaderHeader& Shader, ERHIResourceType Type);
         
         ~IVulkanShader() override;
 
         void GetByteCodeImpl(const void** ByteCode, uint64* Size)
         {
-            *ByteCode = SpirV.ByteCode.data();
-            *Size = SpirV.ByteCode.size() * sizeof(uint32);
+            *ByteCode = ShaderHeader.Binaries.data();
+            *Size = ShaderHeader.Binaries.size() * ShaderBinarySize;
         }
 
         bool CompareSpirV(const IVulkanShader* Other) const
         {
-            return VectorsAreEqual(Other->SpirV.ByteCode, SpirV.ByteCode);
+            return Other->ShaderHeader.Binaries == ShaderHeader.Binaries;
         }
     
     protected:
         
-        struct FSpirvCode
-        {
-            TVector<uint32> ByteCode;
-        } SpirV;
         
+        FShaderHeader ShaderHeader;
         VkShaderModule  ShaderModule = VK_NULL_HANDLE;
     };
 
@@ -228,8 +228,8 @@ namespace Lumina
     public:
         RENDER_RESOURCE(RRT_VertexShader)
 
-        FVulkanVertexShader(FVulkanDevice* InDevice, const TVector<uint32>& ByteCode)
-            :IVulkanShader(InDevice, ByteCode, RRT_VertexShader)
+        FVulkanVertexShader(FVulkanDevice* InDevice, const FShaderHeader& Shader)
+            :IVulkanShader(InDevice, Shader, RRT_VertexShader)
         {}
 
         void* GetAPIResourceImpl(EAPIResourceType ResourceType) override
@@ -240,6 +240,11 @@ namespace Lumina
         void GetByteCode(const void** ByteCode, uint64* Size) override
         {
             GetByteCodeImpl(ByteCode, Size);
+        }
+
+        const FShaderHeader& GetShaderHeader() const override
+        {
+            return ShaderHeader;
         }
     };
 
@@ -249,8 +254,8 @@ namespace Lumina
 
         RENDER_RESOURCE(RRT_PixelShader)
 
-        FVulkanPixelShader(FVulkanDevice* InDevice, const TVector<uint32>& ByteCode)
-            :IVulkanShader(InDevice, ByteCode, RRT_PixelShader)
+        FVulkanPixelShader(FVulkanDevice* InDevice, const FShaderHeader& Shader)
+            :IVulkanShader(InDevice, Shader, RRT_PixelShader)
         {}
 
         void* GetAPIResourceImpl(EAPIResourceType ResourceType) override
@@ -261,6 +266,11 @@ namespace Lumina
         void GetByteCode(const void** ByteCode, uint64* Size) override
         {
             GetByteCodeImpl(ByteCode, Size);
+        }
+
+        const FShaderHeader& GetShaderHeader() const override
+        {
+            return ShaderHeader;
         }
     };
 
@@ -269,8 +279,8 @@ namespace Lumina
     public:
         RENDER_RESOURCE(RRT_ComputeShader)
 
-        FVulkanComputeShader(FVulkanDevice* InDevice, const TVector<uint32>& ByteCode)
-            :IVulkanShader(InDevice, ByteCode, RRT_ComputeShader)
+        FVulkanComputeShader(FVulkanDevice* InDevice, const FShaderHeader& Shader)
+            :IVulkanShader(InDevice, Shader, RRT_ComputeShader)
         {}
 
         void* GetAPIResourceImpl(EAPIResourceType ResourceType) override
@@ -281,6 +291,11 @@ namespace Lumina
         void GetByteCode(const void** ByteCode, uint64* Size) override
         {
             GetByteCodeImpl(ByteCode, Size);
+        }
+
+        const FShaderHeader& GetShaderHeader() const override
+        {
+            return ShaderHeader;
         }
     };
 

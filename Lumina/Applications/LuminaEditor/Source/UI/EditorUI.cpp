@@ -203,6 +203,7 @@ namespace Lumina
         
         
         ImGui::End();
+        
 
         if (!FocusTargetWindowName.empty())
         {
@@ -676,7 +677,7 @@ namespace Lumina
         
         // Set WindowClass based on per-document ID, so tabs from Document A are not dockable in Document B etc. We could be using any ID suiting us, e.g. &doc
         // We also set ParentViewportId to request the platform back-end to set parent/child relationship at the windowing level
-        EditorTool->ToolWindowsClass.ClassId = 0;//EditorTool->GetID();
+        EditorTool->ToolWindowsClass.ClassId = EditorTool->GetID();
         EditorTool->ToolWindowsClass.ViewportFlagsOverrideSet = ImGuiViewportFlags_NoTaskBarIcon | ImGuiViewportFlags_NoDecoration;
         EditorTool->ToolWindowsClass.ParentViewportId = ImGui::GetWindowViewport()->ID;
         EditorTool->ToolWindowsClass.DockingAllowUnclassed = true;

@@ -23,18 +23,19 @@ namespace Lumina
         
     }
 
-    void CEditorEntityMovementSystem::Update(FEntityRegistry& EntityRegistry, const FUpdateContext& UpdateContext)
+    void CEditorEntityMovementSystem::Update(FSystemContext& SystemContext)
     {
         LUMINA_PROFILE_SCOPE();
         
-        double DeltaTime = UpdateContext.GetDeltaTime();
+        double DeltaTime = SystemContext.GetDeltaTime();
+        auto View = SystemContext.CreateView<STransformComponent, SEditorComponent, SCameraComponent, SVelocityComponent>();
         
-        for (auto CameraEntity : EntityRegistry.view<SEditorComponent, SCameraComponent>())
+        for (entt::entity EditorEntity : View)
         {
-            STransformComponent& Transform = EntityRegistry.get<STransformComponent>(CameraEntity);
-            SCameraComponent& Camera = EntityRegistry.get<SCameraComponent>(CameraEntity);
-            SEditorComponent& Editor = EntityRegistry.get<SEditorComponent>(CameraEntity);
-            SVelocityComponent& Velocity = EntityRegistry.get<SVelocityComponent>(CameraEntity);
+            STransformComponent& Transform      = View.get<STransformComponent>(EditorEntity);
+            SCameraComponent& Camera            = View.get<SCameraComponent>(EditorEntity);
+            SEditorComponent& Editor            = View.get<SEditorComponent>(EditorEntity);
+            SVelocityComponent& Velocity        = View.get<SVelocityComponent>(EditorEntity);
     
             if (!Editor.bEnabled)
                 continue;
@@ -74,8 +75,8 @@ namespace Lumina
             {
                 GEngine->GetEngineSubsystem<FInputSubsystem>()->SetCursorMode(GLFW_CURSOR_DISABLED);
     
-                float MousePitchDelta = UpdateContext.GetSubsystem<FInputSubsystem>()->GetMouseDeltaPitch();
-                float MouseYawDelta   = UpdateContext.GetSubsystem<FInputSubsystem>()->GetMouseDeltaYaw();
+                float MousePitchDelta = Input::GetMouseDeltaPitch();
+                float MouseYawDelta   = Input::GetMouseDeltaYaw();
     
                 constexpr float Sensitivity = 0.1f;
                 float YawDelta   = -MouseYawDelta   * Sensitivity;

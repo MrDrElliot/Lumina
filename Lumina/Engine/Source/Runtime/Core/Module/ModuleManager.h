@@ -23,7 +23,7 @@ namespace Lumina
     struct LUMINA_API FModuleInfo
     {
         FName ModuleName;
-        TSharedPtr<IModuleInterface> ModuleInterface;
+        TUniquePtr<IModuleInterface> ModuleInterface;
         void* Module;
     };
     

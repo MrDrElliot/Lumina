@@ -16,7 +16,7 @@ namespace Lumina
         void Initialize() override;
         void Shutdown() override;
 
-        void Update(FEntityRegistry& EntityRegistry, const FUpdateContext& UpdateContext) override;
+        void Update(FSystemContext& SystemContext) override;
         
     
     };

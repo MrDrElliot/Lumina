@@ -15,11 +15,6 @@ namespace Lumina
 
         friend class FEngine;
         
-        FORCEINLINE void MarkFrameStart()
-        {
-            
-        }
-        
         FORCEINLINE void MarkFrameEnd(double InTime)
         {
             DeltaTime = InTime - LastFrameTime;

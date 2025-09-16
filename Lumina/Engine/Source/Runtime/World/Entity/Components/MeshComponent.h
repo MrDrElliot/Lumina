@@ -13,13 +13,8 @@ namespace Lumina
     struct LUMINA_API SMeshComponent : SRenderComponent
     {
         GENERATED_BODY()
-
-        void SetMaterialOverrides(const TVector<TObjectHandle<CMaterialInterface>>& Overrides)
-        {
-            MaterialOverrides = Overrides;
-        }
         
-        LUM_PROPERTY(Editable, Setter, Category = "Materials")
+        LUM_PROPERTY(Editable, Category = "Materials")
         TVector<TObjectHandle<CMaterialInterface>> MaterialOverrides;
     };
     

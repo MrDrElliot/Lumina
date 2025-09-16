@@ -6,15 +6,7 @@
 #include "Renderer/RenderTypes.h"
 #include "Entity/Components/RenderComponent.h"
 
-namespace Lumina
-{
-    struct SDirectionalLightComponent;
-}
 
-namespace Lumina
-{
-    struct SEnvironmentComponent;
-}
 
 namespace Lumina
 {
@@ -26,7 +18,10 @@ namespace Lumina
     struct FMaterialTexturesData;
     class CMaterialInstance;
     class FRenderer;
+}
 
+namespace Lumina
+{
     template<typename T> using TRenderVector = TFixedVector<T, 2024>;
     
     class FSceneRenderer
@@ -38,7 +33,7 @@ namespace Lumina
         FSceneRenderer(CWorld* InWorld);
         virtual ~FSceneRenderer();
         
-        void Render(const FUpdateContext& UpdateContext);
+        void RenderScene(FRenderGraph& RenderGraph);
     
         FRHIImageRef GetRenderTarget() const { return SceneViewport->GetRenderTarget(); }
         FSceneGlobalData* GetSceneGlobalData() { return &SceneGlobalData; }
@@ -51,13 +46,12 @@ namespace Lumina
         
         ESceneRenderGBuffer GetGBufferDebugMode() const { return GBufferDebugMode; }
         void SetGBufferDebugMode(ESceneRenderGBuffer Mode) { GBufferDebugMode = Mode; }
-    
-    protected:
+
+        void DepthPrePass(FRenderGraph& RenderGraph);
+        void GBufferPass(FRenderGraph& RenderGraph);
+        void SSAOPass(FRenderGraph& RenderGraph);
         
-        void AddEnvironmentComponent(entt::entity entity);
-        void RemoveEnvironmentComponent(entt::entity entity);
-        void AddDirectionalLightComponent(entt::entity entity);
-        void RemoveDirectionalLightcomponent(entt::entity entity);
+    protected:
         
         FViewportState MakeViewportStateFromImage(const FRHIImage* Image);
 

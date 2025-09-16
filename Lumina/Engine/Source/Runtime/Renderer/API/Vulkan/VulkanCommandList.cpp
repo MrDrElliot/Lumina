@@ -1,7 +1,6 @@
 ﻿#include "VulkanCommandList.h"
 
 #include "Convert.h"
-#include "VulkanBarriers.h"
 #include "VulkanMacros.h"
 #include "VulkanRenderContext.h"
 #include "VulkanResources.h"
@@ -574,9 +573,7 @@ namespace Lumina
     void FVulkanCommandList::CommitBarriers()
     {
         LUMINA_PROFILE_SCOPE();
-
-        FVulkanPipelineBarrier Barrier;
-
+        
         if (StateTracker.GetBufferBarriers().empty() && StateTracker.GetTextureBarriers().empty())
         {
             return;

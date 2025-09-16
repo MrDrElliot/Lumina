@@ -31,20 +31,19 @@ namespace Lumina
         , CompilationResult()
         , NodeGraph(nullptr)
     {
-        //FSceneManager* SceneManager = GEngine->GetEngineSubsystem<FSceneManager>();
-        //FScene* NewScene = SceneManager->CreateScene(ESceneType::Tool);
-        //NewScene->RegisterSystem(NewObject<CDebugCameraEntitySystem>());
-        //
-        //Entity DirectionalLightEntity = NewScene->CreateEntity(FTransform(), "Directional Light");
-        //DirectionalLightEntity.AddComponent<SDirectionalLightComponent>();
-        //
-        //MeshEntity = NewScene->CreateEntity(FTransform(), "MeshEntity");
-        //MeshEntity.AddComponent<SStaticMeshComponent>();
-        //MeshEntity.GetComponent<SStaticMeshComponent>().StaticMesh = CThumbnailManager::Get().CubeMesh;
-        //MeshEntity.GetComponent<SStaticMeshComponent>().MaterialOverrides.resize(CThumbnailManager::Get().CubeMesh->Materials.size());
-        //MeshEntity.GetComponent<SStaticMeshComponent>().MaterialOverrides[0] = Cast<CMaterialInterface>(InAsset);
-        //
-        //Scene = NewScene;
+        World = NewObject<CWorld>();
+
+        Entity DirectionalLightEntity = World->ConstructEntity("Directional Light");
+        DirectionalLightEntity.Emplace<SDirectionalLightComponent>();
+        
+        MeshEntity = World->ConstructEntity("MeshEntity");
+        
+        MeshEntity.Emplace<SStaticMeshComponent>().StaticMesh = Cast<CStaticMesh>(InAsset);
+        MeshEntity.GetComponent<STransformComponent>().SetLocation(glm::vec3(0.0f, 0.0f, -2.5f));
+        
+        MeshEntity.GetComponent<SStaticMeshComponent>().StaticMesh = CThumbnailManager::Get().CubeMesh;
+        MeshEntity.GetComponent<SStaticMeshComponent>().MaterialOverrides.resize(CThumbnailManager::Get().CubeMesh->Materials.size());
+        MeshEntity.GetComponent<SStaticMeshComponent>().MaterialOverrides[0] = Cast<CMaterialInterface>(InAsset);
     }
 
 
@@ -160,23 +159,29 @@ namespace Lumina
             bGLSLPreviewDirty = true;
             
             IShaderCompiler* ShaderCompiler = GRenderContext->GetShaderCompiler();
-            ShaderCompiler->CompilerShaderRaw(Tree, {}, [this](const ShaderBinaries& Binaries)
+            FShaderHeader CompiledHeader;
+            ShaderCompiler->CompilerShaderRaw(Tree, {}, [this, &CompiledHeader](const FShaderHeader& Header) mutable 
             {
-                FRHIPixelShaderRef PixelShader = GRenderContext->CreatePixelShader(Binaries);
+                CompiledHeader = Header;
                 
-                FName Key = eastl::to_string(Hash::GetHash64(Binaries.data(), Binaries.size()));
+                FRHIPixelShaderRef PixelShader = GRenderContext->CreatePixelShader(Header);
+                
+                FName Key = eastl::to_string(Hash::GetHash64(Header.Binaries.data(), Header.Binaries.size()));
                 PixelShader->SetKey(Key);
                     
                 FRHIVertexShaderRef VertexShader = GRenderContext->GetShaderLibrary()->GetShader("Material.vert").As<FRHIVertexShader>();
                 CMaterial* Material = Cast<CMaterial>(Asset.Get());
                 Material->VertexShader = VertexShader;
                 Material->PixelShader = PixelShader;
+                
                 GRenderContext->OnShaderCompiled(PixelShader);
             });
             
+            ShaderCompiler->Flush();
+            
             CMaterial* Material = Cast<CMaterial>(Asset.Get());
             Compiler.GetBoundTextures(Material->Textures);
-
+            
             FRHIBufferDesc BufferDesc;
             BufferDesc.Size = sizeof(FMaterialUniforms);
             BufferDesc.DebugName = "Material Uniforms";
@@ -196,21 +201,23 @@ namespace Lumina
             BufferItem.Slot = 0;
             BufferItem.Type = ERHIBindingResourceType::Buffer_Uniform;
             LayoutDesc.AddItem(BufferItem);
-            
-            for (SIZE_T i = 0; i < Material->Textures.size(); ++i)
+
+            for (const FShaderBinding& Binding : CompiledHeader.Reflection.Bindings)
             {
-                FRHIImageRef Image = Material->Textures[i]->RHIImage;
+                if (Binding.Type == ERHIBindingResourceType::Texture_SRV)
+                {
+                    FRHIImageRef Image = Material->Textures[Binding.Set - 1]->RHIImage;
                 
-                FBindingLayoutItem Item;
-                Item.Slot = i + 1; // Add 1 because uniform buffer is at 0.
-                Item.Type = ERHIBindingResourceType::Texture_SRV;
+                    FBindingLayoutItem Item;
+                    Item.Slot = Binding.Binding;
+                    Item.Type = ERHIBindingResourceType::Texture_SRV;
                 
-                LayoutDesc.AddItem(Item);
+                    LayoutDesc.AddItem(Item);
                 
-                SetDesc.AddItem(FBindingSetItem::TextureSRV((uint32)i, Image));
+                    SetDesc.AddItem(FBindingSetItem::TextureSRV(Item.Slot, Image));
+                }
             }
             
-
             Memory::Memzero(&Material->MaterialUniforms, sizeof(FMaterialUniforms));
             Material->Parameters.clear();
             

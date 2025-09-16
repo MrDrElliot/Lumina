@@ -1,11 +1,12 @@
 ﻿#pragma once
+
 #include <shaderc/shaderc.hpp>
 
+#include "Shader.h"
 #include "Containers/Array.h"
 #include "Containers/String.h"
 #include "Containers/Function.h"
 #include "Core/Threading/Thread.h"
-#include "EASTL/internal/atomic/atomic.h"
 
 namespace Lumina
 {
@@ -14,32 +15,28 @@ namespace Lumina
         TVector<FString> MacroDefinitions;
     };
     
-    using ShaderBinaries = TVector<uint32>;
     
     class IShaderCompiler
     {
     public:
-        using CompletedFunc = TFunction<void(const TVector<uint32>&& Binaries)>;
+        using CompletedFunc = TFunction<void(FShaderHeader)>;
 
         virtual ~IShaderCompiler() = default;
 
         virtual void Initialize() = 0;
         virtual void Shutdown() = 0;
 
-        virtual bool CompilerShaderRaw(const FString& ShaderString, const FShaderCompileOptions& CompileOptions, CompletedFunc OnCompleted) = 0;
+        virtual bool CompilerShaderRaw(FStringView ShaderString, const FShaderCompileOptions& CompileOptions, CompletedFunc OnCompleted) = 0;
         virtual bool CompileShader(const FString& ShaderPath, const FShaderCompileOptions& CompileOptions, CompletedFunc OnCompleted) = 0;
 
         virtual bool HasPendingRequests() const = 0;
+        void Flush() const
+        {
+            while (HasPendingRequests()) { }
+        }
         
     };
-
-
-    class FSpirVReflector
-    {
-    public:
-
-        
-    };
+    
     
     class FSpirVShaderCompiler : public IShaderCompiler
     {
@@ -56,8 +53,9 @@ namespace Lumina
         void Initialize() override;
         void Shutdown() override;
 
-        bool CompilerShaderRaw(const FString& ShaderString, const FShaderCompileOptions& CompileOptions, CompletedFunc OnCompleted) override;
+        bool CompilerShaderRaw(FStringView ShaderString, const FShaderCompileOptions& CompileOptions, CompletedFunc OnCompleted) override;
         bool CompileShader(const FString& ShaderPath, const FShaderCompileOptions& CompileOptions, CompletedFunc OnCompleted) override;
+        void ReflectSpirv(TSpan<uint32> SpirV, FShaderReflection& Reflection);
 
         void PushRequest(const FRequest& Request);
         void PopRequest();

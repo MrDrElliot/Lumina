@@ -114,12 +114,12 @@ namespace Lumina
 
     struct FStaticMeshRender
     {
+        CMaterialInterface* Material;
+        CStaticMesh* StaticMesh;
         uint64 SortKey;
         uint32 FirstIndex;
         uint32 TransformIdx;
         uint16 SurfaceIndexCount;
-        CMaterialInterface* Material;
-        CStaticMesh* StaticMesh;
 
         auto operator <=> (const FStaticMeshRender& Other) const
         {

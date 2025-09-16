@@ -2,18 +2,18 @@
 
 #include "World/Entity/Components/InterpolatingMovementComponent.h"
 #include "World/Entity/Components/TransformComponent.h"
-#include "World/Entity/Registry/EntityRegistry.h"
 
 namespace Lumina
 {
-    void CInterpolatingMovementSystem::Update(FEntityRegistry& EntityRegistry, const FUpdateContext& UpdateContext)
+    void CInterpolatingMovementSystem::Update(FSystemContext& SystemContext)
     {
         LUMINA_PROFILE_SCOPE();
 
-        auto Group = EntityRegistry.group<SInterpolatingMovementComponent>(entt::get<STransformComponent>);
-        Group.each([&](SInterpolatingMovementComponent& MoveComp, STransformComponent& TransformComp)
+        
+        auto View = SystemContext.CreateView<SInterpolatingMovementComponent, STransformComponent>();
+        View.each([&](SInterpolatingMovementComponent& MoveComp, STransformComponent& TransformComp)
         {
-            float DeltaAlpha = 1.0f * UpdateContext.GetDeltaTime();
+            float DeltaAlpha = 1.0f * SystemContext.GetDeltaTime();
 
             if (MoveComp.bForward)
             {

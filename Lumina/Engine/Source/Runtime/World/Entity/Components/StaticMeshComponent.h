@@ -14,17 +14,9 @@ namespace Lumina
         GENERATED_BODY()
         ENTITY_COMPONENT(SStaticMeshComponent);
         
-        void SetStaticMesh(const TObjectHandle<CStaticMesh>& InMesh)
-        {
-            StaticMesh = InMesh;
-        }
-        
-        
-        TObjectHandle<CStaticMesh> GetStaticMesh() const { return StaticMesh; }
-
         CMaterialInterface* GetMaterialForSlot(SIZE_T Slot) const;
         
-        LUM_PROPERTY(Editable, Getter, Setter, Category = "Mesh")
+        LUM_PROPERTY(Editable, Category = "Mesh")
         TObjectHandle<CStaticMesh> StaticMesh;
         
     };

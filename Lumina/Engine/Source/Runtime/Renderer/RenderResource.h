@@ -15,6 +15,7 @@
 
 namespace Lumina
 {
+	struct FShaderHeader;
 	enum class EBufferUsageFlags : uint32;
     class IRenderContext;
 }
@@ -775,7 +776,9 @@ namespace Lumina
 		
 		/** Get the shader's native representation of it's bytecode */
 		virtual void GetByteCode(const void** ByteCode, uint64* Size) = 0;
-	
+
+		virtual const FShaderHeader& GetShaderHeader() const = 0;
+		
 	private:
 		
 		FName Key;

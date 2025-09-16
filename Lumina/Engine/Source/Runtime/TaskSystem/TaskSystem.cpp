@@ -11,7 +11,7 @@ namespace Lumina
     {
         void OnStartThread(uint32 threadNum)
         {
-            FString ThreadName = "Worker: " + eastl::to_string(threadNum);
+            FString ThreadName = "Background Worker: " + eastl::to_string(threadNum);
             Threading::SetThreadName(ThreadName.c_str());
         
             Memory::InitializeThreadHeap();
@@ -20,6 +20,11 @@ namespace Lumina
         void OnStopThread(uint32_t threadNum)
         {
             Memory::ShutdownThreadHeap();
+        }
+
+        void ObWaitForTaskCompleteStart(uint32_t threadNum)
+        {
+            LUMINA_PROFILE_SCOPE();
         }
 
         void* CustomAllocFunc(size_t alignment, size_t size, void* userData_, const char* file_, int line_)
@@ -38,10 +43,11 @@ namespace Lumina
         GTaskSystem = Memory::New<FTaskSystem>();
         
         enki::TaskSchedulerConfig config;
-        config.customAllocator.alloc            = CustomAllocFunc;
-        config.customAllocator.free             = CustomFreeFunc;
-        config.profilerCallbacks.threadStart    = OnStartThread;
-        config.profilerCallbacks.threadStop     = OnStopThread;
+        config.customAllocator.alloc                        = CustomAllocFunc;
+        config.customAllocator.free                         = CustomFreeFunc;
+        config.profilerCallbacks.threadStart                = OnStartThread;
+        config.profilerCallbacks.waitForTaskCompleteStart   = ObWaitForTaskCompleteStart;
+        config.profilerCallbacks.threadStop                 = OnStopThread;
 
         GTaskSystem->Scheduler.Initialize(config);
     }

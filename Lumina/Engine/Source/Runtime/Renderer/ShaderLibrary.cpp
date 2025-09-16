@@ -21,6 +21,8 @@ namespace Lumina
 
     FRHIShaderRef FShaderLibrary::GetShader(const FName& Key)
     {
+        LUMINA_PROFILE_SCOPE();
+        
         auto It = Shaders.find(Key);
         if (It != Shaders.end())
         {

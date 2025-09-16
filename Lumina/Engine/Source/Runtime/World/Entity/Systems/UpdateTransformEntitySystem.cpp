@@ -21,18 +21,18 @@ namespace Lumina
         
     }
 
-    void CUpdateTransformEntitySystem::Update(FEntityRegistry& EntityRegistry, const FUpdateContext& UpdateContext)
+    void CUpdateTransformEntitySystem::Update(FSystemContext& SystemContext)
     {
         LUMINA_PROFILE_SCOPE();
-        
-        auto Group = EntityRegistry.group<>(entt::get<STransformComponent>);
-        auto RelationshipGroup = EntityRegistry.group<>(entt::get<STransformComponent, SRelationshipComponent>);
-        auto CameraView = EntityRegistry.view<SCameraComponent>(entt::exclude<SEditorComponent>);
 
-        Task::ParallelFor(Group.size(), [&](uint32 Index)
+        auto View = SystemContext.CreateView<STransformComponent>();
+        auto RelationshipView = SystemContext.CreateView<SCameraComponent, SRelationshipComponent>();
+        auto CameraView = SystemContext.CreateView<SCameraComponent>(entt::exclude<SEditorComponent>);
+        
+        Task::ParallelFor(View.size(), [&](uint32 Index)
         {
-            entt::entity entity = Group[Index];
-            auto& transform = Group.get<STransformComponent>(entity);
+            entt::entity entity = View->data()[Index];
+            auto& transform = View.get<STransformComponent>(entity);
 
             if (CameraView.contains(entity))
             {
@@ -43,9 +43,9 @@ namespace Lumina
                 Camera.SetView(transform.Transform.Location, transform.Transform.Location + UpdatedForward, UpdatedUp);
             }
             
-            if (RelationshipGroup.contains(entity))
+            if (RelationshipView.contains(entity))
             {
-                auto& relationship = RelationshipGroup.get<SRelationshipComponent>(entity);
+                auto& relationship = RelationshipView.get<SRelationshipComponent>(entity);
             
                 if (relationship.Parent.IsValid())
                 {
@@ -62,9 +62,6 @@ namespace Lumina
             }
             
             transform.CachedMatrix = transform.WorldTransform.GetMatrix();
-            
         });
-
-        EntityRegistry.clear<FDirtyTransform>();
     }
 }

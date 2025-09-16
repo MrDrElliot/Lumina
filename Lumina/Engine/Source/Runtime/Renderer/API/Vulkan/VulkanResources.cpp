@@ -752,24 +752,21 @@ namespace Lumina
             case EAPIResourceType::Default:     return Image;
             default:                            return Image;
         }
-
-        return nullptr;
     }
 
-    IVulkanShader::IVulkanShader(FVulkanDevice* InDevice, const TVector<uint32>& ByteCode, ERHIResourceType Type)
-        :IDeviceChild(InDevice)
+    IVulkanShader::IVulkanShader(FVulkanDevice* InDevice, const FShaderHeader& Shader, ERHIResourceType Type)
+        : IDeviceChild(InDevice)
+        , ShaderHeader(Shader)
     {
-        Assert(!ByteCode.empty())
-            
-        SpirV.ByteCode = ByteCode;
-
+        Assert(!Shader.Binaries.empty())
+        
         VkShaderModuleCreateFlags Flags = 0;
             
         VkShaderModuleCreateInfo CreateInfo = {};
-        CreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-        CreateInfo.codeSize = ByteCode.size() * sizeof(uint32);
-        CreateInfo.pCode = ByteCode.data();
-        CreateInfo.flags = Flags;
+        CreateInfo.sType        = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+        CreateInfo.codeSize     = Shader.Binaries.size() * ShaderBinarySize;
+        CreateInfo.pCode        = Shader.Binaries.data();
+        CreateInfo.flags        = Flags;
 
         VK_CHECK(vkCreateShaderModule(Device->GetDevice(), &CreateInfo, VK_ALLOC_CALLBACK, &ShaderModule));
     }

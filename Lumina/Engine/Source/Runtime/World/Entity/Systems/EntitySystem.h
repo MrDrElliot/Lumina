@@ -6,6 +6,7 @@
 #include "Core/Object/ObjectHandleTyped.h"
 #include "Core/UpdateContext.h"
 #include "EntitySystem.generated.h"
+#include "SystemContext.h"
 
 
 namespace Lumina
@@ -55,7 +56,7 @@ namespace Lumina
         virtual void Initialize() { }
 
         /** Called per-update, for each required system */
-        virtual void Update(FEntityRegistry& EntityRegistry, const FUpdateContext& UpdateContext) { }
+        virtual void Update(FSystemContext& SystemContext) { }
 
         /** Called when the system is removed from the world, (and world shutdown) */
         virtual void Shutdown() { }

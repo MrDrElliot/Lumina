@@ -138,9 +138,9 @@ namespace Lumina
         
         //-------------------------------------------------------------------------------------
 
-        NODISCARD FRHIVertexShaderRef CreateVertexShader(const TVector<uint32>& ByteCode) override;
-        NODISCARD FRHIPixelShaderRef CreatePixelShader(const TVector<uint32>& ByteCode) override;
-        NODISCARD FRHIComputeShaderRef CreateComputeShader(const TVector<uint32>& ByteCode) override;
+        NODISCARD FRHIVertexShaderRef CreateVertexShader(const FShaderHeader& Shader) override;
+        NODISCARD FRHIPixelShaderRef CreatePixelShader(const FShaderHeader& Shader) override;
+        NODISCARD FRHIComputeShaderRef CreateComputeShader(const FShaderHeader& Shader) override;
 
         NODISCARD IShaderCompiler* GetShaderCompiler() const override;
         NODISCARD FRHIShaderLibraryRef GetShaderLibrary() const override;

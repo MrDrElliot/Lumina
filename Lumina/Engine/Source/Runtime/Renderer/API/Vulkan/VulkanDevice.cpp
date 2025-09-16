@@ -134,9 +134,9 @@ namespace Lumina
     void FVulkanMemoryAllocator::DestroyBuffer(VkBuffer Buffer)
     {
         LUMINA_PROFILE_SCOPE();
+        Assert(Buffer)
+        
         FScopeLock Lock(BufferAllocationMutex);
-
-        Assert(Buffer != VK_NULL_HANDLE)
 
         VmaAllocationInfo AllocationInfo;
         vmaGetAllocationInfo(Allocator, AllocatedBuffers[Buffer], &AllocationInfo);

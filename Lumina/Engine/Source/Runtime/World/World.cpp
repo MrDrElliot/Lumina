@@ -32,9 +32,8 @@ namespace Lumina
         
         if (Ar.IsWriting())
         {
-            
-            EntityRegistry.compact<>();
-            auto View = EntityRegistry.view<entt::entity>(entt::exclude<SEditorComponent>);
+            GetEntityRegistry().compact<>();
+            auto View = GetEntityRegistry().view<entt::entity>(entt::exclude<SEditorComponent>);
 
             SIZE_T NumEntities = 0;
             TVector<entt::entity> Parents;
@@ -43,9 +42,9 @@ namespace Lumina
             for (entt::entity entity : View)
             {
                 // We only want to serialize top-level entities here, parents will serialize their children.
-                if (EntityRegistry.all_of<SRelationshipComponent>(entity))
+                if (GetEntityRegistry().all_of<SRelationshipComponent>(entity))
                 {
-                    auto& RelationshipComponent = EntityRegistry.get<SRelationshipComponent>(entity);
+                    auto& RelationshipComponent = GetEntityRegistry().get<SRelationshipComponent>(entity);
                     if (RelationshipComponent.Parent.IsValid())
                     {
                         continue;
@@ -67,13 +66,13 @@ namespace Lumina
         else if (Ar.IsReading())
         {
             
-            EntityRegistry.clear<>();
+            GetEntityRegistry().clear<>();
             SIZE_T NumEntities = 0;
             Ar << NumEntities;
 
             for (SIZE_T i = 0; i < NumEntities; ++i)
             {
-                Entity NewEntity(EntityRegistry.create(), this);
+                Entity NewEntity(GetEntityRegistry().create(), this);
                 NewEntity.Serialize(Ar);
             }
         }
@@ -119,39 +118,46 @@ namespace Lumina
         LUMINA_PROFILE_SCOPE();
 
         const EUpdateStage Stage = Context.GetUpdateStage();
-        const bool bWantsToRender = Stage == EUpdateStage::FrameEnd;
-
+        
         if (Stage == EUpdateStage::FrameStart)
         {
             DeltaTime = Context.GetDeltaTime();
             TimeSinceCreation += DeltaTime;
         }
-
-        bool bShouldUpdateSystems = true;
-
-        if (bPaused && Stage != EUpdateStage::Paused)
+        
+        FSystemContext SystemContext(this);
+        
+        auto& SystemVector = SystemUpdateList[(uint32)Stage];
+        Task::ParallelFor((uint32)SystemVector.size(), [this, SystemVector, &SystemContext](uint32 Index)
         {
-            bShouldUpdateSystems = false;
-        }
-        else if (!bPaused && Stage == EUpdateStage::Paused)
-        {
-            bShouldUpdateSystems = false;
-        }
 
-        if (bShouldUpdateSystems)
-        {
-            auto& SystemVector = SystemUpdateList[(uint32)Stage];
-            Task::ParallelFor((uint32)SystemVector.size(), [this, SystemVector, Context](uint32 Index)
-            {
-                CEntitySystem* System = SystemVector[Index];
-                System->Update(EntityRegistry, Context);
-            });
-        }
+            CEntitySystem* System = SystemVector[Index];
+            System->Update(SystemContext);
+        });
+    }
 
-        if (bWantsToRender)
+    void CWorld::Paused(const FUpdateContext& Context)
+    {
+        LUMINA_PROFILE_SCOPE();
+
+        DeltaTime = Context.GetDeltaTime();
+        TimeSinceCreation += DeltaTime;
+        
+        FSystemContext SystemContext(this);
+        
+        auto& SystemVector = SystemUpdateList[(uint32)EUpdateStage::Paused];
+        Task::ParallelFor((uint32)SystemVector.size(), [this, SystemVector, &SystemContext](uint32 Index)
         {
-            SceneRenderer->Render(Context);
-        }
+            CEntitySystem* System = SystemVector[Index];
+            System->Update(SystemContext);
+        });
+    }
+
+    void CWorld::Render(FRenderGraph& RenderGraph)
+    {
+        LUMINA_PROFILE_SCOPE();
+
+        SceneRenderer->RenderScene(RenderGraph);
     }
 
     void CWorld::ShutdownWorld()
@@ -199,24 +205,24 @@ namespace Lumina
 
     Entity CWorld::ConstructEntity(const FName& Name, const FTransform& Transform)
     {
-        entt::entity NewEntity = EntityRegistry.create();
+        entt::entity NewEntity = GetEntityRegistry().create();
 
         FString StringName(Name.c_str());
         StringName += "_" + eastl::to_string((int)NewEntity);
         
-        EntityRegistry.emplace<SNameComponent>(NewEntity).Name = StringName;
+        GetEntityRegistry().emplace<SNameComponent>(NewEntity).Name = StringName;
         
-        EntityRegistry.emplace<STransformComponent>(NewEntity).Transform = Transform;
+        GetEntityRegistry().emplace<STransformComponent>(NewEntity).Transform = Transform;
         
         return Entity(NewEntity, this);
     }
     
     void CWorld::CopyEntity(Entity& To, const Entity& From)
     {
-        entt::entity NewEntity = EntityRegistry.create();
+        entt::entity NewEntity = GetEntityRegistry().create();
         To = Entity(NewEntity, this);
         
-        for (auto [id, storage]: EntityRegistry.storage())
+        for (auto [id, storage]: GetEntityRegistry().storage())
         {
             if(storage.contains(From.GetHandle()))
             {
@@ -305,7 +311,7 @@ namespace Lumina
     void CWorld::DestroyEntity(Entity Entity)
     {
         Assert(Entity.IsValid())
-        EntityRegistry.destroy(Entity);
+        GetEntityRegistry().destroy(Entity);
     }
 
     void CWorld::SetActiveCamera(Entity InEntity)
