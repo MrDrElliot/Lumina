@@ -13,17 +13,12 @@
     <td><img src="https://img.shields.io/badge/language-C++20-blue"></td>
     <td><img src="https://img.shields.io/badge/renderer-Vulkan-red"></td>
   </tr>
-  <tr>
-    <td><img src="https://img.shields.io/badge/reflection-custom-lightgrey"></td>
-    <td><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg"></td>
-    <td></td>
-  </tr>
 </table>
 
 
-**Lumina** is a C++-based, Vulkan-powered game engine built as a hands-on learning project. Inspired by engines like Unreal and Godot, it emphasizes reflection, modularity, and a clean visual editor built with ImGui.
+**Lumina** is a C++ game engine powered by Vulkan, built as a hands-on learning project. Inspired by engines like Unreal and Godot, it focuses on reflection, modularity, and a clean ImGui-based editor. The goal isn’t to become the next major engine or to optimize anyone’s workflow, but to serve as a passion project, a way to explore and experiment with the architectures that make up a full-fledged game engine.
 
-> ⚠️ **Early development** – APIs and systems are in flux, and not everything is fully documented or stable yet. **THE PROJECT MOST LIKELY WON'T BUILD FOR YOU**
+> ⚠️ **Early development** – APIs and systems are in flux, and not everything is fully documented or stable yet. **THE PROJECT MOST LIKELY WON'T BUILD FOR YOU, IF YOU WOULD LIKE TO BUILD IT, PLEASE REACH OUT TO GET HELP**
 
 ---
 
