@@ -27,21 +27,11 @@ namespace Lumina
 
         auto View = SystemContext.CreateView<STransformComponent>();
         auto RelationshipView = SystemContext.CreateView<SCameraComponent, SRelationshipComponent>();
-        auto CameraView = SystemContext.CreateView<SCameraComponent>(entt::exclude<SEditorComponent>);
         
-        Task::ParallelFor(View.size(), [&](uint32 Index)
+        Task::ParallelFor((uint32)View.size(), [&](uint32 Index)
         {
             entt::entity entity = View->data()[Index];
             auto& transform = View.get<STransformComponent>(entity);
-
-            if (CameraView.contains(entity))
-            {
-                auto& Camera = CameraView.get<SCameraComponent>(entity);
-                glm::vec3 UpdatedForward = transform.Transform.Rotation * glm::vec3(0.0f, 0.0f, -1.0f);
-                glm::vec3 UpdatedUp      = transform.Transform.Rotation * glm::vec3(0.0f, 1.0f,  0.0f);
-    
-                Camera.SetView(transform.Transform.Location, transform.Transform.Location + UpdatedForward, UpdatedUp);
-            }
             
             if (RelationshipView.contains(entity))
             {

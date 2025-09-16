@@ -319,9 +319,14 @@ namespace Lumina
         CameraManager->SetActiveCamera(InEntity);
     }
 
-    SCameraComponent& CWorld::GetActiveCamera() const
+    SCameraComponent& CWorld::GetActiveCamera()
     {
-        return *CameraManager->GetCameraComponent();
+        return CameraManager->GetCameraComponent();
+    }
+
+    Entity CWorld::GetActiveCameraEntity() const
+    {
+        return CameraManager->GetActiveCameraEntity();
     }
 
     CWorld* CWorld::DuplicateWorldForPIE(CWorld* OwningWorld)

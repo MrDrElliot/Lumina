@@ -13,16 +13,14 @@ namespace Lumina
         void SetActiveCamera(const Entity& NewCameraEntity)
         {
             ActiveCameraEntity = NewCameraEntity;
-            CameraComponent = &ActiveCameraEntity.GetComponent<SCameraComponent>();
         }
         
         Entity GetActiveCameraEntity() const { return ActiveCameraEntity; }
-        SCameraComponent* GetCameraComponent() const { return CameraComponent; }
+        SCameraComponent& GetCameraComponent() { return ActiveCameraEntity.GetComponent<SCameraComponent>(); }
     
 
     private:
 
-        SCameraComponent* CameraComponent = nullptr;
         Entity ActiveCameraEntity;
     
     };

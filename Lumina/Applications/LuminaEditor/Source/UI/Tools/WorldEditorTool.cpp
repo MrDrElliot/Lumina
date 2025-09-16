@@ -411,9 +411,6 @@ namespace Lumina
                         rotation != TransformComponent.GetRotation() ||
                         scale != TransformComponent.GetScale())
                     {
-                        /** In the editor, we always mark the currently selected entity as needing transform updates */
-                        SelectedEntity.Emplace<FDirtyTransform>();
-                        
                         SelectedEntity.Patch<STransformComponent>([&](auto& Transform)
                         {
                             Transform.SetLocation(translation);

@@ -63,6 +63,12 @@ namespace Lumina
         SceneRenderStats = {};
         
         SCameraComponent& CameraComponent = World->GetActiveCamera();
+        STransformComponent& CameraTransform = World->GetActiveCameraEntity().GetComponent<STransformComponent>();
+
+        glm::vec3 UpdatedForward = CameraTransform.Transform.Rotation * glm::vec3(0.0f, 0.0f, -1.0f);
+        glm::vec3 UpdatedUp      = CameraTransform.Transform.Rotation * glm::vec3(0.0f, 1.0f,  0.0f);
+    
+        CameraComponent.SetView(CameraTransform.Transform.Location, CameraTransform.Transform.Location + UpdatedForward, UpdatedUp);
 
         SceneGlobalData.CameraData.Location =           glm::vec4(CameraComponent.GetPosition(), 1.0f);
         SceneGlobalData.CameraData.View =               CameraComponent.GetViewMatrix();

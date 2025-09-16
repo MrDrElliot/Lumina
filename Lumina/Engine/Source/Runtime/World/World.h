@@ -72,7 +72,8 @@ namespace Lumina
 
         
         void SetActiveCamera(Entity InEntity);
-        SCameraComponent& GetActiveCamera() const;
+        SCameraComponent& GetActiveCamera();
+        Entity GetActiveCameraEntity() const;
 
         double GetWorldDeltaTime() const { return DeltaTime; }
         double GetTimeSinceWorldCreation() const { return TimeSinceCreation; }

@@ -54,7 +54,7 @@ namespace Lumina
             return;
         }
         
-        switch (Module.shader_stage)
+        switch (Module.shader_stage)  // NOLINT(clang-diagnostic-switch)
         {
         case SPV_REFLECT_SHADER_STAGE_VERTEX_BIT:
             Reflection.ShaderType = ERHIShaderType::Vertex;
